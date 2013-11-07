@@ -1,0 +1,4 @@
+find . -name 'core.*' -exec rm -fv {} \;
+pushd ..
+tar czvf /home/epics/public_html/pub/tomoRecon_Prebuilt_R1-2.tgz  --exclude '.svn*' --exclude 'O.*' tomoRecon
+popd

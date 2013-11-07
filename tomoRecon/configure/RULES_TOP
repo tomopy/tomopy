@@ -1,0 +1,3 @@
+#RULES_TOP
+include $(EPICS_BASE)/configure/RULES_TOP
+

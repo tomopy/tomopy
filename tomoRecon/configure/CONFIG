@@ -1,0 +1,13 @@
+#CONFIG
+include $(TOP)/configure/CONFIG_APP
+# Add any changes to make definitions here
+
+#CROSS_COMPILER_TARGET_ARCHS = vxWorks-68040
+
+# Use this when your IOC and the host use different paths
+# to access the application. Typically this will be 
+# used with the Microsoft FTP server or with NFS mounts. Use
+# is indicated by failure of the cdCommands script on
+# vxWorks. You must rebuild in the iocBoot directory 
+# before this takes effect.
+#IOCS_APPL_TOP = <the top of the application as seen by the IOC>
