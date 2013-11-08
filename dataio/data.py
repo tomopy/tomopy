@@ -7,8 +7,11 @@ from scipy import ndimage
 from dataio import hdf5
 from scipy.optimize import minimize
 from tomoRecon import tomoRecon
+from dataio import tiff
 import constants
 import pywt
+import shutil
+import os
 
 
 class read(object):
@@ -155,6 +158,62 @@ class read(object):
                                      np.squeeze(self.data[:, :, m]),
                                      size=size)
         else: raise ValueError('Check median filter axes.')
+
+
+    def diagnoseCenter(self,
+                       sliceNo=None,
+                       centerStart=None,
+                       centerEnd=None,
+                       centerStep=None):
+        """ Diagnostic tools to find rotation center.
+
+        Helps finding the rotation center manually by
+        visual inspection of the selected reconstructions
+        with different centers. The outputs for different
+        centers are put into ``data/diagnose`` directory
+        and the corresponding center positions are printed
+        so that one can skim through the images and
+        select the best.
+
+        Parameters
+        ----------
+        sliceNo : scalar, optional
+            The index of the slice to be used for diagnostics.
+            Default is the central slice.
+
+        centerStart, centerEnd, centerStep : scalar, optional
+            Values of the start, end and step of the center values to
+            be used for diagnostics.
+        """
+        print "Diagnosing rotation center..."
+        numProjections =  self.data.shape[0]
+        numSlices =  self.data.shape[1]
+        numPixels =  self.data.shape[2]
+
+        if sliceNo is None:
+            sliceNo = numSlices / 2
+        if centerStart is None:
+            centerStart = (numPixels / 2) - 20
+        if centerEnd is None:
+            centerEnd = (numPixels / 2) + 20
+        if centerStep is None:
+            centerStep = 1
+
+        sliceData = self.data[:, sliceNo, :]
+        center = np.arange(centerStart, centerEnd, centerStep)
+        numCenter = center.size
+        stackedSlices = np.zeros((numProjections, numCenter, numPixels),
+                                dtype='float')
+        for m in range(numCenter):
+            stackedSlices[:, m, :] = sliceData
+        dataset = createDataObject(stackedSlices, center=center)
+        recon = tomoRecon.tomoRecon(dataset)
+        recon.run(dataset, printInfo=False)
+        if os.path.isdir('data/diagnose'):
+            shutil.rmtree('data/diagnose')
+        tiff.write(recon.data, outputFile='data/diagnose/center_.tiff',)
+        for m in range(numCenter):
+            print 'Center for data/diagnose/xxx' + str(m) + '.tiff: ' + str(center[m])
 
 
     def optimizeCenter(self,
@@ -372,3 +431,22 @@ class read(object):
                 nim = pywt.idwt2((nim, (cH[m], cV[m], cD[m])), wname)
             nim = nim[0:self.data.shape[0], 0:self.data.shape[2]]
             self.data[:, m, :] = nim
+
+
+class createDataObject(object):
+    """ Creates data object.
+    """
+    def __init__(self, data, white=None, dark=None, center=None, angles=None):
+        self.data = np.array(data)
+        if white is None:
+            self.white = None
+        else: self.white = white
+        if dark is None:
+            self.dark = None
+        else: self.dark = dark
+        if center is None:
+            self.center = data.shape[2] / 2
+        else: self.center = center
+        if angles is None:
+            self.angles = None
+        else: self.angles = angles
