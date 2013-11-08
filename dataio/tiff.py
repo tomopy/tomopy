@@ -11,7 +11,7 @@ import PIL.Image as Image
 def TIFF2HDF5(inputFile,
               inputStart,
               inputEnd,
-              digits=4,
+              digits=3,
               zeros=True,
               dtype='uint16',
               outputFile='myfile.h5',
@@ -166,7 +166,7 @@ def readTIFFStack(inputFile,
         dataFile = inputFile.split('.')[-2]
         dataExtension = inputFile.split('.')[-1]
 
-    fileIndex = np.empty(digits)
+    fileIndex = ["" for x in range(digits)]
     for m in range(digits):
         if zeros is True:
            fileIndex[m] = '0' * (digits - m)
@@ -175,14 +175,18 @@ def readTIFFStack(inputFile,
 
     ind = range(inputStart, inputEnd)
     for m in range(len(ind)):
-        for m in range(digits):
-            if ind[m] < 10 * (m + 1):
-                fileName = dataFile + fileIndex[m] + str(ind[m]) + '.' + dataExtension
-                break
-
+        if ind[m] < 10 :
+            fileName = dataFile + fileIndex[0] + str(ind[m]) + '.' + dataExtension
+        elif ind[m] < 100 :
+            fileName = dataFile + fileIndex[1] + str(ind[m]) + '.' + dataExtension
+        elif ind[m] < 1000 :
+            fileName = dataFile + fileIndex[2] + str(ind[m]) + '.' + dataExtension
+        elif ind[m] < 10000 :
+            fileName = dataFile + str(ind[m]) + '.' + dataExtension           
+            
         if os.path.isfile(fileName):
             print 'Reading file: ' + os.path.realpath(fileName)
-            tmpdata = readTIFF(fileName, dtype=dtype)
+            tmpdata = readTIFF(fileName, dtype = dtype)
             if m == 0: # Get resolution once.
                 inputData = np.empty((inputEnd-inputStart,
                                       tmpdata.shape[0],
@@ -190,6 +194,7 @@ def readTIFFStack(inputFile,
                                      dtype='uint16')
             inputData[m, :, :] = tmpdata
 
+    return inputData
 
 def write(dataset,
           outputFile='./data/recon.tiff',
