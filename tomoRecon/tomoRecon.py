@@ -396,6 +396,8 @@ class tomoRecon:
             folderName = platform.uname()[0].lower() + '-' +platform.uname()[4]
             if platform.uname()[0].lower() == 'linux':
                 extension = 'so'
+            elif platform.uname()[0].lower() == 'darwin':
+                extension = 'dylib'
             else:
                 extension = 'dll'
             libPath =  os.getcwd() + '/tomoRecon/lib/' \
