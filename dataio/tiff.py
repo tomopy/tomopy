@@ -187,7 +187,7 @@ def readTIFFStack(inputFile,
     ind = range(inputStart, inputEnd)
     for m in range(len(ind)):
         for n in range(digits):
-            if ind[m] < 10 * (n + 1):
+            if ind[m] < np.power(10, n + 1):
                 fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
                 break
 
