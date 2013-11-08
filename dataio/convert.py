@@ -2,7 +2,7 @@
 # Filename: convert.py
 """ Module for converting data into dataExchange.
 """
-from data_exchange import DataExchangeFile, DataExchangeEntry
+#from data_exchange import DataExchangeFile, DataExchangeEntry
 import matplotlib.pyplot as plt
 from dataio import data
 from dataio import tiff
@@ -54,24 +54,24 @@ def APS2BM(dataFolder, baseName):
 
         # Write HDF5 file.
 
-        print 'Assembling HDF5 file: ' + os.path.realpath(HDF5File)
-        # Open DataExchange file
-        f = DataExchangeFile(HDF5File, mode='w') 
-        
-    
-        # Create core HDF5 dataset in exchange group for 180 deep stack
-        # of x,y images /exchange/data
-        f.add_entry( DataExchangeEntry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
-                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-        f.add_entry( DataExchangeEntry.data(data_dark={'value': data_dark, 'units':'counts', 'axes':'theta_dark:y:x',
-                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.add_entry( DataExchangeEntry.data(data_white={'value': data_white, 'units':'counts', 'axes':'theta_white:y:x',
-                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.close()
+##        print 'Assembling HDF5 file: ' + os.path.realpath(HDF5File)
+##        # Open DataExchange file
+##        f = DataExchangeFile(HDF5File, mode='w') 
+##        
+##    
+##        # Create core HDF5 dataset in exchange group for 180 deep stack
+##        # of x,y images /exchange/data
+##        f.add_entry( DataExchangeEntry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
+##                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
+##        f.add_entry( DataExchangeEntry.data(data_dark={'value': data_dark, 'units':'counts', 'axes':'theta_dark:y:x',
+##                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.add_entry( DataExchangeEntry.data(data_white={'value': data_white, 'units':'counts', 'axes':'theta_white:y:x',
+##                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.close()
         return HDF5File
 
 def SLSTomcat(inputFile):
@@ -350,23 +350,23 @@ def APS26ID(dataFolder, baseName):
 
         # Write HDF5 file.
 
-        print 'Assembling HDF5 file: ' + os.path.realpath(HDF5File)
-        # Open DataExchange file
-        f = DataExchangeFile(HDF5File, mode='w') 
-        
-    
-        # Create core HDF5 dataset in exchange group for 180 deep stack
-        # of x,y images /exchange/data
-        f.add_entry( DataExchangeEntry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
-                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-        f.add_entry( DataExchangeEntry.data(data_dark={'value': data_dark, 'units':'counts', 'axes':'theta_dark:y:x',
-                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.add_entry( DataExchangeEntry.data(data_white={'value': data_white, 'units':'counts', 'axes':'theta_white:y:x',
-                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-        )
-        f.close()
+##        print 'Assembling HDF5 file: ' + os.path.realpath(HDF5File)
+##        # Open DataExchange file
+##        f = DataExchangeFile(HDF5File, mode='w') 
+##        
+##    
+##        # Create core HDF5 dataset in exchange group for 180 deep stack
+##        # of x,y images /exchange/data
+##        f.add_entry( DataExchangeEntry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
+##                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
+##        f.add_entry( DataExchangeEntry.data(data_dark={'value': data_dark, 'units':'counts', 'axes':'theta_dark:y:x',
+##                                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.add_entry( DataExchangeEntry.data(data_white={'value': data_white, 'units':'counts', 'axes':'theta_white:y:x',
+##                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+##        )
+##        f.close()
         return HDF5File
 
