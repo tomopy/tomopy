@@ -122,11 +122,15 @@ def readTIFF(inputFile, dtype='uint16'):
     dtype : str, optional
         Corresponding Numpy data type of the TIFF file.
 
+    Returns
+    -------
+    out : ndarray
+        Output 2-D matrix as numpy array.
+
     .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     im = Image.open(inputFile)
-    print list(im.size)
-    out = np.fromstring(im.tostring(), dtype).reshape(tuple(list(im.size)))
+    out = np.fromstring(im.tostring(), dtype).reshape(tuple(list(im.size[::-1])))
     return out
 
 
@@ -159,6 +163,11 @@ def readTIFFStack(inputFile,
     dtype : str, optional
         Corresponding Numpy data type of the TIFF file.
 
+    Returns
+    -------
+    inputData : ndarray
+        Output 2-D matrix as numpy array.
+
     .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     if inputFile.endswith('tif') or \
@@ -167,34 +176,32 @@ def readTIFFStack(inputFile,
         dataExtension = inputFile.split('.')[-1]
 
     fileIndex = ["" for x in range(digits)]
+
     for m in range(digits):
         if zeros is True:
-           fileIndex[m] = '0' * (digits - m)
+           fileIndex[m] = '0' * (digits - m - 1)
+
         elif zeros is False:
            fileIndex[m] = ''
 
     ind = range(inputStart, inputEnd)
     for m in range(len(ind)):
-        if ind[m] < 10 :
-            fileName = dataFile + fileIndex[0] + str(ind[m]) + '.' + dataExtension
-        elif ind[m] < 100 :
-            fileName = dataFile + fileIndex[1] + str(ind[m]) + '.' + dataExtension
-        elif ind[m] < 1000 :
-            fileName = dataFile + fileIndex[2] + str(ind[m]) + '.' + dataExtension
-        elif ind[m] < 10000 :
-            fileName = dataFile + str(ind[m]) + '.' + dataExtension           
-            
+        for n in range(digits):
+            if ind[m] < 10 * (n + 1):
+                fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                break
+
         if os.path.isfile(fileName):
             print 'Reading file: ' + os.path.realpath(fileName)
-            tmpdata = readTIFF(fileName, dtype = dtype)
+            tmpdata = readTIFF(fileName, dtype=dtype)
             if m == 0: # Get resolution once.
                 inputData = np.empty((inputEnd-inputStart,
-                                      tmpdata.shape[0],
-                                      tmpdata.shape[1]),
-                                     dtype='uint16')
+                                    tmpdata.shape[0],
+                                    tmpdata.shape[1]),
+                                    dtype=dtype)
             inputData[m, :, :] = tmpdata
-
     return inputData
+
 
 def write(dataset,
           outputFile='./data/recon.tiff',
