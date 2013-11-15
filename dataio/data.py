@@ -329,7 +329,7 @@ class read(object):
 
 
     def retrievePhase(self, pixelSize, dist, energy, alpha=1):
-        """ Perform phase retrieval.
+        """ Perform Bronnikov-type phase retrieval.
 
         Parameters
         ----------
@@ -360,9 +360,9 @@ class read(object):
                     constants.SPEED_OF_LIGHT) / energy
 
         # Sampling in reciprocal space.
-        indx = (2 * constants.PI / ((numSlices - 1) * pixelSize)) * \
+        indx = (1 / ((numSlices - 1) * pixelSize)) * \
                 np.arange(-(numSlices-1)*0.5, numSlices*0.5)
-        indy = (2 * constants.PI / ((numPixels - 1) * pixelSize)) * \
+        indy = (1 / ((numPixels - 1) * pixelSize)) * \
                 np.arange(-(numPixels-1)*0.5, numPixels*0.5)
         du, dv = np.meshgrid(indy, indx)
         w2 = np.square(du) + np.square(dv)
