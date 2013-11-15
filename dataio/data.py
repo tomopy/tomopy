@@ -326,9 +326,60 @@ class read(object):
         histr = histr.astype('float64') / recon.data.size + 1e-12
         print 'Current center : ' + str(np.squeeze(center))
         return -np.dot(histr, np.log2(histr))
+        
+
+    def retrievePhasePaganin(self, pixelSize, dist, energy, deltaOverMu=1e-8):
+        """ Perform single-material phase retrieval
+        according to Paganin's method.
+
+        Parameters
+        ----------
+        data : ndarray, shape(numProjections, numSlices, numPixels)
+            A stack of flat-field corrected projections.
+
+        pixelSize : scalar
+            Detector pixel size in cm.
+
+        dist : scalar
+            Propagation distance of x-rays in cm.
+
+        energy : scalar
+            Energy of x-rays in keV.
+
+        deltaOverMu : scalar
+            Ratio of the imaginary part of the refractive index
+            decrement to the attenuation of the material.
+
+        Returns
+        -------
+        phase : ndarray
+            Retrieved phase.
+
+        References
+        ----------
+        - J. of Microscopy, Vol 206(1), 33-40(2001)
+        """
+        print "Retrieving phase..."
+        # Size of the detector
+        numProjections, numSlices, numPixels = self.data.shape
+
+        # Sampling in reciprocal space.
+        indx = (1 / ((numSlices - 1) * pixelSize)) * \
+                np.arange(-(numSlices-1)*0.5, numSlices*0.5)
+        indy = (1 / ((numPixels - 1) * pixelSize)) * \
+                np.arange(-(numPixels-1)*0.5, numPixels*0.5)
+        du, dv = np.meshgrid(indy, indx)
+        w2 = np.square(du) + np.square(dv)
+
+        # Fourier transform of data.
+        for m in range(numProjections):
+            fftData = np.fft.fftshift(tomoRecon.fftw2d(self.data[m, : ,:], direction='forward'))
+            H = 1 / (4 * np.square(constants.PI) * dist * deltaOverMu * w2 + 1)
+            filteredData = np.fft.ifftshift(np.multiply(H, fftData))
+            self.data[m, : ,:] = -deltaOverMu * np.log(np.real(tomoRecon.fftw2d(filteredData, direction='backward')))
 
 
-    def retrievePhase(self, pixelSize, dist, energy, alpha=1):
+    def retrievePhaseBronnikov(self, pixelSize, dist, energy, alpha=0.5):
         """ Perform Bronnikov-type phase retrieval.
 
         Parameters
