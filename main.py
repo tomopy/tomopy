@@ -26,7 +26,7 @@ def main():
     dataset.center = 657.125
 
     # Retrieve phase.
-    dataset.retrievePhase(pixelSize=1e-4, dist=70, energy=30, alpha=0.2)
+    dataset.retrievePhasePaganin(pixelSize=1e-4, dist=70, energy=30, deltaOverMu=1e-8)
 
     # Initialize reconstruction parameters.
     recon = tomoRecon.tomoRecon(dataset)
