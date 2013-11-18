@@ -482,7 +482,33 @@ class read(object):
                 nim = pywt.idwt2((nim, (cH[m], cV[m], cD[m])), wname)
             nim = nim[0:self.data.shape[0], 0:self.data.shape[2]]
             self.data[:, m, :] = nim
+            
+            
+    def correctView(self, numOverlapPixels=0):
+        """ Stich 180-360 degree projections on 0-180 degree
+        projections. This is usually the case when field
+        of view of the detector is smaller than the
+        object to be imaged.
 
+        Parameters
+        ----------
+        numOverlapPixels : scalar, optional
+            The overlapping regions between 0-180 and 180-360
+            degree projections.
+        """
+        print "Correcting field of view..."
+        numProjections, numSlices, numPixels = self.data.shape
+
+        if numProjections % 2 != 0: # if odd
+            imgFirstHalf = self.data[1:numProjections/2 + 1, :, numOverlapPixels:numPixels]
+            imgSecondHalf = self.data[numProjections/2:numProjections - 1]
+        else:
+            imgFirstHalf = self.data[1:numProjections/2 + 1, :, numOverlapPixels:numPixels]
+            imgSecondHalf = self.data[numProjections/2:numProjections]
+
+        ind = range(0, numPixels)[::-1]
+        self.data = np.c_[imgSecondHalf[:, :, ind], imgFirstHalf]
+        
 
 class createDataObject(object):
     """ Creates data object.
