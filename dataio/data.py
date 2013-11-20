@@ -376,7 +376,7 @@ class read(object):
             fftData = np.fft.fftshift(tomoRecon.fftw2d(self.data[m, : ,:], direction='forward'))
             H = 1 / (4 * np.square(constants.PI) * dist * deltaOverMu * w2 + 1)
             filteredData = np.fft.ifftshift(np.multiply(H, fftData))
-            self.data[m, : ,:] = -deltaOverMu * np.log(np.real(tomoRecon.fftw2d(filteredData, direction='backward')))
+            self.data[m, : ,:] = -np.log(np.real(tomoRecon.fftw2d(filteredData, direction='backward')))
 
 
     def retrievePhaseBronnikov(self, pixelSize, dist, energy, alpha=0.5):
@@ -426,7 +426,7 @@ class read(object):
             fftData = np.fft.fftshift(tomoRecon.fftw2d(self.data[m, : ,:], direction='forward'))
             H = 1 / (2 * constants.PI * wavelength * dist * w2 + alpha)
             filteredData = np.fft.ifftshift(np.multiply(H, fftData))
-            self.data[m, : ,:] = 1-np.real(tomoRecon.fftw2d(filteredData, direction='backward'))
+            self.data[m, : ,:] = -np.real(tomoRecon.fftw2d(filteredData, direction='backward'))
 
 
 
