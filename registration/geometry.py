@@ -198,7 +198,7 @@ class transform2d:
                              [-sin(a1), cos(a1), 0],
                              [       0,       0, 1]])
                              
-            - 'scale' : ``a = [a1 a2]``
+            - 'scale' : ``a = [a1, a2]``
                 >>> tform = [[a1,  0, 0], 
                              [ 0, a2, 0],
                              [ 0,  0, 1]])
