@@ -30,7 +30,7 @@ class mutualInformation(similarityMeasure):
         pab = histogram / np.sum(histogram)
         pa = np.sum(pab, axis=0)
         pb = np.sum(pab, axis=1)
-        tmp = pab / np.dot(pa, pb)
+        tmp = pab / np.multiply(pa,pb.transpose())
         #tmp = np.empty((64, 64))
         #for m in range(64):
         #    for n in range(64):  
