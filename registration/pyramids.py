@@ -6,7 +6,7 @@ import numpy as np
 from scipy import ndimage
 from registration import interpolate
 
-def reduce(img, level, laplacian=False):
+def reduce(img, level, laplacian=False): #python has a built-in function called 'reduce', so it might be better to find another name for this.
     """ Image pyramid reduction.
     
     The function performs a low pass filtering (convolution with
