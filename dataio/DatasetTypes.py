@@ -115,9 +115,6 @@ class hdf5(DatasetFileInterface):
 class hdf4(DatasetFileInterface):
     def read(self, fileName,
              arrayName=None,
-             projectionsStart=None,
-             projectionsEnd=None,
-             projectionsStep=None,
              slicesStart=None,
              slicesEnd=None,
              slicesStep=None,
