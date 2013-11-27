@@ -60,7 +60,7 @@ class AreaDetector:
                         (leny - self.pixelSize)/2 + self.pixelSize,
                         self.pixelSize)
         y0, z0 = np.meshgrid(yi, zi)
-        x0 = dist * np.ones(self.resolution)
+        x0 = dist * np.ones(self.resolution[::-1])
 
         x1 = x0
         y1 = y0 * np.cos(alpha) + z0 * np.sin(alpha)
@@ -80,7 +80,7 @@ class AreaDetector:
         return coordx, coordy, coordz
 
     def getAngles(self, phi, numProj):
-        """ Calculates the detecto-source pair
+        """ Calculates the detector-source pair
         alignments from object alignment parameters.
         """
         gamma = np.arange(0, np.pi, np.pi / numProj)

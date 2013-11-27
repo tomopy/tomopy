@@ -15,7 +15,6 @@ extern "C" {
     } // extern "C"
 
 dataSim::dataSim(simVars* pSimVars, float *pIn) {
-    std::cout << "Grr!!" << std::endl;
     vpIn = pIn;
     vpSimVars = pSimVars;
     vObjSizeX = pSimVars -> objSizeX;
@@ -37,7 +36,6 @@ dataSim::dataSim(simVars* pSimVars, float *pIn) {
 void dataSim::calc(int numPts, float *srcx,
                    float *srcy, float *srcz, float *detx,
                    float *dety, float *detz, float *pOut) {
-    std::cout << "Ugh!!" << std::endl;
     for (m = 0; m < numPts; m++) {
         if (!vAx.empty()) {
             vAx.clear();
@@ -47,6 +45,9 @@ void dataSim::calc(int numPts, float *srcx,
             }
         if (!vAz.empty()) {
             vAz.clear();
+            }
+        if (!vAxy.empty()) {
+            vAxy.clear();
             }
         if (!vAxIn.empty()) {
             vAxIn.clear();
@@ -108,6 +109,9 @@ void dataSim::calc(int numPts, float *srcx,
             }
         std::merge(vAxIn.begin(), vAxIn.end(),
                    vAyIn.begin(), vAyIn.end(),
+                   std::back_inserter(vAxy));
+        std::merge(vAxy.begin(), vAxy.end(),
+                   vAzIn.begin(), vAzIn.end(),
                    std::back_inserter(vAlpha));
         std::sort(vAlpha.begin(), vAlpha.end());
 

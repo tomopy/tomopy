@@ -40,7 +40,7 @@ private:
     float vObjPixelSize;
     int vNumPts;
     std::vector<float> vXi, vYi, vZi;
-    std::vector<float> vAx, vAy, vAz;
+    std::vector<float> vAx, vAy, vAz, vAxy;
     std::vector<float> vAxIn, vAyIn, vAzIn;
     std::vector<float> vAlpha;
     std::vector<float> vXk, vYk, vZk;
