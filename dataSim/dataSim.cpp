@@ -128,9 +128,6 @@ void dataSim::calc(int numPts, float *srcx,
                 vIndz = floor(((vZk[n] + vZk[n + 1]) / 2) / vObjPixelSize + float(vObjSizeZ) / 2);
                 vIndOut.push_back(vIndz + (vIndy + (vIndx * vObjSizeX)) * vObjSizeY);
                 }
-            //for (n = 0; n < vDist.size(); n++) {
-            //    std::cout << vDist[n] << std::endl;
-            //    }
 
             for (n = 0; n < vIndOut.size(); n++) {
                 pOut[m] += vpIn[vIndOut[n]] * vDist[n];
