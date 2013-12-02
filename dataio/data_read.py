@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
-# Filename: DatasetCreate.py
-from DatasetTypes import hdf5
+# Filename: data_read.py
+from file_types import Hdf5
 
 class Dataset():
     def __init__(self):
         pass
 
-    def readHdf5(self, fileName,
-                 projectionsStart=None,
-                 projectionsEnd=None,
-                 projectionsStep=None,
-                 slicesStart=None,
-                 slicesEnd=None,
-                 slicesStep=None,
-                 pixelsStart=None,
-                 pixelsEnd=None,
-                 pixelsStep=None,
-                 whiteStart=None,
-                 whiteEnd=None,
-                 darkStart=None,
-                 darkEnd=None):
+    def read_hdf5(self, fileName,
+                  projectionsStart=None,
+                  projectionsEnd=None,
+                  projectionsStep=None,
+                  slicesStart=None,
+                  slicesEnd=None,
+                  slicesStep=None,
+                  pixelsStart=None,
+                  pixelsEnd=None,
+                  pixelsStep=None,
+                  whiteStart=None,
+                  whiteEnd=None,
+                  darkStart=None,
+                  darkEnd=None):
         """ Read Data Exchange HDF5 file.
 
         Parameters
@@ -63,7 +63,7 @@ class Dataset():
         if len(end) > 1:
             # Check.
             if end[1] == 'h5' or end[1] == 'hdf':
-                f = hdf5()
+                f = Hdf5()
 
         # If f != None the call read on it.
         if not f == None:

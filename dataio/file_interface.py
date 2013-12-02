@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# Filename: DatasetInterface.py
+# Filename: file_interface.py
 from abc import ABCMeta, abstractmethod
 
-#Dataset file interface
-class DatasetFileInterface(object):
+# Dataset file interface.
+class FileInterface(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod

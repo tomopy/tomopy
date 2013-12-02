@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-# Filename: DataTypes.py
+# Filename: file_types.py
 import h5py
 import os
 import numpy as np
 from scipy import misc
 import PIL.Image as Image
 from pyhdf import SD
-from DatasetFileInterface import DatasetFileInterface
+from file_interface import FileInterface
 
-
-class hdf5(DatasetFileInterface):
+class Hdf5(FileInterface):
     def read(self, fileName,
              arrayName=None,
              projectionsStart=None,
@@ -112,7 +111,7 @@ class hdf5(DatasetFileInterface):
         f.close()
 
 
-class hdf4(DatasetFileInterface):
+class Hdf4(FileInterface):
     def read(self, fileName,
              arrayName=None,
              slicesStart=None,
@@ -179,7 +178,7 @@ class hdf4(DatasetFileInterface):
         pass
 
 
-class tiff(DatasetFileInterface):
+class Tiff(FileInterface):
     def read(self, fileName, dtype='uint16',
              slicesStart=None,
              slicesEnd=None,
@@ -231,7 +230,6 @@ class tiff(DatasetFileInterface):
             pixelsStep = 1
         return out[slicesStart:slicesEnd:slicesStep,
                    pixelsStart:pixelsEnd:pixelsStep]
-
 
     def write(self, dataset,
               fileName,

@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
-# Filename: DatasetConverter.py
+# Filename: data_converter.py
 import numpy as np
 import os
 import h5py
-from dataio.DatasetTypes import tiff, hdf5, hdf4
+from dataio.file_types import tiff, hdf4
 
-def tiff2Hdf5(inputFile,
-              inputStart,
-              inputEnd,
-              slicesStart=None,
-              slicesEnd=None,
-              slicesStep=None,
-              pixelsStart=None,
-              pixelsEnd=None,
-              pixelsStep=None,
-              digits=4,
-              zeros=True,
-              dtype='uint16',
-              outputFile='myfile.h5',
-              whiteFile=None,
-              whiteStart=None,
-              whiteEnd=None,
-              darkFile=None,
-              darkStart=None,
-              darkEnd=None):
+def tiff_to_hdf5(inputFile,
+                 inputStart,
+                 inputEnd,
+                 slicesStart=None,
+                 slicesEnd=None,
+                 slicesStep=None,
+                 pixelsStart=None,
+                 pixelsEnd=None,
+                 pixelsStep=None,
+                 digits=4,
+                 zeros=True,
+                 dtype='uint16',
+                 outputFile='myfile.h5',
+                 whiteFile=None,
+                 whiteStart=None,
+                 whiteEnd=None,
+                 darkFile=None,
+                 darkStart=None,
+                 darkEnd=None):
     """ Converts a stack of projection 16-bit TIFF files
     in a folder to a single HDF5 file. The dataset is
     constructed using the projection data, white field
@@ -94,25 +94,41 @@ def tiff2Hdf5(inputFile,
     exchangeGrp = f.create_group("exchange")
 
     # Read projection TIFF files in the given folder.
-    inputData = readStack(inputFile,
-                          inputStart,
-                          inputEnd,
-                          slicesStart=slicesStart,
-                          slicesEnd=slicesEnd,
-                          slicesStep=slicesStep,
-                          pixelsStart=pixelsStart,
-                          pixelsEnd=pixelsEnd,
-                          pixelsStep=pixelsStep,
-                          dtype=dtype,
-                          digits=digits,
-                          zeros=zeros)
+    inputData = read_stack(inputFile,
+                           inputStart,
+                           inputEnd,
+                           slicesStart=slicesStart,
+                           slicesEnd=slicesEnd,
+                           slicesStep=slicesStep,
+                           pixelsStart=pixelsStart,
+                           pixelsEnd=pixelsEnd,
+                           pixelsStep=pixelsStep,
+                           dtype=dtype,
+                           digits=digits,
+                           zeros=zeros)
     exchangeGrp.create_dataset('data', data=inputData, dtype=dtype)
 
     # Read white-field TIFF files in the given folder.
     if not whiteFile == None:
-        whiteData = readStack(whiteFile,
-                              whiteStart,
-                              whiteEnd,
+        whiteData = read_stack(whiteFile,
+                               whiteStart,
+                               whiteEnd,
+                               slicesStart=slicesStart,
+                               slicesEnd=slicesEnd,
+                               slicesStep=slicesStep,
+                               pixelsStart=pixelsStart,
+                               pixelsEnd=pixelsEnd,
+                               pixelsStep=pixelsStep,
+                               dtype=dtype,
+                               digits=digits,
+                               zeros=zeros)
+        exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
+
+    # Read dark-field TIFF files in the given folder.
+    if not darkFile == None:
+        darkData = read_stack(darkFile,
+                              darkStart,
+                              darkEnd,
                               slicesStart=slicesStart,
                               slicesEnd=slicesEnd,
                               slicesStep=slicesStep,
@@ -122,46 +138,29 @@ def tiff2Hdf5(inputFile,
                               dtype=dtype,
                               digits=digits,
                               zeros=zeros)
-        exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
-
-    # Read dark-field TIFF files in the given folder.
-    if not darkFile == None:
-        darkData = readStack(darkFile,
-                            darkStart,
-                            darkEnd,
-                            slicesStart=slicesStart,
-                            slicesEnd=slicesEnd,
-                            slicesStep=slicesStep,
-                            pixelsStart=pixelsStart,
-                            pixelsEnd=pixelsEnd,
-                            pixelsStep=pixelsStep,
-                            dtype=dtype,
-                            digits=digits,
-                            zeros=zeros)
         exchangeGrp.create_dataset('data_dark', data=darkData, dtype=dtype)
     f.close()
 
-
-def hdf42Hdf5(inputFile,
-              inputStart,
-              inputEnd,
-              slicesStart=None,
-              slicesEnd=None,
-              slicesStep=None,
-              pixelsStart=None,
-              pixelsEnd=None,
-              pixelsStep=None,
-              digits=4,
-              zeros=True,
-              dtype='uint16',
-              arrayName=None,
-              outputFile='myfile.h5',
-              whiteFile=None,
-              whiteStart=None,
-              whiteEnd=None,
-              darkFile=None,
-              darkStart=None,
-              darkEnd=None):
+def hdf4_to_hdf5(inputFile,
+                 inputStart,
+                 inputEnd,
+                 slicesStart=None,
+                 slicesEnd=None,
+                 slicesStep=None,
+                 pixelsStart=None,
+                 pixelsEnd=None,
+                 pixelsStep=None,
+                 digits=4,
+                 zeros=True,
+                 dtype='uint16',
+                 arrayName=None,
+                 outputFile='myfile.h5',
+                 whiteFile=None,
+                 whiteStart=None,
+                 whiteEnd=None,
+                 darkFile=None,
+                 darkStart=None,
+                 darkEnd=None):
     """ Converts a stack of projection 16-bit HDF files
     in a folder to a single HDF5 file. The dataset is
     constructed using the projection data, white field
@@ -245,19 +244,18 @@ def hdf42Hdf5(inputFile,
             indEnd = inputEnd
 
         # Read projection files in the given folder.
-        inputData = readStack(inputFile,
-                            inputStart=indStart,
-                            inputEnd=indEnd,
-                            slicesStart=slicesStart,
-                            slicesEnd=slicesEnd,
-                            slicesStep=slicesStep,
-                            pixelsStart=pixelsStart,
-                            pixelsEnd=pixelsEnd,
-                            pixelsStep=pixelsStep,
-                            digits=digits,
-                            zeros=zeros,
-                            arrayName=arrayName)
-
+        inputData = read_stack(inputFile,
+                               inputStart=indStart,
+                               inputEnd=indEnd,
+                               slicesStart=slicesStart,
+                               slicesEnd=slicesEnd,
+                               slicesStep=slicesStep,
+                               pixelsStart=pixelsStart,
+                               pixelsEnd=pixelsEnd,
+                               pixelsStep=pixelsStep,
+                               digits=digits,
+                               zeros=zeros,
+                               arrayName=arrayName)
 
         # Update HDF5 file.
         if m == 0:
@@ -270,40 +268,39 @@ def hdf42Hdf5(inputFile,
 
     # Read white-field TIFF files in the given folder.
     if not whiteFile == None:
-        whiteData = readStack(whiteFile,
-                                whiteStart,
-                                whiteEnd,
-                                digits=digits,
-                                zeros=zeros,
-                                arrayName=arrayName)
+        whiteData = read_stack(whiteFile,
+                               whiteStart,
+                               whiteEnd,
+                               digits=digits,
+                               zeros=zeros,
+                               arrayName=arrayName)
         exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
 
 
     # Read dark-field TIFF files in the given folder.
     if not darkFile == None:
-        darkData = readStack(darkFile,
-                                darkStart,
-                                darkEnd,
-                                digits=digits,
-                                zeros=zeros,
-                                arrayName=arrayName)
+        darkData = read_stack(darkFile,
+                              darkStart,
+                              darkEnd,
+                              digits=digits,
+                              zeros=zeros,
+                              arrayName=arrayName)
         exchangeGrp.create_dataset('data_dark', data=darkData, dtype=dtype)
     f.close()
 
-
-def readStack(inputFile,
-              inputStart,
-              inputEnd,
-              slicesStart=None,
-              slicesEnd=None,
-              slicesStep=None,
-              pixelsStart=None,
-              pixelsEnd=None,
-              pixelsStep=None,
-              digits=4,
-              zeros=True,
-              dtype='uint16',
-              arrayName=None):
+def read_stack(inputFile,
+               inputStart,
+               inputEnd,
+               slicesStart=None,
+               slicesEnd=None,
+               slicesStep=None,
+               pixelsStart=None,
+               pixelsEnd=None,
+               pixelsStep=None,
+               digits=4,
+               zeros=True,
+               dtype='uint16',
+               arrayName=None):
     """Read a stack of files in a folder.
 
     Parameters
