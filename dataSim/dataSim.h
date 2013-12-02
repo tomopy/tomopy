@@ -27,7 +27,7 @@ class dataSim {
 public:
     dataSim(simVars* params, float *pIn);
     void calc(int numPts, float *srcx, float *srcy, float *srcz,
-               float *detx, float *dety, float *detz, float *pOut);
+              float *detx, float *dety, float *detz, float *pOut);
 
 private:
     int m, n;
@@ -39,9 +39,10 @@ private:
     int vObjSizeZ;
     float vObjPixelSize;
     int vNumPts;
+    float vxf, vxl, vyf, vyl, vzf, vzl;
+    float tmp;
     std::vector<float> vXi, vYi, vZi;
     std::vector<float> vAx, vAy, vAz, vAxy;
-    std::vector<float> vAxIn, vAyIn, vAzIn;
     std::vector<float> vAlpha;
     std::vector<float> vXk, vYk, vZk;
     std::vector<float> vDist;
