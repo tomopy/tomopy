@@ -4,7 +4,7 @@
 """
 from tomoRecon import tomoRecon
 from visualize import image
-from dataio import data, tiff
+from dataio import data, tiff, hdf5
 
 def main():
 
@@ -26,7 +26,7 @@ def main():
     dataset.center = 657.125
 
     # Retrieve phase.
-    dataset.retrievePhasePaganin(pixelSize=1e-4, dist=70, energy=30, deltaOverMu=1e-8)
+    #dataset.retrievePhasePaganin(pixelSize=1e-4, dist=70, energy=30, deltaOverMu=1e-8)
 
     # Initialize reconstruction parameters.
     recon = tomoRecon.tomoRecon(dataset)
@@ -35,7 +35,7 @@ def main():
     recon.run(dataset)
 
     # Export data.
-    tiff.write(recon.data, outputFile='/local/dgursoy/data/test.tiff')
+    hdf5.write(recon.data, outputFile='/local/dgursoy/data/test.hdf')
 
     # Visualize a single slice.
     image.showSlice(recon.data)

@@ -98,7 +98,7 @@ def write(dataset, outputFile='./data/recon.h5'):
     """
     # Enforce HDF data format if different.
     if not outputFile.endswith('h5'):
-        outputFile = outputFile.split(".")[-2] + 'h5'
+        outputFile = outputFile.split(".")[-2] + '.h5'
 
     # Create new folders.
     dirPath = os.path.dirname(outputFile)
