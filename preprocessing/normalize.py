@@ -22,11 +22,10 @@ def normalize(data, white, cutoff=None):
     data : ndarray
         Output processed data.
     """
-    print "Normalizing data..."
     avg_white = np.mean(white, axis=0)
     for m in range(data.shape[0]):
         data[m, :, :] = np.divide(data[m, :, :], avg_white)
 
     if cutoff is not None:
-        data.data[data.data > cutoff] = cutoff
+        data[data > cutoff] = cutoff
     return data

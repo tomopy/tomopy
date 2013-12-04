@@ -25,8 +25,6 @@ def median_filter(data, axis=1, size=(1, 3)):
     data : ndarray
         Output processed data.
     """
-    print "Applying median filter to data..."
-
     # Override medianaxis if one dimension is null.
     if data.shape[0] == 1:
         axis = 0

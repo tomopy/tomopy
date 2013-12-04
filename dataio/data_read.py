@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-# input_file: data_read.py
+# filename: data_read.py
 from file_types import Hdf5
 
 class Dataset():
-    def __init__(self):
-        pass
+    def __init__(self, data=None, white=None, dark=None,
+                 center=None, angles=None):
+        self.data = data
+        self.white = white
+        self.dark = dark
+        self.center = center
+        self.angles = angles
 
-    def read_hdf5(self, input_file,
+    def read_hdf5(self, filename,
                   projections_start=None,
                   projections_end=None,
                   projections_step=None,
@@ -19,12 +24,13 @@ class Dataset():
                   white_start=None,
                   white_end=None,
                   dark_start=None,
-                  dark_end=None):
+                  dark_end=None,
+                  dtype='float32'):
         """ Read Data Exchange HDF5 file.
 
         Parameters
         ----------
-        input_file : str
+        filename : str
             Input file.
 
         projections_start, projections_end, projections_step : scalar, optional
@@ -46,15 +52,18 @@ class Dataset():
         dark_start, dark_end : scalar, optional
             Values of the start, end and step of the
             slicing for the whole dark field shots.
+
+        dtype : str, optional
+            Desired output data type.
         """
         print "Reading data..."
-        self.input_file = input_file
+        self.filename = filename
 
         # Initialize f to null.
         f = None
 
-        # Get the input_file in lower case.
-        lFn = input_file.lower()
+        # Get the filename in lower case.
+        lFn = filename.lower()
 
         # Split the string with the delimeter '.'
         end = lFn.split('.')
@@ -68,8 +77,8 @@ class Dataset():
         # If f != None the call read on it.
         if not f == None:
             # Read data from exchange group.
-            self.data = f.read(input_file,
-                                arrayName='exchange/data',
+            self.data = f.read(filename,
+                                arrayname='exchange/data',
                                 projections_start=projections_start,
                                 projections_end=projections_end,
                                 projections_step=projections_step,
@@ -78,11 +87,11 @@ class Dataset():
                                 slices_step=slices_step,
                                 pixels_start=pixels_start,
                                 pixels_end=pixels_end,
-                                pixels_step=pixels_step)
+                                pixels_step=pixels_step).astype(dtype)
 
             # Read white field data from exchange group.
-            self.white = f.read(input_file,
-                                arrayName='exchange/data_white',
+            self.white = f.read(filename,
+                                arrayname='exchange/data_white',
                                 projections_start=white_start,
                                 projections_end=white_end,
                                 slices_start=slices_start,
@@ -90,11 +99,11 @@ class Dataset():
                                 slices_step=slices_step,
                                 pixels_start=pixels_start,
                                 pixels_end=pixels_end,
-                                pixels_step=pixels_step)
+                                pixels_step=pixels_step).astype(dtype)
 
             # Read dark field data from exchange group.
-            self.dark = f.read(input_file,
-                                arrayName='exchange/data_dark',
+            self.dark = f.read(filename,
+                                arrayname='exchange/data_dark',
                                 projections_start=dark_start,
                                 projections_end=dark_end,
                                 slices_start=slices_start,
@@ -102,13 +111,9 @@ class Dataset():
                                 slices_step=slices_step,
                                 pixels_start=pixels_start,
                                 pixels_end=pixels_end,
-                                pixels_step=pixels_step)
+                                pixels_step=pixels_step).astype(dtype)
 
             # Assign the rotation center.
             self.center = self.data.shape[2] / 2
-
-            # Assign angles.
-            self.angles = None
-
         else:
             print 'Unsupported file.'

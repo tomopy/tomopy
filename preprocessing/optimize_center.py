@@ -2,8 +2,9 @@
 # Filename: optimize_center.py
 import numpy as np
 from scipy.optimize import minimize
-from scipy.optimize import ndimage
+from scipy import ndimage
 from tomoRecon import tomoRecon
+from dataio.data_read import Dataset
 
 def optimize_center(data,
                     slice_no=None,
@@ -73,8 +74,9 @@ def optimize_center(data,
         raise ValueError('center_init must be a scalar.')
 
     #selectedSlice = np.expand_dims(selectedSlice, axis=1)
-    recon = tomoRecon.tomoRecon(self)
-    recon.run(self, slice_no=slice_no, printInfo=False)
+    dataset = Dataset(data=data)
+    recon = tomoRecon.tomoRecon(dataset)
+    recon.run(dataset, sliceNo=slice_no, printInfo=False)
     if hist_min is None:
         hist_min = np.min(recon.data)
         if hist_min < 0:
@@ -89,9 +91,9 @@ def optimize_center(data,
         elif hist_max >= 0:
             hist_max = 2 * hist_max
 
-    res = minimize(read._costFunc,
+    res = minimize(_costFunc,
                    center_init,
-                   args=(self, recon, slice_no, hist_min, hist_max, sigma),
+                   args=(dataset, recon, slice_no, hist_min, hist_max, sigma),
                    method='Nelder-Mead',
                    tol=tol,
                    options={'disp':True})
@@ -99,12 +101,11 @@ def optimize_center(data,
     print 'Calculated rotation center : ' + str(np.squeeze(res.x))
     return res.x
 
-@staticmethod
 def _costFunc(center, data, recon, slice_no, hist_min, hist_max, sigma):
     """ Cost function of the ``optimize_center``.
     """
     data.center = center
-    recon.run(data, slice_no=slice_no, printInfo=False)
+    recon.run(data, sliceNo=slice_no, printInfo=False)
     histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data,
                                                             sigma=sigma),
                             bins=64, range=[hist_min, hist_max])

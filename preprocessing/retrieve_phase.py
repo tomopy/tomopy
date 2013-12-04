@@ -35,7 +35,6 @@ def retrieve_phase(data, pixel_size, dist, energy, delta_over_mu=1e-8):
     ----------
     - J. of Microscopy, Vol 206(1), 33-40(2001)
     """
-    print "Retrieving phase..."
     # Size of the detector
     num_projections, num_slices, num_pixels = data.shape
 
@@ -53,3 +52,4 @@ def retrieve_phase(data, pixel_size, dist, energy, delta_over_mu=1e-8):
         H = 1 / (4 * np.square(constants.PI) * dist * delta_over_mu * w2 + 1)
         filtered_data = np.fft.ifftshift(np.multiply(H, fftData))
         data[m, : ,:] = -np.log(np.real(tomoRecon.fftw2d(filtered_data, direction='backward')))
+    return data

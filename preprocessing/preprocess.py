@@ -4,40 +4,42 @@ from dataio.data_read import Dataset
 from preprocessing import normalize
 from preprocessing import median_filter
 from preprocessing import optimize_center
+from preprocessing import diagnose_center
 from preprocessing import retrieve_phase
 from preprocessing import remove_rings
 from preprocessing import correct_view
 
 class Preprocess(Dataset):
-    def normalize(self, overwrite=True):
+    def normalize(self, cutoff=None, overwrite=True):
+        print "Normalizing data..."
         if overwrite is True:
-            self.data = normalize.normalize(self.data, self.white)
+            self.data = normalize.normalize(self.data, self.white, cutoff=cutoff)
         elif overwrite is False:
-            return normalize.normalize(self.data, self.white)
+            return normalize.normalize(self.data, self.white, cutoff=cutoff)
 
-    def median_filter(self, overwrite=True):
+    def median_filter(self, axis=1, size=(1, 3), overwrite=True):
+        print "Applying median filter to data..."
         if overwrite is True:
-            self.data = median_filter.median_filter(self.data)
+            self.data = median_filter.median_filter(self.data, axis=axis, size=size)
         elif overwrite is False:
-            return median_filter.median_filter(self.data)
+            return median_filter.median_filter(self.data, axis=axis, size=size)
 
-    def optimize_center(self, overwrite=True):
+    def optimize_center(self, slice_no=None, center_init=None, hist_min=None, hist_max=None, tol=0.5, sigma=2, overwrite=True):
         if overwrite is True:
-            self.data = optimize_center.optimize_center(self.data)
+            self.center = optimize_center.optimize_center(self.data, slice_no=slice_no, center_init=center_init, hist_min=hist_min, hist_max=hist_max, tol=tol, sigma=sigma)
         elif overwrite is False:
-            return optimize_center.optimize_center(self.data)
+            return optimize_center.optimize_center(self.data, slice_no=slice_no, center_init=center_init, hist_min=hist_min, hist_max=hist_max, tol=tol, sigma=sigma)
 
-    def diagnose_center(self, overwrite=True):
-        if overwrite is True:
-            self.data = optimize_center.diagnose_center(self.data)
-        elif overwrite is False:
-            return optimize_center.diagnose_center(self.data)
+    def diagnose_center(self, slice_no=None, center_start=None, center_end=None, center_step=None, overwrite=True):
+        print "Diagnosing rotation center..."
+        diagnose_center.diagnose_center(self.data, slice_no=slice_no, center_start=center_start, center_end=center_end, center_step=center_step)
 
-    def remove_rings(self, overwrite=True):
+    def remove_rings(self, level=6, wname='db10', sigma=2, overwrite=True):
+        print "Removing rings..."
         if overwrite is True:
-            self.data = remove_rings.remove_rings(self.data)
+            self.data = remove_rings.remove_rings(self.data, level=level, wname=wname, sigma=sigma)
         elif overwrite is False:
-            return remove_rings.remove_rings(self.data)
+            return remove_rings.remove_rings(self.data, level=level, wname=wname, sigma=sigma)
 
     def correct_view(self, overwrite=True):
         if overwrite is True:
@@ -45,8 +47,9 @@ class Preprocess(Dataset):
         elif overwrite is False:
             return correct_view.correct_view(self.data)
 
-    def retrieve_phase(self, overwrite=True):
+    def retrieve_phase(self, pixel_size, dist, energy, delta_over_mu=1e-8, overwrite=True):
+        print "Retrieving phase..."
         if overwrite is True:
-            self.data = retrieve_phase.retrieve_phase(self.data)
+            self.data = retrieve_phase.retrieve_phase(self.data, pixel_size=pixel_size, dist=dist, energy=energy, delta_over_mu=delta_over_mu)
         elif overwrite is False:
-            return retrieve_phase.retrieve_phase(self.data)
+            return retrieve_phase.retrieve_phase(self.data, pixel_size=pixel_size, dist=dist, energy=energy, delta_over_mu=delta_over_mu)

@@ -24,7 +24,6 @@ def remove_rings(data, level=6, wname='db10', sigma=2):
     ----------
     - Optics Express, Vol 17(10), 8567-8591(2009)
     """
-    print "Removing rings..."
     for m in range(data.shape[1]):
         # Wavelet decomposition.
         im = data[:, m, :]
@@ -58,3 +57,4 @@ def remove_rings(data, level=6, wname='db10', sigma=2):
             nim = pywt.idwt2((nim, (cH[m], cV[m], cD[m])), wname)
         nim = nim[0:data.shape[0], 0:data.shape[2]]
         data[:, m, :] = nim
+        return data

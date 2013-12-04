@@ -4,6 +4,8 @@ import numpy as np
 import shutil
 import os
 from tomoRecon import tomoRecon
+from dataio.data_read import Dataset
+from dataio.file_types import Tiff
 
 def diagnose_center(data,
                     slice_no=None,
@@ -33,7 +35,6 @@ def diagnose_center(data,
         Values of the start, end and step of the center values to
         be used for diagnostics.
     """
-    print "Diagnosing rotation center..."
     num_projections =  data.shape[0]
     num_slices =  data.shape[1]
     num_pixels =  data.shape[2]
@@ -54,11 +55,12 @@ def diagnose_center(data,
                              dtype='float')
     for m in range(num_center):
         stacked_slices[:, m, :] = sliceData
-    # xzgfzdxg
+    dataset = Dataset(data=stacked_slices, center=center)
     recon = tomoRecon.tomoRecon(dataset)
     recon.run(dataset, printInfo=False)
+    f = Tiff()
     if os.path.isdir('data/diagnose'):
         shutil.rmtree('data/diagnose')
-        Tiff.write(recon.data, output_file='data/diagnose/center_.tiff',)
-        for m in range(num_center):
-            print 'Center for data/diagnose/xxx' + str(m) + '.tiff: ' + str(center[m])
+    f.write(recon.data, filename='data/diagnose/center_.tiff',)
+    for m in range(num_center):
+        print 'Center for data/diagnose/xxx' + str(m) + '.tiff: ' + str(center[m])

@@ -9,8 +9,8 @@ import numpy as np
 import os
 import time
 import platform
-from dataio import hdf5
-from dataio import tiff
+from dataio.file_types import Hdf5
+from dataio.file_types import Tiff
 
 
 class tomoRecon:
@@ -146,8 +146,7 @@ class tomoRecon:
                 paddedSinogramWidth = 2 ** powerN
                 powerN += 1
         elif paddedSinogramWidth < dataset.data.shape[2]:
-            raise ValueError('paddedSinogramWidth must be higher than \
-                                                        the number of pixels.')
+            raise ValueError('paddedSinogramWidth must be higher than the number of pixels.')
         self.params.paddedSinogramWidth = paddedSinogramWidth
         self.params.airPixels = airPixels
         self.params.ringWidth = ringWidth
@@ -372,9 +371,9 @@ class tomoRecon:
         """ Write reconstructed data into file.
         """
         if outputFile.endswith('hdf'):
-            hdf5.write(self.data, outputFile)
+            Hdf5.write(self.data, outputFile)
         elif outputFile.endswith('tiff'):
-            tiff.write(self.data,
+            Tiff.write(self.data,
                        outputFile,
                        slicesStart=slicesStart,
                        slicesEnd=slicesEnd)
