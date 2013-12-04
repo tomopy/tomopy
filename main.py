@@ -9,7 +9,7 @@ from visualize import image
 from dataio.file_types import Tiff
 
 # Input HDF file.
-filename = 'filename.h5'
+filename = '/local/dgursoy/data/Harrison_Aus_2013/A02_.h5'
 
 # Pre-process data.
 mydata = Preprocess()
@@ -28,4 +28,4 @@ f = Tiff()
 f.write(recon.data, filename='/local/dgursoy/GIT/tomopy/data/test_.tiff')
 
 # Visualize data.
-image.showSlice(recon.data)
+image.show_slice(recon.data)
