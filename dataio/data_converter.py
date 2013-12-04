@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
-# Filename: data_converter.py
+# file_name: data_converter.py
 import numpy as np
 import os
 import h5py
-from dataio.file_types import tiff, hdf4
+from dataio.file_types import Tiff, Hdf4
 
-def tiff_to_hdf5(inputFile,
-                 inputStart,
-                 inputEnd,
-                 slicesStart=None,
-                 slicesEnd=None,
-                 slicesStep=None,
-                 pixelsStart=None,
-                 pixelsEnd=None,
-                 pixelsStep=None,
+def tiff_to_hdf5(input_file,
+                 input_start,
+                 input_end,
+                 slices_start=None,
+                 slices_end=None,
+                 slices_step=None,
+                 pixels_start=None,
+                 pixels_end=None,
+                 pixels_step=None,
                  digits=4,
                  zeros=True,
                  dtype='uint16',
-                 outputFile='myfile.h5',
-                 whiteFile=None,
-                 whiteStart=None,
-                 whiteEnd=None,
-                 darkFile=None,
-                 darkStart=None,
-                 darkEnd=None):
+                 output_file='myfile.h5',
+                 white_file=None,
+                 white_start=None,
+                 white_end=None,
+                 dark_file=None,
+                 dark_start=None,
+                 dark_end=None):
     """ Converts a stack of projection 16-bit TIFF files
     in a folder to a single HDF5 file. The dataset is
     constructed using the projection data, white field
@@ -31,19 +31,19 @@ def tiff_to_hdf5(inputFile,
 
     Parameters
     ----------
-    inputFile : str
+    input_file : str
         Name of the generic input file name
         for all the TIFF files to be assembled.
 
-    inputStart, inputEnd : scalar
+    input_start, input_end : scalar
         Determines the portion of the TIFF images
         to be used for assembling the HDF file.
 
-    slicesStart, slicesEnd, slicesStep : scalar, optional
+    slices_start, slices_end, slices_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
-    pixelsStart, pixelsEnd, pixelsStep : scalar, optional
+    pixels_start, pixels_end, pixels_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
@@ -59,108 +59,108 @@ def tiff_to_hdf5(inputFile,
     dtype : str, optional
         Corresponding Numpy data type of the TIFF file.
 
-    outputFile : str
+    output_file : str
         Name of the output HDF file.
 
-    whiteFile : str, optional
+    white_file : str, optional
         Name of the generic input file name
         for all the white field
         TIFF files to be assembled.
 
-    whiteStart, whiteEnd : scalar, optional
+    white_start, white_end : scalar, optional
         Determines the portion of the white
         field TIFF images to be used for
         assembling HDF file.
 
-    darkFile : str, optional
+    dark_file : str, optional
         Name of the generic input file name
         for all the white field
         TIFF files to be assembled.
 
-    darkStart, darkEnd : scalar, optional
+    dark_start, dark_end : scalar, optional
         Determines the portion of the dark
         field TIFF images to be used for
         assembling HDF file.
     """
     # Create new folders.
-    dirPath = os.path.dirname(outputFile)
+    dirPath = os.path.dirname(output_file)
     if not os.path.exists(dirPath):
         os.makedirs(dirPath)
 
     # Prepare HDF5 file.
-    print 'Assembling HDF5 file: ' + os.path.realpath(outputFile)
-    f = h5py.File(outputFile, 'w')
+    print 'Assembling HDF5 file: ' + os.path.realpath(output_file)
+    f = h5py.File(output_file, 'w')
     f.create_dataset('implements', data='exchange')
     exchangeGrp = f.create_group("exchange")
 
     # Read projection TIFF files in the given folder.
-    inputData = read_stack(inputFile,
-                           inputStart,
-                           inputEnd,
-                           slicesStart=slicesStart,
-                           slicesEnd=slicesEnd,
-                           slicesStep=slicesStep,
-                           pixelsStart=pixelsStart,
-                           pixelsEnd=pixelsEnd,
-                           pixelsStep=pixelsStep,
+    input_data = read_stack(input_file,
+                           input_start,
+                           input_end,
+                           slices_start=slices_start,
+                           slices_end=slices_end,
+                           slices_step=slices_step,
+                           pixels_start=pixels_start,
+                           pixels_end=pixels_end,
+                           pixels_step=pixels_step,
                            dtype=dtype,
                            digits=digits,
                            zeros=zeros)
-    exchangeGrp.create_dataset('data', data=inputData, dtype=dtype)
+    exchangeGrp.create_dataset('data', data=input_data, dtype=dtype)
 
     # Read white-field TIFF files in the given folder.
-    if not whiteFile == None:
-        whiteData = read_stack(whiteFile,
-                               whiteStart,
-                               whiteEnd,
-                               slicesStart=slicesStart,
-                               slicesEnd=slicesEnd,
-                               slicesStep=slicesStep,
-                               pixelsStart=pixelsStart,
-                               pixelsEnd=pixelsEnd,
-                               pixelsStep=pixelsStep,
+    if not white_file == None:
+        whiteData = read_stack(white_file,
+                               white_start,
+                               white_end,
+                               slices_start=slices_start,
+                               slices_end=slices_end,
+                               slices_step=slices_step,
+                               pixels_start=pixels_start,
+                               pixels_end=pixels_end,
+                               pixels_step=pixels_step,
                                dtype=dtype,
                                digits=digits,
                                zeros=zeros)
         exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
 
     # Read dark-field TIFF files in the given folder.
-    if not darkFile == None:
-        darkData = read_stack(darkFile,
-                              darkStart,
-                              darkEnd,
-                              slicesStart=slicesStart,
-                              slicesEnd=slicesEnd,
-                              slicesStep=slicesStep,
-                              pixelsStart=pixelsStart,
-                              pixelsEnd=pixelsEnd,
-                              pixelsStep=pixelsStep,
+    if not dark_file == None:
+        darkData = read_stack(dark_file,
+                              dark_start,
+                              dark_end,
+                              slices_start=slices_start,
+                              slices_end=slices_end,
+                              slices_step=slices_step,
+                              pixels_start=pixels_start,
+                              pixels_end=pixels_end,
+                              pixels_step=pixels_step,
                               dtype=dtype,
                               digits=digits,
                               zeros=zeros)
         exchangeGrp.create_dataset('data_dark', data=darkData, dtype=dtype)
     f.close()
 
-def hdf4_to_hdf5(inputFile,
-                 inputStart,
-                 inputEnd,
-                 slicesStart=None,
-                 slicesEnd=None,
-                 slicesStep=None,
-                 pixelsStart=None,
-                 pixelsEnd=None,
-                 pixelsStep=None,
+def hdf4_to_hdf5(input_file,
+                 input_start,
+                 input_end,
+                 slices_start=None,
+                 slices_end=None,
+                 slices_step=None,
+                 pixels_start=None,
+                 pixels_end=None,
+                 pixels_step=None,
                  digits=4,
                  zeros=True,
                  dtype='uint16',
-                 arrayName=None,
-                 outputFile='myfile.h5',
-                 whiteFile=None,
-                 whiteStart=None,
-                 whiteEnd=None,
-                 darkFile=None,
-                 darkStart=None,
-                 darkEnd=None):
+                 array_name=None,
+                 output_file='myfile.h5',
+                 white_file=None,
+                 white_start=None,
+                 white_end=None,
+                 dark_file=None,
+                 dark_start=None,
+                 dark_end=None):
     """ Converts a stack of projection 16-bit HDF files
     in a folder to a single HDF5 file. The dataset is
     constructed using the projection data, white field
@@ -168,19 +168,19 @@ def hdf4_to_hdf5(inputFile,
 
     Parameters
     ----------
-    inputFile : str
+    input_file : str
         Name of the generic input file name
         for all the TIFF files to be assembled.
 
-    inputStart, inputEnd : scalar
+    input_start, input_end : scalar
         Determines the portion of the TIFF images
         to be used for assembling the HDF file.
 
-    slicesStart, slicesEnd, slicesStep : scalar, optional
+    slices_start, slices_end, slices_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
-    pixelsStart, pixelsEnd, pixelsStep : scalar, optional
+    pixels_start, pixels_end, pixels_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
@@ -199,124 +199,124 @@ def hdf4_to_hdf5(inputFile,
     hdftype : scalar, optional
         Type of HDF files to be read (4:HDF4, 5:HDF5)
 
-    outputFile : str
+    output_file : str
         Name of the output HDF file.
 
-    whiteFile : str, optional
+    white_file : str, optional
         Name of the generic input file name
         for all the white field
         TIFF files to be assembled.
 
-    whiteStart, whiteEnd : scalar, optional
+    white_start, white_end : scalar, optional
         Determines the portion of the white
         field TIFF images to be used for
         assembling HDF file.
 
-    darkFile : str, optional
+    dark_file : str, optional
         Name of the generic input file name
         for all the white field
         TIFF files to be assembled.
 
-    darkStart, darkEnd : scalar, optional
+    dark_start, dark_end : scalar, optional
         Determines the portion of the dark
         field TIFF images to be used for
         assembling HDF file.
     """
     # Create new folders.
-    dirPath = os.path.dirname(outputFile)
+    dirPath = os.path.dirname(output_file)
     if not os.path.exists(dirPath):
         os.makedirs(dirPath)
 
     # Prepare HDF5 file.
-    print 'Assembling HDF5 file: ' + os.path.realpath(outputFile)
-    f = h5py.File(outputFile, 'w')
+    print 'Assembling HDF5 file: ' + os.path.realpath(output_file)
+    f = h5py.File(output_file, 'w')
     f.create_dataset('implements', data='exchange')
     exchangeGrp = f.create_group("exchange")
 
     # Update HDF5 file in chunks.
     chunkSize = 20
-    ind1 = np.int(np.floor(np.float(inputStart) / chunkSize))
-    ind2 = np.int(np.ceil(np.float(inputEnd) / chunkSize))
+    ind1 = np.int(np.floor(np.float(input_start) / chunkSize))
+    ind2 = np.int(np.ceil(np.float(input_end) / chunkSize))
     for m in range(ind2-ind1):
-        indStart = (m * chunkSize) + inputStart
+        indStart = (m * chunkSize) + input_start
         indEnd = indStart + chunkSize
-        if indEnd > inputEnd:
-            indEnd = inputEnd
+        if indEnd > input_end:
+            indEnd = input_end
 
         # Read projection files in the given folder.
-        inputData = read_stack(inputFile,
-                               inputStart=indStart,
-                               inputEnd=indEnd,
-                               slicesStart=slicesStart,
-                               slicesEnd=slicesEnd,
-                               slicesStep=slicesStep,
-                               pixelsStart=pixelsStart,
-                               pixelsEnd=pixelsEnd,
-                               pixelsStep=pixelsStep,
+        input_data = read_stack(input_file,
+                               input_start=indStart,
+                               input_end=indEnd,
+                               slices_start=slices_start,
+                               slices_end=slices_end,
+                               slices_step=slices_step,
+                               pixels_start=pixels_start,
+                               pixels_end=pixels_end,
+                               pixels_step=pixels_step,
                                digits=digits,
                                zeros=zeros,
-                               arrayName=arrayName)
+                               array_name=array_name)
 
         # Update HDF5 file.
         if m == 0:
             dset = exchangeGrp.create_dataset('data',
-                                              (inputEnd-inputStart,
-                                               inputData.shape[1],
-                                               inputData.shape[2]),
+                                              (input_end-input_start,
+                                               input_data.shape[1],
+                                               input_data.shape[2]),
                                               dtype=dtype)
-        dset[(indStart-inputStart):(indEnd-inputStart), :, :] = inputData
+        dset[(indStart-input_start):(indEnd-input_start), :, :] = input_data
 
     # Read white-field TIFF files in the given folder.
-    if not whiteFile == None:
-        whiteData = read_stack(whiteFile,
-                               whiteStart,
-                               whiteEnd,
+    if not white_file == None:
+        whiteData = read_stack(white_file,
+                               white_start,
+                               white_end,
                                digits=digits,
                                zeros=zeros,
-                               arrayName=arrayName)
+                               array_name=array_name)
         exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
 
 
     # Read dark-field TIFF files in the given folder.
-    if not darkFile == None:
-        darkData = read_stack(darkFile,
-                              darkStart,
-                              darkEnd,
+    if not dark_file == None:
+        darkData = read_stack(dark_file,
+                              dark_start,
+                              dark_end,
                               digits=digits,
                               zeros=zeros,
-                              arrayName=arrayName)
+                              array_name=array_name)
         exchangeGrp.create_dataset('data_dark', data=darkData, dtype=dtype)
     f.close()
 
-def read_stack(inputFile,
-               inputStart,
-               inputEnd,
-               slicesStart=None,
-               slicesEnd=None,
-               slicesStep=None,
-               pixelsStart=None,
-               pixelsEnd=None,
-               pixelsStep=None,
+def read_stack(input_file,
+               input_start,
+               input_end,
+               slices_start=None,
+               slices_end=None,
+               slices_step=None,
+               pixels_start=None,
+               pixels_end=None,
+               pixels_step=None,
                digits=4,
                zeros=True,
                dtype='uint16',
-               arrayName=None):
+               array_name=None):
     """Read a stack of files in a folder.
 
     Parameters
     ----------
-    inputFile : str
+    input_file : str
         Name of the input file.
 
-    inputStart, inputEnd : scalar
+    input_start, input_end : scalar
         Determines the portion of the images
         to be used for assembling the HDF file.
 
-    slicesStart, slicesEnd, slicesStep : scalar, optional
+    slices_start, slices_end, slices_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
-    pixelsStart, pixelsEnd, pixelsStep : scalar, optional
+    pixels_start, pixels_end, pixels_step : scalar, optional
         Values of the start, end and step of the
         slicing for the whole ndarray.
 
@@ -334,55 +334,55 @@ def read_stack(inputFile,
 
     Returns
     -------
-    inputData : ndarray
+    input_data : ndarray
         Output 2-D matrix as numpy array.
 
     .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     # Split the string with the delimeter '.'
-    dataFile = inputFile.split('.')[-2]
-    dataExtension = inputFile.split('.')[-1]
+    data_file = input_file.split('.')[-2]
+    data_extension = input_file.split('.')[-1]
 
-    fileIndex = ["" for x in range(digits)]
+    file_index = ["" for x in range(digits)]
     for m in range(digits):
         if zeros is True:
-            fileIndex[m] = '0' * (digits - m - 1)
+            file_index[m] = '0' * (digits - m - 1)
 
         elif zeros is False:
-            fileIndex[m] = ''
+            file_index[m] = ''
 
-    ind = range(inputStart, inputEnd)
+    ind = range(input_start, input_end)
     for m in range(len(ind)):
         for n in range(digits):
             if ind[m] < np.power(10, n + 1):
-                fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                file_name = data_file + file_index[n] + str(ind[m]) + '.' + data_extension
                 break
 
-        if os.path.isfile(fileName):
-            print 'Reading file: ' + os.path.realpath(fileName)
-            if dataExtension == 'tiff' or dataExtension == 'tif':
-                f = tiff()
-                tmpdata = f.read(fileName, dtype=dtype,
-                                slicesStart=slicesStart,
-                                slicesEnd=slicesEnd,
-                                slicesStep=slicesStep,
-                                pixelsStart=pixelsStart,
-                                pixelsEnd=pixelsEnd,
-                                pixelsStep=pixelsStep)
-            elif dataExtension == 'hdf':
-                f = hdf4()
-                tmpdata = f.read(fileName,
-                                slicesStart=slicesStart,
-                                slicesEnd=slicesEnd,
-                                slicesStep=slicesStep,
-                                pixelsStart=pixelsStart,
-                                pixelsEnd=pixelsEnd,
-                                pixelsStep=pixelsStep,
-                                arrayName=arrayName)
+        if os.path.isfile(file_name):
+            print 'Reading file: ' + os.path.realpath(file_name)
+            if data_extension == 'tiff' or data_extension == 'tif':
+                f = Tiff()
+                tmpdata = f.read(file_name, dtype=dtype,
+                                slices_start=slices_start,
+                                slices_end=slices_end,
+                                slices_step=slices_step,
+                                pixels_start=pixels_start,
+                                pixels_end=pixels_end,
+                                pixels_step=pixels_step)
+            elif data_extension == 'hdf':
+                f = Hdf4()
+                tmpdata = f.read(file_name,
+                                slices_start=slices_start,
+                                slices_end=slices_end,
+                                slices_step=slices_step,
+                                pixels_start=pixels_start,
+                                pixels_end=pixels_end,
+                                pixels_step=pixels_step,
+                                array_name=array_name)
         if m == 0: # Get resolution once.
-            inputData = np.empty((inputEnd-inputStart,
+            input_data = np.empty((input_end-input_start,
                                   tmpdata.shape[0],
                                   tmpdata.shape[1]),
                                  dtype=dtype)
-        inputData[m, :, :] = tmpdata
-    return inputData
+        input_data[m, :, :] = tmpdata
+    return input_data

@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-# Filename: data_read.py
+# file_name: data_read.py
 from file_types import Hdf5
 
 class Dataset():
     def __init__(self):
         pass
 
-    def read_hdf5(self, fileName,
-                  projectionsStart=None,
-                  projectionsEnd=None,
-                  projectionsStep=None,
-                  slicesStart=None,
-                  slicesEnd=None,
-                  slicesStep=None,
-                  pixelsStart=None,
-                  pixelsEnd=None,
-                  pixelsStep=None,
+    def read_hdf5(self, file_name,
+                  projections_start=None,
+                  projections_end=None,
+                  projections_step=None,
+                  slices_start=None,
+                  slices_end=None,
+                  slices_step=None,
+                  pixels_start=None,
+                  pixels_end=None,
+                  pixels_step=None,
                   whiteStart=None,
                   whiteEnd=None,
                   darkStart=None,
@@ -24,18 +24,18 @@ class Dataset():
 
         Parameters
         ----------
-        fileName : str
+        file_name : str
             Input file.
 
-        projectionsStart, projectionsEnd, projectionsStep : scalar, optional
+        projections_start, projections_end, projections_step : scalar, optional
             Values of the start, end and step of the projections to
             be used for slicing for the whole ndarray.
 
-        slicesStart, slicesEnd, slicesStep : scalar, optional
+        slices_start, slices_end, slices_step : scalar, optional
             Values of the start, end and step of the slices to
             be used for slicing for the whole ndarray.
 
-        pixelsStart, pixelsEnd, pixelsStep : scalar, optional
+        pixels_start, pixels_end, pixels_step : scalar, optional
             Values of the start, end and step of the pixels to
             be used for slicing for the whole ndarray.
 
@@ -48,13 +48,13 @@ class Dataset():
             slicing for the whole dark field shots.
         """
         print "Reading data..."
-        self.fileName = fileName
+        self.file_name = file_name
 
         # Initialize f to null.
         f = None
 
-        # Get the fileName in lower case.
-        lFn = fileName.lower()
+        # Get the file_name in lower case.
+        lFn = file_name.lower()
 
         # Split the string with the delimeter '.'
         end = lFn.split('.')
@@ -68,41 +68,41 @@ class Dataset():
         # If f != None the call read on it.
         if not f == None:
             # Read data from exchange group.
-            self.data = f.read(fileName,
+            self.data = f.read(file_name,
                                 arrayName='exchange/data',
-                                projectionsStart=projectionsStart,
-                                projectionsEnd=projectionsEnd,
-                                projectionsStep=projectionsStep,
-                                slicesStart=slicesStart,
-                                slicesEnd=slicesEnd,
-                                slicesStep=slicesStep,
-                                pixelsStart=pixelsStart,
-                                pixelsEnd=pixelsEnd,
-                                pixelsStep=pixelsStep)
+                                projections_start=projections_start,
+                                projections_end=projections_end,
+                                projections_step=projections_step,
+                                slices_start=slices_start,
+                                slices_end=slices_end,
+                                slices_step=slices_step,
+                                pixels_start=pixels_start,
+                                pixels_end=pixels_end,
+                                pixels_step=pixels_step)
 
             # Read white field data from exchange group.
-            self.white = f.read(fileName,
+            self.white = f.read(file_name,
                                 arrayName='exchange/data_white',
-                                projectionsStart=whiteStart,
-                                projectionsEnd=whiteEnd,
-                                slicesStart=slicesStart,
-                                slicesEnd=slicesEnd,
-                                slicesStep=slicesStep,
-                                pixelsStart=pixelsStart,
-                                pixelsEnd=pixelsEnd,
-                                pixelsStep=pixelsStep)
+                                projections_start=whiteStart,
+                                projections_end=whiteEnd,
+                                slices_start=slices_start,
+                                slices_end=slices_end,
+                                slices_step=slices_step,
+                                pixels_start=pixels_start,
+                                pixels_end=pixels_end,
+                                pixels_step=pixels_step)
 
             # Read dark field data from exchange group.
-            self.dark = f.read(fileName,
+            self.dark = f.read(file_name,
                                 arrayName='exchange/data_dark',
-                                projectionsStart=darkStart,
-                                projectionsEnd=darkEnd,
-                                slicesStart=slicesStart,
-                                slicesEnd=slicesEnd,
-                                slicesStep=slicesStep,
-                                pixelsStart=pixelsStart,
-                                pixelsEnd=pixelsEnd,
-                                pixelsStep=pixelsStep)
+                                projections_start=darkStart,
+                                projections_end=darkEnd,
+                                slices_start=slices_start,
+                                slices_end=slices_end,
+                                slices_step=slices_step,
+                                pixels_start=pixels_start,
+                                pixels_end=pixels_end,
+                                pixels_step=pixels_step)
 
             # Assign the rotation center.
             self.center = self.data.shape[2] / 2
