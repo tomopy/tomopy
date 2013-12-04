@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Filename: retrieve_phase.py
+# Filename: phase_retrieval.py
 import numpy as np
 import constants
 from tomoRecon import tomoRecon
