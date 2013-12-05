@@ -61,8 +61,6 @@ def optimize_center(data,
         This function returns the index of the center position that
         results in the minimum entropy in the reconstructed image.
     """
-    print "Opimizing rotation center using Nelder-Mead method..."
-
     num_slices =  data.shape[1]
     num_pixels =  data.shape[2]
 

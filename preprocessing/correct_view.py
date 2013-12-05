@@ -22,7 +22,6 @@ def correct_view(data, num_overlap_pixels=0):
     data : ndarray
         Output processed data.
     """
-    print "Correcting field of view..."
     num_projection, num_slices, num_pixels = data.shape
 
     if num_projection % 2 != 0: # if odd

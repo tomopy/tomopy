@@ -24,6 +24,7 @@ class Preprocess(Dataset):
             return filters.median_filter(self.data, axis=axis, size=size)
 
     def optimize_center(self, slice_no=None, center_init=None, hist_min=None, hist_max=None, tol=0.5, sigma=2, overwrite=True):
+        print "Opimizing rotation center using Nelder-Mead method..."
         if overwrite is True:
             self.center = correct_alignment.optimize_center(self.data, slice_no=slice_no, center_init=center_init, hist_min=hist_min, hist_max=hist_max, tol=tol, sigma=sigma)
         elif overwrite is False:
@@ -36,11 +37,12 @@ class Preprocess(Dataset):
     def remove_rings(self, level=6, wname='db10', sigma=2, overwrite=True):
         print "Removing rings..."
         if overwrite is True:
-            self.data = ring_removal.remove_rings(self.data, level=level, wname=wname, sigma=sigma)
+            self.data = ring_removal.dwtfft(self.data, level=level, wname=wname, sigma=sigma)
         elif overwrite is False:
-            return ring_removal.remove_rings(self.data, level=level, wname=wname, sigma=sigma)
+            return ring_removal.dwtfft(self.data, level=level, wname=wname, sigma=sigma)
 
     def correct_view(self, overwrite=True):
+        print "Correcting field of view..."
         if overwrite is True:
             self.data = correct_view.correct_view(self.data)
         elif overwrite is False:
