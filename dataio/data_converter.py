@@ -340,7 +340,7 @@ def read_stack(input_file,
     .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     # Split the string with the delimeter '.'
-    data_file = input_file.split('.')[-2]
+    data_file = input_file.split('.')[-3] + '.' + input_file.split('.')[-2]
     data_extension = input_file.split('.')[-1]
 
     file_index = ["" for x in range(digits)]

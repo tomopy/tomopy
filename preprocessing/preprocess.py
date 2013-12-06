@@ -41,12 +41,12 @@ class Preprocess(Dataset):
         elif overwrite is False:
             return ring_removal.dwtfft(self.data, level=level, wname=wname, sigma=sigma)
 
-    def correct_view(self, overwrite=True):
+    def correct_view(self, num_overlap_pixels=None, overwrite=True):
         print "Correcting field of view..."
         if overwrite is True:
-            self.data = correct_view.correct_view(self.data)
+            self.data = correct_view.correct_view(self.data, num_overlap_pixels=num_overlap_pixels)
         elif overwrite is False:
-            return correct_view.correct_view(self.data)
+            return correct_view.correct_view(self.data, num_overlap_pixels=num_overlap_pixels)
 
     def retrieve_phase(self, pixel_size, dist, energy, delta_over_mu=1e-8, overwrite=True):
         print "Retrieving phase..."
