@@ -54,3 +54,10 @@ class Preprocess(Dataset):
             self.data = phase_retrieval.single_material(self.data, pixel_size=pixel_size, dist=dist, energy=energy, delta_over_mu=delta_over_mu)
         elif overwrite is False:
             return phase_retrieval.single_material(self.data, pixel_size=pixel_size, dist=dist, energy=energy, delta_over_mu=delta_over_mu)
+
+    def zinger_filter(self, cutoff=2, overwrite=True):
+        print "Removing zingers..."
+        if overwrite is True:
+            self.data = filters.zinger_filter(self.data, cutoff=cutoff)
+        elif overwrite is False:
+            return filters.zinger_filter(self.data, cutoff=cutoff)

@@ -47,3 +47,27 @@ def median_filter(data, axis=1, size=(1, 3)):
                                     np.squeeze(data[:, :, m]), size=size)
     else: raise ValueError('Check median filter axes.')
     return data
+
+def zinger_filter(data, cutoff=2):
+    """ Apply zinger removal filter to data.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data (normalized).
+
+    cutoff : scl, optional
+        Permitted maximum vaue of the
+        normalized data. Zinger otherwise.
+
+    Returns
+    -------
+    data : ndarray
+        Output processed data.
+    """
+    for m in range(data.shape[0]):
+        zinger_mask = data[m, :, :] > cutoff
+        print np.sum(zinger_mask)
+        tmp = ndimage.filters.median_filter(data[m, :, :], size=3)
+        data[m, zinger_mask] = 100
+    return data
