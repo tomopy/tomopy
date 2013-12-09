@@ -65,9 +65,10 @@ def zinger_filter(data, cutoff=2):
     data : ndarray
         Output processed data.
     """
-    for m in range(data.shape[0]):
-        zinger_mask = data[m, :, :] > cutoff
-        print np.sum(zinger_mask)
-        tmp = ndimage.filters.median_filter(data[m, :, :], size=3)
-        data[m, zinger_mask] = 100
+    indx, indy, indz = np.where(data > cutoff)
+    for m in range(indx.size):
+        if not (indz[m] == 0 or indz[m] == 1 or indz[m] == indz.size):
+            local_region = data[indx[m], indy[m], indz[m]-2:indz[m]+1]
+            tmp = ndimage.filters.median_filter(local_region, size=3)
+            data[indx[m], indy[m], indz[m]] = tmp[1]
     return data
