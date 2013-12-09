@@ -2,43 +2,30 @@
 # Filename: main.py
 """ Main program for tomographic reconstruction.
 """
+#import tomoRecon.tomoRecon
+from preprocessing.preprocess import Preprocess
 from tomoRecon import tomoRecon
 from visualize import image
-from dataio import data, tiff
+from dataio.file_types import Tiff
 
-def main():
+# Input HDF file.
+filename = '/local/dgursoy/data/Harrison_Aus_2013/A02_.h5'
 
-    # Read input HDF file.
-    inputFile = '/local/dgursoy/data/Harrison_Aus_2013/A01_.h5'
-    dataset = data.read(inputFile, slicesStart=700, slicesEnd=703)
+# Pre-process data.
+mydata = Preprocess()
+mydata.read_hdf5(filename, slices_start=200, slices_end=201)
+mydata.normalize()
+mydata.median_filter()
+mydata.remove_rings()
+mydata.optimize_center()
 
-    # Normalize dataset.
-    dataset.normalize()
+# Reconstruct data.
+recon = tomoRecon.tomoRecon(mydata)
+recon.run(mydata)
 
-    # Apply ring removal.
-    dataset.removeRings()
+# Save data.
+f = Tiff()
+f.write(recon.data, filename='/local/dgursoy/GIT/tomopy/data/test_.tiff')
 
-    # Apply median filter.
-    dataset.medianFilter()
-
-    # Find rotation center.
-    #dataset.optimizeCenter(tol=0.1)
-    dataset.center = 657.125
-
-    # Retrieve phase.
-    dataset.retrievePhasePaganin(pixelSize=1e-4, dist=70, energy=30, deltaOverMu=1e-8)
-
-    # Initialize reconstruction parameters.
-    recon = tomoRecon.tomoRecon(dataset)
-
-    # Perform tomographic reconstruction.
-    recon.run(dataset)
-
-    # Export data.
-    tiff.write(recon.data, outputFile='/local/dgursoy/data/test.tiff')
-
-    # Visualize a single slice.
-    image.showSlice(recon.data)
-
-if __name__ == "__main__":
-    main()
+# Visualize data.
+image.show_slice(recon.data)

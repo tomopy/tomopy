@@ -4,27 +4,25 @@
 """
 import matplotlib.pylab as plt
 
-
-def showSlice(reconOutput, sliceNo=0, clim=None):
+def show_slice(data, slice_no=0, clim=None):
     """ Visualize the reconstructed slice.
-    
+
     Parameters
     -----------
-    reconOutput : ndarray
+    data : ndarray
         3-D matrix of stacked reconstructed slices.
-        
-    slices : scalar, optional
-        The index of the slice to be imaged. By default the first
-        slice is picked.
-    """ 
+
+    slice_no : scalar, optional
+        The index of the slice to be imaged.
+    """
     plt.figure(figsize=(7, 7))
-    if len(reconOutput.shape) is 2:
-        plt.imshow(reconOutput, 
+    if len(data.shape) is 2:
+        plt.imshow(data,
                    interpolation='none',
                    cmap='gray')
         plt.colorbar()
-    elif len(reconOutput.shape) is 3:
-        plt.imshow(reconOutput[sliceNo, :, :], 
+    elif len(data.shape) is 3:
+        plt.imshow(data[slice_no, :, :],
                    interpolation='none',
                    cmap='gray')
         plt.colorbar()
