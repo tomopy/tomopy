@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-class Detector():
+class Source():
     def __init__(self):
         pass
 
@@ -12,8 +12,11 @@ class Detector():
         self.sizex = np.array(sizex, dtype='int32')
         self.sizey = np.array(sizey, dtype='int32')
 
-    def pixel_coords(self, dist=-1e3, alpha=0, beta=0, gamma=0):
-        """ Positions the detector in space and
+    def energy(self, energy):
+        self.energy = np.array(energy, dtype='float32')
+
+    def pixel_coords(self, dist=1e3, alpha=0, beta=0, gamma=0):
+        """ Positions the source in space and
         returns the pixel coordinates
         (pixel centers not edges).
 
@@ -33,12 +36,12 @@ class Detector():
         leny = self.sizey * self.pixel_size
         yi = np.arange(-(lenx - self.pixel_size)/2,
                         (lenx - self.pixel_size)/2 + self.pixel_size,
-                        self.pixel_size)
+                        self.pixel_size).astype('float32')
         zi = np.arange(-(leny - self.pixel_size)/2,
                         (leny - self.pixel_size)/2 + self.pixel_size,
-                        self.pixel_size)
+                        self.pixel_size).astype('float32')
         y0, z0 = np.meshgrid(zi, yi)
-        x0 = dist * np.ones((self.sizex, self.sizey))
+        x0 = dist * np.ones((self.sizex, self.sizey)).astype('float32')
 
         # Perform rotation.
         c1, c2, c3 = np.cos([alpha, beta, gamma])
