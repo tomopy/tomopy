@@ -171,3 +171,54 @@ def diagnose_center(data,
     f.write(recon.data, filename='data/diagnose/center_.tiff',)
     for m in range(num_center):
         print 'Center for data/diagnose/xxx' + str(m) + '.tiff: ' + str(center[m])
+
+def register_translation(data1, data2, axis=0, num=0):
+    """
+    """
+    if axis == 0:
+        data1 = np.squeeze(data1[num, :, :])
+        data2 = np.squeeze(data2[num, :, :])
+
+    elif axis == 1:
+        data1 = np.squeeze(data1[:, num, :])
+        data2 = np.squeeze(data2[:, num, :])
+
+    elif axis == 2:
+        data1 = np.squeeze(data1[:, :, num])
+        data2 = np.squeeze(data2[:, :, num])
+
+    num_x1, num_y1 = data1.shape
+    num_x2, num_y2 = data2.shape
+
+    data1 = -np.log(data1)
+    data2 = -np.log(data2)
+
+    if num_x1 > num_x2:
+        tmp = np.zeros((num_x1, num_y1))
+        tmp[0:num_x2, 0:num_y2] = data2
+        data2 = tmp
+    elif num_x2 > num_x1:
+        tmp = np.zeros((num_x2, num_y2))
+        tmp[0:num_x1, 0:num_y1] = data1
+        data1 = tmp
+
+    # This stuff below is to filter out
+    # slowly varying optics-related fluctuations
+    # in data.
+    tmp1 = np.fft.fftshift(np.fft.fft2(data1))
+    tmp2 = np.fft.fftshift(np.fft.fft2(data2))
+    a = 30
+    tmp1[tmp1.shape[0]/2-a:tmp1.shape[0]/2+a, tmp1.shape[1]/2-a:tmp1.shape[1]/2+a] = 0
+    tmp2[tmp2.shape[0]/2-a:tmp2.shape[0]/2+a, tmp2.shape[1]/2-a:tmp2.shape[1]/2+a] = 0
+
+    data1 = np.abs(np.fft.ifft2(np.fft.ifftshift(tmp1)))
+    data2 = np.abs(np.fft.ifft2(np.fft.ifftshift(tmp2)))
+
+    data1 = ndimage.filters.gaussian_filter(data1, sigma=2)
+    data2 = ndimage.filters.gaussian_filter(data2, sigma=2)
+    # -------------
+
+    data1 = np.fft.fft2(data1)
+    data2 = np.fft.fft2(data2)
+    tmp = np.abs(np.fft.ifft2(np.multiply(np.conjugate(data1), data2)))
+    return np.unravel_index(tmp.argmax(), tmp.shape)

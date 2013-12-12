@@ -170,7 +170,7 @@ def hdf4_to_hdf5(input_file,
     ----------
     input_file : str
         Name of the generic input file name
-        for all the TIFF files to be assembled.
+        for all the HDF4 files to be assembled.
 
     input_start, input_end : scalar
         Determines the portion of the TIFF images
@@ -197,30 +197,30 @@ def hdf4_to_hdf5(input_file,
         Corresponding Numpy data type of the TIFF file.
 
     hdftype : scalar, optional
-        Type of HDF files to be read (4:HDF4, 5:HDF5)
+        Type of HDF5 files to be read (4:HDF4, 5:HDF5)
 
     output_file : str
-        Name of the output HDF file.
+        Name of the output HDF5 file.
 
     white_file : str, optional
         Name of the generic input file name
         for all the white field
-        TIFF files to be assembled.
+        HDF4 files to be assembled.
 
     white_start, white_end : scalar, optional
         Determines the portion of the white
-        field TIFF images to be used for
-        assembling HDF file.
+        field HDF4 images to be used for
+        assembling HDF5 file.
 
     dark_file : str, optional
         Name of the generic input file name
         for all the white field
-        TIFF files to be assembled.
+        HDF4 files to be assembled.
 
     dark_start, dark_end : scalar, optional
         Determines the portion of the dark
-        field TIFF images to be used for
-        assembling HDF file.
+        field HDF4 images to be used for
+        assembling HDF5 file.
     """
     # Create new folders.
     dirPath = os.path.dirname(output_file)
@@ -236,7 +236,7 @@ def hdf4_to_hdf5(input_file,
     # Update HDF5 file in chunks.
     chunkSize = 20
     ind1 = np.int(np.floor(np.float(input_start) / chunkSize))
-    ind2 = np.int(np.ceil(np.float(input_end) / chunkSize))
+    ind2 = np.int(np.floor(np.float(input_end) / chunkSize))
     for m in range(ind2-ind1):
         indStart = (m * chunkSize) + input_start
         indEnd = indStart + chunkSize
@@ -340,7 +340,8 @@ def read_stack(input_file,
     .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     # Split the string with the delimeter '.'
-    data_file = input_file.split('.')[-3] + '.' + input_file.split('.')[-2]
+    #data_file = input_file.split('.')[-3] + '.' + input_file.split('.')[-2]
+    data_file = input_file.split('.')[-2]
     data_extension = input_file.split('.')[-1]
 
     file_index = ["" for x in range(digits)]

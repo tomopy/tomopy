@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# filename: data_read.py
+# file_name: data_read.py
 from file_types import Hdf5
 
 class Dataset():
@@ -11,7 +11,7 @@ class Dataset():
         self.center = center
         self.angles = angles
 
-    def read_hdf5(self, filename,
+    def read_hdf5(self, file_name,
                   projections_start=None,
                   projections_end=None,
                   projections_step=None,
@@ -30,7 +30,7 @@ class Dataset():
 
         Parameters
         ----------
-        filename : str
+        file_name : str
             Input file.
 
         projections_start, projections_end, projections_step : scalar, optional
@@ -57,13 +57,13 @@ class Dataset():
             Desired output data type.
         """
         print "Reading data..."
-        self.filename = filename
+        self.file_name = file_name
 
         # Initialize f to null.
         f = None
 
-        # Get the filename in lower case.
-        lFn = filename.lower()
+        # Get the file_name in lower case.
+        lFn = file_name.lower()
 
         # Split the string with the delimeter '.'
         end = lFn.split('.')
@@ -77,8 +77,8 @@ class Dataset():
         # If f != None the call read on it.
         if not f == None:
             # Read data from exchange group.
-            self.data = f.read(filename,
-                                arrayname='exchange/data',
+            self.data = f.read(file_name,
+                                array_name='exchange/data',
                                 projections_start=projections_start,
                                 projections_end=projections_end,
                                 projections_step=projections_step,
@@ -90,8 +90,8 @@ class Dataset():
                                 pixels_step=pixels_step).astype(dtype)
 
             # Read white field data from exchange group.
-            self.white = f.read(filename,
-                                arrayname='exchange/data_white',
+            self.white = f.read(file_name,
+                                array_name='exchange/data_white',
                                 projections_start=white_start,
                                 projections_end=white_end,
                                 slices_start=slices_start,
@@ -102,8 +102,8 @@ class Dataset():
                                 pixels_step=pixels_step).astype(dtype)
 
             # Read dark field data from exchange group.
-            self.dark = f.read(filename,
-                                arrayname='exchange/data_dark',
+            self.dark = f.read(file_name,
+                                array_name='exchange/data_dark',
                                 projections_start=dark_start,
                                 projections_end=dark_end,
                                 slices_start=slices_start,

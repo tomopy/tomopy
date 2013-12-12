@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# filename: file_types.py
+# file_name: file_types.py
 import h5py
 import os
 import numpy as np
@@ -9,8 +9,8 @@ from pyhdf import SD
 from file_interface import FileInterface
 
 class Hdf5(FileInterface):
-    def read(self, filename,
-             arrayname=None,
+    def read(self, file_name,
+             array_name=None,
              projections_start=None,
              projections_end=None,
              projections_step=None,
@@ -22,16 +22,16 @@ class Hdf5(FileInterface):
              pixels_step=None):
         """ Read 3-D tomographic data from hdf5 file.
 
-        Opens ``filename`` and reads the contents
-        of the array specified by ``arrayname`` in
+        Opens ``file_name`` and reads the contents
+        of the array specified by ``array_name`` in
         the specified group of the HDF file.
 
         Parameters
         ----------
-        filename : str
+        file_name : str
             Input HDF file.
 
-        arrayname : str
+        array_name : str
             Name of the array to be read at exchange group.
 
         projections_start, projections_end, projections_step : scalar, optional
@@ -52,8 +52,8 @@ class Hdf5(FileInterface):
             Returns the data as a matrix.
         """
         # Read data from file.
-        f = h5py.File(filename, 'r')
-        hdfdata = f[arrayname]
+        f = h5py.File(file_name, 'r')
+        hdfdata = f[array_name]
 
         # Select desired slices from whole data.
         numProjections, num_slices, num_pixels = hdfdata.shape
@@ -83,7 +83,7 @@ class Hdf5(FileInterface):
         f.close()
         return dataset
 
-    def write(self, filename, arrayname):
+    def write(self, file_name, array_name):
         """ Write data to hdf5 file.
 
         Parameters
@@ -91,29 +91,29 @@ class Hdf5(FileInterface):
         dataset : ndarray
             Input values.
 
-        filename : str
+        file_name : str
             Name of the output HDF file.
 
-        arrayname : str, optional
+        array_name : str, optional
             Name of the group that the data will be put
             under the exchange group of the HDF file.
         """
         # Create new folders.
-        dir_path = os.path.dirname(filename)
+        dir_path = os.path.dirname(file_name)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
         # Write data
-        f = h5py.File(filename, 'w')
+        f = h5py.File(file_name, 'w')
         f.create_dataset('implements', data='exchange')
         exchange_group = f.create_group("exchange")
-        exchange_group.create_dataset(arrayname, data=self.dataset)
+        exchange_group.create_dataset(array_name, data=self.dataset)
         f.close()
 
 
 class Hdf4(FileInterface):
-    def read(self, filename,
-             arrayname=None,
+    def read(self, file_name,
+             array_name=None,
              slices_start=None,
              slices_end=None,
              slices_step=None,
@@ -122,16 +122,16 @@ class Hdf4(FileInterface):
              pixels_step=None):
         """ Read 2-D tomographic data from hdf4 file.
 
-        Opens ``filename`` and reads the contents
-        of the array specified by ``arrayname`` in
+        Opens ``file_name`` and reads the contents
+        of the array specified by ``array_name`` in
         the specified group of the HDF file.
 
         Parameters
         ----------
-        filename : str
+        file_name : str
             Input HDF file.
 
-        arrayname : str
+        array_name : str
             Name of the array to be read at exchange group.
 
         slices_start, slices_end, slices_step : scalar, optional
@@ -148,8 +148,8 @@ class Hdf4(FileInterface):
             Returns the data as a matrix.
         """
         # Read data from file.
-        f = SD.SD(filename)
-        sds = f.select(arrayname)
+        f = SD.SD(file_name)
+        sds = f.select(array_name)
         hdfdata = sds.get()
         hdfdata = hdfdata.reshape(hdfdata.shape[1],
                                   hdfdata.shape[0])
@@ -179,7 +179,7 @@ class Hdf4(FileInterface):
 
 
 class Tiff(FileInterface):
-    def read(self, filename, dtype='uint16',
+    def read(self, file_name, dtype='uint16',
              slices_start=None,
              slices_end=None,
              slices_step=None,
@@ -190,7 +190,7 @@ class Tiff(FileInterface):
 
         Parameters
         ----------
-        filename : str
+        file_name : str
             Name of the input TIFF file.
 
         dtype : str, optional
@@ -211,7 +211,7 @@ class Tiff(FileInterface):
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
-        im = Image.open(filename)
+        im = Image.open(file_name)
         out = np.fromstring(im.tostring(), dtype).reshape(tuple(list(im.size[::-1])))
 
         # Select desired slices from whole data.
@@ -232,7 +232,7 @@ class Tiff(FileInterface):
                    pixels_start:pixels_end:pixels_step]
 
     def write(self, dataset,
-              filename,
+              file_name,
               slices_start=None,
               slices_end=None,
               digits=5):
@@ -244,7 +244,7 @@ class Tiff(FileInterface):
         dataset : ndarray
             Reconstructed values as a 3-D ndarray.
 
-        filename : str
+        file_name : str
             Generic name for all TIFF images. Index will
             be added to the end of the name.
 
@@ -261,13 +261,13 @@ class Tiff(FileInterface):
             For example if 4: test_XXXX.tiff
         """
         # Create new folders.
-        dir_path = os.path.dirname(filename)
+        dir_path = os.path.dirname(file_name)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
         # Remove TIFF extension.
-        if filename.endswith('tiff'):
-            output_file = filename.split(".")[-2]
+        if file_name.endswith('tiff'):
+            output_file = file_name.split(".")[-2]
 
         # Select desired slices from whole data.
         numx, numy, numz = dataset.shape
@@ -284,8 +284,8 @@ class Tiff(FileInterface):
         for m in range(len(ind)):
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):
-                    filename = output_file + file_index[n] + str(ind[m]) + '.tiff'
+                    file_name = output_file + file_index[n] + str(ind[m]) + '.tiff'
                     break
             img = misc.toimage(dataset[m, :, :])
             #img = misc.toimage(dataset[m, :, :], mode='F')
-            img.save(filename)
+            img.save(file_name)
