@@ -435,7 +435,7 @@ class DataExchangeEntry(object):
 
         self._detector = {
             'root': '/measurement/instrument',
-            'entry_name': '_detector',
+            'entry_name': 'detector',
             'docstring': 'X-ray detector.',
             'manufacturer': {
                 'value': None,
