@@ -168,7 +168,7 @@ def diagnose_center(data,
     f = Tiff()
     if os.path.isdir('data/diagnose'):
         shutil.rmtree('data/diagnose')
-    f.write(recon.data, filename='data/diagnose/center_.tiff',)
+    f.write(recon.data, file_name='data/diagnose/center_.tiff',)
     for m in range(num_center):
         print 'Center for data/diagnose/xxx' + str(m) + '.tiff: ' + str(center[m])
 
@@ -207,15 +207,15 @@ def register_translation(data1, data2, axis=0, num=0):
     # in data.
     tmp1 = np.fft.fftshift(np.fft.fft2(data1))
     tmp2 = np.fft.fftshift(np.fft.fft2(data2))
-    a = 30
+    a = 50
     tmp1[tmp1.shape[0]/2-a:tmp1.shape[0]/2+a, tmp1.shape[1]/2-a:tmp1.shape[1]/2+a] = 0
     tmp2[tmp2.shape[0]/2-a:tmp2.shape[0]/2+a, tmp2.shape[1]/2-a:tmp2.shape[1]/2+a] = 0
 
     data1 = np.abs(np.fft.ifft2(np.fft.ifftshift(tmp1)))
     data2 = np.abs(np.fft.ifft2(np.fft.ifftshift(tmp2)))
 
-    data1 = ndimage.filters.gaussian_filter(data1, sigma=2)
-    data2 = ndimage.filters.gaussian_filter(data2, sigma=2)
+    #data1 = ndimage.filters.gaussian_filter(data1, sigma=2)
+    #data2 = ndimage.filters.gaussian_filter(data2, sigma=2)
     # -------------
 
     data1 = np.fft.fft2(data1)

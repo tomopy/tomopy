@@ -401,6 +401,7 @@ class tomoRecon:
                 extension = 'dll'
             libPath =  os.getcwd() + '/tomoRecon/lib/' \
                     + folderName + '/libtomoRecon.' + extension
+            print libPath
         return libPath
 
 

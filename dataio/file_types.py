@@ -83,7 +83,7 @@ class Hdf5(FileInterface):
         f.close()
         return dataset
 
-    def write(self, file_name, array_name):
+    def write(self, dataset, file_name, array_name):
         """ Write data to hdf5 file.
 
         Parameters
@@ -107,7 +107,7 @@ class Hdf5(FileInterface):
         f = h5py.File(file_name, 'w')
         f.create_dataset('implements', data='exchange')
         exchange_group = f.create_group("exchange")
-        exchange_group.create_dataset(array_name, data=self.dataset)
+        exchange_group.create_dataset(array_name, data=dataset)
         f.close()
 
 

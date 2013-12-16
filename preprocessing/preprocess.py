@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # Filename: preprocess.py
 from dataio.data_read import Dataset
-from preprocessing import normalize
-from preprocessing import filters
 from preprocessing import correct_alignment
+from preprocessing import correct_view
+from preprocessing import filters
+from preprocessing import normalize
 from preprocessing import phase_retrieval
 from preprocessing import ring_removal
-from preprocessing import correct_view
 from preprocessing import zoom
+
 
 class Preprocess(Dataset):
     def correct_view(self, num_overlap_pixels=None, overwrite=True):
