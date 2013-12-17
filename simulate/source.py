@@ -15,7 +15,7 @@ class Source():
     def energy(self, energy):
         self.energy = np.array(energy, dtype='float32')
 
-    def pixel_coords(self, dist=1e4, alpha=0, beta=0, gamma=0):
+    def pixel_coords(self, dist=-1e4, alpha=0, beta=0, gamma=0):
         """ Positions the source in space and
         returns the pixel coordinates
         (pixel centers not edges).

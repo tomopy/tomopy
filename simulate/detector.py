@@ -12,7 +12,7 @@ class Detector():
         self.sizex = np.array(sizex, dtype='int32')
         self.sizey = np.array(sizey, dtype='int32')
 
-    def pixel_coords(self, dist=-1e4, alpha=0, beta=0, gamma=0):
+    def pixel_coords(self, dist=1e4, alpha=0, beta=0, gamma=0):
         """ Positions the detector in space and
         returns the pixel coordinates
         (pixel centers not edges).

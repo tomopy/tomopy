@@ -110,11 +110,11 @@ void Simulate::calc3d(float *psrcx, float *psrcy, float *psrcz,
                 dist_.push_back(sqrt(pow(xk_[n + 1] - xk_[n], 2) + pow(yk_[n + 1] - yk_[n], 2) + pow(zk_[n + 1] - zk_[n], 2)));
                 }
 
-            for (n = 0; n < dist_.size() - 1; n++) {
+            for (n = 0; n < dist_.size(); n++) {
                 indx_ = floor(((xk_[n] + xk_[n + 1]) / 2) / obj_pixel_size_ + float(obj_sizex_) / 2);
                 indy_ = floor(((yk_[n] + yk_[n + 1]) / 2) / obj_pixel_size_ + float(obj_sizey_) / 2);
                 indz_ = floor(((zk_[n] + zk_[n + 1]) / 2) / obj_pixel_size_ + float(obj_sizez_) / 2);
-                ind_out_ = indz_ + (indy_ + (indx_ * obj_sizex_)) * obj_sizey_;
+                ind_out_ = indz_ * (obj_sizex_ * obj_sizey_) + indy_ * obj_sizex_ + indx_ ;
                 poutput[m] += pinput_[ind_out_] * dist_[n];
                 }
             }
@@ -126,7 +126,7 @@ void Simulate::calc2d(float *psrcx, float *psrcy,
                       float *pdetx, float *pdety,
                       float *poutput) {
     int m, n, k;
-    for (m = 0; m < det_sizex_; m++) {
+    for (m = 0; m < det_sizey_; m++) {
         if (!ax_.empty()) { ax_.clear(); }
         if (!ay_.empty()) { ay_.clear(); }
         if (!az_.empty()) { az_.clear(); }
@@ -173,13 +173,13 @@ void Simulate::calc2d(float *psrcx, float *psrcy,
                 dist_.push_back(sqrt(pow(xk_[n + 1] - xk_[n], 2) + pow(yk_[n + 1] - yk_[n], 2)));
                 }
 
-            for (n = 0; n < dist_.size() - 1; n++) {
+            for (n = 0; n < dist_.size(); n++) {
                 indx_ = floor(((xk_[n] + xk_[n + 1]) / 2) / obj_pixel_size_ + float(obj_sizex_) / 2);
                 indy_ = floor(((yk_[n] + yk_[n + 1]) / 2) / obj_pixel_size_ + float(obj_sizey_) / 2);
-                for (k = 0; k < det_sizey_; k++) {
+                for (k = 0; k < det_sizex_; k++) {
                     indz_ = k;
-                    ind_out_ = indz_ + (indy_ + (indx_ * obj_sizex_)) * obj_sizey_;
-                    poutput[m + k * det_sizex_] += pinput_[ind_out_] * dist_[n];
+                    ind_out_ = indz_ * (obj_sizex_ * obj_sizey_) + indy_ * obj_sizex_ + indx_ ;
+                    poutput[m + k * det_sizey_] += pinput_[ind_out_] * dist_[n];
                     }
                 }
             }

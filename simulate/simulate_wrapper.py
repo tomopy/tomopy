@@ -54,8 +54,8 @@ class Simulate():
         proj = np.zeros((self.detector.sizex,
                          self.detector.sizey), dtype='float32')
 
-        import time
-        t = time.time()
+        #import time
+        #t = time.time()
         lib.calc3d(self.obj,
                    srcx.ctypes.data_as(c_float_p),
                    srcy.ctypes.data_as(c_float_p),
@@ -64,7 +64,7 @@ class Simulate():
                    dety.ctypes.data_as(c_float_p),
                    detz.ctypes.data_as(c_float_p),
                    proj.ctypes.data_as(c_float_p))
-        print time.time() - t
+        #print time.time() - t
         return proj
 
     def calc2d(self, srcx, srcy, detx, dety):
@@ -75,13 +75,13 @@ class Simulate():
         proj = np.zeros((self.detector.sizex,
                          self.detector.sizey), dtype='float32')
 
-        import time
-        t = time.time()
+        #import time
+        #t = time.time()
         lib.calc2d(self.obj,
                    srcx.ctypes.data_as(c_float_p),
                    srcy.ctypes.data_as(c_float_p),
                    detx.ctypes.data_as(c_float_p),
                    dety.ctypes.data_as(c_float_p),
                    proj.ctypes.data_as(c_float_p))
-        print time.time() - t
+        #print time.time() - t
         return proj
