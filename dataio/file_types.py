@@ -11,15 +11,15 @@ from file_interface import FileInterface
 class Hdf5(FileInterface):
     def read(self, file_name,
              array_name=None,
-             projections_start=None,
-             projections_end=None,
-             projections_step=None,
-             slices_start=None,
-             slices_end=None,
-             slices_step=None,
-             pixels_start=None,
-             pixels_end=None,
-             pixels_step=None):
+             x_start=None,
+             x_end=None,
+             x_step=None,
+             y_start=None,
+             y_end=None,
+             y_step=None,
+             z_start=None,
+             z_end=None,
+             z_step=None):
         """ Read 3-D tomographic data from hdf5 file.
 
         Opens ``file_name`` and reads the contents
@@ -34,15 +34,15 @@ class Hdf5(FileInterface):
         array_name : str
             Name of the array to be read at exchange group.
 
-        projections_start, projections_end, projections_step : scalar, optional
+        x_start, x_end, x_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
-        slices_start, slices_end, slices_step : scalar, optional
+        y_start, y_end, y_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
-        pixels_start, pixels_end, pixels_step : scalar, optional
+        z_start, z_end, z_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
@@ -55,31 +55,31 @@ class Hdf5(FileInterface):
         f = h5py.File(file_name, 'r')
         hdfdata = f[array_name]
 
-        # Select desired slices from whole data.
-        numProjections, num_slices, num_pixels = hdfdata.shape
-        if projections_start is None:
-            projections_start = 0
-        if projections_end is None:
-            projections_end = numProjections
-        if projections_step is None:
-            projections_step = 1
-        if slices_start is None:
-            slices_start = 0
-        if slices_end is None:
-            slices_end = num_slices
-        if slices_step is None:
-            slices_step = 1
-        if pixels_start is None:
-            pixels_start = 0
-        if pixels_end is None:
-            pixels_end = num_pixels
-        if pixels_step is None:
-            pixels_step = 1
+        # Select desired y from whole data.
+        num_x, num_y, num_z = hdfdata.shape
+        if x_start is None:
+            x_start = 0
+        if x_end is None:
+            x_end = num_x
+        if x_step is None:
+            x_step = 1
+        if y_start is None:
+            y_start = 0
+        if y_end is None:
+            y_end = num_y
+        if y_step is None:
+            y_step = 1
+        if z_start is None:
+            z_start = 0
+        if z_end is None:
+            z_end = num_z
+        if z_step is None:
+            z_step = 1
 
-        # Construct dataset from desired slices.
-        dataset = hdfdata[projections_start:projections_end:projections_step,
-                          slices_start:slices_end:slices_step,
-                          pixels_start:pixels_end:pixels_step]
+        # Construct dataset from desired y.
+        dataset = hdfdata[x_start:x_end:x_step,
+                          y_start:y_end:y_step,
+                          z_start:z_end:z_step]
         f.close()
         return dataset
 
@@ -114,12 +114,12 @@ class Hdf5(FileInterface):
 class Hdf4(FileInterface):
     def read(self, file_name,
              array_name=None,
-             slices_start=None,
-             slices_end=None,
-             slices_step=None,
-             pixels_start=None,
-             pixels_end=None,
-             pixels_step=None):
+             x_start=None,
+             x_end=None,
+             x_step=None,
+             y_start=None,
+             y_end=None,
+             y_step=None):
         """ Read 2-D tomographic data from hdf4 file.
 
         Opens ``file_name`` and reads the contents
@@ -134,11 +134,11 @@ class Hdf4(FileInterface):
         array_name : str
             Name of the array to be read at exchange group.
 
-        slices_start, slices_end, slices_step : scalar, optional
+        x_start, x_end, x_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
-        pixels_start, pixels_end, pixels_step : scalar, optional
+        y_start, y_end, y_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
@@ -154,24 +154,24 @@ class Hdf4(FileInterface):
         hdfdata = hdfdata.reshape(hdfdata.shape[1],
                                   hdfdata.shape[0])
 
-        # Select desired slices from whole data.
-        num_slices, num_pixels = hdfdata.shape
-        if slices_start is None:
-            slices_start = 0
-        if slices_end is None:
-            slices_end = num_slices
-        if slices_step is None:
-            slices_step = 1
-        if pixels_start is None:
-            pixels_start = 0
-        if pixels_end is None:
-            pixels_end = num_pixels
-        if pixels_step is None:
-            pixels_step = 1
+        # Select desired x from whole data.
+        num_x, num_y = hdfdata.shape
+        if x_start is None:
+            x_start = 0
+        if x_end is None:
+            x_end = num_x
+        if x_step is None:
+            x_step = 1
+        if y_start is None:
+            y_start = 0
+        if y_end is None:
+            y_end = num_y
+        if y_step is None:
+            y_step = 1
 
-        # Construct dataset from desired slices.
-        dataset = hdfdata[slices_start:slices_end:slices_step,
-                          pixels_start:pixels_end:pixels_step]
+        # Construct dataset from desired x.
+        dataset = hdfdata[x_start:x_end:x_step,
+                          y_start:y_end:y_step]
         return dataset
 
     def write(self):
@@ -180,12 +180,12 @@ class Hdf4(FileInterface):
 
 class Tiff(FileInterface):
     def read(self, file_name, dtype='uint16',
-             slices_start=None,
-             slices_end=None,
-             slices_step=None,
-             pixels_start=None,
-             pixels_end=None,
-             pixels_step=None):
+             x_start=None,
+             x_end=None,
+             x_step=None,
+             y_start=None,
+             y_end=None,
+             y_step=None):
         """Read TIFF files.
 
         Parameters
@@ -196,11 +196,11 @@ class Tiff(FileInterface):
         dtype : str, optional
             Corresponding Numpy data type of the TIFF file.
 
-        slices_start, slices_end, slices_step : scalar, optional
+        x_start, x_end, x_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
-        pixels_start, pixels_end, pixels_step : scalar, optional
+        y_start, y_end, y_step : scalar, optional
             Values of the start, end and step of the
             slicing for the whole ndarray.
 
@@ -214,29 +214,29 @@ class Tiff(FileInterface):
         im = Image.open(file_name)
         out = np.fromstring(im.tostring(), dtype).reshape(tuple(list(im.size[::-1])))
 
-        # Select desired slices from whole data.
-        num_slices, num_pixels = out.shape
-        if slices_start is None:
-            slices_start = 0
-        if slices_end is None:
-            slices_end = num_slices
-        if slices_step is None:
-            slices_step = 1
-        if pixels_start is None:
-            pixels_start = 0
-        if pixels_end is None:
-            pixels_end = num_pixels
-        if pixels_step is None:
-            pixels_step = 1
-        return out[slices_start:slices_end:slices_step,
-                   pixels_start:pixels_end:pixels_step]
+        # Select desired x from whole data.
+        num_x, num_y = out.shape
+        if x_start is None:
+            x_start = 0
+        if x_end is None:
+            x_end = num_x
+        if x_step is None:
+            x_step = 1
+        if y_start is None:
+            y_start = 0
+        if y_end is None:
+            y_end = num_y
+        if y_step is None:
+            y_step = 1
+        return out[x_start:x_end:x_step,
+                   y_start:y_end:y_step]
 
     def write(self, dataset,
               file_name,
-              slices_start=None,
-              slices_end=None,
+              x_start=None,
+              x_end=None,
               digits=5):
-        """ Write reconstructed slices to a stack
+        """ Write reconstructed x to a stack
         of 2-D 32-bit TIFF images.
 
         Parameters
@@ -248,11 +248,11 @@ class Tiff(FileInterface):
             Generic name for all TIFF images. Index will
             be added to the end of the name.
 
-        slices_start : scalar, optional
+        x_start : scalar, optional
             First index of the data on first dimension
             of the array.
 
-        slices_end : scalar, optional
+        x_end : scalar, optional
             Last index of the data on first dimension
             of the array.
 
@@ -269,18 +269,18 @@ class Tiff(FileInterface):
         if file_name.endswith('tiff'):
             output_file = file_name.split(".")[-2]
 
-        # Select desired slices from whole data.
-        numx, numy, numz = dataset.shape
-        if slices_start is None:
-            slices_start = 0
-        if slices_end is None:
-            slices_end = slices_start+numx
+        # Select desired x from whole data.
+        num_x, num_y, num_z = dataset.shape
+        if x_start is None:
+            x_start = 0
+        if x_end is None:
+            x_end = x_start+num_x
 
         # Write data.
         file_index = ["" for x in range(digits)]
         for m in range(digits):
             file_index[m] = '0' * (digits - m - 1)
-        ind = range(slices_start, slices_end)
+        ind = range(x_start, x_end)
         for m in range(len(ind)):
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):

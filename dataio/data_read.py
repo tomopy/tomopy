@@ -79,39 +79,39 @@ class Dataset():
             # Read data from exchange group.
             self.data = f.read(file_name,
                                 array_name='exchange/data',
-                                projections_start=projections_start,
-                                projections_end=projections_end,
-                                projections_step=projections_step,
-                                slices_start=slices_start,
-                                slices_end=slices_end,
-                                slices_step=slices_step,
-                                pixels_start=pixels_start,
-                                pixels_end=pixels_end,
-                                pixels_step=pixels_step).astype(dtype)
+                                x_start=projections_start,
+                                x_end=projections_end,
+                                x_step=projections_step,
+                                y_start=slices_start,
+                                y_end=slices_end,
+                                y_step=slices_step,
+                                z_start=pixels_start,
+                                z_end=pixels_end,
+                                z_step=pixels_step).astype(dtype)
 
             # Read white field data from exchange group.
             self.white = f.read(file_name,
                                 array_name='exchange/data_white',
-                                projections_start=white_start,
-                                projections_end=white_end,
-                                slices_start=slices_start,
-                                slices_end=slices_end,
-                                slices_step=slices_step,
-                                pixels_start=pixels_start,
-                                pixels_end=pixels_end,
-                                pixels_step=pixels_step).astype(dtype)
+                                x_start=white_start,
+                                x_end=white_end,
+                                y_start=slices_start,
+                                y_end=slices_end,
+                                y_step=slices_step,
+                                z_start=pixels_start,
+                                z_end=pixels_end,
+                                z_step=pixels_step).astype(dtype)
 
             # Read dark field data from exchange group.
             self.dark = f.read(file_name,
                                 array_name='exchange/data_dark',
-                                projections_start=dark_start,
-                                projections_end=dark_end,
-                                slices_start=slices_start,
-                                slices_end=slices_end,
-                                slices_step=slices_step,
-                                pixels_start=pixels_start,
-                                pixels_end=pixels_end,
-                                pixels_step=pixels_step).astype(dtype)
+                                x_start=dark_start,
+                                x_end=dark_end,
+                                y_start=slices_start,
+                                y_end=slices_end,
+                                y_step=slices_step,
+                                z_start=pixels_start,
+                                z_end=pixels_end,
+                                z_step=pixels_step).astype(dtype)
 
             # Assign the rotation center.
             self.center = self.data.shape[2] / 2
