@@ -10,7 +10,7 @@ from dataio.file_types import Tiff
 import numpy as np
 
 # Input HDF file.
-filename = '/local/data/databank/dataExchange/microCT/Hornby_b_SLS_2011.h5'
+#filename = '/local/data/databank/dataExchange/microCT/Hornby_b_SLS_2011.h5'
 filename = '/local/data/databank/tt.h5'
 
 # Pre-process data.
