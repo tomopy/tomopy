@@ -15,8 +15,8 @@ class Dataset():
         self.angles = angles
 
     def read_tiff(self, file_name,
-                      projections_start=None,
-                      projections_end=None,
+                      projections_start=0,
+                      projections_end=0,
                       projections_step=None,
                       slices_start=None,
                       slices_end=None,
@@ -24,10 +24,10 @@ class Dataset():
                       pixels_start=None,
                       pixels_end=None,
                       pixels_step=None,
-                      white_start=None,
-                      white_end=None,
-                      dark_start=None,
-                      dark_end=None,
+                      white_start=0,
+                      white_end=0,
+                      dark_start=0,
+                      dark_end=0,
                       digits=4,
                       zeros=True,
                       dtype='uint16'):
@@ -113,7 +113,8 @@ class Dataset():
                                         tmpdata.shape[1]),
                                         dtype=dtype)
                 inputData[m, :, :] = tmpdata
-        self.data = inputData
+        if len(ind) > 0:
+            self.data = inputData
         
         ind = range(white_start, white_end)
         for m in range(len(ind)):
@@ -136,7 +137,8 @@ class Dataset():
                                         tmpdata.shape[1]),
                                         dtype=dtype)
                 inputData[m, :, :] = tmpdata
-        self.white = inputData
+        if len(ind) > 0:
+            self.white = inputData
 
         ind = range(dark_start, dark_end)
         for m in range(len(ind)):
@@ -159,7 +161,8 @@ class Dataset():
                                         tmpdata.shape[1]),
                                         dtype=dtype)
                 inputData[m, :, :] = tmpdata
-        self.dark = inputData
+        if len(ind) > 0:
+            self.dark = inputData
 
      
     def read_hdf5(self, file_name,
@@ -241,6 +244,7 @@ class Dataset():
                                 z_step=pixels_step).astype(dtype)
 
             # Read white field data from exchange group.
+            print white_start, white_end, slices_start, slices_end
             self.white = f.read(file_name,
                                 array_name='exchange/data_white',
                                 x_start=white_start,
