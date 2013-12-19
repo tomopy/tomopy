@@ -84,6 +84,8 @@ white_end = 221
 projections_start = 221
 projections_end = 1662
 
+white_end = 42
+projections_end = 242
 
 mydata = Preprocess()
 
@@ -93,45 +95,46 @@ mydata.read_tiff(filename, projections_start, projections_end, white_start = whi
 
 #Write HDF5 file.
 
-#HDF5 = '/local/data/databank/tt3.h5'
+HDF5 = '/local/data/databank/tt5.h5'
 # Open DataExchange file
-##f = DataExchangeFile(HDF5, mode='w') 
-##
-##
-### Create core HDF5 dataset in exchange group for 180 deep stack
-### of x,y images /exchange/data
-##f.add_entry( DataExchangeEntry.data(data={'value': mydata.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
-##                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-##)
-##f.add_entry( DataExchangeEntry.data(data_dark={'value': mydata.dark, 'units':'counts', 'axes':'theta_dark:y:x',
-##                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-##)
-##f.add_entry( DataExchangeEntry.data(data_white={'value': mydata.white, 'units':'counts', 'axes':'theta_white:y:x',
-##                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
-##)
-##f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-##
-##f.close()
-mydata.normalize()
-#mydata.remove_rings(wname='db10', sigma=2)
-#mydata.median_filter()
-mydata.optimize_center()
-#mydata.optimize_center(center_init=1010)
-#mydata.center = 1404.6484375
-#mydata.retrieve_phase(pixel_size=0.65e-4, dist=40, energy=22.4, delta_over_mu=1e-8)
-#mydata.data = np.exp(-mydata.data)
+f = DataExchangeFile(HDF5, mode='w') 
+
+
+# Create core HDF5 dataset in exchange group for 180 deep stack
+# of x,y images /exchange/data
+f.add_entry( DataExchangeEntry.data(data={'value': mydata.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x',
+                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+)
+f.add_entry( DataExchangeEntry.data(data_dark={'value': mydata.dark, 'units':'counts', 'axes':'theta_dark:y:x',
+                                            'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+)
+f.add_entry( DataExchangeEntry.data(data_white={'value': mydata.white, 'units':'counts', 'axes':'theta_white:y:x',
+                                    'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} })
+)
+f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
+
+f.close()
+
+##mydata.normalize()
+##mydata.remove_rings(wname='db10', sigma=2)
+##mydata.median_filter()
+##mydata.optimize_center()
+##mydata.optimize_center(center_init=1010)
+##mydata.center = 1404.6484375
+##mydata.retrieve_phase(pixel_size=0.65e-4, dist=40, energy=22.4, delta_over_mu=1e-8)
+##mydata.data = np.exp(-mydata.data)
 
 
 # Reconstruct data.
-recon = tomoRecon.tomoRecon(mydata)
-recon.run(mydata)
+#recon = tomoRecon.tomoRecon(mydata)
+#recon.run(mydata)
 
 # Save data.
 #f = Tiff()
 #f.write(recon.data, file_name='/local/dgursoy/GIT/tomopy/data/test_.tiff')
 
 # Visualize data.
-image.show_slice(recon.data)
+#image.show_slice(recon.data)
 
 #print data.shape
 #print data_dark.shape

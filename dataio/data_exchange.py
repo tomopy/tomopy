@@ -144,7 +144,7 @@ class DataExchangeEntry(object):
         """
         self._data = {
             'root': '/exchange',
-            'entry_name': 'data',
+            'entry_name': '',
             'docstring': 'The result of the measurement.',
             'data': {
                 'value': None,
