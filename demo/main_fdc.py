@@ -14,7 +14,7 @@ filename = '/local/data/databank/dataExchange/microCT/Blakely_SLS_2011.h5'
 
 # Pre-process data.
 mydata = Preprocess()
-mydata.read_hdf5(filename, slices_start=2, slices_end=3)
+mydata.read_hdf5(filename, slices_start=802, slices_end=803)
 mydata.normalize()
 #mydata.remove_rings(wname='db10', sigma=2)
 #mydata.median_filter()

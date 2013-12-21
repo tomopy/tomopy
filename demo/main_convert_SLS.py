@@ -25,7 +25,7 @@ import re
 filename = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby_b.tif'
 SLSlogFile = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby.log'
 
-HDF5 = '/local/data/databank/dataExchange/microCT/Blakely_SLS_2011.h5'
+HDF5 = '/local/data/databank/dataExchange/microCT/Hornby_b_SLS_2011.h5'
 
 print filename
 print SLSlogFile
@@ -86,8 +86,8 @@ white_end = 221
 projections_start = 221
 projections_end = 1662
 
-dark_end = 4
-white_end = 24
+#dark_end = 4
+#white_end = 24
 #projections_end = 224
 
 mydata = Preprocess()
@@ -95,13 +95,91 @@ mydata = Preprocess()
 #mydata.read_tiff(filename, projections_start, projections_end, slices_start = 800, slices_end = 801, white_start = white_start, white_end = white_end, dark_start= dark_start, dark_end = dark_end)
 #mydata.read_tiff(filename, projections_start, projections_end, white_start = white_start, white_end = white_end, dark_start= dark_start, dark_end = dark_end)
 #mydata.read_tiff(filename, projections_start, projections_end, slices_start = 800, slices_end = 820, dark_start = dark_start, dark_end = dark_end)
-mydata.read_tiff(filename, projections_start, projections_end, slices_start = 800, slices_end = 820, dark_start = dark_start, dark_end = dark_end, white_start = white_start, white_end = white_end)
+mydata.read_tiff(filename, projections_start, projections_end, dark_start = dark_start, dark_end = dark_end, white_start = white_start, white_end = white_end)
 
 
 #Write HDF5 file.
 
 # Open DataExchange file
 f = DataExchangeFile(HDF5, mode='w') 
+
+# Create HDF5 subgroup
+# /measurement/instrument
+f.add_entry( DataExchangeEntry.instrument(name={'value': 'Tomcat'}) )
+
+# Create HDF5 subgroup
+# /measurement/instrument/source
+f.add_entry( DataExchangeEntry.source(name={'value': 'Swiss Light Source'},
+                                    date_time={'value': "2010-11-08T14:51:56+0100"},
+                                    beamline={'value': "Tomcat"},
+                                    current={'value': 401.96, 'units': 'mA', 'dataset_opts': {'dtype': 'd'}},
+                                    )
+)
+
+# Create HDF5 subgroup
+# /measurement/instrument/monochromator
+f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Multilayer'},
+                                            energy={'value': 19.260, 'units': 'keV', 'dataset_opts': {'dtype': 'd'}},
+                                            mono_stripe={'value': 'Ru/C'},
+                                            )
+    )
+
+
+# Create HDF5 subgroup
+# /measurement/experimenter
+f.add_entry( DataExchangeEntry.experimenter(name={'value':"Federica Marone"},
+                                            role={'value':"Project PI"},
+                                            affiliation={'value':"Swiss Light Source"},
+                                            phone={'value':"+41 56 310 5318"},
+                                            email={'value':"federica.marone@psi.ch"},
+
+                )
+    )
+
+# Create HDF5 subgroup
+# /measurement/instrument/detector
+f.add_entry( DataExchangeEntry.detector(manufacturer={'value':'CooKe Corporation'},
+                                        model={'value': 'pco dimax'},
+                                        serial_number={'value': '1234XW2'},
+                                        bit_depth={'value': 12, 'dataset_opts':  {'dtype': 'd'}},
+                                        x_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
+                                        y_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
+                                        x_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
+                                        y_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
+                                        x_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
+                                        y_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
+                                        operating_temperature={'value': 270, 'units':'K', 'dataset_opts':  {'dtype': 'f'}},
+                                        exposure_time={'value': 170, 'units':'ms', 'dataset_opts':  {'dtype': 'd'}},
+                                        frame_rate={'value': 3, 'dataset_opts':  {'dtype': 'i'}},
+                                        output_data={'value':'/exchange'}
+                                        )
+    )
+
+
+f.add_entry(DataExchangeEntry.objective(magnification={'value':10, 'dataset_opts': {'dtype': 'd'}},
+                                    )
+    )
+
+f.add_entry(DataExchangeEntry.scintillator(name={'value':'LuAg '},
+                                            type={'value':'LuAg'},
+                                            scintillating_thickness={'value':20e-6, 'dataset_opts': {'dtype': 'd'}},
+        )
+    )
+
+# Create HDF5 subgroup
+# /measurement/experiment
+f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
+            )
+    )
+
+
+# Create HDF5 subgroup
+# /measurement/sample
+f.add_entry( DataExchangeEntry.sample( name={'value':'Hornby_b'},
+                                        description={'value':'rock sample tested at ALS and APS'},
+        )
+    )
+
 
 
 # Create core HDF5 dataset in exchange group for 180 deep stack
