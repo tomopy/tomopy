@@ -291,7 +291,7 @@ class xrm:
         #list = ole.listdir()
         #print list
         
-        verbose = True
+        verbose = False
         
 
         # Test if known streams/storages exist:
@@ -478,7 +478,7 @@ class xrm:
         #list = ole.listdir()
         #print list
         
-        verbose = True
+        verbose = False
 
 
         # Test if known streams/storages exist:
