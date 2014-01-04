@@ -289,3 +289,120 @@ class Tiff(FileInterface):
             img = misc.toimage(dataset[m, :, :])
             #img = misc.toimage(dataset[m, :, :], mode='F')
             img.save(file_name)
+
+class xradia(FileInterface):
+    def read(self, file_name,
+             array_name=None,
+             x_start=None,
+             x_end=None,
+             x_step=None,
+             y_start=None,
+             y_end=None,
+             y_step=None,
+             z_start=None,
+             z_end=None,
+             z_step=None):
+        """ Read 3-D tomographic data from a txrm file and the background/reference image for an xrm files.
+
+        Opens ``file_name`` and copy into an array its content;
+                this is can be a series/scan of tomographic projections (if file_name extension is ``txrm``) or
+                a series of backgroud/reference images if the file_name extension is ``xrm``
+        
+        Parameters
+        ----------
+        file_name : str
+            Input txrm or xrm file.
+            
+        x_start, x_end, x_step : scalar, optional
+            Values of the start, end and step of the
+            slicing for the whole array.
+
+        y_start, y_end, y_step : scalar, optional
+            Values of the start, end and step of the
+            slicing for the whole array.
+
+        z_start, z_end, z_step : scalar, optional
+            Values of the start, end and step of the
+            slicing for the whole array.
+
+        Returns
+        -------
+        out : array
+            Returns the data as a matrix.
+        """
+        verbose = True
+        imgname = 'Image'
+        reader = xradia.xrm()
+        array = dstruct
+
+        # Read data from file.
+        if file_name.endswith('txrm'):
+            if verbose: print "reading projections ... "
+            reader.read_txrm(file_name,array)
+            num_x, num_y, num_z = np.shape(array.exchange.data)
+            if verbose:
+                print "done reading ", num_z, " projections images of (", num_x,"x", num_y, ") pixels"
+                    
+        if file_name.endswith('xrm'):
+            if verbose: print "reading background ... "
+            reader.read_txrm(file_name,array)
+            num_x, num_y, num_z = np.shape(array.exchange.data)
+            if verbose:
+                print "done reading ", num_z, " projections images of (", num_x,"x", num_y, ") pixels"
+                
+        # hdfdata = array.exchange.data
+
+        # Select desired y from whole data.
+        # num_x, num_y, num_z = hdfdata.shape
+        if x_start is None:
+            x_start = 0
+        if x_end is None:
+            x_end = num_x
+        if x_step is None:
+            x_step = 1
+        if y_start is None:
+            y_start = 0
+        if y_end is None:
+            y_end = num_y
+        if y_step is None:
+            y_step = 1
+        if z_start is None:
+            z_start = 0
+        if z_end is None:
+            z_end = num_z
+        if z_step is None:
+            z_step = 1
+
+        # Construct dataset from desired y.
+        dataset = array.exchange.data[x_start:x_end:x_step,
+                          y_start:y_end:y_step,
+                          z_start:z_end:z_step]
+        f.close()
+        return dataset
+
+    def write(self, dataset, file_name, array_name):
+        """ Write data to hdf5 file.
+
+        Parameters
+        -----------
+        dataset : ndarray
+            Input values.
+
+        file_name : str
+            Name of the output HDF file.
+
+        array_name : str, optional
+            Name of the group that the data will be put
+            under the exchange group of the HDF file.
+        """
+        # Create new folders.
+        dir_path = os.path.dirname(file_name)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        # Write data
+        f = h5py.File(file_name, 'w')
+        f.create_dataset('implements', data='exchange')
+        exchange_group = f.create_group("exchange")
+        exchange_group.create_dataset(array_name, data=dataset)
+        f.close()

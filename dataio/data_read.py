@@ -17,17 +17,21 @@ class Dataset():
     def read_tiff(self, file_name,
                       projections_start=0,
                       projections_end=0,
-                      projections_step=None,
+                      projections_step=1,
                       slices_start=None,
                       slices_end=None,
                       slices_step=None,
                       pixels_start=None,
                       pixels_end=None,
                       pixels_step=None,
+                      file_name_white=None,
                       white_start=0,
                       white_end=0,
+                      white_step=1,
+                      file_name_dark=None,
                       dark_start=0,
                       dark_end=0,
+                      dark_step=1,
                       digits=4,
                       zeros=True,
                       dtype='uint16'):
@@ -35,7 +39,7 @@ class Dataset():
 
         Parameters
         ----------
-        inputFile : str
+        file_name : str
             Name of the input TIFF file.
 
         projections_start, projections_end, projections_step : scalar, optional
@@ -50,9 +54,15 @@ class Dataset():
             Values of the start, end and step of the pixels to
             be used for slicing for the whole ndarray.
 
+        file_name_white : str
+            enter if the white field name is different from file_name.
+
         white_start, white_end : scalar, optional
             Values of the start, end and step of the
             slicing for the whole white field shots.
+
+        file_name_dark : str
+            enter if the dark field name is different from file_name.
 
         dark_start, dark_end : scalar, optional
             Values of the start, end and step of the
@@ -77,11 +87,27 @@ class Dataset():
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
-
+        verbose = True
+        
+        if file_name_white == None:
+                file_name_white = file_name
+                if verbose: print "File Name White = ", file_name_white
+        if file_name_dark == None:
+                file_name_dark = file_name
+                if verbose: print "File Name Dark = ", file_name_dark
+                
         if file_name.endswith('tif') or \
            file_name.endswith('tiff'):
             dataFile = file_name.split('.')[-2]
             dataExtension = file_name.split('.')[-1]
+        if file_name_white.endswith('tif') or \
+           file_name_white.endswith('tiff'):
+            dataFileWhite = file_name_white.split('.')[-2]
+            dataExtensionWhite = file_name_white.split('.')[-1]
+        if file_name_dark.endswith('tif') or \
+           file_name_dark.endswith('tiff'):
+            dataFileDark = file_name_dark.split('.')[-2]
+            dataExtensionDark = file_name_dark.split('.')[-1]
 
         fileIndex = ["" for x in range(digits)]
 
@@ -100,7 +126,7 @@ class Dataset():
                     break
 
             if os.path.isfile(fileName):
-                print 'Reading projection file: ' + os.path.realpath(fileName)
+                if verbose: print 'Reading projection file: ' + os.path.realpath(fileName)
                 f = Tiff()
                 tmpdata = f.read(fileName,
                                     x_start=slices_start,
@@ -116,15 +142,18 @@ class Dataset():
         if len(ind) > 0:
             self.data = inputData
         
-        ind = range(white_start, white_end)
+        ind = range(white_start, white_end, white_step)
+        if verbose: print 'White: Start =', white_start, 'End =', white_end, 'Step =', white_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
         for m in range(len(ind)):
             for n in range(digits):
+                if verbose: print 'n =', n, 'ind[m]', ind[m], '<', np.power(10, n + 1)
                 if ind[m] < np.power(10, n + 1):
-                    fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                    fileName = dataFileWhite + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                    if verbose: print fileName
                     break
 
             if os.path.isfile(fileName):
-                print 'Reading white file: ' + os.path.realpath(fileName)
+                if verbose: print 'Reading white file: ' + os.path.realpath(fileName)
                 f = Tiff()
                 tmpdata = f.read(fileName,
                                     x_start=slices_start,
@@ -132,23 +161,26 @@ class Dataset():
                                     x_step=slices_step,
                                     dtype=dtype)
                 if m == 0: # Get resolution once.
-                    inputData = np.empty((white_end-white_start,
+                    if verbose: print 'Tempory Data Array: (white_end-white_start) =', (white_end-white_start)/white_step + 1, 'tmpdata shape = (', tmpdata.shape[0], ',', tmpdata.shape[1], ')'
+                    inputData = np.empty(((white_end - white_start)/white_step + 1,
                                         tmpdata.shape[0],
                                         tmpdata.shape[1]),
                                         dtype=dtype)
+                if verbose: print 'm', m
                 inputData[m, :, :] = tmpdata
         if len(ind) > 0:
             self.white = inputData
 
-        ind = range(dark_start, dark_end)
+        ind = range(dark_start, dark_end, dark_step)
+        if verbose: print 'Dark: Start =', dark_start, 'End =', dark_end, 'Step =', dark_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
         for m in range(len(ind)):
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):
-                    fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                    fileName = dataFileDark + fileIndex[n] + str(ind[m]) + '.' + dataExtension
                     break
 
             if os.path.isfile(fileName):
-                print 'Reading dark file: ' + os.path.realpath(fileName)
+                if verbose: print 'Reading dark file: ' + os.path.realpath(fileName)
                 f = Tiff()
                 tmpdata = f.read(fileName,
                                     x_start=slices_start,
@@ -156,7 +188,8 @@ class Dataset():
                                     x_step=slices_step,
                                     dtype=dtype)
                 if m == 0: # Get resolution once.
-                    inputData = np.empty((dark_end-dark_start,
+                    if verbose: print 'Tempory Data Array: (dark_end-dark_start) =', (dark_end-dark_start), 'tmpdata shape = (', tmpdata.shape[0], ',', tmpdata.shape[1], ')'
+                    inputData = np.empty(((dark_end - dark_start),
                                         tmpdata.shape[0],
                                         tmpdata.shape[1]),
                                         dtype=dtype)
