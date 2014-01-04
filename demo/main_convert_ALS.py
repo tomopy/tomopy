@@ -25,7 +25,14 @@ filenamedark = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSdrk_
 filenamewhite = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSbak_.tif'
 ALSlogFile = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS.sct'
 
-HDF5 = '/local/data/databank/dataExchange/microCT/blakely_ALS_2011.h5'
+HDF5 = '/local/data/databank/dataExchange/microCT/Blakely_ALS_2011.h5'
+
+filename = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS_.tif'
+filenamedark = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSdrk_.tif'
+filenamewhite = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSbak_.tif'
+ALSlogFile = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS.sct'
+
+HDF5 = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011.h5'
 
 verbose = True
 
@@ -74,7 +81,7 @@ white_start = 0
 white_end = int(Angles[0]) 
 white_step = int(WhiteStep[0])
 projections_start = 0
-projections_end = int(Angles[0]) + 1
+projections_end = int(Angles[0])
 
 # test
 #dark_end = 2
