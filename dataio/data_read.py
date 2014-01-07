@@ -96,6 +96,10 @@ class Dataset():
                 file_name_dark = file_name
                 if verbose: print "File Name Dark = ", file_name_dark
 
+        if verbose: print "File Name Projections = ", file_name
+        if verbose: print "File Name White = ", file_name_white
+        if verbose: print "File Name Dark = ", file_name_dark
+
         if file_name.endswith('tif') or \
            file_name.endswith('tiff'):
             dataFile = file_name.split('.')[-2]
@@ -119,10 +123,13 @@ class Dataset():
                fileIndex[m] = ''
 
         ind = range(projections_start, projections_end)
+        if verbose: print 'Projections: Start =', projections_start, 'End =', projections_end, 'Step =', projections_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
         for m in range(len(ind)):
             for n in range(digits):
+                if verbose: print 'n =', n, 'ind[m]', ind[m], '<', np.power(10, n + 1)
                 if ind[m] < np.power(10, n + 1):
                     fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                    if verbose: print 'Generating file names: ' + fileName
                     break
 
             if os.path.isfile(fileName):
