@@ -74,7 +74,6 @@ def optimize_center(data,
     elif not np.isscalar(center_init) :
         raise ValueError('center_init must be a scalar.')
 
-    #selectedSlice = np.expand_dims(selectedSlice, axis=1)
     dataset = Dataset(data=data)
     recon = tomoRecon.tomoRecon(dataset)
     recon.run(dataset, sliceNo=slice_no, printInfo=False)
@@ -110,7 +109,7 @@ def _costFunc(center, data, recon, slice_no, hist_min, hist_max, sigma):
     histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data,
                                                             sigma=sigma),
                             bins=64, range=[hist_min, hist_max])
-    histr = histr.astype('float64') / recon.data.size + 1e-12
+    histr = histr.astype('float32') / recon.data.size + 1e-12
     print 'Current center : ' + str(np.squeeze(center))
     return -np.dot(histr, np.log2(histr))
 
