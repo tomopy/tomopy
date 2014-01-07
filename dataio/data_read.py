@@ -88,14 +88,14 @@ class Dataset():
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
         verbose = True
-        
+
         if file_name_white == None:
                 file_name_white = file_name
                 if verbose: print "File Name White = ", file_name_white
         if file_name_dark == None:
                 file_name_dark = file_name
                 if verbose: print "File Name Dark = ", file_name_dark
-                
+
         if file_name.endswith('tif') or \
            file_name.endswith('tiff'):
             dataFile = file_name.split('.')[-2]
@@ -111,7 +111,7 @@ class Dataset():
 
         fileIndex = ["" for x in range(digits)]
 
-        for m in range(digits):           
+        for m in range(digits):
             if zeros is True:
                fileIndex[m] = '0' * (digits - m - 1)
 
@@ -141,7 +141,7 @@ class Dataset():
                 inputData[m, :, :] = tmpdata
         if len(ind) > 0:
             self.data = inputData
-        
+
         ind = range(white_start, white_end, white_step)
         if verbose: print 'White: Start =', white_start, 'End =', white_end, 'Step =', white_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
         for m in range(len(ind)):
@@ -197,7 +197,7 @@ class Dataset():
         if len(ind) > 0:
             self.dark = inputData
 
-     
+
     def read_hdf5(self, file_name,
                   projections_start=None,
                   projections_end=None,
@@ -258,7 +258,7 @@ class Dataset():
         # If the string has an extension.
         if len(end) > 1:
             # Check.
-            if end[1] == 'h5' or end[1] == 'hdf':
+            if end[len(end) - 1] == 'h5' or end[len(end) - 1] == 'hdf':
                 f = Hdf5()
 
         # If f != None the call read on it.
