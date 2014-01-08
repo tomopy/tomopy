@@ -40,33 +40,35 @@ class Dataset():
         Parameters
         ----------
         file_name : str
-            Name of the input TIFF file.
-
+            Base name of the input TIFF files.
+            For example if the projections names are /local/data/test_XXXX.tiff
+            file_name is /local/data/test_.tiff
+            
         projections_start, projections_end, projections_step : scalar, optional
-            Values of the start, end and step of the projections to
-            be used for slicing for the whole ndarray.
+            start and end index for the projection Tiff files to load. Use step define a stride.
 
         slices_start, slices_end, slices_step : scalar, optional
-            Values of the start, end and step of the slices to
-            be used for slicing for the whole ndarray.
+            start and end pixel of the projection image to load along the rotation axis. Use step define a stride.
 
-        pixels_start, pixels_end, pixels_step : scalar, optional
-            Values of the start, end and step of the pixels to
-            be used for slicing for the whole ndarray.
+        pixels_start, pixels_end, pixels_step : not used yet ...
 
         file_name_white : str
-            enter if the white field name is different from file_name.
+            Base name of the white field input TIFF files: string optinal.
+            For example if the white field names are /local/data/test_bg_XXXX.tiff
+            file_name is /local/data/test_bg_.tiff
+            if omitted file_name_white = file_name.
 
         white_start, white_end : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole white field shots.
+            start and end index for the white field Tiff files to load. Use step define a stride.
 
         file_name_dark : str
-            enter if the dark field name is different from file_name.
+            Base name of the dark field input TIFF files: string optinal.
+            For example if the white field names are /local/data/test_dk_XXXX.tiff
+            file_name is /local/data/test_dk_.tiff
+            if omitted file_name_dark = file_name.
 
         dark_start, dark_end : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole dark field shots.
+            start and end index for the dark field Tiff files to load. Use step define a stride.
 
         digits : scalar, optional
             Number of digits used for file indexing.
@@ -82,8 +84,9 @@ class Dataset():
 
         Returns
         -------
-        inputData : ndarray
-            Output 2-D matrix as numpy array.
+        inputData : list of tiff files contating projections, white and dark images
+
+        Output 2-D matrix as numpy array.
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
@@ -184,6 +187,7 @@ class Dataset():
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):
                     fileName = dataFileDark + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                    if verbose: print fileName
                     break
 
             if os.path.isfile(fileName):
