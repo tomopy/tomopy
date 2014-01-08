@@ -208,7 +208,6 @@ class Dataset():
         if len(ind) > 0:
             self.dark = inputData
 
-
     def read_hdf5(self, file_name,
                   projections_start=None,
                   projections_end=None,

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Filename: main_convert_xradia.py
+# Filename: main_convert_Xradia.py
 """ Main program for convert xradia txrm and xrm data into tiff and HDF5 data exchange file.
 """
 import dataio.xradia.xradia_xrm as xradia
@@ -37,24 +37,21 @@ save_dir = '/local/data/databank/TXM_26ID/temp'
 
 HDF5 = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.h5'
 
+verbose = True
+
 imgname='Image'
 
 reader = xradia.xrm()
 array = dstruct
 
-print "reading projections ... "
+if verbose: print "reading projections ... "
 
 reader.read_txrm(filename,array)
 nx, ny, nz_dt = np.shape(array.exchange.data)
-print "done reading ", nz_dt, " projections images of (", nx,"x", ny, ") pixels"
-
+if verbose: print "done reading ", nz_dt, " projections images of (", nx,"x", ny, ") pixels"
 
 dt = np.zeros((nx,ny,nz_dt))
 dt = array.exchange.data[:,:,:]
-
-#plt.figure(1)
-#plt.imshow(dt[:,:,0])
-
 
 f = open(save_dir+'/configure.txt','w')
 f.write('Data creation date: \n')
@@ -114,27 +111,24 @@ f.write('\n')
 f.close()
 
 n_angles = np.shape(array.exchange.angles)
-print "done reading ", n_angles, " angles"
+if verbose: print "done reading ", n_angles, " angles"
 angles = np.zeros(n_angles)
 angles = array.exchange.angles[:]
 
-print "reading background ... "
+if verbose: print "reading background ... "
 reader.read_xrm(bgfile,array)
 nx, ny, nz = np.shape(array.exchange.data)
 bg = np.zeros((nx,ny,nz))
 bg = array.exchange.data[:,:,:]
-print "done reading ", nz, " background image (s) of (", nx,"x", ny, ") pixels"
+if verbose: print "done reading ", nz, " background image (s) of (", nx,"x", ny, ") pixels"
 
-#plt.figure(2)
-#plt.imshow(bg[:,:,0])
-
-print "reading dark fields ... "
+if verbose: print "reading dark fields ... "
 ## reader.read_xrm(dkfile,array)
 nx, ny, nz = np.shape(array.exchange.data)
 nz = 1
 dk = np.zeros((nx,ny,nz))
 ## dk = array.exchange.data[:,:,:]
-print "done reading ", nz, " dark image (s) of (", nx,"x", ny, ") pixels"
+if verbose: print "done reading ", nz, " dark image (s) of (", nx,"x", ny, ") pixels"
 
 #Write HDF5 file.
 
@@ -161,7 +155,6 @@ f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Unknown'},
                                             )
     )
 
-
 # Create HDF5 subgroup
 # /measurement/experimenter
 f.add_entry( DataExchangeEntry.experimenter(name={'value':"Robert Winarski"},
@@ -169,15 +162,12 @@ f.add_entry( DataExchangeEntry.experimenter(name={'value':"Robert Winarski"},
                 )
     )
 
-
 # Create HDF5 subgroup
 # /measurement/sample
 f.add_entry( DataExchangeEntry.sample( name={'value':'Stripe_Solder_Sample_Tip1'},
                                         description={'value':'data converted from txrm/xrm set'},
         )
     )
-
-
 
 # Create core HDF5 dataset in exchange group for 180 deep stack
 # of x,y images /exchange/data
