@@ -19,53 +19,53 @@ import re
 
 #def main():
 
-# ct2: pj: from 0 -> 3600; bf from 0 -> 20; df from 0 -> 20
-file_name = '/local/data/databank/PetraIII/ct2/ct2_.tif'
-file_name_dark = '/local/data/databank/PetraIII/ct2/df2b_.tif'
-file_name_white = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
+### ct2: pj: from 0 -> 3600; bf from 0 -> 20; df from 0 -> 20
+##file_name = '/local/data/databank/PetraIII/ct2/ct2_.tif'
+##file_name_dark = '/local/data/databank/PetraIII/ct2/df2b_.tif'
+##file_name_white = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
+##
+##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct2_test_angles2.h5'
+##
+##projections_start = 0
+##projections_end = 3601
+##white_start = 0
+##white_end = 20
+##white_step = 1
+##dark_start = 0
+##dark_end = 20
+##dark_step = 1
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct2_test_angles.h5'
-
-projections_start = 0
-projections_end = 3600
-white_start = 0
-white_end = 20
-white_step = 1
-dark_start = 0
-dark_end = 20
-dark_step = 1
-
-### ct3: pj: from 0 -> 3601; bf from 20 -> 39; df from 0 -> 19
+# ct3: pj: from 0 -> 3601; bf from 20 -> 39; df from 0 -> 19
 ##file_name = '/local/data/databank/PetraIII/ct3/ct3_.tif'
 ##file_name_dark = '/local/data/databank/PetraIII/ct3/df_.tif'
 ##file_name_white = '/local/data/databank/PetraIII/ct3/bf_.tif'
 ##
-##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct3.h5'
+##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct3_test_angles2.h5'
 ##
 ##projections_start = 0
-##projections_end = 3600
+##projections_end = 3601
 ##white_start = 20
 ##white_end = 40
 ##white_step = 1
 ##dark_start = 0
 ##dark_end = 20
 ##dark_step = 1
-##
-### ct4: pj: from 0 -> 1199; bf from 1 -> 18; df from 0 -> 19
-##file_name = '/local/data/databank/PetraIII/ct4/ct4_.tif'
-##file_name_dark = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
-##file_name_white = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
-##
-##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4.h5'
-##
-##projections_start = 0
-##projections_end = 1200
-##white_start = 1
-##white_end = 19
-##white_step = 1
-##dark_start = 0
-##dark_end = 20
-##dark_step = 1
+
+# ct4: pj: from 0 -> 1199; bf from 1 -> 18; df from 0 -> 19
+file_name = '/local/data/databank/PetraIII/ct4/ct4_.tif'
+file_name_dark = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
+file_name_white = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
+
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4.h5'
+
+projections_start = 0
+projections_end = 1201
+white_start = 1
+white_end = 19
+white_step = 1
+dark_start = 0
+dark_end = 20
+dark_step = 1
 
 verbose = True
 
