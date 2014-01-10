@@ -36,7 +36,9 @@ def single_material(data, pixel_size, dist, energy, delta_over_mu=1e-8):
     - J. of Microscopy, Vol 206(1), 33-40(2001)
     """
     # Size of the detector
-    num_projections, num_slices, num_pixels = data.shape
+    tmp_data = np.ones((data.shape[1] + 40, data.shape[2]), dtype='complex')
+    num_slices, num_pixels = tmp_data.shape
+    num_projections = data.shape[0]
 
     # Sampling in reciprocal space.
     indx = (1 / ((num_slices - 1) * pixel_size)) * \
@@ -46,12 +48,16 @@ def single_material(data, pixel_size, dist, energy, delta_over_mu=1e-8):
     du, dv = np.meshgrid(indy, indx)
     w2 = np.square(du) + np.square(dv)
 
+    # Filter in Fourier space.
+    H = 1 / (4 * np.square(constants.PI) * dist * delta_over_mu * w2 + 1)
+
     # Fourier transform of data.
     for m in range(num_projections):
-        fft_data = np.fft.fftshift(tomoRecon.fftw2d(data[m, : ,:], direction='forward'))
-        H = 1 / (4 * np.square(constants.PI) * dist * delta_over_mu * w2 + 1)
+        tmp_data[20:data.shape[1]+20, :] = data[m, : ,:]
+        fft_data = np.fft.fftshift(tomoRecon.fftw2d(tmp_data, direction='forward'))
         filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
-        data[m, : ,:] = -np.log(np.real(tomoRecon.fftw2d(filtered_data, direction='backward')))
+        tmp = -np.log(np.real(tomoRecon.fftw2d(filtered_data, direction='backward')))
+        data[m, : ,:] = tmp[20:data.shape[1]+20, :]
     return data
 
 def pure_phase(data, pixel_size, dist, energy, alpha=0.5):
