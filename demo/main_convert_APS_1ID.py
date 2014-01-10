@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Filename: SLSConverter.py
-""" Main program for convert SLS data into dataExchange.
+# Filename: APS 1-ID Converter.py
+""" Main program for convert 1-ID data into dataExchange.
 """
 from preprocessing.preprocess import Preprocess
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
@@ -19,78 +19,84 @@ import re
 
 #def main():
 
-file_name = '/local/data/databank/SLS_2011/Blakely_SLS/Blakely.tif'
-sls_log_file = '/local/data/databank/SLS_2011/Blakely_SLS/Blakely.log'
+file_name = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_.tif'
+aps1id_log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_SLS_2011_xx.h5'
-
-##file_name = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby_b.tif'
-##sls_log_file = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby.log'
-##
-##hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_SLS_2011.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2.h5'
 
 verbose = True
 
 if verbose: print file_name
-if verbose: print sls_log_file
+if verbose: print aps1id_log_file
 
 
 
 #Read input SLS data
-file = open(sls_log_file, 'r')
+file = open(aps1id_log_file, 'r')
 if verbose: print '###############################'
-for line in file:
-    if 'Number of darks' in line:
-        NumberOfDarks = re.findall(r'\d+', line)
-        if verbose: print 'Number of Darks', NumberOfDarks[0]
-    if 'Number of flats' in line:
-        NumberOfFlats = re.findall(r'\d+', line)
-        if verbose: print 'Number of Flats', NumberOfFlats[0]
-    if 'Number of projections' in line:
-        NumberOfProjections = re.findall(r'\d+', line)
-        if verbose: print 'Number of Projections', NumberOfProjections[0]
-    if 'Number of inter-flats' in line:
-        NumberOfInterFlats = re.findall(r'\d+', line)
-        if verbose: print 'Number of inter-flats', NumberOfInterFlats[0]
-    if 'Inner scan flag' in line:
-        InnerScanFlag = re.findall(r'\d+', line)
-        if verbose: print 'Inner scan flag', InnerScanFlag[0]
-    if 'Flat frequency' in line:
-        FlatFrequency = re.findall(r'\d+', line)
-        if verbose: print 'Flat frequency', FlatFrequency[0]
-    if 'Rot Y min' in line:
-        RotYmin = re.findall(r'\d+.\d+', line)
-        if verbose: print 'Rot Y min', RotYmin[0]
-    if 'Rot Y max' in line:
-        RotYmax = re.findall(r'\d+.\d+', line)
-        if verbose: print 'Rot Y max', RotYmax[0]
-    if 'Angular step' in line:
-        AngularStep = re.findall(r'\d+.\d+', line)
-        if verbose: print 'Angular step', AngularStep[0]
-if verbose: print '###############################'
+##for line in file:
+##    if verbose: print line
+##
+##    if 'Number of darks' in line:
+##        NumberOfDarks = re.findall(r'\d+', line)
+##        if verbose: print 'Number of Darks', NumberOfDarks[0]
+##    if 'Number of flats' in line:
+##        NumberOfFlats = re.findall(r'\d+', line)
+##        if verbose: print 'Number of Flats', NumberOfFlats[0]
+##    if 'Number of projections' in line:
+##        NumberOfProjections = re.findall(r'\d+', line)
+##        if verbose: print 'Number of Projections', NumberOfProjections[0]
+##    if 'Number of inter-flats' in line:
+##        NumberOfInterFlats = re.findall(r'\d+', line)
+##        if verbose: print 'Number of inter-flats', NumberOfInterFlats[0]
+##    if 'Inner scan flag' in line:
+##        InnerScanFlag = re.findall(r'\d+', line)
+##        if verbose: print 'Inner scan flag', InnerScanFlag[0]
+##    if 'Flat frequency' in line:
+##        FlatFrequency = re.findall(r'\d+', line)
+##        if verbose: print 'Flat frequency', FlatFrequency[0]
+##    if 'Rot Y min' in line:
+##        RotYmin = re.findall(r'\d+.\d+', line)
+##        if verbose: print 'Rot Y min', RotYmin[0]
+##    if 'Rot Y max' in line:
+##        RotYmax = re.findall(r'\d+.\d+', line)
+##        if verbose: print 'Rot Y max', RotYmax[0]
+##    if 'Angular step' in line:
+##        AngularStep = re.findall(r'\d+.\d+', line)
+##        if verbose: print 'Angular step', AngularStep[0]
+##if verbose: print '###############################'
 file.close()
 
-dark_start = 1
-dark_end = int(NumberOfDarks[0]) + 1
-white_start = dark_end
-white_end = white_start + int(NumberOfFlats[0])
-projections_start = white_end
-projections_end = projections_start + int(NumberOfProjections[0])
+##dark_start = 1
+##dark_end = int(NumberOfDarks[0]) + 1
+##white_start = dark_end
+##white_end = white_start + int(NumberOfFlats[0])
+##projection_start = white_end
+##projection_end = projection_start + int(NumberOfProjections[0])
+
+
+##projections_start = 942
+##projections_end = 1843
+##white_start = 1843
+##white_end = 1853
+##dark_start = 1853
+##dark_end = 1863
+
+projections_start = 943
+projections_end = 1853
+white_start = 1844
+white_end = 1853
+dark_start = 1854
+dark_end = 1863
 
 if verbose: print dark_start, dark_end
 if verbose: print white_start, white_end
 if verbose: print projections_start, projections_end
 
-dark_start = 1
-dark_end = 21
-white_start = 21
-white_end = 221
-projections_start = 221
-projections_end = 1662
 
-#dark_end = 4
-#white_end = 24
-#projections_end = 224
+##projections_end = 952
+##white_end = 1845
+##dark_end = 1855
 
 z = np.arange(projections_end - projections_start);
 if verbose: print z, len(z)
@@ -106,7 +112,8 @@ mydata.read_tiff(file_name,
                  white_start = white_start,
                  white_end = white_end,
                  dark_start = dark_start,
-                 dark_end = dark_end
+                 dark_end = dark_end,
+                 digits = 6
                  )
 
 
@@ -117,14 +124,14 @@ f = DataExchangeFile(hdf5_file_name, mode='w')
 
 # Create HDF5 subgroup
 # /measurement/instrument
-f.add_entry( DataExchangeEntry.instrument(name={'value': 'Tomcat'}) )
+f.add_entry( DataExchangeEntry.instrument(name={'value': 'APS 1-ID Tomography'}) )
 
 # Create HDF5 subgroup
 # /measurement/instrument/source
-f.add_entry( DataExchangeEntry.source(name={'value': 'Swiss Light Source'},
-                                    date_time={'value': "2010-11-08T14:51:56+0100"},
-                                    beamline={'value': "Tomcat"},
-                                    current={'value': 401.96, 'units': 'mA', 'dataset_opts': {'dtype': 'd'}},
+f.add_entry( DataExchangeEntry.source(name={'value': 'Advanced Photon Source'},
+                                    date_time={'value': "2012-07-08T15:42:56+0100"},
+                                    beamline={'value': "1-ID"},
+                                    current={'value': 100.96, 'units': 'mA', 'dataset_opts': {'dtype': 'd'}},
                                     )
 )
 
@@ -138,11 +145,11 @@ f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Multilayer'},
 
 # Create HDF5 subgroup
 # /measurement/experimenter
-f.add_entry( DataExchangeEntry.experimenter(name={'value':"Federica Marone"},
+f.add_entry( DataExchangeEntry.experimenter(name={'value':"Peter Kenesei"},
                                             role={'value':"Project PI"},
-                                            affiliation={'value':"Swiss Light Source"},
-                                            phone={'value':"+41 56 310 5318"},
-                                            email={'value':"federica.marone@psi.ch"},
+                                            affiliation={'value':"Advanced Photon Source"},
+                                            phone={'value':"+1 630 252-0133"},
+                                            email={'value':"kenesei@aps.anl.gov"},
 
                 )
     )
@@ -184,8 +191,8 @@ f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
 
 # Create HDF5 subgroup
 # /measurement/sample
-f.add_entry( DataExchangeEntry.sample( name={'value':'Hornby_b'},
-                                        description={'value':'rock sample tested at ALS and APS'},
+f.add_entry( DataExchangeEntry.sample( name={'value':'CAT4B_2'},
+                                        description={'value':'unknown'},
         )
     )
 
