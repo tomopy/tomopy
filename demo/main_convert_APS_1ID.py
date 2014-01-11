@@ -22,7 +22,7 @@ import re
 file_name = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_.tif'
 aps1id_log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_test.h5'
 
 verbose = True
 
@@ -75,13 +75,6 @@ file.close()
 ##projection_end = projection_start + int(NumberOfProjections[0])
 
 
-##projections_start = 942
-##projections_end = 1843
-##white_start = 1843
-##white_end = 1853
-##dark_start = 1853
-##dark_end = 1863
-
 projections_start = 943
 projections_end = 1853
 white_start = 1844
@@ -93,10 +86,10 @@ if verbose: print dark_start, dark_end
 if verbose: print white_start, white_end
 if verbose: print projections_start, projections_end
 
-
+### if testing uncomment
 ##projections_end = 952
-##white_end = 1845
-##dark_end = 1855
+##white_end = 1846
+##dark_end = 1856
 
 z = np.arange(projections_end - projections_start);
 if verbose: print z, len(z)
