@@ -178,6 +178,7 @@ f.add_entry( DataExchangeEntry.data(data_white={'value': bg, 'units':'counts', '
 f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
 
 f.close()
+if verbose: print "Done converting ", filename
 
 ###if __name__ == "__main__":
 ###    main()

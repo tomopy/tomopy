@@ -14,24 +14,24 @@ import re
 # stage stop moving . This happened after 180 deg so picking the first 180 deg are good to reconstruct.
 # The 3 blocks below load only the good 180 deg
 
-# ct2: pj: from 0 -> 3600; bf from 0 -> 20; df from 0 -> 20
-file_name = '/local/data/databank/PetraIII/ct2/ct2_.tif'
-file_name_dark = '/local/data/databank/PetraIII/ct2/df2b_.tif'
-file_name_white = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct2_180_new.h5'
-
-sample_name = 'ct2'
-## ct2: Wheat root
-## Sample measured at room temperature
-
-projections_start = 0
-projections_end = 1801
-white_start = 0
-white_end = 20
-white_step = 1
-dark_start = 0
-dark_end = 20
-dark_step = 1
+### ct2: pj: from 0 -> 3600; bf from 0 -> 20; df from 0 -> 20
+##file_name = '/local/data/databank/PetraIII/ct2/ct2_.tif'
+##file_name_dark = '/local/data/databank/PetraIII/ct2/df2b_.tif'
+##file_name_white = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
+##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct2_180_new.h5'
+##
+##sample_name = 'ct2'
+#### ct2: Wheat root
+#### Sample measured at room temperature
+##
+##projections_start = 0
+##projections_end = 1801
+##white_start = 0
+##white_end = 20
+##white_step = 1
+##dark_start = 0
+##dark_end = 20
+##dark_step = 1
 
 ### ct3: pj: from 0 -> 3601; bf from 20 -> 39; df from 0 -> 19
 ##file_name = '/local/data/databank/PetraIII/ct3/ct3_.tif'
@@ -52,35 +52,35 @@ dark_step = 1
 ##dark_end = 20
 ##dark_step = 1
 
-### ct4: pj: from 0 -> 1199; bf from 1 -> 18; df from 0 -> 19
-##file_name = '/local/data/databank/PetraIII/ct4/ct4_.tif'
-##file_name_dark = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
-##file_name_white = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
-##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4_180_new.h5'
-##
+# ct4: pj: from 0 -> 1199; bf from 1 -> 18; df from 0 -> 19
+file_name = '/local/data/databank/PetraIII/ct4/ct4_.tif'
+file_name_dark = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
+file_name_white = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4_180_new.h5'
+
     
-##sample_name = 'ct4'
-## ct4: Leaf of rice
-## Fresh sample measured at cryogenic condition
+sample_name = 'ct4'
+#ct4: Leaf of rice
+#Fresh sample measured at cryogenic condition
 
-##projections_start = 0
-##projections_end = 601
-##white_start = 1
-##white_end = 19
-##white_step = 1
-##dark_start = 0
-##dark_end = 20
-##dark_step = 1
-
-### if testing uncomment
 projections_start = 0
-projections_end = 5
-white_start = 0
-white_end = 5
+projections_end = 601
+white_start = 1
+white_end = 19
 white_step = 1
 dark_start = 0
-dark_end = 5
+dark_end = 20
 dark_step = 1
+
+##### if testing uncomment
+##projections_start = 0
+##projections_end = 5
+##white_start = 0
+##white_end = 5
+##white_step = 1
+##dark_start = 0
+##dark_end = 5
+##dark_step = 1
 
 
 verbose = True
@@ -112,7 +112,8 @@ mydata.tiff(file_name,
                  dark_step = dark_step,
                  sample_name = sample_name,
                  digits = 5,
-                 zeros = True
+                 zeros = True,
+                 verbose = False
                  )
 
  
@@ -140,6 +141,7 @@ f.add_entry( DataExchangeEntry.experimenter(name={'value':"Walter Schroeder"},
     )
 
 f.close()
+if verbose: print "Done converting ", file_name
 
 ###if __name__ == "__main__":
 ###    main()

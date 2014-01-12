@@ -12,7 +12,7 @@ import re
 file_name = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_.tif'
 log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_test_new.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_new.h5'
 
 verbose = True
 
@@ -77,10 +77,10 @@ if verbose: print dark_start, dark_end
 if verbose: print white_start, white_end
 if verbose: print projections_start, projections_end
 
-# if testing uncomment
-projections_end = 952
-white_end = 1846
-dark_end = 1856
+### if testing uncomment
+##projections_end = 952
+##white_end = 1846
+##dark_end = 1856
 
 
 mydata = Convert()
@@ -93,7 +93,8 @@ mydata.tiff(file_name,
                  white_end = white_end,
                  dark_start = dark_start,
                  dark_end = dark_end,
-                 digits = 6
+                 digits = 6,
+                 verbose = False
                  )
 
  
@@ -171,6 +172,7 @@ f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
 
 
 f.close()
+if verbose: print "Done converting ", file_name
 
 ###if __name__ == "__main__":
 ###    main()

@@ -168,8 +168,8 @@ f.add_entry(DataExchangeEntry.scintillator(name={'value':'LuAg '},
 f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
             )
     )
-
 f.close()
+if verbose: print "Done converting ", file_name
 
 ###if __name__ == "__main__":
 ###    main()
