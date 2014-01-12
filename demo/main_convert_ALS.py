@@ -2,45 +2,37 @@
 # Filename: SLSConverter.py
 """ Main program for convert SLS data into dataExchange.
 """
-from preprocessing.preprocess import Preprocess
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
-
-from dataio.file_types import Tiff
-from tomoRecon import tomoRecon
-from visualize import image
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-import os
-import h5py
+from dataio.data_convert import Convert
 
 import re
 
 #def main():
 
-
-##filename = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS_.tif'
+##file_name = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS_.tif'
 ##file_name_dark = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSdrk_.tif'
 ##file_name_white = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSbak_.tif'
-##als_log_file = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS.sct'
+##log_file = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS.sct'
 ##
 ##hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_ALS_2011.h5'
 
-filename = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS_.tif'
+file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS_.tif'
 file_name_dark = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSdrk_.tif'
 file_name_white = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSbak_.tif'
-als_log_file = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS.sct'
+log_file = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS.sct'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011_test_angles.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011_new.h5'
 
 verbose = True
 
-if verbose: print filename
-if verbose: print als_log_file
+if verbose: print file_name
+if verbose: print log_file
+if verbose: print hdf5_file_name
 
-#Read input ALS data
-file = open(als_log_file, 'r')
+
+
+#Read input SLS data
+file = open(log_file, 'r')
 if verbose: print '###############################'
 for line in file:
     if '-scanner' in line:
@@ -79,23 +71,22 @@ white_step = int(WhiteStep[0])
 projections_start = 0
 projections_end = int(Angles[0])
 
-# test
-#dark_end = 2
-#white_end = 361
-#projections_end = 2
+if verbose: print dark_start, dark_end
+if verbose: print white_start, white_end
+if verbose: print projections_start, projections_end
 
-z = np.arange(projections_end - projections_start);
-if verbose: print z, len(z)
-    
-# Fabricate theta values
-theta = (z * float(180) / (len(z) - 1))
-if verbose: print theta
+# if testing uncomment
+dark_end = 2
+white_end = 361
+projections_end = 2
 
-mydata = Preprocess()
-
-mydata.read_tiff(filename,
+mydata = Convert()
+# Create minimal hdf5 file
+mydata.tiff(file_name,
+                 hdf5_file_name,
                  projections_start,
                  projections_end,
+                 file_name_white = file_name_white,
                  white_start = white_start,
                  white_end = white_end,
                  white_step = white_step,
@@ -103,19 +94,18 @@ mydata.read_tiff(filename,
                  dark_start = dark_start,
                  dark_end = dark_end,
                  dark_step = dark_step,
-                 file_name_white =
-                 file_name_white,
                  zeros = False
                  )
 
-#Write HDF5 file.
+ 
+# Add extra metadata if available
 
 # Open DataExchange file
-f = DataExchangeFile(hdf5_file_name, mode='w') 
+f = DataExchangeFile(hdf5_file_name, mode='a') 
 
 # Create HDF5 subgroup
 # /measurement/instrument
-f.add_entry( DataExchangeEntry.instrument(name={'value': 'Tomcat'}) )
+f.add_entry( DataExchangeEntry.instrument(name={'value': 'ALS'}) )
 
 # Create HDF5 subgroup
 # /measurement/instrument/source
@@ -169,21 +159,6 @@ f.add_entry(DataExchangeEntry.scintillator(name={'value':'LuAg '},
                                             scintillating_thickness={'value':20e-6, 'dataset_opts': {'dtype': 'd'}},
         )
     )
-
-# Create HDF5 subgroup
-# /measurement/sample
-f.add_entry( DataExchangeEntry.sample( name={'value':Sample},
-                                        description={'value':'rock sample tested at SLS and APS'},
-        )
-    )
-
-# Create core HDF5 dataset in exchange group for 180 deep stack
-# of x,y images /exchange/data
-f.add_entry( DataExchangeEntry.data(data={'value': mydata.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x' }))
-f.add_entry( DataExchangeEntry.data(theta={'value': theta, 'units':'degrees'}))
-f.add_entry( DataExchangeEntry.data(data_dark={'value': mydata.dark, 'units':'counts', 'axes':'theta_dark:y:x' }))
-f.add_entry( DataExchangeEntry.data(data_white={'value': mydata.white, 'units':'counts', 'axes':'theta_white:y:x' }))
-f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
 
 f.close()
 

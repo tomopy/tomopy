@@ -1,38 +1,29 @@
 # -*- coding: utf-8 -*-
-# Filename: APS 1-ID Converter.py
-""" Main program for convert 1-ID data into dataExchange.
+# Filename: APS_1ID_Converter.py
+""" Main program for convert APS 1-ID data into dataExchange.
 """
-from preprocessing.preprocess import Preprocess
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
-#from inout import data
-from dataio.file_types import Tiff
-from tomoRecon import tomoRecon
-from visualize import image
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-import os
-import h5py
+from dataio.data_convert import Convert
 
 import re
 
 #def main():
 
 file_name = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_.tif'
-aps1id_log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
+log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_test.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_test_new.h5'
 
 verbose = True
 
 if verbose: print file_name
-if verbose: print aps1id_log_file
+if verbose: print log_file
+if verbose: print hdf5_file_name
 
 
 
-#Read input SLS data
-file = open(aps1id_log_file, 'r')
+#Read input APS 1-ID log file data
+file = open(log_file, 'r')
 if verbose: print '###############################'
 ##for line in file:
 ##    if verbose: print line
@@ -86,20 +77,16 @@ if verbose: print dark_start, dark_end
 if verbose: print white_start, white_end
 if verbose: print projections_start, projections_end
 
-### if testing uncomment
-##projections_end = 952
-##white_end = 1846
-##dark_end = 1856
+# if testing uncomment
+projections_end = 952
+white_end = 1846
+dark_end = 1856
 
-z = np.arange(projections_end - projections_start);
-if verbose: print z, len(z)
-    
-# Fabricate theta values
-theta = (z * float(180) / (len(z) - 1))
-if verbose: print theta
 
-mydata = Preprocess()
-mydata.read_tiff(file_name,
+mydata = Convert()
+# Create minimal hdf5 file
+mydata.tiff(file_name,
+                 hdf5_file_name,
                  projections_start,
                  projections_end,
                  white_start = white_start,
@@ -109,11 +96,11 @@ mydata.read_tiff(file_name,
                  digits = 6
                  )
 
-
-#Write HDF5 file.
+ 
+# Add extra metadata if available
 
 # Open DataExchange file
-f = DataExchangeFile(hdf5_file_name, mode='w') 
+f = DataExchangeFile(hdf5_file_name, mode='a') 
 
 # Create HDF5 subgroup
 # /measurement/instrument
@@ -182,20 +169,6 @@ f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
             )
     )
 
-# Create HDF5 subgroup
-# /measurement/sample
-f.add_entry( DataExchangeEntry.sample( name={'value':'CAT4B_2'},
-                                        description={'value':'unknown'},
-        )
-    )
-
-# Create core HDF5 dataset in exchange group for 180 deep stack
-# of x,y images /exchange/data
-f.add_entry( DataExchangeEntry.data(data={'value': mydata.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-f.add_entry( DataExchangeEntry.data(theta={'value': theta, 'units':'degrees'}))
-f.add_entry( DataExchangeEntry.data(data_dark={'value': mydata.dark, 'units':'counts', 'axes':'theta_dark:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-f.add_entry( DataExchangeEntry.data(data_white={'value': mydata.white, 'units':'counts', 'axes':'theta_white:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
 
 f.close()
 
