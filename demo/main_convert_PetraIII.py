@@ -16,8 +16,8 @@ import re
 
 ### ct2: pj: from 0 -> 3600; bf from 0 -> 20; df from 0 -> 20
 ##file_name = '/local/data/databank/PetraIII/ct2/ct2_.tif'
-##file_name_dark = '/local/data/databank/PetraIII/ct2/df2b_.tif'
-##file_name_white = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
+##dark_file_name = '/local/data/databank/PetraIII/ct2/df2b_.tif'
+##white_file_name = '/local/data/databank/PetraIII/ct2/bf2b_.tif'
 ##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct2_180_new.h5'
 ##
 ##sample_name = 'ct2'
@@ -35,8 +35,8 @@ import re
 
 ### ct3: pj: from 0 -> 3601; bf from 20 -> 39; df from 0 -> 19
 ##file_name = '/local/data/databank/PetraIII/ct3/ct3_.tif'
-##file_name_dark = '/local/data/databank/PetraIII/ct3/df_.tif'
-##file_name_white = '/local/data/databank/PetraIII/ct3/bf_.tif'
+##dark_file_name = '/local/data/databank/PetraIII/ct3/df_.tif'
+##white_file_name = '/local/data/databank/PetraIII/ct3/bf_.tif'
 ##hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct3_180_new.h5'
 ##
 ##sample_name = 'ct3'
@@ -54,9 +54,9 @@ import re
 
 # ct4: pj: from 0 -> 1199; bf from 1 -> 18; df from 0 -> 19
 file_name = '/local/data/databank/PetraIII/ct4/ct4_.tif'
-file_name_dark = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
-file_name_white = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4_180_new.h5'
+dark_file_name = '/local/data/databank/PetraIII/ct4/df_ct4_.tif'
+white_file_name = '/local/data/databank/PetraIII/ct4/bf_ct4_.tif'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/PetraIII_ct4_180_new_new.h5'
 
     
 sample_name = 'ct4'
@@ -97,23 +97,23 @@ if verbose: print "Projections start, end", projections_start, projections_end
 
 mydata = Convert()
 # Create minimal hdf5 file
-mydata.tiff(file_name,
+mydata.series_of_images(file_name,
                  hdf5_file_name,
                  projections_start,
                  projections_end,
                  # projections_angle_range=360,
-                 file_name_white = file_name_white,
+                 white_file_name = white_file_name,
                  white_start = white_start,
                  white_end = white_end,
                  white_step = white_step,
-                 file_name_dark = file_name_dark,
+                 dark_file_name = dark_file_name,
                  dark_start = dark_start,
                  dark_end = dark_end,
                  dark_step = dark_step,
                  sample_name = sample_name,
                  digits = 5,
                  zeros = True,
-                 verbose = False
+                 # verbose = False
                  )
 
  

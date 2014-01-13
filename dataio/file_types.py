@@ -151,8 +151,8 @@ class Hdf4(FileInterface):
         f = SD.SD(file_name)
         sds = f.select(array_name)
         hdfdata = sds.get()
-        hdfdata = hdfdata.reshape(hdfdata.shape[1],
-                                  hdfdata.shape[0])
+        hdfdata = hdfdata.reshape(hdfdata.shape[0],
+                                  hdfdata.shape[1])
 
         # Select desired x from whole data.
         num_x, num_y = hdfdata.shape

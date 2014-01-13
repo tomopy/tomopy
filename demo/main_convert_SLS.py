@@ -12,7 +12,7 @@ import re
 file_name = '/local/data/databank/SLS_2011/Blakely_SLS/Blakely.tif'
 log_file = '/local/data/databank/SLS_2011/Blakely_SLS/Blakely.log'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_SLS_2011_new_convert.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_SLS_2011_new_convert_series_of_images.h5'
 
 ##file_name = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby_b.tif'
 ##log_file = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby.log'
@@ -86,14 +86,15 @@ projections_end = 1662
 
 mydata = Convert()
 # Create minimal hdf5 file
-mydata.tiff(file_name,
+mydata.series_of_images(file_name,
                  hdf5_file_name,
                  projections_start,
                  projections_end,
                  white_start = white_start,
                  white_end = white_end,
                  dark_start = dark_start,
-                 dark_end = dark_end
+                 dark_end = dark_end,
+                 verbose = False
                  )
 
  

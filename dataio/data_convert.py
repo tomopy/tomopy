@@ -15,7 +15,7 @@ class Convert():
         self.center = center
         self.angles = angles
     
-    def tiff(self, file_name,
+    def series_of_images(self, file_name,
                 hdf5_file_name,
                 projections_start=0,
                 projections_end=0,
@@ -27,27 +27,28 @@ class Convert():
                 pixels_start=None,
                 pixels_end=None,
                 pixels_step=None,
-                file_name_white=None,
+                white_file_name=None,
                 white_start=0,
                 white_end=0,
                 white_step=1,
-                file_name_dark=None,
+                dark_file_name=None,
                 dark_start=0,
                 dark_end=0,
                 dark_step=1,
                 digits=4,
                 zeros=True,
                 dtype='uint16',
+                data_type='tiff',
                 sample_name=None,
                 verbose=True):
-        """Read a stack of TIFF files in a folder.
+        """Read a stack of HDF-4 or TIFF files in a folder.
 
         Parameters
         ----------
         file_name : str
-            Base name of the input TIFF files.
-            For example if the projections names are /local/data/test_XXXX.tiff
-            file_name is /local/data/test_.tiff
+            Base name of the input HDF-4 or TIFF files.
+            For example if the projections names are /local/data/test_XXXX.hdf
+            file_name is /local/data/test_.hdf
             
         hdf5_file_name : str
             HDF5/data exchange file name
@@ -58,29 +59,29 @@ class Convert():
         slices_start, slices_end, slices_step : scalar, optional
             start and end pixel of the projection image to load along the rotation axis. Use step define a stride.
 
-        pixels_start, pixels_end, pixels_step : not used yet ...
+        pixels_start, pixels_end, pixels_step : not used yet.
 
-        file_name_white : str
-            Base name of the white field input TIFF files: string optinal.
-            For example if the white field names are /local/data/test_bg_XXXX.tiff
-            file_name is /local/data/test_bg_.tiff
-            if omitted file_name_white = file_name.
+        white_file_name : str
+            Base name of the white field input HDF-4 or TIFF files: string optional.
+            For example if the white field names are /local/data/test_bg_XXXX.hdf
+            file_name is /local/data/test_bg_.hdf
+            if omitted white_file_name = file_name.
 
         white_start, white_end : scalar, optional
             start and end index for the white field Tiff files to load. Use step define a stride.
 
-        file_name_dark : str
-            Base name of the dark field input TIFF files: string optinal.
-            For example if the white field names are /local/data/test_dk_XXXX.tiff
-            file_name is /local/data/test_dk_.tiff
-            if omitted file_name_dark = file_name.
+        dark_file_name : str
+            Base name of the dark field input HDF-4 or TIFF files: string optinal.
+            For example if the white field names are /local/data/test_dk_XXXX.hdf
+            file_name is /local/data/test_dk_.hdf
+            if omitted dark_file_name = file_name.
 
         dark_start, dark_end : scalar, optional
             start and end index for the dark field Tiff files to load. Use step define a stride.
 
         digits : scalar, optional
             Number of digits used for file indexing.
-            For example if 4: test_XXXX.tiff
+            For example if 4: test_XXXX.hdf
 
         zeros : bool, optional
             If ``True`` assumes all indexing uses four digits
@@ -88,19 +89,19 @@ class Convert():
             indexing (1, 2, ..., 9999)
 
         dtype : str, optional
-            Corresponding Numpy data type of the TIFF file.
+            Corresponding Numpy data type of the HDF-4 or TIFF file.
+
+        data_type : str, optional
+            if 'hdf4q m    ' will convert HDF-4 files (old 2-BM), deafult is 'tiff'
 
         Returns
         -------
-        inputData : list of tiff files contating projections, white and dark images
+        inputData : list of hdf files contating projections, white and dark images
 
         Output 2-D matrix as numpy array.
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
-        # Check if hdf5_file_name already exists.
-        if verbose: print "Check if the HDF5 was already created ..."
-        #self.hdf5_file_name = file_name
 
         # Initialize f to null.
         hdf5_file_extension = False
@@ -122,32 +123,51 @@ class Convert():
                 if verbose: print "HDF file extension must be .h5 or .hdf"
                 
 
-        # If f == None the call converts the tiff files.
+        # If the extension is correct and the file does not exists then convert
         if (hdf5_file_extension and (os.path.isfile(hdf5_file_name) == False)):
-            # Prepare tiff file names to be read.
-            if file_name_white == None:
-                    file_name_white = file_name
-                    if verbose: print "File Name White = ", file_name_white
-            if file_name_dark == None:
-                    file_name_dark = file_name
-                    if verbose: print "File Name Dark = ", file_name_dark
+            # Create new folder.
+            dirPath = os.path.dirname(hdf5_file_name)
+            if not os.path.exists(dirPath):
+                os.makedirs(dirPath)
+            # Prepare hdf file names to be read.
+            if white_file_name == None:
+                    white_file_name = file_name
+                    if verbose: print "File Name White = ", white_file_name
+            if dark_file_name == None:
+                    dark_file_name = file_name
+                    if verbose: print "File Name Dark = ", dark_file_name
 
             if verbose: print "File Name Projections = ", file_name
-            if verbose: print "File Name White = ", file_name_white
-            if verbose: print "File Name Dark = ", file_name_dark
+            if verbose: print "File Name White = ", white_file_name
+            if verbose: print "File Name Dark = ", dark_file_name
 
-            if file_name.endswith('tif') or \
-               file_name.endswith('tiff'):
-                dataFile = file_name.split('.')[-2]
-                dataExtension = file_name.split('.')[-1]
-            if file_name_white.endswith('tif') or \
-               file_name_white.endswith('tiff'):
-                dataFileWhite = file_name_white.split('.')[-2]
-                dataExtensionWhite = file_name_white.split('.')[-1]
-            if file_name_dark.endswith('tif') or \
-               file_name_dark.endswith('tiff'):
-                dataFileDark = file_name_dark.split('.')[-2]
-                dataExtensionDark = file_name_dark.split('.')[-1]
+            if (data_type is 'hdf4'):
+                if file_name.endswith('h4') or \
+                   file_name.endswith('hdf'):
+                    dataFile = file_name.split('.')[-2]
+                    dataExtension = file_name.split('.')[-1]
+                if white_file_name.endswith('h4') or \
+                   white_file_name.endswith('hdf'):
+                    dataFileWhite = white_file_name.split('.')[-2]
+                    dataExtensionWhite = white_file_name.split('.')[-1]
+                if dark_file_name.endswith('h4') or \
+                   dark_file_name.endswith('hdf'):
+                    dataFileDark = dark_file_name.split('.')[-2]
+                    dataExtensionDark = dark_file_name.split('.')[-1]
+            else:
+                if file_name.endswith('tif') or \
+                   file_name.endswith('tiff'):
+                    dataFile = file_name.split('.')[-2]
+                    dataExtension = file_name.split('.')[-1]
+                if white_file_name.endswith('tif') or \
+                   white_file_name.endswith('tiff'):
+                    dataFileWhite = white_file_name.split('.')[-2]
+                    dataExtensionWhite = white_file_name.split('.')[-1]
+                if dark_file_name.endswith('tif') or \
+                   dark_file_name.endswith('tiff'):
+                    dataFileDark = dark_file_name.split('.')[-2]
+                    dataExtensionDark = dark_file_name.split('.')[-1]
+
 
             fileIndex = ["" for x in range(digits)]
 
@@ -171,17 +191,29 @@ class Convert():
 
                 if os.path.isfile(fileName):
                     if verbose: print 'Reading projection file: ' + os.path.realpath(fileName)
-                    f = Tiff()
-                    tmpdata = f.read(fileName,
-                                        x_start=slices_start,
-                                        x_end=slices_end,
-                                        x_step=slices_step,
-                                        dtype=dtype)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'hdf4'):
+                        f = Hdf4()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            array_name = 'data'
+                                         )
+                    else:
+                        f = Tiff()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            dtype=dtype
+                                         )
                     if m == 0: # Get resolution once.
                         inputData = np.empty((projections_end-projections_start,
                                             tmpdata.shape[0],
                                             tmpdata.shape[1]),
-                                            dtype=dtype)
+                                            dtype=dtype
+                                    )
                     inputData[m, :, :] = tmpdata
             if len(ind) > 0:
                 self.data = inputData
@@ -199,18 +231,30 @@ class Convert():
 
                 if os.path.isfile(fileName):
                     if verbose: print 'Reading white file: ' + os.path.realpath(fileName)
-                    f = Tiff()
-                    tmpdata = f.read(fileName,
-                                        x_start=slices_start,
-                                        x_end=slices_end,
-                                        x_step=slices_step,
-                                        dtype=dtype)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'hdf4'):
+                        f = Hdf4()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            array_name = 'data'
+                                         )
+                    else:
+                        f = Tiff()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            dtype=dtype
+                                         )
                     if m == 0: # Get resolution once.
                         if verbose: print 'Tempory Data Array: (white_end-white_start) =', (white_end-white_start)/white_step + 1, 'tmpdata shape = (', tmpdata.shape[0], ',', tmpdata.shape[1], ')'
                         inputData = np.empty(((white_end - white_start)/white_step + 1,
                                             tmpdata.shape[0],
                                             tmpdata.shape[1]),
-                                            dtype=dtype)
+                                            dtype=dtype
+                                        )
                     if verbose: print 'm', m
                     inputData[m, :, :] = tmpdata
             if len(ind) > 0:
@@ -228,18 +272,30 @@ class Convert():
 
                 if os.path.isfile(fileName):
                     if verbose: print 'Reading dark file: ' + os.path.realpath(fileName)
-                    f = Tiff()
-                    tmpdata = f.read(fileName,
-                                        x_start=slices_start,
-                                        x_end=slices_end,
-                                        x_step=slices_step,
-                                        dtype=dtype)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'hdf4'):
+                        f = Hdf4()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            array_name = 'data'
+                                         )
+                    else:
+                        f = Tiff()
+                        tmpdata = f.read(fileName,
+                                            x_start=slices_start,
+                                            x_end=slices_end,
+                                            x_step=slices_step,
+                                            dtype=dtype
+                                         )
                     if m == 0: # Get resolution once.
                         if verbose: print 'Tempory Data Array: (dark_end-dark_start) =', (dark_end-dark_start), 'tmpdata shape = (', tmpdata.shape[0], ',', tmpdata.shape[1], ')'
                         inputData = np.empty(((dark_end - dark_start),
                                             tmpdata.shape[0],
                                             tmpdata.shape[1]),
-                                            dtype=dtype)
+                                            dtype=dtype
+                                        )
                     inputData[m, :, :] = tmpdata
             if len(ind) > 0:
                 self.dark = inputData
@@ -277,254 +333,7 @@ class Convert():
             f.close()
         else:
             if os.path.isfile(hdf5_file_name):
-                if verbose: print 'HDF5 already exists.'
+                print 'HDF5 already exists. Nothing to do ...'
             if (hdf5_file_extension == False):
-                if verbose: print "HDF file extension must be .h5 or .hdf"
+                print "HDF file extension must be .h5 or .hdf"
 
-
-    def hdf4(input_file,
-                     input_start,
-                     input_end,
-                     slices_start=None,
-                     slices_end=None,
-                     slices_step=None,
-                     pixels_start=None,
-                     pixels_end=None,
-                     pixels_step=None,
-                     digits=4,
-                     zeros=True,
-                     dtype='uint16',
-                     array_name=None,
-                     output_file='myfile.h5',
-                     white_file=None,
-                     white_start=None,
-                     white_end=None,
-                     dark_file=None,
-                     dark_start=None,
-                     dark_end=None):
-        """ Converts a stack of projection 16-bit HDF files
-        in a folder to a single HDF5 file. The dataset is
-        constructed using the projection data, white field
-        and dark field images.
-
-        Parameters
-        ----------
-        input_file : str
-            Name of the generic input file name
-            for all the HDF4 files to be assembled.
-
-        input_start, input_end : scalar
-            Determines the portion of the TIFF images
-            to be used for assembling the HDF file.
-
-        slices_start, slices_end, slices_step : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole ndarray.
-
-        pixels_start, pixels_end, pixels_step : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole ndarray.
-
-        digits : scalar, optional
-            Number of digits used for file indexing.
-            For example if 4: test_XXXX.tiff
-
-        zeros : bool, optional
-            If ``True`` assumes all indexing uses four digits
-            (0001, 0002, ..., 9999). If ``False`` omits zeros in
-            indexing (1, 2, ..., 9999)
-
-        dtype : str, optional
-            Corresponding Numpy data type of the TIFF file.
-
-        hdftype : scalar, optional
-            Type of HDF5 files to be read (4:HDF4, 5:HDF5)
-
-        output_file : str
-            Name of the output HDF5 file.
-
-        white_file : str, optional
-            Name of the generic input file name
-            for all the white field
-            HDF4 files to be assembled.
-
-        white_start, white_end : scalar, optional
-            Determines the portion of the white
-            field HDF4 images to be used for
-            assembling HDF5 file.
-
-        dark_file : str, optional
-            Name of the generic input file name
-            for all the white field
-            HDF4 files to be assembled.
-
-        dark_start, dark_end : scalar, optional
-            Determines the portion of the dark
-            field HDF4 images to be used for
-            assembling HDF5 file.
-        """
-        # Create new folders.
-        dirPath = os.path.dirname(output_file)
-        if not os.path.exists(dirPath):
-            os.makedirs(dirPath)
-
-        # Prepare HDF5 file.
-        print 'Assembling HDF5 file: ' + os.path.realpath(output_file)
-        f = h5py.File(output_file, 'w')
-        f.create_dataset('implements', data='exchange')
-        exchangeGrp = f.create_group("exchange")
-
-        # Update HDF5 file in chunks.
-        chunkSize = 20
-        ind1 = np.int(np.floor(np.float(input_start) / chunkSize))
-        ind2 = np.int(np.floor(np.float(input_end) / chunkSize))
-        for m in range(ind2-ind1):
-            indStart = (m * chunkSize) + input_start
-            indEnd = indStart + chunkSize
-            if indEnd > input_end:
-                indEnd = input_end
-
-            # Read projection files in the given folder.
-            input_data = read_stack(input_file,
-                                   input_start=indStart,
-                                   input_end=indEnd,
-                                   slices_start=slices_start,
-                                   slices_end=slices_end,
-                                   slices_step=slices_step,
-                                   pixels_start=pixels_start,
-                                   pixels_end=pixels_end,
-                                   pixels_step=pixels_step,
-                                   digits=digits,
-                                   zeros=zeros,
-                                   array_name=array_name)
-
-            # Update HDF5 file.
-            if m == 0:
-                dset = exchangeGrp.create_dataset('data',
-                                                  (input_end-input_start,
-                                                   input_data.shape[1],
-                                                   input_data.shape[2]),
-                                                  dtype=dtype)
-            dset[(indStart-input_start):(indEnd-input_start), :, :] = input_data
-
-        # Read white-field TIFF files in the given folder.
-        if not white_file == None:
-            whiteData = read_stack(white_file,
-                                   white_start,
-                                   white_end,
-                                   digits=digits,
-                                   zeros=zeros,
-                                   array_name=array_name)
-            exchangeGrp.create_dataset('data_white', data=whiteData, dtype=dtype)
-
-
-        # Read dark-field TIFF files in the given folder.
-        if not dark_file == None:
-            darkData = read_stack(dark_file,
-                                  dark_start,
-                                  dark_end,
-                                  digits=digits,
-                                  zeros=zeros,
-                                  array_name=array_name)
-            exchangeGrp.create_dataset('data_dark', data=darkData, dtype=dtype)
-        f.close()
-
-    def read_stack(input_file,
-                   input_start,
-                   input_end,
-                   slices_start=None,
-                   slices_end=None,
-                   slices_step=None,
-                   pixels_start=None,
-                   pixels_end=None,
-                   pixels_step=None,
-                   digits=4,
-                   zeros=True,
-                   dtype='uint16',
-                   array_name=None):
-        """Read a stack of files in a folder.
-
-        Parameters
-        ----------
-        input_file : str
-            Name of the input file.
-
-        input_start, input_end : scalar
-            Determines the portion of the images
-            to be used for assembling the HDF file.
-
-        slices_start, slices_end, slices_step : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole ndarray.
-
-        pixels_start, pixels_end, pixels_step : scalar, optional
-            Values of the start, end and step of the
-            slicing for the whole ndarray.
-
-        digits : scalar, optional
-            Number of digits used for file indexing.
-            For example if 4: test_XXXX.tiff
-
-        zeros : bool, optional
-            If ``True`` assumes all indexing uses four digits
-            (0001, 0002, ..., 9999). If ``False`` omits zeros in
-            indexing (1, 2, ..., 9999)
-
-        dtype : str, optional
-            Corresponding Numpy data type of the file.
-
-        Returns
-        -------
-        input_data : ndarray
-            Output 2-D matrix as numpy array.
-
-        .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
-        """
-        # Split the string with the delimeter '.'
-        #data_file = input_file.split('.')[-3] + '.' + input_file.split('.')[-2]
-        data_file = input_file.split('.')[-2]
-        data_extension = input_file.split('.')[-1]
-
-        file_index = ["" for x in range(digits)]
-        for m in range(digits):
-            if zeros is True:
-                file_index[m] = '0' * (digits - m - 1)
-
-            elif zeros is False:
-                file_index[m] = ''
-
-        ind = range(input_start, input_end)
-        for m in range(len(ind)):
-            for n in range(digits):
-                if ind[m] < np.power(10, n + 1):
-                    file_name = data_file + file_index[n] + str(ind[m]) + '.' + data_extension
-                    break
-
-            if os.path.isfile(file_name):
-                print 'Reading file: ' + os.path.realpath(file_name)
-                if data_extension == 'tiff' or data_extension == 'tif':
-                    f = Tiff()
-                    tmpdata = f.read(file_name, dtype=dtype,
-                                    slices_start=slices_start,
-                                    slices_end=slices_end,
-                                    slices_step=slices_step,
-                                    pixels_start=pixels_start,
-                                    pixels_end=pixels_end,
-                                    pixels_step=pixels_step)
-                elif data_extension == 'hdf':
-                    f = Hdf4()
-                    tmpdata = f.read(file_name,
-                                    slices_start=slices_start,
-                                    slices_end=slices_end,
-                                    slices_step=slices_step,
-                                    pixels_start=pixels_start,
-                                    pixels_end=pixels_end,
-                                    pixels_step=pixels_step,
-                                    array_name=array_name)
-            if m == 0: # Get resolution once.
-                input_data = np.empty((input_end-input_start,
-                                      tmpdata.shape[0],
-                                      tmpdata.shape[1]),
-                                     dtype=dtype)
-            input_data[m, :, :] = tmpdata
-        return input_data

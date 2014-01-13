@@ -85,7 +85,7 @@ if verbose: print projections_start, projections_end
 
 mydata = Convert()
 # Create minimal hdf5 file
-mydata.tiff(file_name,
+mydata.series_of_images(file_name,
                  hdf5_file_name,
                  projections_start,
                  projections_end,

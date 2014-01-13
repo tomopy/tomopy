@@ -10,18 +10,18 @@ import re
 #def main():
 
 ##file_name = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS_.tif'
-##file_name_dark = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSdrk_.tif'
-##file_name_white = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSbak_.tif'
+##dark_file_name = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSdrk_.tif'
+##white_file_name = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALSbak_.tif'
 ##log_file = '/local/data/databank/ALS_2011/Blakely/blakely_raw/blakelyALS.sct'
 ##
 ##hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_ALS_2011.h5'
 
 file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS_.tif'
-file_name_dark = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSdrk_.tif'
-file_name_white = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSbak_.tif'
+dark_file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSdrk_.tif'
+white_file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSbak_.tif'
 log_file = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS.sct'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011_new.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011_new_series_of_images.h5'
 
 verbose = True
 
@@ -31,7 +31,7 @@ if verbose: print hdf5_file_name
 
 
 
-#Read input SLS data
+#Read input ALS data
 file = open(log_file, 'r')
 if verbose: print '###############################'
 for line in file:
@@ -75,26 +75,27 @@ if verbose: print dark_start, dark_end
 if verbose: print white_start, white_end
 if verbose: print projections_start, projections_end
 
-# if testing uncomment
-dark_end = 2
-white_end = 361
-projections_end = 2
+### if testing uncomment
+##dark_end = 2
+##white_end = 361
+##projections_end = 2
 
 mydata = Convert()
 # Create minimal hdf5 file
-mydata.tiff(file_name,
+mydata.series_of_images(file_name,
                  hdf5_file_name,
                  projections_start,
                  projections_end,
-                 file_name_white = file_name_white,
+                 white_file_name = white_file_name,
                  white_start = white_start,
                  white_end = white_end,
                  white_step = white_step,
-                 file_name_dark = file_name_dark,
+                 dark_file_name = dark_file_name,
                  dark_start = dark_start,
                  dark_end = dark_end,
                  dark_step = dark_step,
-                 zeros = False
+                 zeros = False,
+                 verbose = False
                  )
 
  
