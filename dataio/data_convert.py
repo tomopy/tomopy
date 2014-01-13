@@ -319,15 +319,14 @@ class Convert():
             f.add_entry( DataExchangeEntry.data(data_dark={'value': self.dark, 'units':'counts', 'axes':'theta_dark:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
             f.add_entry( DataExchangeEntry.data(data_white={'value': self.white, 'units':'counts', 'axes':'theta_white:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
             f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-            if verbose:
-                print "Sample name = ", sample_name
-                if (sample_name == None):
-                    sample_name = end[0]
-                    f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was assigned by the HDF5 converter and based on the HDF5 fine name'}))
-                    if verbose: print "Assigned default file name", end[0]
-                else:
-                    f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was read from the user log file'}))
-                    if verbose: print "Assigned file name from user log"
+            if verbose: print "Sample name = ", sample_name
+            if (sample_name == None):
+                sample_name = end[0]
+                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was assigned by the HDF5 converter and based on the HDF5 fine name'}))
+                if verbose: print "Assigned default file name", end[0]
+            else:
+                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was read from the user log file'}))
+                if verbose: print "Assigned file name from user log"
                     
             
             f.close()
