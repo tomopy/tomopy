@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Filename: main_convert_Xradia.py
-""" Main program for convert xradia txrm and xrm data into tiff and HDF5 data exchange file.
+# Filename: XradiaConverter.py
+""" Main program for convert SLS data into dataExchange.
 """
 import dataio.xradia.xradia_xrm as xradia
 import dataio.xradia.data_stack_sim as dstack
@@ -12,173 +12,106 @@ import os
 
 import scipy
 
+from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
+from dataio.data_convert import Convert
+
+import re
+
 #def main():
 
-#filename = '/local/data/databank/TXM_NSLS/XrmTxrmExampleFiles/20120627_006_Tomography_SOFC_E8332.txrm'
-#bgfile = '/local/data/databank/TXM_NSLS/XrmTxrmExampleFiles/20120627_005_BackgroundforTomo_SOFC_E8332_Average.xrm'
-
-
-##filename = '/local/data/databank/TXM_NSLS/2013_smallTomo/20130405_016_tomoTest_6565eV_256x256x181proj_noBKG.txrm'
-##bgfile = '/local/data/databank/TXM_NSLS/2013_smallTomo/20130405_015_bkg_6565eV_256x256.xrm'
-##
-##save_dir = '/local/data/databank/TXM_NSLS/temp'
-##
-##filename = '/local/data/databank/TXM_NSLS/2012_largeTomo/20121015_002_SOFC_tomo_1kx1kx1441proj_noBKG.txrm'
-##bgfile = '/local/data/databank/TXM_NSLS/2012_largeTomo/20121015_001_SOFC_bkg_1kx1k.xrm'
-##
-##filename = '/local/data/databank/TXM_NSLS/2011_largeTomo/20111101_007_SOFC_8400eV_tomo_1k1k1441proj_noBKG.txrm'
-##bgfile = '/local/data/databank/TXM_NSLS/2011_largeTomo/20111101_006_SOFC_8400eV_bkg_1k1k.xrm'
-##
-##save_dir = '/local/data/databank/TXM_NSLS/temp2'
-
-filename = '/local/data/databank/TXM_26ID/20130731_004_Stripe_Solder_Sample_Tip1_TomoScript_181imgs_p1s_b1.txrm'
-bgfile = '/local/data/databank/TXM_26ID/20130731_001_Background_Reference_20imgs_p5s_b1.xrm'
-save_dir = '/local/data/databank/TXM_26ID/temp'
-
-HDF5 = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.h5'
+file_name = '/local/data/databank/TXM_26ID/20130731_004_Stripe_Solder_Sample_Tip1_TomoScript_181imgs_p1s_b1.txrm'
+white_file_name = '/local/data/databank/TXM_26ID/20130731_001_Background_Reference_20imgs_p5s_b1.xrm'
+hdf5_file_name = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1_new.h5'
 
 verbose = True
 
-imgname='Image'
+if verbose: print file_name
+if verbose: print white_file_name
+if verbose: print hdf5_file_name
 
-reader = xradia.xrm()
-array = dstruct
 
-if verbose: print "reading projections ... "
 
-reader.read_txrm(filename,array)
-nx, ny, nz_dt = np.shape(array.exchange.data)
-if verbose: print "done reading ", nz_dt, " projections images of (", nx,"x", ny, ") pixels"
+mydata = Convert()
+# Create minimal hdf5 file
+mydata.x_radia(file_name,
+               hdf5_file_name = hdf5_file_name,
+               white_file_name = white_file_name
+               )
 
-dt = np.zeros((nx,ny,nz_dt))
-dt = array.exchange.data[:,:,:]
-
-f = open(save_dir+'/configure.txt','w')
-f.write('Data creation date: \n')
-f.write(str(array.information.file_creation_datetime))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Sample name: \n')
-f.write(str(array.information.sample.name))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Experimenter name: \n')
-f.write(str(array.information.experimenter.name))
-f.write('\n')
-f.write('=======================================\n')
-f.write('X-ray energy: \n')
-f.write(str(array.exchange.energy))
-f.write(str(array.exchange.energy_units))
-f.write('\n')
-f.write('=======================================\n')
-f.write('nx, ny: \n')
-f.write(str(dt.shape[0]))
-f.write(', ')
-f.write(str(dt.shape[1]))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Number of frames: \n')
-f.write(str(dt.shape[2]))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Angles: \n')
-f.write(str(array.exchange.angles))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Data type: \n')
-f.write(str(dt.dtype))
-f.write('\n')
-f.write('=======================================\n')
-f.write('Data axes: \n')
-f.write(str(array.exchange.data_axes))
-f.write('\n')
-f.write('=======================================\n')
-f.write('x distance: \n')
-f.write(str(array.exchange.x))
-f.write('\n')
-f.write('=======================================\n')
-f.write('x units: \n')
-f.write(str(array.exchange.x_units))
-f.write('\n')
-f.write('=======================================\n')
-f.write('y distance: \n')
-f.write(str(array.exchange.y))
-f.write('\n')
-f.write('=======================================\n')
-f.write('y units: \n')
-f.write(str(array.exchange.y_units))
-f.write('\n')
-f.close()
-
-n_angles = np.shape(array.exchange.angles)
-if verbose: print "done reading ", n_angles, " angles"
-angles = np.zeros(n_angles)
-angles = array.exchange.angles[:]
-
-if verbose: print "reading background ... "
-reader.read_xrm(bgfile,array)
-nx, ny, nz = np.shape(array.exchange.data)
-bg = np.zeros((nx,ny,nz))
-bg = array.exchange.data[:,:,:]
-if verbose: print "done reading ", nz, " background image (s) of (", nx,"x", ny, ") pixels"
-
-if verbose: print "reading dark fields ... "
-## reader.read_xrm(dkfile,array)
-nx, ny, nz = np.shape(array.exchange.data)
-nz = 1
-dk = np.zeros((nx,ny,nz))
-## dk = array.exchange.data[:,:,:]
-if verbose: print "done reading ", nz, " dark image (s) of (", nx,"x", ny, ") pixels"
-
-#Write HDF5 file.
+ 
+# Add extra metadata if available
 
 # Open DataExchange file
-f = DataExchangeFile(HDF5, mode='w') 
+f = DataExchangeFile(hdf5_file_name, mode='a') 
 
 # Create HDF5 subgroup
 # /measurement/instrument
-f.add_entry( DataExchangeEntry.instrument(name={'value': 'APS-CNM 26-ID'}) )
+f.add_entry( DataExchangeEntry.instrument(name={'value': 'Tomcat'}) )
 
-### Create HDF5 subgroup
-### /measurement/instrument/source
-f.add_entry( DataExchangeEntry.source(name={'value': "Advanced Photon Source"},
-                                    date_time={'value': "2013-07-31T19:42:13+0100"},
-                                    beamline={'value': "26-ID"},
+# Create HDF5 subgroup
+# /measurement/instrument/source
+f.add_entry( DataExchangeEntry.source(name={'value': 'Swiss Light Source'},
+                                    date_time={'value': "2010-11-08T14:51:56+0100"},
+                                    beamline={'value': "Tomcat"},
+                                    current={'value': 401.96, 'units': 'mA', 'dataset_opts': {'dtype': 'd'}},
                                     )
 )
 
 # Create HDF5 subgroup
 # /measurement/instrument/monochromator
-f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Unknown'},
-                                            energy={'value': float(array.exchange.energy[0]), 'units': 'keV', 'dataset_opts': {'dtype': 'd'}},
-                                            mono_stripe={'value': 'Unknown'},
+f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Multilayer'},
+                                            energy={'value': 19.260, 'units': 'keV', 'dataset_opts': {'dtype': 'd'}},
+                                            mono_stripe={'value': 'Ru/C'},
                                             )
     )
 
 # Create HDF5 subgroup
 # /measurement/experimenter
-f.add_entry( DataExchangeEntry.experimenter(name={'value':"Robert Winarski"},
+f.add_entry( DataExchangeEntry.experimenter(name={'value':"Federica Marone"},
                                             role={'value':"Project PI"},
+                                            affiliation={'value':"Swiss Light Source"},
+                                            phone={'value':"+41 56 310 5318"},
+                                            email={'value':"federica.marone@psi.ch"},
+
                 )
     )
 
 # Create HDF5 subgroup
-# /measurement/sample
-f.add_entry( DataExchangeEntry.sample( name={'value':'Stripe_Solder_Sample_Tip1'},
-                                        description={'value':'data converted from txrm/xrm set'},
+# /measurement/instrument/detector
+f.add_entry( DataExchangeEntry.detector(manufacturer={'value':'CooKe Corporation'},
+                                        model={'value': 'pco dimax'},
+                                        serial_number={'value': '1234XW2'},
+                                        bit_depth={'value': 12, 'dataset_opts':  {'dtype': 'd'}},
+                                        x_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
+                                        y_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
+                                        x_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
+                                        y_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
+                                        x_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
+                                        y_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
+                                        operating_temperature={'value': 270, 'units':'K', 'dataset_opts':  {'dtype': 'f'}},
+                                        exposure_time={'value': 170, 'units':'ms', 'dataset_opts':  {'dtype': 'd'}},
+                                        frame_rate={'value': 3, 'dataset_opts':  {'dtype': 'i'}},
+                                        output_data={'value':'/exchange'}
+                                        )
+    )
+
+f.add_entry(DataExchangeEntry.objective(magnification={'value':10, 'dataset_opts': {'dtype': 'd'}},
+                                    )
+    )
+
+f.add_entry(DataExchangeEntry.scintillator(name={'value':'LuAg '},
+                                            type={'value':'LuAg'},
+                                            scintillating_thickness={'value':20e-6, 'dataset_opts': {'dtype': 'd'}},
         )
     )
 
-# Create core HDF5 dataset in exchange group for 180 deep stack
-# of x,y images /exchange/data
-f.add_entry( DataExchangeEntry.data(data={'value': dt, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x' }))
-f.add_entry( DataExchangeEntry.data(theta={'value': angles, 'units':'degrees'}))
-f.add_entry( DataExchangeEntry.data(data_dark={'value': dk, 'units':'counts', 'axes':'theta_dark:y:x' }))
-f.add_entry( DataExchangeEntry.data(data_white={'value': bg, 'units':'counts', 'axes':'theta_white:y:x' }))
-f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-
+# Create HDF5 subgroup
+# /measurement/experiment
+f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
+            )
+    )
 f.close()
-if verbose: print "Done converting ", filename
+if verbose: print "Done converting ", file_name
 
 ###if __name__ == "__main__":
 ###    main()
