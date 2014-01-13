@@ -98,7 +98,7 @@ class Convert():
         -------
         inputData : list of hdf files contating projections, white and dark images
 
-        Output 2-D matrix as numpy array.
+        Output : saves the data as HDF5 in hdf5_file_name
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
@@ -336,90 +336,37 @@ class Convert():
             if (hdf5_file_extension == False):
                 print "HDF file extension must be .h5 or .hdf"
 
-
     def x_radia(self, file_name,
                 hdf5_file_name,
-                projections_start=0,
-                projections_end=0,
-                projections_step=1,
-                projections_angle_range=180,
                 projections_data_type='txrm',
-                slices_start=None,
-                slices_end=None,
-                slices_step=None,
-                pixels_start=None,
-                pixels_end=None,
-                pixels_step=None,
                 white_file_name='',
-                white_start=0,
-                white_end=0,
-                white_step=1,
                 white_data_type='xrm',
                 dark_file_name='',
-                dark_start=0,
-                dark_end=0,
-                dark_step=1,
                 dark_data_type='xrm',
                 sample_name=None,
                 verbose=True):
-        """Read a stack of HDF-4 or TIFF files in a folder.
+        """Read a stack xradia files. This consists of up to 3 files:
+            txrm: one mandatory file, containing the projections
+            xrm: two optional files contating white and dark images
 
         Parameters
         ----------
         file_name : str
-            Base name of the input HDF-4 or TIFF files.
-            For example if the projections names are /local/data/test_XXXX.hdf
-            file_name is /local/data/test_.hdf
+            Name of the txrm file containing the projections.
             
         hdf5_file_name : str
             HDF5/data exchange file name
 
-        projections_start, projections_end, projections_step : scalar, optional
-            start and end index for the projection Tiff files to load. Use step define a stride.
+        white_file_name, dark_file_name : str, optional
+            Name of the xrm fileS containing the white and dark images
 
-        slices_start, slices_end, slices_step : scalar, optional
-            start and end pixel of the projection image to load along the rotation axis. Use step define a stride.
-
-        pixels_start, pixels_end, pixels_step : not used yet.
-
-        white_file_name : str
-            Base name of the white field input HDF-4 or TIFF files: string optional.
-            For example if the white field names are /local/data/test_bg_XXXX.hdf
-            file_name is /local/data/test_bg_.hdf
-            if omitted white_file_name = file_name.
-
-        white_start, white_end : scalar, optional
-            start and end index for the white field Tiff files to load. Use step define a stride.
-
-        dark_file_name : str
-            Base name of the dark field input HDF-4 or TIFF files: string optinal.
-            For example if the white field names are /local/data/test_dk_XXXX.hdf
-            file_name is /local/data/test_dk_.hdf
-            if omitted dark_file_name = file_name.
-
-        dark_start, dark_end : scalar, optional
-            start and end index for the dark field Tiff files to load. Use step define a stride.
-
-        digits : scalar, optional
-            Number of digits used for file indexing.
-            For example if 4: test_XXXX.hdf
-
-        zeros : bool, optional
-            If ``True`` assumes all indexing uses four digits
-            (0001, 0002, ..., 9999). If ``False`` omits zeros in
-            indexing (1, 2, ..., 9999)
-
-        dtype : str, optional
-            Corresponding Numpy data type of the HDF-4 or TIFF file.
-
-        data_type : str, optional
-            if 'hdf4q m    ' will convert HDF-4 files (old 2-BM), deafult is 'tiff'
+        projection_data_type, white_data_type, dark_data_type : str, optional
 
         Returns
         -------
         inputData : list of hdf files contating projections, white and dark images
 
-        Output 2-D matrix as numpy array.
+        Output : saves the data as HDF5 in hdf5_file_name
 
         .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
         """
@@ -492,6 +439,7 @@ class Convert():
             # Open DataExchange file
             f = DataExchangeFile(hdf5_file_name, mode='w') 
 
+            if verbose: print "Writing the HDF5 file"
             # Create core HDF5 dataset in exchange group for projections_theta_range
             # deep stack of x,y images /exchange/data
             f.add_entry( DataExchangeEntry.data(data={'value': self.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
