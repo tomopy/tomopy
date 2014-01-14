@@ -22,7 +22,7 @@ import re
 file_name = '/local/data/databank/TXM_26ID/20130731_004_Stripe_Solder_Sample_Tip1_TomoScript_181imgs_p1s_b1.txrm'
 white_file_name = '/local/data/databank/TXM_26ID/20130731_001_Background_Reference_20imgs_p5s_b1.xrm'
 hdf5_file_name = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1_nx.h5'
-log_file = '/local/data/databank/dataExchange/TXM/Blakely20130731_004_Stripe_Solder_Sample_Tip1.log'
+log_file = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.log'
 
 verbose = True
 

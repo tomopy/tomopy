@@ -21,7 +21,7 @@ dark_file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSdrk_.tif'
 white_file_name = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALSbak_.tif'
 log_file = '/local/data/databank/ALS_2011/Hornby/raw/hornbyALS.sct'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011_new_series_of_images.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_ALS_2011.h5'
 
 verbose = True
 
