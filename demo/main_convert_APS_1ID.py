@@ -12,7 +12,7 @@ import re
 file_name = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_.tif'
 log_file = '/local/data/databank/APS_1_ID/APS1ID_Cat4B_2/CAT4B_2_TomoStillScan.dat'
 
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2_new.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/CAT4B_2.h5'
 
 verbose = True
 
@@ -118,9 +118,9 @@ f.add_entry( DataExchangeEntry.source(name={'value': 'Advanced Photon Source'},
 
 # Create HDF5 subgroup
 # /measurement/instrument/monochromator
-f.add_entry( DataExchangeEntry.monochromator(type={'value': 'Multilayer'},
-                                            energy={'value': 19.260, 'units': 'keV', 'dataset_opts': {'dtype': 'd'}},
-                                            mono_stripe={'value': 'Ru/C'},
+f.add_entry( DataExchangeEntry.monochromator(type={'value': 'unknow'},
+                                            energy={'value': 65, 'units': 'keV', 'dataset_opts': {'dtype': 'd'}},
+                                            mono_stripe={'value': 'unknow'},
                                             )
     )
 
@@ -133,41 +133,6 @@ f.add_entry( DataExchangeEntry.experimenter(name={'value':"Peter Kenesei"},
                                             email={'value':"kenesei@aps.anl.gov"},
 
                 )
-    )
-
-# Create HDF5 subgroup
-# /measurement/instrument/detector
-f.add_entry( DataExchangeEntry.detector(manufacturer={'value':'CooKe Corporation'},
-                                        model={'value': 'pco dimax'},
-                                        serial_number={'value': '1234XW2'},
-                                        bit_depth={'value': 12, 'dataset_opts':  {'dtype': 'd'}},
-                                        x_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
-                                        y_pixel_size={'value': 6.7e-6, 'dataset_opts':  {'dtype': 'f'}},
-                                        x_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
-                                        y_dimensions={'value': 2048, 'dataset_opts':  {'dtype': 'i'}},
-                                        x_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
-                                        y_binning={'value': 1, 'dataset_opts':  {'dtype': 'i'}},
-                                        operating_temperature={'value': 270, 'units':'K', 'dataset_opts':  {'dtype': 'f'}},
-                                        exposure_time={'value': 170, 'units':'ms', 'dataset_opts':  {'dtype': 'd'}},
-                                        frame_rate={'value': 3, 'dataset_opts':  {'dtype': 'i'}},
-                                        output_data={'value':'/exchange'}
-                                        )
-    )
-
-f.add_entry(DataExchangeEntry.objective(magnification={'value':10, 'dataset_opts': {'dtype': 'd'}},
-                                    )
-    )
-
-f.add_entry(DataExchangeEntry.scintillator(name={'value':'LuAg '},
-                                            type={'value':'LuAg'},
-                                            scintillating_thickness={'value':20e-6, 'dataset_opts': {'dtype': 'd'}},
-        )
-    )
-
-# Create HDF5 subgroup
-# /measurement/experiment
-f.add_entry( DataExchangeEntry.experiment( proposal={'value':"e11218"},
-            )
     )
 
 

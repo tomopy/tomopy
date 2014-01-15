@@ -112,7 +112,7 @@ mydata.series_of_images(file_name,
                  sample_name = sample_name,
                  digits = 5,
                  zeros = True,
-                 # verbose = False
+                 verbose = False
                  )
 
  

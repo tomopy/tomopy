@@ -9,15 +9,15 @@ import re
 
 #def main():
 
-file_name = '/local/data/databank/APS_2_BM/Sam18_hornby/raw/Hornby_19keV_10x_.hdf'
-log_file = '/local/data/databank/APS_2_BM/Sam18_hornby/raw/Hornby.log'
-
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_APS_2011_new_convert_series_of_images.h5'
-
-##file_name = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby_b.tif'
-##log_file = '/local/data/databank/SLS_2011/Hornby_SLS/Hornby.log'
+##file_name = '/local/data/databank/APS_2_BM/Sam18_hornby/raw/Hornby_19keV_10x_.hdf'
+##log_file = '/local/data/databank/APS_2_BM/Sam18_hornby/raw/Hornby.log'
 ##
-##hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_SLS_2011.h5'
+##hdf5_file_name = '/local/data/databank/dataExchange/microCT/Hornby_APS_2011.h5'
+
+file_name = '/local/data/databank/APS_2_BM/Sam19_blakely/raw/Blakely_19keV_10x_.hdf'
+log_file = '/local/data/databank/APS_2_BM/Sam19_blakely/raw/Blakely.log'
+
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/Blakely_APS_2011.h5'
 
 verbose = True
 
@@ -103,7 +103,7 @@ mydata.series_of_images(file_name,
                  dark_end = dark_end,
                  digits = 5,
                  data_type = 'hdf4',
-                 verbose = False
+                 #verbose = False
              )
 
  
