@@ -477,7 +477,7 @@ class Spe(FileInterface):
              z_end=None,
              z_step=None
              ):
-        """ Read 3-D tomographic data from a txrm file and the background/reference image for an xrm files.
+        """ Read 3-D tomographic data from a spe file and the background/reference image for an xrm files.
 
         Opens ``file_name`` and copy into an array its content;
                 this is can be a series/scan of tomographic projections (if file_name extension is ``txrm``) or
@@ -506,15 +506,17 @@ class Spe(FileInterface):
             Returns the data as a matrix.
         """
         verbose = True
-        imgname = array_name
-        reader = xradia.xrm()
-        array = dstruct
-
+        #imgname = array_name
+        spe_data = spe.PrincetonSPEFile(file_name)
+        #array = dstruct
+        if verbose: print file_name
+        if verbose: print spe_data
         # Read data from file.
-        if file_name.endswith('txrm'):
+        if file_name.endswith('SPE'):
             if verbose: print "reading projections ... "
-            reader.read_txrm(file_name,array)
-            num_x, num_y, num_z = np.shape(array.exchange.data)
+            array = spe_data.getData()
+            #reader.openFile(file_name)
+            num_x, num_y, num_z = np.shape(array)
             if verbose:
                 print "done reading ", num_z, " projections images of (", num_x,"x", num_y, ") pixels"
 
@@ -540,7 +542,7 @@ class Spe(FileInterface):
             z_step = 1
 
         # Construct dataset from desired y.
-        dataset = array.exchange.data[x_start:x_end:x_step,
+        dataset = array[x_start:x_end:x_step,
                           y_start:y_end:y_step,
                           z_start:z_end:z_step]
         return dataset

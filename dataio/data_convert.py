@@ -3,7 +3,7 @@
 import numpy as np
 import os
 import h5py
-from dataio.file_types import Tiff, Hdf4, Hdf5, Txrm, Xrm
+from dataio.file_types import Tiff, Hdf4, Hdf5, Txrm, Xrm, Spe
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
 
 class Convert():
@@ -533,16 +533,16 @@ class Convert():
             if os.path.isfile(file_name):
                 if verbose: print 'Reading projection file: ' + os.path.realpath(file_name)
                 if verbose: print 'data type: ', projections_data_type
-                if (projections_data_type is 'txrm'):
-                    f = Txrm()
+                if (projections_data_type is 'SPE'):
+                    f = Spe()
                     tmpdata = f.read(file_name)
                     self.data = tmpdata
 
             if os.path.isfile(white_file_name):
                 if verbose: print 'Reading white file: ' + os.path.realpath(white_file_name)
                 if verbose: print 'data type: ', white_data_type
-                if (white_data_type is 'xrm'):
-                    f = Xrm()
+                if (white_data_type is 'SPE'):
+                    f = Spe()
                     tmpdata = f.read(white_file_name)
                     #inputData[m, :, :] = tmpdata
                     self.white = tmpdata
@@ -553,8 +553,8 @@ class Convert():
             if os.path.isfile(dark_file_name):
                 if verbose: print 'Reading dark file: ' + os.path.realpath(dark_file_name)
                 if verbose: print 'data type: ', dark_data_type
-                if (white_data_type is 'xrm'):
-                    f = Xrm()
+                if (white_data_type is 'SPE'):
+                    f = Spe()
                     tmpdata = f.read(dark_file_name)
                     #inputData[m, :, :] = tmpdata
                     self.dark = tmpdata
