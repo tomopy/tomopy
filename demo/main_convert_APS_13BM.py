@@ -31,7 +31,7 @@ if verbose: print hdf5_file_name
 mydata = Convert()
 # Create minimal hdf5 file
 if verbose: print "Reading data ... "
-mydata.x_radia(file_name,
+mydata.single_stack(file_name,
                hdf5_file_name = hdf5_file_name,
                white_file_name = white_file_name,
                sample_name = 'Stripe_Solder_Sample_Tip1'
