@@ -548,7 +548,7 @@ class Convert():
                     self.white = tmpdata
             else:
                 nx, ny, nz = np.shape(self.data)
-                self.dark = np.ones((nx,ny,1))
+                self.dark = np.ones((1,ny,nz))
 
             if os.path.isfile(dark_file_name):
                 if verbose: print 'Reading dark file: ' + os.path.realpath(dark_file_name)
@@ -560,7 +560,7 @@ class Convert():
                     self.dark = tmpdata
             else:
                 nx, ny, nz = np.shape(self.data)
-                self.dark = np.zeros((nx,ny,1))
+                self.dark = np.zeros((1,ny,nz))
 
 
             # Write HDF5 file.

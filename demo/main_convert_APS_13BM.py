@@ -18,7 +18,7 @@ import re
 
 file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_2.SPE'
 white_file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_1.SPE'
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_3.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_02.h5'
 # log_file = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.log'
 
 verbose = True

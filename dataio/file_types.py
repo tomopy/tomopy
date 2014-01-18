@@ -513,12 +513,12 @@ class Spe(FileInterface):
         if verbose: print spe_data
         # Read data from file.
         if file_name.endswith('SPE'):
-            if verbose: print "reading projections ... "
+            if verbose: print "reading data ... "
             array = spe_data.getData()
             #reader.openFile(file_name)
             num_x, num_y, num_z = np.shape(array)
             if verbose:
-                print "done reading ", num_z, " projections images of (", num_x,"x", num_y, ") pixels"
+                print "done reading ", num_z, " images of (", num_x,"x", num_y, ") pixels"
 
         # Select desired y from whole data.
         # num_x, num_y, num_z = hdfdata.shape
