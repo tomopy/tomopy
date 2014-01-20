@@ -465,139 +465,10 @@ class Convert():
             if (hdf5_file_extension == False):
                 print "HDF file extension must be .h5 or .hdf"
 
-    def single_stack(self, file_name,
-                hdf5_file_name,
-                projections_data_type='txrm',
-                white_file_name='',
-                white_data_type='xrm',
-                dark_file_name='',
-                dark_data_type='xrm',
-                sample_name=None,
-                verbose=True):
-        """Read a stack xradia files. This consists of up to 3 files:
-            txrm: one mandatory file, containing the projections
-            xrm: two optional files contating white and dark images
-
-        Parameters
-        ----------
-        file_name : str
-            Name of the txrm file containing the projections.
-            
-        hdf5_file_name : str
-            HDF5/data exchange file name
-
-        white_file_name, dark_file_name : str, optional
-            Name of the xrm fileS containing the white and dark images
-
-        projection_data_type, white_data_type, dark_data_type : str, optional
-
-        Returns
-        -------
-        inputData : list of hdf files contating projections, white and dark images
-
-        Output : saves the data as HDF5 in hdf5_file_name
-
-        .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
-        """
-
-        # Initialize f to null.
-        hdf5_file_extension = False
-
-        # Get the file_name in lower case.
-        lFn = hdf5_file_name.lower()
-
-        # Split the string with the delimeter '.'
-        end = lFn.split('.')
-        if verbose: print end
-        # If the string has an extension.
-        if len(end) > 1:
-            # Check.
-            if end[len(end) - 1] == 'h5' or end[len(end) - 1] == 'hdf':
-                hdf5_file_extension = True
-                if verbose: print "HDF file extension is .h5 or .hdf"
-            else:
-                hdf5_file_extension = False
-                if verbose: print "HDF file extension must be .h5 or .hdf"
-                
-
-        # If the extension is correct and the file does not exists then convert
-        if (hdf5_file_extension and (os.path.isfile(hdf5_file_name) == False)):
-            # Create new folder.
-            dirPath = os.path.dirname(hdf5_file_name)
-            if not os.path.exists(dirPath):
-                os.makedirs(dirPath)
-
-            if verbose: print "File Name Projections = ", file_name
-            if verbose: print "File Name White = ", white_file_name
-            if verbose: print "File Name Dark = ", dark_file_name
-
-            if os.path.isfile(file_name):
-                if verbose: print 'Reading projection file: ' + os.path.realpath(file_name)
-                if verbose: print 'data type: ', projections_data_type
-                if (projections_data_type is 'txrm'):
-                    f = Txrm()
-                    tmpdata = f.read(file_name)
-                    self.data = tmpdata
-
-            if os.path.isfile(white_file_name):
-                if verbose: print 'Reading white file: ' + os.path.realpath(white_file_name)
-                if verbose: print 'data type: ', white_data_type
-                if (white_data_type is 'xrm'):
-                    f = Xrm()
-                    tmpdata = f.read(white_file_name)
-                    #inputData[m, :, :] = tmpdata
-                    self.white = tmpdata
-            else:
-                nx, ny, nz = np.shape(self.data)
-                self.white = np.ones((nx,ny,1))
-
-            if os.path.isfile(dark_file_name):
-                if verbose: print 'Reading dark file: ' + os.path.realpath(dark_file_name)
-                if verbose: print 'data type: ', dark_data_type
-                if (white_data_type is 'xrm'):
-                    f = Xrm()
-                    tmpdata = f.read(dark_file_name)
-                    #inputData[m, :, :] = tmpdata
-                    self.dark = tmpdata
-            else:
-                nx, ny, nz = np.shape(self.data)
-                self.dark = np.zeros((nx,ny,1))
-
-
-            # Write HDF5 file.
-            # Open DataExchange file
-            f = DataExchangeFile(hdf5_file_name, mode='w') 
-
-            if verbose: print "Writing the HDF5 file"
-            # Create core HDF5 dataset in exchange group for projections_theta_range
-            # deep stack of x,y images /exchange/data
-            f.add_entry( DataExchangeEntry.data(data={'value': self.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-            f.add_entry( DataExchangeEntry.data(theta={'value': self.theta, 'units':'degrees'}))
-            f.add_entry( DataExchangeEntry.data(data_dark={'value': self.dark, 'units':'counts', 'axes':'theta_dark:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-            f.add_entry( DataExchangeEntry.data(data_white={'value': self.white, 'units':'counts', 'axes':'theta_white:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
-            f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
-            if verbose: print "Sample name = ", sample_name
-            if (sample_name == None):
-                sample_name = end[0]
-                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was assigned by the HDF5 converter and based on the HDF5 fine name'}))
-                if verbose: print "Assigned default file name", end[0]
-            else:
-                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was read from the user log file'}))
-                if verbose: print "Assigned file name from user log"
-                    
-            
-            f.close()
-        else:
-            if os.path.isfile(hdf5_file_name):
-                print 'HDF5 already exists. Nothing to do ...'
-            if (hdf5_file_extension == False):
-                print "HDF file extension must be .h5 or .hdf"
-
-
     def multiple_stack(self, file_name,
                 hdf5_file_name,
                 projections_start=0,
-                projections_end=0,
+                projections_end=1,
                 projections_step=1,
                 white_file_name=None,
                 white_start=0,
@@ -608,29 +479,59 @@ class Convert():
                 dark_end=0,
                 dark_step=1,
                 digits=4,
-                zeros=True,
+                zeros=False,
                 data_type='spe',
-                dtype='uint16',
                 sample_name=None,
-                verbose=True):
-        """Read a stack spe files. Each spe file contains a stack of images
+                verbose=False):
+        """Read a stack spe files. Each SPE file contains a stack of projections/white images
 
         Parameters
         ----------
         file_name : str
-            Name of the txrm file containing the projections.
+            Base name of the input SPE files.
+            For example if the projection file names are /local/data/test_XXXX.SPE
+            file_name is /local/data/test_.hdf
+            
+        projections_start, projections_end, projections_step : scalar, optional
+            start and end index for the projection Tiff files to load. Use step define a stride.
+
+        white_file_name : str
+            Base name of the white field input SPE files: string optional.
+            For example if the white field names are /local/data/test_bg_XXXX.SPE
+            file_name is /local/data/test_bg_.SPE
+            if omitted white_file_name = file_name.
+
+        white_start, white_end, white_step : scalar, optional
+            start and end index for the white field SPE files to load.
+            white_step defines the stride.
+
+        dark_file_name : str
+            Base name of the dark field input SPE files: string optinal.
+            For example if the white field names are /local/data/test_dk_XXXX.SPE
+            file_name is /local/data/test_dk_.SPE
+            if omitted dark_file_name = file_name.
+
+        dark_start, dark_end, dark_step : scalar, optional
+            start and end index for the dark field Tiff files to load. 
+            dark_step defines the stride.
+
+        digits : scalar, optional
+            Number of digits used for file indexing.
+            For example if 4: test_XXXX.hdf
+
+        zeros : bool, optional
+            If ``True`` assumes all indexing uses four digits
+            (0001, 0002, ..., 9999). If ``False`` omits zeros in
+            indexing (1, 2, ..., 9999)
+
+        data_type : str, optional
+            Not used 
             
         hdf5_file_name : str
             HDF5/data exchange file name
 
-        white_file_name, dark_file_name : str, optional
-            Name of the xrm fileS containing the white and dark images
-
-        projection_data_type, white_data_type, dark_data_type : str, optional
-
         Returns
         -------
-        inputData : list of hdf files contating projections, white and dark images
 
         Output : saves the data as HDF5 in hdf5_file_name
 
@@ -734,7 +635,6 @@ class Convert():
 
             # Reading white.
             fileName = ''
-            off_set = 0
             ind = range(white_start, white_end, white_step)
             if verbose: print 'white: Start =', white_start, 'End =', white_end, 'Step =', white_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
             for m in range(len(ind)):
@@ -772,7 +672,6 @@ class Convert():
 
             # Reading dark.
             fileName = ''
-            off_set = 0
             ind = range(dark_start, dark_end, dark_step)
             if verbose: print 'dark: Start =', dark_start, 'End =', dark_end, 'Step =', dark_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
             for m in range(len(ind)):
@@ -816,6 +715,7 @@ class Convert():
             # Create core HDF5 dataset in exchange group for projections_theta_range
             # deep stack of x,y images /exchange/data
             f.add_entry( DataExchangeEntry.data(data={'value': self.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
+            print self.theta
             f.add_entry( DataExchangeEntry.data(theta={'value': self.theta, 'units':'degrees'}))
             f.add_entry( DataExchangeEntry.data(data_dark={'value': self.dark, 'units':'counts', 'axes':'theta_dark:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
             f.add_entry( DataExchangeEntry.data(data_white={'value': self.white, 'units':'counts', 'axes':'theta_white:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))

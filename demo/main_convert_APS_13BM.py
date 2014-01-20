@@ -21,7 +21,7 @@ import re
 #white_file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_.SPE'
 
 file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_.SPE'
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_17.h5'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_20.h5'
 # log_file = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.log'
 
 verbose = True
@@ -35,13 +35,6 @@ if verbose: print hdf5_file_name
 mydata = Convert()
 # Create minimal hdf5 file
 if verbose: print "Reading data ... "
-##mydata.single_stack(file_name,
-##               hdf5_file_name = hdf5_file_name,
-##               projections_data_type='SPE',
-##               white_file_name = white_file_name,
-##               white_data_type='SPE',
-##               #sample_name = 'Stripe_Solder_Sample_Tip1'
-##               )
 mydata.multiple_stack(file_name,
                     hdf5_file_name = hdf5_file_name,
                     projections_start=2,
@@ -50,9 +43,7 @@ mydata.multiple_stack(file_name,
                     white_start=1,
                     white_end=8,
                     white_step=2,
-                    data_type='spe',
-                    zeros=False
-               #sample_name = 'Stripe_Solder_Sample_Tip1'
+                    sample_name = 'Stripe_Solder_Sample_Tip1'
                )
 if verbose: print "Done reading data ... "
 
