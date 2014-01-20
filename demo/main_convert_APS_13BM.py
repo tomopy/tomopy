@@ -2,7 +2,8 @@
 # Filename: XradiaConverter.py
 """ Main program for convert SLS data into dataExchange.
 """
-import dataio.data_spe as spe
+#from dataio.file_types import Spe
+#import dataio.data_spe as spe
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
 
 import numpy as np
@@ -16,26 +17,41 @@ import re
 
 #def main():
 
-file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_2.SPE'
-white_file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_1.SPE'
-hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_02.h5'
+#file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_2.SPE'
+#white_file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_.SPE'
+
+file_name = '/local/data/databank/APS_13_BM/run2_soln1_2_.SPE'
+hdf5_file_name = '/local/data/databank/dataExchange/microCT/run2_soln1_17.h5'
 # log_file = '/local/data/databank/dataExchange/TXM/20130731_004_Stripe_Solder_Sample_Tip1.log'
 
 verbose = True
 
+
 if verbose: print file_name
-if verbose: print white_file_name
+#if verbose: print white_file_name
 if verbose: print hdf5_file_name
 #if verbose: print log_file
 
 mydata = Convert()
 # Create minimal hdf5 file
 if verbose: print "Reading data ... "
-mydata.single_stack(file_name,
-               hdf5_file_name = hdf5_file_name,
-               projections_data_type='SPE',
-               white_file_name = white_file_name,
-               white_data_type='SPE',
+##mydata.single_stack(file_name,
+##               hdf5_file_name = hdf5_file_name,
+##               projections_data_type='SPE',
+##               white_file_name = white_file_name,
+##               white_data_type='SPE',
+##               #sample_name = 'Stripe_Solder_Sample_Tip1'
+##               )
+mydata.multiple_stack(file_name,
+                    hdf5_file_name = hdf5_file_name,
+                    projections_start=2,
+                    projections_end=7,
+                    projections_step=2,
+                    white_start=1,
+                    white_end=8,
+                    white_step=2,
+                    data_type='spe',
+                    zeros=False
                #sample_name = 'Stripe_Solder_Sample_Tip1'
                )
 if verbose: print "Done reading data ... "

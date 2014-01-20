@@ -5,6 +5,7 @@ import os
 import h5py
 from dataio.file_types import Tiff, Hdf4, Hdf5, Txrm, Xrm, Spe
 from dataio.data_exchange import DataExchangeFile, DataExchangeEntry
+import dataio.data_spe as spe
 
 class Convert():
     def __init__(self, data=None, white=None, dark=None,
@@ -533,35 +534,279 @@ class Convert():
             if os.path.isfile(file_name):
                 if verbose: print 'Reading projection file: ' + os.path.realpath(file_name)
                 if verbose: print 'data type: ', projections_data_type
-                if (projections_data_type is 'SPE'):
-                    f = Spe()
+                if (projections_data_type is 'txrm'):
+                    f = Txrm()
                     tmpdata = f.read(file_name)
                     self.data = tmpdata
 
             if os.path.isfile(white_file_name):
                 if verbose: print 'Reading white file: ' + os.path.realpath(white_file_name)
                 if verbose: print 'data type: ', white_data_type
-                if (white_data_type is 'SPE'):
-                    f = Spe()
+                if (white_data_type is 'xrm'):
+                    f = Xrm()
                     tmpdata = f.read(white_file_name)
                     #inputData[m, :, :] = tmpdata
                     self.white = tmpdata
             else:
                 nx, ny, nz = np.shape(self.data)
-                self.dark = np.ones((1,ny,nz))
+                self.white = np.ones((nx,ny,1))
 
             if os.path.isfile(dark_file_name):
                 if verbose: print 'Reading dark file: ' + os.path.realpath(dark_file_name)
                 if verbose: print 'data type: ', dark_data_type
-                if (white_data_type is 'SPE'):
-                    f = Spe()
+                if (white_data_type is 'xrm'):
+                    f = Xrm()
                     tmpdata = f.read(dark_file_name)
                     #inputData[m, :, :] = tmpdata
                     self.dark = tmpdata
             else:
                 nx, ny, nz = np.shape(self.data)
-                self.dark = np.zeros((1,ny,nz))
+                self.dark = np.zeros((nx,ny,1))
 
+
+            # Write HDF5 file.
+            # Open DataExchange file
+            f = DataExchangeFile(hdf5_file_name, mode='w') 
+
+            if verbose: print "Writing the HDF5 file"
+            # Create core HDF5 dataset in exchange group for projections_theta_range
+            # deep stack of x,y images /exchange/data
+            f.add_entry( DataExchangeEntry.data(data={'value': self.data, 'units':'counts', 'description': 'transmission', 'axes':'theta:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
+            f.add_entry( DataExchangeEntry.data(theta={'value': self.theta, 'units':'degrees'}))
+            f.add_entry( DataExchangeEntry.data(data_dark={'value': self.dark, 'units':'counts', 'axes':'theta_dark:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
+            f.add_entry( DataExchangeEntry.data(data_white={'value': self.white, 'units':'counts', 'axes':'theta_white:y:x', 'dataset_opts':  {'compression': 'gzip', 'compression_opts': 4} }))
+            f.add_entry( DataExchangeEntry.data(title={'value': 'tomography_raw_projections'}))
+            if verbose: print "Sample name = ", sample_name
+            if (sample_name == None):
+                sample_name = end[0]
+                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was assigned by the HDF5 converter and based on the HDF5 fine name'}))
+                if verbose: print "Assigned default file name", end[0]
+            else:
+                f.add_entry( DataExchangeEntry.sample( name={'value':sample_name}, description={'value':'Sample name was read from the user log file'}))
+                if verbose: print "Assigned file name from user log"
+                    
+            
+            f.close()
+        else:
+            if os.path.isfile(hdf5_file_name):
+                print 'HDF5 already exists. Nothing to do ...'
+            if (hdf5_file_extension == False):
+                print "HDF file extension must be .h5 or .hdf"
+
+
+    def multiple_stack(self, file_name,
+                hdf5_file_name,
+                projections_start=0,
+                projections_end=0,
+                projections_step=1,
+                white_file_name=None,
+                white_start=0,
+                white_end=0,
+                white_step=1,
+                dark_file_name=None,
+                dark_start=0,
+                dark_end=0,
+                dark_step=1,
+                digits=4,
+                zeros=True,
+                data_type='spe',
+                dtype='uint16',
+                sample_name=None,
+                verbose=True):
+        """Read a stack spe files. Each spe file contains a stack of images
+
+        Parameters
+        ----------
+        file_name : str
+            Name of the txrm file containing the projections.
+            
+        hdf5_file_name : str
+            HDF5/data exchange file name
+
+        white_file_name, dark_file_name : str, optional
+            Name of the xrm fileS containing the white and dark images
+
+        projection_data_type, white_data_type, dark_data_type : str, optional
+
+        Returns
+        -------
+        inputData : list of hdf files contating projections, white and dark images
+
+        Output : saves the data as HDF5 in hdf5_file_name
+
+        .. See also:: http://docs.scipy.org/doc/numpy/user/basics.types.html
+        """
+        
+        # Initialize f to null.
+        hdf5_file_extension = False
+
+        # Get the file_name in lower case.
+        lFn = hdf5_file_name.lower()
+
+        # Split the string with the delimeter '.'
+        end = lFn.split('.')
+        if verbose: print end
+        # If the string has an extension.
+        if len(end) > 1:
+            # Check.
+            if end[len(end) - 1] == 'h5' or end[len(end) - 1] == 'hdf':
+                hdf5_file_extension = True
+                if verbose: print "HDF file extension is .h5 or .hdf"
+            else:
+                hdf5_file_extension = False
+                if verbose: print "HDF file extension must be .h5 or .hdf"
+                
+
+        # If the extension is correct and the file does not exists then convert
+        if (hdf5_file_extension and (os.path.isfile(hdf5_file_name) == False)):
+            # Create new folder.
+            dirPath = os.path.dirname(hdf5_file_name)
+            if not os.path.exists(dirPath):
+                os.makedirs(dirPath)
+            # Prepare hdf file names to be read.
+            if white_file_name == None:
+                    white_file_name = file_name
+                    if verbose: print "File Name White = ", white_file_name
+            if dark_file_name == None:
+                    dark_file_name = file_name
+                    if verbose: print "File Name Dark = ", dark_file_name
+
+            if verbose: print "File Name Projections = ", file_name
+            if verbose: print "File Name White = ", white_file_name
+            if verbose: print "File Name Dark = ", dark_file_name
+
+            if (data_type is 'spe'):
+                if file_name.endswith('SPE') or \
+                   file_name.endswith('spe'):
+                    dataFile = file_name.split('.')[-2]
+                    dataExtension = file_name.split('.')[-1]
+                if white_file_name.endswith('SPE') or \
+                   white_file_name.endswith('spe'):
+                    dataFileWhite = white_file_name.split('.')[-2]
+                    dataExtensionWhite = white_file_name.split('.')[-1]
+                if dark_file_name.endswith('SPE') or \
+                   dark_file_name.endswith('spe'):
+                    dataFileDark = dark_file_name.split('.')[-2]
+                    dataExtensionDark = dark_file_name.split('.')[-1]
+
+            fileIndex = ["" for x in range(digits)]
+
+            for m in range(digits):
+                if zeros is True:
+                   fileIndex[m] = '0' * (digits - m - 1)
+
+                elif zeros is False:
+                   fileIndex[m] = ''
+
+            # Reading projections.
+            fileName = ''
+            ind = range(projections_start, projections_end, projections_step)
+            if verbose: print 'projections: Start =', projections_start, 'End =', projections_end, 'Step =', projections_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
+            for m in range(len(ind)):
+                if verbose: print 'm = ', m, 'range =', range(len(ind))
+                for n in range(digits):
+                    if verbose: print 'n = ', n, 'range =', range(digits)
+                    if verbose: print 'n =', n, 'ind[m]', ind[m], '<', np.power(10, n + 1)
+                    if ind[m] < np.power(10, n + 1):
+                        fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                        if verbose: print 'Generating file names: ' + fileName
+                        break
+                if os.path.isfile(fileName):
+                    spe_data = spe.PrincetonSPEFile(fileName)
+                    if verbose: print spe_data
+
+                    if verbose: print 'Reading projections file: ' + os.path.realpath(fileName)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'spe'):
+                        f = Spe()
+                        tmpdata = f.read(fileName)
+                        if verbose: print tmpdata.shape[0], tmpdata.shape[1], tmpdata.shape[2]  
+                        if m == 0: # Get resolution once.
+                            inputData = np.vstack([tmpdata])
+                        else:
+                            inputData = np.concatenate((inputData, tmpdata), axis=0)
+                            if verbose: print "inputData: ", inputData.shape[0], inputData.shape[1], inputData.shape[2]
+
+            if len(ind) > 0:
+                self.data = inputData
+                if verbose: print "Done loading projections"
+                if verbose: print self.data.shape[0], self.data.shape[1], self.data.shape[2]  
+
+            # Reading white.
+            fileName = ''
+            off_set = 0
+            ind = range(white_start, white_end, white_step)
+            if verbose: print 'white: Start =', white_start, 'End =', white_end, 'Step =', white_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
+            for m in range(len(ind)):
+                if verbose: print 'm = ', m, 'range =', range(len(ind))
+                for n in range(digits):
+                    if verbose: print 'n = ', n, 'range =', range(digits)
+                    if verbose: print 'n =', n, 'ind[m]', ind[m], '<', np.power(10, n + 1)
+                    if ind[m] < np.power(10, n + 1):
+                        fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                        if verbose: print 'Generating file names: ' + fileName
+                        break
+                if os.path.isfile(fileName):
+                    spe_data = spe.PrincetonSPEFile(fileName)
+                    if verbose: print spe_data
+
+                    if verbose: print 'Reading white file: ' + os.path.realpath(fileName)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'spe'):
+                        f = Spe()
+                        tmpdata = f.read(fileName)
+                        if verbose: print tmpdata.shape[0], tmpdata.shape[1], tmpdata.shape[2]  
+                        if m == 0: # Get resolution once.
+                            inputData = np.vstack([tmpdata])
+                        else:
+                            inputData = np.concatenate((inputData, tmpdata), axis=0)
+                            if verbose: print "inputData: ", inputData.shape[0], inputData.shape[1], inputData.shape[2]
+
+            if len(ind) > 0:
+                self.white = inputData
+                if verbose: print "Done loading white"
+                if verbose: print self.white.shape[0], self.white.shape[1], self.white.shape[2]  
+            else:
+                nx, ny, nz = np.shape(self.data)
+                self.white = np.ones((1, ny, nx))
+
+            # Reading dark.
+            fileName = ''
+            off_set = 0
+            ind = range(dark_start, dark_end, dark_step)
+            if verbose: print 'dark: Start =', dark_start, 'End =', dark_end, 'Step =', dark_step, 'ind =', ind, 'range(digits) =', range(digits),'len(ind) =', len(ind), 'range(lan(ind)) =', range(len(ind))
+            for m in range(len(ind)):
+                if verbose: print 'm = ', m, 'range =', range(len(ind))
+                for n in range(digits):
+                    if verbose: print 'n = ', n, 'range =', range(digits)
+                    if verbose: print 'n =', n, 'ind[m]', ind[m], '<', np.power(10, n + 1)
+                    if ind[m] < np.power(10, n + 1):
+                        fileName = dataFile + fileIndex[n] + str(ind[m]) + '.' + dataExtension
+                        if verbose: print 'Generating file names: ' + fileName
+                        break
+                if os.path.isfile(fileName):
+                    spe_data = spe.PrincetonSPEFile(fileName)
+                    if verbose: print spe_data
+
+                    if verbose: print 'Reading dark file: ' + os.path.realpath(fileName)
+                    if verbose: print 'data type: ', data_type
+                    if (data_type is 'spe'):
+                        f = Spe()
+                        tmpdata = f.read(fileName)
+                        if verbose: print tmpdata.shape[0], tmpdata.shape[1], tmpdata.shape[2]  
+                        if m == 0: # Get resolution once.
+                            inputData = np.vstack([tmpdata])
+                        else:
+                            inputData = np.concatenate((inputData, tmpdata), axis=0)
+                            if verbose: print "inputData: ", inputData.shape[0], inputData.shape[1], inputData.shape[2]
+
+            if len(ind) > 0:
+                self.dark = inputData
+                if verbose: print "Done loading dark"
+                if verbose: print self.dark.shape[0], self.dark.shape[1], self.dark.shape[2]  
+            else:
+                nx, ny, nz = np.shape(self.data)
+                self.dark = np.zeros((1, ny, nx))
 
             # Write HDF5 file.
             # Open DataExchange file

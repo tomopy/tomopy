@@ -475,7 +475,8 @@ class Spe(FileInterface):
              y_step=None,
              z_start=None,
              z_end=None,
-             z_step=None
+             z_step=None,
+             verbose=False
              ):
         """ Read 3-D tomographic data from a spe file and the background/reference image for an xrm files.
 
@@ -505,7 +506,7 @@ class Spe(FileInterface):
         out : array
             Returns the data as a matrix.
         """
-        verbose = True
+        verbose = False
         #imgname = array_name
         spe_data = spe.PrincetonSPEFile(file_name)
         #array = dstruct
@@ -518,7 +519,7 @@ class Spe(FileInterface):
             #reader.openFile(file_name)
             num_x, num_y, num_z = np.shape(array)
             if verbose:
-                print "done reading ", num_z, " images of (", num_x,"x", num_y, ") pixels"
+                print "done reading ", num_x, " images of (", num_z,"x", num_y, ") pixels"
 
         # Select desired y from whole data.
         # num_x, num_y, num_z = hdfdata.shape
