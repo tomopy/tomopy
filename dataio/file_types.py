@@ -5,7 +5,6 @@ import os
 import numpy as np
 from scipy import misc
 import PIL.Image as Image
-from pyhdf import SD
 from file_interface import FileInterface
 
 class Hdf5(FileInterface):
