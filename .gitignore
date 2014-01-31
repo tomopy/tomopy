@@ -48,3 +48,8 @@ Thumbs.db
 *.cls
 *.layout
 *.bst
+
+# Test files #
+##############
+test.py
+main.py

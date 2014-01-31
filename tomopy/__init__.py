@@ -9,4 +9,4 @@ except:
 from dataio.reader import Dataset
 import dataio.writer
 import preprocess.preprocess
-import recon.gridrec
+import recon.recon

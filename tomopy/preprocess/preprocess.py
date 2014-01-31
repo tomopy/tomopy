@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from tomopy.dataio.reader import Dataset
-from funcs.median_filter import median_filter
-from funcs.normalize import normalize
-from funcs.phase_retrieval import phase_retrieval
-from funcs.stripe_removal import stripe_removal
+from median_filter import median_filter
+from normalize import normalize
+from phase_retrieval import phase_retrieval
+from stripe_removal import stripe_removal
 import numpy as np
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("tomopy")
 
 
 def median_filter_wrapper(TomoObj, *args, **kwargs):
