@@ -22,55 +22,6 @@ long_description = read('README.md', 'CHANGES.txt')
 # Allow setup.py to be run from any path.
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
-"""
-# For Linux
-# Create FFTW shared-libraries.
-name = 'tomopy.lib.libfftw'
-sources = ['c/fftw/src/fftw.cpp']
-libraries = []
-include_dirs = ['/local/include']
-define_macros = []
-library_dirs = ['/local/lib']
-extra_compile_args = []
-extra_link_args = ['-lfftw3']
-ext_module_fftw = Extension(name=name,
-                            sources=sources,
-                            libraries=libraries,
-                            include_dirs=include_dirs,
-                            define_macros=define_macros,
-                            library_dirs=library_dirs,
-                            extra_compile_args=extra_compile_args,
-                            extra_link_args=extra_link_args)
-
-# Create Gridrec shared-libraries.
-name = 'tomopy.lib.libgridrec'
-sources = ['c/gridrec/src/filters.cpp',
-           'c/gridrec/src/grid.cpp',
-           'c/gridrec/src/MessageQueue.cpp',
-           'c/gridrec/src/pswf.cpp',
-           'c/gridrec/src/tomoRecon.cpp',
-           'c/gridrec/src/tomoReconPy.cpp']
-libraries = []
-include_dirs = ['c/gridrec/include',
-                '/local/include']
-define_macros = []
-library_dirs = ['/local/lib']
-extra_compile_args = []
-extra_link_args = ['-lfftw3',
-                   '-lboost_thread',
-                   '-lboost_date_time']
-ext_module_gridrec = Extension(name=name,
-                            sources=sources,
-                            libraries=libraries,
-                            include_dirs=include_dirs,
-                            define_macros=define_macros,
-                            library_dirs=library_dirs,
-                            extra_compile_args=extra_compile_args,
-                            extra_link_args=extra_link_args)
-"""
-
-
-# For Mac OS
 # Create FFTW shared-libraries.
 name = 'tomopy.lib.libfftw'
 sources = ['c/fftw/src/fftw.cpp']
@@ -114,7 +65,6 @@ ext_module_gridrec = Extension(name=name,
                             library_dirs=library_dirs,
                             extra_compile_args=extra_compile_args,
                             extra_link_args=extra_link_args)
-
 
 # Main setup configuration.
 setup(
