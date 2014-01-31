@@ -75,9 +75,9 @@ ext_module_gridrec = Extension(name=name,
 name = 'tomopy.lib.libfftw'
 sources = ['c/fftw/src/fftw.cpp']
 libraries = []
-include_dirs = []
+include_dirs = ['/local/include']
 define_macros = []
-library_dirs = []
+library_dirs = ['/local/lib']
 extra_compile_args = []
 extra_link_args = ['-lfftw3f']
 ext_module_fftw = Extension(name=name,
@@ -98,11 +98,12 @@ sources = ['c/gridrec/src/filters.cpp',
            'c/gridrec/src/tomoRecon.cpp',
            'c/gridrec/src/tomoReconPy.cpp']
 libraries = []
-include_dirs = ['c/gridrec/include']
+include_dirs = ['c/gridrec/include', '/local/include']
 define_macros = []
-library_dirs = []
+library_dirs = ['/local/lib']
 extra_compile_args = []
 extra_link_args = ['-lfftw3f',
+                   '-lboost_thread',
                    '-lboost_thread-mt',
                    '-lboost_date_time']
 ext_module_gridrec = Extension(name=name,
