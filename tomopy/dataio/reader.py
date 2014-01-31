@@ -3,11 +3,11 @@ import h5py
 import os
 import numpy as np
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("tomopy")
 
 
 class Dataset():
-    def __init__(TomoObj, data=None, data_white=None, theta=None, log_level='WARNING'):
+    def __init__(TomoObj, data=None, data_white=None, theta=None, log_level='INFO'):
         """Constructor for initial Data-Exchange data structure.
         """
         # Set the numpy Data-Exchange structure.

@@ -5,7 +5,7 @@ import numpy as np
 from scipy import misc
 from reader import Dataset
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("tomopy")
 
         
 def write_hdf5(TomoObj, output_file):
@@ -38,7 +38,7 @@ def write_hdf5(TomoObj, output_file):
         f = h5py.File(TomoObj.output_file, 'w')
         f.create_dataset('implements', data='exchange')
         exchange_group = f.create_group("processed")
-        exchange_group.create_dataset('data', data=TomoObj.data)
+        exchange_group.create_dataset('data', data=TomoObj.data_recon)
         f.close()
     
 def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
@@ -84,7 +84,7 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
             output_file = TomoObj.output_file.split(".")[-2]
     
         # Select desired x from whole data.
-        num_x, num_y, num_z = TomoObj.data.shape
+        num_x, num_y, num_z = TomoObj.data_recon.shape
         if x_start is None:
             x_start = 0
         if x_end is None:
@@ -100,8 +100,7 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
                 if ind[m] < np.power(10, n + 1):
                     file_name = output_file + file_index[n] + str(ind[m]) + '.tiff'
                     break
-            img = misc.toimage(TomoObj.data[m, :, :])
-            #img = misc.toimage(dataset[m, :, :], mode='F')
+            img = misc.toimage(TomoObj.data_recon[m, :, :])
             img.save(file_name)
 
         
