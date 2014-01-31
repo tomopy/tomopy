@@ -40,39 +40,3 @@ median_filter_wrapper.__doc__ = median_filter.__doc__
 normalize_wrapper.__doc__ = normalize.__doc__
 phase_retrieval_wrapper.__doc__ = phase_retrieval.__doc__
 stripe_removal_wrapper.__doc__ = stripe_removal.__doc__
-
-
-import ctypes
-def fftw2d(TomoObj, direction='forward'):
-    """ Calculate FFT and inverse FFT of the dataset using
-    FFTW package.
-    """
-    data = TomoObj.data[:, 0, :]
-    
-    # Get the shared library
-    sharedLibrary = '/Users/doga/Software/tomopy-test/tomopy/libs/tomorecon.so'
-    RECON_LIB = ctypes.CDLL(sharedLibrary)
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    c_int_p = ctypes.POINTER(ctypes.c_int)
-
-    _data = np.array(data, dtype='complex64')
-    dimx = np.array(data.shape[1])
-    dimy = np.array(data.shape[0])
-    if direction is 'forward':
-        direction = np.array(-1)
-        RECON_LIB.fftw_2d(_data.ctypes.data_as(c_float_p),
-                        dimx.ctypes.data_as(c_int_p),
-                        dimy.ctypes.data_as(c_int_p),
-                        direction.ctypes.data_as(c_int_p))
-
-    if direction is 'backward':
-        direction = np.array(1)
-        RECON_LIB.fftw_2d(_data.ctypes.data_as(c_float_p),
-                        dimx.ctypes.data_as(c_int_p),
-                        dimy.ctypes.data_as(c_int_p),
-                        direction.ctypes.data_as(c_int_p))
-        _data = _data / (dimx * dimy)
-    return _data
-    
-    
-setattr(Dataset, 'fftw', fftw2d)
