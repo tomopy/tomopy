@@ -22,7 +22,7 @@
 #endif
 #define free_matrix(A) (free(*(A)),free(A))
 #define abs(A) ((A)>0 ?(A):-(A))
-#define pi  3.14159265359
+#define pi 3.14159265359
 #define TOLERANCE 0.1	/* For comparing centers of two sinograms */
 #define LTBL_DEF 512	/* Default lookup table length */
 
