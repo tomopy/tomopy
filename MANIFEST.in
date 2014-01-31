@@ -1,0 +1,6 @@
+include README.md
+include CHANGES.txt
+recursive-include docs *.txt *.rst
+recursive-include tomopy/dataio *
+recursive-include tomopy/preprocess *
+recursive-include tomopy/recon *
