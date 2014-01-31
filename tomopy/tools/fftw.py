@@ -1,8 +1,10 @@
 import ctypes
 import numpy as np
-
 import os
-libfftw = ctypes.CDLL(os.path.dirname(__name__) + "/fftw/libfftw.so")
+
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libfftw.so'))
+libfftw = ctypes.CDLL(libpath)
+
 
 def fftw(*args, **kwargs):
     """ 

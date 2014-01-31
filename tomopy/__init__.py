@@ -7,4 +7,5 @@ except:
 
 # Main function to create TomoObj.
 from dataio.reader import Dataset
-from recon.gridrec import tomoRecon
+from dataio import writer
+from recon.gridrec import gridrec

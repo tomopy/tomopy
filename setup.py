@@ -22,6 +22,7 @@ long_description = read('README.md', 'CHANGES.txt')
 # Allow setup.py to be run from any path.
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+"""
 # For Linux
 # Create FFTW shared-libraries.
 name = 'tomopy.lib.libfftw'
@@ -66,8 +67,9 @@ ext_module_gridrec = Extension(name=name,
                             library_dirs=library_dirs,
                             extra_compile_args=extra_compile_args,
                             extra_link_args=extra_link_args)
-
 """
+
+
 # For Mac OS
 # Create FFTW shared-libraries.
 name = 'tomopy.lib.libfftw'
@@ -111,7 +113,7 @@ ext_module_gridrec = Extension(name=name,
                             library_dirs=library_dirs,
                             extra_compile_args=extra_compile_args,
                             extra_link_args=extra_link_args)
-"""
+
 
 # Main setup configuration.
 setup(
