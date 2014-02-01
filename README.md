@@ -20,7 +20,6 @@ as the standard means of data exchange.
 
 Make sure you have Python 2.7 installed and install above dependencies before installing TomoPy. Then:
 
-- To insall from tarball or from [PyPI](https://pypi.python.org/pypi "PyPI") open shell prompt and type `easy_install tomopy` or `pip tomopy install`.
-- To build and install from source, type `python setup.py install` in the directory where `setup.py` resides.
-- Pre-build binaries for different platforms can be found in this [TomoPy GitHub repository](../dist/).
+- To insall from egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install tomopy-egg-name`.
+- To build and install from source, download the [latest released source](https://github.com/tomopy/tomopy/releases), type `python setup.py install` in the directory where `setup.py` resides.
 
