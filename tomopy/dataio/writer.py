@@ -66,24 +66,14 @@ def write_hdf5(TomoObj, output_file=None):
             while not FLAG_SAVE:
                 new_file_name = file_body + '-' + str(ind) + '.h5'
                 if not os.path.isfile(new_file_name):
-                    # Write data
-                    f = h5py.File(new_file_name, 'w')
-                    f.create_dataset('implements', data='exchange')
-                    exchange_group = f.create_group("processed")
-                    exchange_group.create_dataset('data', data=TomoObj.data_recon)
-                    f.close()
+                    _export_to_hdf5(new_file_name, TomoObj.data_recon)
                     FLAG_SAVE = True
                     file_name = new_file_name
                 else:
                     ind += 1
             logger.warning("saved as %s [ok]", file_name)
         else:
-            # Write data
-            f = h5py.File(file_name, 'w')
-            f.create_dataset('implements', data='exchange')
-            exchange_group = f.create_group("processed")
-            exchange_group.create_dataset('data', data=TomoObj.data_recon)
-            f.close()
+            _export_to_hdf5(file_name, TomoObj.data_recon)
             logger.debug("saved as %s [ok]", file_name)
         TomoObj.output_file = output_file
         logger.info("save data at %s [ok]", dir_path)
@@ -166,7 +156,6 @@ def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
                     file_name = file_body + '.tif'
                     break
             img = misc.toimage(TomoObj.data_recon[m, :, :])
-
             # check if file exists.
             if os.path.isfile(file_name):
                 logger.warning("saving path check [failed]")
@@ -192,5 +181,13 @@ def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
        logger.warning("save data [bypassed]")
 
 
+def _export_to_hdf5(file_name, data):
+    f = h5py.File(file_name, 'w')
+    f.create_dataset('implements', data='exchange')
+    exchange_group = f.create_group("processed")
+    exchange_group.create_dataset('data', data=data)
+    f.close()
+
 setattr(Dataset, 'write_hdf5', write_hdf5)
 setattr(Dataset, 'write_tiff', write_tiff)
+
