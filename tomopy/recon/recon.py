@@ -12,8 +12,11 @@ def find_center_wrapper(TomoObj, *args, **kwargs):
     
 def gridrec_wrapper(TomoObj, *args, **kwargs):
     logger.info("performing reconstruction with gridrec")
+    # Find center if center is absent.
+    if not hasattr(TomoObj, 'center'):
+        TomoObj.center = find_center(TomoObj.data)
     recon = Gridrec(TomoObj.data, *args, **kwargs)
-    recon.run(TomoObj.data)
+    recon.run(TomoObj.data, center=TomoObj.center, theta=TomoObj.theta)
     TomoObj.data_recon = recon.data_recon
     TomoObj.gridrec_pars = recon.params
     
