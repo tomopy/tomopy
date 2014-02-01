@@ -7,8 +7,8 @@ as the standard means of data exchange.
 
 ## External Dependencies:
 - [HDF5 1.8.12](http://www.hdfgroup.org/HDF5/ "HDF5")
-- [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float libraries required)
-- [Boost 1.55.0](http://www.boost.org "Boost C++") (only thread and date_time libraries required)
+- [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
+- [Boost 1.55.0](http://www.boost.org "Boost C++") (only thread and date_time libraries are required)
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
