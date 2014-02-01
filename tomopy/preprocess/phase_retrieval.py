@@ -4,7 +4,8 @@ import numpy as np
 
 
 def phase_retrieval(data, pixel_size, dist, energy, alpha=1):
-    """Perform single-material phase retrieval
+    """
+    Perform single-material phase retrieval
     using projection data.
 
     Parameters

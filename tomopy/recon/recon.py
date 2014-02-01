@@ -11,7 +11,7 @@ def optimize_center_wrapper(TomoObj, *args, **kwargs):
         TomoObj.center = optimize_center(TomoObj.data, *args, **kwargs)
         logger.info("optimize rotation center [ok]")
     else:
-        logger.info("optimize rotation center [bypassed]")
+        logger.warning("optimize rotation center [bypassed]")
     
 def gridrec_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
@@ -24,7 +24,7 @@ def gridrec_wrapper(TomoObj, *args, **kwargs):
         TomoObj.gridrec_pars = recon.params
         logger.info("gridrec reconstruction [ok]")
     else:
-        logger.info("gridrec reconstruction [bypassed]")
+        logger.warning("gridrec reconstruction [bypassed]")
 
 
 setattr(Dataset, 'optimize_center', optimize_center_wrapper)

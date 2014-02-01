@@ -79,7 +79,8 @@ class Gridrec():
                  BP_filterSize=100,
                  RiemannInterpolation=0,
                  RadonInterpolation=0):
-        """ Initialize tomography parameters.
+        """ 
+        Initialize tomography parameters.
 
         Parameters
         ----------

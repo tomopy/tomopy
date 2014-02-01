@@ -209,14 +209,14 @@ class Dataset():
             # All done. Close file.
             f.close()
         
-        # We work with float32.
-        if TomoObj.FLAG_DATA:
-            TomoObj.data = TomoObj.data.astype('float32')
-        if TomoObj.FLAG_WHITE:
-            TomoObj.data_white = TomoObj.data_white.astype('float32')
-        if TomoObj.FLAG_THETA:
-            TomoObj.theta = TomoObj.theta.astype('float32')
-        logger.debug("data conversion to float32 [ok]")
+            # We work with float32.
+            if TomoObj.FLAG_DATA:
+                TomoObj.data = TomoObj.data.astype('float32')
+            if TomoObj.FLAG_WHITE:
+                TomoObj.data_white = TomoObj.data_white.astype('float32')
+            if TomoObj.FLAG_THETA:
+                TomoObj.theta = TomoObj.theta.astype('float32')
+            logger.debug("data conversion to float32 [ok]")
 
     def _init_log(TomoObj):
         # Top-level log setup.
@@ -387,7 +387,10 @@ class Dataset():
                         logger.warning("theta compatibility [failed]")
             except IndexError: # if TomoObj.data is None
                 pass
-
-        # Good to go.
-        TomoObj.FLAG_FILE_CHECK = True
-        logger.debug("file check [ok]")
+                    
+            # Good to go.
+            TomoObj.FLAG_FILE_CHECK = True
+            logger.debug("file check [ok]")
+        else:
+            TomoObj.FLAG_FILE_CHECK = False
+            logger.error("file check [failed]")

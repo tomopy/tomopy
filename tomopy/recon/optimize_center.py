@@ -107,7 +107,8 @@ def optimize_center(data,
     return res.x
 
 def _costFunc(center, data, recon, slice_no, hist_min, hist_max, sigma):
-    """ Cost function of the ``optimize_center``.
+    """ 
+    Cost function of the ``optimize_center``.
     """
     logger.info('trying center: ' + str(np.squeeze(center)))
     recon.run(data, center=center, slice_no=slice_no)
