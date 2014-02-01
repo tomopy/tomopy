@@ -1,6 +1,7 @@
 include README.md
 include CHANGES.txt
-recursive-include docs *.txt *.rst
+graft tomopy/c
+recursive-include tomopy/ *.cpp *.h
 recursive-include tomopy/dataio *
 recursive-include tomopy/preprocess *
 recursive-include tomopy/recon *
