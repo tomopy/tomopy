@@ -72,10 +72,10 @@ def find_center(data,
     if slice_no is None:
         slice_no = num_slices / 2
     
-    # Use middle point of the detector area if the center is absent.
+    # Use middle point of the detector area if the initial center is absent.
     if center_init is None:
         center_init = num_pixels / 2
-       
+
     # Make an initial reconstruction to adjust histogram limits. 
     recon = Gridrec(data)
     recon.run(data, center=center_init, slice_no=slice_no)

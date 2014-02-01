@@ -254,19 +254,12 @@ class Gridrec():
         if slice_no is not None:
             num_slices = 1
         
+        # We want float32 inputs.
+        center = np.array(center, dtype='float32')
+        
         # Construct the reconstruction object.
         libgridrec.reconCreate(ctypes.byref(self.params),
                             theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
-                            
-        # Assume mid point as the rotation axis if center is absent.
-        if center is None:
-            center = np.ones(num_slices, dtype='float32') * self.params.numPixels/2
-        else:
-            center = np.array(center, dtype='float32')
-            if center.size is 1:
-                center = np.ones(num_slices, dtype='float32') * center
-            elif center.size is num_slices:
-                center = np.array(center, dtype='float32')
     
         # Prepare input variables by converting them to C-types.
         _num_slices = ctypes.c_int(num_slices)
