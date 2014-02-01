@@ -22,6 +22,7 @@ def gridrec_wrapper(TomoObj, *args, **kwargs):
         recon.run(TomoObj.data, center=TomoObj.center, theta=TomoObj.theta)
         TomoObj.data_recon = recon.data_recon
         TomoObj.gridrec_pars = recon.params
+        TomoObj.FLAG_DATA_RECON = True
         logger.info("gridrec reconstruction [ok]")
     else:
         logger.warning("gridrec reconstruction [bypassed]")

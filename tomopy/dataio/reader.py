@@ -43,7 +43,7 @@ class Dataset():
         TomoObj.FLAG_WHITE = False
         TomoObj.FLAG_THETA = False
         TomoObj.FLAG_FILE_CHECK = False
-        TomoObj.FLAG_RECON = False
+        TomoObj.FLAG_DATA_RECON = False
         
         # Logging init.
         if clog: # enable colored logging

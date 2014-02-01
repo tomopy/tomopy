@@ -26,7 +26,7 @@ def write_hdf5(TomoObj, output_file=None):
     resides. The name of the reconstructed files will 
     be initialized with ``recon``
     """
-    if TomoObj.FLAG_DATA:
+    if TomoObj.FLAG_DATA_RECON:
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
@@ -87,7 +87,9 @@ def write_hdf5(TomoObj, output_file=None):
             logger.debug("saved as %s [ok]", file_name)
         TomoObj.output_file = output_file
         logger.info("save data at %s [ok]", dir_path)
-    
+    else:
+        logger.warning("save data [bypassed]")
+
 def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
     """ 
     Write data to a stack of tif files.
@@ -118,7 +120,7 @@ def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
     resides. The name of the reconstructed files will
     be initialized with ``recon``
     """
-    if TomoObj.FLAG_DATA:
+    if TomoObj.FLAG_DATA_RECON:
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
@@ -186,6 +188,8 @@ def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
                 logger.debug("saved as %s [ok]", file_name)
             TomoObj.output_file = file_name
             logger.info("save data at %s [ok]", dir_path)
+    else:
+       logger.warning("save data [bypassed]")
 
 
 setattr(Dataset, 'write_hdf5', write_hdf5)
