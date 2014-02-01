@@ -20,7 +20,7 @@ as the standard means of data exchange.
 
 _"Try not. Do or do not, there is no try". Yoda_
 
-Make sure you have Python 2.7 installed and install above dependencies before installing TomoPy. Then:
+Make sure you have [Python 2.7](http://www.python.org/download/releases/2.7/ "tsss...") installed and install above dependencies before installing TomoPy. Then:
 
 - To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install tomopy-egg-name` in the directory where the egg resides..
 - To build and install from source, download the [latest released source](https://github.com/tomopy/tomopy/releases), open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
