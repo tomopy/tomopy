@@ -24,11 +24,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Create FFTW shared-libraries.
 name = 'tomopy.lib.libfftw'
-sources = ['c/fftw/src/fftw.cpp']
+sources = ['tomopy/c/fftw/src/fftw.cpp']
 libraries = []
-include_dirs = ['/local/include']
+include_dirs = []
 define_macros = []
-library_dirs = ['/local/lib']
+library_dirs = []
 extra_compile_args = []
 extra_link_args = ['-lfftw3f']
 ext_module_fftw = Extension(name=name,
@@ -42,19 +42,18 @@ ext_module_fftw = Extension(name=name,
 
 # Create Gridrec shared-libraries.
 name = 'tomopy.lib.libgridrec'
-sources = ['c/gridrec/src/filters.cpp',
-           'c/gridrec/src/grid.cpp',
-           'c/gridrec/src/MessageQueue.cpp',
-           'c/gridrec/src/pswf.cpp',
-           'c/gridrec/src/tomoRecon.cpp',
-           'c/gridrec/src/tomoReconPy.cpp']
+sources = ['tomopy/c/gridrec/src/filters.cpp',
+           'tomopy/c/gridrec/src/grid.cpp',
+           'tomopy/c/gridrec/src/MessageQueue.cpp',
+           'tomopy/c/gridrec/src/pswf.cpp',
+           'tomopy/c/gridrec/src/tomoRecon.cpp',
+           'tomopy/c/gridrec/src/tomoReconPy.cpp']
 libraries = []
-include_dirs = ['c/gridrec/include', '/local/include']
+include_dirs = ['tomopy/c/gridrec/include']
 define_macros = []
-library_dirs = ['/local/lib']
+library_dirs = []
 extra_compile_args = []
 extra_link_args = ['-lfftw3f',
-                   '-lboost_thread',
                    '-lboost_thread-mt',
                    '-lboost_date_time']
 ext_module_gridrec = Extension(name=name,
@@ -69,11 +68,12 @@ ext_module_gridrec = Extension(name=name,
 # Main setup configuration.
 setup(
       name = 'tomopy',
-      version = '0.0.1',
-      packages = find_packages(exclude=['ez_setup']),
+      version = '0.0.2',
+      packages = find_packages(),
       install_requires = ['h5py==2.2.1',
                           'pyWavelets==0.2.2',
-                          'scipy==0.13.2'],
+                          'scipy==0.13.2',
+                          'numpy==1.8.0'],
 
       package_data = {
           # If any package contains *.txt or *.rst files, include them:
@@ -94,7 +94,7 @@ setup(
       download_url = 'http://github.com/dgursoy/tomopy-test',
       platforms = 'x86, x86_64',
       classifiers = [
-                     'Development Status :: 3 - Alpha',
+                     'Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
                      'Intended Audience :: Science/Research',
                      'Intended Audience :: Education',
