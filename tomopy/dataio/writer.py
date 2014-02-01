@@ -64,15 +64,14 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
     if TomoObj.FLAG_DATA:
         TomoObj.output_file =  os.path.abspath(output_file)
     
-        # check if file exists.
-        if os.path.isfile(TomoObj.output_file):
-            logger.error("another file exists at location")
-    
         # check folder's read permissions.
         dir_path = os.path.dirname(TomoObj.output_file)
         write_access = os.access(dir_path, os.W_OK)
-        if not write_access:
-            logger.error("permission denied to write at location")
+        if write_access:
+            logger.debug("saving directory permissions [ok]")
+        else:
+            logger.error("saving directory permissions [failed]")
+        
         
         # Create new folders.
         dir_path = os.path.dirname(TomoObj.output_file)
@@ -98,11 +97,32 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
         for m in range(len(ind)):
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):
-                    file_name = output_file + file_index[n] + str(ind[m]) + '.tiff'
+                    file_body = output_file + file_index[n] + str(ind[m])
+                    file_name = file_body + '.tif'
                     break
             img = misc.toimage(TomoObj.data_recon[m, :, :])
-            img.save(file_name)
 
-        
+            # check if file exists.
+            if os.path.isfile(file_name):
+                logger.warning("saving path check [failed]")
+                # genarate new file name.
+                ind = 1
+                FLAG_SAVE = False
+                while not FLAG_SAVE:
+                    new_file_body = file_body + '-' + str(ind)
+                    new_file_name = new_file_body + '.tif'
+                    if not os.path.isfile(new_file_name):
+                        img.save(new_file_name)
+                        FLAG_SAVE = True
+                        file_name = new_file_name
+                    else:
+                        ind += 1
+                logger.warning("saved as %s [ok]", new_file_name)
+            else:
+                img.save(file_name)
+                logger.debug("saved as %s [ok]", file_name)
+            logger.info("save data at %s [ok]", dir_path)
+
+
 setattr(Dataset, 'write_hdf5', write_hdf5)
 setattr(Dataset, 'write_tiff', write_tiff)

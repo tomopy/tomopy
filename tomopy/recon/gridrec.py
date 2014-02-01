@@ -243,18 +243,14 @@ class Gridrec():
         out : ndarray
             Assigns reconstructed values in TomoRecon object as ``recon``.
         """
-        # Assume 180 degrees rotation if theta is absent.
-        if theta is None:
-            theta = (np.linspace(0, self.params.numProjections,
-                                self.params.numProjections)
-                    * 180 / self.params.numProjections).astype('float32')
-        
         # Assign slice_no.
         num_slices = self.params.numSlices
         if slice_no is not None:
             num_slices = 1
         
         # We want float32 inputs.
+        data = np.array(data, dtype='float32')
+        theta = np.array(theta, dtype='float32')
         center = np.array(center, dtype='float32')
         
         # Construct the reconstruction object.
