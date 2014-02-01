@@ -7,8 +7,8 @@ as the standard means of data exchange.
 
 ## External Dependencies:
 - [HDF5 1.8.12](http://www.hdfgroup.org/HDF5/ "HDF5")
-- [FFTW 3.3.3](http://www.fftw.org "FFTW3")
-- [Boost 1.55.0](http://www.boost.org "Boost C++")
+- [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
+- [Boost 1.55.0](http://www.boost.org "Boost C++") (only thread and date_time libraries are required)
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
@@ -20,7 +20,7 @@ as the standard means of data exchange.
 
 _"Try not. Do or do not, there is no try". Yoda_
 
-Make sure you have Python 2.7 installed and install above dependencies before installing TomoPy. Then:
+Make sure you have [Python 2.7](http://www.python.org/download/releases/2.7/ "tsss...") installed and install above dependencies before installing TomoPy. Then:
 
 - To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install tomopy-egg-name` in the directory where the egg resides..
 - To build and install from source, download the [latest released source](https://github.com/tomopy/tomopy/releases), open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
