@@ -4,7 +4,8 @@ import pywt
 
 
 def stripe_removal(data, level=12, wname='db5', sigma=2):
-    """Remove stripes from sinogram data.
+    """
+    Remove stripes from sinogram data.
 
     Parameters
     ----------

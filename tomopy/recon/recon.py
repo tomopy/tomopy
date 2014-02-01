@@ -1,25 +1,35 @@
 # -*- coding: utf-8 -*-
 from tomopy.dataio.reader import Dataset
 from gridrec import Gridrec
-from find_center import find_center
+from optimize_center import optimize_center
 import logging
 logger = logging.getLogger("tomopy")
 
 
-def find_center_wrapper(TomoObj, *args, **kwargs):
-    logger.info("finding rotation center")
-    TomoObj.center = find_center(TomoObj.data, *args, **kwargs)
+def optimize_center_wrapper(TomoObj, *args, **kwargs):
+    if TomoObj.FLAG_DATA:
+        TomoObj.center = optimize_center(TomoObj.data, *args, **kwargs)
+        logger.info("optimize rotation center [ok]")
+    else:
+        logger.warning("optimize rotation center [bypassed]")
     
 def gridrec_wrapper(TomoObj, *args, **kwargs):
-    logger.info("performing reconstruction with gridrec")
-    recon = Gridrec(TomoObj.data, *args, **kwargs)
-    recon.run(TomoObj.data)
-    TomoObj.data_recon = recon.data_recon
-    TomoObj.gridrec_pars = recon.params
-    
+    if TomoObj.FLAG_DATA:
+        # Find center if center is absent.
+        if not hasattr(TomoObj, 'center'):
+            TomoObj.center = optimize_center(TomoObj.data)
+        recon = Gridrec(TomoObj.data, *args, **kwargs)
+        recon.run(TomoObj.data, center=TomoObj.center, theta=TomoObj.theta)
+        TomoObj.data_recon = recon.data_recon
+        TomoObj.gridrec_pars = recon.params
+        TomoObj.FLAG_DATA_RECON = True
+        logger.info("gridrec reconstruction [ok]")
+    else:
+        logger.warning("gridrec reconstruction [bypassed]")
 
-setattr(Dataset, 'find_center', find_center_wrapper)
+
+setattr(Dataset, 'optimize_center', optimize_center_wrapper)
 setattr(Dataset, 'gridrec', gridrec_wrapper)
 
-find_center_wrapper.__doc__ = find_center.__doc__
+optimize_center_wrapper.__doc__ = optimize_center.__doc__
 gridrec_wrapper.__doc__ = Gridrec.__doc__

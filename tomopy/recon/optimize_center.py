@@ -7,13 +7,13 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def find_center(data,
-                slice_no=None,
-                center_init=None,
-                hist_min=None,
-                hist_max=None,
-                tol=0.5,
-                sigma=2):
+def optimize_center(data,
+                    slice_no=None,
+                    center_init=None,
+                    hist_min=None,
+                    hist_max=None,
+                    tol=0.5,
+                    sigma=2):
     """ 
     Find the distance between the rotation axis and the middle
     of the detector field-of-view.
@@ -72,10 +72,10 @@ def find_center(data,
     if slice_no is None:
         slice_no = num_slices / 2
     
-    # Use middle point of the detector area if the center is absent.
+    # Use middle point of the detector area if the initial center is absent.
     if center_init is None:
         center_init = num_pixels / 2
-       
+
     # Make an initial reconstruction to adjust histogram limits. 
     recon = Gridrec(data)
     recon.run(data, center=center_init, slice_no=slice_no)
@@ -107,7 +107,8 @@ def find_center(data,
     return res.x
 
 def _costFunc(center, data, recon, slice_no, hist_min, hist_max, sigma):
-    """ Cost function of the ``optimize_center``.
+    """ 
+    Cost function of the ``optimize_center``.
     """
     logger.info('trying center: ' + str(np.squeeze(center)))
     recon.run(data, center=center, slice_no=slice_no)
