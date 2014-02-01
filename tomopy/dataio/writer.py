@@ -8,41 +8,89 @@ import logging
 logger = logging.getLogger("tomopy")
 
         
-def write_hdf5(TomoObj, output_file):
-    """ Write data to hdf5 file.
+def write_hdf5(TomoObj, output_file=None):
+    """ 
+    Write data to hdf5 file.
 
     Parameters
-    -----------
+    ----------
     output_file : str, optional
         Name of the output file.
+        
+    Notes
+    -----
+    If file exists, saves it with a modified name.
+    
+    If output location is not specified, the data is
+    saved inside ``recon`` folder where the input data
+    resides. The name of the reconstructed files will 
+    be initialized with ``recon``
     """
     if TomoObj.FLAG_DATA:
-        TomoObj.output_file =  os.path.abspath(output_file)
-    
-        # check if file exists.
-        if os.path.isfile(TomoObj.output_file):
-            logger.error("another file exists at location")
-    
+        if output_file == None:
+            dir_path = os.path.dirname(TomoObj.file_name)
+            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            output_file = dir_path + "/recon/recon_" + base_name + ".h5"
+            logger.warning("generate output file name [ok]")
+        output_file =  os.path.abspath(output_file)
+        
         # check folder's read permissions.
-        dir_path = os.path.dirname(TomoObj.output_file)
+        dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
-        if not write_access:
-            logger.error("permission denied to write at location")
+        if write_access:
+            logger.debug("save folder directory permissions [ok]")
+        else:
+            logger.error("save folder directory permissions [failed]")
         
         # Create new folders.
-        dir_path = os.path.dirname(TomoObj.output_file)
+        dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
+            logger.debug("new folders generated [ok]")
+                
+        # Remove HDF5 extension if there is.
+        if (output_file.endswith('h5') or
+            output_file.endswith('hdf5') or
+            output_file.endswith('hdf')):
+            file_body = output_file.split(".")[-2]
+        else:
+            file_body = output_file
+        file_name = file_body + '.h5'
     
-        # Write data
-        f = h5py.File(TomoObj.output_file, 'w')
-        f.create_dataset('implements', data='exchange')
-        exchange_group = f.create_group("processed")
-        exchange_group.create_dataset('data', data=TomoObj.data_recon)
-        f.close()
+        # check if file exists.
+        if os.path.isfile(file_name):
+            logger.warning("saving path check [failed]")
+            # genarate new file name.
+            ind = 1
+            FLAG_SAVE = False
+            while not FLAG_SAVE:
+                new_file_name = file_body + '-' + str(ind) + '.h5'
+                if not os.path.isfile(new_file_name):
+                    # Write data
+                    f = h5py.File(new_file_name, 'w')
+                    f.create_dataset('implements', data='exchange')
+                    exchange_group = f.create_group("processed")
+                    exchange_group.create_dataset('data', data=TomoObj.data_recon)
+                    f.close()
+                    FLAG_SAVE = True
+                    file_name = new_file_name
+                else:
+                    ind += 1
+            logger.warning("saved as %s [ok]", file_name)
+        else:
+            # Write data
+            f = h5py.File(file_name, 'w')
+            f.create_dataset('implements', data='exchange')
+            exchange_group = f.create_group("processed")
+            exchange_group.create_dataset('data', data=TomoObj.data_recon)
+            f.close()
+            logger.debug("saved as %s [ok]", file_name)
+        TomoObj.output_file = output_file
+        logger.info("save data at %s [ok]", dir_path)
     
-def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
-    """ Write data to a stack of tiff files.
+def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
+    """ 
+    Write data to a stack of tif files.
 
     Parameters
     -----------
@@ -60,28 +108,43 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
     digits : scalar, optional
         Number of digits used for file indexing.
         For example if 4: test_XXXX.tiff
+    
+    Notes
+    -----
+    If file exists, saves it with a modified name.
+    
+    If output location is not specified, the data is
+    saved inside ``recon`` folder where the input data
+    resides. The name of the reconstructed files will
+    be initialized with ``recon``
     """
     if TomoObj.FLAG_DATA:
-        TomoObj.output_file =  os.path.abspath(output_file)
+        if output_file == None:
+            dir_path = os.path.dirname(TomoObj.file_name)
+            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            output_file = dir_path + "/recon/recon_" + base_name + "_"
+            logger.warning("generate output file name [ok]")
+        output_file =  os.path.abspath(output_file)
+        
+        # Remove TIFF extension if there is.
+        if (output_file.endswith('tif') or
+            output_file.endswith('tiff')) :
+                output_file = output_file.split(".")[-2]
     
         # check folder's read permissions.
-        dir_path = os.path.dirname(TomoObj.output_file)
+        dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
         if write_access:
-            logger.debug("saving directory permissions [ok]")
+            logger.debug("save folder directory permissions [ok]")
         else:
-            logger.error("saving directory permissions [failed]")
-        
+            logger.error("save folder directory permissions [failed]")
         
         # Create new folders.
-        dir_path = os.path.dirname(TomoObj.output_file)
+        dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-    
-        # Remove TIFF extension.
-        if TomoObj.output_file.endswith('tif'):
-            output_file = TomoObj.output_file.split(".")[-2]
-    
+            logger.debug("new folders generated [ok]")
+
         # Select desired x from whole data.
         num_x, num_y, num_z = TomoObj.data_recon.shape
         if x_start is None:
@@ -121,6 +184,7 @@ def write_tiff(TomoObj, output_file, x_start=None, x_end=None, digits=5):
             else:
                 img.save(file_name)
                 logger.debug("saved as %s [ok]", file_name)
+            TomoObj.output_file = file_name
             logger.info("save data at %s [ok]", dir_path)
 
 
