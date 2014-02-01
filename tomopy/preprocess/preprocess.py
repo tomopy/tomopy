@@ -10,25 +10,37 @@ logger = logging.getLogger("tomopy")
 
 
 def median_filter_wrapper(TomoObj, *args, **kwargs):
-    logger.info("performing median filtering")
-    for m in range(TomoObj.data.shape[2]):
-        TomoObj.data[:, :, m] = median_filter(TomoObj.data[:, :, m], *args, **kwargs)
+    if TomoObj.FLAG_DATA:
+        for m in range(TomoObj.data.shape[2]):
+            TomoObj.data[:, :, m] = median_filter(TomoObj.data[:, :, m], *args, **kwargs)
+        logger.info("median filtering [ok]")
+    else:
+        logger.warning("median filtering [bypassed]")
 
 def normalize_wrapper(TomoObj, *args, **kwargs):
-    logger.info("performing normalization")
-    avg_white = np.mean(TomoObj.data_white, axis=0)
-    for m in range(TomoObj.data.shape[0]):
-        TomoObj.data[m, :, :] = normalize(TomoObj.data[m, :, :], avg_white, *args, **kwargs)
+    if TomoObj.FLAG_DATA and TomoObj.FLAG_WHITE:
+        avg_white = np.mean(TomoObj.data_white, axis=0)
+        for m in range(TomoObj.data.shape[0]):
+            TomoObj.data[m, :, :] = normalize(TomoObj.data[m, :, :], avg_white, *args, **kwargs)
+        logger.info("normalization [ok]")
+    else:
+        logger.warning("normalization [bypassed]")
 
 def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
-    logger.info("performing phase retrieval")
-    for m in range(TomoObj.data.shape[0]):
-        TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
+    if TomoObj.FLAG_DATA:
+        for m in range(TomoObj.data.shape[0]):
+            TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
+        logger.info("phase retrieval [ok]")
+    else:
+        logger.info("phase retrieval [bypassed]")
 
 def stripe_removal_wrapper(TomoObj, *args, **kwargs):
-    logger.info("performing stripe removal")
-    for m in range(TomoObj.data.shape[1]):
-        TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
+    if TomoObj.FLAG_DATA:
+        for m in range(TomoObj.data.shape[1]):
+            TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
+        logger.info("stripe removal [ok]")
+    else:
+        logger.warning("stripe removal [bypassed]")
 
 
 setattr(Dataset, 'median_filter', median_filter_wrapper)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Constants in cgs units.
+"""
+Constants in cgs units.
 
 AVOGADRO_NUMBER : float
     Avagadro constant [1/mol]
