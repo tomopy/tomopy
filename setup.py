@@ -3,6 +3,8 @@
 import os
 import io
 
+VERSION = '0.0.2'
+
 # Import setuptools.
 from ez_setup import use_setuptools
 use_setuptools()
@@ -68,7 +70,7 @@ ext_module_gridrec = Extension(name=name,
 # Main setup configuration.
 setup(
       name = 'tomopy',
-      version = '0.0.1',
+      version = VERSION,
       packages = find_packages(),
       install_requires = ['h5py==2.2.1',
                           'pyWavelets==0.2.2',

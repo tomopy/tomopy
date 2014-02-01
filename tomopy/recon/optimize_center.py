@@ -7,13 +7,13 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def find_center(data,
-                slice_no=None,
-                center_init=None,
-                hist_min=None,
-                hist_max=None,
-                tol=0.5,
-                sigma=2):
+def optimize_center(data,
+                    slice_no=None,
+                    center_init=None,
+                    hist_min=None,
+                    hist_max=None,
+                    tol=0.5,
+                    sigma=2):
     """ 
     Find the distance between the rotation axis and the middle
     of the detector field-of-view.
