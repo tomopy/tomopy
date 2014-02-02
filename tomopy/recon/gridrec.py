@@ -220,7 +220,7 @@ class Gridrec():
         self.params.RadonInterpolationNone = 0
         self.params.RadonInterpolationLinear = 1
 
-    def run(self, data, theta=None, center=None, slice_no=None):
+    def run(self, data, center, theta, slice_no=None):
         """
         Performs reconstruction using the tomographic data.
         
@@ -228,8 +228,6 @@ class Gridrec():
         rumors that it was written by written by Bob Marr and Graham
         Campbell at BNL in 1997). The basic algorithm is based on FFTs
         and interpolations.
-        
-        TODO: Make checks outside.
         
         Parameters
         ----------
@@ -249,18 +247,22 @@ class Gridrec():
         if slice_no is not None:
             num_slices = 1
         
+        # Prepare center for C.
+        if np.array(center).size == 1:
+            center = np.ones(num_slices) * self.params.numPixels / 2
+        
         # We want float32 inputs.
         data = np.array(data, dtype='float32')
         theta = np.array(theta, dtype='float32')
         center = np.array(center, dtype='float32')
-        
+
         # Construct the reconstruction object.
         libgridrec.reconCreate(ctypes.byref(self.params),
                             theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
     
         # Prepare input variables by converting them to C-types.
         _num_slices = ctypes.c_int(num_slices)
-        datain = np.array(data[:, slice_no, :], dtype='float32')
+        datain = np.array(data[:, slice_no, :])
         self.data_recon = np.empty((num_slices,
                                     self.params.numPixels,
                                     self.params.numPixels), dtype='float32')

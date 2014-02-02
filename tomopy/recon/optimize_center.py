@@ -8,6 +8,7 @@ logger = logging.getLogger("tomopy")
 
 
 def optimize_center(data,
+                    theta,
                     slice_no=None,
                     center_init=None,
                     hist_min=None,
@@ -78,7 +79,7 @@ def optimize_center(data,
 
     # Make an initial reconstruction to adjust histogram limits. 
     recon = Gridrec(data)
-    recon.run(data, center=center_init, slice_no=slice_no)
+    recon.run(data, theta=theta, center=center_init, slice_no=slice_no)
     
     # Adjust histogram boundaries if given.
     if hist_min is None:
@@ -98,22 +99,21 @@ def optimize_center(data,
     # Magic is ready to happen...
     res = minimize(_costFunc,
                    center_init,
-                   args=(data, recon, slice_no, hist_min, hist_max, sigma),
+                   args=(data, recon, theta, slice_no, hist_min, hist_max, sigma),
                    method='Nelder-Mead',
                    tol=tol)
     
     # Have a look at what I found:
-    logger.info('calculated rotation center: ' + str(np.squeeze(res.x)))
+    logger.info("calculated rotation center: " + str(np.squeeze(res.x)))
     return res.x
 
-def _costFunc(center, data, recon, slice_no, hist_min, hist_max, sigma):
+def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max, sigma):
     """ 
     Cost function of the ``optimize_center``.
     """
     logger.info('trying center: ' + str(np.squeeze(center)))
-    recon.run(data, center=center, slice_no=slice_no)
-    histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data_recon,
-                                                            sigma=sigma),
+    recon.run(data, theta=theta, center=center, slice_no=slice_no)
+    histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data_recon, sigma=sigma),
                             bins=64, range=[hist_min, hist_max])
     histr = histr.astype('float32') / recon.data_recon.size + 1e-12
     return -np.dot(histr, np.log2(histr))

@@ -186,6 +186,7 @@ class Dataset():
             else:
                 TomoObj.data_white = np.zeros((1, TomoObj.data.shape[1], TomoObj.data.shape[2]))
                 TomoObj.data_white += np.mean(TomoObj.data[:])
+                TomoObj.FLAG_WHITE = True
                 logger.warning("auto-normalization [ok]")
 
             # Read projection angles.
@@ -204,6 +205,7 @@ class Dataset():
             else:
                 TomoObj.theta = np.linspace(0, TomoObj.data.shape[0], TomoObj.data.shape[0]) \
                                 * 180 / TomoObj.data.shape[0]
+                TomoObj.FLAG_THETA = True
                 logger.warning("assign 180-degree rotation [ok]")
 
             # All done. Close file.
@@ -216,7 +218,6 @@ class Dataset():
                 TomoObj.data_white = TomoObj.data_white.astype('float32')
             if TomoObj.FLAG_THETA:
                 TomoObj.theta = TomoObj.theta.astype('float32')
-            logger.debug("data conversion to float32 [ok]")
 
     def _init_log(TomoObj):
         # Top-level log setup.
@@ -292,7 +293,7 @@ class Dataset():
         # check if file exists.
         if os.path.isfile(TomoObj.file_name):
             TomoObj.FLAG_DATA = True
-            logger.info("file check: %s [passed]", TomoObj.file_name)
+            logger.info("file check: %s [ok]", TomoObj.file_name)
         else:
             TomoObj.FLAG_DATA = False
             logger.error("file check: %s [failed]", TomoObj.file_name)
