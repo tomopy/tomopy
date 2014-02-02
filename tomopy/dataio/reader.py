@@ -2,6 +2,7 @@
 import h5py
 import os
 import numpy as np
+import time
 import logging
 logger = logging.getLogger("tomopy")
 
@@ -45,6 +46,9 @@ class Dataset():
         TomoObj.FLAG_FILE_CHECK = False
         TomoObj.FLAG_DATA_RECON = False
         
+        # Provenance initialization.
+        TomoObj._init_provenance()
+    
         # Logging init.
         if clog: # enable colored logging
             from tomopy.tools import colorer
@@ -58,7 +62,14 @@ class Dataset():
         if not TomoObj.FLAG_THETA:
             TomoObj.theta = None
         logger.debug("TomoObj initialization [ok]")
-           
+            
+    def _init_provenance(TomoObj):
+        # Start adding info.
+        TomoObj.provenance = {}
+        TomoObj.provenance['date'] = time.strftime('%Y-%m-%d')
+        TomoObj.provenance['time'] = time.strftime('%H:%M:%S')
+    
+    
     def read(TomoObj, file_name,
              projections_start=None,
              projections_end=None,
@@ -125,6 +136,7 @@ class Dataset():
 
         # Make checks.
         TomoObj._check_input_file()
+        TomoObj.provenance['file_name'] = TomoObj.file_name
 
         if TomoObj.FLAG_DATA:
             # All looks fine. Start reading data.
