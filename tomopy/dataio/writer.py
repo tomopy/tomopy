@@ -66,14 +66,14 @@ def write_hdf5(TomoObj, output_file=None):
             while not FLAG_SAVE:
                 new_file_name = file_body + '-' + str(ind) + '.h5'
                 if not os.path.isfile(new_file_name):
-                    _export_to_hdf5(new_file_name, TomoObj.data_recon)
+                    _export_to_hdf5(new_file_name, TomoObj.data_recon, TomoObj.provenance)
                     FLAG_SAVE = True
                     file_name = new_file_name
                 else:
                     ind += 1
             logger.warning("saved as %s [ok]", file_name)
         else:
-            _export_to_hdf5(file_name, TomoObj.data_recon)
+            _export_to_hdf5(file_name, TomoObj.data_recon, TomoObj.provenance)
             logger.debug("saved as %s [ok]", file_name)
         TomoObj.output_file = output_file
         logger.info("save data at %s [ok]", dir_path)
@@ -181,11 +181,14 @@ def write_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5):
        logger.warning("save data [bypassed]")
 
 
-def _export_to_hdf5(file_name, data):
+def _export_to_hdf5(file_name, data, provenance):
     f = h5py.File(file_name, 'w')
     f.create_dataset('implements', data='exchange')
     exchange_group = f.create_group("processed")
     exchange_group.create_dataset('data', data=data)
+    provenance_group = f.create_group("provenance")
+    for key, value in provenance.iteritems():
+        provenance_group.create_dataset(key, data=str(value))
     f.close()
 
 setattr(Dataset, 'write_hdf5', write_hdf5)
