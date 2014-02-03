@@ -12,10 +12,7 @@ image reconstruction tasks at APS. It uses `HDF5 file format
 <https://subversion.xray.aps.anl.gov/DataExchange/doc/trunk/>`_ as
 the standard means of data exchange.
 
-Installing TomoPy
-=================
-
-Coming soon...
+Give link to install.rst
 
 Development
 ===========
@@ -23,10 +20,3 @@ Development
 TomoPy uses the `numpy/scipy documentation standard 
 <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
 for code development.
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

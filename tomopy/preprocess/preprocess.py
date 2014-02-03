@@ -5,6 +5,7 @@ from normalize import normalize
 from phase_retrieval import phase_retrieval
 from stripe_removal import stripe_removal
 import numpy as np
+import inspect
 import logging
 logger = logging.getLogger("tomopy")
 
@@ -13,6 +14,7 @@ def median_filter_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
         for m in range(TomoObj.data.shape[2]):
             TomoObj.data[:, :, m] = median_filter(TomoObj.data[:, :, m], *args, **kwargs)
+        TomoObj.provenance['median_filter'] = (args, kwargs)
         logger.info("median filtering [ok]")
     else:
         logger.warning("median filtering [bypassed]")
@@ -22,6 +24,7 @@ def normalize_wrapper(TomoObj, *args, **kwargs):
         avg_white = np.mean(TomoObj.data_white, axis=0)
         for m in range(TomoObj.data.shape[0]):
             TomoObj.data[m, :, :] = normalize(TomoObj.data[m, :, :], avg_white, *args, **kwargs)
+        TomoObj.provenance['normalization'] = (args, kwargs)
         logger.info("normalization [ok]")
     else:
         logger.warning("normalization [bypassed]")
@@ -30,6 +33,7 @@ def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
         for m in range(TomoObj.data.shape[0]):
             TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
+        TomoObj.provenance['phase_retrieval'] = (args, kwargs)
         logger.info("phase retrieval [ok]")
     else:
         logger.info("phase retrieval [bypassed]")
@@ -38,6 +42,7 @@ def stripe_removal_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
         for m in range(TomoObj.data.shape[1]):
             TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
+        TomoObj.provenance['stripe_removal'] = (args, kwargs)
         logger.info("stripe removal [ok]")
     else:
         logger.warning("stripe removal [bypassed]")
