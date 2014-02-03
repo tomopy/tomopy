@@ -10,7 +10,7 @@ as the standard means of data exchange.
 - [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
-You can use ``python install.py`` to automatically download and install external dependencies at ``/usr/local``. if you want to install them to another directory, use ``python install.py <my-install-directory>``. But for this case you should define ``LIB_TOMOPY`` as an environment variable: ``setenv LIB_TOMOPY <your-path-to-libraries>`` before you start installing TomoPy.
+You can use ``python install.py --fftw --boost`` to automatically download and install external dependencies at ``/usr/local``. if you want to install them to another directory, use ``python install.py <my-install-directory> --fftw --boost``. But for this case you should define ``LIB_TOMOPY`` as an environment variable: ``setenv LIB_TOMOPY <your-path-to-libraries>`` before you start installing TomoPy.
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
