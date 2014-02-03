@@ -2,6 +2,7 @@
 import h5py
 import os
 import numpy as np
+import time
 import logging
 logger = logging.getLogger("tomopy")
 
@@ -45,6 +46,9 @@ class Dataset():
         TomoObj.FLAG_FILE_CHECK = False
         TomoObj.FLAG_DATA_RECON = False
         
+        # Provenance initialization.
+        TomoObj._init_provenance()
+    
         # Logging init.
         if clog: # enable colored logging
             from tomopy.tools import colorer
@@ -58,7 +62,14 @@ class Dataset():
         if not TomoObj.FLAG_THETA:
             TomoObj.theta = None
         logger.debug("TomoObj initialization [ok]")
-           
+            
+    def _init_provenance(TomoObj):
+        # Start adding info.
+        TomoObj.provenance = {}
+        TomoObj.provenance['date'] = time.strftime('%Y-%m-%d')
+        TomoObj.provenance['time'] = time.strftime('%H:%M:%S')
+    
+    
     def read(TomoObj, file_name,
              projections_start=None,
              projections_end=None,
@@ -125,6 +136,7 @@ class Dataset():
 
         # Make checks.
         TomoObj._check_input_file()
+        TomoObj.provenance['file_name'] = TomoObj.file_name
 
         if TomoObj.FLAG_DATA:
             # All looks fine. Start reading data.
@@ -153,14 +165,14 @@ class Dataset():
                 TomoObj.pixels_step = 1
         
             TomoObj.data = hdfdata[TomoObj.projections_start:
-                                    TomoObj.projections_end:
-                                        TomoObj.projections_step,
-                                TomoObj.slices_start:
-                                    TomoObj.slices_end:
-                                        TomoObj.slices_step,
-                                TomoObj.pixels_start:
-                                    TomoObj.pixels_end:
-                                        TomoObj.pixels_step]
+				      TomoObj.projections_end:
+					  TomoObj.projections_step,
+				  TomoObj.slices_start:
+				      TomoObj.slices_end:
+					  TomoObj.slices_step,
+				  TomoObj.pixels_start:
+				      TomoObj.pixels_end:
+					  TomoObj.pixels_step]
             logger.info("read data from file [ok]")
 
             # Now read white fields.
@@ -175,13 +187,13 @@ class Dataset():
 
                 # Slice it now.
                 TomoObj.data_white = hdfdata[TomoObj.white_start:
-                                              TomoObj.white_end,
-                                          TomoObj.slices_start:
-                                              TomoObj.slices_end:
-                                                  TomoObj.slices_step,
-                                          TomoObj.pixels_start:
-                                              TomoObj.pixels_end:
-                                                  TomoObj.pixels_step]
+					         TomoObj.white_end,
+					     TomoObj.slices_start:
+						 TomoObj.slices_end:
+						     TomoObj.slices_step,
+					     TomoObj.pixels_start:
+						 TomoObj.pixels_end:
+						     TomoObj.pixels_step]
                 logger.info("read data_white from file [ok]")
             else:
                 TomoObj.data_white = np.zeros((1, TomoObj.data.shape[1], TomoObj.data.shape[2]))
@@ -193,14 +205,8 @@ class Dataset():
             if TomoObj.FLAG_THETA:
                 hdfdata = f["/exchange/theta"]
                 TomoObj.theta = hdfdata[TomoObj.projections_start:
-                                        TomoObj.projections_end:
-                                            TomoObj.projections_step,
-                                    TomoObj.slices_start:
-                                        TomoObj.slices_end:
-                                            TomoObj.slices_step,
-                                    TomoObj.pixels_start:
-                                        TomoObj.pixels_end:
-                                            TomoObj.pixels_step]
+					    TomoObj.projections_end:
+						TomoObj.projections_step]
                 logger.info("reading theta from file [ok]")
             else:
                 TomoObj.theta = np.linspace(0, TomoObj.data.shape[0], TomoObj.data.shape[0]) \
