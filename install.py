@@ -19,9 +19,9 @@ try:
 except ImportError:
     from urllib.parse import urlencode
 
-INSTALL_HDF5 = True
-INSTALL_FFTW = True
-INSTALL_BOOST = True
+INSTALL_HDF5 = False
+INSTALL_FFTW = False
+INSTALL_BOOST = False
 
 VERBOSE = False
 
@@ -39,9 +39,9 @@ def usage():
     print("")
     print(" Available options include:")
     print("")
-    print("  --only-fftw             only compile the FFTW library")
-    print("  --only-boost            only compile the Boost library")
-    print("  --only-hdf5             only compile the HDF5 library")
+    print("  --fftw                  compile the FFTW library")
+    print("  --boost                 compile the Boost library")
+    print("  --hdf5                  compile the HDF5 library")
     print("  --fc-compiler=<value>   force script to use a specific fortran compiler")
     print("  --cc-compiler=<value>   force script to use a specific C compiler")
     print("  --cxx-compiler=<value>  force script to use a specific C++ compiler")
@@ -54,12 +54,12 @@ if '--help' in sys.argv[1:]:
     usage()
 
 for arg in sys.argv[1:]:
-    if arg == '--only-fftw':
-        INSTALL_FFTW = False
-    if arg == '--only-boost':
-        INSTALL_BOOST = False
-    if arg == '--only-hdf5':
-        INSTALL_HDF5 = False
+    if arg == '--fftw':
+        INSTALL_FFTW = True
+    if arg == '--boost':
+        INSTALL_BOOST = True
+    if arg == '--hdf5':
+        INSTALL_HDF5 = True
     if arg == '--verbose':
         VERBOSE = True
     if arg.startswith('--fc-compiler'):
@@ -84,16 +84,17 @@ for arg in sys.argv[1:]:
             print("ERROR: only one non-optional argument can be provided (the installation path)")
             usage()
 
-if prefix is None:
-    prefix - 'usr/local'
-    print("Default installation directory is taken as /usr/local")
+
+if (INSTALL_HDF5 or INSTALL_FFTW or INSTALL_BOOST) is False:
+    print("Nothing to install! Use 'python install.py --help' for options.")
     sys.exit(1)
 
-
+if prefix is None:
+    prefix = '/usr/local'
+    print("Default installation directory is taken as /usr/local")
+    
 def run(command, logfile):
-
     import subprocess
-
     if VERBOSE:
         status = subprocess.call(command + ' 2>&1 | tee ' + logfile, shell=True, executable="/bin/bash")
     else:
@@ -211,34 +212,6 @@ if system == 'Darwin' and is_gcc:
             print(" -> SPECIAL CASE: adjusting fortran compiler:", fc)
 
 
-if INSTALL_BOOST:
-    BOOST_URL = "http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz"
-    BOOST_SHA1 = '61ed0e57d3c7c8985805bb0682de3f4c65f4b6e5'
-    print("Installing Boost C++")
-    boost_file = os.path.basename(BOOST_URL)
-    if os.path.exists(boost_file):
-        sha1 = hashlib.sha1(open(boost_file, 'rb').read()).hexdigest()
-        if sha1 == BOOST_SHA1:
-            print(" -> file exists, skipping download")
-        else:
-            print(" -> file exists but incorrect SHA1, re-downloading")
-            open(boost_file, 'wb').write(urlopen(BOOST_URL).read())
-    else:
-        print(" -> downloading")
-        open(boost_file, 'wb').write(urlopen(BOOST_URL).read())
-    print(" -> expanding tarfile")
-    t = tarfile.open(boost_file, 'r:gz')
-    t.extractall()
-    print(" -> configuring")
-    os.chdir(boost_file.replace('.tar.gz', ''))
-    run('./bootstrap.sh --with-libraries=system,thread,date_time --prefix={prefix}'.format(fc=fc, cc=cc, cxx=cxx, prefix=prefix), 'log_configure')
-    print(" -> making")
-    run('./b2', 'log_make')
-    print(" -> installing")
-    run('./b2 install', 'log_make_install')
-    os.chdir(work_dir)
-
-
 if INSTALL_FFTW:
     FFTW_URL = "http://www.fftw.org/fftw-3.3.3.tar.gz"
     FFTW_SHA1 = '11487180928d05746d431ebe7a176b52fe205cf9'
@@ -266,6 +239,33 @@ if INSTALL_FFTW:
     run('make install', 'log_make_install')
     os.chdir(work_dir)
 
+
+if INSTALL_BOOST:
+    BOOST_URL = "http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz"
+    BOOST_SHA1 = '61ed0e57d3c7c8985805bb0682de3f4c65f4b6e5'
+    print("Installing Boost C++")
+    boost_file = os.path.basename(BOOST_URL)
+    if os.path.exists(boost_file):
+        sha1 = hashlib.sha1(open(boost_file, 'rb').read()).hexdigest()
+        if sha1 == BOOST_SHA1:
+            print(" -> file exists, skipping download")
+        else:
+            print(" -> file exists but incorrect SHA1, re-downloading")
+            open(boost_file, 'wb').write(urlopen(BOOST_URL).read())
+    else:
+        print(" -> downloading")
+        open(boost_file, 'wb').write(urlopen(BOOST_URL).read())
+    print(" -> expanding tarfile")
+    t = tarfile.open(boost_file, 'r:gz')
+    t.extractall()
+    print(" -> configuring")
+    os.chdir(boost_file.replace('.tar.gz', ''))
+    run('./bootstrap.sh --with-libraries=system,thread,date_time --prefix={prefix}'.format(fc=fc, cc=cc, cxx=cxx, prefix=prefix), 'log_configure')
+    print(" -> making")
+    run('./b2', 'log_make')
+    print(" -> installing")
+    run('./b2 install', 'log_make_install')
+    os.chdir(work_dir)
 
 
 if INSTALL_HDF5:
