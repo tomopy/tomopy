@@ -19,10 +19,10 @@ as the standard means of data exchange.
 
 ## Installing TomoPy
 
-Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "tsss...") or [Python 2.7](http://www.python.org/download/releases/2.7/ "tsss...") and above dependencies installed in your system. If you installed [FFTW 3.3.3](http://www.fftw.org "FFTW3") and [Boost C++ 1.55.0](http://www.boost.org "Boost C++") other than the default ``usr/local``, then define the following environment variable before you start install: ``setenv $LIB_TOMOPY=<your-path-to-libraries>. Then:
+Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "tsss...") or [Python 2.7](http://www.python.org/download/releases/2.7/ "tsss...") and above dependencies installed in your system. If you installed [FFTW](http://www.fftw.org "FFTW3") and [Boost C++](http://www.boost.org "Boost C++") somewhere other than ``usr/local``, then before you start installation you should define ``LIB_TOMOPY`` as an environment variable: ``setenv LIB_TOMOPY <your-path-to-libraries>``. Then:
 
-- To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides..
-- To build and install from source, download the [latest released source](https://github.com/tomopy/tomopy/releases), open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
+- To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
+- To build and install from source, download the tarball or clone the project, open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
 
 
 
