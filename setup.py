@@ -3,7 +3,7 @@
 import os
 import io
 
-VERSION = '0.0.3'
+VERSION = '0.0.1'
 
 # Import setuptools.
 from ez_setup import use_setuptools
