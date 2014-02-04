@@ -3,7 +3,7 @@ import numpy as np
 import pywt
 
 
-def stripe_removal(data, level=12, wname='db5', sigma=2):
+def stripe_removal(data, level=None, wname='db5', sigma=2):
     """
     Remove stripes from sinogram data.
 
@@ -26,6 +26,10 @@ def stripe_removal(data, level=12, wname='db5', sigma=2):
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
+    # Find the higest level possible
+    size = np.max(data.shape)
+    level = int(np.ceil(np.log2(size)))
+
     # Wavelet decomposition.
     dx, dy = data.shape
     cH = []
