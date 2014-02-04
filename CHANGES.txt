@@ -1,3 +1,7 @@
-v0.0.1, Jan 31 2014 —- Initial release.
-        Feb 01 2014 —- Errors removed. Logs modified. Colored logging option added. Data write checks updated.
-        Feb 01 2014 —— Center diagnose added. Optimize center bug fixed.
+        Feb 04 2014 -- Phase retrieval tested.
+        Feb 04 2014 -- Check if there is at least 16 slices before starting phase retrieval.
+        Feb 04 2014 -- Auto level calculation for ring removal. 
+        Feb 01 2014 -- Center diagnose added. Optimize center bug fixed.
+        Feb 01 2014 -- Errors removed. Logs modified. Colored logging option added. Data write checks updated.
+v0.0.1, Jan 31 2014 -- Initial release.
+        
