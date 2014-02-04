@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import shutil
 from tomopy.dataio.reader import Dataset
 from gridrec import Gridrec
 from diagnose_center import diagnose_center
@@ -8,10 +10,15 @@ logger = logging.getLogger("tomopy")
 
 
 def diagnose_center_wrapper(TomoObj, *args, **kwargs):
+    dir_path = os.path.dirname(TomoObj.file_name) + '/tmp/'
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+    os.makedirs(dir_path)
+    logger.debug("tmp directory create [ok]")
     if TomoObj.FLAG_DATA and TomoObj.FLAG_THETA:
-        diagnose_center(TomoObj.data, TomoObj.theta, *args, **kwargs)
+        diagnose_center(TomoObj.data, TomoObj.theta, dir_path, *args, **kwargs)
         TomoObj.provenance['diagnose_center'] = (args, kwargs)
-        logger.info("diagnose rotation center [ok]")
+        logger.debug("save diagnostic images at %s [ok]", dir_path)
     else:
         logger.warning("diagnose rotation center [bypassed]")
 

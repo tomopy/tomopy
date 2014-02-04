@@ -249,7 +249,7 @@ class Gridrec():
         
         # Prepare center for C.
         if np.array(center).size == 1:
-            center = np.ones(num_slices) * self.params.numPixels / 2
+            center = np.ones(num_slices) * center
         
         # We want float32 inputs.
         data = np.array(data, dtype='float32')

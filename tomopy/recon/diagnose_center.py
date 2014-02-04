@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import shutil
-import os
 from scipy.optimize import minimize
 from scipy import ndimage
 from scipy import misc
@@ -12,6 +10,7 @@ logger = logging.getLogger("tomopy")
 
 def diagnose_center(data,
                     theta,
+                    dir_path,
                     slice_no=None,
                     center_start=None,
                     center_end=None,
@@ -67,16 +66,11 @@ def diagnose_center(data,
     recon.run(stacked_slices, center=center, theta=theta)
 
     # Save it to a temporary directory for manual inspection.
-    if os.path.isdir("tmp"):
-        shutil.rmtree("tmp")
-    os.makedirs("./tmp")
-    logger.debug("tmp directory create [ok]")
     for m in range(center.size):
         if m % 2 == 0: # 2 slices same bec of gridrec
             img = misc.toimage(recon.data_recon[m, :, :])
-            file_name = "tmp/" + str(np.squeeze(center[m])) + ".tif"
+            file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             img.save(file_name)
-    logger.debug("save diagnostic images [ok]")
 
 
 
