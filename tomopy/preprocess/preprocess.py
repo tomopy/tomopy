@@ -17,7 +17,7 @@ def median_filter_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['median_filter'] = (args, kwargs)
         logger.info("median filtering [ok]")
     else:
-        logger.warning("median filtering [bypassed]")
+        logger.warning("median filtering (data missing) [bypassed]")
 
 def normalize_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA and TomoObj.FLAG_WHITE:
@@ -27,16 +27,22 @@ def normalize_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['normalization'] = (args, kwargs)
         logger.info("normalization [ok]")
     else:
-        logger.warning("normalization [bypassed]")
+        logger.warning("normalization (data missing) [bypassed]")
 
 def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
-        for m in range(TomoObj.data.shape[0]):
-            TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
-        TomoObj.provenance['phase_retrieval'] = (args, kwargs)
-        logger.info("phase retrieval [ok]")
+        if TomoObj.data.shape[1] >= 16:
+            try:
+		for m in range(TomoObj.data.shape[0]):
+		    TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
+		TomoObj.provenance['phase_retrieval'] = (args, kwargs)
+		logger.info("phase retrieval [ok]")
+            except:
+                logger.info("phase retrieval (requires pixel_size, dist, energy as inputs) [bypassed]")
+        else:
+            logger.info("phase retrieval (at least 16 slices needed) [bypassed]")
     else:
-        logger.info("phase retrieval [bypassed]")
+        logger.info("phase retrieval (data missing) [bypassed]")
 
 def stripe_removal_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
@@ -45,7 +51,7 @@ def stripe_removal_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['stripe_removal'] = (args, kwargs)
         logger.info("stripe removal [ok]")
     else:
-        logger.warning("stripe removal [bypassed]")
+        logger.warning("stripe removal (data missing) [bypassed]")
 
 
 setattr(Dataset, 'median_filter', median_filter_wrapper)

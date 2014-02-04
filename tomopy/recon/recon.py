@@ -20,7 +20,7 @@ def diagnose_center_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['diagnose_center'] = (args, kwargs)
         logger.debug("save diagnostic images at %s [ok]", dir_path)
     else:
-        logger.warning("diagnose rotation center [bypassed]")
+        logger.warning("diagnose rotation center (data missing) [bypassed]")
 
 def optimize_center_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA and TomoObj.FLAG_THETA:
@@ -28,7 +28,7 @@ def optimize_center_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['optimize_center'] = (args, kwargs)
         logger.info("optimize rotation center [ok]")
     else:
-        logger.warning("optimize rotation center [bypassed]")
+        logger.warning("optimize rotation center (data missing) [bypassed]")
     
 def gridrec_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA and TomoObj.FLAG_THETA:
@@ -43,7 +43,7 @@ def gridrec_wrapper(TomoObj, *args, **kwargs):
         TomoObj.provenance['gridrec'] = (args, kwargs)
         logger.info("gridrec reconstruction [ok]")
     else:
-        logger.warning("gridrec reconstruction [bypassed]")
+        logger.warning("gridrec reconstruction (data missing) [bypassed]")
 
 
 setattr(Dataset, 'diagnose_center', diagnose_center_wrapper)
