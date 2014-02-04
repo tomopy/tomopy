@@ -189,9 +189,9 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
                 img.save(file_name)
                 logger.debug("saved as %s [ok]", file_name)
             TomoObj.output_file = file_name
-            logger.info("save data at %s [ok]", dir_path)
+        logger.info("save data at %s [ok]", dir_path)
     else:
-       logger.warning("save data [bypassed]")
+        logger.warning("save data [bypassed]")
 
 def data_to_hdf5(TomoObj, output_file=None):
     """
@@ -374,7 +374,7 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
                 img.save(file_name)
                 logger.debug("saved as %s [ok]", file_name)
             TomoObj.output_file = file_name
-            logger.info("save data at %s [ok]", dir_path)
+        logger.info("save data at %s [ok]", dir_path)
     else:
         logger.warning("save data [bypassed]")
 
