@@ -26,7 +26,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Get shared library location from environment variables.
 try:
-    LIB_TOMOPY = os.environ['LIB_TOMOPY']
+    LIB_TOMOPY = [os.environ['LIB_TOMOPY']]
 except KeyError:
     LIB_TOMOPY = ['/usr/local/lib, /usr/lib', '/local/lib']
 
@@ -40,11 +40,11 @@ ext_module_fftw = Extension(name='tomopy.lib.libfftw',
 # Create Gridrec shared-libraries.
 ext_module_gridrec = Extension(name='tomopy.lib.libgridrec',
                             sources=['tomopy/c/gridrec/src/filters.cpp',
-				     'tomopy/c/gridrec/src/grid.cpp',
-				     'tomopy/c/gridrec/src/MessageQueue.cpp',
-				     'tomopy/c/gridrec/src/pswf.cpp',
-				     'tomopy/c/gridrec/src/tomoRecon.cpp',
-				     'tomopy/c/gridrec/src/tomoReconPy.cpp'],
+                                     'tomopy/c/gridrec/src/grid.cpp',
+                                     'tomopy/c/gridrec/src/MessageQueue.cpp',
+                                     'tomopy/c/gridrec/src/pswf.cpp',
+                                     'tomopy/c/gridrec/src/tomoRecon.cpp',
+                                     'tomopy/c/gridrec/src/tomoReconPy.cpp'],
                             include_dirs=['tomopy/c/gridrec/include'],
                             library_dirs=LIB_TOMOPY,
                             extra_link_args=['-lfftw3f',
@@ -95,3 +95,5 @@ setup(
                      'Programming Language :: C++',
                      ]
       )
+
+print "Successfully finished!"
