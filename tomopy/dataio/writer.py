@@ -157,7 +157,6 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
         for m in range(digits):
             file_index[m] = '0' * (digits - m - 1)
         ind = range(x_start, x_end)
-        print x_start, x_end
         for m in range(len(ind)):
             for n in range(digits):
                 if ind[m] < np.power(10, n + 1):

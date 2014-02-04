@@ -210,7 +210,7 @@ class Dataset():
                 logger.info("reading theta from file [ok]")
             else:
                 TomoObj.theta = np.linspace(0, TomoObj.data.shape[0], TomoObj.data.shape[0]) \
-                                * 180 / TomoObj.data.shape[0]
+                                * 180 / (TomoObj.data.shape[0] + 1)
                 TomoObj.FLAG_THETA = True
                 logger.warning("assign 180-degree rotation [ok]")
 
