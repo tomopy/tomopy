@@ -7,7 +7,7 @@ libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/lib
 libfftw = ctypes.CDLL(libpath)
 
 
-def fftw(a, axis=None):
+def fftw(a):
     """ 
     Compute the one-dimensional discrete Fourier Transform (DWT).
         
@@ -19,10 +19,6 @@ def fftw(a, axis=None):
     ----------
     a : ndarray
         Input array, can be complex.
-
-    axis : int, optional
-        Axis over which to compute the FFT. 
-        If not given, the last axis is used.
         
     Returns
     -------
@@ -45,7 +41,7 @@ def fftw(a, axis=None):
     c_int_p = ctypes.POINTER(ctypes.c_int)
 
     _a = np.array(a, dtype='complex64')
-    dimx = np.array(a.shape[1])
+    dimx = np.array(a.shape[-1:])
     direction = np.array(-1)
     libfftw.fftw_1d(_a.ctypes.data_as(c_float_p),
 		    dimx.ctypes.data_as(c_int_p),
@@ -81,7 +77,7 @@ def ifftw(a):
     c_int_p = ctypes.POINTER(ctypes.c_int)
     
     _a = np.array(a, dtype='complex64')
-    dimx = np.array(a.shape[1])
+    dimx = np.array(a.shape[-1:])
     direction = np.array(1)
     libfftw.fftw_2d(_a.ctypes.data_as(c_float_p),
                     dimx.ctypes.data_as(c_int_p),
