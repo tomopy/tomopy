@@ -6,7 +6,7 @@ tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
 as the standard means of data exchange.
 
 ## Clone the TomoPy project:
-``$ cd to your working directory`` (i.e. /local/tomopy/)
+``$ cd to your working directory`` (i.e. cd /local/tomopy/)
 
 ``$ git clone https://github.com/tomopy/tomopy.git tomopy``
 
@@ -16,6 +16,8 @@ as the standard means of data exchange.
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
 To automatically downaload and install the external dependencies inside ``/usr/local``:
+
+``$ cd to your working directory`` (i.e. cd /local/tomopy/tomopy)
 
 ``$ python install.py --fftw --boost`` 
 
