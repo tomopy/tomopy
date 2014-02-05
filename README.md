@@ -5,7 +5,7 @@ tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
 [HDF5 file format](https://github.com/data-exchange/data-exchange/ "Data Exchange")
 as the standard means of data exchange.
 
-## Clone the TomoPy project:
+## Cloning the TomoPy project:
 ``$ cd <my-working-directory>`` (i.e. cd /local/tomopy/)
 
 ``$ git clone https://github.com/tomopy/tomopy.git tomopy``
