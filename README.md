@@ -2,7 +2,7 @@
 
 TomoPy is a Python toolbox to perform data processing and image reconstruction 
 tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
-[HDF5 file format](https://subversion.xray.aps.anl.gov/DataExchange/doc/trunk/ "Data Exchange")
+[HDF5 file format](https://github.com/data-exchange/data-exchange/ "Data Exchange")
 as the standard means of data exchange.
 
 ## External Dependencies:
