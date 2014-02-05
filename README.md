@@ -25,6 +25,5 @@ Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "ts
 
 - To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
 - To build and install from source, download the tarball or clone the project, open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
-.
 
 
