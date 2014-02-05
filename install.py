@@ -338,6 +338,5 @@ if INSTALL_HDF5:
 
 # Go back to starting directory
 os.chdir(start_dir)
-print("Installation succesful! Don't forget to set \
-      an environment variable LIB_TOMOPY to the \
-      directory you specified for this install.")
+print("Installation succesful!")
+print("Don't forget to run: setenv LIB_TOMOPY %s" % prefix + '/lib')
