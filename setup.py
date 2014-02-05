@@ -34,7 +34,7 @@ except KeyError:
 ext_module_fftw = Extension(name='tomopy.lib.libfftw',
                             sources=['tomopy/c/fftw/src/fftw.cpp'],
                             include_dirs=['tomopy/c/fftw/include'],
-                            library_dirs=['/usr/local/lib'],
+                            library_dirs=LIB_TOMOPY,
                             extra_link_args=['-lfftw3f'])
 
 # Create Gridrec shared-libraries.
@@ -46,22 +46,21 @@ ext_module_gridrec = Extension(name='tomopy.lib.libgridrec',
                                      'tomopy/c/gridrec/src/tomoRecon.cpp',
                                      'tomopy/c/gridrec/src/tomoReconPy.cpp'],
                             include_dirs=['tomopy/c/gridrec/include'],
-                            library_dirs=['/usr/local/lib'],
+                            library_dirs=LIB_TOMOPY,
                             extra_link_args=['-lfftw3f',
-                                             '-lboost_thread-mt',
-                                             '-lboost_system-mt',
-                                             '-lboost_date_time-mt'])
+                                             '-lboost_thread',
+                                             '-lboost_system',
+                                             '-lboost_date_time'])
 
 # Main setup configuration.
 setup(
       name = 'tomopy',
       version = VERSION,
       packages = find_packages(),
-      install_requires = ['Pillow==2.3.0',
-                          'h5py==2.2.1',
-                          'pyWavelets==0.2.2',
-                          'scipy==0.13.2',
-                          'numpy==1.8.0'],
+      install_requires = ['h5py',
+                          'pyWavelets>=0.2',
+                          'scipy>=0.13',
+                          'numpy>=1.8'],
 
       package_data = {
           # If any package contains *.txt or *.rst files, include them:
@@ -97,4 +96,3 @@ setup(
                      ]
       )
 
-print "Successfully finished!"
