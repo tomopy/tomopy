@@ -5,12 +5,32 @@ tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
 [HDF5 file format](https://github.com/data-exchange/data-exchange/ "Data Exchange")
 as the standard means of data exchange.
 
+## Clone the TomoPy project:
+``$ cd to your working directory`` (i.e. /local/tomopy/)
+``$ git clone https://github.com/tomopy/tomopy.git tomopy``
+
 ## External Dependencies:
 - [HDF5 1.8.12](http://www.hdfgroup.org/HDF5/ "HDF5")
 - [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
-You can use ``python install.py --fftw --boost`` (if authorization requires ``sudo python install.py --fftw --boost``) to automatically download and install external dependencies inside ``/usr/local``. if you want to install them to another directory, use ``python install.py <my-install-directory> --fftw --boost``. But for this case after the installation you should define ``LIB_TOMOPY`` as an environment variable (like ``setenv LIB_TOMOPY <your-path-to-libraries>``) before you start installing TomoPy.
+To automatically downaload and install the external dependencies inside ``/usr/local``:
+
+``$ python install.py --fftw --boost`` 
+
+``or if authorization is required
+
+``$ sudo python install.py --fftw --boost``
+
+To install them to another directory use:
+
+``$ python install.py <my-install-directory> --fftw --boost``
+
+in case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
+
+``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
+
+before you start installing TomoPy.
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
