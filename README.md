@@ -23,7 +23,7 @@ or if authorization is required
 
 ``$ sudo python install.py --fftw --boost``
 
-To install them to another directory use:
+To install the external dependencies to another directory use:
 
 ``$ python install.py <my-install-directory> --fftw --boost``
 
