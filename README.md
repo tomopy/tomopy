@@ -6,7 +6,7 @@ tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
 as the standard means of data exchange.
 
 ## Clone the TomoPy project:
-``$ cd to your working directory`` (i.e. cd /local/tomopy/)
+``$ cd <my-working-directory>`` (i.e. cd /local/tomopy/)
 
 ``$ git clone https://github.com/tomopy/tomopy.git tomopy``
 
@@ -17,7 +17,7 @@ as the standard means of data exchange.
 
 To automatically downaload and install the external dependencies inside ``/usr/local``:
 
-``$ cd to your working directory`` (i.e. cd /local/tomopy/tomopy)
+``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomopy/tomopy)
 
 ``$ python install.py --fftw --boost`` 
 
@@ -46,7 +46,13 @@ before you start installing TomoPy.
 
 Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "tsss...") or [2.7](http://www.python.org/download/releases/2.7/ "tsss...") and the above dependencies installed in your system. If the external libraries are installed in a non-standard place, define the environment variable ``LIB_TOMOPY`` and set it to the location of the ``lib`` folder (like ``setenv LIB_TOMOPY <path-to-external-libraries>``). Then:
 
-- To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
-- To build and install from source, download the tarball or clone the project, open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
+- To build and install from source:
+
+``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomopy/tomopy)
+
+``$ python setup.py install``
+
+- To install from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
+
 
 
