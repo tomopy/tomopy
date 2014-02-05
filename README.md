@@ -7,6 +7,7 @@ as the standard means of data exchange.
 
 ## Clone the TomoPy project:
 ``$ cd to your working directory`` (i.e. /local/tomopy/)
+
 ``$ git clone https://github.com/tomopy/tomopy.git tomopy``
 
 ## External Dependencies:
@@ -18,7 +19,7 @@ To automatically downaload and install the external dependencies inside ``/usr/l
 
 ``$ python install.py --fftw --boost`` 
 
-``or if authorization is required
+or if authorization is required
 
 ``$ sudo python install.py --fftw --boost``
 
