@@ -25,11 +25,13 @@ inside ``/usr/local``:
 
 in another directory use:
 
-  ``$ python install.py <my-install-directory> --fftw --boost``
+  ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
+
+  ``$ python install.py <my-install-directory> --fftw --boost`` (i.e. python install.py /local/pythonPackages/ --fftw --boost)
 
   in this case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
 
-  ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
+  ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` (i.e. ``$ setenv LIB_TOMOPY /local/pythonPackages/lib``
 
 before you start installing TomoPy.
 
