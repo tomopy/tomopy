@@ -19,19 +19,17 @@ To automatically downaload and install the external dependencies:
 
 inside ``/usr/local``:
   
-``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
+  ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
-``$ python install.py --fftw --boost``
-      
-if authorization is required: ``$ sudo python install.py --fftw --boost``
+  ``$ python install.py --fftw --boost`` (if authorization is required: ``$ sudo python install.py --fftw --boost``)
 
 in another directory use:
 
-``$ python install.py <my-install-directory> --fftw --boost``
+  ``$ python install.py <my-install-directory> --fftw --boost``
 
-in this case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
+  in this case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
 
-``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
+  ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
 
 before you start installing TomoPy.
 
