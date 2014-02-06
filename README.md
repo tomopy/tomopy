@@ -31,7 +31,7 @@ in another directory use:
 
   in this case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
 
-  ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` (i.e. ``$ setenv LIB_TOMOPY /local/pythonPackages/lib``
+  ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` (i.e. ``$ setenv LIB_TOMOPY /local/pythonPackages/lib``)
 
 before you start installing TomoPy.
 
