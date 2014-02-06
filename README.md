@@ -48,12 +48,12 @@ Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "ts
 
 - To build and install from source:
 
-``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
-
 in the default python distribution (PYTHONPATH):
+  ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
   ``$ python setup.py install``
 
 in your user site packages directory:
+  ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
   ``$ setup.py install --user``
 
 - To install from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
