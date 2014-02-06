@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import io
+import platform
 
 from ez_setup import use_setuptools
 use_setuptools()
@@ -42,6 +43,8 @@ try:
 except KeyError:
     raise KeyError("You need to set C_INCLUDE_PATH")
 
+check_ext_lib_path(LD_LIBRARY_PATH, C_INCLUDE_PATH)
+
 # Create FFTW shared-libraries.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
 		     sources=['tomopy/c/fftw/src/fftw.cpp'],
@@ -49,20 +52,39 @@ ext_fftw = Extension(name='tomopy.lib.libfftw',
 		     library_dirs=LD_LIBRARY_PATH,
 		     extra_link_args=['-lfftw3f'])
 
-# Create Gridrec shared-libraries.
-ext_gridrec = Extension(name='tomopy.lib.libgridrec',
-			sources=['tomopy/c/gridrec/src/filters.cpp',
-				 'tomopy/c/gridrec/src/grid.cpp',
-				 'tomopy/c/gridrec/src/MessageQueue.cpp',
-				 'tomopy/c/gridrec/src/pswf.cpp',
-				 'tomopy/c/gridrec/src/tomoRecon.cpp',
-				 'tomopy/c/gridrec/src/tomoReconPy.cpp'],
-			include_dirs=C_INCLUDE_PATH,
-			library_dirs=LD_LIBRARY_PATH,
-			extra_link_args=['-lfftw3f',
-					 '-lboost_thread',
-					 '-lboost_system',
-					 '-lboost_date_time'])
+myplatform = platform.uname()[0]
+if myplatform == 'Linux':
+    # Create Gridrec shared-libraries.
+    ext_gridrec = Extension(name='tomopy.lib.libgridrec',
+			    sources=['tomopy/c/gridrec/src/filters.cpp',
+				    'tomopy/c/gridrec/src/grid.cpp',
+				    'tomopy/c/gridrec/src/MessageQueue.cpp',
+				    'tomopy/c/gridrec/src/pswf.cpp',
+				    'tomopy/c/gridrec/src/tomoRecon.cpp',
+				    'tomopy/c/gridrec/src/tomoReconPy.cpp'],
+			    include_dirs=C_INCLUDE_PATH,
+			    library_dirs=LD_LIBRARY_PATH,
+			    extra_link_args=['-lfftw3f',
+					    '-lboost_thread',
+					    '-lboost_system',
+					    '-lboost_date_time'])
+elif myplatform == 'Darwin':
+    # Create Gridrec shared-libraries.
+    ext_gridrec = Extension(name='tomopy.lib.libgridrec',
+			    sources=['tomopy/c/gridrec/src/filters.cpp',
+				    'tomopy/c/gridrec/src/grid.cpp',
+				    'tomopy/c/gridrec/src/MessageQueue.cpp',
+				    'tomopy/c/gridrec/src/pswf.cpp',
+				    'tomopy/c/gridrec/src/tomoRecon.cpp',
+				    'tomopy/c/gridrec/src/tomoReconPy.cpp'],
+			    include_dirs=C_INCLUDE_PATH,
+			    library_dirs=LD_LIBRARY_PATH,
+			    extra_link_args=['-lfftw3f',
+					    '-lboost_thread-mt',
+					    '-lboost_system-mt',
+					    '-lboost_date_time-mt'])
+else:
+    print "Win is not tested!"
 
 # Main setup configuration.
 setup(
@@ -99,4 +121,9 @@ setup(
 		   'Programming Language :: C',
 		   'Programming Language :: C++']
       )
+
+
+
+
+
 
