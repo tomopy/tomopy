@@ -5,17 +5,11 @@ tasks at the [Advanced Photon Source](http://www.aps.anl.gov/ "APS"). It uses th
 [HDF5 file format](https://github.com/data-exchange/data-exchange/ "Data Exchange")
 as the standard means of data exchange.
 
-## Cloning the TomoPy project:
-``$ cd <my-working-directory>`` (i.e. cd /local/tomo/)
-
-``$ git clone https://github.com/tomopy/tomopy.git tomopy``
-
 ## External Dependencies:
 - [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
 Note: You can use ``python install.py <desired-directory> --boost --fftw`` for a quick install of these packages. If ``<desired-directory>`` is unspecified, by default it installs them into ``/usr/local``. 
-
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
