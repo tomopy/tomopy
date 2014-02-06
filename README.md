@@ -50,7 +50,7 @@ Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "ts
   
   ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
   
-  ``$ python setup.py install`` (in your user site packages directory ``$ setup.py install --user``)
+  ``$ python setup.py install`` (in your user site packages directory ``$ python setup.py install --user``)
 
 - To install from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
 
