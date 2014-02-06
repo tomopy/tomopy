@@ -17,7 +17,7 @@ as the standard means of data exchange.
 
 To automatically downaload and install the external dependencies:
 
-inside ``/usr/local``:
+in the default location (``/usr/local``):
   
   ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
