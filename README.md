@@ -46,13 +46,11 @@ before you start installing TomoPy.
 
 Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "tsss...") or [2.7](http://www.python.org/download/releases/2.7/ "tsss...") and the above dependencies installed in your system. If the external libraries are installed in a non-standard place, define the environment variable ``LIB_TOMOPY`` and set it to the location of the ``lib`` folder (like ``setenv LIB_TOMOPY <path-to-external-libraries>``). Then:
 
-- To build and install from source:
-
-in the default python distribution (PYTHONPATH):
+- To build and install from source in the default python distribution (PYTHONPATH):
   ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
   ``$ python setup.py install``
 
-in your user site packages directory:
+- To build and install from source in your user site packages directory:
   ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
   ``$ setup.py install --user``
 
