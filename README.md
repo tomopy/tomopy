@@ -9,7 +9,7 @@ as the standard means of data exchange.
 - [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
-Note: You can use ``python install.py <desired-directory> --boost --fftw`` for a quick install of these packages. If ``<desired-directory>`` is unspecified, by default it installs them into ``/usr/local``. 
+**Note:** You can use ``python install.py <desired-directory> --boost --fftw`` for a quick install of these packages. If ``<desired-directory>`` is unspecified, by default it installs them into ``/usr/local``. 
 
 ## Python Dependencies:
 - [NumPy 1.8.0](http://www.numpy.org "numpy")
@@ -22,7 +22,7 @@ Note: You can use ``python install.py <desired-directory> --boost --fftw`` for a
 
 Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "tsss...") or [2.7](http://www.python.org/download/releases/2.7/ "tsss...") and the above dependencies installed in your system. 
 
-Then, set the following environment variables in the shell like (C-shell assumed):
+Then, permanently set the following environment variables in the shell like (C-shell assumed):
 - ``setenv LD_LIBRARY_PATH <my-boost-lib-dir>:<my-fftw-lib-dir>``  
 - ``setenv C_INCLUDE_PATH <my-boost-include-dir>:<my-fftw-include-dir>``
 
