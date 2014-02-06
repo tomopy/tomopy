@@ -3,5 +3,7 @@ include CHANGES.txt
 graft tomopy/c
 recursive-include tomopy/ *.cpp *.h
 recursive-include tomopy/dataio *
+recursive-include tomopy/material *
 recursive-include tomopy/preprocess *
 recursive-include tomopy/recon *
+recursive-include tomopy/tools *

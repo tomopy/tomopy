@@ -106,6 +106,7 @@ def run(command, logfile):
         return
 
 
+print(" ")
 print("Determining system setup")
 start_dir = os.path.abspath('.')
 prefix = os.path.abspath(prefix)
@@ -215,6 +216,7 @@ if system == 'Darwin' and is_gcc:
 if INSTALL_FFTW:
     FFTW_URL = "http://www.fftw.org/fftw-3.3.3.tar.gz"
     FFTW_SHA1 = '11487180928d05746d431ebe7a176b52fe205cf9'
+    print(" ")
     print("Installing FFTW")
     fftw_file = os.path.basename(FFTW_URL)
     if os.path.exists(fftw_file):
@@ -243,6 +245,7 @@ if INSTALL_FFTW:
 if INSTALL_BOOST:
     BOOST_URL = "http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz"
     BOOST_SHA1 = '61ed0e57d3c7c8985805bb0682de3f4c65f4b6e5'
+    print(" ")
     print("Installing Boost C++")
     boost_file = os.path.basename(BOOST_URL)
     if os.path.exists(boost_file):
@@ -271,6 +274,7 @@ if INSTALL_BOOST:
 if INSTALL_HDF5:
     ZLIB_URL = "http://downloads.sourceforge.net/project/libpng/zlib/1.2.7/zlib-1.2.7.tar.gz"
     ZLIB_SHA1 = '4aa358a95d1e5774603e6fa149c926a80df43559'
+    print(" ")
     print("Installing ZLIB (for HDF5)")
     zlib_file = os.path.basename(ZLIB_URL)
     if os.path.exists(zlib_file):
@@ -297,6 +301,7 @@ if INSTALL_HDF5:
 
     HDF5_URL = 'http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.12/src/hdf5-1.8.12.tar.gz'
     HDF5_SHA1 = '965d954d596cfa694f3260856a6406ea69e46e68'
+    print(" ")
     print("Installing HDF5")
     hdf5_file = os.path.basename(HDF5_URL)
     if os.path.exists(hdf5_file):
@@ -338,5 +343,14 @@ if INSTALL_HDF5:
 
 # Go back to starting directory
 os.chdir(start_dir)
-print("Installation succesful!")
-print("Don't forget to run: setenv LIB_TOMOPY %s" % prefix + '/lib')
+print(" ")
+print("Installation succesful!!!")
+print(" ")
+print("Before you start installing TomoPy, don't forget to:")
+print(" ")
+print("    1) Set LD_LIBRARY_PATH permanently in your shell to: %s" % prefix + '/lib')
+print("       (hint: setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:%s)" % prefix + '/lib')
+print(" ")
+print("    2) Set C_INCLUDE_PATH permanently in your shell to: %s" % prefix + '/include')
+print("       (hint: setenv C_INCLUDE_PATH ${C_INCLUDE_PATH}:%s)" % prefix + '/include')
+print(" ")
