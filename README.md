@@ -23,7 +23,7 @@ in the default location (``/usr/local``):
 
   ``$ python install.py --fftw --boost`` (if authorization is required: ``$ sudo python install.py --fftw --boost``)
 
-in another directory use:
+in another directory (``<my-tomopy-project-directory>``):
 
   ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
