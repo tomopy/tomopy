@@ -18,10 +18,12 @@ as the standard means of data exchange.
 To automatically downaload and install the external dependencies:
 
   inside ``/usr/local``:
-
+  
     ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
-    ``$ python install.py --fftw --boost``  (if authorization is required: ``$ sudo python install.py --fftw --boost``)
+    ``$ python install.py --fftw --boost``
+      
+  if authorization is required: ``$ sudo python install.py --fftw --boost``
 
   in another directory use:
 
