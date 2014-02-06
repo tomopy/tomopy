@@ -6,7 +6,7 @@ tasks at [APS](http://www.aps.anl.gov/ "APS"). It uses
 as the standard means of data exchange.
 
 ## Cloning the TomoPy project:
-``$ cd <my-working-directory>`` (i.e. cd /local/tomopy/)
+``$ cd <my-working-directory>`` (i.e. cd /local/tomo/)
 
 ``$ git clone https://github.com/tomopy/tomopy.git tomopy``
 
@@ -15,23 +15,21 @@ as the standard means of data exchange.
 - [FFTW 3.3.3](http://www.fftw.org "FFTW3") (only float library is required)
 - [Boost C++ 1.55.0](http://www.boost.org "Boost C++") (only thread, system and date_time libraries are required)
 
-To automatically downaload and install the external dependencies inside ``/usr/local``:
+To automatically downaload and install the external dependencies:
 
-``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomopy/tomopy)
+  inside ``/usr/local``:
 
-``$ python install.py --fftw --boost`` 
+    ``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
-or if authorization is required
+    ``$ python install.py --fftw --boost``  (if authorization is required: ``$ sudo python install.py --fftw --boost``)
 
-``$ sudo python install.py --fftw --boost``
+  in another directory use:
 
-To install the external dependencies to another directory use:
+    ``$ python install.py <my-install-directory> --fftw --boost``
 
-``$ python install.py <my-install-directory> --fftw --boost``
+    in this case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
 
-in case after the installation you should define ``LIB_TOMOPY`` as an environment variable: 
-
-``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
+    ``$ setenv LIB_TOMOPY <your-path-to-libraries>`` 
 
 before you start installing TomoPy.
 
@@ -48,9 +46,13 @@ Make sure you have [Python 2.6](http://www.python.org/download/releases/2.6/ "ts
 
 - To build and install from source:
 
-``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomopy/tomopy)
+``$ cd <my-tomopy-project-directory>`` (i.e. cd /local/tomo/tomopy)
 
-``$ python setup.py install``
+in the default python distribution (PYTHONPATH):
+  ``$ python setup.py install``
+
+in your user site packages directory:
+  ``$ setup.py install --user``
 
 - To install from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides.
 
