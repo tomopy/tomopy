@@ -43,8 +43,6 @@ try:
 except KeyError:
     raise KeyError("You need to set C_INCLUDE_PATH")
 
-check_ext_lib_path(LD_LIBRARY_PATH, C_INCLUDE_PATH)
-
 # Create FFTW shared-libraries.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
 		     sources=['tomopy/c/fftw/src/fftw.cpp'],
