@@ -5,15 +5,20 @@ from normalize import normalize
 from phase_retrieval import phase_retrieval
 from stripe_removal import stripe_removal
 import numpy as np
-import inspect
+import multiprocessing as mp
+from tomopy.tools.multiprocess import multiprocess
 import logging
 logger = logging.getLogger("tomopy")
 
+pool_size = mp.cpu_count()
 
 def median_filter_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
+        multip = multiprocess(median_filter, num_processes=pool_size)
         for m in range(TomoObj.data.shape[2]):
-            TomoObj.data[:, :, m] = median_filter(TomoObj.data[:, :, m], *args, **kwargs)
+            multip.add_job(TomoObj.data[:, :, m], *args, **kwargs)
+        for each in multip.close_out():
+            TomoObj.data[:, :, m] = each
         TomoObj.provenance['median_filter'] = (args, kwargs)
         logger.info("median filtering [ok]")
     else:
@@ -32,13 +37,13 @@ def normalize_wrapper(TomoObj, *args, **kwargs):
 def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
         if TomoObj.data.shape[1] >= 16:
-            try:
-		for m in range(TomoObj.data.shape[0]):
-		    TomoObj.data[m, :, :] = phase_retrieval(TomoObj.data[m, :, :], *args, **kwargs)
-		TomoObj.provenance['phase_retrieval'] = (args, kwargs)
-		logger.info("phase retrieval [ok]")
-            except:
-                logger.info("phase retrieval (requires pixel_size, dist, energy as inputs) [bypassed]")
+	    multip = multiprocess(phase_retrieval, num_processes=pool_size)
+	    for m in range(TomoObj.data.shape[0]):
+		multip.add_job(TomoObj.data[m, :, :], *args, **kwargs)
+	    for each in multip.close_out():
+		TomoObj.data[m, :, :] = each
+	    TomoObj.provenance['phase_retrieval'] = (args, kwargs)
+	    logger.info("phase retrieval [ok]")
         else:
             logger.info("phase retrieval (at least 16 slices needed) [bypassed]")
     else:
@@ -46,8 +51,14 @@ def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
 
 def stripe_removal_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
-        for m in range(TomoObj.data.shape[1]):
-            TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
+	multip = multiprocess(stripe_removal, num_processes=pool_size)
+	for m in range(TomoObj.data.shape[1]):
+	    multip.add_job(TomoObj.data[:, m, :], *args, **kwargs)
+	for each in multip.close_out():
+	    TomoObj.data[:, m, :] = each
+        #for m in range(TomoObj.data.shape[1]):
+            #print m
+            #TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
         TomoObj.provenance['stripe_removal'] = (args, kwargs)
         logger.info("stripe removal [ok]")
     else:
