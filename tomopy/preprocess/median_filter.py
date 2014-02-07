@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from scipy.ndimage import filters
+from tomopy.tools.multiprocess import worker
 
-
+@worker
 def median_filter(data, size=(3, 1)):
     """
     Apply median filter to data.

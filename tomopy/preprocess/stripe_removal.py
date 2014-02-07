@@ -28,7 +28,6 @@ def stripe_removal(data, level=None, wname='db5', sigma=2):
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
     # Find the higest level possible
-    print 1
     size = np.max(data.shape)
     level = int(np.ceil(np.log2(size)))
 
