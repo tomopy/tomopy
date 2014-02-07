@@ -17,8 +17,10 @@ def median_filter_wrapper(TomoObj, *args, **kwargs):
         multip = multiprocess(median_filter, num_processes=pool_size)
         for m in range(TomoObj.data.shape[2]):
             multip.add_job(TomoObj.data[:, :, m], *args, **kwargs)
+	m = 0
         for each in multip.close_out():
             TomoObj.data[:, :, m] = each
+	    m += 1
         TomoObj.provenance['median_filter'] = (args, kwargs)
         logger.info("median filtering [ok]")
     else:
@@ -40,8 +42,10 @@ def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
 	    multip = multiprocess(phase_retrieval, num_processes=pool_size)
 	    for m in range(TomoObj.data.shape[0]):
 		multip.add_job(TomoObj.data[m, :, :], *args, **kwargs)
-	    for each in multip.close_out():
+	    m = 0
+            for each in multip.close_out():
 		TomoObj.data[m, :, :] = each
+		m += 1
 	    TomoObj.provenance['phase_retrieval'] = (args, kwargs)
 	    logger.info("phase retrieval [ok]")
         else:
@@ -53,12 +57,11 @@ def stripe_removal_wrapper(TomoObj, *args, **kwargs):
     if TomoObj.FLAG_DATA:
 	multip = multiprocess(stripe_removal, num_processes=pool_size)
 	for m in range(TomoObj.data.shape[1]):
-	    multip.add_job(TomoObj.data[:, m, :], *args, **kwargs)
+	    multip.add_job(TomoObj.data[:, m, :])
+        m = 0
 	for each in multip.close_out():
 	    TomoObj.data[:, m, :] = each
-        #for m in range(TomoObj.data.shape[1]):
-            #print m
-            #TomoObj.data[:, m, :] = stripe_removal(TomoObj.data[:, m, :], *args, **kwargs)
+            m += 1
         TomoObj.provenance['stripe_removal'] = (args, kwargs)
         logger.info("stripe removal [ok]")
     else:

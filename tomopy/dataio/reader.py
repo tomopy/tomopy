@@ -8,7 +8,7 @@ logger = logging.getLogger("tomopy")
 
 
 class Dataset():
-    def __init__(TomoObj, data=None, data_white=None, theta=None, log='DEBUG', clog=True):
+    def __init__(TomoObj, data=None, data_white=None, theta=None, log='INFO', clog=True):
         """
         Constructor for initial Data-Exchange data structure.
         

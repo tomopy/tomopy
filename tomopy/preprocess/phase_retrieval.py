@@ -3,8 +3,9 @@
 import numpy as np
 from tomopy.tools import constants
 from tomopy.tools import fftw
+from tomopy.tools.multiprocess import worker
 
-
+@worker
 def phase_retrieval(data, pixel_size, dist, energy, alpha=0.001, padding=True):
     """
     Perform single-material phase retrieval
@@ -41,6 +42,7 @@ def phase_retrieval(data, pixel_size, dist, energy, alpha=0.001, padding=True):
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
+    print energy
     dx, dy = data.shape # dx:slices, dy:pixels
     wavelength = 2 * constants.PI * constants.PLANCK_CONSTANT * \
                  constants.SPEED_OF_LIGHT / energy
