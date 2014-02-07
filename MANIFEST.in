@@ -1,5 +1,6 @@
 include README.md
 include CHANGES.txt
+include LICENSE.txt
 graft tomopy/c
 recursive-include tomopy/ *.cpp *.h
 recursive-include tomopy/dataio *
