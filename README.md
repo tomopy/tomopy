@@ -31,7 +31,7 @@ Once the environment variables are set correctly, then:
 - To insall from an egg distribution download the [latest released egg](https://github.com/tomopy/tomopy/releases) for your system, open shell prompt and type `easy_install my-egg-name` in the directory where the egg resides. 
 - To build and install from source, download the [latest source tarball](https://github.com/tomopy/tomopy/releases), open shell prompt and type `python setup.py install` in the directory where `setup.py` resides.
 
-To test if installation was succesfull, open a new shell and try:
+For some configurations you may need to specifically add the install directory to your ``PYTHONPATH``. To test if installation was succesfull, open a new shell and try:
 
 - ``python -c "import tomopy"``
 
