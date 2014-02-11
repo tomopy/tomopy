@@ -9,7 +9,7 @@ from scipy import interpolate
 class Element():
     def __init__(self, element):
         self.element = element.lower()
-        self._f = h5py.File('elements.h5', 'r')
+        self._f = h5py.File('/local/dgursoy/Projects/tomopy/tomopy/material/elements.h5', 'r')
         
     def atomic_number(self):
         _atomic_number = np.squeeze(self._f[self.element+'/atomic_number'][:])

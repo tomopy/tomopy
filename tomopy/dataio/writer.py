@@ -40,7 +40,7 @@ def recon_to_hdf5(TomoObj, output_file=None):
         if write_access:
             logger.debug("save folder directory permissions [ok]")
         else:
-            logger.error("save folder directory permissions [failed]")
+            logger.warning("save folder directory permissions [failed]")
         
         # Create new folders.
         dir_path = os.path.dirname(output_file)
