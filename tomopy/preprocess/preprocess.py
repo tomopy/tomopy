@@ -11,25 +11,14 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-
 def median_filter_wrapper(TomoObj, size=(3, 1)):
     if not TomoObj.FLAG_DATA:
         logger.warning("median filtering (data missing) [bypassed]")
         return
-        
-    # Create multi-processing object.
-    multip = multiprocess(median_filter, num_processes=mp.cpu_count())
-    
-    # Populate jobs.
-    for m in range(TomoObj.data.shape[2]):
-        args = (TomoObj.data[:, :, m], size)
-        multip.add_job(args)
-    
-    # Collect results.
-    m = 0
-    for each in multip.close_out():
-        TomoObj.data[:, :, m] = each
-   	m += 1
+   
+    # Perform median filtering.
+    args = (TomoObj.data, size)
+    TomoObj.data = median_filter(args)
     
     # Update provenance.
     TomoObj.provenance['median_filter'] = {'size':size}
@@ -49,19 +38,9 @@ def normalize_wrapper(TomoObj, cutoff=None):
     # Calculate average white field for normalization.
     avg_white = np.mean(TomoObj.data_white, axis=0)
     
-    # Create multi-processing object.
-    multip = multiprocess(normalize, num_processes=mp.cpu_count())
-    
-    # Populate jobs.
-    for m in range(TomoObj.data.shape[0]):
-        args = (TomoObj.data[m, :, :], avg_white, cutoff)
-        multip.add_job(args)
-    
-    # Collect results.
-    m = 0
-    for each in multip.close_out():
-        TomoObj.data[m, :, :] = each
-   	m += 1
+    # Perform normalization.
+    args = (TomoObj.data, avg_white, cutoff)
+    TomoObj.data = normalize(args)
     
     # Update provenance.
     TomoObj.provenance['normalize'] = {'cutoff':cutoff}

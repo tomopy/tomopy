@@ -7,6 +7,7 @@ class multiprocess(object):
         self.total_jobs = 0
         self.jobs = mp.JoinableQueue()
         self.results = mp.Queue()
+        self.lock = mp.Lock()
 
         tup = (self.jobs, self.results)
         self.num_processes = num_processes
@@ -25,7 +26,7 @@ class multiprocess(object):
         for i in range(self.num_processes):
             self.jobs.put((None,))
 
-        completed_jobs=0
+        completed_jobs = 0
         res_list = []
         while True:
             if not self.results.empty():
@@ -35,7 +36,6 @@ class multiprocess(object):
                 break
 
         self.jobs.join()
-
         self.jobs.close()
         self.results.close()
 
@@ -46,9 +46,9 @@ class multiprocess(object):
 
 def worker(func):
     def worker2(*args, **kwargs):
-	#name = mp.current_process().name
+	name = mp.current_process().name
         jobs_completed = 0
-        jobs, results = args[0], args[1]
+        jobs, results = args
         while True:
             job_args = jobs.get()
             if job_args[0] is None: # Deal with Poison Pill
