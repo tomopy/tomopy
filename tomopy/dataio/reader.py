@@ -129,6 +129,8 @@ class Dataset():
         TomoObj.pixels_start = pixels_start
         TomoObj.pixels_end = pixels_end
         TomoObj.pixels_step = pixels_step
+        TomoObj.white_start = white_start
+        TomoObj.white_end = white_end
         TomoObj._log_level = str(log).upper()
         
         # Prepare logging file.

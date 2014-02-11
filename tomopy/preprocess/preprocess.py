@@ -119,12 +119,13 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
         logger.warning("normalization (data missing) [bypassed]")
         return
 
-    # Find the higest level possible
-    size = np.max(TomoObj.data.shape)
-    level = int(np.ceil(np.log2(size)))
+    # Find the higest level possible.
+    if level is None:
+        size = np.max(TomoObj.data.shape)
+        level = int(np.ceil(np.log2(size)))
     
     # Create multi-processing object.
-    multip = multiprocess(stripe_removal, num_processes=1)
+    multip = multiprocess(stripe_removal, num_processes=mp.cpu_count())
     
     # Populate jobs.
     for m in range(TomoObj.data.shape[1]):
@@ -134,7 +135,7 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
     # Collect results.
     m = 0
     for each in multip.close_out():
-        #TomoObj.data[:,  m*chunk_size:(m+1)*chunk_size, :] = each
+        TomoObj.data[:, m, :] = each
    	m += 1
    	
     # Update provenance.

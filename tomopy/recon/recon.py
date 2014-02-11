@@ -9,15 +9,26 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def diagnose_center_wrapper(TomoObj, *args, **kwargs):
+def diagnose_center_wrapper(TomoObj,
+			    dir_path,
+			    slice_no=None,
+			    center_start=None,
+			    center_end=None,
+			    center_step=None):
     dir_path = os.path.dirname(TomoObj.file_name) + '/tmp/'
     if os.path.isdir(dir_path):
         shutil.rmtree(dir_path)
     os.makedirs(dir_path)
     logger.debug("tmp directory create [ok]")
     if TomoObj.FLAG_DATA and TomoObj.FLAG_THETA:
-        diagnose_center(TomoObj.data, TomoObj.theta, dir_path, *args, **kwargs)
-        TomoObj.provenance['diagnose_center'] = (args, kwargs)
+        diagnose_center(TomoObj.data, 
+			TomoObj.theta, 
+			dir_path=dir_path,
+			slice_no=slice_no,
+			center_start=center_start,
+			center_end=center_end,
+			center_step=center_step)
+        #TomoObj.provenance['diagnose_center'] = (args, kwargs)
         logger.debug("save diagnostic images at %s [ok]", dir_path)
     else:
         logger.warning("diagnose rotation center (data missing) [bypassed]")
