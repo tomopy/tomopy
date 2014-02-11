@@ -2,8 +2,9 @@
 from scipy.ndimage import filters
 from tomopy.tools.multiprocess import worker
 
+
 @worker
-def median_filter(data, size=(3, 1)):
+def median_filter(args):
     """
     Apply median filter to data.
 
@@ -12,7 +13,7 @@ def median_filter(data, size=(3, 1)):
     data : ndarray
         Projection data.
         
-    size : scalar or tuple, optional
+    size : scalar or tuple
         The size of the filter. 
 
     Returns
@@ -20,5 +21,6 @@ def median_filter(data, size=(3, 1)):
     data : ndarray
         Median filtered data.
     """
+    data, size = args
     data = filters.median_filter(data, size)
     return data
