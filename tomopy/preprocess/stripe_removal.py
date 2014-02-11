@@ -27,7 +27,6 @@ def stripe_removal(args):
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
-
     data, level, wname, sigma = args
     
     dx, dy = data.shape
