@@ -134,7 +134,7 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
     # Collect results.
     m = 0
     for each in multip.close_out():
-        #TomoObj.data[:,  m*chunk_size:(m+1)*chunk_size, :] = each
+        TomoObj.data[:, m, :] = each
    	m += 1
    	
     # Update provenance.
