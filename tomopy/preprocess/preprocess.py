@@ -10,62 +10,139 @@ from tomopy.tools.multiprocess import multiprocess
 import logging
 logger = logging.getLogger("tomopy")
 
-pool_size = mp.cpu_count()
 
-def median_filter_wrapper(TomoObj, *args, **kwargs):
-    if TomoObj.FLAG_DATA:
-        multip = multiprocess(median_filter, num_processes=pool_size)
-        for m in range(TomoObj.data.shape[2]):
-            multip.add_job(TomoObj.data[:, :, m], *args, **kwargs)
-	m = 0
-        for each in multip.close_out():
-            TomoObj.data[:, :, m] = each
-	    m += 1
-        TomoObj.provenance['median_filter'] = (args, kwargs)
-        logger.info("median filtering [ok]")
-    else:
+
+def median_filter_wrapper(TomoObj, size=(3, 1)):
+    if not TomoObj.FLAG_DATA:
         logger.warning("median filtering (data missing) [bypassed]")
+        return
+        
+    # Create multi-processing object.
+    multip = multiprocess(median_filter, num_processes=mp.cpu_count())
+    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[2]):
+        args = (TomoObj.data[:, :, m], size)
+        multip.add_job(args)
+    
+    # Collect results.
+    m = 0
+    for each in multip.close_out():
+        TomoObj.data[:, :, m] = each
+   	m += 1
+    
+    # Update provenance.
+    TomoObj.provenance['median_filter'] = {'size':size}
+    
+    logger.info("median filtering [ok]")
 
-def normalize_wrapper(TomoObj, *args, **kwargs):
-    if TomoObj.FLAG_DATA and TomoObj.FLAG_WHITE:
-        avg_white = np.mean(TomoObj.data_white, axis=0)
-        for m in range(TomoObj.data.shape[0]):
-            TomoObj.data[m, :, :] = normalize(TomoObj.data[m, :, :], avg_white, *args, **kwargs)
-        TomoObj.provenance['normalization'] = (args, kwargs)
-        logger.info("normalization [ok]")
-    else:
+
+def normalize_wrapper(TomoObj, cutoff=None):
+    if not TomoObj.FLAG_DATA:
         logger.warning("normalization (data missing) [bypassed]")
+        return
+        
+    if not TomoObj.FLAG_WHITE:
+        logger.warning("normalization (white-data missing) [bypassed]")
+        return
 
-def phase_retrieval_wrapper(TomoObj, *args, **kwargs):
-    if TomoObj.FLAG_DATA:
-        if TomoObj.data.shape[1] >= 16:
-	    multip = multiprocess(phase_retrieval, num_processes=pool_size)
-	    for m in range(TomoObj.data.shape[0]):
-		multip.add_job(TomoObj.data[m, :, :], *args, **kwargs)
-	    m = 0
-            for each in multip.close_out():
-		TomoObj.data[m, :, :] = each
-		m += 1
-	    TomoObj.provenance['phase_retrieval'] = (args, kwargs)
-	    logger.info("phase retrieval [ok]")
-        else:
-            logger.info("phase retrieval (at least 16 slices needed) [bypassed]")
-    else:
-        logger.info("phase retrieval (data missing) [bypassed]")
+    # Calculate average white field for normalization.
+    avg_white = np.mean(TomoObj.data_white, axis=0)
+    
+    # Create multi-processing object.
+    multip = multiprocess(normalize, num_processes=mp.cpu_count())
+    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[0]):
+        args = (TomoObj.data[m, :, :], avg_white, cutoff)
+        multip.add_job(args)
+    
+    # Collect results.
+    m = 0
+    for each in multip.close_out():
+        TomoObj.data[m, :, :] = each
+   	m += 1
+    
+    # Update provenance.
+    TomoObj.provenance['normalize'] = {'cutoff':cutoff}
+    
+    logger.info("normalization [ok]")
 
-def stripe_removal_wrapper(TomoObj, *args, **kwargs):
-    if TomoObj.FLAG_DATA:
-	multip = multiprocess(stripe_removal, num_processes=pool_size)
-	for m in range(TomoObj.data.shape[1]):
-	    multip.add_job(TomoObj.data[:, m, :])
-        m = 0
-	for each in multip.close_out():
-	    TomoObj.data[:, m, :] = each
-            m += 1
-        TomoObj.provenance['stripe_removal'] = (args, kwargs)
-        logger.info("stripe removal [ok]")
-    else:
-        logger.warning("stripe removal (data missing) [bypassed]")
+
+def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=0.001, padding=True):
+    if not TomoObj.FLAG_DATA:
+        logger.warning("phase retrieval (data missing) [bypassed]")
+        return
+        
+    if TomoObj.data.shape[1] < 16:
+        logger.warning("phase retrieval (at least 16 slices are needed) [bypassed]")
+        return
+        
+    if pixel_size is None:
+        logger.warning("phase retrieval (pixel_size missing) [bypassed]")
+        return
+        
+    if dist is None:
+        logger.warning("phase retrieval (dist missing) [bypassed]")
+        return
+        
+    if energy is None:
+        logger.warning("phase retrieval (energy missing) [bypassed]")
+        return
+        
+    # Create multi-processing object.
+    multip = multiprocess(phase_retrieval, num_processes=mp.cpu_count())
+	    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[0]):
+	args = (TomoObj.data[m, :, :], pixel_size, dist, energy, alpha, padding)
+        multip.add_job(args)
+		
+    # Collect results.
+    m = 0
+    for each in multip.close_out():
+        TomoObj.data[m, :, :] = each
+	m += 1
+    
+    # Update provenance.
+    TomoObj.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
+	                                     'dist':dist, 
+	                                     'energy':energy, 
+	                                     'alpha':alpha, 
+	                                     'padding':padding}
+	    
+    logger.info("phase retrieval [ok]")
+
+
+def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
+    if not TomoObj.FLAG_DATA:
+        logger.warning("normalization (data missing) [bypassed]")
+        return
+
+    # Find the higest level possible
+    size = np.max(TomoObj.data.shape)
+    level = int(np.ceil(np.log2(size)))
+    
+    # Create multi-processing object.
+    multip = multiprocess(stripe_removal, num_processes=1)
+    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[1]):
+	args = (TomoObj.data[:, m, :], level, wname, sigma)
+        multip.add_job(args)
+    
+    # Collect results.
+    m = 0
+    for each in multip.close_out():
+        #TomoObj.data[:,  m*chunk_size:(m+1)*chunk_size, :] = each
+   	m += 1
+   	
+    # Update provenance.
+    TomoObj.provenance['stripe_removal'] = {'level':level, 
+                                            'wname':wname, 
+                                            'sigma':sigma}
+    
+    logger.info("stripe removal [ok]")
 
 
 setattr(Dataset, 'median_filter', median_filter_wrapper)

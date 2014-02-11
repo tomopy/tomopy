@@ -173,7 +173,6 @@ class Dataset():
 				  TomoObj.pixels_start:
 				      TomoObj.pixels_end:
 					  TomoObj.pixels_step]
-            logger.info("read data from file [ok]")
 
             # Now read white fields.
             if TomoObj.FLAG_WHITE:
@@ -216,7 +215,6 @@ class Dataset():
 
             # All done. Close file.
             f.close()
-        
             # We work with float32.
             if TomoObj.FLAG_DATA:
                 TomoObj.data = TomoObj.data.astype('float32')

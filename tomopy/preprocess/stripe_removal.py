@@ -4,7 +4,7 @@ import pywt
 from tomopy.tools.multiprocess import worker
 
 @worker
-def stripe_removal(data, level=None, wname='db5', sigma=2):
+def stripe_removal(args):
     """
     Remove stripes from sinogram data.
 
@@ -13,13 +13,13 @@ def stripe_removal(data, level=None, wname='db5', sigma=2):
     data : ndarray
         Projection data.
 
-    level : scalar, optional
+    level : scalar
         Number of DWT levels.
 
-    wname : str, optional
+    wname : str
         Type of the wavelet filter.
 
-    sigma : scalar, optional
+    sigma : scalar
         Damping parameter in Fourier space.
 
     References
@@ -27,12 +27,11 @@ def stripe_removal(data, level=None, wname='db5', sigma=2):
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
-    # Find the higest level possible
-    size = np.max(data.shape)
-    level = int(np.ceil(np.log2(size)))
 
-    # Wavelet decomposition.
+    data, level, wname, sigma = args
+    
     dx, dy = data.shape
+    # Wavelet decomposition.
     cH = []
     cV = []
     cD = []
@@ -60,6 +59,5 @@ def stripe_removal(data, level=None, wname='db5', sigma=2):
     for m in range(level)[::-1]:
         data = data[0:cH[m].shape[0], 0:cH[m].shape[1]]
         data = pywt.idwt2((data, (cH[m], cV[m], cD[m])), wname)
-    data = data[0:dx, 0:dy]
-    return data
+    return data[0:dx, 0:dy]
     

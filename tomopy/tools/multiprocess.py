@@ -10,8 +10,8 @@ class multiprocess(object):
 
         tup = (self.jobs, self.results)
         self.num_processes = num_processes
-        self.p = [mp.Process(target=target_func,
-                    args=tup) for i in range(num_processes)]
+        self.p = [mp.Process(target=target_func, 
+                             args=tup) for i in range(num_processes)]
 
         for process in self.p:
             process.start()
@@ -46,7 +46,7 @@ class multiprocess(object):
 
 def worker(func):
     def worker2(*args, **kwargs):
-	name = mp.current_process().name
+	#name = mp.current_process().name
         jobs_completed = 0
         jobs, results = args[0], args[1]
         while True:

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from tomopy.tools.multiprocess import worker
 
 
-def normalize(data, data_white, cutoff=None):
+@worker
+def normalize(args):
     """
     Normalize raw projection data with
     the white field projection data.
@@ -15,7 +17,7 @@ def normalize(data, data_white, cutoff=None):
     data_white : ndarray
         2-D white field projection data.
 
-    cutoff : scalar, optional
+    cutoff : scalar
         Permitted maximum vaue of the
         normalized data.
 
@@ -24,6 +26,7 @@ def normalize(data, data_white, cutoff=None):
     data : ndarray
         Normalized data.
     """
+    data, data_white, cutoff = args
     data = np.divide(data, data_white)
     if cutoff is not None:
         data[data > cutoff] = cutoff

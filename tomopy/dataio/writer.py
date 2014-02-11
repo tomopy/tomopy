@@ -215,7 +215,7 @@ def data_to_hdf5(TomoObj, output_file=None):
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
-            output_file = dir_path + "/recon/recon_" + base_name + ".h5"
+            output_file = dir_path + "/data/data_" + base_name + ".h5"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
@@ -390,7 +390,7 @@ def _export_to_hdf5(file_name, data, provenance):
 
 setattr(Dataset, 'recon_to_hdf5', recon_to_hdf5)
 setattr(Dataset, 'recon_to_tiff', recon_to_tiff)
-setattr(Dataset, 'data_to_hdf5', data_to_tiff)
+setattr(Dataset, 'data_to_hdf5', data_to_hdf5)
 setattr(Dataset, 'data_to_tiff', data_to_tiff)
 
 
