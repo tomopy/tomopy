@@ -3,6 +3,7 @@ import numpy as np
 import pywt
 from tomopy.tools.multiprocess import worker
 
+
 @worker
 def stripe_removal(args):
     """
@@ -27,7 +28,7 @@ def stripe_removal(args):
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
-    data, level, wname, sigma = args
+    data, level, wname, sigma, id = args
     
     dx, dy = data.shape
     # Wavelet decomposition.
@@ -58,5 +59,5 @@ def stripe_removal(args):
     for m in range(level)[::-1]:
         data = data[0:cH[m].shape[0], 0:cH[m].shape[1]]
         data = pywt.idwt2((data, (cH[m], cV[m], cD[m])), wname)
-    return data[0:dx, 0:dy]
+    return id, data[0:dx, 0:dy]
     

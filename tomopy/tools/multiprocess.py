@@ -7,7 +7,6 @@ class multiprocess(object):
         self.total_jobs = 0
         self.jobs = mp.JoinableQueue()
         self.results = mp.Queue()
-        self.lock = mp.Lock()
 
         tup = (self.jobs, self.results)
         self.num_processes = num_processes
@@ -41,7 +40,7 @@ class multiprocess(object):
 
         for process in self.p:
             process.join()
-
+            
         return res_list
 
 def worker(func):

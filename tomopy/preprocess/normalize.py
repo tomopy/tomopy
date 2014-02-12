@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from tomopy.tools.multiprocess import worker
 
 
+@worker
 def normalize(args):
     """
     Normalize raw projection data with
@@ -24,9 +26,9 @@ def normalize(args):
     data : ndarray
         Normalized data.
     """
-    data, data_white, cutoff = args
-    for m in range(data.shape[0]):
-        data[m, :, :] = np.divide(data[m, :, :], data_white)
+    data, data_white, cutoff, id = args
+    
+    data = np.divide(data, data_white)
     if cutoff is not None:
         data[data > cutoff] = cutoff
-    return data
+    return id, data

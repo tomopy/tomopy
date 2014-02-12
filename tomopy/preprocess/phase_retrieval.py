@@ -42,23 +42,26 @@ def phase_retrieval(args):
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
-    data, pixel_size, dist, energy, alpha, padding = args
+    data, pixel_size, dist, energy, alpha, padding, id = args
     
     dx, dy = data.shape # dx:slices, dy:pixels
     wavelength = 2 * constants.PI * constants.PLANCK_CONSTANT * \
-                 constants.SPEED_OF_LIGHT / energy
-
+                constants.SPEED_OF_LIGHT / energy
+                
     if padding:
-	# Fourier padding in powers of 2.
-	pad_pixels = np.ceil(constants.PI * wavelength * dist / pixel_size ** 2)
-	num_x = pow(2, np.ceil(np.log2(dx + pad_pixels)))
-	num_y = pow(2, np.ceil(np.log2(dy + pad_pixels)))
-	y_shift = int((num_x - dx) / 2.0)
-	x_shift = int((num_y - dy) / 2.0)
-	tmp_data = np.ones((num_x, num_y), dtype='complex')
+        # Find padding values.
+        pad_value = np.mean((data[:, 0] + data[:, dy-1]) / 2)
+        
+        # Fourier padding in powers of 2.
+        pad_pixels = np.ceil(constants.PI * wavelength * dist / pixel_size ** 2)
+        num_x = pow(2, np.ceil(np.log2(dx + pad_pixels)))
+        num_y = pow(2, np.ceil(np.log2(dy + pad_pixels)))
+        x_shift = int((num_x - dx) / 2.0)
+        y_shift = int((num_y - dy) / 2.0)
+        tmp_data = pad_value * np.ones((num_x, num_y), dtype='float32')
     elif not padding:
         num_x, num_y = data.shape
-
+                
     # Sampling in reciprocal space.
     indx = (1 / ((num_x-1) * pixel_size)) * np.arange(-(num_x-1)*0.5, num_x*0.5)
     indy = (1 / ((num_y-1) * pixel_size)) * np.arange(-(num_y-1)*0.5, num_y*0.5)
@@ -67,17 +70,17 @@ def phase_retrieval(args):
 
     # Filter in Fourier space.
     H = 1 / (wavelength * dist * w2 / (4 * constants.PI) + alpha)
-
+    
     if padding:
-	# Fourier transform of data.
-	tmp_data[y_shift:dx+y_shift, x_shift:dy+x_shift] = data
-	fft_data = np.fft.fftshift(np.fft.fft2(tmp_data))
-	filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
-	tmp = np.real(np.fft.ifft2(filtered_data))
-	data = tmp[y_shift:dx+y_shift, x_shift:dy+x_shift]
+        # Fourier transform of data.
+        tmp_data[x_shift:dx+x_shift, y_shift:dy+y_shift] = data
+        fft_data = np.fft.fftshift(fftw.fftw2(tmp_data))
+        filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
+        tmp = np.real(fftw.ifftw2(filtered_data))
+        data = tmp[x_shift:dx+x_shift, y_shift:dy+y_shift]
     elif not padding:
-	# Fourier transform of data.
-	fft_data = np.fft.fftshift(fftw.fftw2(data))
-	filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
-	data = np.real(fftw.ifftw2(filtered_data))
-    return alpha + np.log(data)
+        # Fourier transform of data.
+        fft_data = np.fft.fftshift(fftw.fftw2(data))
+        filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
+        data = np.real(fftw.ifftw2(filtered_data)) / np.max(H)
+    return id, data
