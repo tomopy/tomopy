@@ -11,14 +11,22 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def median_filter_wrapper(TomoObj, size=(3, 1)):
+def median_filter_wrapper(TomoObj, size=3):
     if not TomoObj.FLAG_DATA:
         logger.warning("median filtering (data missing) [bypassed]")
         return
-   
-    # Perform median filtering.
-    args = (TomoObj.data, size)
-    TomoObj.data = median_filter(args)
+        
+    # Create multi-processing object.
+    multip = multiprocess(median_filter)
+	    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[2]):
+	args = (TomoObj.data[:, :, m], size, m)
+        multip.add_job(args)
+		
+    # Collect results.
+    for each in multip.close_out():
+        TomoObj.data[:, :, each[0]] = each[1]
     
     # Update provenance.
     TomoObj.provenance['median_filter'] = {'size':size}
@@ -37,10 +45,18 @@ def normalize_wrapper(TomoObj, cutoff=None):
 
     # Calculate average white field for normalization.
     avg_white = np.mean(TomoObj.data_white, axis=0)
-    
-    # Perform normalization.
-    args = (TomoObj.data, avg_white, cutoff)
-    TomoObj.data = normalize(args)
+        
+    # Create multi-processing object.
+    multip = multiprocess(normalize)
+	    
+    # Populate jobs.
+    for m in range(TomoObj.data.shape[0]):
+	args = (TomoObj.data[m, :, :], avg_white, cutoff, m)
+        multip.add_job(args)
+		
+    # Collect results.
+    for each in multip.close_out():
+        TomoObj.data[each[0], :, :] = each[1]
     
     # Update provenance.
     TomoObj.provenance['normalize'] = {'cutoff':cutoff}
@@ -48,7 +64,7 @@ def normalize_wrapper(TomoObj, cutoff=None):
     logger.info("normalization [ok]")
 
 
-def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=0.001, padding=True):
+def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=1e-3, padding=True):
     if not TomoObj.FLAG_DATA:
         logger.warning("phase retrieval (data missing) [bypassed]")
         return
@@ -70,19 +86,17 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, al
         return
         
     # Create multi-processing object.
-    multip = multiprocess(phase_retrieval, num_processes=mp.cpu_count())
+    multip = multiprocess(phase_retrieval)
 	    
     # Populate jobs.
     for m in range(TomoObj.data.shape[0]):
-	args = (TomoObj.data[m, :, :], pixel_size, dist, energy, alpha, padding)
+	args = (TomoObj.data[m, :, :], pixel_size, dist, energy, alpha, padding, m)
         multip.add_job(args)
 		
     # Collect results.
-    m = 0
     for each in multip.close_out():
-        TomoObj.data[m, :, :] = each
-	m += 1
-    
+        TomoObj.data[each[0], :, :] = each[1]
+   	    
     # Update provenance.
     TomoObj.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
 	                                     'dist':dist, 
@@ -102,20 +116,18 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
     if level is None:
         size = np.max(TomoObj.data.shape)
         level = int(np.ceil(np.log2(size)))
-    
+        
     # Create multi-processing object.
-    multip = multiprocess(stripe_removal, num_processes=mp.cpu_count())
-    
+    multip = multiprocess(stripe_removal)
+	    
     # Populate jobs.
     for m in range(TomoObj.data.shape[1]):
-	args = (TomoObj.data[:, m, :], level, wname, sigma)
+	args = (TomoObj.data[:, m, :], level, wname, sigma, m)
         multip.add_job(args)
-    
+		
     # Collect results.
-    m = 0
     for each in multip.close_out():
-        TomoObj.data[:, m, :] = each
-   	m += 1
+        TomoObj.data[:, each[0], :] = each[1]
    	
     # Update provenance.
     TomoObj.provenance['stripe_removal'] = {'level':level, 

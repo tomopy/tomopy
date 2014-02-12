@@ -317,7 +317,8 @@ class Dataset():
         # check if file is hdf5.
         extension = os.path.splitext(TomoObj.file_name)[1]
         if extension == ".hdf" or extension == ".h5":
-            TomoObj.FLAG_DATA = True
+            if os.path.isfile(TomoObj.file_name):
+                TomoObj.FLAG_DATA = True
             logger.debug("file extension: %s [ok]", extension)
         else:
             TomoObj.FLAG_DATA = False

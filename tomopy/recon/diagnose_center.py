@@ -8,13 +8,7 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def diagnose_center(data,
-                    theta,
-                    dir_path,
-                    slice_no=None,
-                    center_start=None,
-                    center_end=None,
-                    center_step=None):
+def diagnose_center(args):
     """ 
     Diagnostic tools to find rotation center.
     
@@ -38,6 +32,8 @@ def diagnose_center(data,
         Values of the start, end and step of the center values to
         be used for diagnostics.
     """
+    data, theta, dir_path, slice_no, center_start, center_end, center_step = args
+    
     num_projections =  data.shape[0]
     num_slices =  data.shape[1]
     num_pixels =  data.shape[2]
