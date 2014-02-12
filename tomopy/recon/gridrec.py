@@ -3,6 +3,7 @@ import numpy as np
 import ctypes
 import os
 import time
+import multiprocessing as mp
 
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libgridrec.so'))
 libgridrec = ctypes.CDLL(libpath)
@@ -57,12 +58,12 @@ class Gridrec():
                  reconScale=1,
                  paddedSinogramWidth=None,
                  airPixels=10,
-                 ringWidth=9,
+                 ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
-                 numThreads=24,
-                 slicesPerChunk=32,
+                 numThreads=mp.cpu_count(),
+                 slicesPerChunk=mp.cpu_count(),
                  debugFileName='',
                  debug=0,
                  geom=0,
