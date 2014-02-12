@@ -64,7 +64,7 @@ def normalize_wrapper(TomoObj, cutoff=None):
     logger.info("normalization [ok]")
 
 
-def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=1e-3, padding=True):
+def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=1e-5, padding=True):
     if not TomoObj.FLAG_DATA:
         logger.warning("phase retrieval (data missing) [bypassed]")
         return

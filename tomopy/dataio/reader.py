@@ -33,18 +33,26 @@ class Dataset():
             to each projection.
         
         """
-        # Set the numpy Data-Exchange structure.
-        TomoObj.data = np.array(data) # do not squeeze
-        TomoObj.data_white = np.array(data_white) # do not squeeze
-        TomoObj.theta = np.array(np.squeeze(theta))
-        TomoObj._log_level = str(log).upper()
-        
         # Init all flags here. False unless checked.
         TomoObj.FLAG_DATA = False
         TomoObj.FLAG_WHITE = False
         TomoObj.FLAG_THETA = False
         TomoObj.FLAG_FILE_CHECK = False
         TomoObj.FLAG_DATA_RECON = False
+        
+        # Set the numpy Data-Exchange structure.
+        TomoObj.data = np.array(data) # do not squeeze
+        TomoObj.data_white = np.array(data_white) # do not squeeze
+        TomoObj.theta = np.array(np.squeeze(theta))
+        TomoObj._log_level = str(log).upper()
+        
+        # Ignore inconsistent data.
+        if TomoObj.data != None:
+            TomoObj.FLAG_DATA = True
+        if TomoObj.data_white != None:
+            TomoObj.FLAG_WHITE = True
+        if TomoObj.theta != None:
+            TomoObj.FLAG_THETA = True
         
         # Provenance initialization.
         TomoObj._init_provenance()
@@ -53,14 +61,6 @@ class Dataset():
         if clog: # enable colored logging
             from tomopy.tools import colorer
         TomoObj._init_log()
-        
-        # Ignore inconsistent data.
-        if not TomoObj.FLAG_DATA:
-            TomoObj.data = None
-        if not TomoObj.FLAG_WHITE:
-            TomoObj.data_white = None
-        if not TomoObj.FLAG_THETA:
-            TomoObj.theta = None
         logger.debug("TomoObj initialization [ok]")
             
     def _init_provenance(TomoObj):
@@ -217,6 +217,7 @@ class Dataset():
 
             # All done. Close file.
             f.close()
+            
             # We work with float32.
             if TomoObj.FLAG_DATA:
                 TomoObj.data = TomoObj.data.astype('float32')
