@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import multiprocessing as mp
 
-class multiprocess(object):
 
+class multiprocess(object):
     def __init__(self, target_func, num_processes=mp.cpu_count(), **kwargs):
         self.total_jobs = 0
         self.jobs = mp.JoinableQueue()
@@ -33,7 +33,7 @@ class multiprocess(object):
                 completed_jobs += 1
             if completed_jobs==self.total_jobs:
                 break
-
+        
         self.jobs.join()
         self.jobs.close()
         self.results.close()
@@ -43,9 +43,10 @@ class multiprocess(object):
             
         return res_list
 
+
 def worker(func):
-    def worker2(*args, **kwargs):
-	name = mp.current_process().name
+    def worker_in(*args, **kwargs):
+	#name = mp.current_process().name
         jobs_completed = 0
         jobs, results = args
         while True:
@@ -58,5 +59,5 @@ def worker(func):
             jobs_completed += 1
             jobs.task_done()
             results.put(res)
-        return worker2
-    return worker2
+        return worker_in
+    return worker_in
