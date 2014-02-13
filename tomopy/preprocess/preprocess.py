@@ -5,6 +5,7 @@ from normalize import normalize
 from phase_retrieval import phase_retrieval
 from stripe_removal import stripe_removal
 import numpy as np
+import multiprocessing as mp
 from tomopy.tools.multiprocess import multiprocess
 import logging
 logger = logging.getLogger("tomopy")
@@ -53,14 +54,27 @@ def normalize_wrapper(TomoObj, cutoff=None):
     # Create multi-processing object.
     multip = multiprocess(normalize)
 	    
+    # Chunk size.
+    pool_size = mp.cpu_count()
+    dx, dy, dz = TomoObj.data.shape
+    chunk_size = dy / pool_size + 1
+    
     # Populate jobs.
-    for m in range(TomoObj.data.shape[0]):
-	args = (TomoObj.data[m, :, :], avg_white, avg_dark, cutoff, m)
+    for m in range(pool_size):
+        ind_start = m*chunk_size
+        ind_end = (m+1)*chunk_size
+        if ind_end > dy:
+            ind_end = dy
+            args = (TomoObj.data[ind_start:ind_end, :, :],
+                    avg_white, avg_dark, cutoff, ind_start, ind_end)
+            break
+        args = (TomoObj.data[ind_start:ind_end, :, :],
+                avg_white, avg_dark, cutoff, ind_start, ind_end)
         multip.add_job(args)
-		
+        
     # Collect results.
     for each in multip.close_out():
-        TomoObj.data[each[0], :, :] = each[1]
+        TomoObj.data[each[0]:each[1], :, :] = each[2]
     
     # Update provenance.
     TomoObj.provenance['normalize'] = {'cutoff':cutoff}
