@@ -1,6 +1,6 @@
-=============================
- :mod:`tomopy.dataio.reader`
-=============================
+===============
+ :mod:`reader`
+===============
 
 
 .. automodule:: tomopy.dataio.reader

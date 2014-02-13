@@ -1,6 +1,6 @@
-==========================================
- :mod:`tomopy.preprocess.median_filter`
-==========================================
+======================
+ :mod:`median_filter`
+======================
 
 
 .. automodule:: tomopy.preprocess.median_filter

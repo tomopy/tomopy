@@ -1,6 +1,6 @@
-===================================
-:mod:`tomopy.recon.optimize_center`
-===================================
+======================
+:mod:`optimize_center`
+======================
 
 .. automodule:: tomopy.recon.optimize_center
    :members:

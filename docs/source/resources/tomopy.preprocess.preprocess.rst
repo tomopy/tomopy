@@ -1,6 +1,6 @@
-======================================
- :mod:`tomopy.preprocess.preprocess`
-======================================
+===================
+ :mod:`preprocess`
+===================
 
 
 .. automodule:: tomopy.preprocess.preprocess

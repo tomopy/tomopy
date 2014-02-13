@@ -1,10 +1,10 @@
 ======================
- :mod:`tomopy.dataio`
+ :mod:`dataio` Module
 ======================
 
 .. toctree::
    tomopy.dataio.reader
-   tomopy.dataio.reader
+   tomopy.dataio.writer
 
 
 .. automodule:: tomopy.dataio
