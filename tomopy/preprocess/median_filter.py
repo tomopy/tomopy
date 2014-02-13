@@ -23,5 +23,5 @@ def median_filter(args):
     """
     data, size, id = args
     
-    data = filters.median_filter(data, (size, 1))
+    data = filters.median_filter(data, (1, size))
     return id, data

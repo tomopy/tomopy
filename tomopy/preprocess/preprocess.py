@@ -5,13 +5,12 @@ from normalize import normalize
 from phase_retrieval import phase_retrieval
 from stripe_removal import stripe_removal
 import numpy as np
-import multiprocessing as mp
 from tomopy.tools.multiprocess import multiprocess
 import logging
 logger = logging.getLogger("tomopy")
 
 
-def median_filter_wrapper(TomoObj, size=3):
+def median_filter_wrapper(TomoObj, size=5):
     if not TomoObj.FLAG_DATA:
         logger.warning("median filtering (data missing) [bypassed]")
         return
@@ -20,13 +19,13 @@ def median_filter_wrapper(TomoObj, size=3):
     multip = multiprocess(median_filter)
 	    
     # Populate jobs.
-    for m in range(TomoObj.data.shape[2]):
-	args = (TomoObj.data[:, :, m], size, m)
+    for m in range(TomoObj.data.shape[1]):
+	args = (TomoObj.data[:, m, :], size, m)
         multip.add_job(args)
 		
     # Collect results.
     for each in multip.close_out():
-        TomoObj.data[:, :, each[0]] = each[1]
+        TomoObj.data[:, each[0], :] = each[1]
     
     # Update provenance.
     TomoObj.provenance['median_filter'] = {'size':size}
@@ -42,16 +41,21 @@ def normalize_wrapper(TomoObj, cutoff=None):
     if not TomoObj.FLAG_WHITE:
         logger.warning("normalization (white-data missing) [bypassed]")
         return
+        
+    if not TomoObj.FLAG_DARK:
+        logger.warning("normalization (dark-data missing) [bypassed]")
+        return
 
-    # Calculate average white field for normalization.
+    # Calculate average white and dark fields for normalization.
     avg_white = np.mean(TomoObj.data_white, axis=0)
+    avg_dark = np.mean(TomoObj.data_dark, axis=0)
         
     # Create multi-processing object.
     multip = multiprocess(normalize)
 	    
     # Populate jobs.
     for m in range(TomoObj.data.shape[0]):
-	args = (TomoObj.data[m, :, :], avg_white, cutoff, m)
+	args = (TomoObj.data[m, :, :], avg_white, avg_dark, cutoff, m)
         multip.add_job(args)
 		
     # Collect results.
@@ -84,7 +88,7 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, al
     if energy is None:
         logger.warning("phase retrieval (energy missing) [bypassed]")
         return
-        
+    
     # Create multi-processing object.
     multip = multiprocess(phase_retrieval)
 	    
@@ -119,16 +123,16 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
         
     # Create multi-processing object.
     multip = multiprocess(stripe_removal)
-	    
+
     # Populate jobs.
     for m in range(TomoObj.data.shape[1]):
-	args = (TomoObj.data[:, m, :], level, wname, sigma, m)
+        args = (TomoObj.data[:, m, :], level, wname, sigma, m)
         multip.add_job(args)
-		
+
     # Collect results.
     for each in multip.close_out():
         TomoObj.data[:, each[0], :] = each[1]
-   	
+    
     # Update provenance.
     TomoObj.provenance['stripe_removal'] = {'level':level, 
                                             'wname':wname, 

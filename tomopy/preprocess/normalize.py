@@ -16,6 +16,9 @@ def normalize(args):
 
     data_white : ndarray
         2-D white field projection data.
+        
+    data_dark : ndarray
+        2-D dark field projection data.
 
     cutoff : scalar
         Permitted maximum vaue of the
@@ -26,9 +29,9 @@ def normalize(args):
     data : ndarray
         Normalized data.
     """
-    data, data_white, cutoff, id = args
+    data, data_white, data_dark, cutoff, id = args
     
-    data = np.divide(data, data_white)
+    data = np.divide(data-data_dark, data_white-data_dark)
     if cutoff is not None:
         data[data > cutoff] = cutoff
     return id, data

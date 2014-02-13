@@ -8,7 +8,9 @@ logger = logging.getLogger("tomopy")
 
 
 class Dataset():
-    def __init__(TomoObj, data=None, data_white=None, theta=None, log='INFO', clog=True):
+    def __init__(TomoObj, data=None, data_white=None, 
+                 data_dark=None, theta=None, 
+                 log='INFO', clog=True):
         """
         Constructor for initial Data-Exchange data structure.
         
@@ -28,6 +30,12 @@ class Dataset():
             2nd and 3rd dimensions should be the same as
             data [shots, slices, pixels].
             
+        data_dark : ndarray
+            3-D dark-field data. Multiple projections
+            are stacked together to obtain 3-D matrix. 
+            2nd and 3rd dimensions should be the same as
+            data [shots, slices, pixels].
+            
         theta : ndarray
             Data acquisition angles corresponding
             to each projection.
@@ -36,6 +44,7 @@ class Dataset():
         # Init all flags here. False unless checked.
         TomoObj.FLAG_DATA = False
         TomoObj.FLAG_WHITE = False
+        TomoObj.FLAG_DARK = False
         TomoObj.FLAG_THETA = False
         TomoObj.FLAG_FILE_CHECK = False
         TomoObj.FLAG_DATA_RECON = False
@@ -43,6 +52,7 @@ class Dataset():
         # Set the numpy Data-Exchange structure.
         TomoObj.data = np.array(data) # do not squeeze
         TomoObj.data_white = np.array(data_white) # do not squeeze
+        TomoObj.data_dark = np.array(data_dark) # do not squeeze
         TomoObj.theta = np.array(np.squeeze(theta))
         TomoObj._log_level = str(log).upper()
         
@@ -51,6 +61,8 @@ class Dataset():
             TomoObj.FLAG_DATA = True
         if TomoObj.data_white != None:
             TomoObj.FLAG_WHITE = True
+        if TomoObj.data_dark != None:
+            TomoObj.FLAG_DARK = True
         if TomoObj.theta != None:
             TomoObj.FLAG_THETA = True
         
@@ -82,6 +94,8 @@ class Dataset():
              pixels_step=None,
              white_start=None,
              white_end=None,
+             dark_start=None,
+             dark_end=None,
              log='INFO'):
         """
         Read Data Exchange HDF5 file.
@@ -104,8 +118,12 @@ class Dataset():
             be used for slicing for the whole data.
 
         white_start, white_end : scalar, optional
-            Values of the start, end and step of the
+            Values of the start and end of the
             slicing for the whole white field shots.
+
+        dark_start, dark_end : scalar, optional
+            Values of the start and end of the
+            slicing for the whole dark field shots.
 
         dtype : str, optional
             Desired output data type.
@@ -131,6 +149,8 @@ class Dataset():
         TomoObj.pixels_step = pixels_step
         TomoObj.white_start = white_start
         TomoObj.white_end = white_end
+        TomoObj.dark_start = dark_start
+        TomoObj.dark_end = dark_end
         TomoObj._log_level = str(log).upper()
         
         # Prepare logging file.
@@ -201,6 +221,32 @@ class Dataset():
                 TomoObj.data_white += np.mean(TomoObj.data[:])
                 TomoObj.FLAG_WHITE = True
                 logger.warning("auto-normalization [ok]")
+            
+            # Now read dark fields.
+            if TomoObj.FLAG_DARK:
+                hdfdata = f["/exchange/data_dark"]
+
+                # Prepare slicing based on data shape.
+                if dark_start is None:
+                    TomoObj.dark_start = 0
+                if dark_end is None:
+                    TomoObj.dark_end = hdfdata.shape[0]
+
+                # Slice it now.
+                TomoObj.data_dark = hdfdata[TomoObj.dark_start:
+					         TomoObj.dark_end,
+					     TomoObj.slices_start:
+						 TomoObj.slices_end:
+						     TomoObj.slices_step,
+					     TomoObj.pixels_start:
+						 TomoObj.pixels_end:
+						     TomoObj.pixels_step]
+                logger.info("read data_dark from file [ok]")
+            else:
+                TomoObj.data_dark = np.zeros((1, TomoObj.data.shape[1], TomoObj.data.shape[2]))
+                TomoObj.data_dark += np.mean(TomoObj.data[:])
+                TomoObj.FLAG_DARK = True
+                logger.warning("auto-normalization [ok]")
 
             # Read projection angles.
             if TomoObj.FLAG_THETA:
@@ -223,6 +269,8 @@ class Dataset():
                 TomoObj.data = TomoObj.data.astype(dtype=np.float32, copy=False)
             if not isinstance(TomoObj.data_white, np.float32):
                 TomoObj.data_white = TomoObj.data_white.astype(dtype=np.float32, copy=False)
+            if not isinstance(TomoObj.data_dark, np.float32):
+                TomoObj.data_dark = TomoObj.data_dark.astype(dtype=np.float32, copy=False)
             if not isinstance(TomoObj.theta, np.float32):
                 TomoObj.theta = TomoObj.theta.astype(dtype=np.float32, copy=False)
 
@@ -289,12 +337,15 @@ class Dataset():
             
                 - exchange/data (error)
                 - exchange/data_white (warning)
+                - exchange/data_dark (warning)
                 - exchange/theta (warning)
                 
             - data dimensions (error)
             - data_white dimensions (warning)
+            - data_dark dimensions (warning)
             - theta dimensions (warning)
             - consistency of data and data_white dimensions (warning)
+            - consistency of data and data_dark dimensions (warning)
             - consistency of data and theta dimensions (warning)
         """
         # check if file exists.
@@ -348,6 +399,12 @@ class Dataset():
             else:
                 TomoObj.FLAG_WHITE = False
                 logger.warning("/exchange/data_white node [failed]")
+            if "exchange/data_dark" in f:
+                TomoObj.FLAG_DARK = True
+                logger.debug("/exchange/data_dark [ok]")
+            else:
+                TomoObj.FLAG_DARK = False
+                logger.warning("/exchange/data_dark node [failed]")
             if "exchange/theta" in f:
                 TomoObj.FLAG_THETA = True
                 logger.debug("/exchange/theta [ok]")
@@ -369,6 +426,13 @@ class Dataset():
                 else:
                     TomoObj.FLAG_WHITE = False
                     logger.warning("data_white dimensions [failed]")
+            if TomoObj.FLAG_DARK:
+                if len(f["/exchange/data_dark"].shape) == 3:
+                    TomoObj.FLAG_DARK = True
+                    logger.debug("data_dark dimensions [ok]")
+                else:
+                    TomoObj.FLAG_DARK = False
+                    logger.warning("data_dark dimensions [failed]")
             if TomoObj.FLAG_THETA:
                 if len(f["/exchange/theta"].shape) == 1 or len(f["/exchange/theta"].shape) == 0:
                     TomoObj.FLAG_THETA = True
@@ -386,7 +450,13 @@ class Dataset():
                     else:
                         TomoObj.FLAG_WHITE = False
                         logger.warning("data_white compatibility [failed]")
-
+                if TomoObj.FLAG_DARK:
+                    if f["/exchange/data_dark"].shape[1:2] == f["/exchange/data"].shape[1:2]:
+                        TomoObj.FLAG_DARK = True
+                        logger.debug("data_dark compatibility [ok]")
+                    else:
+                        TomoObj.FLAG_DARK = False
+                        logger.warning("data_dark compatibility [failed]")
                 if TomoObj.FLAG_THETA:
                     if f["/exchange/theta"].size == f["/exchange/data"].shape[0]:
                         TomoObj.FLAG_THETA = True

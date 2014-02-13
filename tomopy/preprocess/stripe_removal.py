@@ -60,4 +60,4 @@ def stripe_removal(args):
         data = data[0:cH[m].shape[0], 0:cH[m].shape[1]]
         data = pywt.idwt2((data, (cH[m], cV[m], cD[m])), wname)
     return id, data[0:dx, 0:dy]
-    
+ 
