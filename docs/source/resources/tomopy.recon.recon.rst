@@ -1,6 +1,6 @@
-===========================
- :mod:`tomopy.recon.recon`
-===========================
+==============
+ :mod:`recon`
+==============
 
 .. automodule:: tomopy.recon.recon
    :members:

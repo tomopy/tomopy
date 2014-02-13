@@ -1,6 +1,6 @@
-===========================================
- :mod:`tomopy.preprocess.stripe_removal`
-===========================================
+=====================
+:mod:`stripe_removal`
+=====================
 
 
 .. automodule:: tomopy.preprocess.stripe_removal

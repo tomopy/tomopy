@@ -4,7 +4,7 @@
 
 .. toctree::
    tomopy.recon.diagnose_center
-   tomopy.recon.gridspec
+   tomopy.recon.gridrec
    tomopy.recon.optimize_center
    tomopy.recon.recon
 
