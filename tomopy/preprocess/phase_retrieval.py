@@ -52,7 +52,7 @@ def phase_retrieval(data, pixel_size, dist, energy, alpha=0.001, padding=True):
 	num_y = pow(2, np.ceil(np.log2(dy + pad_pixels)))
 	y_shift = int((num_x - dx) / 2.0)
 	x_shift = int((num_y - dy) / 2.0)
-	tmp_data = np.ones((num_x, num_y), dtype='complex')
+	tmp_data = np.ones((num_x, num_y), dtype='float32')
     elif not padding:
         num_x, num_y = data.shape
 
@@ -76,5 +76,5 @@ def phase_retrieval(data, pixel_size, dist, energy, alpha=0.001, padding=True):
 	# Fourier transform of data.
 	fft_data = np.fft.fftshift(fftw.fftw2(data))
 	filtered_data = np.fft.ifftshift(np.multiply(H, fft_data))
-	data = np.real(fftw.ifftw2(filtered_data))
-    return alpha + np.log(data)
+	data = np.real(fftw.ifftw2(filtered_data)) / np.max(H)
+    return data
