@@ -28,7 +28,7 @@ def stripe_removal(data, level=None, wname='db5', sigma=2):
     """
     # Find the higest level possible
     size = np.max(data.shape)
-    level = int(np.ceil(np.log2(size)))
+    if level==None: level = int(np.ceil(np.log2(size)))
 
     # Wavelet decomposition.
     dx, dy = data.shape
