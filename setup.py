@@ -3,6 +3,7 @@
 import os
 import io
 import platform
+import warnings
 
 from ez_setup import use_setuptools
 use_setuptools()
@@ -34,14 +35,20 @@ except ImportError:
 try:
     LD_LIBRARY_PATH = os.environ['LD_LIBRARY_PATH'].split(os.pathsep)
 except KeyError:
-    raise KeyError("You need to set LD_LIBRARY_PATH")
-    
+    warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
+                  "find the libraries correctly")
+    LD_LIBRARY_PATH = []
+
 try:
     C_INCLUDE_PATH = os.environ['C_INCLUDE_PATH'].split(os.pathsep)
-    C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec/include')}
-    C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw/include')}
 except KeyError:
-    raise KeyError("You need to set C_INCLUDE_PATH")
+    C_INCLUDE_PATH = []
+    warnings.warn("you may need to manually set C_INCLUDE_PATH manually to " +
+                  "find the libraries correctly")
+
+C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec/include')}
+C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw/include')}
+
 
 # Create FFTW shared-libraries.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
@@ -91,10 +98,10 @@ setup(
 
       packages = find_packages(),
       include_package_data = True,
-      
+
       # Specify C/C++ file paths. They will be compiled and put into tomopy.lib:
       ext_modules=[ext_fftw, ext_gridrec],
-      
+
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
 
@@ -119,9 +126,3 @@ setup(
 		   'Programming Language :: C',
 		   'Programming Language :: C++']
       )
-
-
-
-
-
-
