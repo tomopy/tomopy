@@ -1,6 +1,6 @@
-====================
-:mod:`tools.colorer`
-====================
+==============
+:mod:`colorer`
+==============
 
 
 .. automodule:: tomopy.tools.colorer

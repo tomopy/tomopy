@@ -1,6 +1,6 @@
-=============================
-:mod:`tomopy.tools.constants`
-=============================
+================
+:mod:`constants`
+================
 
 .. automodule:: tomopy.tools.constants
    :members:

@@ -1,6 +1,6 @@
-============================================
- :mod:`tomopy.preprocess.phase_retrieval`
-============================================
+========================
+ :mod:`phase_retrieval`
+========================
 
 
 .. automodule:: tomopy.preprocess.phase_retrieval
