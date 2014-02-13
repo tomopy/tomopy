@@ -1,6 +1,6 @@
-=============================
- :mod:`tomopy.dataio.writer`
-=============================
+===============
+ :mod:`writer`
+===============
 
 
 .. automodule:: tomopy.dataio.writer

@@ -1,6 +1,6 @@
-=================
-:mod:`tools.fftw`
-=================
+===========
+:mod:`fftw`
+===========
 
 .. automodule:: tomopy.tools.fftw
    :members:
