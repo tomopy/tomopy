@@ -253,12 +253,12 @@ class Gridrec():
             center = np.ones(num_slices) * center
 
         # We want float32 inputs.
-        if not np.any(np.array(data, dtype=np.float32) != data):
-            data = np.array(data, dtype='float32')
-        if not np.any(np.array(theta, dtype=np.float32) != theta):
-            theta = np.array(theta, dtype='float32')
-        if not np.any(np.array(center, dtype=np.float32) != center):
-            center = np.array(center, dtype='float32')
+        if not isinstance(data, np.float32):
+            data = data.astype(dtype=np.float32, copy=False)
+        if not isinstance(theta, np.float32):
+            theta = theta.astype(dtype=np.float32, copy=False)
+        if not isinstance(center, np.float32):
+            center = center.astype(dtype=np.float32, copy=False)
             
         # Construct the reconstruction object.
         libgridrec.reconCreate(ctypes.byref(self.params),
@@ -269,8 +269,8 @@ class Gridrec():
         datain = np.array(data[:, slice_no, :])
         self.data_recon = np.empty((num_slices,
                                     self.params.numPixels,
-                                    self.params.numPixels), dtype='float32')
-
+                                    self.params.numPixels), dtype=np.float32)
+                                    
         # Go, go, go.
         libgridrec.reconRun(ctypes.byref(_num_slices),
                             center.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),

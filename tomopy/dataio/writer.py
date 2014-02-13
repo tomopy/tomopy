@@ -30,7 +30,7 @@ def recon_to_hdf5(TomoObj, output_file=None):
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
-            output_file = dir_path + "/recon/recon_" + base_name + ".h5"
+            output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + ".h5"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
@@ -117,7 +117,7 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
-            output_file = dir_path + "/recon/recon_" + base_name + "_"
+            output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + "_"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
@@ -215,7 +215,7 @@ def data_to_hdf5(TomoObj, output_file=None):
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
-            output_file = dir_path + "/data/data_" + base_name + ".h5"
+            output_file = dir_path + "/data_" + base_name + "/data_" + base_name + ".h5"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
@@ -302,7 +302,7 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
         if output_file == None:
             dir_path = os.path.dirname(TomoObj.file_name)
             base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
-            output_file = dir_path + "/data/data_" + base_name + "_"
+            output_file = dir_path + "/data_" + base_name + "/data_" + base_name + "_"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         

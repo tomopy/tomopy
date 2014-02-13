@@ -218,13 +218,13 @@ class Dataset():
             # All done. Close file.
             f.close()
             
-            # We work with float32.
-            if TomoObj.FLAG_DATA:
-                TomoObj.data = TomoObj.data.astype('float32')
-            if TomoObj.FLAG_WHITE:
-                TomoObj.data_white = TomoObj.data_white.astype('float32')
-            if TomoObj.FLAG_THETA:
-                TomoObj.theta = TomoObj.theta.astype('float32')
+            # We want float32 inputs.
+            if not isinstance(TomoObj.data, np.float32):
+                TomoObj.data = TomoObj.data.astype(dtype=np.float32, copy=False)
+            if not isinstance(TomoObj.data_white, np.float32):
+                TomoObj.data_white = TomoObj.data_white.astype(dtype=np.float32, copy=False)
+            if not isinstance(TomoObj.theta, np.float32):
+                TomoObj.theta = TomoObj.theta.astype(dtype=np.float32, copy=False)
 
     def _init_log(TomoObj):
         # Top-level log setup.
