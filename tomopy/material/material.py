@@ -52,31 +52,6 @@ class Element():
         return _thompson_corr
 
 
-class Compound():
-    def __init__(self, compound, density):
-        self.compound = compound
-        self.density = density
-
-    def mass_ratio(self):
-        pass
-    
-    def total_attenuation(self, energy):
-        pass
-        
-    def photo_absorption(self, energy):
-        pass
-    
-    def compton_scattering(self, energy):
-        pass
-    
-    def refractive_index(self, energy):
-        pass
-    
-    def electron_density(self, energy):
-        pass
-
-
-
 
 
 
