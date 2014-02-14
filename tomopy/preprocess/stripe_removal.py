@@ -32,8 +32,8 @@ def stripe_removal(args):
     
     dx, num_slices, dy = data.shape
     
-    for m in range(num_slices):
-        sli = data[:, m, :]
+    for n in range(num_slices):
+        sli = data[:, n, :]
         
         # Wavelet decomposition.
         cH = []
@@ -64,7 +64,7 @@ def stripe_removal(args):
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
             
-        data[:, m, :] = sli[0:dx, 0:dy]
+        data[:, n, :] = sli[0:dx, 0:dy]
         
     return ind_start, ind_end, data
  
