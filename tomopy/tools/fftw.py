@@ -82,8 +82,9 @@ def ifftw(a):
     libfftw.fftw_2d(_a.ctypes.data_as(c_float_p),
                     dimx.ctypes.data_as(c_int_p),
                     direction.ctypes.data_as(c_int_p))
-    _a = _a / dimx
+    #_a = _a / dimx
     return _a
+
 
 def fftw2(a):
     """
@@ -125,8 +126,9 @@ def fftw2(a):
     libfftw.fftw_2d(_a.ctypes.data_as(c_float_p),
                     dimx.ctypes.data_as(c_int_p),
                     dimy.ctypes.data_as(c_int_p),
-                    direction.ctypes.data_as(c_int_p))
+                    direction.ctypes.data_as(c_int_p)) 
     return _a
+
 
 def ifftw2(a):
     """
@@ -163,5 +165,5 @@ def ifftw2(a):
                       dimx.ctypes.data_as(c_int_p),
                       dimy.ctypes.data_as(c_int_p),
                       direction.ctypes.data_as(c_int_p))
-    _a = _a / (dimx * dimy)
+    #_a /= (dimx * dimy)
     return _a

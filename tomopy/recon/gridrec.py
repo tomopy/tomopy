@@ -63,7 +63,7 @@ class Gridrec():
                  reconMethod=0,
                  reconMethodTomoRecon=0,
                  numThreads=mp.cpu_count(),
-                 slicesPerChunk=mp.cpu_count(),
+                 slicesPerChunk=32,
                  debugFileName='',
                  debug=0,
                  geom=0,

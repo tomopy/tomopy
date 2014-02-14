@@ -43,12 +43,12 @@ class multiprocess(object):
             
         return res_list
 
-
+#import time
 def worker(func):
     def worker_in(*args, **kwargs):
 	#name = mp.current_process().name
         jobs_completed = 0
-        jobs, results = args
+        jobs, results = args[0], args[1]
         while True:
             job_args = jobs.get()
             if job_args[0] is None: # Deal with Poison Pill

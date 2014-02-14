@@ -2,7 +2,7 @@
 from tomopy.dataio.reader import Dataset
 from median_filter import median_filter
 from normalize import normalize
-from phase_retrieval import phase_retrieval
+import phase_retrieval
 from stripe_removal import stripe_removal
 import numpy as np
 import multiprocessing as mp
@@ -11,22 +11,46 @@ import logging
 logger = logging.getLogger("tomopy")
 
 
-def median_filter_wrapper(TomoObj, size=5):
+def median_filter_wrapper(TomoObj, size=5,
+                          num_processors=None, chunk_size=None):
     if not TomoObj.FLAG_DATA:
         logger.warning("median filtering (data missing) [bypassed]")
         return
         
+    # Arrange number of processors.
+    if num_processors is None:
+        num_processors = mp.cpu_count()
+    dims = TomoObj.data.shape[1]
+    
+    # Maximum number of available processors for the task.
+    if dims < num_processors:
+        num_processors = dims
+    
+    # Arrange chunk size.
+    if chunk_size is None:
+        chunk_size = dims / num_processors
+        
+    # Determine pool size.
+    pool_size = dims / chunk_size + 1
+
     # Create multi-processing object.
-    multip = multiprocess(median_filter)
-	    
+    multip = multiprocess(median_filter,
+                          num_processes=num_processors)
+    
     # Populate jobs.
-    for m in range(TomoObj.data.shape[1]):
-	args = (TomoObj.data[:, m, :], size, m)
+    for m in range(pool_size):
+        ind_start = m*chunk_size
+        ind_end = (m+1)*chunk_size
+        if ind_start >= dims:
+            break
+        if ind_end > dims:
+            ind_end = dims
+        args = (TomoObj.data[:, ind_start:ind_end, :], size, ind_start, ind_end)
         multip.add_job(args)
-		
+        
     # Collect results.
     for each in multip.close_out():
-        TomoObj.data[:, each[0], :] = each[1]
+        TomoObj.data[:, each[0]:each[1], :] = each[2]
     
     # Update provenance.
     TomoObj.provenance['median_filter'] = {'size':size}
@@ -34,7 +58,8 @@ def median_filter_wrapper(TomoObj, size=5):
     logger.info("median filtering [ok]")
 
 
-def normalize_wrapper(TomoObj, cutoff=None):
+def normalize_wrapper(TomoObj, cutoff=None,
+                      num_processors=None, chunk_size=None):
     if not TomoObj.FLAG_DATA:
         logger.warning("normalization (data missing) [bypassed]")
         return
@@ -50,24 +75,35 @@ def normalize_wrapper(TomoObj, cutoff=None):
     # Calculate average white and dark fields for normalization.
     avg_white = np.mean(TomoObj.data_white, axis=0)
     avg_dark = np.mean(TomoObj.data_dark, axis=0)
+    
+    # Arrange number of processors.
+    if num_processors is None:
+        num_processors = mp.cpu_count()
+    dims = TomoObj.data.shape[0]
+    
+    # Maximum number of available processors for the task.
+    if dims < num_processors:
+        num_processors = dims
+    
+    # Arrange chunk size.
+    if chunk_size is None:
+        chunk_size = dims / num_processors
         
+    # Determine pool size.
+    pool_size = dims / chunk_size + 1
+
     # Create multi-processing object.
-    multip = multiprocess(normalize)
-	    
-    # Chunk size.
-    pool_size = mp.cpu_count()
-    dx, dy, dz = TomoObj.data.shape
-    chunk_size = dy / pool_size + 1
+    multip = multiprocess(normalize,
+                          num_processes=num_processors)
     
     # Populate jobs.
     for m in range(pool_size):
         ind_start = m*chunk_size
         ind_end = (m+1)*chunk_size
-        if ind_end > dy:
-            ind_end = dy
-            args = (TomoObj.data[ind_start:ind_end, :, :],
-                    avg_white, avg_dark, cutoff, ind_start, ind_end)
+        if ind_start >= dims:
             break
+        if ind_end > dims:
+            ind_end = dims
         args = (TomoObj.data[ind_start:ind_end, :, :],
                 avg_white, avg_dark, cutoff, ind_start, ind_end)
         multip.add_job(args)
@@ -82,7 +118,9 @@ def normalize_wrapper(TomoObj, cutoff=None):
     logger.info("normalization [ok]")
 
 
-def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, alpha=1e-5, padding=True):
+def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, 
+                            energy=None, alpha=1e-5, padding=True,
+                            num_processors=None, chunk_size=None):
     if not TomoObj.FLAG_DATA:
         logger.warning("phase retrieval (data missing) [bypassed]")
         return
@@ -102,18 +140,46 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, al
     if energy is None:
         logger.warning("phase retrieval (energy missing) [bypassed]")
         return
+        
+    # Compute the filter.
+    H, x_shift, y_shift, tmp_data = phase_retrieval.paganin_filter(TomoObj.data, 
+                                    pixel_size, dist, energy, alpha, padding)
+
+    # Arrange number of processors.
+    if num_processors is None:
+        num_processors = mp.cpu_count()
     
+    # Maximum number of available processors for the task.
+    dims = TomoObj.data.shape[0]
+    if dims < num_processors:
+        num_processors = dims
+    
+    # Arrange chunk size.
+    if chunk_size is None:
+        chunk_size = dims / num_processors + 1
+        
+    # Determine pool size.
+    pool_size = dims / chunk_size + 1
+
     # Create multi-processing object.
-    multip = multiprocess(phase_retrieval)
-	    
+    multip = multiprocess(phase_retrieval.phase_retrieval,
+                          num_processes=num_processors)
+
     # Populate jobs.
-    for m in range(TomoObj.data.shape[0]):
-	args = (TomoObj.data[m, :, :], pixel_size, dist, energy, alpha, padding, m)
+    for m in range(pool_size):
+        ind_start = m*chunk_size
+        ind_end = (m+1)*chunk_size
+        if ind_start >= dims:
+            break
+        if ind_end > dims:
+            ind_end = dims
+        args = (TomoObj.data[ind_start:ind_end, :, :],
+                H, x_shift, y_shift, tmp_data, padding, ind_start, ind_end)
         multip.add_job(args)
-		
+    
     # Collect results.
     for each in multip.close_out():
-        TomoObj.data[each[0], :, :] = each[1]
+        TomoObj.data[each[0]:each[1], :, :] = each[2]
    	    
     # Update provenance.
     TomoObj.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
@@ -125,7 +191,8 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, energy=None, al
     logger.info("phase retrieval [ok]")
 
 
-def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
+def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2,
+                           num_processors=None, chunk_size=None):
     if not TomoObj.FLAG_DATA:
         logger.warning("normalization (data missing) [bypassed]")
         return
@@ -135,17 +202,41 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2):
         size = np.max(TomoObj.data.shape)
         level = int(np.ceil(np.log2(size)))
         
+    # Arrange number of processors.
+    if num_processors is None:
+        num_processors = mp.cpu_count()
+    dims = TomoObj.data.shape[1]
+    
+    # Maximum number of available processors for the task.
+    if dims < num_processors:
+        num_processors = dims
+    
+    # Arrange chunk size.
+    if chunk_size is None:
+        chunk_size = dims / num_processors
+        
+    # Determine pool size.
+    pool_size = dims / chunk_size + 1
+
     # Create multi-processing object.
-    multip = multiprocess(stripe_removal)
-
+    multip = multiprocess(stripe_removal,
+                          num_processes=num_processors)
+    
     # Populate jobs.
-    for m in range(TomoObj.data.shape[1]):
-        args = (TomoObj.data[:, m, :], level, wname, sigma, m)
+    for m in range(pool_size):
+        ind_start = m*chunk_size
+        ind_end = (m+1)*chunk_size
+        if ind_start >= dims:
+            break
+        if ind_end > dims:
+            ind_end = dims
+        args = (TomoObj.data[:, ind_start:ind_end, :], 
+                level, wname, sigma, ind_start, ind_end)
         multip.add_job(args)
-
+        
     # Collect results.
     for each in multip.close_out():
-        TomoObj.data[:, each[0], :] = each[1]
+        TomoObj.data[:, each[0]:each[1], :] = each[2]
     
     # Update provenance.
     TomoObj.provenance['stripe_removal'] = {'level':level, 

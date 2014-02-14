@@ -195,6 +195,7 @@ class Dataset():
 				  TomoObj.pixels_start:
 				      TomoObj.pixels_end:
 					  TomoObj.pixels_step]
+            logger.info("read data from file [ok]")
 
             # Now read white fields.
             if TomoObj.FLAG_WHITE:
