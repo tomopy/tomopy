@@ -101,3 +101,4 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     H = np.fft.fftshift(H)
 
     return H, x_shift, y_shift, tmp_data
+

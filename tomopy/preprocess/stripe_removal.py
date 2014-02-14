@@ -72,4 +72,3 @@ def stripe_removal(args):
         data[:, n, :] = sli[x_shift:dx+x_shift, :]
         
     return ind_start, ind_end, data
- 
