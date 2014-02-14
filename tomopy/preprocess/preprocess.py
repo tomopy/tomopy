@@ -57,14 +57,14 @@ def normalize_wrapper(TomoObj, cutoff=None):
     # Chunk size.
     pool_size = mp.cpu_count()
     dx, dy, dz = TomoObj.data.shape
-    chunk_size = dy / pool_size + 1
+    chunk_size = dx / pool_size + 1
     
     # Populate jobs.
     for m in range(pool_size):
         ind_start = m*chunk_size
         ind_end = (m+1)*chunk_size
-        if ind_end > dy:
-            ind_end = dy
+        if ind_end > dx:
+            ind_end = dx
             args = (TomoObj.data[ind_start:ind_end, :, :],
                     avg_white, avg_dark, cutoff, ind_start, ind_end)
             break
