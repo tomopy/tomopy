@@ -32,8 +32,13 @@ def stripe_removal(args):
     
     dx, num_slices, dy = data.shape
     
+    # Padded temp image.
+    num_x = dx + dx / 8
+    x_shift = int((num_x - dx) / 2.0)
+    sli = np.zeros((num_x, dy), dtype='float32')
+    
     for n in range(num_slices):
-        sli = data[:, n, :]
+        sli[x_shift:dx+x_shift, :] = data[:, n, :]
         
         # Wavelet decomposition.
         cH = []
@@ -64,7 +69,7 @@ def stripe_removal(args):
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
             
-        data[:, n, :] = sli[0:dx, 0:dy]
+        data[:, n, :] = sli[x_shift:dx+x_shift, :]
         
     return ind_start, ind_end, data
  
