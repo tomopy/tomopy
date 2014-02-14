@@ -1,4 +1,4 @@
-        Feb 12 2014 —- Multi-processing class added.
+        Feb 14 2014 —- Multi-processing feature added.
         Feb 04 2014 -- Auto level calculation for ring removal
         Feb 01 2014 -- optimize_center and diagnose_center added.
 v0.0.1, Jan 31 2014 -- Initial release.
