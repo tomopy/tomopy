@@ -22,7 +22,7 @@ def normalize(args):
 
     cutoff : scalar
         Permitted maximum vaue of the
-        normalized data.
+        normalized data. 
 
     Returns
     -------
@@ -30,6 +30,7 @@ def normalize(args):
         Normalized data.
     """
     data, data_white, data_dark, cutoff, ind_start, ind_end = args
+
     for m in range(ind_end-ind_start):
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, data_white-data_dark)
     if cutoff is not None:
