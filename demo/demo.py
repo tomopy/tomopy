@@ -11,7 +11,7 @@ import tomopy
 # Create a NULL dataset.
 # All scripts starts with this line. 
 # Use ``log='DEBUG'`` argument for dbugging.
-d = tomopy.Dataset(log='DEBUG')
+d = tomopy.Dataset()
 
 # Import data from HDF file.
 # You can use slices_start, slices_end, etc. (see docs)
