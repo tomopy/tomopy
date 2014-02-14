@@ -95,7 +95,7 @@ def normalize_wrapper(TomoObj, cutoff=None,
     # Create multi-processing object.
     multip = multiprocess(normalize,
                           num_processes=num_processors)
-    
+	    
     # Populate jobs.
     for m in range(pool_size):
         ind_start = m*chunk_size
