@@ -85,7 +85,7 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
         y_shift = int((num_y - dy) / 2.0)
         
         # Template padded image.
-        tmp_data = pad_value * np.ones((num_x, num_y), dtype='float32')
+        tmp_proj = pad_value * np.ones((num_x, num_y), dtype='float32')
         
     elif not padding:
         num_x, num_y = dx, dy
@@ -101,5 +101,5 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     H = 1 / (wavelength * dist * w2 / (4 * constants.PI) + alpha)
     H = np.fft.fftshift(H)
 
-    return H, x_shift, y_shift, tmp_data
+    return H, x_shift, y_shift, tmp_proj
 
