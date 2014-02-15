@@ -83,13 +83,13 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None,
         return
         
     # Compute the filter.
-    H, x_shift, y_shift, tmp_data = phase_retrieval.paganin_filter(TomoObj.data, 
+    H, x_shift, y_shift, tmp_proj = phase_retrieval.paganin_filter(TomoObj.data,
                                     pixel_size, dist, energy, alpha, padding)
                                     
                                     
     # Distribute jobs.
     axis = 0 # Projection axis
-    args = (H, x_shift, y_shift, tmp_data, padding)
+    args = (H, x_shift, y_shift, tmp_proj, padding)
     multiprocess.distribute_jobs(TomoObj.data, phase_retrieval.phase_retrieval, args,
                                  axis, num_cores, chunk_size)
 
