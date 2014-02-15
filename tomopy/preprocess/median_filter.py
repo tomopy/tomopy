@@ -21,7 +21,8 @@ def median_filter(args):
     data : ndarray
         Median filtered data.
     """
-    data, size, ind_start, ind_end = args
+    data, args, ind_start, ind_end = args
+    size = args
     
     for m in range(ind_end-ind_start):
         data[:, m, :] = filters.median_filter(data[:, m, :], (1, size))
