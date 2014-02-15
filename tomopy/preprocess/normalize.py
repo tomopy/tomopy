@@ -29,7 +29,8 @@ def normalize(args):
     data : ndarray
         Normalized data.
     """
-    data, data_white, data_dark, cutoff, ind_start, ind_end = args
+    data, args, ind_start, ind_end = args
+    data_white, data_dark, cutoff = args
 
     for m in range(ind_end-ind_start):
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, data_white-data_dark)

@@ -43,7 +43,8 @@ def phase_retrieval(args):
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
-    data, H, x_shift, y_shift, tmp_proj, padding, ind_start, ind_end = args
+    data, args, ind_start, ind_end = args
+    H, x_shift, y_shift, tmp_proj, padding = args
     
     num_proj, dx, dy = data.shape # dx:slices, dy:pixels
     
