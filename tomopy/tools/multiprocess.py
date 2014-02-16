@@ -111,6 +111,7 @@ def distribute_jobs(data, func, args, axis, num_cores, chunk_size):
             data[:, each[0]:each[1], :] = each[2]
         elif axis == 2:
             data[:, :, each[0]:each[1]] = each[2]
+    return data
 
 
 
