@@ -20,7 +20,7 @@ def median_filter_wrapper(TomoObj, size=5,
     # Distribute jobs.
     axis = 1 # Slice axis
     args = (size)
-    multiprocess.distribute_jobs(TomoObj.data, median_filter, args,
+    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, median_filter, args,
                                  axis, num_cores, chunk_size)
    
     # Update provenance.
@@ -50,7 +50,7 @@ def normalize_wrapper(TomoObj, cutoff=None,
     # Distribute jobs.
     axis = 0 # Projection axis
     args = (avg_white, avg_dark, cutoff)
-    multiprocess.distribute_jobs(TomoObj.data, normalize, args,
+    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, normalize, args,
                                  axis, num_cores, chunk_size)
 
     # Update provenance.
@@ -90,7 +90,7 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None,
     # Distribute jobs.
     axis = 0 # Projection axis
     args = (H, x_shift, y_shift, tmp_proj, padding)
-    multiprocess.distribute_jobs(TomoObj.data, phase_retrieval.phase_retrieval, args,
+    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, phase_retrieval.phase_retrieval, args,
                                  axis, num_cores, chunk_size)
 
     # Update provenance.
@@ -117,7 +117,7 @@ def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2,
     # Distribute jobs.
     axis = 1 # Slice axis
     args = (level, wname, sigma)
-    multiprocess.distribute_jobs(TomoObj.data, stripe_removal, args,
+    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, stripe_removal, args,
                                  axis, num_cores, chunk_size)
     
     # Update provenance.
