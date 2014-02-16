@@ -46,5 +46,10 @@ d.phase_retrieval(pixel_size=1e-4, dist=70, energy=30, alpha=1e-5)
 # gridrec() uses optimize_center() first to find center of rotation axis.
 d.gridrec()
 
+# If the image is kind of binary, then you
+# can try thresholding based segmentation.
+# See also: ``region_segment(low=0.35, high=0.65)``
+d.threshold_segment()
+
 # Export data to file.
 d.recon_to_tiff('demo/test_')
