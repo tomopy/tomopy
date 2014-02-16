@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from skimage.filter import threshold_otsu
+from skimage.morphology import reconstruction
 from tomopy.tools.multiprocess import worker
 
 
 @worker
-def threshold_segment(args):
+def remove_bg(args):
     """
-    Threshold based segmentation.
+    Remove background from reconstructions.
     """
     data, args, ind_start, ind_end = args
-    cutoff = args
     
     for m in range(ind_end-ind_start):
         img = data[m, :, :]
-        if cutoff == None:
-            cutoff = threshold_otsu(img)
-        img = img > cutoff
+        
+        # first remove background.
+        seed = np.copy(img)
+        seed[1:-1, 1:-1] = img.min()
+        img -= reconstruction(seed, img, method='dilation')
+        
         data[m, :, :] = img
     return ind_start, ind_end, data

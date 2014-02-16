@@ -2,6 +2,7 @@
 import numpy as np
 from tomopy.dataio.reader import Dataset
 from adaptive_segment import adaptive_segment
+from remove_bg import remove_bg
 from region_segment import region_segment
 from threshold_segment import threshold_segment
 import multiprocessing as mp
@@ -41,6 +42,7 @@ def adaptive_segment_wrapper(TomoObj, block_size=None, offset=None,
 
     logger.info("adaptive thresholding based segmentation [ok]")
 
+
 def region_segment_wrapper(TomoObj, low, high,
                            num_cores=None, chunk_size=None):
     if not TomoObj.FLAG_DATA_RECON:
@@ -63,6 +65,24 @@ def region_segment_wrapper(TomoObj, low, high,
     logger.info("region based segmentation [ok]")
 
 
+def remove_bg_wrapper(TomoObj, num_cores=None, chunk_size=None):
+    if not TomoObj.FLAG_DATA_RECON:
+        logger.warning("adaptive thresholding based segmentation (recon data missing) [bypassed]")
+        return
+    
+    # Distribute jobs.
+    axis = 0 # Slice axis
+    args = ()
+    TomoObj.data_recon = distribute_jobs(TomoObj.data_recon, remove_bg, args,
+                                         axis, num_cores, chunk_size)
+                                         
+    # Update provenance.
+    TomoObj.provenance['adaptive_segment'] = {}
+    
+    logger.info("background removal [ok]")
+
+
+
 def threshold_segment_wrapper(TomoObj, cutoff=None,
                            num_cores=None, chunk_size=None):
     if not TomoObj.FLAG_DATA_RECON:
@@ -72,9 +92,6 @@ def threshold_segment_wrapper(TomoObj, cutoff=None,
     # Normalize data first.
     data = TomoObj.data_recon - TomoObj.data_recon.min()
     data /= data.max()
-
-    if cutoff == None:
-        cutoff = 0.5
 
     # Distribute jobs.
     axis = 0 # Slice axis
@@ -89,9 +106,11 @@ def threshold_segment_wrapper(TomoObj, cutoff=None,
 
 
 setattr(Dataset, 'adaptive_segment', adaptive_segment_wrapper)
+setattr(Dataset, 'remove_bg', remove_bg_wrapper)
 setattr(Dataset, 'region_segment', region_segment_wrapper)
 setattr(Dataset, 'threshold_segment', threshold_segment_wrapper)
 
 adaptive_segment_wrapper.__doc__ = adaptive_segment.__doc__
+remove_bg_wrapper.__doc__ = remove_bg.__doc__
 region_segment_wrapper.__doc__ = region_segment.__doc__
 threshold_segment_wrapper.__doc__ = threshold_segment.__doc__
