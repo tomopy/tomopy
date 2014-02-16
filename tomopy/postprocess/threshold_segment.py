@@ -15,7 +15,6 @@ def threshold_segment(args):
     for m in range(ind_end-ind_start):
         img = data[m, :, :]
         cutoff = threshold_otsu(img)
-        img[img >= cutoff] = 1
-        img[img < cutoff] = 0
+        img = img > cutoff
         data[m, :, :] = img
     return ind_start, ind_end, data
