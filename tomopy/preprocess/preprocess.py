@@ -95,10 +95,10 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None,
 
     # Update provenance.
     TomoObj.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
-	                                         'dist':dist,
+	                                     'dist':dist,
                                              'energy':energy,
-	                                         'alpha':alpha,
-	                                         'padding':padding}
+	                                     'alpha':alpha,
+	                                     'padding':padding}
 	    
     logger.info("phase retrieval [ok]")
 
