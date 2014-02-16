@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from skimage.filter import threshold_otsu
 from tomopy.tools.multiprocess import worker
 
 
@@ -11,6 +12,10 @@ def threshold_segment(args):
     data, args, ind_start, ind_end = args
     cutoff = args
     
-    data[data >= cutoff] = 1
-    data[data < cutoff] = 0
+    for m in range(ind_end-ind_start):
+        img = data[m, :, :]
+        cutoff = threshold_otsu(img)
+        img[img >= cutoff] = 1
+        img[img < cutoff] = 0
+        data[m, :, :] = img
     return ind_start, ind_end, data
