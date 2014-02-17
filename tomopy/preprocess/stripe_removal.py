@@ -35,7 +35,7 @@ def stripe_removal(args):
     
     # Padded temp image.
     num_x = dx + dx / 8
-    x_shift = int((num_x - dx) / 2.0)
+    x_shift = int((num_x - dx) / 2.)
     sli = np.zeros((num_x, dy), dtype='float32')
     
     for n in range(num_slices):
@@ -70,6 +70,6 @@ def stripe_removal(args):
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
             
-        data[:, n, :] = sli[x_shift:dx+x_shift, :]
+        data[:, n, :] = sli[x_shift:dx+x_shift, 0:dy]
         
     return ind_start, ind_end, data
