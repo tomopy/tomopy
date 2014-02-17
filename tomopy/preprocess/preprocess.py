@@ -103,7 +103,7 @@ def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None,
     logger.info("phase retrieval [ok]")
 
 
-def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=2,
+def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=4,
                            num_cores=None, chunk_size=None):
     if not TomoObj.FLAG_DATA:
         logger.warning("normalization (data missing) [bypassed]")
