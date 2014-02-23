@@ -164,11 +164,11 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
                     file_name = file_body + '.tif'
                     break
             if axis == 0:
-                img = misc.toimage(TomoObj.data_recon[m, :, :])
+                img = misc.toimage(TomoObj.data_recon[m, :, :], mode='F')
             elif axis == 1:
-                img = misc.toimage(TomoObj.data_recon[:, m, :])
+                img = misc.toimage(TomoObj.data_recon[:, m, :], mode='F')
             elif axis == 2:
-                img = misc.toimage(TomoObj.data_recon[:, :, m])
+                img = misc.toimage(TomoObj.data_recon[:, :, m], mode='F')
             # check if file exists.
             if os.path.isfile(file_name):
                 logger.warning("saving path check [failed]")
