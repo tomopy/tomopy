@@ -48,8 +48,8 @@ except KeyError:
     warnings.warn("you may need to manually set C_INCLUDE_PATH manually to " +
                   "find the libraries correctly")
 
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec/include')}
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw/include')}
+#C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec/include')}
+#C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw/include')}
 
 
 # Create FFTW shared-libraries.
