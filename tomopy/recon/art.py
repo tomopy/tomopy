@@ -10,16 +10,19 @@ libart = ctypes.CDLL(libpath)
 
 
 class Art():
-    def __init__(self, data):
+    def __init__(self, data, padding):
         
         num_projections = np.array(data.shape[0], dtype='int32')
         num_slices = np.array(data.shape[1], dtype='int32')
         num_pixels = np.array(data.shape[2], dtype='int32')
+        
+        if not padding:
+            num_grid = np.array(np.round(num_pixels/np.sqrt(2)/2.)*2, dtype='int32')
+        else:
+            num_grid = np.array(num_pixels, dtype='int32')
     
-        self.data_recon = np.ones((num_slices,
-                                   num_pixels,
-                                   num_pixels), 
-                                  dtype='float32')
+        self.data_recon = np.ones((num_slices, num_grid, num_grid),
+                                   dtype='float32')
         
         c_float_p = ctypes.POINTER(ctypes.c_float)
         c_int_p = ctypes.POINTER(ctypes.c_int)
@@ -28,6 +31,7 @@ class Art():
         self.obj = libart.create(num_projections.ctypes.data_as(c_int_p),
                                   num_slices.ctypes.data_as(c_int_p),
                                   num_pixels.ctypes.data_as(c_int_p),
+                                  num_grid.ctypes.data_as(c_int_p),
                                   data.ctypes.data_as(c_float_p))
     
     def reconstruct(self, iters, center, theta):

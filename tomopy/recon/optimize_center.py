@@ -43,8 +43,8 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     <dx.doi.org/10.1117/12.679101>`_
     """
     # Make an initial reconstruction to adjust histogram limits. 
-    recon = Gridrec(data, ringWidth=10)
-    recon.run(data, theta=theta, center=center_init, slice_no=slice_no)
+    recon = Gridrec(data, )
+    recon.reconstruct(data, theta=theta, center=center_init, slice_no=slice_no)
     
     # Adjust histogram boundaries according to reconstruction.
     hist_min = np.min(recon.data_recon)
@@ -74,7 +74,7 @@ def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max):
     Cost function of the ``optimize_center``.
     """
     logger.info('trying center: ' + str(np.squeeze(center)))
-    recon.run(data, theta=theta, center=center, slice_no=slice_no)
+    recon.reconstruct(data, theta=theta, center=center, slice_no=slice_no)
     histr, e = np.histogram(recon.data_recon, bins=64, range=[hist_min, hist_max])
     histr = histr.astype('float32') / recon.data_recon.size + 1e-12
     return -np.dot(histr, np.log2(histr))

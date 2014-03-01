@@ -37,18 +37,20 @@ def _diagnose_center(data, theta, dir_path, slice_no,
     
     # Don't ask why. Just do that.
     center_step /= 2.
-
+    
     # Make preperations for the slices and corresponding centers.
     slice_data = data[:, slice_no, :]
-    center = np.arange(center_start, center_end, center_step)
+    center = np.arange(center_start, center_end, center_step, dtype=np.float32)
     num_center = center.size
-    stacked_slices = np.zeros((num_projections, num_center, num_pixels))
+    stacked_slices = np.zeros((num_projections, num_center, num_pixels),
+                              dtype=np.float32)
+                              
     for m in range(num_center):
         stacked_slices[:, m, :] = slice_data
 
     # Reconstruct the same slice with different centers.
     recon = Gridrec(stacked_slices)
-    recon.run(stacked_slices, center=center, theta=theta)
+    recon.reconstruct(stacked_slices, theta=theta, center=center)
 
     # Save it to a temporary directory for manual inspection.
     for m in range(center.size):
@@ -56,6 +58,7 @@ def _diagnose_center(data, theta, dir_path, slice_no,
             img = misc.toimage(recon.data_recon[m, :, :])
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             img.save(file_name)
+    logger.info("diagnose center (see: " + file_name + " [ok]")
 
 
 
