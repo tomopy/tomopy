@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from tomopy.tools.multiprocess import worker
 
 
-@worker
-def normalize(args):
+def _normalize(args):
     """
     Normalize raw projection data with
     the white field projection data.
@@ -31,6 +29,7 @@ def normalize(args):
     """
     data, args, ind_start, ind_end = args
     data_white, data_dark, cutoff = args
+    
 
     for m in range(ind_end-ind_start):
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, data_white-data_dark)

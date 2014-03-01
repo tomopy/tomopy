@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy.optimize import minimize
-from scipy import ndimage
 from scipy import misc
+
 from gridrec import Gridrec
 import logging
 logger = logging.getLogger("tomopy")
 
 
-def diagnose_center(args):
+def _diagnose_center(data, theta, dir_path, slice_no, 
+                     center_start, center_end, center_step):
     """ 
     Diagnostic tools to find rotation center.
     
@@ -32,21 +32,10 @@ def diagnose_center(args):
         Values of the start, end and step of the center values to
         be used for diagnostics.
     """
-    data, theta, dir_path, slice_no, center_start, center_end, center_step = args
-    
     num_projections =  data.shape[0]
-    num_slices =  data.shape[1]
     num_pixels =  data.shape[2]
     
-    # Define diagnose region.
-    if slice_no is None:
-        slice_no = num_slices / 2
-    if center_start is None:
-        center_start = (num_pixels / 2) - 20
-    if center_end is None:
-        center_end = (num_pixels / 2) + 20
-    if center_step is None:
-        center_step = 1
+    # Don't ask why. Just do that.
     center_step /= 2.
 
     # Make preperations for the slices and corresponding centers.
@@ -63,7 +52,7 @@ def diagnose_center(args):
 
     # Save it to a temporary directory for manual inspection.
     for m in range(center.size):
-        if m % 2 == 0: # 2 slices same bec of gridrec
+        if m % 2 == 0: # 2 slices same bec of gridrec.
             img = misc.toimage(recon.data_recon[m, :, :])
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             img.save(file_name)

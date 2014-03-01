@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
+"""
+Module for exporting dataset into Tiff and Hdf5.
+"""
 import h5py
 import os
 import numpy as np
 from scipy import misc
-from reader import Dataset
 import logging
 logger = logging.getLogger("tomopy")
 
+# Import main TomoPy object.
+from reader import Session
+
         
-def recon_to_hdf5(TomoObj, output_file=None):
+def recon_to_hdf5(tomo, output_file=None):
     """ 
     Write reconstructed data to hdf5 file.
 
@@ -26,10 +31,10 @@ def recon_to_hdf5(TomoObj, output_file=None):
     resides. The name of the reconstructed files will 
     be initialized with ``recon``
     """
-    if TomoObj.FLAG_DATA_RECON:
+    if tomo.FLAG_DATA_RECON:
         if output_file == None:
-            dir_path = os.path.dirname(TomoObj.file_name)
-            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            dir_path = os.path.dirname(tomo.file_name)
+            base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + ".h5"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
@@ -66,21 +71,22 @@ def recon_to_hdf5(TomoObj, output_file=None):
             while not FLAG_SAVE:
                 new_file_name = file_body + '-' + str(ind) + '.h5'
                 if not os.path.isfile(new_file_name):
-                    _export_to_hdf5(new_file_name, TomoObj.data_recon, TomoObj.provenance)
+                    _export_to_hdf5(new_file_name, tomo.data_recon, tomo.provenance)
                     FLAG_SAVE = True
                     file_name = new_file_name
                 else:
                     ind += 1
             logger.warning("saved as %s [ok]", file_name)
         else:
-            _export_to_hdf5(file_name, TomoObj.data_recon, TomoObj.provenance)
+            _export_to_hdf5(file_name, tomo.data_recon, tomo.provenance)
             logger.debug("saved as %s [ok]", file_name)
-        TomoObj.output_file = output_file
+        tomo.output_file = output_file
         logger.info("save data at %s [ok]", dir_path)
     else:
         logger.warning("save data [bypassed]")
+        
 
-def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, axis=0):
+def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=0):
     """ 
     Write reconstructed data to a stack of tif files.
 
@@ -113,10 +119,10 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
     resides. The name of the reconstructed files will
     be initialized with ``recon``
     """
-    if TomoObj.FLAG_DATA_RECON:
+    if tomo.FLAG_DATA_RECON:
         if output_file == None:
-            dir_path = os.path.dirname(TomoObj.file_name)
-            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            dir_path = os.path.dirname(tomo.file_name)
+            base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + "_"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
@@ -141,7 +147,7 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
             logger.debug("new folders generated [ok]")
 
         # Select desired x from whole data.
-        num_x, num_y, num_z = TomoObj.data_recon.shape
+        num_x, num_y, num_z = tomo.data_recon.shape
         if x_start is None:
             x_start = 0
         if x_end is None:
@@ -164,11 +170,11 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
                     file_name = file_body + '.tif'
                     break
             if axis == 0:
-                img = misc.toimage(TomoObj.data_recon[m, :, :])
+                img = misc.toimage(tomo.data_recon[m, :, :])
             elif axis == 1:
-                img = misc.toimage(TomoObj.data_recon[:, m, :])
+                img = misc.toimage(tomo.data_recon[:, m, :])
             elif axis == 2:
-                img = misc.toimage(TomoObj.data_recon[:, :, m])
+                img = misc.toimage(tomo.data_recon[:, :, m])
             # check if file exists.
             if os.path.isfile(file_name):
                 logger.warning("saving path check [failed]")
@@ -188,12 +194,13 @@ def recon_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5,
             else:
                 img.save(file_name)
                 logger.debug("saved as %s [ok]", file_name)
-            TomoObj.output_file = file_name
+            tomo.output_file = file_name
         logger.info("save data at %s [ok]", dir_path)
     else:
         logger.warning("save data [bypassed]")
+        
 
-def data_to_hdf5(TomoObj, output_file=None):
+def data_to_hdf5(tomo, output_file=None):
     """
     Write raw data to hdf5 file.
     
@@ -211,10 +218,10 @@ def data_to_hdf5(TomoObj, output_file=None):
     resides. The name of the reconstructed files will
     be initialized with ``data``
     """
-    if TomoObj.FLAG_DATA:
+    if tomo.FLAG_DATA:
         if output_file == None:
-            dir_path = os.path.dirname(TomoObj.file_name)
-            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            dir_path = os.path.dirname(tomo.file_name)
+            base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/data_" + base_name + "/data_" + base_name + ".h5"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
@@ -251,21 +258,22 @@ def data_to_hdf5(TomoObj, output_file=None):
             while not FLAG_SAVE:
                 new_file_name = file_body + '-' + str(ind) + '.h5'
                 if not os.path.isfile(new_file_name):
-                    _export_to_hdf5(new_file_name, TomoObj.data, TomoObj.provenance)
+                    _export_to_hdf5(new_file_name, tomo.data, tomo.provenance)
                     FLAG_SAVE = True
                     file_name = new_file_name
                 else:
                     ind += 1
             logger.warning("saved as %s [ok]", file_name)
         else:
-            _export_to_hdf5(file_name, TomoObj.data, TomoObj.provenance)
+            _export_to_hdf5(file_name, tomo.data, tomo.provenance)
             logger.debug("saved as %s [ok]", file_name)
-        TomoObj.output_file = output_file
+        tomo.output_file = output_file
         logger.info("save data at %s [ok]", dir_path)
     else:
         logger.warning("save data [bypassed]")
 
-def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, axis=1):
+
+def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=1):
     """
     Write raw data to a stack of tif files.
     
@@ -298,10 +306,10 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
     resides. The name of the reconstructed files will
     be initialized with ``data``
     """
-    if TomoObj.FLAG_DATA:
+    if tomo.FLAG_DATA:
         if output_file == None:
-            dir_path = os.path.dirname(TomoObj.file_name)
-            base_name = os.path.basename(TomoObj.file_name).split(".")[-2]
+            dir_path = os.path.dirname(tomo.file_name)
+            base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/data_" + base_name + "/data_" + base_name + "_"
             logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
@@ -326,7 +334,7 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
             logger.debug("new folders generated [ok]")
         
         # Select desired x from whole data.
-        num_x, num_y, num_z = TomoObj.data.shape
+        num_x, num_y, num_z = tomo.data.shape
         if x_start is None:
             x_start = 0
         if x_end is None:
@@ -349,11 +357,11 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
                     file_name = file_body + '.tif'
                     break
             if axis == 0:
-                img = misc.toimage(TomoObj.data[m, :, :])
+                img = misc.toimage(tomo.data[m, :, :])
             elif axis == 1:
-                img = misc.toimage(TomoObj.data[:, m, :])
+                img = misc.toimage(tomo.data[:, m, :])
             elif axis == 2:
-                img = misc.toimage(TomoObj.data[:, :, m])
+                img = misc.toimage(tomo.data[:, :, m])
             # check if file exists.
             if os.path.isfile(file_name):
                 logger.warning("saving path check [failed]")
@@ -373,10 +381,11 @@ def data_to_tiff(TomoObj, output_file=None, x_start=None, x_end=None, digits=5, 
             else:
                 img.save(file_name)
                 logger.debug("saved as %s [ok]", file_name)
-            TomoObj.output_file = file_name
+            tomo.output_file = file_name
         logger.info("save data at %s [ok]", dir_path)
     else:
         logger.warning("save data [bypassed]")
+
 
 def _export_to_hdf5(file_name, data, provenance):
     f = h5py.File(file_name, 'w')
@@ -387,10 +396,12 @@ def _export_to_hdf5(file_name, data, provenance):
     for key, value in provenance.iteritems():
         provenance_group.create_dataset(key, data=str(value))
     f.close()
+    
 
-setattr(Dataset, 'recon_to_hdf5', recon_to_hdf5)
-setattr(Dataset, 'recon_to_tiff', recon_to_tiff)
-setattr(Dataset, 'data_to_hdf5', data_to_hdf5)
-setattr(Dataset, 'data_to_tiff', data_to_tiff)
+# Hook all these methods to TomoPy.
+setattr(Session, 'recon_to_hdf5', recon_to_hdf5)
+setattr(Session, 'recon_to_tiff', recon_to_tiff)
+setattr(Session, 'data_to_hdf5', data_to_hdf5)
+setattr(Session, 'data_to_tiff', data_to_tiff)
 
 

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Module in construction!
+"""
 import h5py
 import re
 from tomopy.tools import constants
