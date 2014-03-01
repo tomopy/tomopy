@@ -3,11 +3,9 @@
 import numpy as np
 from tomopy.tools import constants
 from tomopy.tools import fftw
-from tomopy.tools.multiprocess import worker
 
 
-@worker
-def phase_retrieval(args):
+def _phase_retrieval(args):
     """
     Perform single-material phase retrieval
     using projection data.
@@ -68,7 +66,7 @@ def phase_retrieval(args):
     return ind_start, ind_end, data
     
 
-def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
+def _paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     num_proj, dx, dy = data.shape # dx:slices, dy:pixels
     wavelength = 2 * constants.PI * constants.PLANCK_CONSTANT * \
                 constants.SPEED_OF_LIGHT / energy
@@ -79,6 +77,7 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
         
         # Fourier padding in powers of 2.
         pad_pixels = np.ceil(constants.PI * wavelength * dist / pixel_size ** 2)
+        
         num_x = pow(2, np.ceil(np.log2(dx + pad_pixels)))
         num_y = pow(2, np.ceil(np.log2(dy + pad_pixels)))
         x_shift = int((num_x - dx) / 2.0)

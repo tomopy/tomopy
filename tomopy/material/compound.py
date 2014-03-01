@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module in construction!
+"""
 import re
 import numpy as np
 import h5py

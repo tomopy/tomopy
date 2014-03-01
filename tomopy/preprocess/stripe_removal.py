@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pywt
-from tomopy.tools.multiprocess import worker
 
 
-@worker
-def stripe_removal(args):
+def _stripe_removal(args):
     """
     Remove stripes from sinogram data.
 

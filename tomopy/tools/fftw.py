@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Module for FFTW wrappers.
+"""
 import ctypes
 import numpy as np
 import os
