@@ -64,7 +64,7 @@ class Gridrec():
                  reconScale=1,
                  paddedSinogramWidth=None,
                  airPixels=10,
-                 ringWidth=10,
+                 ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
@@ -287,3 +287,4 @@ class Gridrec():
         # Destruct the reconstruction object used by the wrapper.
         libgridrec.reconDelete()
         return self.data_recon
+

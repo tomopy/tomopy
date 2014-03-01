@@ -175,6 +175,7 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
                 img = misc.toimage(tomo.data_recon[:, m, :])
             elif axis == 2:
                 img = misc.toimage(tomo.data_recon[:, :, m])
+
             # check if file exists.
             if os.path.isfile(file_name):
                 logger.warning("saving path check [failed]")
