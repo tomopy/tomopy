@@ -79,10 +79,10 @@ class Session():
             to each projection.
         """
         # Set the numpy Data-Exchange structure.
-        tomo.data = np.array(data) # do not squeeze
-        tomo.data_white = np.array(data_white) # do not squeeze
-        tomo.data_dark = np.array(data_dark) # do not squeeze
-        tomo.theta = np.array(np.squeeze(theta))
+        tomo.data = np.array(data, dtype='float32', copy=False) # do not squeeze
+        tomo.data_white = np.array(data_white, dtype='float32', copy=False) # do not squeeze
+        tomo.data_dark = np.array(data_dark, dtype='float32', copy=False) # do not squeeze
+        tomo.theta = np.array(np.squeeze(theta), dtype='float32', copy=False)
     
     def read(tomo, file_name,
              projections_start=None,
