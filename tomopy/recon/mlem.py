@@ -10,15 +10,18 @@ libmlem = ctypes.CDLL(libpath)
 
 
 class Mlem():
-    def __init__(self, data):
+    def __init__(self, data, padding):
         
         num_projections = np.array(data.shape[0], dtype='int32')
         num_slices = np.array(data.shape[1], dtype='int32')
         num_pixels = np.array(data.shape[2], dtype='int32')
-    
-        self.data_recon = np.ones((num_slices,
-                                   num_pixels,
-                                   num_pixels), 
+        
+        if not padding:
+            num_grid = np.array(np.round(num_pixels/np.sqrt(2)/2.)*2, dtype='int32')
+        else:
+            num_grid = np.array(num_pixels-50, dtype='int32')
+        
+        self.data_recon = np.ones((num_slices, num_grid, num_grid),
                                   dtype='float32')
         
         c_float_p = ctypes.POINTER(ctypes.c_float)
@@ -28,8 +31,9 @@ class Mlem():
         self.obj = libmlem.create(num_projections.ctypes.data_as(c_int_p),
                                   num_slices.ctypes.data_as(c_int_p),
                                   num_pixels.ctypes.data_as(c_int_p),
+                                  num_grid.ctypes.data_as(c_int_p),
                                   data.ctypes.data_as(c_float_p))
-    
+
     def reconstruct(self, iters, center, theta):
                                
         c_float_p = ctypes.POINTER(ctypes.c_float)

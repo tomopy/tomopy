@@ -68,9 +68,9 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
     # Update provenance and log.
     tomo.provenance['diagnose_center'] = {'dir_path':dir_path,
                                           'slice_no':slice_no,
-                                   	  'center_start':center_start,
-                                   	  'center_end':center_end,
-                                   	  'center_step':center_step}
+                                   	      'center_start':center_start,
+                                   	      'center_end':center_end,
+                                   	      'center_step':center_step}
     logger.debug("data_center directory create [ok]")
 
 
@@ -112,13 +112,13 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     # Update provenance and log.
     tomo.provenance['optimize_center'] = {'theta':tomo.theta,
                                           'slice_no':slice_no,
-                                   	  'center_init':center_init,
-                                   	  'tol':tol}
+                                   	      'center_init':center_init,
+                                   	      'tol':tol}
     logger.info("optimize rotation center [ok]")
     
 
     
-def art(tomo, iters=None):
+def art(tomo, iters=None, padding=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("art (data missing) [bypassed]")
@@ -136,7 +136,11 @@ def art(tomo, iters=None):
     if iters is None:
         iters = 1
         logger.debug("art: iters set to 1 [ok]")
-        
+
+    if padding is None:
+        padding = False
+        logger.debug("art: padding set to False [ok]")
+
 
     # Check again.
     if not isinstance(tomo.data, np.float32):
@@ -158,7 +162,7 @@ def art(tomo, iters=None):
     data = -np.log(tomo.data)
     
     # Initialize and perform reconstruction.    
-    recon = Art(data)
+    recon = Art(data, padding)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
     
     
@@ -171,7 +175,7 @@ def art(tomo, iters=None):
     
     
     
-def mlem(tomo, iters=None):
+def mlem(tomo, iters=None, padding=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("mlem (data missing) [bypassed]")
@@ -204,6 +208,9 @@ def mlem(tomo, iters=None):
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
     
+    if padding is None:
+        padding = False
+        logger.debug("art: padding set to False [ok]")
 
     # This works with radians.
     tomo.theta *= np.pi/180
@@ -212,7 +219,7 @@ def mlem(tomo, iters=None):
     data = -np.log(tomo.data)
 
     # Initialize and perform reconstruction.    
-    recon = Mlem(data)
+    recon = Mlem(data, padding)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
     
     
@@ -247,7 +254,7 @@ def gridrec(tomo, *args, **kwargs):
 
     if not isinstance(tomo.center, np.float32):
         tomo.center = np.array(tomo.center, dtype=np.float32, copy=False)
-        
+
     
     # Initialize and perform reconstruction.    
     recon = Gridrec(tomo.data, *args, **kwargs)

@@ -64,7 +64,7 @@ class Gridrec():
                  reconScale=1,
                  paddedSinogramWidth=None,
                  airPixels=10,
-                 ringWidth=0,
+                 ringWidth=10,
                  fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
@@ -266,6 +266,8 @@ class Gridrec():
         # Convert center to array.
         if np.array(center).size == 1:
             center = np.ones(num_slices) * center
+            center = np.array(center, dtype=np.float32, copy=False)
+
             
         # Construct the reconstruction object.
         libgridrec.reconCreate(ctypes.byref(self.params),
@@ -276,7 +278,7 @@ class Gridrec():
         datain = np.array(data[:, slice_no, :])
         self.data_recon = np.empty((num_slices,
                                     self.params.numPixels,
-                                    self.params.numPixels), dtype=np.float32)
+                                    self.params.numPixels), dtype='float32')
                                     
         # Go, go, go.
         libgridrec.reconRun(ctypes.byref(_num_slices),
