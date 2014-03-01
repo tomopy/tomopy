@@ -135,7 +135,7 @@ def phase_retrieval(tomo, pixel_size=None, dist=None,
     if padding is None:
         padding = True
         logger.debug("phase_retrieval: padding is set " +
-                       "to ", + str(padding) + " [ok]")
+                       "to " + str(padding) + " [ok]")
         
         
     # Compute the filter.

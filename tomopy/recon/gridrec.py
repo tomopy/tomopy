@@ -12,6 +12,7 @@ import multiprocessing as mp
 # Get the shared library for gridrec.
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libgridrec.so'))
 libgridrec = ctypes.CDLL(libpath)
+print libpath
 
 
 class GridrecCStruct(ctypes.Structure):
@@ -63,8 +64,8 @@ class Gridrec():
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
-                 airPixels=10,
-                 ringWidth=10,
+                 airPixels=1,
+                 ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
@@ -268,7 +269,6 @@ class Gridrec():
             center = np.ones(num_slices) * center
             center = np.array(center, dtype=np.float32, copy=False)
 
-            
         # Construct the reconstruction object.
         libgridrec.reconCreate(ctypes.byref(self.params),
                 theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
@@ -285,7 +285,7 @@ class Gridrec():
                 center.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                 datain.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                 self.data_recon.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
-    
+
         # Destruct the reconstruction object used by the wrapper.
         libgridrec.reconDelete()
         return self.data_recon

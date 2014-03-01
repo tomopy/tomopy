@@ -316,7 +316,10 @@ class Session():
         log_name = os.path.splitext(tomo.file_name)[0] + ".log"
         
         # File log.
-        fh = logging.FileHandler(log_name)
+        try:
+            fh = logging.FileHandler(log_name)
+        except IOError:
+            return
         if tomo._log_level == 'DEBUG':
             fh.setLevel(logging.DEBUG)
         elif tomo._log_level == 'INFO':

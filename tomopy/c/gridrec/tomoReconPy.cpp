@@ -31,10 +31,10 @@ void reconDelete()
     angles = NULL;
 }
 
-void reconstruct(int *numSlices,
-                 float *pCenter,
-                 float *pIn,
-                 float *pOut)
+void reconRun(int *numSlices,
+             float *pCenter,
+             float *pIn,
+             float *pOut)
 {
     if (pTomoRecon == NULL) return;
     pTomoRecon -> reconstruct(*numSlices, pCenter, pIn, pOut);
