@@ -53,13 +53,13 @@ def _phase_retrieval(args):
             tmp_proj[x_shift:dx+x_shift, y_shift:dy+y_shift] = proj
             fft_proj = fftw.fftw2(tmp_proj)
             filtered_proj = np.multiply(H, fft_proj)
-            tmp = np.real(fftw.ifftw2(filtered_proj))
+            tmp = np.real(fftw.ifftw2(filtered_proj))/np.max(H)
             proj = tmp[x_shift:dx+x_shift, y_shift:dy+y_shift]   
                 
         elif not padding:
             fft_proj = fftw.fftw2(proj)
             filtered_proj = np.multiply(H, fft_proj)
-            proj = np.real(fftw.ifftw2(filtered_proj)) / np.max(H)
+            proj = np.real(fftw.ifftw2(filtered_proj))/np.max(H)
         
         data[m, :, :] = proj
         

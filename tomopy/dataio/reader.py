@@ -35,7 +35,7 @@ class Session():
         tomo.FLAG_WHITE = False
         tomo.FLAG_DARK = False
         tomo.FLAG_THETA = False
-        tomo.FLAG_FILE_CHECK = False
+        tomo.FLAG_DATA_CHECK = False
         tomo.FLAG_DATA_RECON = False
         
         # Set the log level.
@@ -78,12 +78,41 @@ class Session():
             Data acquisition angles corresponding
             to each projection.
         """
+        # Control inputs.
+        if data is None:
+            logger.error("Dataset import [bypassed]")
+            return
+        
         # Set the numpy Data-Exchange structure.
         tomo.data = np.array(data, dtype='float32', copy=False) # do not squeeze
         tomo.data_white = np.array(data_white, dtype='float32', copy=False) # do not squeeze
         tomo.data_dark = np.array(data_dark, dtype='float32', copy=False) # do not squeeze
         tomo.theta = np.array(np.squeeze(theta), dtype='float32', copy=False)
-    
+            
+        # Assign data_white
+        if data_white is None:
+            tomo.data_white = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+            tomo.data_white += np.mean(tomo.data[:])
+            logger.warning("auto-normalization [ok]")
+        tomo.FLAG_WHITE = True
+            
+        # Assign data_dark
+        if data_dark is None:
+            tomo.data_dark = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+            logger.warning("dark-field assumed as zeros [ok]")
+        tomo.FLAG_DARK = True
+                
+        # Assign theta
+        if theta is None:
+            tomo.theta = np.linspace(0, tomo.data.shape[0], tomo.data.shape[0]) \
+                * 180 / (tomo.data.shape[0] + 1)
+            logger.warning("assign 180-degree rotation [ok]")
+        tomo.FLAG_THETA = True
+
+        # Check if data is as expected.
+        tomo._check_input_data()
+
+
     def read(tomo, file_name,
              projections_start=None,
              projections_end=None,
@@ -356,70 +385,64 @@ class Session():
             - consistency of data and data_dark dimensions (warning)
             - consistency of data and theta dimensions (warning)
         """
-        # check exchange group.
-        if tomo.FLAG_DATA:
-        
-            # Check data dimensions.
-            if len(tomo.data.shape) == 3:
-                tomo.FLAG_DATA = True
-                logger.debug("data dimensions [ok]")
+        # Check data dimensions.
+        if len(tomo.data.shape) == 3:
+            tomo.FLAG_DATA = True
+            logger.debug("data dimensions [ok]")
+        else:
+            tomo.FLAG_DATA = False
+            logger.error("data dimensions [failed]")
+        if tomo.FLAG_WHITE:
+            if len(tomo.data_white.shape) == 3:
+                tomo.FLAG_WHITE = True
+                logger.debug("data_white dimensions [ok]")
             else:
-                tomo.FLAG_DATA = False
-                logger.error("data dimensions [failed]")
+                tomo.FLAG_WHITE = False
+                logger.warning("data_white dimensions [failed]")
+        if tomo.FLAG_DARK:
+            if len(tomo.data_dark.shape) == 3:
+                tomo.FLAG_DARK = True
+                logger.debug("data_dark dimensions [ok]")
+            else:
+                tomo.FLAG_DARK = False
+                logger.warning("data_dark dimensions [failed]")
+        if tomo.FLAG_THETA:
+            if len(tomo.theta.shape) == 1 or len(tomo.theta.shape) == 0:
+                tomo.FLAG_THETA = True
+                logger.debug("theta dimensions [ok]")
+            else:
+                tomo.FLAG_THETA = False
+                logger.warning("theta dimensions [failed]")
+        
+        # Check data consistencies.
+        try:
             if tomo.FLAG_WHITE:
-                if len(tomo.data_white.shape) == 3:
+                if tomo.data_white.shape[1:2] == tomo.data.shape[1:2]:
                     tomo.FLAG_WHITE = True
-                    logger.debug("data_white dimensions [ok]")
+                    logger.debug("data_white compatibility [ok]")
                 else:
                     tomo.FLAG_WHITE = False
-                    logger.warning("data_white dimensions [failed]")
+                    logger.warning("data_white compatibility [failed]")
             if tomo.FLAG_DARK:
-                if len(tomo.data_dark.shape) == 3:
+                if tomo.data_dark.shape[1:2] == tomo.data.shape[1:2]:
                     tomo.FLAG_DARK = True
-                    logger.debug("data_dark dimensions [ok]")
+                    logger.debug("data_dark compatibility [ok]")
                 else:
                     tomo.FLAG_DARK = False
-                    logger.warning("data_dark dimensions [failed]")
+                    logger.warning("data_dark compatibility [failed]")
             if tomo.FLAG_THETA:
-                if len(tomo.theta.shape) == 1 or len(tomo.theta.shape) == 0:
+                if tomo.theta.size == tomo.data.shape[0]:
                     tomo.FLAG_THETA = True
-                    logger.debug("theta dimensions [ok]")
+                    logger.debug("theta compatibility [ok]")
                 else:
                     tomo.FLAG_THETA = False
-                    logger.warning("theta dimensions [failed]")
-            
-            # Check data consistencies.
-            try:
-                if tomo.FLAG_WHITE:
-                    if tomo.data_white.shape[1:2] == tomo.data.shape[1:2]:
-                        tomo.FLAG_WHITE = True
-                        logger.debug("data_white compatibility [ok]")
-                    else:
-                        tomo.FLAG_WHITE = False
-                        logger.warning("data_white compatibility [failed]")
-                if tomo.FLAG_DARK:
-                    if tomo.data_dark.shape[1:2] == tomo.data.shape[1:2]:
-                        tomo.FLAG_DARK = True
-                        logger.debug("data_dark compatibility [ok]")
-                    else:
-                        tomo.FLAG_DARK = False
-                        logger.warning("data_dark compatibility [failed]")
-                if tomo.FLAG_THETA:
-                    if tomo.theta.size == tomo.data.shape[0]:
-                        tomo.FLAG_THETA = True
-                        logger.debug("theta compatibility [ok]")
-                    else:
-                        tomo.FLAG_THETA = False
-                        logger.warning("theta compatibility [failed]")
-            except IndexError: # if tomo.data is None
-                pass
-                    
-            # Good to go.
-            tomo.FLAG_FILE_CHECK = True
-            logger.debug("file check [ok]")
-        else:
-            tomo.FLAG_FILE_CHECK = False
-            logger.error("file check [failed]")
+                    logger.warning("theta compatibility [failed]")
+        except IndexError: # if tomo.data is None
+            pass
+                
+        # Good to go.
+        tomo.FLAG_DATA_CHECK = True
+        logger.debug("file check [ok]")
             
 
     def _check_input_file(tomo):
@@ -569,10 +592,10 @@ class Session():
                 pass
                     
             # Good to go.
-            tomo.FLAG_FILE_CHECK = True
+            tomo.FLAG_DATA_CHECK = True
             logger.debug("file check [ok]")
         else:
-            tomo.FLAG_FILE_CHECK = False
+            tomo.FLAG_DATA_CHECK = False
             logger.error("file check [failed]")
             
             
