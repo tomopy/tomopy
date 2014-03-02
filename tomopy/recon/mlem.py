@@ -19,8 +19,8 @@ class Mlem():
         if not padding:
             num_grid = np.array(np.round(num_pixels/np.sqrt(2)/2.)*2, dtype='int32')
         else:
-            num_grid = np.array(num_pixels-50, dtype='int32')
-        
+            num_grid = np.array(num_pixels, dtype='int32')
+
         self.data_recon = np.ones((num_slices, num_grid, num_grid),
                                   dtype='float32')
         

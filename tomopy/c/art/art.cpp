@@ -15,15 +15,15 @@ extern "C"
 
 
 Art::Art(int *num_projections, int *num_slices, int *num_pixels, int *num_grid, float *data) :
-    num_projections_(*num_projections),
-    num_slices_(*num_slices),
-    num_pixels_(*num_pixels),
-    num_grid_(*num_grid),
-    data_(data)
+num_projections_(*num_projections),
+num_slices_(*num_slices),
+num_pixels_(*num_pixels),
+num_grid_(*num_grid),
+data_(data)
 {
     gridx_ = new float[num_grid_+1];
     gridy_ = new float[num_grid_+1];
-
+    
     for (int m = 0; m <= num_grid_; m++) {
         gridx_[m] = -float(num_grid_)/2 + m;
         gridy_[m] = -float(num_grid_)/2 + m;
@@ -36,13 +36,13 @@ Art::Art(int *num_projections, int *num_slices, int *num_pixels, int *num_grid, 
     ay = new float[num_grid_+1];
     bx = new float[num_grid_+1];
     by = new float[num_grid_+1];
-
+    
     coorx = new float[2*num_grid_];
     coory = new float[2*num_grid_];
-
+    
     leng = new float[2*num_grid_];
     leng2 = new float[2*num_grid_];
-
+    
     indx_ = new int[2*num_grid_];
     indy_ = new int[2*num_grid_];
     indi = new int[2*num_grid_];
@@ -66,13 +66,13 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
     if (mov-ceil(mov) < 1e-2) {
         mov += 1e-2;
     }
-
+    
     for (t = 0; t < *iters; t++) {
         
         for (q = 0; q < num_projections_; q++) {
-
+            
             for (m = 0; m < num_pixels_; m++) {
-                    
+                
                 xi = -1e6;
                 yi = -float(num_pixels_-1)/2 + m + mov;
                 srcx = xi * cos(theta[q]) - yi * sin(theta[q]);
@@ -107,14 +107,14 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                     }
                 }
                 len = alen+blen;
-            
-    
+                
+                
                 
                 i = 0;
                 j = 0;
                 k = 0;
                 if ((theta[q] >= 0 && theta[q] < PI/2) || (theta[q] >= PI && theta[q] < 3*PI/2)) {
-    
+                    
                     while (i < alen && j < blen)
                     {
                         if (ax[i] < bx[j]) {
@@ -144,7 +144,7 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                         j++;
                         k++;
                     }
-    
+                    
                 } else {
                     while (i < alen && j < blen)
                     {
@@ -175,8 +175,8 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                         k++;
                     }
                 }
-    
-    
+                
+                
                 for (n = 0; n < len-1; n++) {
                     diffx = coorx[n+1] - coorx[n];
                     diffy = coory[n+1] - coory[n];
@@ -185,28 +185,28 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                     
                     midx = (coorx[n+1] + coorx[n])/2;
                     midy = (coory[n+1] + coory[n])/2;
-    
+                    
                     indx_[n] = floor(midx + float(num_grid_)/2);
                     indy_[n] = floor(midy + float(num_grid_)/2);
                 }
-    
+                
                 a2 = 0;
                 for (n = 0; n < len-1; n++) {
                     a2 += leng2[n];
-                    }
+                }
                 
-    
-    
+                
+                
                 for (k = 0; k < num_slices_; k++) {
-    
+                    
                     indo = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
-    
+                    
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
                         indi[n] = (indx_[n] + (indy_[n] * num_grid_)) + k * (num_grid_ * num_slices_);
                         simdata += (recon[indi[n]] * leng[n]);
                     }
-    
+                    
                     for (n = 0; n < len-1; n++) {
                         recon[indi[n]] += (data_[indo] - simdata) / a2 * leng[n];
                     } 

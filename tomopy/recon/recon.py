@@ -160,7 +160,7 @@ def art(tomo, iters=None, padding=None):
 
     # Intensity to line integral according to Beer's Law.
     data = -np.log(tomo.data)
-    
+
     # Initialize and perform reconstruction.    
     recon = Art(data, padding)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
@@ -210,14 +210,14 @@ def mlem(tomo, iters=None, padding=None):
     
     if padding is None:
         padding = False
-        logger.debug("art: padding set to False [ok]")
+        logger.debug("mlem: padding set to False [ok]")
 
     # This works with radians.
     tomo.theta *= np.pi/180
 
     # Intensity to line integral according to Beer's Law.
     data = -np.log(tomo.data)
-
+ 
     # Initialize and perform reconstruction.    
     recon = Mlem(data, padding)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
