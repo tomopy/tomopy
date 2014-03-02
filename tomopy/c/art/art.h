@@ -23,6 +23,5 @@ private:
     float *leng, *leng2;
     float diffx, diffy;
     float midx, midy;
-    int *indx_, *indy_;
     int *indi;
 };

@@ -118,7 +118,7 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     
 
     
-def art(tomo, iters=None, padding=None):
+def art(tomo, iters=None, num_grid=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("art (data missing) [bypassed]")
@@ -137,9 +137,9 @@ def art(tomo, iters=None, padding=None):
         iters = 1
         logger.debug("art: iters set to 1 [ok]")
 
-    if padding is None:
-        padding = False
-        logger.debug("art: padding set to False [ok]")
+    if num_grid is None:
+        num_grid = tomo.data.shape[2]
+        logger.debug("art: num_grid set to " + str(num_grid) + " [ok]")
 
 
     # Check again.
@@ -162,7 +162,7 @@ def art(tomo, iters=None, padding=None):
     data = -np.log(tomo.data)
 
     # Initialize and perform reconstruction.    
-    recon = Art(data, padding)
+    recon = Art(data, num_grid)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
     
     
@@ -175,7 +175,7 @@ def art(tomo, iters=None, padding=None):
     
     
     
-def mlem(tomo, iters=None, padding=None):
+def mlem(tomo, iters=None, num_grid=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("mlem (data missing) [bypassed]")
@@ -208,18 +208,18 @@ def mlem(tomo, iters=None, padding=None):
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
     
-    if padding is None:
-        padding = False
-        logger.debug("mlem: padding set to False [ok]")
+    if num_grid is None:
+        num_grid = tomo.data.shape[2]
+        logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
 
     # This works with radians.
     tomo.theta *= np.pi/180
 
     # Intensity to line integral according to Beer's Law.
     data = -np.log(tomo.data)
- 
+
     # Initialize and perform reconstruction.    
-    recon = Mlem(data, padding)
+    recon = Mlem(data, num_grid)
     tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
     
     

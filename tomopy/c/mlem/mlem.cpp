@@ -40,9 +40,6 @@ Mlem::Mlem(int *num_projections, int *num_slices, int *num_pixels, int *num_grid
     coory = new float[2*num_grid_];
 
     leng = new float[2*num_grid_];
-
-    indx_ = new int[2*num_grid_];
-    indy_ = new int[2*num_grid_];
     indi = new int[2*num_grid_];
 }
 
@@ -52,7 +49,7 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
     float xi, yi;
     float slope, islope;
     int alen, blen, len;
-    int ii, io;
+    int indx, indy, io, isin;
     float simdata;
     float srcx, srcy, detx, dety;
     
@@ -71,7 +68,7 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
             for (m = 0; m < num_pixels_; m++) {
                 
                 xi = -1e6;
-                yi = -float(num_pixels_-1)/2 + m + mov;
+                yi = -float(num_pixels_-1)/2 + m;
                 srcx = xi * cos(theta[q]) - yi * sin(theta[q]);
                 srcy = xi * sin(theta[q]) + yi * cos(theta[q]);
                 detx = -xi * cos(theta[q]) - yi * sin(theta[q]);
@@ -181,28 +178,28 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
                     midx = (coorx[n+1] + coorx[n])/2;
                     midy = (coory[n+1] + coory[n])/2;
     
-                    indx_[n] = floor(midx + float(num_grid_)/2);
-                    indy_[n] = floor(midy + float(num_grid_)/2);
-                }
-                
-                
-                for (n = 0; n < len-1; n++) {
-                    indi[n] = (indx_[n] + (indy_[n] * num_grid_));
+                    indx = floor(midx + float(num_grid_)/2);
+                    indy = floor(midy + float(num_grid_)/2);
+                    
+                    indi[n] = indx + (indy * num_grid_);
                     suma[indi[n]] += leng[n];
                 }
                 
+                
+                
                 for (k = 0; k < num_slices_; k++) {
+                    
+                    io = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
+                    isin = k * (num_grid_ * num_slices_);
                     
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
-                        ii = indi[n] + k * (num_grid_ * num_slices_);
-                        simdata += (recon[ii] * leng[n]);
+                        indi[n] += isin;
+                        simdata += recon[indi[n]] * leng[n];
                     }
         
-                    io = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
                     for (n = 0; n < len-1; n++) {
-                        ii = indi[n] + k * (num_grid_ * num_grid_);
-                        sumay[ii] += (data_[io] / simdata) * leng[n];
+                        sumay[indi[n]] += (data_[io] / simdata) * leng[n];
                     }
     
     
