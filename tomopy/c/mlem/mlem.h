@@ -23,7 +23,6 @@ private:
     float *leng;
     float diffx, diffy;
     float midx, midy;
-    int *indx_, *indy_;
     int *indi;
     float *suma, *sumay;
 };

@@ -43,13 +43,8 @@ data_(data)
     leng = new float[2*num_grid_];
     leng2 = new float[2*num_grid_];
     
-    indx_ = new int[2*num_grid_];
-    indy_ = new int[2*num_grid_];
     indi = new int[2*num_grid_];
 }
-
-
-
 
 void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
 {
@@ -57,7 +52,7 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
     float xi, yi;
     float slope, islope;
     int alen, blen, len;
-    int indo;
+    int indx, indy, io, isin;
     float a2;
     float simdata;
     float srcx, srcy, detx, dety;
@@ -74,7 +69,7 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
             for (m = 0; m < num_pixels_; m++) {
                 
                 xi = -1e6;
-                yi = -float(num_pixels_-1)/2 + m + mov;
+                yi = -float(num_pixels_-1)/2 + m;
                 srcx = xi * cos(theta[q]) - yi * sin(theta[q]);
                 srcy = xi * sin(theta[q]) + yi * cos(theta[q]);
                 detx = -xi * cos(theta[q]) - yi * sin(theta[q]);
@@ -177,6 +172,7 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                 }
                 
                 
+                a2 = 0;
                 for (n = 0; n < len-1; n++) {
                     diffx = coorx[n+1] - coorx[n];
                     diffy = coory[n+1] - coory[n];
@@ -186,12 +182,10 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                     midx = (coorx[n+1] + coorx[n])/2;
                     midy = (coory[n+1] + coory[n])/2;
                     
-                    indx_[n] = floor(midx + float(num_grid_)/2);
-                    indy_[n] = floor(midy + float(num_grid_)/2);
-                }
-                
-                a2 = 0;
-                for (n = 0; n < len-1; n++) {
+                    indx = floor(midx + float(num_grid_)/2);
+                    indy = floor(midy + float(num_grid_)/2);
+                    
+                    indi[n] = indx + (indy * num_grid_);
                     a2 += leng2[n];
                 }
                 
@@ -199,16 +193,17 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                 
                 for (k = 0; k < num_slices_; k++) {
                     
-                    indo = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
+                    io = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
+                    isin = k * (num_grid_ * num_slices_);
                     
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
-                        indi[n] = (indx_[n] + (indy_[n] * num_grid_)) + k * (num_grid_ * num_slices_);
-                        simdata += (recon[indi[n]] * leng[n]);
+                        indi[n] += isin;
+                        simdata += recon[indi[n]] * leng[n];
                     }
                     
                     for (n = 0; n < len-1; n++) {
-                        recon[indi[n]] += (data_[indo] - simdata) / a2 * leng[n];
+                        recon[indi[n]] += (data_[io] - simdata) / a2 * leng[n];
                     } 
                 }
             }
