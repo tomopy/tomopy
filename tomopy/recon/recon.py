@@ -25,6 +25,7 @@ from optimize_center import _optimize_center
 
 
 
+
 def diagnose_center(tomo, dir_path=None, slice_no=None,
 		    center_start=None, center_end=None, center_step=None):
     # Make checks first. 
@@ -68,9 +69,9 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
     # Update provenance and log.
     tomo.provenance['diagnose_center'] = {'dir_path':dir_path,
                                           'slice_no':slice_no,
-                                   	      'center_start':center_start,
-                                   	      'center_end':center_end,
-                                   	      'center_step':center_step}
+                                   	  'center_start':center_start,
+                                   	  'center_end':center_end,
+                                   	  'center_step':center_step}
     logger.debug("data_center directory create [ok]")
 
 
@@ -112,13 +113,13 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     # Update provenance and log.
     tomo.provenance['optimize_center'] = {'theta':tomo.theta,
                                           'slice_no':slice_no,
-                                   	      'center_init':center_init,
-                                   	      'tol':tol}
+                                   	  'center_init':center_init,
+                                   	  'tol':tol}
     logger.info("optimize rotation center [ok]")
     
 
     
-def art(tomo, iters=None, num_grid=None):
+def art(tomo, iters=None, num_grid=None, num_air=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("art (data missing) [bypassed]")
@@ -135,11 +136,26 @@ def art(tomo, iters=None, num_grid=None):
     # Set default parameters.
     if iters is None:
         iters = 1
-        logger.debug("art: iters set to 1 [ok]")
+        logger.debug("art: iters set to " + str(iters) + " [ok]")
 
-    if num_grid is None:
+    if num_grid is None or num_grid > tomo.data.shape[2]:
         num_grid = tomo.data.shape[2]
         logger.debug("art: num_grid set to " + str(num_grid) + " [ok]")
+        
+    if num_air is None:
+        if tomo.data.shape[2] > 128:
+            num_air = 10
+        else:
+            num_air = 1
+        logger.debug("art: num_air set to " + str(num_air) + " [ok]")
+        
+        
+    # This works with radians.
+    tomo.theta *= np.pi/180
+    
+    # For parallelization test:
+    slices_start = 0
+    slices_end = 1
 
 
     # Check again.
@@ -154,17 +170,22 @@ def art(tomo, iters=None, num_grid=None):
         
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
-    
-    # This works with radians.
-    tomo.theta *= np.pi/180
 
-    # Intensity to line integral according to Beer's Law.
-#    data = -np.log(tomo.data)
-    data = tomo.data
+    if not isinstance(num_grid, np.int32):
+        num_grid = np.array(num_grid, dtype=np.int32, copy=False)
+        
+    if not isinstance(slices_start, np.int32):
+        slices_start = np.array(slices_start, dtype=np.int32, copy=False)
+        
+    if not isinstance(slices_end, np.int32):
+        slices_end = np.array(slices_end, dtype=np.int32, copy=False)
+        
+    if not isinstance(num_air, np.int32):
+        num_air = np.array(num_air, dtype=np.int32, copy=False)
 
-    # Initialize and perform reconstruction.    
-    recon = Art(data, num_grid)
-    tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
+    # Initialize and perform reconstruction.
+    recon = Art(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
+    tomo.data_recon = recon.reconstruct(iters)
     
     
     # Update provenance and log.
@@ -176,7 +197,7 @@ def art(tomo, iters=None, num_grid=None):
     
     
     
-def mlem(tomo, iters=None, num_grid=None):
+def mlem(tomo, iters=None, num_grid=None, num_air=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("mlem (data missing) [bypassed]")
@@ -195,6 +216,26 @@ def mlem(tomo, iters=None, num_grid=None):
     if iters is None:
         iters = 1
         logger.debug("mlem: iters set to " + str(iters) + " [ok]")
+
+    if num_grid is None or num_grid > tomo.data.shape[2]:
+        num_grid = tomo.data.shape[2]
+        logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
+        
+    if num_air is None:
+        if tomo.data.shape[2] > 128:
+            num_air = 10
+        else:
+            num_air = 1
+        logger.debug("mlem: num_air set to " + str(num_air) + " [ok]")
+        
+        
+    # This works with radians.
+    tomo.theta *= np.pi/180
+    
+    # For parallelization test:
+    slices_start = 0
+    slices_end = 1
+
     
     # Check again.
     if not isinstance(tomo.data, np.float32):
@@ -205,25 +246,26 @@ def mlem(tomo, iters=None, num_grid=None):
 
     if not isinstance(tomo.center, np.float32):
         tomo.center = np.array(tomo.center, dtype=np.float32, copy=False)
-
+        
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
-    
-    if num_grid is None:
-        num_grid = tomo.data.shape[2]
-        logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
 
-    # This works with radians.
-    tomo.theta *= np.pi/180
+    if not isinstance(num_grid, np.int32):
+        num_grid = np.array(num_grid, dtype=np.int32, copy=False)
+        
+    if not isinstance(slices_start, np.int32):
+        slices_start = np.array(slices_start, dtype=np.int32, copy=False)
+        
+    if not isinstance(slices_end, np.int32):
+        slices_end = np.array(slices_end, dtype=np.int32, copy=False)
+        
+    if not isinstance(num_air, np.int32):
+        num_air = np.array(num_air, dtype=np.int32, copy=False)
 
-    # Intensity to line integral according to Beer's Law.
-#    data = -np.log(tomo.data)
-    data = tomo.data
 
-
-    # Initialize and perform reconstruction.    
-    recon = Mlem(data, num_grid)
-    tomo.data_recon = recon.reconstruct(iters, tomo.center, tomo.theta)
+    # Initialize and perform reconstruction.  
+    recon = Mlem(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
+    tomo.data_recon = recon.reconstruct(iters)
     
     
     # Update provenance and log.

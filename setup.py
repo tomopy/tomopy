@@ -77,9 +77,9 @@ ext_gridrec = Extension(name='tomopy.lib.libgridrec',
                     include_dirs=C_INCLUDE_PATH,
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f',
-                                     '-lboost_thread-mt',
-                                     '-lboost_system-mt',
-                                     '-lboost_date_time-mt'])
+                                     '-lboost_thread',
+                                     '-lboost_system',
+                                     '-lboost_date_time'])
 
 # Create Art shared-library.
 ext_art = Extension(name='tomopy.lib.libart',
@@ -101,7 +101,8 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem],
+      #ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem],
+      ext_modules=[ext_art, ext_mlem],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
