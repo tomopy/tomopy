@@ -159,7 +159,8 @@ def art(tomo, iters=None, num_grid=None):
     tomo.theta *= np.pi/180
 
     # Intensity to line integral according to Beer's Law.
-    data = -np.log(tomo.data)
+#    data = -np.log(tomo.data)
+    data = tomo.data
 
     # Initialize and perform reconstruction.    
     recon = Art(data, num_grid)
@@ -216,7 +217,9 @@ def mlem(tomo, iters=None, num_grid=None):
     tomo.theta *= np.pi/180
 
     # Intensity to line integral according to Beer's Law.
-    data = -np.log(tomo.data)
+#    data = -np.log(tomo.data)
+    data = tomo.data
+
 
     # Initialize and perform reconstruction.    
     recon = Mlem(data, num_grid)
