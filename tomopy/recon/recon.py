@@ -23,6 +23,8 @@ from mlem import Mlem
 from diagnose_center import _diagnose_center
 from optimize_center import _optimize_center
 
+# Import multiprocessing module.
+from tomopy.tools.multiprocess import distribute_jobs
 
 
 
@@ -119,7 +121,8 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     
 
     
-def art(tomo, iters=None, num_grid=None, num_air=None):
+def art(tomo, iters=None, num_grid=None, num_air=None,
+        slices_start=None, slices_end=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("art (data missing) [bypassed]")
@@ -149,14 +152,16 @@ def art(tomo, iters=None, num_grid=None, num_air=None):
             num_air = 1
         logger.debug("art: num_air set to " + str(num_air) + " [ok]")
         
+    if slices_start is None:
+        slices_start = 0
+        
+    if slices_end is None:
+        slices_end = tomo.data.shape[1]
+        
         
     # This works with radians.
     tomo.theta *= np.pi/180
     
-    # For parallelization test:
-    slices_start = 0
-    slices_end = 1
-
 
     # Check again.
     if not isinstance(tomo.data, np.float32):
@@ -174,19 +179,19 @@ def art(tomo, iters=None, num_grid=None, num_air=None):
     if not isinstance(num_grid, np.int32):
         num_grid = np.array(num_grid, dtype=np.int32, copy=False)
         
+    if not isinstance(num_air, np.int32):
+        num_air = np.array(num_air, dtype=np.int32, copy=False)
+        
     if not isinstance(slices_start, np.int32):
         slices_start = np.array(slices_start, dtype=np.int32, copy=False)
         
     if not isinstance(slices_end, np.int32):
         slices_end = np.array(slices_end, dtype=np.int32, copy=False)
         
-    if not isinstance(num_air, np.int32):
-        num_air = np.array(num_air, dtype=np.int32, copy=False)
 
     # Initialize and perform reconstruction.
     recon = Art(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
-    tomo.data_recon = recon.reconstruct(iters)
-    
+    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end)
     
     # Update provenance and log.
     tomo.provenance['art'] =  {'iters':iters}
@@ -197,7 +202,8 @@ def art(tomo, iters=None, num_grid=None, num_air=None):
     
     
     
-def mlem(tomo, iters=None, num_grid=None, num_air=None):
+def mlem(tomo, iters=None, num_grid=None, num_air=None, 
+         slices_start=None, slices_end=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
         logger.warning("mlem (data missing) [bypassed]")
@@ -228,14 +234,15 @@ def mlem(tomo, iters=None, num_grid=None, num_air=None):
             num_air = 1
         logger.debug("mlem: num_air set to " + str(num_air) + " [ok]")
         
+    if slices_start is None:
+        slices_start = 0
+        
+    if slices_end is None:
+        slices_end = tomo.data.shape[1]
         
     # This works with radians.
     tomo.theta *= np.pi/180
     
-    # For parallelization test:
-    slices_start = 0
-    slices_end = 1
-
     
     # Check again.
     if not isinstance(tomo.data, np.float32):
@@ -253,19 +260,19 @@ def mlem(tomo, iters=None, num_grid=None, num_air=None):
     if not isinstance(num_grid, np.int32):
         num_grid = np.array(num_grid, dtype=np.int32, copy=False)
         
+    if not isinstance(num_air, np.int32):
+        num_air = np.array(num_air, dtype=np.int32, copy=False)
+    
     if not isinstance(slices_start, np.int32):
         slices_start = np.array(slices_start, dtype=np.int32, copy=False)
-        
+
     if not isinstance(slices_end, np.int32):
         slices_end = np.array(slices_end, dtype=np.int32, copy=False)
         
-    if not isinstance(num_air, np.int32):
-        num_air = np.array(num_air, dtype=np.int32, copy=False)
-
 
     # Initialize and perform reconstruction.  
     recon = Mlem(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
-    tomo.data_recon = recon.reconstruct(iters)
+    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end)
     
     
     # Update provenance and log.

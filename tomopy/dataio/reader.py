@@ -50,6 +50,7 @@ class Session():
         tomo._init_log()
         logger.debug("TomoPy session initialization [ok]")
         
+        
     def dataset(tomo, data=None, data_white=None, 
                 data_dark=None, theta=None):
         """

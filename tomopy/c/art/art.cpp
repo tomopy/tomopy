@@ -11,8 +11,9 @@ extern "C"
                        num_pixels, num_grid, num_air);
     }
     
-    void reconstruct(Art *Art, float *recon, int *iters) {
-        Art->reconstruct(recon, iters);
+    void reconstruct(Art *Art, float *recon, int *iters, 
+                     int *slices_start, int *slices_end) {
+        Art->reconstruct(recon, iters, slices_start, slices_end);
     }
     
 } // extern "C"
@@ -80,7 +81,8 @@ Art::~Art() {
     }
 
 
-void Art::reconstruct(float *recon, int *iters) {
+void Art::reconstruct(float *recon, int *iters,
+                      int *slices_start, int *slices_end) {
                           
     int m, n, k, q, i, j, t;
     float xi, yi;
@@ -97,13 +99,12 @@ void Art::reconstruct(float *recon, int *iters) {
         mov += 1e-3;
     }
     
-
     
     for (t = 0; t < *iters; t++) {
         
         for (q = 0; q < num_projections_; q++) {
             
-            for (n = 0; n < num_slices_; n++) {
+            for (n = *slices_start; n < *slices_end; n++) {
                 
                 if (num_air_ > 0) {
                     i = n * num_pixels_ + q * (num_pixels_ * num_slices_);
@@ -276,7 +277,7 @@ void Art::reconstruct(float *recon, int *iters) {
                     indi[n] = (indx[n] + (indy[n] * num_grid_));
                 }
                 
-                for (k = 0; k < num_slices_; k++) {
+                for (k = *slices_start; k < *slices_end; k++) {
                     
                     io = m + (k * padded_data_size);
                     

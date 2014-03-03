@@ -11,8 +11,9 @@ extern "C"
                         num_pixels, num_grid, num_air);
     }
     
-    void reconstruct(Mlem *Mlem, float *recon, int *iters) {
-        Mlem->reconstruct(recon, iters);
+    void reconstruct(Mlem *Mlem, float *recon, int *iters, 
+                     int *slices_start, int *slices_end) {
+        Mlem->reconstruct(recon, iters, slices_start, slices_end);
     }
     
 } // extern "C"
@@ -78,7 +79,8 @@ Mlem::~Mlem() {
     }
 
 
-void Mlem::reconstruct(float *recon, int *iters)
+void Mlem::reconstruct(float *recon, int *iters, 
+                       int *slices_start, int *slices_end)
 {
     int m, n, k, q, i, j, t;
     float xi, yi;
@@ -101,7 +103,7 @@ void Mlem::reconstruct(float *recon, int *iters)
         
         for (q = 0; q < num_projections_; q++) {
             
-            for (n = 0; n < num_slices_; n++) {
+            for (n = *slices_start; n < *slices_end; n++) {
 
                 if (num_air_ > 0) {
                     i = n * num_pixels_ + q * (num_pixels_ * num_slices_);
@@ -263,7 +265,7 @@ void Mlem::reconstruct(float *recon, int *iters)
                     suma[indi[n]] += leng[n];
                 }
                 
-                for (k = 0; k < num_slices_; k++) {
+                for (k = *slices_start; k < *slices_end; k++) {
                     
                     io = m + (k * padded_data_size);
                     
@@ -289,7 +291,7 @@ void Mlem::reconstruct(float *recon, int *iters)
             
         }
         i = 0;
-        for (k = 0; k < num_slices_; k++) {
+        for (k = 0; k < *slices_end-*slices_start; k++) {
             for (n = 0; n < num_grid_*num_grid_; n++) {
                 recon[i] = recon[i] * (sumay[i] / suma[n]);
                 i++;

@@ -28,12 +28,10 @@ class Art():
         num_grid : scalar (int32)
             Grid size of the reconstructed slices.
         """
-        num_projections = np.array(data.shape[0], dtype='int32')
-        num_slices = np.array(data.shape[1], dtype='int32')
-        num_pixels = np.array(data.shape[2], dtype='int32')
-        
-        self.data_recon = np.zeros((num_slices, num_grid, num_grid),
-                                   dtype='float32')
+        self.num_projections = np.array(data.shape[0], dtype='int32')
+        self.num_slices = np.array(data.shape[1], dtype='int32')
+        self.num_pixels = np.array(data.shape[2], dtype='int32')
+        self.num_grid = np.array(num_grid, dtype='int32')
         
         c_float_p = ctypes.POINTER(ctypes.c_float)
         c_int_p = ctypes.POINTER(ctypes.c_int)
@@ -42,30 +40,34 @@ class Art():
         self.obj = libart.create(data.ctypes.data_as(c_float_p),
                                  theta.ctypes.data_as(c_float_p),
                                  center.ctypes.data_as(c_float_p),
-                                 num_projections.ctypes.data_as(c_int_p),
-                                 num_slices.ctypes.data_as(c_int_p),
-                                 num_pixels.ctypes.data_as(c_int_p),
-                                 num_grid.ctypes.data_as(c_int_p),
+                                 self.num_projections.ctypes.data_as(c_int_p),
+                                 self.num_slices.ctypes.data_as(c_int_p),
+                                 self.num_pixels.ctypes.data_as(c_int_p),
+                                 self.num_grid.ctypes.data_as(c_int_p),
                                  num_air.ctypes.data_as(c_int_p))
         
 
-    def reconstruct(self, iters):
+    def reconstruct(self, iters, slice_start, slice_end):
         """
-        Perform Art reconstruction for slices starting from
-        ``slice_start`` to ``slice_end``. 
+        Perform Art reconstruction. 
         
         Parameters
         ----------
         iters : scalar (int32)
             Number of iterations.
         """
+        
+        self.data_recon = np.zeros((slice_end-slice_start, self.num_grid, 
+                                   self.num_grid), dtype='float32')
+                                   
         c_float_p = ctypes.POINTER(ctypes.c_float)
         c_int_p = ctypes.POINTER(ctypes.c_int)
                                
         libart.reconstruct(self.obj,
                            self.data_recon.ctypes.data_as(c_float_p),
-                           iters.ctypes.data_as(c_int_p))
-
+                           iters.ctypes.data_as(c_int_p),
+                           slice_start.ctypes.data_as(c_int_p),
+                           slice_end.ctypes.data_as(c_int_p))
         return self.data_recon
 
 
