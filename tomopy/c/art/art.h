@@ -25,4 +25,9 @@ private:
     float midx, midy;
     int *indx_, *indy_;
     int *indi;
+    
+    
+    float *data_padded;
+    int padded_width;
+    float *air;
 };

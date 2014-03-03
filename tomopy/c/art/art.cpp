@@ -54,7 +54,8 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
     float xi, yi;
     float slope, islope;
     int alen, blen, len;
-    int ii, io, a2;
+    int ii, io;
+    float a2;
     float simdata;
     float srcx, srcy, detx, dety;
     
@@ -67,14 +68,82 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
 //        cout << t << "   " << recon[t] << endl;
 //    }
     
+    
+    padded_width = num_pixels_ * sqrt(2) + 1;
+    int num_air = 10;
+    data_padded = new float[padded_width * num_slices_]();
+    //    for (j = 0; j < padded_width * num_slices_; j++) {
+    //        data_padded[j] = 0;
+    //    }
+    
+    int sin_offset = (padded_width - num_pixels_)/2;
+    
+    air = new float[num_pixels_];
+    float air_left, air_right, air_slope;
+
+    
+    
+    
+    
+    
+    
+    
     for (t = 0; t < *iters; t++) {
         
         for (q = 0; q < num_projections_; q++) {
             
-            for (m = 0; m < num_pixels_; m++) {
+            
+            
+            
+            
+            for (n = 0; n < num_slices_; n++) {
+                
+                if (num_air > 0) {
+                    i = n * num_pixels_ + q * (num_pixels_ * num_slices_);
+                    
+                    for (j = 0, air_left = 0, air_right = 0; j < num_air; j++) {
+                        air_left += data_[i+j];
+                        air_right += data_[i+num_pixels_-1-j];
+                    }
+                    air_left /= float(num_air);
+                    air_right /= float(num_air);
+                    if (air_left <= 0.) {
+                        air_left = 1.;
+                    }
+                    if (air_right <= 0.) {
+                        air_right = 1.;
+                    }
+                    air_slope = (air_right - air_left)/(num_pixels_ - 1);
+                    
+                    for (j = 0; j < num_pixels_; j++) {
+                        air[j] = air_left + air_slope*j;
+                    }
+                }
+                
+                
+                
+                
+                for (m = 0; m < num_pixels_; m++) {
+                    
+                    i = m + (n * num_pixels_) + q * (num_pixels_ * num_slices_);
+                    j = sin_offset + m + (n * padded_width);
+                    data_padded[j] = -log(data_[i] / air[m]);
+                }
+            }
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            for (m = 0; m < padded_width; m++) {
                 
                 xi = -1e6;
-                yi = -float(num_pixels_-1)/2 + m;
+                yi = -float(padded_width-1)/2 + m;
                 srcx = xi * cos(theta[q]) - yi * sin(theta[q]);
                 srcy = xi * sin(theta[q]) + yi * cos(theta[q]);
                 detx = -xi * cos(theta[q]) - yi * sin(theta[q]);
@@ -190,31 +259,34 @@ void Art::reconstruct(int *iters, float *center, float *theta, float *recon)
                     indy_[n] = floor(midy + float(num_grid_)/2);
                 }
                 
+//                cout << "    " << endl;
                 a2 = 0;
                 for (n = 0; n < len-1; n++) {
                     a2 += leng2[n];
+//                    cout << leng2[n] << "     " << a2 << endl;
                 }
                 
                 for (n = 0; n < len-1; n++) {
                     indi[n] = (indx_[n] + (indy_[n] * num_grid_));
                 }
                 
-                
+//                cout << "    " << endl;
+//                cout << a2 << endl;
                 
                 for (k = 0; k < num_slices_; k++) {
                     
-                    io = m + (k * num_pixels_) + q * (num_pixels_ * num_slices_);
+                    io = m + (k * padded_width);
                     
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
                         ii = indi[n] + k * (num_grid_ * num_grid_);
                         simdata += recon[ii] * leng[n];
-                        cout << ii << "    " <<  recon[ii] << "    " << leng[n] << endl;
+//                        cout << ii << "    " <<  recon[ii] << "    " << leng[n] << endl;
                     }
 //                    cout << simdata << endl;
                     for (n = 0; n < len-1; n++) {
                         ii = indi[n] + k * (num_grid_ * num_grid_);
-//                        recon[ii] += (data_[io] - simdata) / a2 * leng[n];
+                        recon[ii] += (data_padded[io] - simdata) / a2 * leng[n];
                     }
                 }
             }
