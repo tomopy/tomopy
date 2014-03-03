@@ -67,9 +67,13 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
     
     
     
-    padded_width = 500;
+    padded_width = num_pixels_ * sqrt(2) + 1;
     int num_air = 10;
     data_padded = new float[padded_width * num_slices_]();
+//    for (j = 0; j < padded_width * num_slices_; j++) {
+//        data_padded[j] = 0;
+//    }
+    
     int sin_offset = (padded_width - num_pixels_)/2;
     
     air = new float[num_pixels_];
