@@ -3,50 +3,82 @@ using namespace std;
 
 extern "C"
 {
-    Mlem* create(int *num_projections, int *num_slices, int *num_pixels, int *num_grid, float *data) {         return new Mlem(num_projections, num_slices, num_pixels, num_grid, data);
+    Mlem* create(float *data, float *theta, float *center, 
+                 int *num_projections, int *num_slices, 
+                 int *num_pixels, int *num_grid, int *num_air) {         
+        return new Mlem(data, theta, center, 
+                        num_projections, num_slices, 
+                        num_pixels, num_grid, num_air);
     }
     
-    void reconstruct(Mlem *Mlem, int *iters, float *center, float *theta, float *recon) {
-        Mlem->reconstruct(iters, center, theta, recon);
+    void reconstruct(Mlem *Mlem, float *recon, int *iters) {
+        Mlem->reconstruct(recon, iters);
     }
     
 } // extern "C"
 
 
-Mlem::Mlem(int *num_projections, int *num_slices, int *num_pixels, int *num_grid, float *data) :
+Mlem::Mlem(float *data, float *theta, float *center, 
+         int *num_projections, int *num_slices, 
+         int *num_pixels, int *num_grid, int *num_air) :
+data_(data),
+theta_(theta),
+center_(*center),
 num_projections_(*num_projections),
 num_slices_(*num_slices),
 num_pixels_(*num_pixels),
 num_grid_(*num_grid),
-data_(data)
-{
-    gridx_ = new float[num_grid_+1];
-    gridy_ = new float[num_grid_+1];
+num_air_(*num_air) {
+
+    padded_data_size = num_pixels_*sqrt(2)+1;
+    padded_data = new float[padded_data_size * num_slices_]();
+    pad_size = (padded_data_size - num_pixels_)/2;
+    air = new float[num_pixels_];
+
+    gridx = new float[num_grid_+1];
+    gridy = new float[num_grid_+1];
     
     for (int m = 0; m <= num_grid_; m++) {
-        gridx_[m] = -float(num_grid_)/2 + m;
-        gridy_[m] = -float(num_grid_)/2 + m;
+        gridx[m] = -float(num_grid_)/2 + m;
+        gridy[m] = -float(num_grid_)/2 + m;
     }
-    
+        
     coordx = new float[num_grid_+1];
     coordy = new float[num_grid_+1];
-    
     ax = new float[num_grid_+1];
     ay = new float[num_grid_+1];
     bx = new float[num_grid_+1];
     by = new float[num_grid_+1];
-    
     coorx = new float[2*num_grid_];
     coory = new float[2*num_grid_];
-    
     leng = new float[2*num_grid_];
-    
-    indx_ = new int[2*num_grid_];
-    indy_ = new int[2*num_grid_];
+    indx = new int[2*num_grid_];
+    indy = new int[2*num_grid_];
     indi = new int[2*num_grid_];
 }
 
-void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
+
+Mlem::~Mlem() {
+    delete [] padded_data; padded_data = NULL;
+    delete [] air; air = NULL;
+    delete [] gridx; gridx = NULL;
+    delete [] gridy; gridy = NULL;
+    delete [] coordx; coordx = NULL;
+    delete [] coordy; coordy = NULL;
+    delete [] ax; ax = NULL;
+    delete [] ay; ay = NULL;
+    delete [] bx; bx = NULL;
+    delete [] by; by = NULL;
+    delete [] coorx; coorx = NULL;
+    delete [] coory; coory = NULL;
+    delete [] leng; leng = NULL;
+    delete [] indx; indx = NULL;
+    delete [] indy; indy = NULL;
+    delete [] indi; indi = NULL;
+    }
+
+
+void Mlem::reconstruct(float *recon, int *iters)
 {
     int m, n, k, q, i, j, t;
     float xi, yi;
@@ -55,34 +87,12 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
     int ii, io;
     float simdata;
     float srcx, srcy, detx, dety;
+    float air_left, air_right, air_slope;
     
-    float mov = num_pixels_/2 - *center;
+    float mov = num_pixels_/2 - center_;
     if (mov-ceil(mov) < 1e-2) {
         mov += 1e-2;
     }
-    
-//    for (t = 0; t < num_grid_*num_grid_*num_slices_; t++) {
-//        cout << t << "   " << recon[t] << endl;
-//    }
-    
-    
-    
-    padded_width = num_pixels_ * sqrt(2) + 1;
-    int num_air = 10;
-    data_padded = new float[padded_width * num_slices_]();
-//    for (j = 0; j < padded_width * num_slices_; j++) {
-//        data_padded[j] = 0;
-//    }
-    
-    int sin_offset = (padded_width - num_pixels_)/2;
-    
-    air = new float[num_pixels_];
-    float air_left, air_right, air_slope;
-    
-    
-    
-    
-    
     
     for (t = 0; t < *iters; t++) {
         
@@ -91,18 +101,17 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
         
         for (q = 0; q < num_projections_; q++) {
             
-            
             for (n = 0; n < num_slices_; n++) {
 
-                if (num_air > 0) {
+                if (num_air_ > 0) {
                     i = n * num_pixels_ + q * (num_pixels_ * num_slices_);
 
-                    for (j = 0, air_left = 0, air_right = 0; j < num_air; j++) {
+                    for (j = 0, air_left = 0, air_right = 0; j < num_air_; j++) {
                         air_left += data_[i+j];
                         air_right += data_[i+num_pixels_-1-j];
                     }
-                    air_left /= float(num_air);
-                    air_right /= float(num_air);
+                    air_left /= float(num_air_);
+                    air_right /= float(num_air_);
                     if (air_left <= 0.) {
                         air_left = 1.;
                     }
@@ -122,8 +131,8 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
             for (m = 0; m < num_pixels_; m++) {
                     
                     i = m + (n * num_pixels_) + q * (num_pixels_ * num_slices_);
-                    j = sin_offset + m + (n * padded_width);
-                    data_padded[j] = -log(data_[i] / air[m]);
+                    j = pad_size + m + (n * padded_data_size);
+                    padded_data[j] = -log(data_[i] / air[m]);
                 }
             }
             
@@ -131,36 +140,36 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
             
             
             
-            for (m = 0; m < padded_width; m++) {
+            for (m = 0; m < padded_data_size; m++) {
                 
                 xi = -1e6;
-                yi = -float(padded_width-1)/2 + m;
-                srcx = xi * cos(theta[q]) - yi * sin(theta[q]);
-                srcy = xi * sin(theta[q]) + yi * cos(theta[q]);
-                detx = -xi * cos(theta[q]) - yi * sin(theta[q]);
-                dety = -xi * sin(theta[q]) + yi * cos(theta[q]);
+                yi = -float(padded_data_size-1)/2 + m + mov;
+                srcx = xi * cos(theta_[q]) - yi * sin(theta_[q]);
+                srcy = xi * sin(theta_[q]) + yi * cos(theta_[q]);
+                detx = -xi * cos(theta_[q]) - yi * sin(theta_[q]);
+                dety = -xi * sin(theta_[q]) + yi * cos(theta_[q]);
                 
                 slope = (srcy - dety) / (srcx - detx);
                 islope = 1 / slope;
                 
                 for (n = 0; n <= num_grid_; n++) {
-                    coordx[n] = islope * (gridy_[n] - srcy) + srcx;
-                    coordy[n] = slope * (gridx_[n] - srcx) + srcy;
+                    coordx[n] = islope * (gridy[n] - srcy) + srcx;
+                    coordy[n] = slope * (gridx[n] - srcx) + srcy;
                 }
                 
                 alen = 0;
                 blen = 0;
                 for (n = 0; n <= num_grid_; n++) {
-                    if (coordx[n] > gridx_[0]) {
-                        if (coordx[n] < gridx_[num_grid_]) {
+                    if (coordx[n] > gridx[0]) {
+                        if (coordx[n] < gridx[num_grid_]) {
                             ax[alen] = coordx[n];
-                            ay[alen] = gridy_[n];
+                            ay[alen] = gridy[n];
                             alen++;
                         }
                     }
-                    if (coordy[n] > gridy_[0]) {
-                        if (coordy[n] < gridy_[num_grid_]) {
-                            bx[blen] = gridx_[n];
+                    if (coordy[n] > gridy[0]) {
+                        if (coordy[n] < gridy[num_grid_]) {
+                            bx[blen] = gridx[n];
                             by[blen] = coordy[n];
                             blen++;
                         }
@@ -172,7 +181,7 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
                 i = 0;
                 j = 0;
                 k = 0;
-                if ((theta[q] >= 0 && theta[q] < PI/2) || (theta[q] >= PI && theta[q] < 3*PI/2)) {
+                if ((theta_[q] >= 0 && theta_[q] < PI/2) || (theta_[q] >= PI && theta_[q] < 3*PI/2)) {
                     
                     while (i < alen && j < blen)
                     {
@@ -244,19 +253,19 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
                     midx = (coorx[n+1] + coorx[n])/2;
                     midy = (coory[n+1] + coory[n])/2;
                     
-                    indx_[n] = floor(midx + float(num_grid_)/2);
-                    indy_[n] = floor(midy + float(num_grid_)/2);
+                    indx[n] = floor(midx + float(num_grid_)/2);
+                    indy[n] = floor(midy + float(num_grid_)/2);
                 }
                 
                 
                 for (n = 0; n < len-1; n++) {
-                    indi[n] = (indx_[n] + (indy_[n] * num_grid_));
+                    indi[n] = (indx[n] + (indy[n] * num_grid_));
                     suma[indi[n]] += leng[n];
                 }
                 
                 for (k = 0; k < num_slices_; k++) {
                     
-                    io = m + (k * padded_width);
+                    io = m + (k * padded_data_size);
                     
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
@@ -270,7 +279,7 @@ void Mlem::reconstruct(int *iters, float *center, float *theta, float *recon)
 //                    cout << ".    " << endl;
                     for (n = 0; n < len-1; n++) {
                         ii = indi[n] + k * (num_grid_ * num_grid_);
-                        sumay[ii] += (data_padded[io] / simdata) * leng[n];
+                        sumay[ii] += (padded_data[io] / simdata) * leng[n];
                     }
                     
                     
