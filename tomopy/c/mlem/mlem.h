@@ -13,7 +13,7 @@ public:
         
     ~Mlem();
 
-    void reconstruct(float *recon, int *iters);
+    void reconstruct(float *recon, int *iters, int *slices_start, int *slices_end);
     
 private:
     // Constructor inputs.

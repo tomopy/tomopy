@@ -2,6 +2,7 @@
 """
 Module for multiprocessing.
 """
+import numpy as np
 import multiprocessing as mp
 import logging
 logger = logging.getLogger("tomopy")
@@ -151,6 +152,12 @@ def distribute_jobs(data, func, args, axis,
             break
         if ind_end > dims:
             ind_end = dims
+            
+        if not isinstance(ind_start, np.int32):
+            ind_start = np.array(ind_start, dtype=np.int32, copy=False)
+            
+        if not isinstance(ind_end, np.int32):
+            ind_end = np.array(ind_end, dtype=np.int32, copy=False)
         
         # Add to queue.
         if axis == 0:
@@ -169,6 +176,8 @@ def distribute_jobs(data, func, args, axis,
         elif axis == 2:
             data[:, :, each[0]:each[1]] = each[2]
     return data
+
+
 
 
 
