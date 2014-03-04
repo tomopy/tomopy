@@ -317,7 +317,17 @@ class Session():
         """
         # Top-level log setup.
         tomo.logger = logging.getLogger("tomopy") 
-          
+        if tomo._log_level == 'DEBUG':
+            tomo.logger.setLevel(logging.DEBUG)
+        elif tomo._log_level == 'INFO':
+            tomo.logger.setLevel(logging.INFO) 
+        elif tomo._log_level == 'WARN':
+            tomo.logger.setLevel(logging.WARN)
+        elif tomo._log_level == 'WARNING':
+            tomo.logger.setLevel(logging.WARNING)
+        elif tomo._log_level == 'ERROR':
+            tomo.logger.setLevel(logging.ERROR)
+        
         # Terminal stream log.
         ch = logging.StreamHandler()
         if tomo._log_level == 'DEBUG':
@@ -337,18 +347,8 @@ class Session():
             
         # Update logger.
         if not len(tomo.logger.handlers): # For fist time create handlers.
+            print tomo._log_level
             tomo.logger.addHandler(ch)
-        else: # If it exists just update.
-            if tomo._log_level == 'DEBUG':
-                tomo.logger.setLevel(logging.DEBUG)
-            elif tomo._log_level == 'INFO':
-                tomo.logger.setLevel(logging.INFO) 
-            elif tomo._log_level == 'WARN':
-                tomo.logger.setLevel(logging.WARN)
-            elif tomo._log_level == 'WARNING':
-                tomo.logger.setLevel(logging.WARNING)
-            elif tomo._log_level == 'ERROR':
-                tomo.logger.setLevel(logging.ERROR)
             
         
     def _set_log_file(tomo):

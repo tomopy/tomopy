@@ -273,12 +273,8 @@ void Mlem::reconstruct(float *recon, int *iters,
                     for (n = 0; n < len-1; n++) {
                         ii = indi[n] + k * (num_grid_ * num_grid_);
                         simdata += recon[ii] * leng[n];
-//                        cout << recon[ii] << "    " <<  ii << "    " << leng[n] << endl;
                     }
-//                    cout << simdata << endl;
                     
-                    
-//                    cout << ".    " << endl;
                     for (n = 0; n < len-1; n++) {
                         ii = indi[n] + k * (num_grid_ * num_grid_);
                         sumay[ii] += (padded_data[io] / simdata) * leng[n];
