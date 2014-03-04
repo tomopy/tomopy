@@ -46,7 +46,7 @@ class Mlem():
                                   num_grid.ctypes.data_as(c_int_p),
                                   num_air.ctypes.data_as(c_int_p))
 
-    def reconstruct(self, iters, slice_start, slice_end):
+    def reconstruct(self, iters, slice_start, slice_end, init_matrix):
         """
         Perform Mlem reconstruction.
         
@@ -58,8 +58,12 @@ class Mlem():
         c_float_p = ctypes.POINTER(ctypes.c_float)
         c_int_p = ctypes.POINTER(ctypes.c_int)
 
-        self.data_recon = np.ones((slice_end-slice_start, self.num_grid, 
-                                   self.num_grid), dtype='float32')
+
+        if init_matrix is None:
+            self.data_recon = np.ones((slice_end-slice_start, self.num_grid, 
+                                    self.num_grid), dtype='float32')
+        else:                           
+            self.data_recon = np.array(np.exp(-init_matrix), dtype='float32')
                                
         libmlem.reconstruct(self.obj,
                             self.data_recon.ctypes.data_as(c_float_p),

@@ -3,8 +3,6 @@ import numpy as np
 from scipy import misc
 
 from gridrec import Gridrec
-import logging
-logger = logging.getLogger("tomopy")
 
 
 def _diagnose_center(data, theta, dir_path, slice_no, 
@@ -58,7 +56,6 @@ def _diagnose_center(data, theta, dir_path, slice_no,
             img = misc.toimage(recon.data_recon[m, :, :])
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             img.save(file_name)
-    logger.info("diagnose center (see: " + file_name + " [ok]")
 
 
 

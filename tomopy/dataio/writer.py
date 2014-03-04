@@ -6,8 +6,6 @@ import h5py
 import os
 import numpy as np
 from scipy import misc
-import logging
-logger = logging.getLogger("tomopy")
 
 # Import main TomoPy object.
 from reader import Session
@@ -36,22 +34,22 @@ def recon_to_hdf5(tomo, output_file=None):
             dir_path = os.path.dirname(tomo.file_name)
             base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + ".h5"
-            logger.warning("generate output file name [ok]")
+            tomo.logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
         # check folder's read permissions.
         dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
         if write_access:
-            logger.debug("save folder directory permissions [ok]")
+            tomo.logger.debug("save folder directory permissions [ok]")
         else:
-            logger.warning("save folder directory permissions [failed]")
+            tomo.logger.warning("save folder directory permissions [failed]")
         
         # Create new folders.
         dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            logger.debug("new folders generated [ok]")
+            tomo.logger.debug("new folders generated [ok]")
                 
         # Remove HDF5 extension if there is.
         if (output_file.endswith('h5') or
@@ -64,7 +62,7 @@ def recon_to_hdf5(tomo, output_file=None):
     
         # check if file exists.
         if os.path.isfile(file_name):
-            logger.warning("saving path check [failed]")
+            tomo.logger.warning("saving path check [failed]")
             # genarate new file name.
             ind = 1
             FLAG_SAVE = False
@@ -76,14 +74,14 @@ def recon_to_hdf5(tomo, output_file=None):
                     file_name = new_file_name
                 else:
                     ind += 1
-            logger.warning("saved as %s [ok]", file_name)
+            tomo.logger.warning("saved as %s [ok]", file_name)
         else:
             _export_to_hdf5(file_name, tomo.data_recon, tomo.provenance)
-            logger.debug("saved as %s [ok]", file_name)
+            tomo.logger.debug("saved as %s [ok]", file_name)
         tomo.output_file = output_file
-        logger.info("save data at %s [ok]", dir_path)
+        tomo.logger.info("save data at %s [ok]", dir_path)
     else:
-        logger.warning("save data [bypassed]")
+        tomo.logger.warning("save data [bypassed]")
         
 
 def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=0):
@@ -124,7 +122,7 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
             dir_path = os.path.dirname(tomo.file_name)
             base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/recon_" + base_name + "/recon_" + base_name + "_"
-            logger.warning("generate output file name [ok]")
+            tomo.logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
         # Remove TIFF extension if there is.
@@ -136,15 +134,15 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
         dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
         if write_access:
-            logger.debug("save folder directory permissions [ok]")
+            tomo.logger.debug("save folder directory permissions [ok]")
         else:
-            logger.error("save folder directory permissions [failed]")
+            tomo.logger.error("save folder directory permissions [failed]")
         
         # Create new folders.
         dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            logger.debug("new folders generated [ok]")
+            tomo.logger.debug("new folders generated [ok]")
 
         # Select desired x from whole data.
         num_x, num_y, num_z = tomo.data_recon.shape
@@ -178,7 +176,7 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
 
             # check if file exists.
             if os.path.isfile(file_name):
-                logger.warning("saving path check [failed]")
+                tomo.logger.warning("saving path check [failed]")
                 # genarate new file name.
                 indq = 1
                 FLAG_SAVE = False
@@ -191,14 +189,14 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
                         file_name = new_file_name
                     else:
                         indq += 1
-                logger.warning("saved as %s [ok]", new_file_name)
+                tomo.logger.warning("saved as %s [ok]", new_file_name)
             else:
                 img.save(file_name)
-                logger.debug("saved as %s [ok]", file_name)
+                tomo.logger.debug("saved as %s [ok]", file_name)
             tomo.output_file = file_name
-        logger.info("save data at %s [ok]", dir_path)
+        tomo.logger.info("save data at %s [ok]", dir_path)
     else:
-        logger.warning("save data [bypassed]")
+        tomo.logger.warning("save data [bypassed]")
         
 
 def data_to_hdf5(tomo, output_file=None):
@@ -224,22 +222,22 @@ def data_to_hdf5(tomo, output_file=None):
             dir_path = os.path.dirname(tomo.file_name)
             base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/data_" + base_name + "/data_" + base_name + ".h5"
-            logger.warning("generate output file name [ok]")
+            tomo.logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
         # check folder's read permissions.
         dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
         if write_access:
-            logger.debug("save folder directory permissions [ok]")
+            tomo.logger.debug("save folder directory permissions [ok]")
         else:
-            logger.error("save folder directory permissions [failed]")
+            tomo.logger.error("save folder directory permissions [failed]")
         
         # Create new folders.
         dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            logger.debug("new folders generated [ok]")
+            tomo.logger.debug("new folders generated [ok]")
         
         # Remove HDF5 extension if there is.
         if (output_file.endswith('h5') or
@@ -252,7 +250,7 @@ def data_to_hdf5(tomo, output_file=None):
         
         # check if file exists.
         if os.path.isfile(file_name):
-            logger.warning("saving path check [failed]")
+            tomo.logger.warning("saving path check [failed]")
             # genarate new file name.
             ind = 1
             FLAG_SAVE = False
@@ -264,14 +262,14 @@ def data_to_hdf5(tomo, output_file=None):
                     file_name = new_file_name
                 else:
                     ind += 1
-            logger.warning("saved as %s [ok]", file_name)
+            tomo.logger.warning("saved as %s [ok]", file_name)
         else:
             _export_to_hdf5(file_name, tomo.data, tomo.provenance)
-            logger.debug("saved as %s [ok]", file_name)
+            tomo.logger.debug("saved as %s [ok]", file_name)
         tomo.output_file = output_file
-        logger.info("save data at %s [ok]", dir_path)
+        tomo.logger.info("save data at %s [ok]", dir_path)
     else:
-        logger.warning("save data [bypassed]")
+        tomo.logger.warning("save data [bypassed]")
 
 
 def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=1):
@@ -312,7 +310,7 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
             dir_path = os.path.dirname(tomo.file_name)
             base_name = os.path.basename(tomo.file_name).split(".")[-2]
             output_file = dir_path + "/data_" + base_name + "/data_" + base_name + "_"
-            logger.warning("generate output file name [ok]")
+            tomo.logger.warning("generate output file name [ok]")
         output_file =  os.path.abspath(output_file)
         
         # Remove TIFF extension if there is.
@@ -324,15 +322,15 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
         dir_path = os.path.dirname(output_file)
         write_access = os.access(dir_path, os.W_OK)
         if write_access:
-            logger.debug("save folder directory permissions [ok]")
+            tomo.logger.debug("save folder directory permissions [ok]")
         else:
-            logger.error("save folder directory permissions [failed]")
+            tomo.logger.error("save folder directory permissions [failed]")
         
         # Create new folders.
         dir_path = os.path.dirname(output_file)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-            logger.debug("new folders generated [ok]")
+            tomo.logger.debug("new folders generated [ok]")
         
         # Select desired x from whole data.
         num_x, num_y, num_z = tomo.data.shape
@@ -365,7 +363,7 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
                 img = misc.toimage(tomo.data[:, :, m])
             # check if file exists.
             if os.path.isfile(file_name):
-                logger.warning("saving path check [failed]")
+                tomo.logger.warning("saving path check [failed]")
                 # genarate new file name.
                 indq = 1
                 FLAG_SAVE = False
@@ -378,14 +376,14 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
                         file_name = new_file_name
                     else:
                         indq += 1
-                logger.warning("saved as %s [ok]", new_file_name)
+                tomo.logger.warning("saved as %s [ok]", new_file_name)
             else:
                 img.save(file_name)
-                logger.debug("saved as %s [ok]", file_name)
+                tomo.logger.debug("saved as %s [ok]", file_name)
             tomo.output_file = file_name
-        logger.info("save data at %s [ok]", dir_path)
+        tomo.logger.info("save data at %s [ok]", dir_path)
     else:
-        logger.warning("save data [bypassed]")
+        tomo.logger.warning("save data [bypassed]")
 
 
 def _export_to_hdf5(file_name, data, provenance):

@@ -5,9 +5,6 @@ modules in postprocess package to link them to TomoPy session.
 Each wrapper first checks the arguments and then calls the method.
 The linking is mostly realized through the multiprocessing module.
 """
-import logging
-logger = logging.getLogger("tomopy")
-
 # Import main TomoPy object.
 from tomopy.dataio.reader import Session
 
@@ -26,7 +23,7 @@ def adaptive_segment(tomo, block_size=None, offset=None,
                      num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA_RECON:
-        logger.warning("adaptive thresholding based segmentation " +
+        tomo.logger.warning("adaptive thresholding based segmentation " +
                        "(recon data missing) [bypassed]")
         return
     
@@ -34,12 +31,12 @@ def adaptive_segment(tomo, block_size=None, offset=None,
     # Set default parameters.
     if block_size == None:
         block_size = 256
-        logger.debug("adaptive_segment: block_size is " +
+        tomo.logger.debug("adaptive_segment: block_size is " +
                        "set to " + str(block_size) + " [ok]")
 
     if offset == None:
         offset = 0
-        logger.debug("adaptive_segment: offset is " +
+        tomo.logger.debug("adaptive_segment: offset is " +
                        "set to " + str(offset) + " [ok]")
     
     
@@ -57,25 +54,25 @@ def adaptive_segment(tomo, block_size=None, offset=None,
     # Update provenance.
     tomo.provenance['adaptive_segment'] = {'block_size':block_size, 
                                               'offset':offset}
-    logger.info("adaptive thresholding based segmentation [ok]")
+    tomo.logger.info("adaptive thresholding based segmentation [ok]")
 
 
 def region_segment(tomo, low=None, high=None,
                    num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA_RECON:
-        logger.warning("region based segmentation " +
+        tomo.logger.warning("region based segmentation " +
                        "(recon data missing) [bypassed]")
         return
 
     if low is None:
-        logger.warning("region based segmentation " +
+        tomo.logger.warning("region based segmentation " +
                        "(low value for segmentation " +
                        "missing) [bypassed]")
         return
         
     if high is None:
-        logger.warning("region based segmentation " +
+        tomo.logger.warning("region based segmentation " +
                        "(high value for segmentation " +
                        "missing) [bypassed]")
         return
@@ -93,13 +90,13 @@ def region_segment(tomo, low=None, high=None,
 
     # Update provenance.
     tomo.provenance['region_segment'] = {'low':low, 'high':high}
-    logger.info("region based segmentation [ok]")
+    tomo.logger.info("region based segmentation [ok]")
 
 
 def remove_background(tomo, num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA_RECON:
-        logger.warning("background removal " +
+        tomo.logger.warning("background removal " +
                        "(recon data missing) [bypassed]")
         return
     
@@ -112,7 +109,7 @@ def remove_background(tomo, num_cores=None, chunk_size=None):
                                          
     # Update provenance.
     tomo.provenance['remove_background'] = {}
-    logger.info("background removal [ok]")
+    tomo.logger.info("background removal [ok]")
 
 
 
@@ -120,7 +117,7 @@ def threshold_segment(tomo, cutoff=None,
                       num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA_RECON:
-        logger.warning("threshold based segmentation " +
+        tomo.logger.warning("threshold based segmentation " +
                        "(recon data missing) [bypassed]")
         return
     
@@ -137,7 +134,7 @@ def threshold_segment(tomo, cutoff=None,
                                                       
     # Update provenance.
     tomo.provenance['threshold_segment'] = {'cutoff':cutoff}
-    logger.info("threshold based segmentation [ok]")
+    tomo.logger.info("threshold based segmentation [ok]")
 
 
 # Hook all these methods to TomoPy.

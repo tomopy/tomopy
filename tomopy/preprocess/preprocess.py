@@ -6,8 +6,6 @@ Each wrapper first checks the arguments and then calls the method.
 The linking is mostly realized through the multiprocessing module.
 """
 import numpy as np
-import logging
-logger = logging.getLogger("tomopy")
 
 # Import main TomoPy object.
 from tomopy.dataio.reader import Session
@@ -26,7 +24,7 @@ def median_filter(tomo, size=None,
                   num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("median filtering (data " +
+        tomo.logger.warning("median filtering (data " +
                        "missing) [bypassed]")
         return
         
@@ -34,7 +32,7 @@ def median_filter(tomo, size=None,
     # Set default parameters.
     if size is None:
         size = 5
-        logger.debug("median_filter: size is " +
+        tomo.logger.debug("median_filter: size is " +
                        "set to " + str(size) + " [ok]")
         
         
@@ -48,7 +46,7 @@ def median_filter(tomo, size=None,
    
     # Update provenance and log.
     tomo.provenance['median_filter'] = {'size':size}
-    logger.info("median filtering [ok]")
+    tomo.logger.info("median filtering [ok]")
 
 
 
@@ -56,24 +54,24 @@ def normalize(tomo, cutoff=None,
               num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("normalization (data " +
+        tomo.logger.warning("normalization (data " +
                        "missing) [bypassed]")
         return
         
     if not tomo.FLAG_WHITE: # This is checked before but check anyway.
-        logger.warning("normalization (white-data " +
+        tomo.logger.warning("normalization (white-data " +
                        "missing) [bypassed]")
         return
         
     if not tomo.FLAG_DARK: # This is checked before but check anyway.
-        logger.warning("normalization (dark-data " +
+        tomo.logger.warning("normalization (dark-data " +
                        "missing) [bypassed]")
         return
         
 
     # Set default parameters.
     if cutoff is None:
-        logger.debug("normalize: cutoff is set to None [ok]")
+        tomo.logger.debug("normalize: cutoff is set to None [ok]")
 
 
     # Calculate average white and dark fields for normalization.
@@ -92,7 +90,7 @@ def normalize(tomo, cutoff=None,
 
     # Update provenance and log.
     tomo.provenance['normalize'] = {'cutoff':cutoff}
-    logger.info("normalization [ok]")
+    tomo.logger.info("normalization [ok]")
 
 
 
@@ -101,27 +99,27 @@ def phase_retrieval(tomo, pixel_size=None, dist=None,
                     num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("phase retrieval (data " +
+        tomo.logger.warning("phase retrieval (data " +
                        "missing) [bypassed]")
         return
         
     if tomo.data.shape[1] < 16:
-        logger.warning("phase retrieval (at least 16 " +
+        tomo.logger.warning("phase retrieval (at least 16 " +
                        "slices are needed) [bypassed]")
         return
         
     if pixel_size is None:
-        logger.warning("phase retrieval (pixel_size " +
+        tomo.logger.warning("phase retrieval (pixel_size " +
                        "missing) [bypassed]")
         return
         
     if dist is None:
-        logger.warning("phase retrieval (dist " +
+        tomo.logger.warning("phase retrieval (dist " +
                        "missing) [bypassed]")
         return
         
     if energy is None:
-        logger.warning("phase retrieval (energy " +
+        tomo.logger.warning("phase retrieval (energy " +
                        "missing) [bypassed]")
         return
     
@@ -129,12 +127,12 @@ def phase_retrieval(tomo, pixel_size=None, dist=None,
     # Set default parameters.
     if alpha is None:
         alpha = 1e-5
-        logger.debug("phase_retrieval: alpha is set " +
+        tomo.logger.debug("phase_retrieval: alpha is set " +
                        "to " + str(alpha) + " [ok]")
   
     if padding is None:
         padding = True
-        logger.debug("phase_retrieval: padding is set " +
+        tomo.logger.debug("phase_retrieval: padding is set " +
                        "to " + str(padding) + " [ok]")
         
         
@@ -157,7 +155,7 @@ def phase_retrieval(tomo, pixel_size=None, dist=None,
                                           'energy':energy,
 	                                  'alpha':alpha,
 	                                  'padding':padding}
-    logger.info("phase retrieval [ok]")
+    tomo.logger.info("phase retrieval [ok]")
 
 
 
@@ -165,19 +163,19 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
                    num_cores=None, chunk_size=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("stripe removal (data " +
+        tomo.logger.warning("stripe removal (data " +
                        "missing) [bypassed]")
         return
         
     # Set default parameters.
     if wname is None:
         wname = 'db5'
-        logger.debug("stripe_removal wavelet is " +
+        tomo.logger.debug("stripe_removal wavelet is " +
                        "set to " + wname + " [ok]")
 
     if sigma is None:
         sigma = 4
-        logger.debug("stripe_removal: sigma is " +
+        tomo.logger.debug("stripe_removal: sigma is " +
                        "set to " + str(sigma) + " [ok]")
 
 
@@ -200,7 +198,7 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
     tomo.provenance['stripe_removal'] = {'level':level, 
                                          'wname':wname, 
                                          'sigma':sigma}
-    logger.info("stripe removal [ok]")
+    tomo.logger.info("stripe removal [ok]")
     
     
 

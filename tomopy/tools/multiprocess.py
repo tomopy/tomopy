@@ -4,8 +4,6 @@ Module for multiprocessing.
 """
 import numpy as np
 import multiprocessing as mp
-import logging
-logger = logging.getLogger("tomopy")
 
 
 class Multiprocess(object):
