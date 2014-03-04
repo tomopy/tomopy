@@ -64,7 +64,7 @@ class Mlem():
                                     self.num_grid), dtype='float32')
         else:                           
             self.data_recon = np.array(np.exp(-init_matrix), dtype='float32')
-                               
+                
         libmlem.reconstruct(self.obj,
                             self.data_recon.ctypes.data_as(c_float_p),
                             iters.ctypes.data_as(c_int_p),
