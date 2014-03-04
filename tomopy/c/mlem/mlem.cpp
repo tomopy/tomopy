@@ -134,7 +134,7 @@ void Mlem::reconstruct(float *recon, int *iters,
                     
                     i = m + (n * num_pixels_) + q * (num_pixels_ * num_slices_);
                     j = pad_size + m + (n * padded_data_size);
-                    padded_data[j] = -log(data_[i] / air[m]);
+                    padded_data[j] = abs(-log(data_[i] / air[m]));
                 }
             }
             

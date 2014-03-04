@@ -347,7 +347,6 @@ class Session():
             
         # Update logger.
         if not len(tomo.logger.handlers): # For fist time create handlers.
-            print tomo._log_level
             tomo.logger.addHandler(ch)
             
         
