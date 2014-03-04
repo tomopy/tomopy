@@ -8,8 +8,6 @@ The linking is mostly realized through the multiprocessing module.
 import numpy as np
 import os
 import shutil
-import logging
-logger = logging.getLogger("tomopy")
 
 # Import main TomoPy object.
 from tomopy.dataio.reader import Session
@@ -32,12 +30,12 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
 		    center_start=None, center_end=None, center_step=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("diagnose rotation center " +
+        tomo.logger.warning("diagnose rotation center " +
                        "(data missing) [bypassed]")
         return
    
     if not tomo.FLAG_THETA:
-        logger.warning("diagnose rotation center " +
+        tomo.logger.warning("diagnose rotation center " +
                        "(angles missing) [bypassed]")
         return
     
@@ -48,7 +46,7 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
         if os.path.isdir(dir_path):
             shutil.rmtree(dir_path)
         os.makedirs(dir_path)
-        logger.debug("data_center: dir_path set " +
+        tomo.logger.debug("data_center: dir_path set " +
                        "to ", dir_path, " [ok]")
     
     # Define diagnose region.
@@ -74,18 +72,18 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
                                    	  'center_start':center_start,
                                    	  'center_end':center_end,
                                    	  'center_step':center_step}
-    logger.debug("data_center directory create [ok]")
+    tomo.logger.debug("data_center directory create [ok]")
 
 
 def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("optimize rotation center " +
+        tomo.logger.warning("optimize rotation center " +
                        "(data missing) [bypassed]")
         return
    
     if not tomo.FLAG_THETA:
-        logger.warning("optimize rotation center " +
+        tomo.logger.warning("optimize rotation center " +
                        "(angles missing) [bypassed]")
         return
 
@@ -93,17 +91,17 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     # Set default parameters.
     if slice_no is None: # Use middle slice.
         slice_no = tomo.data.shape[1] / 2
-        logger.debug("optimize_center: slice_no is " +
+        tomo.logger.debug("optimize_center: slice_no is " +
                        "set to " + str(slice_no) + " [ok]")
     
     if center_init is None: # Use middle point of the detector area.
         center_init = tomo.data.shape[2] / 2
-        logger.debug("optimize_center: center_init " +
+        tomo.logger.debug("optimize_center: center_init " +
                        "is set to " + str(center_init) + " [ok]")
     
     if tol is None:
         tol = 0.5
-        logger.debug("optimize_center: tol is set " +
+        tomo.logger.debug("optimize_center: tol is set " +
                        "to " + str(tol) + " [ok]")
     
 
@@ -117,40 +115,40 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
                                           'slice_no':slice_no,
                                    	  'center_init':center_init,
                                    	  'tol':tol}
-    logger.info("optimize rotation center [ok]")
+    tomo.logger.info("optimize rotation center [ok]")
     
 
     
 def art(tomo, iters=None, num_grid=None, num_air=None,
-        slices_start=None, slices_end=None):
+        slices_start=None, slices_end=None,  init_matrix=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("art (data missing) [bypassed]")
+        tomo.logger.warning("art (data missing) [bypassed]")
         return
    
     if not tomo.FLAG_THETA:
-        logger.warning("art (angles missing) [bypassed]")
+        tomo.logger.warning("art (angles missing) [bypassed]")
         return
 
     if not hasattr(tomo, 'center'):
-        logger.warning("art (center missing) [bypassed]")
+        tomo.logger.warning("art (center missing) [bypassed]")
         return
         
     # Set default parameters.
     if iters is None:
         iters = 1
-        logger.debug("art: iters set to " + str(iters) + " [ok]")
+        tomo.logger.debug("art: iters set to " + str(iters) + " [ok]")
 
     if num_grid is None or num_grid > tomo.data.shape[2]:
         num_grid = tomo.data.shape[2]
-        logger.debug("art: num_grid set to " + str(num_grid) + " [ok]")
+        tomo.logger.debug("art: num_grid set to " + str(num_grid) + " [ok]")
         
     if num_air is None:
         if tomo.data.shape[2] > 128:
             num_air = 10
         else:
             num_air = 1
-        logger.debug("art: num_air set to " + str(num_air) + " [ok]")
+        tomo.logger.debug("art: num_air set to " + str(num_air) + " [ok]")
         
     if slices_start is None:
         slices_start = 0
@@ -191,48 +189,48 @@ def art(tomo, iters=None, num_grid=None, num_air=None,
 
     # Initialize and perform reconstruction.
     recon = Art(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
-    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end)
+    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end, init_matrix)
     
     # Update provenance and log.
     tomo.provenance['art'] =  {'iters':iters}
     tomo.FLAG_DATA_RECON = True
-    logger.info("art reconstruction [ok]")
+    tomo.logger.info("art reconstruction [ok]")
     
     
     
     
     
 def mlem(tomo, iters=None, num_grid=None, num_air=None, 
-         slices_start=None, slices_end=None):
+         slices_start=None, slices_end=None,  init_matrix=None):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("mlem (data missing) [bypassed]")
+        tomo.logger.warning("mlem (data missing) [bypassed]")
         return
    
     if not tomo.FLAG_THETA:
-        logger.warning("mlem (angles missing) [bypassed]")
+        tomo.logger.warning("mlem (angles missing) [bypassed]")
         return
         
     if not hasattr(tomo, 'center'):
-        logger.warning("mlem (center missing) [bypassed]")
+        tomo.logger.warning("mlem (center missing) [bypassed]")
         return
         
         
     # Set default parameters.
     if iters is None:
         iters = 1
-        logger.debug("mlem: iters set to " + str(iters) + " [ok]")
+        tomo.logger.debug("mlem: iters set to " + str(iters) + " [ok]")
 
     if num_grid is None or num_grid > tomo.data.shape[2]:
         num_grid = tomo.data.shape[2]
-        logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
+        tomo.logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
         
     if num_air is None:
         if tomo.data.shape[2] > 128:
             num_air = 10
         else:
             num_air = 1
-        logger.debug("mlem: num_air set to " + str(num_air) + " [ok]")
+        tomo.logger.debug("mlem: num_air set to " + str(num_air) + " [ok]")
         
     if slices_start is None:
         slices_start = 0
@@ -272,28 +270,28 @@ def mlem(tomo, iters=None, num_grid=None, num_air=None,
 
     # Initialize and perform reconstruction.  
     recon = Mlem(tomo.data, tomo.theta, tomo.center, num_grid, num_air)
-    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end)
+    tomo.data_recon = recon.reconstruct(iters, slices_start, slices_end, init_matrix)
     
     
     # Update provenance and log.
     tomo.provenance['mlem'] = {'iters':iters}
     tomo.FLAG_DATA_RECON = True
-    logger.info("mlem reconstruction [ok]")
+    tomo.logger.info("mlem reconstruction [ok]")
 
 
     
 def gridrec(tomo, *args, **kwargs):
     # Make checks first. 
     if not tomo.FLAG_DATA:
-        logger.warning("gridrec (data missing) [bypassed]")
+        tomo.logger.warning("gridrec (data missing) [bypassed]")
         return
    
     if not tomo.FLAG_THETA:
-        logger.warning("gridrec (angles missing) [bypassed]")
+        tomo.logger.warning("gridrec (angles missing) [bypassed]")
         return
 
     if not hasattr(tomo, 'center'):
-        logger.warning("gridrec (center missing) [bypassed]")
+        tomo.logger.warning("gridrec (center missing) [bypassed]")
         return
 
 
@@ -315,7 +313,7 @@ def gridrec(tomo, *args, **kwargs):
     # Update provenance and log.
     tomo.provenance['gridrec'] = (args, kwargs)
     tomo.FLAG_DATA_RECON = True
-    logger.info("gridrec reconstruction [ok]")
+    tomo.logger.info("gridrec reconstruction [ok]")
 
 
 

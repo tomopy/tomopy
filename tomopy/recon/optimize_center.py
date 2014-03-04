@@ -3,8 +3,6 @@ import numpy as np
 from scipy.optimize import minimize
 
 from gridrec import Gridrec
-import logging
-logger = logging.getLogger("tomopy")
 
 
 def _optimize_center(data, theta, slice_no, center_init, tol):
@@ -65,7 +63,7 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
                    method='Nelder-Mead', tol=tol)
     
     # Have a look at what I found:
-    logger.info("calculated rotation center: " + str(np.squeeze(res.x)))
+    print "calculated rotation center: " + str(np.squeeze(res.x))
     return res.x
     
 
@@ -73,7 +71,7 @@ def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max):
     """ 
     Cost function of the ``optimize_center``.
     """
-    logger.info('trying center: ' + str(np.squeeze(center)))
+    print 'trying center: ' + str(np.squeeze(center))
     recon.reconstruct(data, theta=theta, center=center, slice_no=slice_no)
     histr, e = np.histogram(recon.data_recon, bins=64, range=[hist_min, hist_max])
     histr = histr.astype('float32') / recon.data_recon.size + 1e-12
