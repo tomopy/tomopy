@@ -1,93 +1,35 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 import os
 import ctypes
-import numpy as np
 
 # --------------------------------------------------------------------
 
-# Get the shared library for art.
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libart.so'))
+# Get the shared library.
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                          '..', 'lib/libart.so'))
 libart = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-class Art():
-    def __init__(self, data, theta, center, num_grid, num_air):
-        """
-        Constructor for Art reconstruction.
-        
-        Parameters
-        ----------
-        data : ndarray (float32)
-            3-D omography data. [num_projections, num_slices, num_pixels]
-            
-        theta : ndarray (float32)
-            Projection angles in radians.
-            
-        center : scalar (int32)
-            Location of rotation axis on transverse (pixel) axis.
-            
-        num_grid : scalar (int32)
-            Grid size of the reconstructed slices.
-        """
-        self.num_projections = np.array(data.shape[0], dtype='int32')
-        self.num_slices = np.array(data.shape[1], dtype='int32')
-        self.num_pixels = np.array(data.shape[2], dtype='int32')
-        self.num_grid = np.array(num_grid, dtype='int32')
-        
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        c_int_p = ctypes.POINTER(ctypes.c_int)
+def _art(data, theta, center, num_grid, iters):
+    
+    num_projections = np.array(data.shape[0], dtype='int32')
+    num_slices = np.array(data.shape[1], dtype='int32')
+    num_pixels = np.array(data.shape[2], dtype='int32')
 
-        libart.create.restype = ctypes.POINTER(ctypes.c_void_p)
-        self.obj = libart.create(data.ctypes.data_as(c_float_p),
-                                 theta.ctypes.data_as(c_float_p),
-                                 center.ctypes.data_as(c_float_p),
-                                 self.num_projections.ctypes.data_as(c_int_p),
-                                 self.num_slices.ctypes.data_as(c_int_p),
-                                 self.num_pixels.ctypes.data_as(c_int_p),
-                                 self.num_grid.ctypes.data_as(c_int_p),
-                                 num_air.ctypes.data_as(c_int_p))
-        
-
-    def reconstruct(self, iters, slice_start, slice_end, init_matrix):
-        """
-        Perform Art reconstruction. 
-        
-        Parameters
-        ----------
-        iters : scalar (int32)
-            Number of iterations.
-        """
-        
-        #self.data_recon = np.zeros((slice_end-slice_start, self.num_grid, 
-        #                           self.num_grid), dtype='float32')
-                                   
-        if init_matrix is None:
-            self.data_recon = np.zeros((slice_end-slice_start, self.num_grid, 
-                                    self.num_grid), dtype='float32')
-        else:                           
-            self.data_recon = np.array(init_matrix, dtype='float32')
-                                   
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        c_int_p = ctypes.POINTER(ctypes.c_int)
-                               
-        libart.reconstruct(self.obj,
-                           self.data_recon.ctypes.data_as(c_float_p),
-                           iters.ctypes.data_as(c_int_p),
-                           slice_start.ctypes.data_as(c_int_p),
-                           slice_end.ctypes.data_as(c_int_p))
-        return self.data_recon
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Call C function.
+    data_recon = np.zeros((num_slices, num_grid, num_grid), dtype='float32')
+    
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libart.art.restype = ctypes.POINTER(ctypes.c_void_p)
+    libart.art(data.ctypes.data_as(c_float_p),
+                 theta.ctypes.data_as(c_float_p),
+                 ctypes.c_float(center),
+                 ctypes.c_int(num_projections),
+                 ctypes.c_int(num_slices),
+                 ctypes.c_int(num_pixels),
+                 ctypes.c_int(num_grid),
+                 ctypes.c_int(iters),
+                 data_recon.ctypes.data_as(c_float_p))
+    return data_recon

@@ -27,10 +27,10 @@ def _apply_padding(data):
     
     libprep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
     libprep.apply_padding(data.ctypes.data_as(c_float_p),
-                          ctypes.byref(ctypes.c_int(num_projections)),
-                          ctypes.byref(ctypes.c_int(num_slices)),
-                          ctypes.byref(ctypes.c_int(num_pixels)),
-                          ctypes.byref(ctypes.c_int(num_pad)),
+                          ctypes.c_int(num_projections),
+                          ctypes.c_int(num_slices),
+                          ctypes.c_int(num_pixels),
+                          ctypes.c_int(num_pad),
                           padded_data.ctypes.data_as(c_float_p))
     return padded_data
     

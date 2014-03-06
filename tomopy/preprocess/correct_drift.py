@@ -24,8 +24,8 @@ def _correct_drift(data, air_pixels):
     
     libprep.correct_drift.restype = ctypes.POINTER(ctypes.c_void_p)
     libprep.correct_drift(data.ctypes.data_as(c_float_p),
-                          ctypes.byref(ctypes.c_int(num_projections)),
-                          ctypes.byref(ctypes.c_int(num_slices)),
-                          ctypes.byref(ctypes.c_int(num_pixels)),
-                          ctypes.byref(ctypes.c_int(air_pixels)))
+                          ctypes.c_int(num_projections),
+                          ctypes.c_int(num_slices),
+                          ctypes.c_int(num_pixels),
+                          ctypes.c_int(air_pixels))
     return data
