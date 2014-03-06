@@ -53,28 +53,24 @@ except KeyError:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
 
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec')}
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw')}
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/art')}
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/mlem')}
-C_INCLUDE_PATH += {os.path.abspath('tomopy/c/sinogram')}
+C_INCLUDE_PATH += {os.path.abspath('tomopy/recon/gridrec')}
 
 
 # Create FFTW shared-library.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
-                    sources=['tomopy/c/fftw/fftw.cpp'],
+                    sources=['tomopy/tools/fftw.cpp'],
                     include_dirs=C_INCLUDE_PATH,
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f'])
 
 # Create Gridrec shared-library.
 ext_gridrec = Extension(name='tomopy.lib.libgridrec',
-                    sources=['tomopy/c/gridrec/filters.cpp',
-                             'tomopy/c/gridrec/grid.cpp',
-                             'tomopy/c/gridrec/MessageQueue.cpp',
-                             'tomopy/c/gridrec/pswf.cpp',
-                             'tomopy/c/gridrec/tomoRecon.cpp',
-                             'tomopy/c/gridrec/tomoReconPy.cpp'],
+                    sources=['tomopy/recon/gridrec/filters.cpp',
+                             'tomopy/recon/gridrec/grid.cpp',
+                             'tomopy/recon/gridrec/MessageQueue.cpp',
+                             'tomopy/recon/gridrec/pswf.cpp',
+                             'tomopy/recon/gridrec/tomoRecon.cpp',
+                             'tomopy/recon/gridrec/tomoReconPy.cpp'],
                     include_dirs=C_INCLUDE_PATH,
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f',
@@ -84,18 +80,18 @@ ext_gridrec = Extension(name='tomopy.lib.libgridrec',
 
 # Create Art shared-library.
 ext_art = Extension(name='tomopy.lib.libart',
-                    sources=['tomopy/c/art/art.cpp'],
+                    sources=['tomopy/recon/art.c'],
                     include_dirs=C_INCLUDE_PATH)
 
 # Create Mlem shared-library.
 ext_mlem = Extension(name='tomopy.lib.libmlem',
-                    sources=['tomopy/c/mlem/mlem.cpp'],
+                    sources=['tomopy/recon/mlem.c'],
                     include_dirs=C_INCLUDE_PATH)
                     
-# Create Sinogram shared-library.
+# Create preprocessing shared-library.
 ext_prep = Extension(name='tomopy.lib.libprep',
-                    sources=['tomopy/c/preprocess/correct_drift.c',
-                             'tomopy/c/preprocess/apply_padding.c'],
+                    sources=['tomopy/preprocess/correct_drift.c',
+                             'tomopy/preprocess/apply_padding.c'],
                     include_dirs=C_INCLUDE_PATH)
 
 
@@ -107,8 +103,8 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
-      #ext_modules=[ext_prep],
+      #ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
+      ext_modules=[ext_mlem, ext_art],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',

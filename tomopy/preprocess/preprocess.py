@@ -34,6 +34,9 @@ def apply_padding(tomo,
 
     tomo.data = _apply_padding(tomo.data)
 
+    # Update data dimensions.
+    tomo.num_pixels = np.array(tomo.data.shape[2], dtype='int32')
+
     ## Distribute jobs.
     #_func = _apply_padding
     #_args = ()
