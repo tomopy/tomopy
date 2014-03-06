@@ -3,6 +3,7 @@ import numpy as np
 from skimage import morphology
 from skimage.filter import sobel
 
+# --------------------------------------------------------------------
 
 def _region_segment(args):
     """

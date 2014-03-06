@@ -6,6 +6,8 @@ import re
 import numpy as np
 import h5py
 
+# --------------------------------------------------------------------
+
 class Compound():
     
     def __init__(self, compound, density):

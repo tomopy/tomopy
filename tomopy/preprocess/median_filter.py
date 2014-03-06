@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scipy.ndimage import filters
 
+# --------------------------------------------------------------------
 
 def _median_filter(args):
     """

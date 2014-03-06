@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+# --------------------------------------------------------------------
 
 def _normalize(args):
     """
@@ -32,7 +33,8 @@ def _normalize(args):
     
 
     for m in range(ind_end-ind_start):
-        data[m, :, :] = np.divide(data[m, :, :]-data_dark, data_white-data_dark)
+        data[m, :, :] = np.divide(data[m, :, :]-data_dark, 
+                                  data_white-data_dark)
     if cutoff is not None:
         data[data > cutoff] = cutoff
     return ind_start, ind_end, data

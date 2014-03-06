@@ -5,6 +5,7 @@ Module for multiprocessing.
 import numpy as np
 import multiprocessing as mp
 
+# --------------------------------------------------------------------
 
 class Multiprocess(object):
     def __init__(self, target_func, num_cores=None):
@@ -60,6 +61,7 @@ class Multiprocess(object):
             
         return res_list
 
+# --------------------------------------------------------------------
 
 def worker(func):
     """
@@ -82,6 +84,7 @@ def worker(func):
         return worker_in
     return worker_in
 
+# --------------------------------------------------------------------
 
 def distribute_jobs(data, func, args, axis, 
                     num_cores=None, chunk_size=None):

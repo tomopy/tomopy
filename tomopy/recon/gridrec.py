@@ -8,11 +8,13 @@ import ctypes
 import os
 import multiprocessing as mp
 
+# --------------------------------------------------------------------
 
 # Get the shared library for gridrec.
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libgridrec.so'))
 libgridrec = ctypes.CDLL(libpath)
 
+# --------------------------------------------------------------------
 
 class GridrecCStruct(ctypes.Structure):
     """
