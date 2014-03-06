@@ -10,6 +10,7 @@ from scipy import misc
 # Import main TomoPy object.
 from reader import Session
 
+# --------------------------------------------------------------------
         
 def recon_to_hdf5(tomo, output_file=None):
     """ 
@@ -82,7 +83,8 @@ def recon_to_hdf5(tomo, output_file=None):
         tomo.logger.info("save data at %s [ok]", dir_path)
     else:
         tomo.logger.warning("save data [bypassed]")
-        
+   
+# --------------------------------------------------------------------     
 
 def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=0):
     """ 
@@ -197,7 +199,8 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
         tomo.logger.info("save data at %s [ok]", dir_path)
     else:
         tomo.logger.warning("save data [bypassed]")
-        
+      
+# --------------------------------------------------------------------  
 
 def data_to_hdf5(tomo, output_file=None):
     """
@@ -271,6 +274,7 @@ def data_to_hdf5(tomo, output_file=None):
     else:
         tomo.logger.warning("save data [bypassed]")
 
+# --------------------------------------------------------------------
 
 def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axis=1):
     """
@@ -385,6 +389,7 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
     else:
         tomo.logger.warning("save data [bypassed]")
 
+# --------------------------------------------------------------------
 
 def _export_to_hdf5(file_name, data, provenance):
     f = h5py.File(file_name, 'w')
@@ -396,6 +401,7 @@ def _export_to_hdf5(file_name, data, provenance):
         provenance_group.create_dataset(key, data=str(value))
     f.close()
     
+# --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
 setattr(Session, 'recon_to_hdf5', recon_to_hdf5)

@@ -18,6 +18,7 @@ from threshold_segment import _threshold_segment
 from tomopy.tools.multiprocess import distribute_jobs
 
 
+# --------------------------------------------------------------------
 
 def adaptive_segment(tomo, block_size=None, offset=None,
                      num_cores=None, chunk_size=None):
@@ -56,6 +57,7 @@ def adaptive_segment(tomo, block_size=None, offset=None,
                                               'offset':offset}
     tomo.logger.info("adaptive thresholding based segmentation [ok]")
 
+# --------------------------------------------------------------------
 
 def region_segment(tomo, low=None, high=None,
                    num_cores=None, chunk_size=None):
@@ -92,6 +94,7 @@ def region_segment(tomo, low=None, high=None,
     tomo.provenance['region_segment'] = {'low':low, 'high':high}
     tomo.logger.info("region based segmentation [ok]")
 
+# --------------------------------------------------------------------
 
 def remove_background(tomo, num_cores=None, chunk_size=None):
     # Make checks first. 
@@ -111,7 +114,7 @@ def remove_background(tomo, num_cores=None, chunk_size=None):
     tomo.provenance['remove_background'] = {}
     tomo.logger.info("background removal [ok]")
 
-
+# --------------------------------------------------------------------
 
 def threshold_segment(tomo, cutoff=None,
                       num_cores=None, chunk_size=None):
@@ -136,6 +139,7 @@ def threshold_segment(tomo, cutoff=None,
     tomo.provenance['threshold_segment'] = {'cutoff':cutoff}
     tomo.logger.info("threshold based segmentation [ok]")
 
+# --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
 setattr(Session, 'adaptive_segment', adaptive_segment)

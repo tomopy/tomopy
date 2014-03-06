@@ -3,11 +3,13 @@ import os
 import ctypes
 import numpy as np
 
+# --------------------------------------------------------------------
 
 # Get the shared library for art.
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libart.so'))
 libart = ctypes.CDLL(libpath)
 
+# --------------------------------------------------------------------
 
 class Art():
     def __init__(self, data, theta, center, num_grid, num_air):

@@ -4,6 +4,7 @@ from scipy import misc
 
 from gridrec import Gridrec
 
+# --------------------------------------------------------------------
 
 def _diagnose_center(data, theta, dir_path, slice_no, 
                      center_start, center_end, center_step):

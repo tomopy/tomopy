@@ -44,19 +44,20 @@ try:
 except KeyError:
     LD_LIBRARY_PATH = []
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
-                  "find the libraries correctly")
+                  "link the shared libraries correctly")
 
 try:
     C_INCLUDE_PATH = os.environ['C_INCLUDE_PATH'].split(os.pathsep)
 except KeyError:
     C_INCLUDE_PATH = []
-    warnings.warn("you may need to manually set C_INCLUDE_PATH manually to " +
-                  "find the libraries correctly")
+    warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
+                  "link the shared libraries correctly")
 
 C_INCLUDE_PATH += {os.path.abspath('tomopy/c/gridrec')}
 C_INCLUDE_PATH += {os.path.abspath('tomopy/c/fftw')}
 C_INCLUDE_PATH += {os.path.abspath('tomopy/c/art')}
 C_INCLUDE_PATH += {os.path.abspath('tomopy/c/mlem')}
+C_INCLUDE_PATH += {os.path.abspath('tomopy/c/sinogram')}
 
 
 # Create FFTW shared-library.
@@ -86,10 +87,15 @@ ext_art = Extension(name='tomopy.lib.libart',
                     sources=['tomopy/c/art/art.cpp'],
                     include_dirs=C_INCLUDE_PATH)
 
-
 # Create Mlem shared-library.
 ext_mlem = Extension(name='tomopy.lib.libmlem',
                     sources=['tomopy/c/mlem/mlem.cpp'],
+                    include_dirs=C_INCLUDE_PATH)
+                    
+# Create Sinogram shared-library.
+ext_prep = Extension(name='tomopy.lib.libprep',
+                    sources=['tomopy/c/preprocess/correct_drift.c',
+                             'tomopy/c/preprocess/apply_padding.c'],
                     include_dirs=C_INCLUDE_PATH)
 
 
@@ -101,8 +107,8 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      #ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem],
-      ext_modules=[ext_art, ext_mlem],
+      ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
+      #ext_modules=[ext_prep],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',

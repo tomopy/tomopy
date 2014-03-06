@@ -4,6 +4,7 @@ import numpy as np
 from tomopy.tools import constants
 from tomopy.tools import fftw
 
+# --------------------------------------------------------------------
 
 def _phase_retrieval(args):
     """
@@ -65,6 +66,7 @@ def _phase_retrieval(args):
         
     return ind_start, ind_end, data
     
+# --------------------------------------------------------------------
 
 def _paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     num_proj, dx, dy = data.shape # dx:slices, dy:pixels

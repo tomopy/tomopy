@@ -4,6 +4,7 @@ from scipy.optimize import minimize
 
 from gridrec import Gridrec
 
+# --------------------------------------------------------------------
 
 def _optimize_center(data, theta, slice_no, center_init, tol):
     """ 
@@ -66,6 +67,7 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     print "calculated rotation center: " + str(np.squeeze(res.x))
     return res.x
     
+# --------------------------------------------------------------------
 
 def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max):
     """ 

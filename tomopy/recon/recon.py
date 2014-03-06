@@ -21,10 +21,8 @@ from mlem import Mlem
 from diagnose_center import _diagnose_center
 from optimize_center import _optimize_center
 
-# Import multiprocessing module.
-from tomopy.tools.multiprocess import distribute_jobs
 
-
+# --------------------------------------------------------------------
 
 def diagnose_center(tomo, dir_path=None, slice_no=None,
 		    center_start=None, center_end=None, center_step=None):
@@ -74,6 +72,7 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
                                    	  'center_step':center_step}
     tomo.logger.debug("data_center directory create [ok]")
 
+# --------------------------------------------------------------------
 
 def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
     # Make checks first. 
@@ -117,7 +116,7 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None):
                                    	  'tol':tol}
     tomo.logger.info("optimize rotation center [ok]")
     
-
+# --------------------------------------------------------------------
     
 def art(tomo, iters=None, num_grid=None, num_air=None,
         slices_start=None, slices_end=None,  init_matrix=None):
@@ -196,9 +195,7 @@ def art(tomo, iters=None, num_grid=None, num_air=None,
     tomo.FLAG_DATA_RECON = True
     tomo.logger.info("art reconstruction [ok]")
     
-    
-    
-    
+# --------------------------------------------------------------------
     
 def mlem(tomo, iters=None, num_grid=None, num_air=None, 
          slices_start=None, slices_end=None,  init_matrix=None):
@@ -278,7 +275,7 @@ def mlem(tomo, iters=None, num_grid=None, num_air=None,
     tomo.FLAG_DATA_RECON = True
     tomo.logger.info("mlem reconstruction [ok]")
 
-
+# --------------------------------------------------------------------
     
 def gridrec(tomo, *args, **kwargs):
     # Make checks first. 
@@ -315,7 +312,7 @@ def gridrec(tomo, *args, **kwargs):
     tomo.FLAG_DATA_RECON = True
     tomo.logger.info("gridrec reconstruction [ok]")
 
-
+# --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
 setattr(Session, 'diagnose_center', diagnose_center)

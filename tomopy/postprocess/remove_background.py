@@ -2,6 +2,7 @@
 import numpy as np
 from skimage.morphology import reconstruction
 
+# --------------------------------------------------------------------
 
 def _remove_background(args):
     """
