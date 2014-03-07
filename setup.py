@@ -103,8 +103,7 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      #ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
-      ext_modules=[ext_mlem, ext_art],
+      ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
