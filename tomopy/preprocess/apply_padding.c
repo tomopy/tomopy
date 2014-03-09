@@ -6,7 +6,7 @@ void apply_padding(float* data, int num_projections,
                    int num_slices, int num_pixels, 
                    int num_pad, float* padded_data) {
     
-    int n, m, i, j, k, jp, iproj, ipproj;
+    int n, m, i, j, k, iproj, ipproj;
     int pad_width = (int)(num_pad-num_pixels)/2;
     
     for (m = 0; m < num_projections; m++) {

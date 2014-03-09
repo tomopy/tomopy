@@ -17,7 +17,7 @@ def _correct_drift(data, air_pixels):
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
-    air_pixels = np.array(air_pixels, dtype='int32')
+        
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
