@@ -62,6 +62,21 @@ ext_fftw = Extension(name='tomopy.lib.libfftw',
                     include_dirs=C_INCLUDE_PATH,
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f'])
+                    
+
+# Create preprocessing shared-library.
+ext_prep = Extension(name='tomopy.lib.libprep',
+                    sources=['tomopy/preprocess/correct_drift.c',
+                             'tomopy/preprocess/apply_padding.c',
+                             'tomopy/preprocess/downsample.c'],
+                    include_dirs=C_INCLUDE_PATH)
+
+# Create reconstruction shared-library.
+ext_recon = Extension(name='tomopy.lib.librecon',
+                    sources=['tomopy/recon/art.c',
+                             'tomopy/recon/mlem.c',
+                             'tomopy/recon/upsample.c'],
+                    include_dirs=C_INCLUDE_PATH)
 
 # Create Gridrec shared-library.
 ext_gridrec = Extension(name='tomopy.lib.libgridrec',
@@ -78,22 +93,6 @@ ext_gridrec = Extension(name='tomopy.lib.libgridrec',
                                      '-lboost_system',
                                      '-lboost_date_time'])
 
-# Create Art shared-library.
-ext_art = Extension(name='tomopy.lib.libart',
-                    sources=['tomopy/recon/art.c'],
-                    include_dirs=C_INCLUDE_PATH)
-
-# Create Mlem shared-library.
-ext_mlem = Extension(name='tomopy.lib.libmlem',
-                    sources=['tomopy/recon/mlem.c'],
-                    include_dirs=C_INCLUDE_PATH)
-                    
-# Create preprocessing shared-library.
-ext_prep = Extension(name='tomopy.lib.libprep',
-                    sources=['tomopy/preprocess/correct_drift.c',
-                             'tomopy/preprocess/apply_padding.c'],
-                    include_dirs=C_INCLUDE_PATH)
-
 
 # Main setup configuration.
 setup(
@@ -103,7 +102,7 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      ext_modules=[ext_fftw, ext_art, ext_gridrec, ext_mlem, ext_prep],
+      ext_modules=[ext_fftw, ext_recon, ext_gridrec, ext_prep],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',

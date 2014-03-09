@@ -110,11 +110,6 @@ class Session():
                 * 180 / (tomo.data.shape[0] + 1)
             tomo.logger.warning("assign 180-degree rotation [ok]")
         tomo.FLAG_THETA = True
-        
-        # Assign raw data dimensions.
-        tomo.num_projections = np.array(tomo.data.shape[0], dtype='int32')
-        tomo.num_slices = np.array(tomo.data.shape[1], dtype='int32')
-        tomo.num_pixels = np.array(tomo.data.shape[2], dtype='int32')
 
         # Check if data is as expected.
         tomo._check_input_data()
@@ -310,11 +305,6 @@ class Session():
                 tomo.data_dark = tomo.data_dark.astype(dtype=np.float32, copy=False)
             if not isinstance(tomo.theta, np.float32):
                 tomo.theta = tomo.theta.astype(dtype=np.float32, copy=False)
-        
-            # Assign raw data dimensions.
-            tomo.num_projections = np.array(tomo.data.shape[0], dtype='int32')
-            tomo.num_slices = np.array(tomo.data.shape[1], dtype='int32')
-            tomo.num_pixels = np.array(tomo.data.shape[2], dtype='int32')
             
     def _init_provenance(tomo):
         # Start adding info.

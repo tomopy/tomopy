@@ -7,23 +7,21 @@ import ctypes
 
 # Get the shared library.
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                          '..', 'lib/libart.so'))
-libart = ctypes.CDLL(libpath)
+                          '..', 'lib/librecon.so'))
+librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _art(data, theta, center, num_grid, iters):
+def _art(data, theta, center, num_grid, iters, init_matrix):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
 
     # Call C function.
-    data_recon = np.zeros((num_slices, num_grid, num_grid), dtype='float32')
-    
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libart.art.restype = ctypes.POINTER(ctypes.c_void_p)
-    libart.art(data.ctypes.data_as(c_float_p),
+    librecon.art.restype = ctypes.POINTER(ctypes.c_void_p)
+    librecon.art(data.ctypes.data_as(c_float_p),
                  theta.ctypes.data_as(c_float_p),
                  ctypes.c_float(center),
                  ctypes.c_int(num_projections),
@@ -31,5 +29,5 @@ def _art(data, theta, center, num_grid, iters):
                  ctypes.c_int(num_pixels),
                  ctypes.c_int(num_grid),
                  ctypes.c_int(iters),
-                 data_recon.ctypes.data_as(c_float_p))
-    return data_recon
+                 init_matrix.ctypes.data_as(c_float_p))
+    return init_matrix
