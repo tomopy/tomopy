@@ -20,7 +20,8 @@ from mlem import _mlem
 # Import helper functons in the package.
 from diagnose_center import _diagnose_center
 from optimize_center import _optimize_center
-from upsample import _upsample
+from upsample import _upsample2d, _upsample3d
+from tomopy.preprocess.downsample import _downsample2d, _downsample3d
 
 
 # --------------------------------------------------------------------
@@ -73,16 +74,11 @@ def diagnose_center(tomo, dir_path=None, slice_no=None,
                                    	      'center_end':center_end,
                                    	      'center_step':center_step}
     tomo.logger.debug("data_center directory create [ok]")
-    
-    # Update returned values.
-    if overwrite:
-	    tomo.data_recon = data_recon
-    else:
-	    return data_recon
 
 # --------------------------------------------------------------------
 
-def optimize_center(tomo, slice_no=None, center_init=None, tol=None, overwrite=True):
+def optimize_center(tomo, slice_no=None, center_init=None, 
+                    tol=None, overwrite=True):
 
     # Make checks first. 
     if not tomo.FLAG_DATA:
@@ -126,15 +122,15 @@ def optimize_center(tomo, slice_no=None, center_init=None, tol=None, overwrite=T
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.center = center
     else:
-	    return data_recon
+	return center
 	    
 # --------------------------------------------------------------------
 
-def upsample(tomo, level=None,
-             num_cores=None, chunk_size=None,
-             overwrite=True):
+def upsample2d(tomo, level=None,
+               num_cores=None, chunk_size=None,
+               overwrite=True):
     
     # Set default parameters.
     if level is None:
@@ -150,7 +146,7 @@ def upsample(tomo, level=None,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype=np.int32, copy=False)
 
-    data_recon = _upsample(tomo.data_recon, level)
+    data_recon = _upsample2d(tomo.data_recon, level)
     
     ## Distribute jobs.
     #_func = _upsample
@@ -165,9 +161,48 @@ def upsample(tomo, level=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
+	    
+# --------------------------------------------------------------------
+
+def upsample3d(tomo, level=None,
+               num_cores=None, chunk_size=None,
+               overwrite=True):
+    
+    # Set default parameters.
+    if level is None:
+        level = 1
+        tomo.logger.debug("upsample: level is " +
+                          "set to " + str(level) + " [ok]")
+
+
+    # Check inputs.
+    if not isinstance(tomo.data_recon, np.float32):
+        tomo.data_recon = np.array(tomo.data_recon, dtype=np.float32, copy=False)
+
+    if not isinstance(level, np.int32):
+        level = np.array(level, dtype=np.int32, copy=False)
+
+    data_recon = _upsample3d(tomo.data_recon, level)
+    
+    ## Distribute jobs.
+    #_func = _upsample
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis,
+    #                            num_cores, chunk_size)
+    
+    # Update provenance and log.
+    tomo.provenance['upsample'] = {'level':level}
+    tomo.logger.info("data upsampling [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data_recon = data_recon 
+    else:
+	return data_recon
     
 # --------------------------------------------------------------------
     
@@ -185,7 +220,19 @@ def art(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
     if not hasattr(tomo, 'center'):
         tomo.logger.warning("art (center missing) [bypassed]")
         return
+
         
+    # This works with radians.
+    if np.max(tomo.theta) > 90: # then theta is obviously in radians.
+        theta = tomo.theta * np.pi/180
+
+    # Pad data first.
+    data = tomo.apply_padding(overwrite=False)
+    data = -np.log(data);
+    
+    # Adjust center according to padding.
+    center = tomo.center + (data.shape[2]-tomo.data.shape[2])/2.
+    
 
     # Set default parameters.
     if iters is None:
@@ -193,30 +240,23 @@ def art(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
         tomo.logger.debug("art: iters set to " + str(iters) + " [ok]")
 
     if num_grid is None or num_grid > tomo.data.shape[2]:
-        num_grid = np.floor(tomo.data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[2] / np.sqrt(2))
         tomo.logger.debug("art: num_grid set to " + str(num_grid) + " [ok]")
         
     if init_matrix is None:   
-        init_matrix = np.zeros((tomo.data.shape[1], num_grid, num_grid), dtype='float32')
-        tomo.logger.debug("mlem: init_matrix set to zeros [ok]")
+        init_matrix = np.zeros((data.shape[1], num_grid, num_grid), dtype='float32')
+        tomo.logger.debug("art: init_matrix set to zeros [ok]")
         
-        
-    # This works with radians.
-    if np.max(tomo.theta) > 90: # then theta is obviously in radians.
-        tomo.theta *= np.pi/180
-    
-    # For transmission data use Beer's Law.
-    data = -np.log(tomo.data);
 
     # Check again.
-    if not isinstance(tomo.data, np.float32):
-        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype=np.float32, copy=False)
 
-    if not isinstance(tomo.theta, np.float32):
-        tomo.theta = np.array(tomo.theta, dtype=np.float32, copy=False)
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype=np.float32, copy=False)
 
-    if not isinstance(tomo.center, np.float32):
-        tomo.center = np.array(tomo.center, dtype=np.float32, copy=False)
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype=np.float32, copy=False)
         
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
@@ -228,7 +268,7 @@ def art(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
         init_matrix = np.array(init_matrix, dtype=np.float32, copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = _art(data, tomo.theta, tomo.center, num_grid, iters, init_matrix)
+    data_recon = _art(data, theta, center, num_grid, iters, init_matrix)
     
     
     # Update provenance and log.
@@ -238,9 +278,9 @@ def art(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
     
 # --------------------------------------------------------------------
     
@@ -259,6 +299,18 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
         tomo.logger.warning("mlem (center missing) [bypassed]")
         return
         
+
+    # This works with radians.
+    if np.max(tomo.theta) > 90: # then theta is obviously in radians.
+        theta = tomo.theta * np.pi/180
+
+    # Pad data first.
+    data = tomo.apply_padding(overwrite=False)
+    data = np.abs(-np.log(data));
+    
+    # Adjust center according to padding.
+    center = tomo.center + (data.shape[2]-tomo.data.shape[2])/2.
+
         
     # Set default parameters.
     if iters is None:
@@ -266,30 +318,23 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
         tomo.logger.debug("mlem: iters set to " + str(iters) + " [ok]")
 
     if num_grid is None or num_grid > tomo.data.shape[2]:
-        num_grid = np.floor(tomo.data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[2] / np.sqrt(2))
         tomo.logger.debug("mlem: num_grid set to " + str(num_grid) + " [ok]")
         
     if init_matrix is None:
-        init_matrix = np.ones((tomo.data.shape[1], num_grid, num_grid), dtype='float32')
+        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
         tomo.logger.debug("mlem: init_matrix set to ones [ok]")
-        
-        
-    # This works with radians.
-    if np.max(tomo.theta) > 90: # then theta is obviously in radians.
-        tomo.theta *= np.pi/180
     
-    # For transmission data use Beer's Law.
-    data = np.abs(-np.log(tomo.data));
 
     # Check again.
-    if not isinstance(tomo.data, np.float32):
-        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype=np.float32, copy=False)
 
     if not isinstance(tomo.theta, np.float32):
-        tomo.theta = np.array(tomo.theta, dtype=np.float32, copy=False)
+        theta = np.array(theta, dtype=np.float32, copy=False)
 
     if not isinstance(tomo.center, np.float32):
-        tomo.center = np.array(tomo.center, dtype=np.float32, copy=False)
+        center = np.array(center, dtype=np.float32, copy=False)
         
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
@@ -301,7 +346,7 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
         init_matrix = np.array(init_matrix, dtype=np.float32, copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = _mlem(data, tomo.theta, tomo.center, num_grid, iters, init_matrix)
+    data_recon = _mlem(data, theta, center, num_grid, iters, init_matrix)
 
     
     # Update provenance and log.
@@ -311,13 +356,14 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 	    
 # --------------------------------------------------------------------
     
-def mlem_multilevel(tomo, iters=None, num_grid=None, level=None, init_matrix=None, overwrite=True):
+def mlem_multilevel(tomo, iters=None, num_grid=None, level=None, 
+                    init_matrix=None, overwrite=True):
     
     # Make checks first. 
     if not tomo.FLAG_DATA:
@@ -342,32 +388,48 @@ def mlem_multilevel(tomo, iters=None, num_grid=None, level=None, init_matrix=Non
         level = 2
         tomo.logger.debug("mlem_multilevel: iters set to " + str(level) + " [ok]")
 
-    if num_grid is None or num_grid > tomo.data.shape[2]:
-        num_grid = np.floor(tomo.data.shape[2] / np.sqrt(2)) / np.power(2, level)
-        tomo.logger.debug("mlem_multilevel: num_grid set to " + str(num_grid) + " [ok]")
-        
-    if init_matrix is None:  
-        init_matrix = np.ones((tomo.data.shape[1], num_grid, num_grid), dtype='float32') 
-        tomo.logger.debug("mlem_multilevel: init_matrix set to ones [ok]")
-            
+
+
 
     # This works with radians.
     if np.max(tomo.theta) > 90: # then theta is obviously in radians.
-        tomo.theta *= np.pi/180
+        theta = tomo.theta * np.pi/180
+        
+    # Level size.
+    lvl = np.power(2, level)
+
+    # Pad data first.
+    num_padded_pixels = tomo.data.shape[2]
+    if num_padded_pixels % lvl > 0:
+        num_padded_pixels +=  lvl - tomo.data.shape[2] % lvl
     
-    # For transmission data use Beer's Law.
-    tomo.data = np.abs(-np.log(tomo.data));
+    data = tomo.apply_padding(num_pad=num_padded_pixels, overwrite=False) 
+    data = np.abs(-np.log(data));
+    
+    # Adjust center according to padding.
+    center = tomo.center + (data.shape[2]-tomo.data.shape[2])/2.
+    
+
+
+    if num_grid is None or num_grid > data.shape[2]:
+        num_grid = num_padded_pixels/lvl
+        tomo.logger.debug("mlem_multilevel: num_grid set to " + str(num_grid) + " [ok]")
+        
+    if init_matrix is None:  
+        #init_matrix = np.ones((data.shape[1]/lvl, num_grid, num_grid), dtype='float32') 
+        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32') 
+        tomo.logger.debug("mlem_multilevel: init_matrix set to ones [ok]")
 
 
     # Check again.
-    if not isinstance(tomo.data, np.float32):
-        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype=np.float32, copy=False)
 
     if not isinstance(tomo.theta, np.float32):
-        tomo.theta = np.array(tomo.theta, dtype=np.float32, copy=False)
+        theta = np.array(theta, dtype=np.float32, copy=False)
 
     if not isinstance(tomo.center, np.float32):
-        tomo.center = np.array(tomo.center, dtype=np.float32, copy=False)
+        center = np.array(center, dtype=np.float32, copy=False)
         
     if not isinstance(iters, np.int32):
         iters = np.array(iters, dtype=np.int32, copy=False)
@@ -377,18 +439,21 @@ def mlem_multilevel(tomo, iters=None, num_grid=None, level=None, init_matrix=Non
         
     if not isinstance(init_matrix, np.float32):
         init_matrix = np.array(init_matrix, dtype=np.float32, copy=False)
+
+      
+    for m in reversed(range(level+1)):
+        x = _downsample2d(data, level=m)
+        cen = np.array(center/np.power(2, m), dtype=np.float32)
+        num_grid = np.array(data.shape[2]/np.power(2, m), dtype=np.int32)
+        it = np.array(iters, dtype=np.float32)
+        y = _mlem(x, theta, cen, num_grid, it, init_matrix)
+
+        if m != 0:
+            init_matrix = _upsample2d(y, level=1)
+        else:
+            init_matrix = y
+    data_recon = init_matrix
     
-    data = tomo.downsample(level=level, overwrite=False)    
-#     tomo.data_to_tiff('test_')
-    	
-    center = np.array(tomo.center/np.power(2, level), dtype=np.float32, copy=False)
-#     print center, num_grid, tomo.data.shape
-	
-    data_recon = _mlem(data, tomo.theta, tomo.center, num_grid, iters, init_matrix)
-    tomo.FLAG_DATA_RECON = True
-#     	tomo.recon_to_tiff('test_')
-    	
-#     data_recon = init_matrix.copy()
     
     # Update provenance and log.
     tomo.provenance['mlem'] = {'iters':iters}
@@ -397,9 +462,9 @@ def mlem_multilevel(tomo, iters=None, num_grid=None, level=None, init_matrix=Non
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
     
@@ -442,16 +507,17 @@ def gridrec(tomo, overwrite=True, *args, **kwargs):
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
 setattr(Session, 'diagnose_center', diagnose_center)
 setattr(Session, 'optimize_center', optimize_center)
-setattr(Session, 'upsample', upsample)
+setattr(Session, 'upsample2d', upsample2d)
+setattr(Session, 'upsample3d', upsample3d)
 setattr(Session, 'art', art)
 setattr(Session, 'gridrec', gridrec)
 setattr(Session, 'mlem', mlem)
@@ -459,7 +525,8 @@ setattr(Session, 'mlem_multilevel', mlem_multilevel)
 
 # Use original function docstrings for the wrappers.
 diagnose_center.__doc__ = _diagnose_center.__doc__
-upsample.__doc__ = _upsample.__doc__
+upsample2d.__doc__ = _upsample2d.__doc__
+upsample3d.__doc__ = _upsample3d.__doc__
 diagnose_center.__doc__ = _diagnose_center.__doc__
 art.__doc__ = _art.__doc__
 gridrec.__doc__ = Gridrec.__doc__

@@ -13,7 +13,7 @@ from tomopy.dataio.reader import Session
 # Import available functons in the package.
 from apply_padding import _apply_padding
 from correct_drift import _correct_drift
-from downsample import _downsample
+from downsample import _downsample2d, _downsample3d
 from median_filter import _median_filter
 from normalize import _normalize
 from phase_retrieval import _phase_retrieval, _paganin_filter
@@ -68,9 +68,9 @@ def apply_padding(tomo, num_pad=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
 
 # --------------------------------------------------------------------
 
@@ -115,15 +115,15 @@ def correct_drift(tomo, air_pixels=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
 
 # --------------------------------------------------------------------
 
-def downsample(tomo, level=None,
-               num_cores=None, chunk_size=None,
-               overwrite=True):
+def downsample2d(tomo, level=None,
+                 num_cores=None, chunk_size=None,
+                 overwrite=True):
     
     # Make checks first.
     if not tomo.FLAG_DATA:
@@ -146,7 +146,7 @@ def downsample(tomo, level=None,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype=np.int32, copy=False)
 
-    data = _downsample(tomo.data, level)
+    data = _downsample2d(tomo.data, level)
     
     ## Distribute jobs.
     #_func = _downsample
@@ -161,9 +161,55 @@ def downsample(tomo, level=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
+	
+# --------------------------------------------------------------------
+
+def downsample3d(tomo, level=None,
+                 num_cores=None, chunk_size=None,
+                 overwrite=True):
+    
+    # Make checks first.
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("data downsampling (data " +
+                            "missing) [bypassed]")
+        return
+    
+    
+    # Set default parameters.
+    if level is None:
+        level = 1
+        tomo.logger.debug("downsample: level is " +
+                          "set to " + str(level) + " [ok]")
+
+
+    # Check inputs.
+    if not isinstance(tomo.data, np.float32):
+        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+
+    if not isinstance(level, np.int32):
+        level = np.array(level, dtype=np.int32, copy=False)
+
+    data = _downsample3d(tomo.data, level)
+    
+    ## Distribute jobs.
+    #_func = _downsample
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis,
+    #                            num_cores, chunk_size)
+    
+    # Update provenance and log.
+    tomo.provenance['downsample'] = {'level':level}
+    tomo.logger.info("data downsampling [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data	
 
 # --------------------------------------------------------------------
 
@@ -198,9 +244,9 @@ def median_filter(tomo, size=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
 
 # --------------------------------------------------------------------
 
@@ -249,9 +295,9 @@ def normalize(tomo, cutoff=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
 
 # --------------------------------------------------------------------
 
@@ -321,9 +367,9 @@ def phase_retrieval(tomo, pixel_size=None, dist=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
 
 # --------------------------------------------------------------------
 
@@ -360,7 +406,7 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
     _args = (level, wname, sigma)
     _axis = 1 # Slice axis
     data = distribute_jobs(tomo.data, _func, _args, _axis,
-						   num_cores, chunk_size)
+                           num_cores, chunk_size)
 			
     # Update provenance and log.
     tomo.provenance['stripe_removal'] = {'level':level, 
@@ -370,16 +416,17 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data = data
+	tomo.data = data
     else:
-	    return data
+	return data
     
 # --------------------------------------------------------------------
     
 # Hook all these methods to TomoPy.
 setattr(Session, 'apply_padding', apply_padding)
 setattr(Session, 'correct_drift', correct_drift)
-setattr(Session, 'downsample', downsample)
+setattr(Session, 'downsample2d', downsample2d)
+setattr(Session, 'downsample3d', downsample3d)
 setattr(Session, 'median_filter', median_filter)
 setattr(Session, 'normalize', normalize)
 setattr(Session, 'phase_retrieval', phase_retrieval)
@@ -388,7 +435,8 @@ setattr(Session, 'stripe_removal', stripe_removal)
 # Use original function docstrings for the wrappers.
 apply_padding.__doc__ = _apply_padding.__doc__
 correct_drift.__doc__ = _correct_drift.__doc__
-downsample.__doc__ = _downsample.__doc__
+downsample2d.__doc__ = _downsample2d.__doc__
+downsample3d.__doc__ = _downsample3d.__doc__
 median_filter.__doc__ = _median_filter.__doc__
 normalize.__doc__ = _normalize.__doc__
 phase_retrieval.__doc__ = _phase_retrieval.__doc__
