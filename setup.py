@@ -63,7 +63,6 @@ ext_fftw = Extension(name='tomopy.lib.libfftw',
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f'])
                     
-
 # Create preprocessing shared-library.
 ext_prep = Extension(name='tomopy.lib.libprep',
                     sources=['tomopy/preprocess/correct_drift.c',
@@ -75,12 +74,8 @@ ext_prep = Extension(name='tomopy.lib.libprep',
 ext_recon = Extension(name='tomopy.lib.librecon',
                     sources=['tomopy/recon/art.c',
                              'tomopy/recon/mlem.c',
-                             'tomopy/recon/upsample.c'],
-                    include_dirs=C_INCLUDE_PATH)
-
-# Create Gridrec shared-library.
-ext_gridrec = Extension(name='tomopy.lib.libgridrec',
-                    sources=['tomopy/recon/gridrec/filters.cpp',
+                             'tomopy/recon/upsample.c',
+                             'tomopy/recon/gridrec/filters.cpp',
                              'tomopy/recon/gridrec/grid.cpp',
                              'tomopy/recon/gridrec/MessageQueue.cpp',
                              'tomopy/recon/gridrec/pswf.cpp',
@@ -93,7 +88,6 @@ ext_gridrec = Extension(name='tomopy.lib.libgridrec',
                                      '-lboost_system',
                                      '-lboost_date_time'])
 
-
 # Main setup configuration.
 setup(
       name='tomopy',
@@ -102,12 +96,12 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      ext_modules=[ext_fftw, ext_recon, ext_gridrec, ext_prep],
+      ext_modules=[ext_fftw, ext_recon, ext_prep],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
 
-      description='Imaging toolbox',
+      description='Toolbox for synchrotron tomographic imaging',
       keywords=['tomography', 'reconstruction', 'imaging'],
       url='http://aps.anl.gov/tomopy',
       download_url='http://github.com/tomopy/tomopy',

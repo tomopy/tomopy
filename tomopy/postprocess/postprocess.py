@@ -61,9 +61,9 @@ def adaptive_segment(tomo, block_size=None, offset=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
 
@@ -106,9 +106,9 @@ def region_segment(tomo, low=None, high=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
 
@@ -135,9 +135,9 @@ def remove_background(tomo,
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
 
@@ -168,9 +168,9 @@ def threshold_segment(tomo, cutoff=None,
     
     # Update returned values.
     if overwrite:
-	    tomo.data_recon = data_recon
+	tomo.data_recon = data_recon
     else:
-	    return data_recon
+	return data_recon
 
 # --------------------------------------------------------------------
 

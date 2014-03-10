@@ -11,8 +11,8 @@ import multiprocessing as mp
 # --------------------------------------------------------------------
 
 # Get the shared library for gridrec.
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libgridrec.so'))
-libgridrec = ctypes.CDLL(libpath)
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/librecon.so'))
+librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
@@ -271,23 +271,23 @@ class Gridrec():
             center = np.array(center, dtype=np.float32, copy=False)
 
         # Construct the reconstruction object.
-        libgridrec.reconCreate(ctypes.byref(self.params),
+        librecon.reconCreate(ctypes.byref(self.params),
                 theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
         # Prepare input variables by converting them to C-types.
         _num_slices = ctypes.c_int(num_slices)
         datain = np.array(data[:, slice_no, :])
-        self.data_recon = np.empty((num_slices,
+        self.data_recon = np.zeros((num_slices,
                                     self.params.numPixels,
                                     self.params.numPixels), dtype='float32')
                                     
         # Go, go, go.
-        libgridrec.reconRun(ctypes.byref(_num_slices),
+        librecon.reconRun(ctypes.byref(_num_slices),
                 center.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                 datain.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                 self.data_recon.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
         # Destruct the reconstruction object used by the wrapper.
-        libgridrec.reconDelete()
+        librecon.reconDelete()
         return self.data_recon
 
