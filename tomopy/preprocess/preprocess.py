@@ -18,6 +18,7 @@ from median_filter import _median_filter
 from normalize import _normalize
 from phase_retrieval import _phase_retrieval, _paganin_filter
 from stripe_removal import _stripe_removal
+from zinger_removal import _zinger_removal
 
 # Import multiprocessing module.
 from tomopy.tools.multiprocess import distribute_jobs
@@ -198,8 +199,8 @@ def downsample3d(tomo, level=None,
     #_func = _downsample
     #_args = ()
     #_axis = 1 # Slice axis
-    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis,
-    #                            num_cores, chunk_size)
+    #data = distribute_jobs(tomo.data, _func, _args, _axis,
+    #                       num_cores, chunk_size)
     
     # Update provenance and log.
     tomo.provenance['downsample'] = {'level':level}
@@ -416,10 +417,60 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
     
     # Update returned values.
     if overwrite:
-	tomo.data = data
+        tomo.data = data
     else:
-	return data
+        return data
+
+# --------------------------------------------------------------------
+
+def zinger_removal(tomo, zinger_level=None, median_width=None,
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
     
+    # Make checks first.
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("zinger removal (data missing) [bypassed]")
+        return
+    
+    
+    # Set default parameters.
+    if zinger_level is None:
+        zinger_level = 1000
+        tomo.logger.debug("zinger_removal: zinger_level is " +
+                          "set to " + str(zinger_level) + " [ok]")
+
+    # Set default parameters.
+    if median_width is None:
+        median_width = 3
+        tomo.logger.debug("zinger_removal: median_width is " +
+                          "set to " + str(median_width) + " [ok]")
+
+    # Distribute jobs.
+    _func = _zinger_removal
+    _args = (zinger_level, median_width)
+    _axis = 0 # Projection axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis,
+                           num_cores, chunk_size)
+
+    data_white = distribute_jobs(tomo.data_white, _func, _args, _axis,
+                           num_cores, chunk_size)
+    
+    data_dark = distribute_jobs(tomo.data_dark, _func, _args, _axis,
+                           num_cores, chunk_size)
+
+    # Update provenance and log.
+    tomo.provenance['zinger_removal'] = {'zinger_level':zinger_level,
+                                         'median_width':median_width}
+    tomo.logger.info("zinger removal [ok]")
+
+    # Update returned values.
+    if overwrite:
+        tomo.data = data
+        tomo.data_white = data_white
+        tomo.data_dark = data_dark
+    else:
+        return data, data_white, data_dark
+
 # --------------------------------------------------------------------
     
 # Hook all these methods to TomoPy.
@@ -431,6 +482,7 @@ setattr(Session, 'median_filter', median_filter)
 setattr(Session, 'normalize', normalize)
 setattr(Session, 'phase_retrieval', phase_retrieval)
 setattr(Session, 'stripe_removal', stripe_removal)
+setattr(Session, 'zinger_removal', zinger_removal)
 
 # Use original function docstrings for the wrappers.
 apply_padding.__doc__ = _apply_padding.__doc__
@@ -441,3 +493,4 @@ median_filter.__doc__ = _median_filter.__doc__
 normalize.__doc__ = _normalize.__doc__
 phase_retrieval.__doc__ = _phase_retrieval.__doc__
 stripe_removal.__doc__ = _stripe_removal.__doc__
+zinger_removal.__doc__ = _zinger_removal.__doc__
