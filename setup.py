@@ -21,7 +21,7 @@ try:
     import scipy
 except ImportError:
     raise ImportError("tomopy requires scipy 0.13.2 " +
-                  "(hint: pip install numpy)")
+                  "(hint: pip install scipy)")
 try:
     import h5py
 except ImportError:
