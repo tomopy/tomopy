@@ -53,6 +53,8 @@ void mlem(float* data, float* theta, float center,
     
     for (t = 0; t < iters; t++) {
         
+        printf ("mlem iteration: %i \n", t);
+        
         suma = (float *)calloc((num_grid*num_grid), sizeof(float));
         sumay = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
         

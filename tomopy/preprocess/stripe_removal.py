@@ -70,5 +70,4 @@ def _stripe_removal(args):
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
             
         data[:, n, :] = sli[x_shift:dx+x_shift, 0:dy]
-        
     return ind_start, ind_end, data

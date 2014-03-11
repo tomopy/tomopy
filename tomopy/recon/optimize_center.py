@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy.optimize import minimize
+from scipy import ndimage
 
 from gridrec import Gridrec
 
@@ -42,7 +43,7 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     <dx.doi.org/10.1117/12.679101>`_
     """
     # Make an initial reconstruction to adjust histogram limits. 
-    recon = Gridrec(data, )
+    recon = Gridrec(data, airPixels=20, ringWidth=10)
     recon.reconstruct(data, theta=theta, center=center_init, slice_no=slice_no)
     
     # Adjust histogram boundaries according to reconstruction.
@@ -75,6 +76,7 @@ def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max):
     """
     print 'trying center: ' + str(np.squeeze(center))
     recon.reconstruct(data, theta=theta, center=center, slice_no=slice_no)
-    histr, e = np.histogram(recon.data_recon, bins=64, range=[hist_min, hist_max])
+    histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data_recon, sigma=2.), 
+                            bins=64, range=[hist_min, hist_max])
     histr = histr.astype('float32') / recon.data_recon.size + 1e-12
     return -np.dot(histr, np.log2(histr))

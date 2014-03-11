@@ -54,6 +54,8 @@ void art(float* data, float* theta, float center,
     
     for (t = 0; t < iters; t++) {
         
+        printf ("art iteration: %i \n", t);
+        
         for (q = 0; q < num_projections; q++) {
             iproj = q * (num_slices * num_pixels);
             

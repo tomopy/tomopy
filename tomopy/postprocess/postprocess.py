@@ -126,7 +126,7 @@ def remove_background(tomo,
     _func = _remove_background
     _args = ()
     _axis = 0 # Slice axis
-    data_recon = distribute_jobs(data, _func, _args, _axis, 
+    data_recon = distribute_jobs(tomo.data_recon, _func, _args, _axis, 
                                  num_cores, chunk_size)
                                          
     # Update provenance.
