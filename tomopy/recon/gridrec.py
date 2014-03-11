@@ -65,7 +65,7 @@ class Gridrec():
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
-                 airPixels=1,
+                 airPixels=20,
                  ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,

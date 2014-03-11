@@ -107,7 +107,10 @@ def optimize_center(tomo, slice_no=None, center_init=None,
         tol = 0.5
         tomo.logger.debug("optimize_center: tol is set " +
                           "to " + str(tol) + " [ok]")
-    
+                          
+                          
+    if not isinstance(center_init, np.float32):
+        center_init = np.array(center_init, dtype=np.float32, copy=False)
 
     # All set, give me center now.
     center = _optimize_center(tomo.data, tomo.theta, slice_no, center_init, tol)
@@ -307,7 +310,7 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
     # Pad data first.
     data = tomo.apply_padding(overwrite=False)
     data = np.abs(-np.log(data));
-    
+
     # Adjust center according to padding.
     center = tomo.center + (data.shape[2]-tomo.data.shape[2])/2.
 

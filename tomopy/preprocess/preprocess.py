@@ -419,6 +419,7 @@ def stripe_removal(tomo, level=None, wname=None, sigma=None,
 	tomo.data = data
     else:
 	return data
+
     
 # --------------------------------------------------------------------
     
