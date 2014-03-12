@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 from skimage.filter import threshold_otsu
-from tomopy.tools.multiprocess import worker
 
+# --------------------------------------------------------------------
 
-@worker
-def threshold_segment(args):
+def _threshold_segment(args):
     """
     Threshold based segmentation.
     """

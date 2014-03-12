@@ -1,6 +1,7 @@
+        Feb 28 2014 -- MLEM and ART reconstructions added. Code cleaned.
         Feb 15 2014 -- Threshold and region based segmentations added.
         Feb 14 2014 -- Multi-processing feature added.
-        Feb 04 2014 -- Auto level calculation for ring removal
+        Feb 04 2014 -- Auto level calculation for ring removal added.
         Feb 01 2014 -- optimize_center and diagnose_center added.
 v0.0.1, Jan 31 2014 -- Initial release.
         

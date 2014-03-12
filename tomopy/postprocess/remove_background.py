@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from skimage.morphology import reconstruction
-from tomopy.tools.multiprocess import worker
 
+# --------------------------------------------------------------------
 
-@worker
-def remove_bg(args):
+def _remove_background(args):
     """
     Remove background from reconstructions.
     """

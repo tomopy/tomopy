@@ -32,9 +32,9 @@ void reconDelete()
 }
 
 void reconRun(int *numSlices,
-              float *pCenter,
-              float *pIn, 
-              float *pOut)
+             float *pCenter,
+             float *pIn,
+             float *pOut)
 {
     if (pTomoRecon == NULL) return;
     pTomoRecon -> reconstruct(*numSlices, pCenter, pIn, pOut);

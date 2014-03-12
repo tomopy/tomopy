@@ -1,6 +1,7 @@
 # encoding: utf-8
 import logging
 
+# --------------------------------------------------------------------
 
 # patch Python code to add color support to logging.StreamHandler
 def add_coloring_to_emit_windows(fn):
@@ -71,6 +72,8 @@ def add_coloring_to_emit_windows(fn):
         return ret
     return new
 
+# --------------------------------------------------------------------
+
 def add_coloring_to_emit_ansi(fn):
     # add methods we need to the class
     def new(*args):
@@ -91,6 +94,7 @@ def add_coloring_to_emit_ansi(fn):
         return fn(*args)
     return new
 
+# --------------------------------------------------------------------
 
 import platform
 if platform.system()=='Windows':

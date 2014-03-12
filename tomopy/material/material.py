@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+Module in construction!
+"""
 import h5py
-import re
-from tomopy.tools import constants
 import numpy as np
 from scipy import interpolate
 
+# --------------------------------------------------------------------
 
 class Element():
     def __init__(self, element):

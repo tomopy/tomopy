@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 from scipy import ndimage
-from skimage.filter import threshold_otsu, threshold_adaptive
-from tomopy.tools.multiprocess import worker
+from skimage.filter import threshold_adaptive
 
+# --------------------------------------------------------------------
 
-@worker
-def adaptive_segment(args):
+def _adaptive_segment(args):
     """
     Adaptive thresholding based segmentation.
     """
@@ -16,9 +14,7 @@ def adaptive_segment(args):
     for m in range(ind_end-ind_start):
         img = data[m, :, :]
         
-        global_thresh = threshold_otsu(img)
-        binary_global = img > global_thresh
-
+        # Perform scikit adaptive thresholding.
         img = threshold_adaptive(img, block_size=block_size, offset=offset)
         
         # Remove small white regions

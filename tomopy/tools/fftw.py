@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Module for FFTW wrappers.
+"""
 import ctypes
 import numpy as np
 import os
 
+# --------------------------------------------------------------------
+
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libfftw.so'))
 libfftw = ctypes.CDLL(libpath)
 
+# --------------------------------------------------------------------
 
 def fftw(a):
     """ 
@@ -48,6 +54,7 @@ def fftw(a):
 		    direction.ctypes.data_as(c_int_p))
     return _a
 
+# --------------------------------------------------------------------
 
 def ifftw(a):
     """
@@ -85,6 +92,7 @@ def ifftw(a):
     #_a = _a / dimx
     return _a
 
+# --------------------------------------------------------------------
 
 def fftw2(a):
     """
@@ -129,6 +137,7 @@ def fftw2(a):
                     direction.ctypes.data_as(c_int_p)) 
     return _a
 
+# --------------------------------------------------------------------
 
 def ifftw2(a):
     """

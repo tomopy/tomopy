@@ -1,139 +1,496 @@
 # -*- coding: utf-8 -*-
-from tomopy.dataio.reader import Dataset
-from median_filter import median_filter
-from normalize import normalize
-import phase_retrieval
-from stripe_removal import stripe_removal
+"""
+This module containes a set of thin wrappers for the other
+modules in preprocess package to link them to TomoPy session. 
+Each wrapper first checks the arguments and then calls the method.
+The linking is mostly realized through the multiprocessing module.
+"""
 import numpy as np
-import multiprocessing as mp
-from tomopy.tools import multiprocess
-import logging
-logger = logging.getLogger("tomopy")
+
+# Import main TomoPy object.
+from tomopy.dataio.reader import Session
+
+# Import available functons in the package.
+from apply_padding import _apply_padding
+from correct_drift import _correct_drift
+from downsample import _downsample2d, _downsample3d
+from median_filter import _median_filter
+from normalize import _normalize
+from phase_retrieval import _phase_retrieval, _paganin_filter
+from stripe_removal import _stripe_removal
+from zinger_removal import _zinger_removal
+
+# Import multiprocessing module.
+from tomopy.tools.multiprocess import distribute_jobs
 
 
-def median_filter_wrapper(TomoObj, size=5,
-                          num_cores=None, chunk_size=None):
-    if not TomoObj.FLAG_DATA:
-        logger.warning("median filtering (data missing) [bypassed]")
+# --------------------------------------------------------------------
+
+def apply_padding(tomo, num_pad=None,
+                  num_cores=None, chunk_size=None,
+                  overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("apply padding to data (data " +
+                            "missing) [bypassed]")
         return
+        
+        
+    # Set default parameters.
+    if num_pad is None:
+        num_pad = np.ceil(tomo.data.shape[2] * np.sqrt(2))
+        tomo.logger.debug("apply_padding: num_pad is " +
+                          "set to " + str(num_pad) + " [ok]")
+                         
+        
+    # Check inputs.
+    if not isinstance(tomo.data, np.float32):
+        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+        
+    if not isinstance(num_pad, np.int32):
+        num_pad = np.array(num_pad, dtype=np.int32, copy=False)
+
+    data = _apply_padding(tomo.data, num_pad)
+
+    # Update data dimensions.
+    tomo.num_pixels = np.array(tomo.data.shape[2], dtype='int32')
+
+    ## Distribute jobs.
+    #_func = _apply_padding
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis, 
+    #                            num_cores, chunk_size)
+   
+    # Update provenance and log.
+    tomo.provenance['apply_padding'] = {}
+    tomo.logger.info("apply data padding [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
+
+# --------------------------------------------------------------------
+
+def correct_drift(tomo, air_pixels=None, 
+                  num_cores=None, chunk_size=None,
+                  overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("data drift correction (data " +
+                            "missing) [bypassed]")
+        return
+        
+        
+    # Set default parameters.
+    if air_pixels is None:
+        air_pixels = 20
+        tomo.logger.debug("correct_data: num_air_pixels is " +
+                          "set to " + str(air_pixels) + " [ok]")
+
+    
+    # Check inputs.
+    if not isinstance(tomo.data, np.float32):
+        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+
+    if not isinstance(air_pixels, np.int32):
+        air_pixels = np.array(air_pixels, dtype=np.int32, copy=False)
+    
+    
+    data = _correct_drift(tomo.data, air_pixels)
+
+    ## Distribute jobs.
+    #_func = _correct_drift
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis, 
+    #                            num_cores, chunk_size)
+   
+    # Update provenance and log.
+    tomo.provenance['correct_data'] = {'air_pixels':air_pixels}
+    tomo.logger.info("data drift correction [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
+
+# --------------------------------------------------------------------
+
+def downsample2d(tomo, level=None,
+                 num_cores=None, chunk_size=None,
+                 overwrite=True):
+    
+    # Make checks first.
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("data downsampling (data " +
+                            "missing) [bypassed]")
+        return
+    
+    
+    # Set default parameters.
+    if level is None:
+        level = 1
+        tomo.logger.debug("downsample: level is " +
+                          "set to " + str(level) + " [ok]")
+
+
+    # Check inputs.
+    if not isinstance(tomo.data, np.float32):
+        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+
+    if not isinstance(level, np.int32):
+        level = np.array(level, dtype=np.int32, copy=False)
+
+    data = _downsample2d(tomo.data, level)
+    
+    ## Distribute jobs.
+    #_func = _downsample
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #tomo.data = distribute_jobs(tomo.data, _func, _args, _axis,
+    #                            num_cores, chunk_size)
+    
+    # Update provenance and log.
+    tomo.provenance['downsample'] = {'level':level}
+    tomo.logger.info("data downsampling [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
+	
+# --------------------------------------------------------------------
+
+def downsample3d(tomo, level=None,
+                 num_cores=None, chunk_size=None,
+                 overwrite=True):
+    
+    # Make checks first.
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("data downsampling (data " +
+                            "missing) [bypassed]")
+        return
+    
+    
+    # Set default parameters.
+    if level is None:
+        level = 1
+        tomo.logger.debug("downsample: level is " +
+                          "set to " + str(level) + " [ok]")
+
+
+    # Check inputs.
+    if not isinstance(tomo.data, np.float32):
+        tomo.data = np.array(tomo.data, dtype=np.float32, copy=False)
+
+    if not isinstance(level, np.int32):
+        level = np.array(level, dtype=np.int32, copy=False)
+
+    data = _downsample3d(tomo.data, level)
+    
+    ## Distribute jobs.
+    #_func = _downsample
+    #_args = ()
+    #_axis = 1 # Slice axis
+    #data = distribute_jobs(tomo.data, _func, _args, _axis,
+    #                       num_cores, chunk_size)
+    
+    # Update provenance and log.
+    tomo.provenance['downsample'] = {'level':level}
+    tomo.logger.info("data downsampling [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data	
+
+# --------------------------------------------------------------------
+
+def median_filter(tomo, size=None, 
+                  num_cores=None, chunk_size=None,
+                  overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("median filtering (data " +
+                            "missing) [bypassed]")
+        return
+        
+
+    # Set default parameters.
+    if size is None:
+        size = 5
+        tomo.logger.debug("median_filter: size is " +
+                       "set to " + str(size) + " [ok]")
+        
         
     # Distribute jobs.
-    axis = 1 # Slice axis
-    args = (size)
-    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, median_filter, args,
-                                 axis, num_cores, chunk_size)
+    _func = _median_filter
+    _args = (size)
+    _axis = 1 # Slice axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis, 
+                           num_cores, chunk_size)
    
-    # Update provenance.
-    TomoObj.provenance['median_filter'] = {'size':size}
+    # Update provenance and log.
+    tomo.provenance['median_filter'] = {'size':size}
+    tomo.logger.info("median filtering [ok]")
     
-    logger.info("median filtering [ok]")
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
 
+# --------------------------------------------------------------------
 
-def normalize_wrapper(TomoObj, cutoff=None,
-                      num_cores=None, chunk_size=None):
-    if not TomoObj.FLAG_DATA:
-        logger.warning("normalization (data missing) [bypassed]")
+def normalize(tomo, cutoff=None, 
+              num_cores=None, chunk_size=None,
+              overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("normalization (data " +
+                            "missing) [bypassed]")
         return
         
-    if not TomoObj.FLAG_WHITE:
-        logger.warning("normalization (white-data missing) [bypassed]")
+    if not tomo.FLAG_WHITE: # This is checked before but check anyway.
+        tomo.logger.warning("normalization (white-data " +
+                            "missing) [bypassed]")
         return
         
-    if not TomoObj.FLAG_DARK:
-        logger.warning("normalization (dark-data missing) [bypassed]")
+    if not tomo.FLAG_DARK: # This is checked before but check anyway.
+        tomo.logger.warning("normalization (dark-data " +
+                            "missing) [bypassed]")
         return
+        
+
+    # Set default parameters.
+    if cutoff is None:
+        tomo.logger.debug("normalize: cutoff is set to None [ok]")
+
 
     # Calculate average white and dark fields for normalization.
-    avg_white = np.mean(TomoObj.data_white, axis=0)
-    avg_dark = np.mean(TomoObj.data_dark, axis=0)
+    avg_white = np.mean(tomo.data_white, axis=0)
+    avg_dark = np.mean(tomo.data_dark, axis=0)
+    
     
     # Distribute jobs.
-    axis = 0 # Projection axis
-    args = (avg_white, avg_dark, cutoff)
-    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, normalize, args,
-                                 axis, num_cores, chunk_size)
+    _func = _normalize
+    _args = (avg_white, avg_dark, cutoff)
+    _axis = 0 # Projection axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis, 
+						   num_cores, chunk_size)
 
-    # Update provenance.
-    TomoObj.provenance['normalize'] = {'cutoff':cutoff}
+
+    # Update provenance and log.
+    tomo.provenance['normalize'] = {'cutoff':cutoff}
+    tomo.logger.info("normalization [ok]")
     
-    logger.info("normalization [ok]")
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
 
+# --------------------------------------------------------------------
 
-def phase_retrieval_wrapper(TomoObj, pixel_size=None, dist=None, 
-                            energy=None, alpha=1e-5, padding=True,
-                            num_cores=None, chunk_size=None):
-    if not TomoObj.FLAG_DATA:
-        logger.warning("phase retrieval (data missing) [bypassed]")
+def phase_retrieval(tomo, pixel_size=None, dist=None, 
+                    energy=None, alpha=None, padding=None,
+                    num_cores=None, chunk_size=None,
+                    overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("phase retrieval (data " +
+                            "missing) [bypassed]")
         return
         
-    if TomoObj.data.shape[1] < 16:
-        logger.warning("phase retrieval (at least 16 slices are needed) [bypassed]")
+    if tomo.data.shape[1] < 16:
+        tomo.logger.warning("phase retrieval (at least 16 " +
+                            "slices are needed) [bypassed]")
         return
         
     if pixel_size is None:
-        logger.warning("phase retrieval (pixel_size missing) [bypassed]")
+        tomo.logger.warning("phase retrieval (pixel_size " +
+                            "missing) [bypassed]")
         return
         
     if dist is None:
-        logger.warning("phase retrieval (dist missing) [bypassed]")
+        tomo.logger.warning("phase retrieval (dist " +
+                            "missing) [bypassed]")
         return
         
     if energy is None:
-        logger.warning("phase retrieval (energy missing) [bypassed]")
+        tomo.logger.warning("phase retrieval (energy " +
+                            "missing) [bypassed]")
         return
+    
+
+    # Set default parameters.
+    if alpha is None:
+        alpha = 1e-5
+        tomo.logger.debug("phase_retrieval: alpha is set " +
+                          "to " + str(alpha) + " [ok]")
+  
+    if padding is None:
+        padding = True
+        tomo.logger.debug("phase_retrieval: padding is set " +
+                          "to " + str(padding) + " [ok]")
+        
         
     # Compute the filter.
-    H, x_shift, y_shift, tmp_proj = phase_retrieval.paganin_filter(TomoObj.data,
+    H, x_shift, y_shift, tmp_proj = _paganin_filter(tomo.data,
                                     pixel_size, dist, energy, alpha, padding)
-                                    
-                                    
+                                   
+                     
     # Distribute jobs.
-    axis = 0 # Projection axis
-    args = (H, x_shift, y_shift, tmp_proj, padding)
-    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, phase_retrieval.phase_retrieval, args,
-                                 axis, num_cores, chunk_size)
+    _func = _phase_retrieval
+    _args = (H, x_shift, y_shift, tmp_proj, padding)
+    _axis = 0 # Projection axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis, 
+                           num_cores, chunk_size)
 
-    # Update provenance.
-    TomoObj.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
-	                                     'dist':dist,
-                                             'energy':energy,
-	                                     'alpha':alpha,
-	                                     'padding':padding}
-	    
-    logger.info("phase retrieval [ok]")
+    # Update provenance and log.
+    tomo.provenance['phase_retrieval'] = {'pixel_size':pixel_size, 
+	                                  'dist':dist,
+                                          'energy':energy,
+	                                  'alpha':alpha,
+	                                  'padding':padding}
+    tomo.logger.info("phase retrieval [ok]")
+    
+    # Update returned values.
+    if overwrite:
+	tomo.data = data
+    else:
+	return data
 
+# --------------------------------------------------------------------
 
-def stripe_removal_wrapper(TomoObj, level=None, wname='db5', sigma=4,
-                           num_cores=None, chunk_size=None):
-    if not TomoObj.FLAG_DATA:
-        logger.warning("normalization (data missing) [bypassed]")
+def stripe_removal(tomo, level=None, wname=None, sigma=None,
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
+    
+    # Make checks first. 
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("stripe removal (data " +
+                            "missing) [bypassed]")
         return
+        
+    # Set default parameters.
+    if wname is None:
+        wname = 'db5'
+        tomo.logger.debug("stripe_removal wavelet is " +
+                          "set to " + wname + " [ok]")
+
+    if sigma is None:
+        sigma = 4
+        tomo.logger.debug("stripe_removal: sigma is " +
+                          "set to " + str(sigma) + " [ok]")
+
 
     # Find the higest level possible.
     if level is None:
-        size = np.max(TomoObj.data.shape)
+        size = np.max(tomo.data.shape)
         level = int(np.ceil(np.log2(size)))
         
+
     # Distribute jobs.
-    axis = 1 # Slice axis
-    args = (level, wname, sigma)
-    TomoObj.data = multiprocess.distribute_jobs(TomoObj.data, stripe_removal, args,
-                                 axis, num_cores, chunk_size)
+    _func = _stripe_removal
+    _args = (level, wname, sigma)
+    _axis = 1 # Slice axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis,
+                           num_cores, chunk_size)
+			
+    # Update provenance and log.
+    tomo.provenance['stripe_removal'] = {'level':level, 
+                                         'wname':wname, 
+                                         'sigma':sigma}
+    tomo.logger.info("stripe removal [ok]")
     
-    # Update provenance.
-    TomoObj.provenance['stripe_removal'] = {'level':level, 
-                                            'wname':wname, 
-                                            'sigma':sigma}
+    # Update returned values.
+    if overwrite:
+        tomo.data = data
+    else:
+	return data
+
+# --------------------------------------------------------------------
+
+def zinger_removal(tomo, zinger_level=None, median_width=None,
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
     
-    logger.info("stripe removal [ok]")
+    # Make checks first.
+    if not tomo.FLAG_DATA:
+        tomo.logger.warning("zinger removal (data missing) [bypassed]")
+        return
+    
+    
+    # Set default parameters.
+    if zinger_level is None:
+        zinger_level = 1000
+        tomo.logger.debug("zinger_removal: zinger_level is " +
+                          "set to " + str(zinger_level) + " [ok]")
 
+    # Set default parameters.
+    if median_width is None:
+        median_width = 3
+        tomo.logger.debug("zinger_removal: median_width is " +
+                          "set to " + str(median_width) + " [ok]")
 
-setattr(Dataset, 'median_filter', median_filter_wrapper)
-setattr(Dataset, 'normalize', normalize_wrapper)
-setattr(Dataset, 'phase_retrieval', phase_retrieval_wrapper)
-setattr(Dataset, 'stripe_removal', stripe_removal_wrapper)
+    # Distribute jobs.
+    _func = _zinger_removal
+    _args = (zinger_level, median_width)
+    _axis = 0 # Projection axis
+    data = distribute_jobs(tomo.data, _func, _args, _axis,
+                           num_cores, chunk_size)
 
-median_filter_wrapper.__doc__ = median_filter.__doc__
-normalize_wrapper.__doc__ = normalize.__doc__
-phase_retrieval_wrapper.__doc__ = phase_retrieval.__doc__
-stripe_removal_wrapper.__doc__ = stripe_removal.__doc__
+    data_white = distribute_jobs(tomo.data_white, _func, _args, _axis,
+                           num_cores, chunk_size)
+    
+    data_dark = distribute_jobs(tomo.data_dark, _func, _args, _axis,
+                           num_cores, chunk_size)
+
+    # Update provenance and log.
+    tomo.provenance['zinger_removal'] = {'zinger_level':zinger_level,
+                                         'median_width':median_width}
+    tomo.logger.info("zinger removal [ok]")
+
+    # Update returned values.
+    if overwrite:
+        tomo.data = data
+        tomo.data_white = data_white
+        tomo.data_dark = data_dark
+    else:
+        return data, data_white, data_dark
+
+# --------------------------------------------------------------------
+    
+# Hook all these methods to TomoPy.
+setattr(Session, 'apply_padding', apply_padding)
+setattr(Session, 'correct_drift', correct_drift)
+setattr(Session, 'downsample2d', downsample2d)
+setattr(Session, 'downsample3d', downsample3d)
+setattr(Session, 'median_filter', median_filter)
+setattr(Session, 'normalize', normalize)
+setattr(Session, 'phase_retrieval', phase_retrieval)
+setattr(Session, 'stripe_removal', stripe_removal)
+setattr(Session, 'zinger_removal', zinger_removal)
+
+# Use original function docstrings for the wrappers.
+apply_padding.__doc__ = _apply_padding.__doc__
+correct_drift.__doc__ = _correct_drift.__doc__
+downsample2d.__doc__ = _downsample2d.__doc__
+downsample3d.__doc__ = _downsample3d.__doc__
+median_filter.__doc__ = _median_filter.__doc__
+normalize.__doc__ = _normalize.__doc__
+phase_retrieval.__doc__ = _phase_retrieval.__doc__
+stripe_removal.__doc__ = _stripe_removal.__doc__
+zinger_removal.__doc__ = _zinger_removal.__doc__
