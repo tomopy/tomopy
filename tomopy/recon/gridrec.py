@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
+"""
+Module for wrapper to gridrec. 
+"""
+# -*- coding: utf-8 -*-
 import numpy as np
 import ctypes
 import os
-import time
 import multiprocessing as mp
 
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libgridrec.so'))
-libgridrec = ctypes.CDLL(libpath)
+# --------------------------------------------------------------------
+
+# Get the shared library for gridrec.
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/librecon.so'))
+librecon = ctypes.CDLL(libpath)
+
+# --------------------------------------------------------------------
 
 class GridrecCStruct(ctypes.Structure):
     """
@@ -57,8 +65,8 @@ class Gridrec():
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
-                 airPixels=10,
-                 ringWidth=9,
+                 airPixels=20,
+                 ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
@@ -171,6 +179,8 @@ class Gridrec():
 
         RadonInterpolation : scalar
             0=none, 1=linear.
+            
+        TODO: Seperate obsolete parameters from arguments.
         """
         self.params = GridrecCStruct()
         self.params.numProjections = data.shape[0]
@@ -221,14 +231,16 @@ class Gridrec():
         self.params.RadonInterpolationNone = 0
         self.params.RadonInterpolationLinear = 1
 
-    def run(self, data, center, theta, slice_no=None):
+    def reconstruct(self, data, center, theta, slice_no=None):
         """
         Performs reconstruction using the tomographic data.
         
-        Gridrec uses the anonymous "gridrec" algorithm (there are
-        rumors that it was written by written by Bob Marr and Graham
-        Campbell at BNL in 1997). The basic algorithm is based on FFTs
-        and interpolations.
+        Gridrec uses the interpolation based direct Fourier 
+        reconstruction (there are rumors that it was written 
+        by written by Bob Marr and Graham Campbell at BNL in 1997). 
+        Later on Mark Rivers upgraded it by adding a new Epics based
+        multi-thread library on top of Gridrec. Current version
+        uses standard Boost libraries for multi-threading.
         
         Parameters
         ----------
@@ -242,69 +254,39 @@ class Gridrec():
         -------
         out : ndarray
             Assigns reconstructed values in TomoRecon object as ``recon``.
+            
+        References
+        ----------
+        - `SPIE Proceedings, Vol 8506, 85060U(2012) \
+        <http://dx.doi.org/10.1117/12.930022>`_
         """
-        # Assign slice_no.
+        # Change num_slices if slice_no is set.
         num_slices = self.params.numSlices
         if slice_no is not None:
             num_slices = 1
         
-        # Prepare center for C.
+        # Convert center to array.
         if np.array(center).size == 1:
             center = np.ones(num_slices) * center
+            center = np.array(center, dtype=np.float32, copy=False)
 
-        # We want float32 inputs.
-        if not isinstance(data, np.float32):
-            data = data.astype(dtype=np.float32, copy=False)
-        if not isinstance(theta, np.float32):
-            theta = theta.astype(dtype=np.float32, copy=False)
-        if not isinstance(center, np.float32):
-            center = center.astype(dtype=np.float32, copy=False)
-            
         # Construct the reconstruction object.
-        libgridrec.reconCreate(ctypes.byref(self.params),
-                            theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+        librecon.reconCreate(ctypes.byref(self.params),
+                theta.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
         # Prepare input variables by converting them to C-types.
         _num_slices = ctypes.c_int(num_slices)
         datain = np.array(data[:, slice_no, :])
-        self.data_recon = np.empty((num_slices,
+        self.data_recon = np.zeros((num_slices,
                                     self.params.numPixels,
-                                    self.params.numPixels), dtype=np.float32)
+                                    self.params.numPixels), dtype='float32')
                                     
         # Go, go, go.
-        libgridrec.reconRun(ctypes.byref(_num_slices),
-                            center.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-                            datain.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-                            self.data_recon.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
-        
-        # Relax and wait while the reconstruction is running.
-        while True:
-            recon_complete, slices_remaining = self.poll()
-            if recon_complete.value is 1:
-                break
-            else:
-                time.sleep(0.1)
-    
+        librecon.reconRun(ctypes.byref(_num_slices),
+                center.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+                datain.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+                self.data_recon.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+
         # Destruct the reconstruction object used by the wrapper.
-        libgridrec.reconDelete()
-    
-    def poll(self):
-        """ 
-        Read the reconstruction status and the number of slices remaining.
-        
-        Returns
-        -------
-        recon_complete: scalar
-            1 if the reconstruction is complete,
-            0 if it is not yet complete.
-        
-        slices_remaining : scalar
-            slices_remaining is the number of slices
-            remaining to be reconstructed.
-            """
-        # Get the shared library
-        recon_complete = ctypes.c_int(0)
-        slices_remaining = ctypes.c_int(0)
-        libgridrec.reconPoll(ctypes.byref(recon_complete),
-                            ctypes.byref(slices_remaining))
-        return recon_complete, slices_remaining
+        librecon.reconDelete()
+        return self.data_recon

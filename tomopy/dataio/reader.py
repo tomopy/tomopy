@@ -1,88 +1,121 @@
 # -*- coding: utf-8 -*-
+"""
+Module for creating dataset.
+"""
+import numpy as np
 import h5py
 import os
-import numpy as np
 import time
 import logging
-logger = logging.getLogger("tomopy")
 
+# --------------------------------------------------------------------
 
-class Dataset():
-    def __init__(TomoObj, data=None, data_white=None, 
-                 data_dark=None, theta=None, 
-                 log='INFO', clog=True):
+class Session():
+    def __init__(tomo, log='INFO', clog=True):
         """
-        Constructor for initial Data-Exchange data structure.
+        Constructor for the data analysis.
         
         Attributes
         ----------
-        TomoObj : tomopy data object
+        tomo : tomopy data object
             This is the core object that all low-level 
             attributes and methods are bound to.
             
+        log : str, optional
+            Determines the logging level.
+            Available arguments: {'DEBUG' 'INFO' 'WARN' 'WARNING' 'ERROR'}.
+            
+        clog : bool, optional
+            If ``True`` command line logging is colored. 
+            You may want to set it ``False`` if you will use 
+            file logging only.
+        """
+        # Init all flags here. False unless checked.
+        tomo.FLAG_DATA = False
+        tomo.FLAG_WHITE = False
+        tomo.FLAG_DARK = False
+        tomo.FLAG_THETA = False
+        tomo.FLAG_DATA_CHECK = False
+        tomo.FLAG_DATA_RECON = False
+        
+        
+        # Provenance initialization.
+        tomo._init_provenance()
+    
+        # Logging init.
+        if clog: # enable colored logging
+            from tomopy.tools import colorer
+        # Set the log level.
+        tomo.logger = None
+        tomo._log_level = str(log).upper()
+        tomo._init_log()
+        tomo.logger.debug("TomoPy session initialization [ok]")
+        
+        
+    def dataset(tomo, data=None, data_white=None, 
+                data_dark=None, theta=None):
+        """
+        Convert external dataset into TomoPy data object.
+        
+        Parameters
+        ----------
+        
         data : ndarray
             3-D tomography data. Dimensions should be
             [projections, slices, pixels].
-            
+
         data_white : ndarray
             3-D white-field data. Multiple projections
-            are stacked together to obtain 3-D matrix. 
+            are stacked together to obtain 3-D matrix.
             2nd and 3rd dimensions should be the same as
             data [shots, slices, pixels].
             
         data_dark : ndarray
             3-D dark-field data. Multiple projections
-            are stacked together to obtain 3-D matrix. 
+            are stacked together to obtain 3-D matrix.
             2nd and 3rd dimensions should be the same as
             data [shots, slices, pixels].
             
         theta : ndarray
             Data acquisition angles corresponding
             to each projection.
-        
         """
-        # Init all flags here. False unless checked.
-        TomoObj.FLAG_DATA = False
-        TomoObj.FLAG_WHITE = False
-        TomoObj.FLAG_DARK = False
-        TomoObj.FLAG_THETA = False
-        TomoObj.FLAG_FILE_CHECK = False
-        TomoObj.FLAG_DATA_RECON = False
+        # Control inputs.
+        if data is None:
+            tomo.logger.error("Dataset import [bypassed]")
+            return
         
         # Set the numpy Data-Exchange structure.
-        TomoObj.data = np.array(data) # do not squeeze
-        TomoObj.data_white = np.array(data_white) # do not squeeze
-        TomoObj.data_dark = np.array(data_dark) # do not squeeze
-        TomoObj.theta = np.array(np.squeeze(theta))
-        TomoObj._log_level = str(log).upper()
-        
-        # Ignore inconsistent data.
-        if TomoObj.data != None:
-            TomoObj.FLAG_DATA = True
-        if TomoObj.data_white != None:
-            TomoObj.FLAG_WHITE = True
-        if TomoObj.data_dark != None:
-            TomoObj.FLAG_DARK = True
-        if TomoObj.theta != None:
-            TomoObj.FLAG_THETA = True
-        
-        # Provenance initialization.
-        TomoObj._init_provenance()
-    
-        # Logging init.
-        if clog: # enable colored logging
-            from tomopy.tools import colorer
-        TomoObj._init_log()
-        logger.debug("TomoObj initialization [ok]")
+        tomo.data = np.array(data, dtype='float32', copy=False) # do not squeeze
+        tomo.data_white = np.array(data_white, dtype='float32', copy=False) # do not squeeze
+        tomo.data_dark = np.array(data_dark, dtype='float32', copy=False) # do not squeeze
+        tomo.theta = np.array(np.squeeze(theta), dtype='float32', copy=False)
             
-    def _init_provenance(TomoObj):
-        # Start adding info.
-        TomoObj.provenance = {}
-        TomoObj.provenance['date'] = time.strftime('%Y-%m-%d')
-        TomoObj.provenance['time'] = time.strftime('%H:%M:%S')
-    
-    
-    def read(TomoObj, file_name,
+        # Assign data_white
+        if data_white is None:
+            tomo.data_white = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+            tomo.data_white += np.mean(tomo.data[:])
+            tomo.logger.warning("auto-normalization [ok]")
+        tomo.FLAG_WHITE = True
+            
+        # Assign data_dark
+        if data_dark is None:
+            tomo.data_dark = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+            tomo.logger.warning("dark-field assumed as zeros [ok]")
+        tomo.FLAG_DARK = True
+                
+        # Assign theta
+        if theta is None:
+            tomo.theta = np.linspace(0, tomo.data.shape[0], tomo.data.shape[0]) \
+                * 180 / (tomo.data.shape[0] + 1)
+            tomo.logger.warning("assign 180-degree rotation [ok]")
+        tomo.FLAG_THETA = True
+
+        # Check if data is as expected.
+        tomo._check_input_data()
+
+
+    def read(tomo, file_name,
              projections_start=None,
              projections_end=None,
              projections_step=None,
@@ -95,8 +128,7 @@ class Dataset():
              white_start=None,
              white_end=None,
              dark_start=None,
-             dark_end=None,
-             log='INFO'):
+             dark_end=None):
         """
         Read Data Exchange HDF5 file.
         
@@ -124,195 +156,222 @@ class Dataset():
         dark_start, dark_end : scalar, optional
             Values of the start and end of the
             slicing for the whole dark field shots.
-
-        dtype : str, optional
-            Desired output data type.
             
         Notes
         -----
         Unless specified in the file, a uniformly sampled
         180 degree rotation is assumed for ``theta``.
         
-        If ``data_white`` is not available, then the ``data``
-        is normalized with the average value ''data''.
+        If ``data_white`` is missing, then the ``data``
+        is by default normalized with the average value of ''data''.
+        
+        If ``data_dark`` is missing, then ``data_dark``
+        is by default set with zeros.
         """
         # Start working on checks and stuff.
-        TomoObj.file_name = os.path.abspath(file_name)
-        TomoObj.projections_start = projections_start
-        TomoObj.projections_end = projections_end
-        TomoObj.projections_step = projections_step
-        TomoObj.slices_start = slices_start
-        TomoObj.slices_end = slices_end
-        TomoObj.slices_step = slices_step
-        TomoObj.pixels_start = pixels_start
-        TomoObj.pixels_end = pixels_end
-        TomoObj.pixels_step = pixels_step
-        TomoObj.white_start = white_start
-        TomoObj.white_end = white_end
-        TomoObj.dark_start = dark_start
-        TomoObj.dark_end = dark_end
-        TomoObj._log_level = str(log).upper()
+        tomo.file_name = os.path.abspath(file_name)
+        tomo.projections_start = projections_start
+        tomo.projections_end = projections_end
+        tomo.projections_step = projections_step
+        tomo.slices_start = slices_start
+        tomo.slices_end = slices_end
+        tomo.slices_step = slices_step
+        tomo.pixels_start = pixels_start
+        tomo.pixels_end = pixels_end
+        tomo.pixels_step = pixels_step
+        tomo.white_start = white_start
+        tomo.white_end = white_end
+        tomo.dark_start = dark_start
+        tomo.dark_end = dark_end
         
-        # Prepare logging file.
-        TomoObj._set_log_file()
+        # Prepare logging file specific to input filename and location.
+        tomo._set_log_file()
 
-        # Make checks.
-        TomoObj._check_input_file()
-        TomoObj.provenance['file_name'] = TomoObj.file_name
+        # Make some checks on input data. This method
+        # sets the flags if all fields are as expected.
+        tomo._check_input_file()
+        tomo.provenance['file_name'] = tomo.file_name
 
-        if TomoObj.FLAG_DATA:
+        if tomo.FLAG_DATA:
             # All looks fine. Start reading data.
-            f = h5py.File(TomoObj.file_name, "r")
+            f = h5py.File(tomo.file_name, "r")
             hdfdata = f["/exchange/data"]
 
             # Prepare slicing based on data shape.
             num_x, num_y, num_z = hdfdata.shape
             if projections_start is None:
-                TomoObj.projections_start = 0
+                tomo.projections_start = 0
             if projections_end is None:
-                TomoObj.projections_end = num_x
+                tomo.projections_end = num_x
             if projections_step is None:
-                TomoObj.projections_step = 1
+                tomo.projections_step = 1
             if slices_start is None:
-                TomoObj.slices_start = 0
+                tomo.slices_start = 0
             if slices_end is None:
-                TomoObj.slices_end = num_y
+                tomo.slices_end = num_y
             if slices_step is None:
-                TomoObj.slices_step = 1
+                tomo.slices_step = 1
             if pixels_start is None:
-                TomoObj.pixels_start = 0
+                tomo.pixels_start = 0
             if pixels_end is None:
-                TomoObj.pixels_end = num_z
+                tomo.pixels_end = num_z
             if pixels_step is None:
-                TomoObj.pixels_step = 1
+                tomo.pixels_step = 1
         
-            TomoObj.data = hdfdata[TomoObj.projections_start:
-				      TomoObj.projections_end:
-					  TomoObj.projections_step,
-				  TomoObj.slices_start:
-				      TomoObj.slices_end:
-					  TomoObj.slices_step,
-				  TomoObj.pixels_start:
-				      TomoObj.pixels_end:
-					  TomoObj.pixels_step]
-            logger.info("read data from file [ok]")
+            tomo.data = hdfdata[tomo.projections_start:
+				      tomo.projections_end:
+					  tomo.projections_step,
+				  tomo.slices_start:
+				      tomo.slices_end:
+					  tomo.slices_step,
+				  tomo.pixels_start:
+				      tomo.pixels_end:
+					  tomo.pixels_step]
+            tomo.logger.info("read data from file [ok]")
 
             # Now read white fields.
-            if TomoObj.FLAG_WHITE:
+            if tomo.FLAG_WHITE:
                 hdfdata = f["/exchange/data_white"]
 
                 # Prepare slicing based on data shape.
                 if white_start is None:
-                    TomoObj.white_start = 0
+                    tomo.white_start = 0
                 if white_end is None:
-                    TomoObj.white_end = hdfdata.shape[0]
+                    tomo.white_end = hdfdata.shape[0]
 
                 # Slice it now.
-                TomoObj.data_white = hdfdata[TomoObj.white_start:
-					         TomoObj.white_end,
-					     TomoObj.slices_start:
-						 TomoObj.slices_end:
-						     TomoObj.slices_step,
-					     TomoObj.pixels_start:
-						 TomoObj.pixels_end:
-						     TomoObj.pixels_step]
-                logger.info("read data_white from file [ok]")
+                tomo.data_white = hdfdata[tomo.white_start:
+					         tomo.white_end,
+					     tomo.slices_start:
+						 tomo.slices_end:
+						     tomo.slices_step,
+					     tomo.pixels_start:
+						 tomo.pixels_end:
+						     tomo.pixels_step]
+                tomo.logger.info("read data_white from file [ok]")
             else:
-                TomoObj.data_white = np.zeros((1, TomoObj.data.shape[1], TomoObj.data.shape[2]))
-                TomoObj.data_white += np.mean(TomoObj.data[:])
-                TomoObj.FLAG_WHITE = True
-                logger.warning("auto-normalization [ok]")
+                tomo.data_white = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+                tomo.data_white += np.mean(tomo.data[:])
+                tomo.FLAG_WHITE = True
+                tomo.logger.warning("auto-normalization [ok]")
             
             # Now read dark fields.
-            if TomoObj.FLAG_DARK:
+            if tomo.FLAG_DARK:
                 hdfdata = f["/exchange/data_dark"]
 
                 # Prepare slicing based on data shape.
                 if dark_start is None:
-                    TomoObj.dark_start = 0
+                    tomo.dark_start = 0
                 if dark_end is None:
-                    TomoObj.dark_end = hdfdata.shape[0]
+                    tomo.dark_end = hdfdata.shape[0]
 
                 # Slice it now.
-                TomoObj.data_dark = hdfdata[TomoObj.dark_start:
-					         TomoObj.dark_end,
-					     TomoObj.slices_start:
-						 TomoObj.slices_end:
-						     TomoObj.slices_step,
-					     TomoObj.pixels_start:
-						 TomoObj.pixels_end:
-						     TomoObj.pixels_step]
-                logger.info("read data_dark from file [ok]")
+                tomo.data_dark = hdfdata[tomo.dark_start:
+					         tomo.dark_end,
+					     tomo.slices_start:
+						 tomo.slices_end:
+						     tomo.slices_step,
+					     tomo.pixels_start:
+						 tomo.pixels_end:
+						     tomo.pixels_step]
+                tomo.logger.info("read data_dark from file [ok]")
             else:
-                TomoObj.data_dark = np.zeros((1, TomoObj.data.shape[1], TomoObj.data.shape[2]))
-                TomoObj.data_dark += np.mean(TomoObj.data[:])
-                TomoObj.FLAG_DARK = True
-                logger.warning("auto-normalization [ok]")
+                tomo.data_dark = np.zeros((1, tomo.data.shape[1], tomo.data.shape[2]))
+                tomo.FLAG_DARK = True
+                tomo.logger.warning("dark-field assumed as zeros [ok]")
 
             # Read projection angles.
-            if TomoObj.FLAG_THETA:
+            if tomo.FLAG_THETA:
                 hdfdata = f["/exchange/theta"]
-                TomoObj.theta = hdfdata[TomoObj.projections_start:
-					    TomoObj.projections_end:
-						TomoObj.projections_step]
-                logger.info("reading theta from file [ok]")
+                tomo.theta = hdfdata[tomo.projections_start:
+					    tomo.projections_end:
+						tomo.projections_step]
+                tomo.logger.info("reading theta from file [ok]")
             else:
-                TomoObj.theta = np.linspace(0, TomoObj.data.shape[0], TomoObj.data.shape[0]) \
-                                * 180 / (TomoObj.data.shape[0] + 1)
-                TomoObj.FLAG_THETA = True
-                logger.warning("assign 180-degree rotation [ok]")
+                tomo.theta = np.linspace(0, tomo.data.shape[0], tomo.data.shape[0]) \
+                                * 180 / (tomo.data.shape[0] + 1)
+                tomo.FLAG_THETA = True
+                tomo.logger.warning("assign 180-degree rotation [ok]")
 
             # All done. Close file.
             f.close()
             
             # We want float32 inputs.
-            if not isinstance(TomoObj.data, np.float32):
-                TomoObj.data = TomoObj.data.astype(dtype=np.float32, copy=False)
-            if not isinstance(TomoObj.data_white, np.float32):
-                TomoObj.data_white = TomoObj.data_white.astype(dtype=np.float32, copy=False)
-            if not isinstance(TomoObj.data_dark, np.float32):
-                TomoObj.data_dark = TomoObj.data_dark.astype(dtype=np.float32, copy=False)
-            if not isinstance(TomoObj.theta, np.float32):
-                TomoObj.theta = TomoObj.theta.astype(dtype=np.float32, copy=False)
+            if not isinstance(tomo.data, np.float32):
+                tomo.data = tomo.data.astype(dtype=np.float32, copy=False)
+            if not isinstance(tomo.data_white, np.float32):
+                tomo.data_white = tomo.data_white.astype(dtype=np.float32, copy=False)
+            if not isinstance(tomo.data_dark, np.float32):
+                tomo.data_dark = tomo.data_dark.astype(dtype=np.float32, copy=False)
+            if not isinstance(tomo.theta, np.float32):
+                tomo.theta = tomo.theta.astype(dtype=np.float32, copy=False)
+            
+    def _init_provenance(tomo):
+        # Start adding info.
+        tomo.provenance = {}
+        tomo.provenance['date'] = time.strftime('%Y-%m-%d')
+        tomo.provenance['time'] = time.strftime('%H:%M:%S')
 
-    def _init_log(TomoObj):
+    def _init_log(tomo):
+        """
+        Setup and start command line logging.
+        """
         # Top-level log setup.
-        logger.setLevel(logging.DEBUG)
+        tomo.logger = logging.getLogger("tomopy") 
+        if tomo._log_level == 'DEBUG':
+            tomo.logger.setLevel(logging.DEBUG)
+        elif tomo._log_level == 'INFO':
+            tomo.logger.setLevel(logging.INFO) 
+        elif tomo._log_level == 'WARN':
+            tomo.logger.setLevel(logging.WARN)
+        elif tomo._log_level == 'WARNING':
+            tomo.logger.setLevel(logging.WARNING)
+        elif tomo._log_level == 'ERROR':
+            tomo.logger.setLevel(logging.ERROR)
         
-        # Terminal stram log.
+        # Terminal stream log.
         ch = logging.StreamHandler()
-        if TomoObj._log_level == 'DEBUG':
+        if tomo._log_level == 'DEBUG':
             ch.setLevel(logging.DEBUG)
-        elif TomoObj._log_level == 'INFO':
-            ch.setLevel(logging.INFO)
-        elif TomoObj._log_level == 'WARN':
+        elif tomo._log_level == 'INFO':
+            ch.setLevel(logging.INFO) 
+        elif tomo._log_level == 'WARN':
             ch.setLevel(logging.WARN)
-        elif TomoObj._log_level == 'WARNING':
+        elif tomo._log_level == 'WARNING':
             ch.setLevel(logging.WARNING)
-        elif TomoObj._log_level == 'ERROR':
+        elif tomo._log_level == 'ERROR':
             ch.setLevel(logging.ERROR)
         
         # Show date and time.
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         ch.setFormatter(formatter)
-        
+            
         # Update logger.
-        logger.addHandler(ch)
+        if not len(tomo.logger.handlers): # For fist time create handlers.
+            tomo.logger.addHandler(ch)
+            
         
-    def _set_log_file(TomoObj):
-        log_name = os.path.splitext(TomoObj.file_name)[0] + ".log"
+    def _set_log_file(tomo):
+        """
+        Setup and start file logging. Log file is placed in
+        the same directory of the data with the same data name.
+        """
+        log_name = os.path.splitext(tomo.file_name)[0] + ".log"
         
         # File log.
-        fh = logging.FileHandler(log_name)
-        if TomoObj._log_level == 'DEBUG':
+        try:
+            fh = logging.FileHandler(log_name)
+        except IOError:
+            return
+        if tomo._log_level == 'DEBUG':
             fh.setLevel(logging.DEBUG)
-        elif TomoObj._log_level == 'INFO':
+        elif tomo._log_level == 'INFO':
             fh.setLevel(logging.INFO)
-        elif TomoObj._log_level == 'WARN':
+        elif tomo._log_level == 'WARN':
             fh.setLevel(logging.WARN)
-        elif TomoObj._log_level == 'WARNING':
+        elif tomo._log_level == 'WARNING':
             fh.setLevel(logging.WARNING)
-        elif TomoObj._log_level == 'ERROR':
+        elif tomo._log_level == 'ERROR':
             fh.setLevel(logging.ERROR)
             
         # Show date and time.
@@ -320,15 +379,93 @@ class Dataset():
         fh.setFormatter(formatter)
         
         # Update logger.
-        logger.addHandler(fh)
+        tomo.logger.addHandler(fh)
+        tomo.logger.info("logger file [ok]")
+        
+    def _check_input_data(tomo):
+        """
+        Check if data is o.k.
+        
+        This method only modifies flags. Below is 
+        the list of checks made and the corresponding 
+        log messages.
+        
+        Check list (flags):
+            - data dimensions (error)
+            - data_white dimensions (warning)
+            - data_dark dimensions (warning)
+            - theta dimensions (warning)
+            - consistency of data and data_white dimensions (warning)
+            - consistency of data and data_dark dimensions (warning)
+            - consistency of data and theta dimensions (warning)
+        """
+        # Check data dimensions.
+        if len(tomo.data.shape) == 3:
+            tomo.FLAG_DATA = True
+            tomo.logger.debug("data dimensions [ok]")
+        else:
+            tomo.FLAG_DATA = False
+            tomo.logger.error("data dimensions [failed]")
+        if tomo.FLAG_WHITE:
+            if len(tomo.data_white.shape) == 3:
+                tomo.FLAG_WHITE = True
+                tomo.logger.debug("data_white dimensions [ok]")
+            else:
+                tomo.FLAG_WHITE = False
+                tomo.logger.warning("data_white dimensions [failed]")
+        if tomo.FLAG_DARK:
+            if len(tomo.data_dark.shape) == 3:
+                tomo.FLAG_DARK = True
+                tomo.logger.debug("data_dark dimensions [ok]")
+            else:
+                tomo.FLAG_DARK = False
+                tomo.logger.warning("data_dark dimensions [failed]")
+        if tomo.FLAG_THETA:
+            if len(tomo.theta.shape) == 1 or len(tomo.theta.shape) == 0:
+                tomo.FLAG_THETA = True
+                tomo.logger.debug("theta dimensions [ok]")
+            else:
+                tomo.FLAG_THETA = False
+                tomo.logger.warning("theta dimensions [failed]")
+        
+        # Check data consistencies.
+        try:
+            if tomo.FLAG_WHITE:
+                if tomo.data_white.shape[1:2] == tomo.data.shape[1:2]:
+                    tomo.FLAG_WHITE = True
+                    tomo.logger.debug("data_white compatibility [ok]")
+                else:
+                    tomo.FLAG_WHITE = False
+                    tomo.logger.warning("data_white compatibility [failed]")
+            if tomo.FLAG_DARK:
+                if tomo.data_dark.shape[1:2] == tomo.data.shape[1:2]:
+                    tomo.FLAG_DARK = True
+                    tomo.logger.debug("data_dark compatibility [ok]")
+                else:
+                    tomo.FLAG_DARK = False
+                    tomo.logger.warning("data_dark compatibility [failed]")
+            if tomo.FLAG_THETA:
+                if tomo.theta.size == tomo.data.shape[0]:
+                    tomo.FLAG_THETA = True
+                    tomo.logger.debug("theta compatibility [ok]")
+                else:
+                    tomo.FLAG_THETA = False
+                    tomo.logger.warning("theta compatibility [failed]")
+        except IndexError: # if tomo.data is None
+            pass
+                
+        # Good to go.
+        tomo.FLAG_DATA_CHECK = True
+        tomo.logger.debug("file check [ok]")
+            
 
-        logger.info("logger file [ok]")
-
-    def _check_input_file(TomoObj):
+    def _check_input_file(tomo):
         """
         Check if HDF5 file is o.k.
         
-        The function only modifies flags. 
+        This method only modifies flags. Below is 
+        the list of checks made and the corresponding 
+        log messages.
         
         Check list (flags):
             - File existence (error)
@@ -350,127 +487,130 @@ class Dataset():
             - consistency of data and theta dimensions (warning)
         """
         # check if file exists.
-        if os.path.isfile(TomoObj.file_name):
-            TomoObj.FLAG_DATA = True
-            logger.info("file check: %s [ok]", TomoObj.file_name)
+        if os.path.isfile(tomo.file_name):
+            tomo.FLAG_DATA = True
+            tomo.logger.info("file check: %s [ok]", tomo.file_name)
         else:
-            TomoObj.FLAG_DATA = False
-            logger.error("file check: %s [failed]", TomoObj.file_name)
+            tomo.FLAG_DATA = False
+            tomo.logger.error("file check: %s [failed]", tomo.file_name)
 
         # check read permissions.
-        read_access = os.access(TomoObj.file_name, os.R_OK)
-        write_access = os.access(TomoObj.file_name, os.W_OK)
+        read_access = os.access(tomo.file_name, os.R_OK)
+        write_access = os.access(tomo.file_name, os.W_OK)
         if read_access and write_access:
-            TomoObj.FLAG_DATA = True
-            logger.debug("file permissions [ok]")
+            tomo.FLAG_DATA = True
+            tomo.logger.debug("file permissions [ok]")
         else:
-            TomoObj.FLAG_DATA = False
-            logger.error("file permissions [failed]")
+            tomo.FLAG_DATA = False
+            tomo.logger.error("file permissions [failed]")
 
         # check if file is hdf5.
-        extension = os.path.splitext(TomoObj.file_name)[1]
+        extension = os.path.splitext(tomo.file_name)[1]
         if extension == ".hdf" or extension == ".h5":
-            if os.path.isfile(TomoObj.file_name):
-                TomoObj.FLAG_DATA = True
-            logger.debug("file extension: %s [ok]", extension)
+            if os.path.isfile(tomo.file_name):
+                tomo.FLAG_DATA = True
+            tomo.logger.debug("file extension: %s [ok]", extension)
         else:
-            TomoObj.FLAG_DATA = False
-            logger.error("file extension: %s [failed]", extension)
+            tomo.FLAG_DATA = False
+            tomo.logger.error("file extension: %s [failed]", extension)
 
         # check exchange group.
-        if TomoObj.FLAG_DATA:
-            f = h5py.File(TomoObj.file_name, 'r')
+        if tomo.FLAG_DATA:
+            f = h5py.File(tomo.file_name, 'r')
             if "exchange" in f:
-                TomoObj.FLAG_DATA = True
-                logger.debug("/exchange group [ok]")
+                tomo.FLAG_DATA = True
+                tomo.logger.debug("/exchange group [ok]")
             else:
-                TomoObj.FLAG_DATA = False
-                logger.error("/exchange group [failed]")
+                tomo.FLAG_DATA = False
+                tomo.logger.error("/exchange group [failed]")
             
             # Check exchange nodes.
             if "exchange/data" in f:
-                TomoObj.FLAG_DATA = True
-                logger.debug("/exchange/data [ok]")
+                tomo.FLAG_DATA = True
+                tomo.logger.debug("/exchange/data [ok]")
             else:
-                TomoObj.FLAG_DATA = False
-                logger.error("/exchange/data [failed]")
+                tomo.FLAG_DATA = False
+                tomo.logger.error("/exchange/data [failed]")
             if "exchange/data_white" in f:
-                TomoObj.FLAG_WHITE = True
-                logger.debug("/exchange/data_white [ok]")
+                tomo.FLAG_WHITE = True
+                tomo.logger.debug("/exchange/data_white [ok]")
             else:
-                TomoObj.FLAG_WHITE = False
-                logger.warning("/exchange/data_white node [failed]")
+                tomo.FLAG_WHITE = False
+                tomo.logger.warning("/exchange/data_white node [failed]")
             if "exchange/data_dark" in f:
-                TomoObj.FLAG_DARK = True
-                logger.debug("/exchange/data_dark [ok]")
+                tomo.FLAG_DARK = True
+                tomo.logger.debug("/exchange/data_dark [ok]")
             else:
-                TomoObj.FLAG_DARK = False
-                logger.warning("/exchange/data_dark node [failed]")
+                tomo.FLAG_DARK = False
+                tomo.logger.warning("/exchange/data_dark node [failed]")
             if "exchange/theta" in f:
-                TomoObj.FLAG_THETA = True
-                logger.debug("/exchange/theta [ok]")
+                tomo.FLAG_THETA = True
+                tomo.logger.debug("/exchange/theta [ok]")
             else:
-                TomoObj.FLAG_THETA = False
-                logger.warning("/exchange/theta [failed]")
+                tomo.FLAG_THETA = False
+                tomo.logger.warning("/exchange/theta [failed]")
         
             # Check data dimensions.
             if len(f["/exchange/data"].shape) == 3:
-                TomoObj.FLAG_DATA = True
-                logger.debug("data dimensions [ok]")
+                tomo.FLAG_DATA = True
+                tomo.logger.debug("data dimensions [ok]")
             else:
-                TomoObj.FLAG_DATA = False
-                logger.error("data dimensions [failed]")
-            if TomoObj.FLAG_WHITE:
+                tomo.FLAG_DATA = False
+                tomo.logger.error("data dimensions [failed]")
+            if tomo.FLAG_WHITE:
                 if len(f["/exchange/data_white"].shape) == 3:
-                    TomoObj.FLAG_WHITE = True
-                    logger.debug("data_white dimensions [ok]")
+                    tomo.FLAG_WHITE = True
+                    tomo.logger.debug("data_white dimensions [ok]")
                 else:
-                    TomoObj.FLAG_WHITE = False
-                    logger.warning("data_white dimensions [failed]")
-            if TomoObj.FLAG_DARK:
+                    tomo.FLAG_WHITE = False
+                    tomo.logger.warning("data_white dimensions [failed]")
+            if tomo.FLAG_DARK:
                 if len(f["/exchange/data_dark"].shape) == 3:
-                    TomoObj.FLAG_DARK = True
-                    logger.debug("data_dark dimensions [ok]")
+                    tomo.FLAG_DARK = True
+                    tomo.logger.debug("data_dark dimensions [ok]")
                 else:
-                    TomoObj.FLAG_DARK = False
-                    logger.warning("data_dark dimensions [failed]")
-            if TomoObj.FLAG_THETA:
+                    tomo.FLAG_DARK = False
+                    tomo.logger.warning("data_dark dimensions [failed]")
+            if tomo.FLAG_THETA:
                 if len(f["/exchange/theta"].shape) == 1 or len(f["/exchange/theta"].shape) == 0:
-                    TomoObj.FLAG_THETA = True
-                    logger.debug("theta dimensions [ok]")
+                    tomo.FLAG_THETA = True
+                    tomo.logger.debug("theta dimensions [ok]")
                 else:
-                    TomoObj.FLAG_THETA = False
-                    logger.warning("theta dimensions [failed]")
+                    tomo.FLAG_THETA = False
+                    tomo.logger.warning("theta dimensions [failed]")
             
             # Check data consistencies.
             try:
-                if TomoObj.FLAG_WHITE:
+                if tomo.FLAG_WHITE:
                     if f["/exchange/data_white"].shape[1:2] == f["/exchange/data"].shape[1:2]:
-                        TomoObj.FLAG_WHITE = True
-                        logger.debug("data_white compatibility [ok]")
+                        tomo.FLAG_WHITE = True
+                        tomo.logger.debug("data_white compatibility [ok]")
                     else:
-                        TomoObj.FLAG_WHITE = False
-                        logger.warning("data_white compatibility [failed]")
-                if TomoObj.FLAG_DARK:
+                        tomo.FLAG_WHITE = False
+                        tomo.logger.warning("data_white compatibility [failed]")
+                if tomo.FLAG_DARK:
                     if f["/exchange/data_dark"].shape[1:2] == f["/exchange/data"].shape[1:2]:
-                        TomoObj.FLAG_DARK = True
-                        logger.debug("data_dark compatibility [ok]")
+                        tomo.FLAG_DARK = True
+                        tomo.logger.debug("data_dark compatibility [ok]")
                     else:
-                        TomoObj.FLAG_DARK = False
-                        logger.warning("data_dark compatibility [failed]")
-                if TomoObj.FLAG_THETA:
+                        tomo.FLAG_DARK = False
+                        tomo.logger.warning("data_dark compatibility [failed]")
+                if tomo.FLAG_THETA:
                     if f["/exchange/theta"].size == f["/exchange/data"].shape[0]:
-                        TomoObj.FLAG_THETA = True
-                        logger.debug("theta compatibility [ok]")
+                        tomo.FLAG_THETA = True
+                        tomo.logger.debug("theta compatibility [ok]")
                     else:
-                        TomoObj.FLAG_THETA = False
-                        logger.warning("theta compatibility [failed]")
-            except IndexError: # if TomoObj.data is None
+                        tomo.FLAG_THETA = False
+                        tomo.logger.warning("theta compatibility [failed]")
+            except IndexError: # if tomo.data is None
                 pass
                     
             # Good to go.
-            TomoObj.FLAG_FILE_CHECK = True
-            logger.debug("file check [ok]")
+            tomo.FLAG_DATA_CHECK = True
+            tomo.logger.debug("file check [ok]")
         else:
-            TomoObj.FLAG_FILE_CHECK = False
-            logger.error("file check [failed]")
+            tomo.FLAG_DATA_CHECK = False
+            tomo.logger.error("file check [failed]")
+            
+            
+            

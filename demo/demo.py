@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-    This is a template script  for simple image processing tasks.
-    For more functionality please check the documentation.
-    
-    Have fun!
-    """
+This is a template script  for simple image processing tasks.
+For more functionality please check the documentation.
+
+Have fun!
+"""
 # Import the glorious package.
 import tomopy
 
 # Create a NULL dataset.
 # All scripts starts with this line.
 # Use ``log='DEBUG'`` argument for dbugging.
-d = tomopy.Dataset()
+d = tomopy.Session()
 
 # Import data from HDF file.
 # You can use slices_start, slices_end, etc. (see docs)

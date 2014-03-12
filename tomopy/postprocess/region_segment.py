@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy import ndimage
 from skimage import morphology
 from skimage.filter import sobel
-from tomopy.tools.multiprocess import worker
 
+# --------------------------------------------------------------------
 
-@worker
-def region_segment(args):
+def _region_segment(args):
     """
     Region based segmentation.
     """
