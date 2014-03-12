@@ -91,7 +91,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
 # Main setup configuration.
 setup(
       name='tomopy',
-      version='0.0.1',
+      version='0.0.2',
 
       packages = find_packages(),
       include_package_data = True,
