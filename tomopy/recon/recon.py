@@ -333,10 +333,10 @@ def mlem(tomo, iters=None, num_grid=None, init_matrix=None, overwrite=True):
     if not isinstance(data, np.float32):
         data = np.array(data, dtype=np.float32, copy=False)
 
-    if not isinstance(tomo.theta, np.float32):
+    if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype=np.float32, copy=False)
 
-    if not isinstance(tomo.center, np.float32):
+    if not isinstance(center, np.float32):
         center = np.array(center, dtype=np.float32, copy=False)
         
     if not isinstance(iters, np.int32):
