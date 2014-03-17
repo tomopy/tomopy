@@ -91,8 +91,8 @@ def distribute_jobs(data, func, args, axis,
     """
     Distribute 3-D volume jobs in chunks into cores.
     
-    Parameters
-    ----------
+    **Parameters**
+    
     func : srt
         Name of the function to be parallelized.
     
@@ -121,8 +121,8 @@ def distribute_jobs(data, func, args, axis,
         will be distributed to processors in equal chunks such that
         each processor will get a single job to do.
         
-    Returns
-    -------
+    **Returns**
+    
     out : ndarray
         3-D output data after transformation.
     """
