@@ -11,8 +11,8 @@ def _phase_retrieval(args):
     Perform single-material phase retrieval
     using projection data.
 
-    **Parameters**
-    
+    Parameters
+    ----------
     data : ndarray
         Projection data.
 
@@ -32,13 +32,13 @@ def _phase_retrieval(args):
         Applies padding for Fourier transform. For quick testing
         you can use False for faster results.
 
-    **Returns**
-    
+    Returns
+    -------
     phase : ndarray
         Retrieved phase.
 
-    **References**
-    
+    References
+    ----------
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """

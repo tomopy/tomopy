@@ -7,16 +7,16 @@ def _median_filter(args):
     """
     Apply median filter to data.
 
-    **Parameters**
-    
+    Parameters
+    ----------
     data : ndarray
         Projection data.
         
     size : scalar
         The size of the filter. 
 
-    **Returns**
-    
+    Returns
+    -------
     data : ndarray
         Median filtered data.
     """

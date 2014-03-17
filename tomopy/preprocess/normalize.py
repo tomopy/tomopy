@@ -8,8 +8,8 @@ def _normalize(args):
     Normalize raw projection data with
     the white field projection data.
 
-    **Parameters**
-    
+    Parameters
+    ----------
     data : ndarray
         Raw projection data.
 
@@ -23,8 +23,8 @@ def _normalize(args):
         Permitted maximum vaue of the
         normalized data. 
 
-    **Returns**
-    
+    Returns
+    -------
     data : ndarray
         Normalized data.
     """

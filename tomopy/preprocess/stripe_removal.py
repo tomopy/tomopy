@@ -8,8 +8,8 @@ def _stripe_removal(args):
     """
     Remove stripes from sinogram data.
 
-    **Parameters**
-    
+    Parameters
+    ----------
     data : ndarray
         Projection data.
 
@@ -22,8 +22,8 @@ def _stripe_removal(args):
     sigma : scalar
         Damping parameter in Fourier space.
 
-    **References**
-    
+    References
+    ----------
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """

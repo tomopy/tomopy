@@ -21,24 +21,24 @@ def fftw(a):
     efficient FFTW algorithm. It is a thin wrapper on FFTW
     C package (http://www.fftw.org).
     
-    **Parameters**
-    
+    Parameters
+    ----------
     a : ndarray
         Input array, can be complex.
         
-    **Returns**
-    
+    Returns
+    -------
     out : complex ndarray
         Output array.
         
-    **See Also**
-    
+    See Also
+    --------
     ifftw : The inverse of `fft`.
     ifftw2 : The inverse of `fft2`.
     fftw2 : The two-dimensional FFT.
     
-    **Notes**
-    
+    Notes
+    -----
     It is calculated efficiently when the input array is
     symmetric, that is highest when the array sizes are 
     powers of 2.
@@ -64,18 +64,18 @@ def ifftw(a):
     computed by `fftw`. It is a thin wrapper on FFTW
     C package (http://www.fftw.org).
     
-    **Parameters**
-    
+    Parameters
+    ----------
     a : array_like
         Input array, can be complex.
     
-    **Returns**
-    
+    Returns
+    -------
     out : complex ndarray
         Output array.
     
-    **See Also**
-    
+    See Also
+    --------
     ifftw2 : The inverse of `fft2`.
     fftw : The one-dimensional FFT.
     fftw2 : The two-dimensional FFT.
@@ -102,24 +102,24 @@ def fftw2(a):
     efficient FFTW algorithm. It is a thin wrapper on FFTW
     C package (http://www.fftw.org).
     
-    **Parameters**
-    
+    Parameters
+    ----------
     a : array_like
         Input array, can be complex.
     
-    **Returns**
-    
+    Returns
+    -------
     out : complex ndarray
         Output array.
     
-    **See Also**
-    
+    See Also
+    --------
     ifftw : The inverse of `fft`.
     ifftw2 : The inverse of `fft2`.
     fftw : The one-dimensional FFT.
     
-    **Notes**
-    
+    Notes
+    -----
     It is calculated efficiently when the input array is
     symmetric, that is highest when the array sizes are
     powers of 2.
@@ -147,18 +147,18 @@ def ifftw2(a):
     computed by `fftw`. It is a thin wrapper on FFTW
     C package (http://www.fftw.org).
     
-    **Parameters**
-    
+    Parameters
+    ----------
     a : array_like
         Input array, can be complex.
     
-    **Returns**
-    
+    Returns
+    -------
     out : complex ndarray
         Output array.
     
-    **See Also**
-    
+    See Also
+    --------
     ifftw : The inverse of `fft`.
     fftw : The one-dimensional FFT.
     fftw2 : The two-dimensional FFT.
