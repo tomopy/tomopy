@@ -17,8 +17,8 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     as the error metric and ''Nelder-Mead'' routine (of the scipy 
     optimization module) as the optimizer.
 
-    **Parameters**
-    
+    Parameters
+    ----------
     data : ndarray
         Input data.
 
@@ -31,14 +31,14 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     tol : scalar
         Desired sub-pixel accuracy.
 
-    **Returns**
-    
+    Returns
+    -------
     optimal_center : scalar
         This function returns the index of the center position that
         results in the minimum entropy in the reconstructed image.
         
-    **References**
-    
+    References
+    ----------
     [1] `SPIE Proceedings, Vol 6318, 631818(2006) \
     <dx.doi.org/10.1117/12.679101>`_
     """
