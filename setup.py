@@ -53,7 +53,7 @@ except KeyError:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
 
-C_INCLUDE_PATH += {os.path.abspath('tomopy/recon/gridrec')}
+C_INCLUDE_PATH += {os.path.abspath('tomopy/algorithms/recon/gridrec')}
 
 
 # Create FFTW shared-library.
@@ -65,22 +65,22 @@ ext_fftw = Extension(name='tomopy.lib.libfftw',
                     
 # Create preprocessing shared-library.
 ext_prep = Extension(name='tomopy.lib.libprep',
-                    sources=['tomopy/preprocess/correct_drift.c',
-                             'tomopy/preprocess/apply_padding.c',
-                             'tomopy/preprocess/downsample.c'],
+                    sources=['tomopy/algorithms/preprocess/correct_drift.c',
+                             'tomopy/algorithms/preprocess/apply_padding.c',
+                             'tomopy/algorithms/preprocess/downsample.c'],
                     include_dirs=C_INCLUDE_PATH)
 
 # Create reconstruction shared-library.
 ext_recon = Extension(name='tomopy.lib.librecon',
-                    sources=['tomopy/recon/art.c',
-                             'tomopy/recon/mlem.c',
-                             'tomopy/recon/upsample.c',
-                             'tomopy/recon/gridrec/filters.cpp',
-                             'tomopy/recon/gridrec/grid.cpp',
-                             'tomopy/recon/gridrec/MessageQueue.cpp',
-                             'tomopy/recon/gridrec/pswf.cpp',
-                             'tomopy/recon/gridrec/tomoRecon.cpp',
-                             'tomopy/recon/gridrec/tomoReconPy.cpp'],
+                    sources=['tomopy/algorithms/recon/art.c',
+                             'tomopy/algorithms/recon/mlem.c',
+                             'tomopy/algorithms/recon/upsample.c',
+                             'tomopy/algorithms/recon/gridrec/filters.cpp',
+                             'tomopy/algorithms/recon/gridrec/grid.cpp',
+                             'tomopy/algorithms/recon/gridrec/MessageQueue.cpp',
+                             'tomopy/algorithms/recon/gridrec/pswf.cpp',
+                             'tomopy/algorithms/recon/gridrec/tomoRecon.cpp',
+                             'tomopy/algorithms/recon/gridrec/tomoReconPy.cpp'],
                     include_dirs=C_INCLUDE_PATH,
                     library_dirs=LD_LIBRARY_PATH,
                     extra_link_args=['-lfftw3f',

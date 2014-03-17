@@ -2,8 +2,7 @@
 """
 TomoPy is a Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
-Advanced Photon Source. It uses the HDF5 file format 
-as the standard means of data exchange.
+Advanced Photon Source.
 """
 
 try:
@@ -11,13 +10,18 @@ try:
     __version__ = pkg_resources.require("tomopy")[0].version
 except:
     pass
+    
+# ---------X-ray absorption tomography imports---------
 
-# Main class to create TomoObj.
-from dataio.reader import Session
+# Reader/Writer functions for xtomo data.
+from xtomo.xtomo_io import xtomo_reader
+from xtomo.xtomo_io import xtomo_writer
+
+# Main xtomo object constructor.
+from xtomo.xtomo_dataset import XTomoDataset as xtomo_dataset
 
 # Hooks to other functions.
-import dataio.writer
-import preprocess.preprocess
-import recon.recon
-import postprocess.postprocess
+import xtomo.xtomo_preprocess
+import xtomo.xtomo_recon
+import xtomo.xtomo_postprocess
 

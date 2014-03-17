@@ -11,7 +11,8 @@ import multiprocessing as mp
 # --------------------------------------------------------------------
 
 # Get the shared library for gridrec.
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/librecon.so'))
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 
+                          '../..', 'lib/librecon.so'))
 librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
@@ -65,7 +66,7 @@ class Gridrec():
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
-                 airPixels=20,
+                 airPixels=10,
                  ringWidth=0,
                  fluorescence=0,
                  reconMethod=0,
