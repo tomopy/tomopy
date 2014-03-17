@@ -23,6 +23,9 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 # -- General configuration ------------------------------------------------
 
+import pkg_resources
+pkg_resources.require('numpydoc')
+
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
@@ -37,7 +40,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-#    'numpydoc',
+    'numpydoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
