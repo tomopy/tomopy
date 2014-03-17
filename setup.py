@@ -28,16 +28,20 @@ for requirement in install_requires:
         raise pkg_resources.DistributionNotFound, msg
 
 # Get shared library locations (list of directories).
-LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', [])
-if len(LD_LIBRARY_PATH) == 0:
+LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
+if LD_LIBRARY_PATH is None:
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
                   "link the shared libraries correctly")
+    LD_LIBRARY_PATH = ''
+LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
 
 # Get header file locations (list of directories).
-C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', [])
-if len(C_INCLUDE_PATH) == 0:
+C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
+if C_INCLUDE_PATH is None:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
+    C_INCLUDE_PATH = ''
+C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
 # add ourselves to the list
 C_INCLUDE_PATH += [os.path.abspath('tomopy/recon/gridrec')]
@@ -78,7 +82,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
 # Main setup configuration.
 setup(
       name='tomopy',
-      version='0.0.2',
+      version=open('VERSION').read().strip(),
 
       packages = find_packages(),
       include_package_data = True,
