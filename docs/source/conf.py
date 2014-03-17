@@ -43,6 +43,12 @@ extensions = [
     'numpydoc',
 ]
 
+# silence the Sphinx warnings about
+# "WARNING: toctree contains reference to nonexisting document"
+# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+numpydoc_show_class_members = False
+#numpydoc_class_members_toctree = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
