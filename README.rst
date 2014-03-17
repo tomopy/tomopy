@@ -6,28 +6,41 @@ tasks at the Advanced Photon Source (http://www.aps.anl.gov). It uses the
 HDF5 file format **Data Exchange** (https://github.com/data-exchange/data-exchange)
 as the standard means of data exchange.
 
+:home: http://tomopy.github.io/tomopy
+:git:  https://github.com/tomopy/tomopy
+
+.. suggest moving this into the Sphinx documentation
+
 External Dependencies
 *********************
 
-==========  =======  ====================  ========================================================
-dependency  version  URL                   comments
-==========  =======  ====================  ========================================================
-FFTW3       3.3.3    http://www.fftw.org   only float library is required
-Boost C++   1.55.0   http://www.boost.org  only thread, system and date_time libraries are required
-==========  =======  ====================  ========================================================
+========== =======  ====================  ========================================================
+dependency version  URL 		  comments
+========== =======  ====================  ========================================================
+FFTW3	   3.3.3    http://www.fftw.org   only float library is required
+Boost C++  1.55.0   http://www.boost.org  only thread, system and date_time libraries are required
+========== =======  ====================  ========================================================
 
-.. note:: For a quick install of these external dependencies, use::
+.. Data Exchange devel    https://github.com/data-exchange/data-exchange  separate project in parallel development
+
+Quick Install
+-------------
+
+For a quick install of these external dependencies, use::
 
        python install.py --boost --fftw
  
-   provided with the TomoPy source code.  
-   By default it installs them into ``/usr/local``. 
-   If you wish to install them into a different directory, use::
+provided with the TomoPy source code.  
+By default it installs them into ``/usr/local``. 
+If you wish to install them into a different directory, use::
 
        python install.py <desired-directory> --boost --fftw
 
-   In this case, be sure that <desired-directory> is added to your
-   **PYTHONPATH** environment variable for runtime use of TomoPy.
+In this case, be sure that <desired-directory> is added to your
+environment variables for runtime use of TomoPy::
+   
+       setenv LD_LIBRARY_PATH <desired-directory>/lib
+       setenv C_INCLUDE_PATH <desired-directory>/include
 
 Python Dependencies
 *******************
@@ -84,10 +97,42 @@ source      #. download latest source tarball from https://github.com/tomopy/tom
             
 
 For some configurations you may need to specifically add 
-the install directory to your ``PYTHONPATH``. To test if installation 
-was succesfull, open a new command shell and try::
+the install directory to your ``PYTHONPATH``. 
+
+To test if installation was succesfull:
+
+#. open a new command shell
+#. **change to a different directory than the tomopy source**
+#. try::
 
     python -c "import tomopy"
 
 If it doesn't complain you are good to go!
 
+Install Example
+---------------
+
+Here is a complete example of the installation, including
+a different *<desired-directory>* for Boost, fftw3, and tomopy:
+
+#. download latest source .tar.gz from https://github.com/tomopy/tomopy/releases
+#. expand the source .tar.gz into a new directory, build and install with these commands::
+
+     /bin/tcsh
+     setenv SANDBOX /tmp/sandbox
+     mkdir -p $SANDBOX/lib/python2.7/site-packages/
+     cd /tmp
+     tar xzf ~/Downloads/tomopy-0.0.2.tar.gz
+     cd tomopy-0.0.2/
+     python install.py $SANDBOX --boost --fftw
+     setenv LD_LIBRARY_PATH $SANDBOX/lib
+     setenv C_INCLUDE_PATH $SANDBOX/include
+     setenv PYTHONPATH $SANDBOX/lib/python2.7/site-packages/
+     python setup.py install --prefix=$SANDBOX
+     cd /tmp
+ 
+     echo "SANDBOX = $SANDBOX"
+     echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
+     echo "C_INCLUDE_PATH = $C_INCLUDE_PATH"
+     echo "PYTHONPATH = $PYTHONPATH"
+     python -c "import tomopy"
