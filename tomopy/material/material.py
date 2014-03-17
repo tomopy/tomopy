@@ -5,13 +5,15 @@ Module in construction!
 import h5py
 import numpy as np
 from scipy import interpolate
+import os
 
 # --------------------------------------------------------------------
 
 class Element():
     def __init__(self, element):
         self.element = element.lower()
-        self._f = h5py.File('/local/dgursoy/Projects/tomopy/tomopy/material/elements.h5', 'r')
+        path = os.path.dirname(__file__)
+        self._f = h5py.File(os.path.join(path,'elements.h5'), 'r')
         
     def atomic_number(self):
         _atomic_number = np.squeeze(self._f[self.element+'/atomic_number'][:])
