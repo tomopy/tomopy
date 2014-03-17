@@ -15,8 +15,8 @@ class Session():
         """
         Constructor for the data analysis.
         
-        Attributes
-        ----------
+        **Attributes**
+        
         tomo : tomopy data object
             This is the core object that all low-level 
             attributes and methods are bound to.
@@ -57,8 +57,7 @@ class Session():
         """
         Convert external dataset into TomoPy data object.
         
-        Parameters
-        ----------
+        **Parameters**
         
         data : ndarray
             3-D tomography data. Dimensions should be
@@ -132,8 +131,8 @@ class Session():
         """
         Read Data Exchange HDF5 file.
         
-        Parameters
-        ----------
+        **Parameters**
+        
         file_name : str
             Input file.
 
@@ -157,8 +156,8 @@ class Session():
             Values of the start and end of the
             slicing for the whole dark field shots.
             
-        Notes
-        -----
+        **Notes**
+        
         Unless specified in the file, a uniformly sampled
         180 degree rotation is assumed for ``theta``.
         

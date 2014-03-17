@@ -19,8 +19,8 @@ def _diagnose_center(data, theta, dir_path, slice_no,
     so that one can skim through the images and
     select the best.
     
-    Parameters
-    ----------
+    **Parameters**
+    
     data : ndarray
         Input data.
     

@@ -8,8 +8,8 @@ def _zinger_removal(args):
     """
     Zinger removal.
 
-    Parameters
-    ----------
+    **Parameters**
+    
     data : ndarray
         Input data.
         

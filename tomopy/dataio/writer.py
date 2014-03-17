@@ -16,13 +16,13 @@ def recon_to_hdf5(tomo, output_file=None):
     """ 
     Write reconstructed data to hdf5 file.
 
-    Parameters
-    ----------
+    **Parameters**
+    
     output_file : str, optional
         Name of the output file.
         
-    Notes
-    -----
+    **Notes**
+    
     If file exists, saves it with a modified name.
     
     If output location is not specified, the data is
@@ -90,8 +90,8 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
     """ 
     Write reconstructed data to a stack of tif files.
 
-    Parameters
-    -----------
+    **Parameters**
+    
     output_file : str, optional
         Name of the output file.
 
@@ -110,8 +110,8 @@ def recon_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, ax
     axis : scalar, optional
         Imaages is read along that axis.
     
-    Notes
-    -----
+    **Notes**
+    
     If file exists, saves it with a modified name.
     
     If output location is not specified, the data is
@@ -206,13 +206,13 @@ def data_to_hdf5(tomo, output_file=None):
     """
     Write raw data to hdf5 file.
     
-    Parameters
-    ----------
+    **Parameters**
+    
     output_file : str, optional
         Name of the output file.
         
-    Notes
-    -----
+    **Notes**
+    
     If file exists, saves it with a modified name.
     
     If output location is not specified, the data is
@@ -280,8 +280,8 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
     """
     Write raw data to a stack of tif files.
     
-    Parameters
-    -----------
+    **Parameters**
+    
     output_file : str, optional
         Name of the output file.
     
@@ -300,8 +300,8 @@ def data_to_tiff(tomo, output_file=None, x_start=None, x_end=None, digits=5, axi
     axis : scalar, optional
         Imaages is read along that axis.
         
-    Notes
-    -----
+    **Notes**
+    
     If file exists, saves it with a modified name.
     
     If output location is not specified, the data is
