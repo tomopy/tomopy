@@ -7,12 +7,12 @@ import ctypes
 
 # Get the shared library.
 libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                          '..', 'lib/libprep.so'))
+                          '../..', 'lib/libprep.so'))
 libprep = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _apply_padding(data, num_pad):
+def _correct_drift(data, air_pixels):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
@@ -22,16 +22,10 @@ def _apply_padding(data, num_pad):
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     
-    padded_data = np.ones((num_projections, num_slices, num_pad), 
-                           dtype='float32')
-    
-    libprep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
-    libprep.apply_padding(data.ctypes.data_as(c_float_p),
+    libprep.correct_drift.restype = ctypes.POINTER(ctypes.c_void_p)
+    libprep.correct_drift(data.ctypes.data_as(c_float_p),
                           ctypes.c_int(num_projections),
                           ctypes.c_int(num_slices),
                           ctypes.c_int(num_pixels),
-                          ctypes.c_int(num_pad),
-                          padded_data.ctypes.data_as(c_float_p))
-    return padded_data
-    
-    
+                          ctypes.c_int(air_pixels))
+    return data
