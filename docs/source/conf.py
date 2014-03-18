@@ -23,9 +23,6 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 # -- General configuration ------------------------------------------------
 
-import pkg_resources
-pkg_resources.require('numpydoc')
-
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
@@ -40,13 +37,17 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'numpydoc',
 ]
 
+#################
+# numpydoc
+import pkg_resources
+pkg_resources.require('numpydoc')
+extensions.append('numpydoc')
 # silence the Sphinx warnings about
 # "WARNING: toctree contains reference to nonexisting document"
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-numpydoc_show_class_members = False
+#numpydoc_show_class_members = False
 #numpydoc_class_members_toctree = False
 
 # Add any paths that contain templates here, relative to this directory.
