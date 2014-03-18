@@ -1,0 +1,725 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>reader &mdash; tomopy 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="dataio Module" href="tomopy.dataio.html" />
+    <link rel="prev" title="dataio Module" href="tomopy.dataio.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.dataio.html" title="dataio Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.dataio.html" accesskey="U"><tt class="docutils literal"><span class="pre">dataio</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.dataio.reader">
+<span id="reader"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">reader</span></tt><a class="headerlink" href="#module-tomopy.dataio.reader" title="Permalink to this headline">¶</a></h1>
+<p>Module for creating dataset.</p>
+<dl class="class">
+<dt id="tomopy.dataio.reader.Session">
+<em class="property">class </em><tt class="descclassname">tomopy.dataio.reader.</tt><tt class="descname">Session</tt><big>(</big><em>tomo</em>, <em>log='INFO'</em>, <em>clog=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/dataio/reader.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.dataio.reader.Session" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.adaptive_segment" title="tomopy.dataio.reader.Session.adaptive_segment"><tt class="xref py py-obj docutils literal"><span class="pre">adaptive_segment</span></tt></a>(tomo[,&nbsp;block_size,&nbsp;offset,&nbsp;...])</td>
+<td>Adaptive thresholding based segmentation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.apply_padding" title="tomopy.dataio.reader.Session.apply_padding"><tt class="xref py py-obj docutils literal"><span class="pre">apply_padding</span></tt></a>(tomo[,&nbsp;num_pad,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.art" title="tomopy.dataio.reader.Session.art"><tt class="xref py py-obj docutils literal"><span class="pre">art</span></tt></a>(tomo[,&nbsp;iters,&nbsp;num_grid,&nbsp;init_matrix,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.correct_drift" title="tomopy.dataio.reader.Session.correct_drift"><tt class="xref py py-obj docutils literal"><span class="pre">correct_drift</span></tt></a>(tomo[,&nbsp;air_pixels,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.data_to_hdf5" title="tomopy.dataio.reader.Session.data_to_hdf5"><tt class="xref py py-obj docutils literal"><span class="pre">data_to_hdf5</span></tt></a>(tomo[,&nbsp;output_file])</td>
+<td>Write raw data to hdf5 file.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.data_to_tiff" title="tomopy.dataio.reader.Session.data_to_tiff"><tt class="xref py py-obj docutils literal"><span class="pre">data_to_tiff</span></tt></a>(tomo[,&nbsp;output_file,&nbsp;x_start,&nbsp;...])</td>
+<td>Write raw data to a stack of tif files.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.dataset" title="tomopy.dataio.reader.Session.dataset"><tt class="xref py py-obj docutils literal"><span class="pre">dataset</span></tt></a>(tomo[,&nbsp;data,&nbsp;data_white,&nbsp;data_dark,&nbsp;...])</td>
+<td>Convert external dataset into TomoPy data object.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.diagnose_center" title="tomopy.dataio.reader.Session.diagnose_center"><tt class="xref py py-obj docutils literal"><span class="pre">diagnose_center</span></tt></a>(tomo[,&nbsp;dir_path,&nbsp;slice_no,&nbsp;...])</td>
+<td>Diagnostic tools to find rotation center.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.downsample2d" title="tomopy.dataio.reader.Session.downsample2d"><tt class="xref py py-obj docutils literal"><span class="pre">downsample2d</span></tt></a>(tomo[,&nbsp;level,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.downsample3d" title="tomopy.dataio.reader.Session.downsample3d"><tt class="xref py py-obj docutils literal"><span class="pre">downsample3d</span></tt></a>(tomo[,&nbsp;level,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.gridrec" title="tomopy.dataio.reader.Session.gridrec"><tt class="xref py py-obj docutils literal"><span class="pre">gridrec</span></tt></a>(tomo[,&nbsp;overwrite])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.median_filter" title="tomopy.dataio.reader.Session.median_filter"><tt class="xref py py-obj docutils literal"><span class="pre">median_filter</span></tt></a>(tomo[,&nbsp;size,&nbsp;num_cores,&nbsp;...])</td>
+<td>Apply median filter to data.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.mlem" title="tomopy.dataio.reader.Session.mlem"><tt class="xref py py-obj docutils literal"><span class="pre">mlem</span></tt></a>(tomo[,&nbsp;iters,&nbsp;num_grid,&nbsp;init_matrix,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.mlem_multilevel" title="tomopy.dataio.reader.Session.mlem_multilevel"><tt class="xref py py-obj docutils literal"><span class="pre">mlem_multilevel</span></tt></a>(tomo[,&nbsp;iters,&nbsp;num_grid,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.normalize" title="tomopy.dataio.reader.Session.normalize"><tt class="xref py py-obj docutils literal"><span class="pre">normalize</span></tt></a>(tomo[,&nbsp;cutoff,&nbsp;num_cores,&nbsp;...])</td>
+<td>Normalize raw projection data with the white field projection data.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.optimize_center" title="tomopy.dataio.reader.Session.optimize_center"><tt class="xref py py-obj docutils literal"><span class="pre">optimize_center</span></tt></a>(tomo[,&nbsp;slice_no,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.phase_retrieval" title="tomopy.dataio.reader.Session.phase_retrieval"><tt class="xref py py-obj docutils literal"><span class="pre">phase_retrieval</span></tt></a>(tomo[,&nbsp;pixel_size,&nbsp;dist,&nbsp;...])</td>
+<td>Perform single-material phase retrieval using projection data.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.read" title="tomopy.dataio.reader.Session.read"><tt class="xref py py-obj docutils literal"><span class="pre">read</span></tt></a>(tomo,&nbsp;file_name[,&nbsp;projections_start,&nbsp;...])</td>
+<td>Read Data Exchange HDF5 file.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.recon_to_hdf5" title="tomopy.dataio.reader.Session.recon_to_hdf5"><tt class="xref py py-obj docutils literal"><span class="pre">recon_to_hdf5</span></tt></a>(tomo[,&nbsp;output_file])</td>
+<td>Write reconstructed data to hdf5 file.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.recon_to_tiff" title="tomopy.dataio.reader.Session.recon_to_tiff"><tt class="xref py py-obj docutils literal"><span class="pre">recon_to_tiff</span></tt></a>(tomo[,&nbsp;output_file,&nbsp;x_start,&nbsp;...])</td>
+<td>Write reconstructed data to a stack of tif files.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.region_segment" title="tomopy.dataio.reader.Session.region_segment"><tt class="xref py py-obj docutils literal"><span class="pre">region_segment</span></tt></a>(tomo[,&nbsp;cutoff,&nbsp;num_cores,&nbsp;...])</td>
+<td>Threshold based segmentation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.remove_background" title="tomopy.dataio.reader.Session.remove_background"><tt class="xref py py-obj docutils literal"><span class="pre">remove_background</span></tt></a>(tomo[,&nbsp;num_cores,&nbsp;...])</td>
+<td>Remove background from reconstructions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.stripe_removal" title="tomopy.dataio.reader.Session.stripe_removal"><tt class="xref py py-obj docutils literal"><span class="pre">stripe_removal</span></tt></a>(tomo[,&nbsp;level,&nbsp;wname,&nbsp;sigma,&nbsp;...])</td>
+<td>Remove stripes from sinogram data.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.threshold_segment" title="tomopy.dataio.reader.Session.threshold_segment"><tt class="xref py py-obj docutils literal"><span class="pre">threshold_segment</span></tt></a>(tomo[,&nbsp;cutoff,&nbsp;num_cores,&nbsp;...])</td>
+<td>Threshold based segmentation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.upsample2d" title="tomopy.dataio.reader.Session.upsample2d"><tt class="xref py py-obj docutils literal"><span class="pre">upsample2d</span></tt></a>(tomo[,&nbsp;level,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.upsample3d" title="tomopy.dataio.reader.Session.upsample3d"><tt class="xref py py-obj docutils literal"><span class="pre">upsample3d</span></tt></a>(tomo[,&nbsp;level,&nbsp;num_cores,&nbsp;...])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.dataio.reader.Session.zinger_removal" title="tomopy.dataio.reader.Session.zinger_removal"><tt class="xref py py-obj docutils literal"><span class="pre">zinger_removal</span></tt></a>(tomo[,&nbsp;zinger_level,&nbsp;...])</td>
+<td>Zinger removal.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.adaptive_segment">
+<tt class="descname">adaptive_segment</tt><big>(</big><em>tomo</em>, <em>block_size=None</em>, <em>offset=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.adaptive_segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adaptive thresholding based segmentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.apply_padding">
+<tt class="descname">apply_padding</tt><big>(</big><em>tomo</em>, <em>num_pad=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.apply_padding" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.art">
+<tt class="descname">art</tt><big>(</big><em>tomo</em>, <em>iters=None</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.art" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.correct_drift">
+<tt class="descname">correct_drift</tt><big>(</big><em>tomo</em>, <em>air_pixels=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.correct_drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.data_to_hdf5">
+<tt class="descname">data_to_hdf5</tt><big>(</big><em>tomo</em>, <em>output_file=None</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.data_to_hdf5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write raw data to hdf5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output_file</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>Name of the output file.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If file exists, saves it with a modified name.</p>
+<p>If output location is not specified, the data is
+saved inside <tt class="docutils literal"><span class="pre">data</span></tt> folder where the input data
+resides. The name of the reconstructed files will
+be initialized with <tt class="docutils literal"><span class="pre">data</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.data_to_tiff">
+<tt class="descname">data_to_tiff</tt><big>(</big><em>tomo</em>, <em>output_file=None</em>, <em>x_start=None</em>, <em>x_end=None</em>, <em>digits=5</em>, <em>axis=1</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.data_to_tiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write raw data to a stack of tif files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output_file</strong> : str, optional</p>
+<blockquote>
+<div><p>Name of the output file.</p>
+</div></blockquote>
+<p><strong>x_start</strong> : scalar, optional</p>
+<blockquote>
+<div><p>First index of the data on first dimension
+of the array.</p>
+</div></blockquote>
+<p><strong>x_end</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Last index of the data on first dimension
+of t]he array.</p>
+</div></blockquote>
+<p><strong>digits</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Number of digits used for file indexing.
+For example if 4: test_XXXX.tiff</p>
+</div></blockquote>
+<p><strong>axis</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>Imaages is read along that axis.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If file exists, saves it with a modified name.</p>
+<p>If output location is not specified, the data is
+saved inside <tt class="docutils literal"><span class="pre">data</span></tt> folder where the input data
+resides. The name of the reconstructed files will
+be initialized with <tt class="docutils literal"><span class="pre">data</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.dataset">
+<tt class="descname">dataset</tt><big>(</big><em>tomo</em>, <em>data=None</em>, <em>data_white=None</em>, <em>data_dark=None</em>, <em>theta=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/dataio/reader.html#Session.dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.dataio.reader.Session.dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert external dataset into TomoPy data object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>3-D tomography data. Dimensions should be
+[projections, slices, pixels].</p>
+</div></blockquote>
+<p><strong>data_white</strong> : ndarray</p>
+<blockquote>
+<div><p>3-D white-field data. Multiple projections
+are stacked together to obtain 3-D matrix.
+2nd and 3rd dimensions should be the same as
+data [shots, slices, pixels].</p>
+</div></blockquote>
+<p><strong>data_dark</strong> : ndarray</p>
+<blockquote>
+<div><p>3-D dark-field data. Multiple projections
+are stacked together to obtain 3-D matrix.
+2nd and 3rd dimensions should be the same as
+data [shots, slices, pixels].</p>
+</div></blockquote>
+<p><strong>theta</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Data acquisition angles corresponding
+to each projection.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.diagnose_center">
+<tt class="descname">diagnose_center</tt><big>(</big><em>tomo</em>, <em>dir_path=None</em>, <em>slice_no=None</em>, <em>center_start=None</em>, <em>center_end=None</em>, <em>center_step=None</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.diagnose_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diagnostic tools to find rotation center.</p>
+<p>Helps finding the rotation center manually by
+visual inspection of the selected reconstructions
+with different centers. The outputs for different
+centers are put into <tt class="docutils literal"><span class="pre">data/diagnose</span></tt> directory
+and the corresponding center positions are printed
+so that one can skim through the images and
+select the best.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Input data.</p>
+</div></blockquote>
+<p><strong>slice_no</strong> : scalar, optional</p>
+<blockquote>
+<div><p>The index of the slice to be used for diagnostics.</p>
+</div></blockquote>
+<p><strong>center_start, center_end, center_step</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>Values of the start, end and step of the center values to
+be used for diagnostics.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.downsample2d">
+<tt class="descname">downsample2d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.downsample2d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.downsample3d">
+<tt class="descname">downsample3d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.downsample3d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.gridrec">
+<tt class="descname">gridrec</tt><big>(</big><em>tomo</em>, <em>overwrite=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.gridrec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.median_filter">
+<tt class="descname">median_filter</tt><big>(</big><em>tomo</em>, <em>size=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.median_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply median filter to data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>size</strong> : scalar</p>
+<blockquote>
+<div><p>The size of the filter.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Median filtered data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.mlem">
+<tt class="descname">mlem</tt><big>(</big><em>tomo</em>, <em>iters=None</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.mlem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.mlem_multilevel">
+<tt class="descname">mlem_multilevel</tt><big>(</big><em>tomo</em>, <em>iters=None</em>, <em>num_grid=None</em>, <em>level=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.mlem_multilevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.normalize">
+<tt class="descname">normalize</tt><big>(</big><em>tomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize raw projection data with
+the white field projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Raw projection data.</p>
+</div></blockquote>
+<p><strong>data_white</strong> : ndarray</p>
+<blockquote>
+<div><p>2-D white field projection data.</p>
+</div></blockquote>
+<p><strong>data_dark</strong> : ndarray</p>
+<blockquote>
+<div><p>2-D dark field projection data.</p>
+</div></blockquote>
+<p><strong>cutoff</strong> : scalar</p>
+<blockquote>
+<div><p>Permitted maximum vaue of the
+normalized data.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Normalized data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.optimize_center">
+<tt class="descname">optimize_center</tt><big>(</big><em>tomo</em>, <em>slice_no=None</em>, <em>center_init=None</em>, <em>tol=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.optimize_center" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.phase_retrieval">
+<tt class="descname">phase_retrieval</tt><big>(</big><em>tomo</em>, <em>pixel_size=None</em>, <em>dist=None</em>, <em>energy=None</em>, <em>alpha=None</em>, <em>padding=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.phase_retrieval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform single-material phase retrieval
+using projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>pixel_size</strong> : scalar</p>
+<blockquote>
+<div><p>Detector pixel size in cm.</p>
+</div></blockquote>
+<p><strong>dist</strong> : scalar</p>
+<blockquote>
+<div><p>Propagation distance of x-rays in cm.</p>
+</div></blockquote>
+<p><strong>energy</strong> : scalar</p>
+<blockquote>
+<div><p>Energy of x-rays in keV.</p>
+</div></blockquote>
+<p><strong>alpha</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Regularization parameter.</p>
+</div></blockquote>
+<p><strong>padding</strong> : bool, optional</p>
+<blockquote>
+<div><p>Applies padding for Fourier transform. For quick testing
+you can use False for faster results.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>phase</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Retrieved phase.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><a class="reference external" href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract">J. of Microscopy, Vol 206(1), 33-40, 2001</a></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.read">
+<tt class="descname">read</tt><big>(</big><em>tomo</em>, <em>file_name</em>, <em>projections_start=None</em>, <em>projections_end=None</em>, <em>projections_step=None</em>, <em>slices_start=None</em>, <em>slices_end=None</em>, <em>slices_step=None</em>, <em>pixels_start=None</em>, <em>pixels_end=None</em>, <em>pixels_step=None</em>, <em>white_start=None</em>, <em>white_end=None</em>, <em>dark_start=None</em>, <em>dark_end=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/dataio/reader.html#Session.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.dataio.reader.Session.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Data Exchange HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>file_name</strong> : str</p>
+<blockquote>
+<div><p>Input file.</p>
+</div></blockquote>
+<p><strong>projections_start, projections_end, projections_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the projections to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>slices_start, slices_end, slices_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the slices to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>pixels_start, pixels_end, pixels_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the pixels to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>white_start, white_end</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start and end of the
+slicing for the whole white field shots.</p>
+</div></blockquote>
+<p><strong>dark_start, dark_end</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>Values of the start and end of the
+slicing for the whole dark field shots.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Unless specified in the file, a uniformly sampled
+180 degree rotation is assumed for <tt class="docutils literal"><span class="pre">theta</span></tt>.</p>
+<p>If <tt class="docutils literal"><span class="pre">data_white</span></tt> is missing, then the <tt class="docutils literal"><span class="pre">data</span></tt>
+is by default normalized with the average value of &#8216;&#8217;data&#8217;&#8216;.</p>
+<p>If <tt class="docutils literal"><span class="pre">data_dark</span></tt> is missing, then <tt class="docutils literal"><span class="pre">data_dark</span></tt>
+is by default set with zeros.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.recon_to_hdf5">
+<tt class="descname">recon_to_hdf5</tt><big>(</big><em>tomo</em>, <em>output_file=None</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.recon_to_hdf5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write reconstructed data to hdf5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output_file</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>Name of the output file.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If file exists, saves it with a modified name.</p>
+<p>If output location is not specified, the data is
+saved inside <tt class="docutils literal"><span class="pre">recon</span></tt> folder where the input data
+resides. The name of the reconstructed files will 
+be initialized with <tt class="docutils literal"><span class="pre">recon</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.recon_to_tiff">
+<tt class="descname">recon_to_tiff</tt><big>(</big><em>tomo</em>, <em>output_file=None</em>, <em>x_start=None</em>, <em>x_end=None</em>, <em>digits=5</em>, <em>axis=0</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.recon_to_tiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write reconstructed data to a stack of tif files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output_file</strong> : str, optional</p>
+<blockquote>
+<div><p>Name of the output file.</p>
+</div></blockquote>
+<p><strong>x_start</strong> : scalar, optional</p>
+<blockquote>
+<div><p>First index of the data on first dimension
+of the array.</p>
+</div></blockquote>
+<p><strong>x_end</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Last index of the data on first dimension
+of the array.</p>
+</div></blockquote>
+<p><strong>digits</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Number of digits used for file indexing.
+For example if 4: test_XXXX.tiff</p>
+</div></blockquote>
+<p><strong>axis</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>Imaages is read along that axis.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If file exists, saves it with a modified name.</p>
+<p>If output location is not specified, the data is
+saved inside <tt class="docutils literal"><span class="pre">recon</span></tt> folder where the input data
+resides. The name of the reconstructed files will
+be initialized with <tt class="docutils literal"><span class="pre">recon</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.region_segment">
+<tt class="descname">region_segment</tt><big>(</big><em>tomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.region_segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Threshold based segmentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.remove_background">
+<tt class="descname">remove_background</tt><big>(</big><em>tomo</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.remove_background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove background from reconstructions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.stripe_removal">
+<tt class="descname">stripe_removal</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>wname=None</em>, <em>sigma=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.stripe_removal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove stripes from sinogram data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>level</strong> : scalar</p>
+<blockquote>
+<div><p>Number of DWT levels.</p>
+</div></blockquote>
+<p><strong>wname</strong> : str</p>
+<blockquote>
+<div><p>Type of the wavelet filter.</p>
+</div></blockquote>
+<p><strong>sigma</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Damping parameter in Fourier space.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567">Optics Express, Vol 17(10), 8567-8591(2009)</a></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.threshold_segment">
+<tt class="descname">threshold_segment</tt><big>(</big><em>tomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.threshold_segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Threshold based segmentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.upsample2d">
+<tt class="descname">upsample2d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.upsample2d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.upsample3d">
+<tt class="descname">upsample3d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.upsample3d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.dataio.reader.Session.zinger_removal">
+<tt class="descname">zinger_removal</tt><big>(</big><em>tomo</em>, <em>zinger_level=None</em>, <em>median_width=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.dataio.reader.Session.zinger_removal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Zinger removal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Input data.</p>
+</div></blockquote>
+<p><strong>zl</strong> : scalar</p>
+<blockquote>
+<div><p>Threshold of counts to cut zingers.</p>
+</div></blockquote>
+<p><strong>mw</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Median filter width.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.dataio.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">dataio</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.dataio.reader.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.dataio.html" title="dataio Module"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.dataio.html" ><tt class="docutils literal"><span class="pre">dataio</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

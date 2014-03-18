@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>gridrec &mdash; tomopy 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="recon Module" href="tomopy.recon.html" />
+    <link rel="prev" title="diagnose_center" href="tomopy.recon.diagnose_center.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.recon.diagnose_center.html" title="diagnose_center"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.recon.html" accesskey="U"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.recon.gridrec">
+<span id="gridrec"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">gridrec</span></tt><a class="headerlink" href="#module-tomopy.recon.gridrec" title="Permalink to this headline">¶</a></h1>
+<p>Module for wrapper to gridrec.</p>
+<dl class="class">
+<dt id="tomopy.recon.gridrec.Gridrec">
+<em class="property">class </em><tt class="descclassname">tomopy.recon.gridrec.</tt><tt class="descname">Gridrec</tt><big>(</big><em>data</em>, <em>sinoScale=10000.0</em>, <em>reconScale=1</em>, <em>paddedSinogramWidth=None</em>, <em>airPixels=20</em>, <em>ringWidth=0</em>, <em>fluorescence=0</em>, <em>reconMethod=0</em>, <em>reconMethodTomoRecon=0</em>, <em>numThreads=4</em>, <em>slicesPerChunk=32</em>, <em>debugFileName=''</em>, <em>debug=0</em>, <em>geom=0</em>, <em>pswfParam=6</em>, <em>sampl=1</em>, <em>MaxPixSiz=1</em>, <em>ROI=1</em>, <em>X0=0</em>, <em>Y0=0</em>, <em>ltbl=512</em>, <em>fname='shepp'</em>, <em>BP_Method=0</em>, <em>BP_filterName='shepp'</em>, <em>BP_filterSize=100</em>, <em>RiemannInterpolation=0</em>, <em>RadonInterpolation=0</em><big>)</big><a class="reference internal" href="../_modules/tomopy/recon/gridrec.html#Gridrec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.recon.gridrec.Gridrec" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#tomopy.recon.gridrec.Gridrec.reconstruct" title="tomopy.recon.gridrec.Gridrec.reconstruct"><tt class="xref py py-obj docutils literal"><span class="pre">reconstruct</span></tt></a>(data,&nbsp;center,&nbsp;theta[,&nbsp;slice_no])</td>
+<td>Performs reconstruction using the tomographic data.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="tomopy.recon.gridrec.Gridrec.reconstruct">
+<tt class="descname">reconstruct</tt><big>(</big><em>data</em>, <em>center</em>, <em>theta</em>, <em>slice_no=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/recon/gridrec.html#Gridrec.reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.recon.gridrec.Gridrec.reconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs reconstruction using the tomographic data.</p>
+<p>Gridrec uses the interpolation based direct Fourier 
+reconstruction (there are rumors that it was written 
+by written by Bob Marr and Graham Campbell at BNL in 1997). 
+Later on Mark Rivers upgraded it by adding a new Epics based
+multi-thread library on top of Gridrec. Current version
+uses standard Boost libraries for multi-threading.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>TomoObj</strong> : tomopy data object</p>
+<blockquote>
+<div><p>Tomopy data object generated by the Dataset() class.</p>
+</div></blockquote>
+<p><strong>slice_no</strong> : int, optional</p>
+<blockquote>
+<div><p>If specified reconstructs only the slice defined by <tt class="docutils literal"><span class="pre">slice_no</span></tt>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Assigns reconstructed values in TomoRecon object as <tt class="docutils literal"><span class="pre">recon</span></tt>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><a class="reference external" href="http://dx.doi.org/10.1117/12.930022">SPIE Proceedings, Vol 8506, 85060U(2012)</a></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.recon.diagnose_center.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">diagnose_center</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.recon.gridrec.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.recon.diagnose_center.html" title="diagnose_center"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.recon.html" ><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
