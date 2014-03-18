@@ -28,13 +28,15 @@ def _stripe_removal(args):
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
     data, args, ind_start, ind_end = args
-    level, wname, sigma = args
+    level, wname, sigma, padding = args
     
     dx, num_slices, dy = data.shape
     
     # Padded temp image.
-    #num_x = dx + dx / 8
-    num_x = dx + 20
+    num_x = dx
+    if padding:
+        num_x = dx + dx/8
+        
     x_shift = int((num_x - dx) / 2.)
     sli = np.zeros((num_x, dy), dtype='float32')
     

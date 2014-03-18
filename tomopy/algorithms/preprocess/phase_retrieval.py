@@ -90,7 +90,7 @@ def _paganin_filter(data, pixel_size, dist, energy, alpha, padding):
         
     elif not padding:
         num_x, num_y = dx, dy
-        x_shift, y_shift, tmp_data = None, None, None
+        x_shift, y_shift, tmp_proj = None, None, None
                 
     # Sampling in reciprocal space.
     indx = (1 / ((num_x-1) * pixel_size)) * np.arange(-(num_x-1)*0.5, num_x*0.5)

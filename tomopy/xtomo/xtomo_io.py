@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy import misc
+import shutil
 import os
 import h5py
 
@@ -100,7 +101,8 @@ def xtomo_reader(file_name,
 
 
 
-def xtomo_writer(data, output_file=None, x_start=0, x_end=None, digits=5, axis=0):
+def xtomo_writer(data, output_file=None, x_start=0, x_end=None, 
+                 digits=5, axis=0, overwrite=False):
     """ 
     Write reconstructed data to a stack of tif files.
 
@@ -123,6 +125,10 @@ def xtomo_writer(data, output_file=None, x_start=0, x_end=None, digits=5, axis=0
         
     axis : scalar, optional
         Imaages is read along that axis.
+        
+    overwrite: bool, optional
+        if overwrite=True the existing data in the
+        reconstruction folder will be overwritten   
     
     Notes
     -----
@@ -136,14 +142,18 @@ def xtomo_writer(data, output_file=None, x_start=0, x_end=None, digits=5, axis=0
     if output_file == None:
         output_file = "tmp/img_" 
     output_file =  os.path.abspath(output_file)
+    dir_path = os.path.dirname(output_file)
     
     # Remove TIFF extension if there is.
     if (output_file.endswith('tif') or
         output_file.endswith('tiff')) :
             output_file = output_file.split(".")[-2]
+  
+    if overwrite:
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
             
     # Create new folders.
-    dir_path = os.path.dirname(output_file)
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
