@@ -94,7 +94,6 @@ if prefix is None:
     print("Default installation directory is taken as /usr/local")
     
 def run(command, logfile):
-    import subprocess
     if VERBOSE:
         status = subprocess.call(command + ' 2>&1 | tee ' + logfile, shell=True, executable="/bin/bash")
     else:
