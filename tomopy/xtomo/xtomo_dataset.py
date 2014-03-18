@@ -72,12 +72,12 @@ class XTomoDataset:
         if data_white is None:
             xtomo.data_white = np.zeros((1, num_slices, num_pixels))
             xtomo.data_white += np.mean(xtomo.data[:])
-            xtomo.logger.warning("auto-normalization [ok]")
+            xtomo.logger.warning('auto-normalization [ok]')
             
         # Assign data_dark
         if data_dark is None:
             xtomo.data_dark = np.zeros((1, num_slices, num_pixels))
-            xtomo.logger.warning("dark-field assumed as zeros [ok]")
+            xtomo.logger.warning('dark-field assumed as zeros [ok]')
                 
         # Assign theta
         if theta is None:
@@ -93,6 +93,10 @@ class XTomoDataset:
             xtomo.data_dark = np.array(xtomo.data_dark, dtype='float32')
         if not isinstance(xtomo.theta, np.float32):
             xtomo.theta = np.array(xtomo.theta, dtype='float32')
+            
+        # Update log.
+        xtomo.logger.debug('data shape: [%i, %i, %i]', 
+                           num_projs, num_slices, num_pixels)
 
 
     def _init_logging(xtomo):

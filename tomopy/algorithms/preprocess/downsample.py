@@ -18,6 +18,9 @@ def _downsample2d(data, level):
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
     
+    if level < 0:
+        return data
+    
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     
@@ -43,6 +46,9 @@ def _downsample3d(data, level):
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
+    
+    if level < 0:
+        return data
     
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)

@@ -10,6 +10,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available functons in the package.
 from tomopy.algorithms.postprocess.adaptive_segment import _adaptive_segment
+from tomopy.algorithms.postprocess.apply_mask import _apply_mask
 from tomopy.algorithms.postprocess.remove_background import _remove_background
 from tomopy.algorithms.postprocess.region_segment import _region_segment
 from tomopy.algorithms.postprocess.threshold_segment import _threshold_segment
@@ -39,6 +40,25 @@ def adaptive_segment(xtomo, block_size=256, offset=0,
     xtomo.logger.debug("adaptive_segment: block_size: " + str(block_size))
     xtomo.logger.debug("adaptive_segment: offset: " + str(offset))
     xtomo.logger.info("adaptive_segment [ok]")
+    
+    # Update returned values.
+    if overwrite: xtomo.data_recon = data_recon
+    else: return data_recon
+
+# --------------------------------------------------------------------
+
+def apply_mask(xtomo, ratio=1, overwrite=True):    
+    
+    # Normalize data first.
+    data = xtomo.data_recon - xtomo.data_recon.min()
+    data /= data.max() 
+
+    # Distribute jobs.
+    data_recon = _apply_mask(xtomo.data_recon, ratio)
+                                         
+    # Update log.
+    xtomo.logger.debug("apply_mask: ratio: " + str(ratio))
+    xtomo.logger.info("apply_mask [ok]")
     
     # Update returned values.
     if overwrite: xtomo.data_recon = data_recon
@@ -119,12 +139,14 @@ def threshold_segment(xtomo, cutoff=None,
 
 # Hook all these methods to TomoPy.
 setattr(XTomoDataset, 'adaptive_segment', adaptive_segment)
+setattr(XTomoDataset, 'apply_mask', apply_mask)
 setattr(XTomoDataset, 'remove_background', remove_background)
 setattr(XTomoDataset, 'region_segment', threshold_segment)
 setattr(XTomoDataset, 'threshold_segment', threshold_segment)
 
 # Use original function docstrings for the wrappers.
 adaptive_segment.__doc__ = _adaptive_segment.__doc__
+apply_mask.__doc__ = _apply_mask.__doc__
 remove_background.__doc__ = _remove_background.__doc__
 region_segment.__doc__ = _region_segment.__doc__
 threshold_segment.__doc__ = _threshold_segment.__doc__

@@ -23,7 +23,6 @@ from tomopy.algorithms.preprocess.zinger_removal import _zinger_removal
 # Import multiprocessing module.
 from tomopy.tools.multiprocess import distribute_jobs
 
-
 # --------------------------------------------------------------------
 
 def apply_padding(xtomo, num_pad=None,
@@ -34,6 +33,8 @@ def apply_padding(xtomo, num_pad=None,
     num_pixels = xtomo.data.shape[2]
     if num_pad is None:
         num_pad = np.ceil(num_pixels * np.sqrt(2))
+    elif num_pad < num_pixels:
+        num_pad = num_pixels
                          
     # Check input.
     if not isinstance(num_pad, np.int32):
@@ -56,6 +57,8 @@ def correct_drift(xtomo, air_pixels=20,
                   overwrite=True):
     
     # Check input.
+    if air_pixels <= 0:
+        air_pixels = 0
     if not isinstance(air_pixels, np.int32):
         air_pixels = np.array(air_pixels, dtype='int32')
     
@@ -76,6 +79,8 @@ def downsample2d(xtomo, level=1,
                  overwrite=True):
     
     # Check input.
+    if level < 0:
+        level = 0
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
@@ -96,6 +101,8 @@ def downsample3d(xtomo, level=1,
                  overwrite=True):
 
     # Check input.
+    if level < 0:
+        level = 0
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
@@ -114,6 +121,10 @@ def downsample3d(xtomo, level=1,
 def median_filter(xtomo, size=5, 
                   num_cores=None, chunk_size=None,
                   overwrite=True):
+                  
+    # Check input.
+    if size < 1:
+        size = 1
         
     # Distribute jobs.
     _func = _median_filter
@@ -157,10 +168,10 @@ def normalize(xtomo, cutoff=None,
 
 # --------------------------------------------------------------------
 
-def phase_retrieval(xtomo, pixel_size=None, dist=None, 
-                    energy=None, alpha=1e-5, padding=True,
+def phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
+                    energy=20, alpha=1e-5, padding=True,
                     num_cores=None, chunk_size=None,
-                    overwrite=True):        
+                    overwrite=True):      
         
     # Compute the filter.
     H, x_shift, y_shift, tmp_proj = _paganin_filter(xtomo.data,
@@ -187,7 +198,7 @@ def phase_retrieval(xtomo, pixel_size=None, dist=None,
 
 # --------------------------------------------------------------------
 
-def stripe_removal(xtomo, level=None, wname='db5', sigma=4,
+def stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
                    num_cores=None, chunk_size=None,
                    overwrite=True):
 
@@ -198,7 +209,7 @@ def stripe_removal(xtomo, level=None, wname='db5', sigma=4,
         
     # Distribute jobs.
     _func = _stripe_removal
-    _args = (level, wname, sigma)
+    _args = (level, wname, sigma, padding)
     _axis = 1 # Slice axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis,
                            num_cores, chunk_size)
@@ -207,6 +218,7 @@ def stripe_removal(xtomo, level=None, wname='db5', sigma=4,
     xtomo.logger.debug("stripe_removal: level: " + str(level))
     xtomo.logger.debug("stripe_removal: wname: " + str(wname))
     xtomo.logger.debug("stripe_removal: sigma: " + str(sigma))
+    xtomo.logger.debug("stripe_removal: padding: " + str(padding))
     xtomo.logger.info("stripe_removal [ok]")
     
     # Update returned values.

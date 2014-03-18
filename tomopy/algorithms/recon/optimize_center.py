@@ -7,7 +7,7 @@ from gridrec import Gridrec
 
 # --------------------------------------------------------------------
 
-def _optimize_center(data, theta, slice_no, center_init, tol):
+def _optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
     """ 
     Find the distance between the rotation axis and the middle
     of the detector field-of-view.
@@ -30,6 +30,13 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
 
     tol : scalar
         Desired sub-pixel accuracy.
+        
+    mask : bool
+        If ``True`` applies a circular mask to the image.
+
+    ratio : scalar
+        The ratio of the radius of the circular mask to the
+        edge of the reconstructed image.
 
     Returns
     -------
@@ -42,9 +49,17 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     [1] `SPIE Proceedings, Vol 6318, 631818(2006) \
     <dx.doi.org/10.1117/12.679101>`_
     """
+
     # Make an initial reconstruction to adjust histogram limits. 
     recon = Gridrec(data, airPixels=20, ringWidth=10)
     recon.reconstruct(data, theta=theta, center=center_init, slice_no=slice_no)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = data.shape[2]/2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x*x + y*y > ratio*ratio*rad*rad
+        recon.data_recon[0, msk] = 0
     
     # Adjust histogram boundaries according to reconstruction.
     hist_min = np.min(recon.data_recon)
@@ -61,7 +76,8 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
 
     # Magic is ready to happen...
     res = minimize(_costFunc, center_init,
-                   args=(data, recon, theta, slice_no, hist_min, hist_max),
+                   args=(data, recon, theta, slice_no, 
+                         hist_min, hist_max, mask, ratio),
                    method='Nelder-Mead', tol=tol)
     
     # Have a look at what I found:
@@ -70,12 +86,22 @@ def _optimize_center(data, theta, slice_no, center_init, tol):
     
 # --------------------------------------------------------------------
 
-def _costFunc(center, data, recon, theta, slice_no, hist_min, hist_max):
+def _costFunc(center, data, recon, theta, slice_no, 
+              hist_min, hist_max, mask, ratio):
     """ 
     Cost function of the ``optimize_center``.
     """
     print 'trying center: ' + str(np.squeeze(center))
+    center = np.array(center, dtype='float32')
     recon.reconstruct(data, theta=theta, center=center, slice_no=slice_no)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = data.shape[2]/2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x*x + y*y > ratio*ratio*rad*rad
+        recon.data_recon[0, msk] = 0
+
     histr, e = np.histogram(ndimage.filters.gaussian_filter(recon.data_recon, sigma=2.), 
                             bins=64, range=[hist_min, hist_max])
     histr = histr.astype('float32') / recon.data_recon.size + 1e-12

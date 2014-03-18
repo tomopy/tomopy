@@ -7,7 +7,8 @@ from gridrec import Gridrec
 # --------------------------------------------------------------------
 
 def _diagnose_center(data, theta, dir_path, slice_no, 
-                     center_start, center_end, center_step):
+                     center_start, center_end, center_step, 
+                     mask, ratio):
     """ 
     Diagnostic tools to find rotation center.
     
@@ -24,12 +25,19 @@ def _diagnose_center(data, theta, dir_path, slice_no,
     data : ndarray
         Input data.
     
-    slice_no : scalar, optional
+    slice_no : scalar
         The index of the slice to be used for diagnostics.
     
-    center_start, center_end, center_step : scalar, optional
+    center_start, center_end, center_step : scalar
         Values of the start, end and step of the center values to
         be used for diagnostics.
+        
+    mask : bool
+        If ``True`` applies a circular mask to the image.
+        
+    ratio : scalar
+        The ratio of the radius of the circular mask to the
+        edge of the reconstructed image.
     """
     num_projections =  data.shape[0]
     num_pixels =  data.shape[2]
@@ -50,6 +58,15 @@ def _diagnose_center(data, theta, dir_path, slice_no,
     # Reconstruct the same slice with different centers.
     recon = Gridrec(stacked_slices)
     recon.reconstruct(stacked_slices, theta=theta, center=center)
+    
+    # Apply circular mask.
+    if mask is True:
+        rad = num_pixels/2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x*x + y*y > ratio*ratio*rad*rad
+        for m in range(center.size):
+            recon.data_recon[m, msk] = 0
+        
 
     # Save it to a temporary directory for manual inspection.
     for m in range(center.size):

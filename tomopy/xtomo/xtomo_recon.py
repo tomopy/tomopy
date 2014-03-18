@@ -25,7 +25,8 @@ from tomopy.algorithms.recon.upsample import _upsample2d, _upsample3d
 # --------------------------------------------------------------------
 
 def diagnose_center(xtomo, dir_path=None, slice_no=None,
-		    center_start=None, center_end=None, center_step=None):
+		    center_start=None, center_end=None, center_step=None, 
+		    mask=True, ratio=1):
 	
     # Dimensions:
     num_slices = xtomo.data.shape[1]
@@ -33,7 +34,7 @@ def diagnose_center(xtomo, dir_path=None, slice_no=None,
 
     # Set default parameters.
     if dir_path is None: # Create one at at data location for output images.
-        dir_path = os.path.dirname(xtomo.file_name) + '/center_diagnose/'
+        dir_path = 'tmp/center_diagnose/'
         if os.path.isdir(dir_path):
             shutil.rmtree(dir_path)
         os.makedirs(dir_path)
@@ -51,7 +52,7 @@ def diagnose_center(xtomo, dir_path=None, slice_no=None,
 
     # Call function.
     _diagnose_center(xtomo.data, xtomo.theta, dir_path, slice_no, 
-                     center_start, center_end, center_step)
+                     center_start, center_end, center_step, mask, ratio)
 
     # Update log.
     xtomo.logger.debug("diagnose_center: dir_path: " + str(dir_path))
@@ -59,12 +60,14 @@ def diagnose_center(xtomo, dir_path=None, slice_no=None,
     xtomo.logger.debug("diagnose_center: center_start: " + str(center_start))
     xtomo.logger.debug("diagnose_center: center_end: " + str(center_end))
     xtomo.logger.debug("diagnose_center: center_step: " + str(center_step))
+    xtomo.logger.debug("diagnose_center: mask: " + str(mask))
+    xtomo.logger.debug("diagnose_center: ratio: " + str(ratio))
     xtomo.logger.info("diagnose_center [ok]")
 
 # --------------------------------------------------------------------
 
 def optimize_center(xtomo, slice_no=None, center_init=None, 
-                    tol=0.5, overwrite=True):
+                    tol=0.5, overwrite=True, mask=True, ratio=1):
                     
     # Dimensions:
     num_slices = xtomo.data.shape[1]
@@ -82,12 +85,15 @@ def optimize_center(xtomo, slice_no=None, center_init=None,
         center_init = np.array(center_init, dtype='float32')
 
     # All set, give me center now.
-    center = _optimize_center(xtomo.data, xtomo.theta, slice_no, center_init, tol)
+    center = _optimize_center(xtomo.data, xtomo.theta, slice_no, 
+                              center_init, tol, mask, ratio)
     
     # Update log.
     xtomo.logger.debug("optimize_center: slice_no: " + str(slice_no))
     xtomo.logger.debug("optimize_center: center_init: " + str(center_init))
     xtomo.logger.debug("optimize_center: tol: " + str(tol))
+    xtomo.logger.debug("optimize_center: mask: " + str(mask))
+    xtomo.logger.debug("optimize_center: ratio: " + str(ratio))
     xtomo.logger.info("optimize_center [ok]")
     
     # Update returned values.

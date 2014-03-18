@@ -17,7 +17,9 @@ def _apply_padding(data, num_pad):
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
-        
+    
+    if num_pad < num_pixels:
+        return data
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
