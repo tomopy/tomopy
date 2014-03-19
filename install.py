@@ -300,38 +300,6 @@ def main():
                 print("ERROR: unexpected output for %s -print-search-dirs: %s" % (cc, output))
                 sys.exit(1)
     
-        # Check whether the C compiler give different architecture builds by default
-        open('test_arch.c', 'w').write(TEST_ARCH_C)
-        subprocess.Popen(shlex.split(cc + ' test_arch.c -o test_arch_c')).wait()
-        output = p_get_first_line('file test_arch_c').strip()
-        if output == 'test_arch_c: Mach-O 64-bit executable x86_64':
-            arch_c = 64
-        elif output == 'test_arch_c: Mach-O executable i386':
-            arch_c = 32
-        else:
-            arch_c = None
-        
-        # Check whether the Fortran compiler give different architecture builds by default
-        open('test_arch.f90', 'w').write(TEST_ARCH_F90)
-        subprocess.Popen(shlex.split(fc + ' test_arch.f90 -o test_arch_f90')).wait()
-        output = p_get_first_line('file test_arch_f90').strip()
-        if output == 'test_arch_f90: Mach-O 64-bit executable x86_64':
-            arch_f90 = 64
-        elif output == 'test_arch_f90: Mach-O executable i386':
-            arch_f90 = 32
-        else:
-            arch_f90 = None
-        if arch_c is None or arch_f90 is None:
-            pass  # just be safe and don't assume anything
-        elif arch_c != arch_f90:
-            if arch_c == 32:
-                cc += '- m64'
-                cxx += ' -m64'
-                print(" -> SPECIAL CASE: adjusting C compiler:", cc)
-            else:
-                fc += ' -m64'
-                print(" -> SPECIAL CASE: adjusting fortran compiler:", fc)
-    
     if INSTALL_FFTW:
         install_fftw(prefix, fc, cc, cxx)
         os.chdir(work_dir)
