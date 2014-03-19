@@ -1,59 +1,48 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-import io
-import platform
 import warnings
 
-from ez_setup import use_setuptools
-use_setuptools()
 from setuptools import setup, Extension, find_packages
 
-#myplatform = platform.uname()[0]
+# Set Python package requirements for installation.
+install_requires = [
+            'numpy>=1.8.0',
+            'scipy>=0.13.2',
+            'h5py>=2.2.1',
+            'pillow>=2.3.0',
+            'pywavelets>=0.2.2',
+            ]
 
-# Check Python packages.
-try:
-    import numpy
-except ImportError:
-    raise ImportError("tomopy requires numpy 1.8.0 " +
-                  "(hint: pip install numpy)")
-try:
-    import scipy
-except ImportError:
-    raise ImportError("tomopy requires scipy 0.13.2 " +
-                  "(hint: pip install scipy)")
-try:
-    import h5py
-except ImportError:
-    raise ImportError("tomopy requires h5py 2.2.1 " +
-                  "(hint: pip install h5py)")
-try:
-    from scipy.misc import toimage
-except ImportError:
-    raise ImportError("tomopy requires pillow 2.3.0 " +
-                  "(hint: pip install pillow)")
-try:
-    import pywt
-except ImportError:
-    raise ImportError("tomopy requires pywavelets 0.2.2 " +
-                  "(hint: pip install pywavelets)")
+# enforce these same requirements at packaging time
+import pkg_resources
+for requirement in install_requires:
+    try:
+        pkg_resources.require(requirement)
+    except pkg_resources.DistributionNotFound:
+        msg = 'Python package requirement not satisfied: ' + requirement
+        msg += '\nsuggest using this command:'
+        msg += '\n\tpip install -U ' + requirement.split('=')[0].rstrip('>')
+        raise pkg_resources.DistributionNotFound, msg
 
-# Get shared library location from environment variables.
-try:
-    LD_LIBRARY_PATH = os.environ['LD_LIBRARY_PATH'].split(os.pathsep)
-except KeyError:
-    LD_LIBRARY_PATH = []
+# Get shared library locations (list of directories).
+LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
+if LD_LIBRARY_PATH is None:
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
                   "link the shared libraries correctly")
+    LD_LIBRARY_PATH = ''
+LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
 
-try:
-    C_INCLUDE_PATH = os.environ['C_INCLUDE_PATH'].split(os.pathsep)
-except KeyError:
-    C_INCLUDE_PATH = []
+# Get header file locations (list of directories).
+C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
+if C_INCLUDE_PATH is None:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
+    C_INCLUDE_PATH = ''
+C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
-C_INCLUDE_PATH += {os.path.abspath('tomopy/algorithms/recon/gridrec')}
+# add ourselves to the list
+C_INCLUDE_PATH += [os.path.abspath('tomopy/algorithms/recon/gridrec')]
 
 
 # Create FFTW shared-library.
@@ -91,7 +80,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
 # Main setup configuration.
 setup(
       name='tomopy',
-      version='0.0.2',
+      version=open('VERSION').read().strip(),
 
       packages = find_packages(),
       include_package_data = True,
@@ -108,6 +97,7 @@ setup(
 
       license='BSD',
       platforms='Any',
+      install_requires = install_requires,
 
       classifiers=['Development Status :: 4 - Beta',
 		   'License :: OSI Approved :: BSD License',

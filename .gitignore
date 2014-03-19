@@ -41,6 +41,11 @@ Thumbs.db
 # Python pyproducts #
 #####################
 *.pyc
+build
+dist
+docs/build
+*egg-info
+.settings
 
 # LaTex generated files #
 #########################
