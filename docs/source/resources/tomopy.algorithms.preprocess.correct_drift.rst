@@ -1,7 +1,6 @@
-======================
- :mod:`correct_drift`
-======================
-
+====================
+:mod:`correct_drift`
+====================
 
 .. automodule:: tomopy.algorithms.preprocess.correct_drift
    :members:

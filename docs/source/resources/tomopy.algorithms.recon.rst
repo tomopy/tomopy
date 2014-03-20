@@ -1,6 +1,6 @@
-=====================
- :mod:`recon` Module
-=====================
+===================
+:mod:`recon` Module
+===================
 
 .. toctree::
    tomopy.algorithms.recon.art

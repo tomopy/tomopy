@@ -1,7 +1,6 @@
-=========================
- :mod:`remove_background`
-=========================
-
+========================
+:mod:`remove_background`
+========================
 
 .. automodule:: tomopy.algorithms.postprocess.remove_background
    :members:

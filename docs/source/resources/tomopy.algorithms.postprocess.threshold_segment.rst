@@ -1,7 +1,6 @@
-=========================
- :mod:`threshold_segment`
-=========================
-
+========================
+:mod:`threshold_segment`
+========================
 
 .. automodule:: tomopy.algorithms.postprocess.threshold_segment
    :members:

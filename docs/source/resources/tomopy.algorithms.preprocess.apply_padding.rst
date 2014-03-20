@@ -1,7 +1,6 @@
-======================
- :mod:`apply_padding`
-======================
-
+====================
+:mod:`apply_padding`
+====================
 
 .. automodule:: tomopy.algorithms.preprocess.apply_padding
    :members:

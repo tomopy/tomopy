@@ -1,7 +1,6 @@
-======================
- :mod:`downsample`
-======================
-
+=================
+:mod:`downsample`
+=================
 
 .. automodule:: tomopy.algorithms.preprocess.downsample
    :members:

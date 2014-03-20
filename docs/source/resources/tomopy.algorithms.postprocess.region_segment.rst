@@ -1,7 +1,6 @@
-======================
- :mod:`region_segment`
-======================
-
+=====================
+:mod:`region_segment`
+=====================
 
 .. automodule:: tomopy.algorithms.postprocess.region_segment
    :members:

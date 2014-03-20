@@ -1,7 +1,6 @@
-==========================
- :mod:`preprocess` Module
-==========================
-
+========================
+:mod:`preprocess` Module
+========================
 
 .. toctree::
    tomopy.algorithms.preprocess.apply_padding
@@ -12,7 +11,6 @@
    tomopy.algorithms.preprocess.phase_retrieval
    tomopy.algorithms.preprocess.stripe_removal
    tomopy.algorithms.preprocess.zinger_removal
-
 
 .. automodule:: tomopy.algorithms.preprocess
    :members:
