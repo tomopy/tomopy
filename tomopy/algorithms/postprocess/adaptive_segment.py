@@ -4,7 +4,7 @@ from skimage.filter import threshold_adaptive
 
 # --------------------------------------------------------------------
 
-def _adaptive_segment(args):
+def adaptive_segment(args):
     """
     Adaptive thresholding based segmentation.
     """

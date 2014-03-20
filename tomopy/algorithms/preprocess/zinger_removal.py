@@ -4,7 +4,7 @@ from scipy.ndimage import filters
 
 # --------------------------------------------------------------------
 
-def _zinger_removal(args):
+def zinger_removal(args):
     """
     Zinger removal.
 

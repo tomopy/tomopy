@@ -12,7 +12,7 @@ librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _mlem(data, theta, center, num_grid, iters, init_matrix):
+def mlem(data, theta, center, num_grid, iters, init_matrix):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

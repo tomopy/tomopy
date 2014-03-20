@@ -4,7 +4,7 @@ from skimage.morphology import reconstruction
 
 # --------------------------------------------------------------------
 
-def _remove_background(args):
+def remove_background(args):
     """
     Remove background from reconstructions.
     """

@@ -12,7 +12,7 @@ libprep = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _apply_padding(data, num_pad):
+def apply_padding(data, num_pad):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

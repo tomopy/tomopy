@@ -7,7 +7,7 @@ from gridrec import Gridrec
 
 # --------------------------------------------------------------------
 
-def _optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
+def optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
     """ 
     Find the distance between the rotation axis and the middle
     of the detector field-of-view.

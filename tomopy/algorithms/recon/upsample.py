@@ -12,7 +12,7 @@ librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _upsample2d(data, level):
+def upsample2d(data, level):
     
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
@@ -36,7 +36,7 @@ def _upsample2d(data, level):
 
 # --------------------------------------------------------------------
 
-def _upsample3d(data, level):
+def upsample3d(data, level):
     
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
