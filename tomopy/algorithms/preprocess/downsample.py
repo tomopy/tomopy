@@ -12,7 +12,7 @@ libprep = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _downsample2d(data, level):
+def downsample2d(data, level):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
@@ -41,7 +41,7 @@ def _downsample2d(data, level):
 
 # --------------------------------------------------------------------
 
-def _downsample3d(data, level):
+def downsample3d(data, level):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

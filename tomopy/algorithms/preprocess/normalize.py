@@ -3,7 +3,7 @@ import numpy as np
 
 # --------------------------------------------------------------------
 
-def _normalize(args):
+def normalize(args):
     """
     Normalize raw projection data with
     the white field projection data.

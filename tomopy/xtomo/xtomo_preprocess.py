@@ -11,23 +11,23 @@ import numpy as np
 from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available functons in the package.
-from tomopy.algorithms.preprocess.apply_padding import _apply_padding
-from tomopy.algorithms.preprocess.correct_drift import _correct_drift
-from tomopy.algorithms.preprocess.downsample import _downsample2d, _downsample3d
-from tomopy.algorithms.preprocess.median_filter import median_filter as median_filter_
-from tomopy.algorithms.preprocess.normalize import _normalize
-from tomopy.algorithms.preprocess.phase_retrieval import _phase_retrieval, _paganin_filter
-from tomopy.algorithms.preprocess.stripe_removal import _stripe_removal
-from tomopy.algorithms.preprocess.zinger_removal import _zinger_removal
+from tomopy.algorithms.preprocess.apply_padding import apply_padding
+from tomopy.algorithms.preprocess.correct_drift import correct_drift
+from tomopy.algorithms.preprocess.downsample import downsample2d, downsample3d
+from tomopy.algorithms.preprocess.median_filter import median_filter
+from tomopy.algorithms.preprocess.normalize import normalize
+from tomopy.algorithms.preprocess.phase_retrieval import phase_retrieval, paganin_filter
+from tomopy.algorithms.preprocess.stripe_removal import stripe_removal
+from tomopy.algorithms.preprocess.zinger_removal import zinger_removal
 
 # Import multiprocessing module.
 from tomopy.tools.multiprocess import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def apply_padding(xtomo, num_pad=None,
-                  num_cores=None, chunk_size=None,
-                  overwrite=True):
+def _apply_padding(xtomo, num_pad=None,
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
 
     # Set default parameters.
     num_pixels = xtomo.data.shape[2]
@@ -40,7 +40,7 @@ def apply_padding(xtomo, num_pad=None,
     if not isinstance(num_pad, np.int32):
         num_pad = np.array(num_pad, dtype='int32')
 
-    data = _apply_padding(xtomo.data, num_pad)
+    data = apply_padding(xtomo.data, num_pad)
     
     # Update log.
     xtomo.logger.debug("apply_padding: num_pad: " + str(num_pad))
@@ -52,9 +52,9 @@ def apply_padding(xtomo, num_pad=None,
 
 # --------------------------------------------------------------------
 
-def correct_drift(xtomo, air_pixels=20, 
-                  num_cores=None, chunk_size=None,
-                  overwrite=True):
+def _correct_drift(xtomo, air_pixels=20, 
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
     
     # Check input.
     if air_pixels <= 0:
@@ -62,7 +62,7 @@ def correct_drift(xtomo, air_pixels=20,
     if not isinstance(air_pixels, np.int32):
         air_pixels = np.array(air_pixels, dtype='int32')
     
-    data = _correct_drift(xtomo.data, air_pixels)
+    data = correct_drift(xtomo.data, air_pixels)
    
     # Update log.
     xtomo.logger.debug("correct_drift: air_pixels: " + str(air_pixels))
@@ -74,9 +74,9 @@ def correct_drift(xtomo, air_pixels=20,
 
 # --------------------------------------------------------------------
 
-def downsample2d(xtomo, level=1,
-                 num_cores=None, chunk_size=None,
-                 overwrite=True):
+def _downsample2d(xtomo, level=1,
+                  num_cores=None, chunk_size=None,
+                  overwrite=True):
     
     # Check input.
     if level < 0:
@@ -84,7 +84,7 @@ def downsample2d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data = _downsample2d(xtomo.data, level)
+    data = downsample2d(xtomo.data, level)
     
     # Update log.
     xtomo.logger.debug("downsample2d: level: " + str(level))
@@ -96,9 +96,9 @@ def downsample2d(xtomo, level=1,
 	
 # --------------------------------------------------------------------
 
-def downsample3d(xtomo, level=1,
-                 num_cores=None, chunk_size=None,
-                 overwrite=True):
+def _downsample3d(xtomo, level=1,
+                  num_cores=None, chunk_size=None,
+                  overwrite=True):
 
     # Check input.
     if level < 0:
@@ -106,7 +106,7 @@ def downsample3d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data = _downsample3d(xtomo.data, level)
+    data = downsample3d(xtomo.data, level)
     
     # Update log.
     xtomo.logger.debug("downsample3d: level: " + str(level))
@@ -118,16 +118,16 @@ def downsample3d(xtomo, level=1,
 
 # --------------------------------------------------------------------
 
-def median_filter(xtomo, size=5, 
-                  num_cores=None, chunk_size=None,
-                  overwrite=True):
+def _median_filter(xtomo, size=5, 
+                   num_cores=None, chunk_size=None,
+                   overwrite=True):
                   
     # Check input.
     if size < 1:
         size = 1
         
     # Distribute jobs.
-    _func = median_filter_
+    _func = median_filter
     _args = (size)
     _axis = 1 # Slice axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis, 
@@ -143,16 +143,16 @@ def median_filter(xtomo, size=5,
 
 # --------------------------------------------------------------------
 
-def normalize(xtomo, cutoff=None, 
-              num_cores=None, chunk_size=None,
-              overwrite=True):
+def _normalize(xtomo, cutoff=None, 
+               num_cores=None, chunk_size=None,
+               overwrite=True):
 
     # Calculate average white and dark fields for normalization.
     avg_white = np.mean(xtomo.data_white, axis=0)
     avg_dark = np.mean(xtomo.data_dark, axis=0)
     
     # Distribute jobs.
-    _func = _normalize
+    _func = normalize
     _args = (avg_white, avg_dark, cutoff)
     _axis = 0 # Projection axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis, 
@@ -168,17 +168,17 @@ def normalize(xtomo, cutoff=None,
 
 # --------------------------------------------------------------------
 
-def phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
-                    energy=20, alpha=1e-5, padding=True,
-                    num_cores=None, chunk_size=None,
-                    overwrite=True):      
+def _phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
+                     energy=20, alpha=1e-5, padding=True,
+                     num_cores=None, chunk_size=None,
+                     overwrite=True):      
         
     # Compute the filter.
-    H, x_shift, y_shift, tmp_proj = _paganin_filter(xtomo.data,
+    H, x_shift, y_shift, tmp_proj = paganin_filter(xtomo.data,
                                     pixel_size, dist, energy, alpha, padding)                 
                      
     # Distribute jobs.
-    _func = _phase_retrieval
+    _func = phase_retrieval
     _args = (H, x_shift, y_shift, tmp_proj, padding)
     _axis = 0 # Projection axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis, 
@@ -198,9 +198,9 @@ def phase_retrieval(xtomo, pixel_size=1e-4, dist=50,
 
 # --------------------------------------------------------------------
 
-def stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
-                   num_cores=None, chunk_size=None,
-                   overwrite=True):
+def _stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
+                    num_cores=None, chunk_size=None,
+                    overwrite=True):
 
     # Find the higest level possible.
     if level is None:
@@ -208,7 +208,7 @@ def stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
         level = int(np.ceil(np.log2(size)))
         
     # Distribute jobs.
-    _func = _stripe_removal
+    _func = stripe_removal
     _args = (level, wname, sigma, padding)
     _axis = 1 # Slice axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis,
@@ -227,12 +227,12 @@ def stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
 
 # --------------------------------------------------------------------
 
-def zinger_removal(xtomo, zinger_level=1000, median_width=3,
-                   num_cores=None, chunk_size=None,
-                   overwrite=True):
+def _zinger_removal(xtomo, zinger_level=1000, median_width=3,
+                    num_cores=None, chunk_size=None,
+                    overwrite=True):
 
     # Distribute jobs.
-    _func = _zinger_removal
+    _func = zinger_removal
     _args = (zinger_level, median_width)
     _axis = 0 # Projection axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis,
@@ -259,12 +259,12 @@ def zinger_removal(xtomo, zinger_level=1000, median_width=3,
 # --------------------------------------------------------------------
     
 # Hook all these methods to TomoPy.
-setattr(XTomoDataset, 'apply_padding', apply_padding)
-setattr(XTomoDataset, 'correct_drift', correct_drift)
-setattr(XTomoDataset, 'downsample2d', downsample2d)
-setattr(XTomoDataset, 'downsample3d', downsample3d)
-setattr(XTomoDataset, 'median_filter', median_filter)
-setattr(XTomoDataset, 'normalize', normalize)
-setattr(XTomoDataset, 'phase_retrieval', phase_retrieval)
-setattr(XTomoDataset, 'stripe_removal', stripe_removal)
-setattr(XTomoDataset, 'zinger_removal', zinger_removal)
+setattr(XTomoDataset, 'apply_padding', _apply_padding)
+setattr(XTomoDataset, 'correct_drift', _correct_drift)
+setattr(XTomoDataset, 'downsample2d', _downsample2d)
+setattr(XTomoDataset, 'downsample3d', _downsample3d)
+setattr(XTomoDataset, 'median_filter', _median_filter)
+setattr(XTomoDataset, 'normalize', _normalize)
+setattr(XTomoDataset, 'phase_retrieval', _phase_retrieval)
+setattr(XTomoDataset, 'stripe_removal', _stripe_removal)
+setattr(XTomoDataset, 'zinger_removal', _zinger_removal)

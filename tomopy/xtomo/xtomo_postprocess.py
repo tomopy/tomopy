@@ -9,11 +9,11 @@ absorption tomography data object.
 from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available functons in the package.
-from tomopy.algorithms.postprocess.adaptive_segment import _adaptive_segment
-from tomopy.algorithms.postprocess.apply_mask import _apply_mask
-from tomopy.algorithms.postprocess.remove_background import _remove_background
-from tomopy.algorithms.postprocess.region_segment import _region_segment
-from tomopy.algorithms.postprocess.threshold_segment import _threshold_segment
+from tomopy.algorithms.postprocess.adaptive_segment import adaptive_segment
+from tomopy.algorithms.postprocess.apply_mask import apply_mask
+from tomopy.algorithms.postprocess.remove_background import remove_background
+from tomopy.algorithms.postprocess.region_segment import region_segment
+from tomopy.algorithms.postprocess.threshold_segment import threshold_segment
 
 # Import multiprocessing module.
 from tomopy.tools.multiprocess import distribute_jobs
@@ -21,16 +21,16 @@ from tomopy.tools.multiprocess import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def adaptive_segment(xtomo, block_size=256, offset=0,
-                     num_cores=None, chunk_size=None,
-                     overwrite=True):    
+def _adaptive_segment(xtomo, block_size=256, offset=0,
+                      num_cores=None, chunk_size=None,
+                      overwrite=True):    
     
     # Normalize data first.
     data = xtomo.data_recon - xtomo.data_recon.min()
     data /= data.max() 
 
     # Distribute jobs.
-    _func = _adaptive_segment
+    _func = adaptive_segment
     _args = (block_size, offset)
     _axis = 0 # Slice axis
     data_recon = distribute_jobs(data, _func, _args, _axis, 
@@ -47,14 +47,14 @@ def adaptive_segment(xtomo, block_size=256, offset=0,
 
 # --------------------------------------------------------------------
 
-def apply_mask(xtomo, ratio=1, overwrite=True):    
+def _apply_mask(xtomo, ratio=1, overwrite=True):    
     
     # Normalize data first.
     data = xtomo.data_recon - xtomo.data_recon.min()
     data /= data.max() 
 
     # Distribute jobs.
-    data_recon = _apply_mask(xtomo.data_recon, ratio)
+    data_recon = apply_mask(xtomo.data_recon, ratio)
                                          
     # Update log.
     xtomo.logger.debug("apply_mask: ratio: " + str(ratio))
@@ -66,16 +66,16 @@ def apply_mask(xtomo, ratio=1, overwrite=True):
 
 # --------------------------------------------------------------------
 
-def region_segment(xtomo, low=None, high=None,
-                   num_cores=None, chunk_size=None,
-                   overwrite=True):
+def _region_segment(xtomo, low=None, high=None,
+                    num_cores=None, chunk_size=None,
+                    overwrite=True):
     
     # Normalize data first.
     data = xtomo.data_recon - xtomo.data_recon.min()
     data /= data.max()
     
     # Distribute jobs.
-    _func = _region_segment
+    _func = region_segment
     _args = (low, high)
     _axis = 0 # Slice axis
     data_recon = distribute_jobs(data, _func, _args, _axis, 
@@ -92,12 +92,12 @@ def region_segment(xtomo, low=None, high=None,
 
 # --------------------------------------------------------------------
 
-def remove_background(xtomo, 
-                      num_cores=None, chunk_size=None,
-                      overwrite=True):
+def _remove_background(xtomo, 
+                       num_cores=None, chunk_size=None,
+                       overwrite=True):
     
     # Distribute jobs.
-    _func = _remove_background
+    _func = remove_background
     _args = ()
     _axis = 0 # Slice axis
     data_recon = distribute_jobs(xtomo.data_recon, _func, _args, _axis, 
@@ -112,16 +112,16 @@ def remove_background(xtomo,
 
 # --------------------------------------------------------------------
 
-def threshold_segment(xtomo, cutoff=None,
-                      num_cores=None, chunk_size=None,
-                      overwrite=True):
+def _threshold_segment(xtomo, cutoff=None,
+                       num_cores=None, chunk_size=None,
+                       overwrite=True):
     
     # Normalize data first.
     data = xtomo.data_recon - xtomo.data_recon.min()
     data /= data.max()
 
     # Distribute jobs.
-    _func = _threshold_segment
+    _func = threshold_segment
     _args = ()
     _axis = 0 # Slice axis
     data_recon = distribute_jobs(data, _func, _args, _axis, 
@@ -138,8 +138,8 @@ def threshold_segment(xtomo, cutoff=None,
 # --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
-setattr(XTomoDataset, 'adaptive_segment', adaptive_segment)
-setattr(XTomoDataset, 'apply_mask', apply_mask)
-setattr(XTomoDataset, 'remove_background', remove_background)
-setattr(XTomoDataset, 'region_segment', threshold_segment)
-setattr(XTomoDataset, 'threshold_segment', threshold_segment)
+setattr(XTomoDataset, 'adaptive_segment', _adaptive_segment)
+setattr(XTomoDataset, 'apply_mask', _apply_mask)
+setattr(XTomoDataset, 'remove_background', _remove_background)
+setattr(XTomoDataset, 'region_segment', _threshold_segment)
+setattr(XTomoDataset, 'threshold_segment', _threshold_segment)

@@ -4,7 +4,7 @@ import pywt
 
 # --------------------------------------------------------------------
 
-def _stripe_removal(args):
+def stripe_removal(args):
     """
     Remove stripes from sinogram data.
 

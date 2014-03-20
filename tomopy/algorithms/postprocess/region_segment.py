@@ -5,7 +5,7 @@ from skimage.filter import sobel
 
 # --------------------------------------------------------------------
 
-def _region_segment(args):
+def region_segment(args):
     """
     Region based segmentation.
     """

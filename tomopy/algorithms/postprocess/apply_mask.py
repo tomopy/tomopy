@@ -3,7 +3,7 @@ import numpy as np
 
 # --------------------------------------------------------------------
 
-def _apply_mask(data, ratio):
+def apply_mask(data, ratio):
     """
     Apply circular mask to reconstructed data.
     """

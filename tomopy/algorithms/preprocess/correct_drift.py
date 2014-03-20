@@ -12,7 +12,7 @@ libprep = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def _correct_drift(data, air_pixels):
+def correct_drift(data, air_pixels):
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

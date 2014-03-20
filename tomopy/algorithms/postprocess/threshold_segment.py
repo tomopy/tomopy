@@ -3,7 +3,7 @@ from skimage.filter import threshold_otsu
 
 # --------------------------------------------------------------------
 
-def _threshold_segment(args):
+def threshold_segment(args):
     """
     Threshold based segmentation.
     """

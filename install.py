@@ -15,14 +15,6 @@ import hashlib
 import shlex
 from distutils import version
 import subprocess
-try:
-    from urllib import urlopen          #@UnusedImport
-except ImportError:
-    from urllib.request import urlopen  #@UnusedImport
-try:
-    from urllib import urlencode        #@UnusedImport
-except ImportError:
-    from urllib.parse import urlencode  #@UnusedImport
 
 
 VERBOSE = False

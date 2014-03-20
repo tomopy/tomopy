@@ -6,7 +6,7 @@ from gridrec import Gridrec
 
 # --------------------------------------------------------------------
 
-def _diagnose_center(data, theta, dir_path, slice_no, 
+def diagnose_center(data, theta, dir_path, slice_no, 
                      center_start, center_end, center_step, 
                      mask, ratio):
     """ 

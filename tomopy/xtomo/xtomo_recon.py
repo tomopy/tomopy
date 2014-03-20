@@ -13,20 +13,20 @@ import shutil
 from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available reconstruction functons in the package.
-from tomopy.algorithms.recon.art import _art
+from tomopy.algorithms.recon.art import art
 from tomopy.algorithms.recon.gridrec import Gridrec
-from tomopy.algorithms.recon.mlem import _mlem
+from tomopy.algorithms.recon.mlem import mlem
 
 # Import helper functons in the package.
-from tomopy.algorithms.recon.diagnose_center import _diagnose_center
-from tomopy.algorithms.recon.optimize_center import _optimize_center
-from tomopy.algorithms.recon.upsample import _upsample2d, _upsample3d
+from tomopy.algorithms.recon.diagnose_center import diagnose_center
+from tomopy.algorithms.recon.optimize_center import optimize_center
+from tomopy.algorithms.recon.upsample import upsample2d, upsample3d
 
 # --------------------------------------------------------------------
 
-def diagnose_center(xtomo, dir_path=None, slice_no=None,
-		    center_start=None, center_end=None, center_step=None, 
-		    mask=True, ratio=1):
+def _diagnose_center(xtomo, dir_path=None, slice_no=None,
+		     center_start=None, center_end=None, center_step=None, 
+		     mask=True, ratio=1):
 	
     # Dimensions:
     num_slices = xtomo.data.shape[1]
@@ -51,7 +51,7 @@ def diagnose_center(xtomo, dir_path=None, slice_no=None,
         center_step = 1
 
     # Call function.
-    _diagnose_center(xtomo.data, xtomo.theta, dir_path, slice_no, 
+    diagnose_center(xtomo.data, xtomo.theta, dir_path, slice_no, 
                      center_start, center_end, center_step, mask, ratio)
 
     # Update log.
@@ -66,8 +66,8 @@ def diagnose_center(xtomo, dir_path=None, slice_no=None,
 
 # --------------------------------------------------------------------
 
-def optimize_center(xtomo, slice_no=None, center_init=None, 
-                    tol=0.5, overwrite=True, mask=True, ratio=1):
+def _optimize_center(xtomo, slice_no=None, center_init=None, 
+                     tol=0.5, overwrite=True, mask=True, ratio=1):
                     
     # Dimensions:
     num_slices = xtomo.data.shape[1]
@@ -85,7 +85,7 @@ def optimize_center(xtomo, slice_no=None, center_init=None,
         center_init = np.array(center_init, dtype='float32')
 
     # All set, give me center now.
-    center = _optimize_center(xtomo.data, xtomo.theta, slice_no, 
+    center = optimize_center(xtomo.data, xtomo.theta, slice_no, 
                               center_init, tol, mask, ratio)
     
     # Update log.
@@ -102,15 +102,15 @@ def optimize_center(xtomo, slice_no=None, center_init=None,
 	    
 # --------------------------------------------------------------------
 
-def upsample2d(xtomo, level=1,
-               num_cores=None, chunk_size=None,
-               overwrite=True):
+def _upsample2d(xtomo, level=1,
+                num_cores=None, chunk_size=None,
+                overwrite=True):
 
     # Check input.
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = _upsample2d(xtomo.data_recon, level)
+    data_recon = upsample2d(xtomo.data_recon, level)
     
     # Update log.
     xtomo.logger.debug("upsample2d: level: " + str(level))
@@ -122,15 +122,15 @@ def upsample2d(xtomo, level=1,
 	    
 # --------------------------------------------------------------------
 
-def upsample3d(xtomo, level=1,
-               num_cores=None, chunk_size=None,
-               overwrite=True):
+def _upsample3d(xtomo, level=1,
+                num_cores=None, chunk_size=None,
+                overwrite=True):
 
     # Check input.
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = _upsample3d(xtomo.data_recon, level)
+    data_recon = upsample3d(xtomo.data_recon, level)
     
     # Update log.
     xtomo.logger.debug("upsample3d: level: " + str(level))
@@ -142,7 +142,7 @@ def upsample3d(xtomo, level=1,
     
 # --------------------------------------------------------------------
     
-def art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
     # Dimensions:
     num_pixels = xtomo.data.shape[2]
@@ -188,7 +188,7 @@ def art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = _art(data, theta, center, num_grid, iters, init_matrix)
+    data_recon = art(data, theta, center, num_grid, iters, init_matrix)
     
     # Update log.
     xtomo.logger.debug("art: iters: " + str(iters))
@@ -202,7 +202,7 @@ def art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
 # --------------------------------------------------------------------
     
-def mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
     # Dimensions:
     num_pixels = xtomo.data.shape[2]
@@ -248,7 +248,7 @@ def mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = _mlem(data, theta, center, num_grid, iters, init_matrix)
+    data_recon = mlem(data, theta, center, num_grid, iters, init_matrix)
 
     # Update log.
     xtomo.logger.debug("mlem: iters: " + str(iters))
@@ -262,7 +262,7 @@ def mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
 # --------------------------------------------------------------------
     
-def gridrec(xtomo, overwrite=True, *args, **kwargs):
+def _gridrec(xtomo, overwrite=True, *args, **kwargs):
 
     # Check input.
     if not isinstance(xtomo.center, np.float32):
@@ -282,10 +282,10 @@ def gridrec(xtomo, overwrite=True, *args, **kwargs):
 # --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
-setattr(XTomoDataset, 'diagnose_center', diagnose_center)
-setattr(XTomoDataset, 'optimize_center', optimize_center)
-setattr(XTomoDataset, 'upsample2d', upsample2d)
-setattr(XTomoDataset, 'upsample3d', upsample3d)
-setattr(XTomoDataset, 'art', art)
-setattr(XTomoDataset, 'gridrec', gridrec)
-setattr(XTomoDataset, 'mlem', mlem)
+setattr(XTomoDataset, 'diagnose_center', _diagnose_center)
+setattr(XTomoDataset, 'optimize_center', _optimize_center)
+setattr(XTomoDataset, 'upsample2d', _upsample2d)
+setattr(XTomoDataset, 'upsample3d', _upsample3d)
+setattr(XTomoDataset, 'art', _art)
+setattr(XTomoDataset, 'gridrec', _gridrec)
+setattr(XTomoDataset, 'mlem', _mlem)
