@@ -1,6 +1,6 @@
-==========================
- :mod:`postprocess` Module
-==========================
+=========================
+:mod:`postprocess` Module
+=========================
 
 .. toctree::
    tomopy.algorithms.postprocess.adaptive_segment

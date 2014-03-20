@@ -1,7 +1,6 @@
-======================================
- :mod:`normalize`
-======================================
-
+================
+:mod:`normalize`
+================
 
 .. automodule:: tomopy.algorithms.preprocess.normalize
    :members:

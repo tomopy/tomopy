@@ -1,6 +1,6 @@
-===============
+==============
 :mod:`gridrec`
-===============
+==============
 
 .. automodule:: tomopy.algorithms.recon.gridrec
    :members:

@@ -1,9 +1,8 @@
-========================
- :mod:`phase_retrieval`
-========================
+======================
+:mod:`zinger_removal`
+======================
 
-
-.. automodule:: tomopy.algorithms.preprocess.phase_retrieval
+.. automodule:: tomopy.algorithms.preprocess.zinger_removal
    :members:
    :show-inheritance:
    :undoc-members:

@@ -1,7 +1,6 @@
-========================
- :mod:`adaptive_segment`
-========================
-
+=======================
+:mod:`adaptive_segment`
+=======================
 
 .. automodule:: tomopy.algorithms.postprocess.adaptive_segment
    :members:
