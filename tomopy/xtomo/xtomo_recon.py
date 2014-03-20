@@ -289,12 +289,3 @@ setattr(XTomoDataset, 'upsample3d', upsample3d)
 setattr(XTomoDataset, 'art', art)
 setattr(XTomoDataset, 'gridrec', gridrec)
 setattr(XTomoDataset, 'mlem', mlem)
-
-# Use original function docstrings for the wrappers.
-diagnose_center.__doc__ = _diagnose_center.__doc__
-upsample2d.__doc__ = _upsample2d.__doc__
-upsample3d.__doc__ = _upsample3d.__doc__
-diagnose_center.__doc__ = _diagnose_center.__doc__
-art.__doc__ = _art.__doc__
-gridrec.__doc__ = Gridrec.__doc__
-mlem.__doc__ = _mlem.__doc__

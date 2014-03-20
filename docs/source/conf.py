@@ -319,3 +319,6 @@ MOCK_MODULES = ['ctypes', 'h5py', 'numpy', 'scipy',
                 'skimage.filter', 'skimage.morphology']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
+
+# To turn-off the warnings at object generation.
+numpydoc_show_class_members = False

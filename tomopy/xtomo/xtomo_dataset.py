@@ -34,7 +34,7 @@ class XTomoDataset:
         """
         Import X-ray absorption tomography data object.
         
-        Attributes
+        Parameters
         ----------
         xtomo : tomopy data object
             This is the core X-ray absorption tomography 

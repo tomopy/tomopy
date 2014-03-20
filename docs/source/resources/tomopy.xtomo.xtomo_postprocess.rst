@@ -1,9 +1,9 @@
 ========================
- :mod:`phase_retrieval`
+:mod:`xtomo_postprocess`
 ========================
 
 
-.. automodule:: tomopy.preprocess.phase_retrieval
+.. automodule:: tomopy.xtomo.xtomo_postprocess
    :members:
    :show-inheritance:
    :undoc-members:

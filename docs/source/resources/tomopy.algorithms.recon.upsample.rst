@@ -1,9 +1,8 @@
 ===============
- :mod:`writer`
+:mod:`upsample`
 ===============
 
-
-.. automodule:: tomopy.dataio.writer
+.. automodule:: tomopy.algorithms.recon.upsample
    :members:
    :show-inheritance:
    :undoc-members:

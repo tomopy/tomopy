@@ -14,7 +14,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 from tomopy.algorithms.preprocess.apply_padding import _apply_padding
 from tomopy.algorithms.preprocess.correct_drift import _correct_drift
 from tomopy.algorithms.preprocess.downsample import _downsample2d, _downsample3d
-from tomopy.algorithms.preprocess.median_filter import _median_filter
+from tomopy.algorithms.preprocess.median_filter import median_filter as median_filter_
 from tomopy.algorithms.preprocess.normalize import _normalize
 from tomopy.algorithms.preprocess.phase_retrieval import _phase_retrieval, _paganin_filter
 from tomopy.algorithms.preprocess.stripe_removal import _stripe_removal
@@ -127,7 +127,7 @@ def median_filter(xtomo, size=5,
         size = 1
         
     # Distribute jobs.
-    _func = _median_filter
+    _func = median_filter_
     _args = (size)
     _axis = 1 # Slice axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis, 
@@ -268,14 +268,3 @@ setattr(XTomoDataset, 'normalize', normalize)
 setattr(XTomoDataset, 'phase_retrieval', phase_retrieval)
 setattr(XTomoDataset, 'stripe_removal', stripe_removal)
 setattr(XTomoDataset, 'zinger_removal', zinger_removal)
-
-# Use original function docstrings for the wrappers.
-apply_padding.__doc__ = _apply_padding.__doc__
-correct_drift.__doc__ = _correct_drift.__doc__
-downsample2d.__doc__ = _downsample2d.__doc__
-downsample3d.__doc__ = _downsample3d.__doc__
-median_filter.__doc__ = _median_filter.__doc__
-normalize.__doc__ = _normalize.__doc__
-phase_retrieval.__doc__ = _phase_retrieval.__doc__
-stripe_removal.__doc__ = _stripe_removal.__doc__
-zinger_removal.__doc__ = _zinger_removal.__doc__

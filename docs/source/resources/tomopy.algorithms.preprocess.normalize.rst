@@ -3,7 +3,7 @@
 ======================================
 
 
-.. automodule:: tomopy.preprocess.normalize
+.. automodule:: tomopy.algorithms.preprocess.normalize
    :members:
    :show-inheritance:
    :undoc-members:

@@ -1,8 +1,9 @@
 ======================
-:mod:`optimize_center`
+ :mod:`downsample`
 ======================
 
-.. automodule:: tomopy.recon.optimize_center
+
+.. automodule:: tomopy.algorithms.preprocess.downsample
    :members:
    :show-inheritance:
    :undoc-members:

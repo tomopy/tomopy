@@ -1,9 +1,9 @@
 ======================
- :mod:`median_filter`
+ :mod:`apply_padding`
 ======================
 
 
-.. automodule:: tomopy.preprocess.median_filter
+.. automodule:: tomopy.algorithms.preprocess.apply_padding
    :members:
    :show-inheritance:
    :undoc-members:
