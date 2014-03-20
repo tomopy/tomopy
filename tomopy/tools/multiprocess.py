@@ -138,7 +138,11 @@ def distribute_jobs(data, func, args, axis,
     # Arrange chunk size.
     if chunk_size is None:
         chunk_size = dims / num_cores
-    
+    if chunk_size > dims:
+        chunk_size = dims
+    if chunk_size > 32:
+        chunk_size = 32
+
     # Determine pool size.
     pool_size = dims / chunk_size + 1
     
