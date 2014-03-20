@@ -1,9 +1,8 @@
 ===================
- :mod:`preprocess`
+:mod:`multiprocess`
 ===================
 
-
-.. automodule:: tomopy.preprocess.preprocess
+.. automodule:: tomopy.tools.multiprocess
    :members:
    :show-inheritance:
    :undoc-members:

@@ -1,10 +1,9 @@
 ======================
-:mod:`diagnose_center`
+ :mod:`median_filter`
 ======================
 
 
-
-.. automodule:: tomopy.recon.diagnose_center
+.. automodule:: tomopy.algorithms.preprocess.median_filter
    :members:
    :show-inheritance:
    :undoc-members:

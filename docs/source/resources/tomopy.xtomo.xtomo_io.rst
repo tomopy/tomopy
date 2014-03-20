@@ -1,8 +1,9 @@
 ===============
-:mod:`gridrec`
+:mod:`xtomo_io`
 ===============
 
-.. automodule:: tomopy.recon.gridrec
+
+.. automodule:: tomopy.xtomo.xtomo_io
    :members:
    :show-inheritance:
    :undoc-members:

@@ -3,7 +3,7 @@ from scipy.ndimage import filters
 
 # --------------------------------------------------------------------
 
-def _median_filter(args):
+def median_filter(args):
     """
     Apply median filter to data.
 

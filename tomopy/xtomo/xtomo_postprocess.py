@@ -143,10 +143,3 @@ setattr(XTomoDataset, 'apply_mask', apply_mask)
 setattr(XTomoDataset, 'remove_background', remove_background)
 setattr(XTomoDataset, 'region_segment', threshold_segment)
 setattr(XTomoDataset, 'threshold_segment', threshold_segment)
-
-# Use original function docstrings for the wrappers.
-adaptive_segment.__doc__ = _adaptive_segment.__doc__
-apply_mask.__doc__ = _apply_mask.__doc__
-remove_background.__doc__ = _remove_background.__doc__
-region_segment.__doc__ = _region_segment.__doc__
-threshold_segment.__doc__ = _threshold_segment.__doc__

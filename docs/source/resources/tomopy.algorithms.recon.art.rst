@@ -1,9 +1,8 @@
 ===============
- :mod:`reader`
+:mod:`art`
 ===============
 
-
-.. automodule:: tomopy.dataio.reader
+.. automodule:: tomopy.algorithms.recon.art
    :members:
    :show-inheritance:
    :undoc-members:
