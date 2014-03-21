@@ -14,23 +14,11 @@ def phase_retrieval(args):
     Parameters
     ----------
     data : ndarray
-        Projection data.
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
 
-    pixel_size : scalar
-        Detector pixel size in cm.
-
-    dist : scalar
-        Propagation distance of x-rays in cm.
-
-    energy : scalar
-        Energy of x-rays in keV.
-
-    alpha : scalar, optional
-        Regularization parameter.
-
-    padding : bool, optional
-        Applies padding for Fourier transform. For quick testing
-        you can use False for faster results.
+    H : ndarray
+        2-D Paganin filter.
 
     Returns
     -------
@@ -69,6 +57,41 @@ def phase_retrieval(args):
 # --------------------------------------------------------------------
 
 def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
+    """
+    Calculates Paganin-type filter.
+    
+    Parameters
+    ----------
+    data : ndarray
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+
+    pixel_size : scalar
+        Detector pixel size in cm.
+
+    dist : scalar
+        Propagation distance of x-rays in cm.
+
+    energy : scalar
+        Energy of x-rays in keV.
+
+    alpha : scalar, optional
+        Regularization parameter.
+
+    padding : bool, optional
+        Applies padding for Fourier transform. For quick testing
+        you can use False for faster results.
+
+    Returns
+    -------
+    phase : ndarray
+        Paganin filter.
+
+    References
+    ----------
+    - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
+    <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
+    """
     num_proj, dx, dy = data.shape # dx:slices, dy:pixels
     wavelength = 2 * constants.PI * constants.PLANCK_CONSTANT * \
                 constants.SPEED_OF_LIGHT / energy

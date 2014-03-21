@@ -13,7 +13,46 @@ librecon = ctypes.CDLL(libpath)
 # --------------------------------------------------------------------
 
 def art(data, theta, center, num_grid, iters, init_matrix):
+    """
+    Applies Algebraic Reconstruction Technique (ART) 
+    to obtain reconstructions.
     
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+        
+    theta : ndarray, float32
+        Projection angles in radians.
+        
+    center : scalar, float32
+        Pixel index corresponding to the 
+        center of rotation axis.
+        
+    num_grid : scalar, int32
+        Grid size of the econstructed images.
+        
+    iters : scalar int32
+        Number of mlem iterations.
+    
+    init_matrix : ndarray
+       Initial guess for the reconstruction. Its
+       shape is the same as the reconstructed data.
+       
+    Returns
+    -------
+    output : ndarray
+        Reconstructed data with dimensions:
+        [slices, num_grid, num_grid]
+        
+    References
+    ----------
+    - `http://en.wikipedia.org/wiki/Algebraic_Reconstruction_Technique \
+    <http://en.wikipedia.org/wiki/Algebraic_Reconstruction_Technique>`_
+    - `http://en.wikipedia.org/wiki/Kaczmarz_method \
+    <http://en.wikipedia.org/wiki/Kaczmarz_method>`_
+    """    
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')

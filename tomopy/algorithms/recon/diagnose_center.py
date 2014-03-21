@@ -7,8 +7,8 @@ from gridrec import Gridrec
 # --------------------------------------------------------------------
 
 def diagnose_center(data, theta, dir_path, slice_no, 
-                     center_start, center_end, center_step, 
-                     mask, ratio):
+                    center_start, center_end, center_step, 
+                    mask, ratio):
     """ 
     Diagnostic tools to find rotation center.
     
@@ -22,8 +22,9 @@ def diagnose_center(data, theta, dir_path, slice_no,
     
     Parameters
     ----------
-    data : ndarray
-        Input data.
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
     
     slice_no : scalar
         The index of the slice to be used for diagnostics.

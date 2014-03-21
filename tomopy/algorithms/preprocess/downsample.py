@@ -13,7 +13,26 @@ libprep = ctypes.CDLL(libpath)
 # --------------------------------------------------------------------
 
 def downsample2d(data, level):
+    """
+    Downsample the slices by binning.
     
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+        
+    level : scalar, int32
+        Downsampling level. For example level=2 
+        means, the sinogram will be downsampled by 4,
+        and level=3 means upsampled by 8.
+    
+    Returns
+    -------
+    output : ndarray
+        Downsampled 3-D tomographic data with dimensions:
+        [projections, slices/level^2, pixels]
+    """    
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
@@ -42,7 +61,26 @@ def downsample2d(data, level):
 # --------------------------------------------------------------------
 
 def downsample3d(data, level):
+    """
+    Downsample the slices and pixels by binning.
     
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+        
+    level : scalar, int32
+        Downsampling level. For example level=2 
+        means, the sinogram will be downsampled by 4,
+        and level=3 means upsampled by 8.
+    
+    Returns
+    -------
+    downsampled_data : ndarray
+        Downsampled 3-D tomographic data with dimensions:
+        [projections, slices/level^2, pixels/level^2]
+    """
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')

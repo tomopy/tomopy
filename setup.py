@@ -11,7 +11,9 @@ install_requires = [
             'scipy>=0.13.2',
             'h5py>=2.2.1',
             'pillow>=2.3.0',
+            'ctypes>=1.0.2',
             'pywavelets>=0.2.2',
+            'skimage>=0.10',
             ]
 
 # enforce these same requirements at packaging time

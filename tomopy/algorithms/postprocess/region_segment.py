@@ -7,7 +7,24 @@ from skimage.filter import sobel
 
 def region_segment(args):
     """
-    Region based segmentation.
+    Applies an region-based segementation to reconstructed data.
+    
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D reconstructed data with dimensions:
+        [slices, pixels, pixels]
+        
+    low : scalar, int
+       Lowest value for the marker.
+        
+    high : scalar, int
+       Higest value for the marker.
+         
+    Returns
+    -------
+    output : ndarray
+        Segmented data.
     """
     data, args, ind_start, ind_end = args
     low, high = args
@@ -22,4 +39,5 @@ def region_segment(args):
 
         img = morphology.watershed(elevation_map, markers)
         data[m, :, :] = img
+        
     return ind_start, ind_end, data

@@ -11,7 +11,8 @@ def stripe_removal(args):
     Parameters
     ----------
     data : ndarray
-        Projection data.
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
 
     level : scalar
         Number of DWT levels.
@@ -21,6 +22,11 @@ def stripe_removal(args):
 
     sigma : scalar
         Damping parameter in Fourier space.
+         
+    Returns
+    -------
+    output : ndarray
+        Corrected data.
 
     References
     ----------

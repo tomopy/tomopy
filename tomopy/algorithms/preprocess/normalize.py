@@ -11,7 +11,8 @@ def normalize(args):
     Parameters
     ----------
     data : ndarray
-        Raw projection data.
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
 
     data_white : ndarray
         2-D white field projection data.

@@ -19,8 +19,9 @@ def optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
 
     Parameters
     ----------
-    data : ndarray
-        Input data.
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
 
     slice_no : scalar
         The index of the slice to be used for finding optimal center.
@@ -40,7 +41,7 @@ def optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
 
     Returns
     -------
-    optimal_center : scalar
+    output : scalar
         This function returns the index of the center position that
         results in the minimum entropy in the reconstructed image.
         
