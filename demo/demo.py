@@ -47,7 +47,7 @@ d.recon_to_tiff('demo/recon_')
 
 # You can also try some post-processing methods.
 # This would remove the background from the reconstructions.
-d.remove_bg()
+d.remove_background()
 d.recon_to_tiff('demo/bg_removed_')
 
 # You can as well try an thresholding using Otsu's method.
