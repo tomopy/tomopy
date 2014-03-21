@@ -171,8 +171,8 @@ def _normalize(xtomo, cutoff=None,
 def _phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
                      energy=20, alpha=1e-5, padding=True,
                      num_cores=None, chunk_size=None,
-                     overwrite=True):      
-        
+                     overwrite=True):
+                     
     # Compute the filter.
     H, x_shift, y_shift, tmp_proj = paganin_filter(xtomo.data,
                                     pixel_size, dist, energy, alpha, padding)                 

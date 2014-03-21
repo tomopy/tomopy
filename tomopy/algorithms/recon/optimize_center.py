@@ -49,6 +49,32 @@ def optimize_center(data, theta, slice_no, center_init, tol, mask, ratio):
     ----------
     [1] `SPIE Proceedings, Vol 6318, 631818(2006) \
     <dx.doi.org/10.1117/12.679101>`_
+        
+    Examples
+    --------
+    - Finding rotation center automatically:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> 
+        >>> # Find rotation center.
+        >>> d.optimize_center()
+        >>> 
+        >>> # Perform reconstruction
+        >>> d.gridrec()
+        >>> 
+        >>> # Save reconstructed data
+        >>> output_file='tmp/recon_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
 
     # Make an initial reconstruction to adjust histogram limits. 

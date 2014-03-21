@@ -30,8 +30,34 @@ def apply_padding(data, num_pad):
     -------
     output : ndarray
         Padded data.
+        
+    Examples
+    --------
+    - Apply padding:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Save data before padding
+        >>> output_file='tmp/before_pad_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform padding
+        >>> d.apply_padding()
+        >>> 
+        >>> # Save data after padding
+        >>> output_file='tmp/after_pad_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
     num_pixels = np.array(data.shape[2], dtype='int32')
@@ -53,5 +79,3 @@ def apply_padding(data, num_pad):
                           ctypes.c_int(num_pad),
                           padded_data.ctypes.data_as(c_float_p))
     return padded_data
-    
-    

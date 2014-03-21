@@ -32,6 +32,33 @@ def downsample2d(data, level):
     output : ndarray
         Downsampled 3-D tomographic data with dimensions:
         [projections, slices/level^2, pixels]
+        
+    Examples
+    --------
+    - Downsample data:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Save data before downsampling
+        >>> output_file='tmp/before_downsampling_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform downsampling
+        >>> d.downsample2d(level=2)
+        >>> 
+        >>> # Save data after downsampling
+        >>> output_file='tmp/after_downsampling_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """    
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
@@ -80,6 +107,33 @@ def downsample3d(data, level):
     downsampled_data : ndarray
         Downsampled 3-D tomographic data with dimensions:
         [projections, slices/level^2, pixels/level^2]
+        
+    Examples
+    --------
+    - Downsample data:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=4)
+        >>> 
+        >>> # Save data before downsampling
+        >>> output_file='tmp/before_downsampling_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform downsampling
+        >>> d.downsample3d(level=2)
+        >>> 
+        >>> # Save data after downsampling
+        >>> output_file='tmp/after_downsampling_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

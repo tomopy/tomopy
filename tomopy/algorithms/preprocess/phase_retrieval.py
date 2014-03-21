@@ -29,6 +29,39 @@ def phase_retrieval(args):
     ----------
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
+        
+    Examples
+    --------
+    - Phase retrieval:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> 
+        >>> # Reconstruct data before phase retrieval
+        >>> d.center=661.5
+        >>> d.gridrec()
+        >>> 
+        >>> # Save reconstructed data before phase retrieval
+        >>> output_file='tmp/before_phase_retrieval_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Reconstruct data after phase retrieval
+        >>> d.phase_retrieval(pixel_size=1e-4, dist=70, energy=20)
+        >>> d.gridrec()
+        >>> 
+        >>> # Save reconstructed data after phase retrieval
+        >>> output_file='tmp/after_phase_retrieval_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     data, args, ind_start, ind_end = args
     H, x_shift, y_shift, tmp_proj, padding = args
@@ -126,4 +159,3 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     H = np.fft.fftshift(H)
 
     return H, x_shift, y_shift, tmp_proj
-

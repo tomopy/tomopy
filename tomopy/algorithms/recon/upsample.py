@@ -32,6 +32,36 @@ def upsample2d(data, level):
     output : ndarray
         Downsampled reconstructed 3-D data with dimensions:
         [slices, pixels*level^2, pixels*level^2]
+        
+    Examples
+    --------
+    - Upsample reconstructed data:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> d.center = 662
+        >>> d.gridrec()
+        >>> 
+        >>> # Save data before upsampling
+        >>> output_file='tmp/before_upsampling_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Perform upsampling
+        >>> d.upsample2d(level=1)
+        >>> 
+        >>> # Save data after upsampling
+        >>> output_file='tmp/after_upsampling_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
@@ -75,6 +105,36 @@ def upsample3d(data, level):
     output : ndarray
         Downsampled reconstructed 3-D data with dimensions:
         [slices*level^2, pixels*level^2, pixels*level^2]
+        
+    Examples
+    --------
+    - Upsample reconstructed data:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> d.center = 662
+        >>> d.gridrec()
+        >>> 
+        >>> # Save data before upsampling
+        >>> output_file='tmp/before_upsampling_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Perform upsampling
+        >>> d.upsample3d(level=1)
+        >>> 
+        >>> # Save data after upsampling
+        >>> output_file='tmp/after_upsampling_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
@@ -95,4 +155,3 @@ def upsample3d(data, level):
                         ctypes.c_int(level),
                         upsampled_data.ctypes.data_as(c_float_p))
     return upsampled_data
-

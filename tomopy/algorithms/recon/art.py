@@ -52,6 +52,31 @@ def art(data, theta, center, num_grid, iters, init_matrix):
     <http://en.wikipedia.org/wiki/Algebraic_Reconstruction_Technique>`_
     - `http://en.wikipedia.org/wiki/Kaczmarz_method \
     <http://en.wikipedia.org/wiki/Kaczmarz_method>`_
+        
+    Examples
+    --------
+    - Reconstruct using ART:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> d.correct_drift()
+        >>> d.center = 662
+        >>> 
+        >>> # Perform reconstruction
+        >>> d.art()
+        >>> 
+        >>> # Save reconstructed data
+        >>> output_file='tmp/recon_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """    
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')
