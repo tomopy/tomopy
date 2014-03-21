@@ -32,6 +32,33 @@ def stripe_removal(args):
     ----------
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
+        
+    Examples
+    --------
+    - Remove sinogram stripes:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Save data before stripe removal
+        >>> output_file='tmp/before_stripe_removal_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform stripe removal
+        >>> d.stripe_removal(padding=True)
+        >>> 
+        >>> # Save data after stripe removal
+        >>> output_file='tmp/after_stripe_removal_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     data, args, ind_start, ind_end = args
     level, wname, sigma, padding = args

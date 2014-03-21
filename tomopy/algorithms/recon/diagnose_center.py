@@ -25,6 +25,12 @@ def diagnose_center(data, theta, dir_path, slice_no,
     data : ndarray, float32
         3-D tomographic data with dimensions:
         [projections, slices, pixels]
+        
+    theta : ndarray, float32
+        Projection angles.
+        
+    dir_path : str
+        Directory to save output images.
     
     slice_no : scalar
         The index of the slice to be used for diagnostics.
@@ -39,6 +45,25 @@ def diagnose_center(data, theta, dir_path, slice_no,
     ratio : scalar
         The ratio of the radius of the circular mask to the
         edge of the reconstructed image.
+        
+    Examples
+    --------
+    - Finding rotation center by visual inspection:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile)
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.normalize()
+        >>> 
+        >>> # Perform reconstructions with different centers.
+        >>> d.diagnose_center(center_start=640, center_end=670)
+        >>> print "Images are succesfully saved at tmp/"
     """
     num_projections =  data.shape[0]
     num_pixels =  data.shape[2]
@@ -75,10 +100,3 @@ def diagnose_center(data, theta, dir_path, slice_no,
             img = misc.toimage(recon.data_recon[m, :, :])
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             img.save(file_name)
-
-
-
-
-
-
-

@@ -260,6 +260,30 @@ class Gridrec():
         ----------
         - `SPIE Proceedings, Vol 8506, 85060U(2012) \
         <http://dx.doi.org/10.1117/12.930022>`_
+        
+        Examples
+        --------
+        - Reconstruct using Gridrec:
+            
+            >>> import tomopy
+            >>> 
+            >>> # Load data
+            >>> myfile = 'demo/data.h5'
+            >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+            >>> 
+            >>> # Construct tomo object
+            >>> d = tomopy.xtomo_dataset(log='error')
+            >>> d.dataset(data, white, dark, theta)
+            >>> d.normalize()
+            >>> d.center = 662
+            >>> 
+            >>> # Perform reconstruction
+            >>> d.gridrec()
+            >>> 
+            >>> # Save reconstructed data
+            >>> output_file='tmp/recon_'
+            >>> tomopy.xtomo_writer(d.data_recon, output_file)
+            >>> print "Images are succesfully saved at " + output_file + '...'
         """
         # Change num_slices if slice_no is set.
         num_slices = self.params.numSlices

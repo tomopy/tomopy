@@ -28,6 +28,33 @@ def normalize(args):
     -------
     data : ndarray
         Normalized data.
+        
+    Examples
+    --------
+    - Normalize using white and dark fields:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, projections_start=0, projections_end=1)
+        >>> 
+        >>> # Save data before normalization
+        >>> output_file='tmp/before_normalization_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform normalization
+        >>> d.normalize()
+        >>> 
+        >>> # Save data after normalization
+        >>> output_file='tmp/after_normalization_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     data, args, ind_start, ind_end = args
     data_white, data_dark, cutoff = args

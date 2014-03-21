@@ -37,6 +37,33 @@ def correct_drift(data, air_pixels):
     -------
     output : ndarray
         Normalized data.
+        
+    Examples
+    --------
+    - Auto-normalize and correct for drifts in sinogram:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
+        >>> 
+        >>> # Save data before correction
+        >>> output_file='tmp/before_correction_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        >>> 
+        >>> # Construct tomo object
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> 
+        >>> # Perform correction
+        >>> d.correct_drift()
+        >>> 
+        >>> # Save data after correction
+        >>> output_file='tmp/after_correction_'
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     
     num_projections = np.array(data.shape[0], dtype='int32')
