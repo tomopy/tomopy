@@ -13,7 +13,26 @@ librecon = ctypes.CDLL(libpath)
 # --------------------------------------------------------------------
 
 def upsample2d(data, level):
+    """
+    Upsample the slices.
     
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D reconstructed data with dimensions:
+        [slices, pixels, pixels]
+        
+    level : scalar, int32
+        Upsampling level. For example level=2 
+        means, the sinogram will be upsampled by 4,
+        and level=3 means upsampled by 8.
+    
+    Returns
+    -------
+    output : ndarray
+        Downsampled reconstructed 3-D data with dimensions:
+        [slices, pixels*level^2, pixels*level^2]
+    """
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
     
@@ -37,7 +56,26 @@ def upsample2d(data, level):
 # --------------------------------------------------------------------
 
 def upsample3d(data, level):
+    """
+    Upsample the slices and pixels.
     
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D reconstructed data with dimensions:
+        [slices, pixels, pixels]
+        
+    level : scalar, int32
+        Upsampling level. For example level=2 
+        means, the sinogram will be upsampled by 4,
+        and level=3 means upsampled by 8.
+    
+    Returns
+    -------
+    output : ndarray
+        Downsampled reconstructed 3-D data with dimensions:
+        [slices*level^2, pixels*level^2, pixels*level^2]
+    """
     num_slices = np.array(data.shape[0], dtype='int32')
     num_pixels = np.array(data.shape[1], dtype='int32')
     

@@ -11,13 +11,19 @@ def zinger_removal(args):
     Parameters
     ----------
     data : ndarray
-        Input data.
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
         
     zl : scalar
         Threshold of counts to cut zingers.
         
     mw : scalar
         Median filter width.
+         
+    Returns
+    -------
+    output : ndarray
+        Zinger removed data.
     """
     data, args, ind_start, ind_end = args
     zl, mw = args

@@ -6,6 +6,22 @@ import numpy as np
 def apply_mask(data, ratio):
     """
     Apply circular mask to reconstructed data.
+    
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D reconstructed data with dimensions:
+        [slices, pixels, pixels]
+        
+    ratio : scalar, int
+        Ratio of the circular mask's diameter in pixels
+        to the number of reconstructed image pixels 
+        (i.e., the dimension of the images).
+         
+    Returns
+    -------
+    output : ndarray
+        Masked data.
     """
     num_slices = data.shape[0]
     num_pixels = data.shape[1]

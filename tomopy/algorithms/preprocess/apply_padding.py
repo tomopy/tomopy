@@ -13,6 +13,24 @@ libprep = ctypes.CDLL(libpath)
 # --------------------------------------------------------------------
 
 def apply_padding(data, num_pad):
+    """
+    Applies zero padding to each projection data.
+    
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+        
+    num_pad : scalar, int32
+        New dimension of the projections  
+        after padding.
+         
+    Returns
+    -------
+    output : ndarray
+        Padded data.
+    """
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

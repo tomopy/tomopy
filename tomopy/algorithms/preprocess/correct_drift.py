@@ -13,6 +13,31 @@ libprep = ctypes.CDLL(libpath)
 # --------------------------------------------------------------------
 
 def correct_drift(data, air_pixels):
+    """
+    Corrects for drifts in the sinogram.
+    
+    It normalizes sinogram such that the left and 
+    the right boundaries are set to one and
+    all intermediate values between the boundaries 
+    are normalized linearly. It can be used if white
+    field is absent.
+    
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
+        
+    air_pixels : scalar, int32
+        number of pixels at each boundaries that
+        the white field will be approximated
+        for normalization.
+         
+    Returns
+    -------
+    output : ndarray
+        Normalized data.
+    """
     
     num_projections = np.array(data.shape[0], dtype='int32')
     num_slices = np.array(data.shape[1], dtype='int32')

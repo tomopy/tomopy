@@ -10,14 +10,15 @@ def median_filter(args):
     Parameters
     ----------
     data : ndarray
-        Projection data.
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
         
     size : scalar
         The size of the filter. 
 
     Returns
     -------
-    data : ndarray
+    output : ndarray
         Median filtered data.
     """
     data, args, ind_start, ind_end = args
