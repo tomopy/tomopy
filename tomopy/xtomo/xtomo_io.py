@@ -47,6 +47,37 @@ def xtomo_reader(file_name,
     dark_start, dark_end : scalar, optional
         Values of the start and end of the
         slicing for the whole dark field shots.
+        
+    Examples
+    --------
+    - Import data, white-field, dark-field and projection angles
+      from HDF5 file:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile)
+        >>>
+        >>> # Image data
+        >>> import pylab as plt
+        >>> plt.figure()
+        >>> plt.imshow(data[:, 0, :])
+        >>> plt.show()
+    
+    - Import only 4th slice from HDF5 file:
+
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile,  slices_start=4, slices_end=5)
+        >>> 
+        >>> # Image data
+        >>> import pylab as plt
+        >>> plt.figure()
+        >>> plt.imshow(data[:, 0, :])
+        >>> plt.show()
     """
 
     # Start working on checks and stuff.
@@ -104,7 +135,7 @@ def xtomo_reader(file_name,
 def xtomo_writer(data, output_file=None, x_start=0, x_end=None, 
                  digits=5, axis=0, overwrite=False):
     """ 
-    Write reconstructed data to a stack of tif files.
+    Write 3-D data to a stack of tif files.
 
     Parameters
     -----------
@@ -138,6 +169,53 @@ def xtomo_writer(data, output_file=None, x_start=0, x_end=None,
     saved inside ``recon`` folder where the input data
     resides. The name of the reconstructed files will
     be initialized with ``recon``
+    
+    Examples
+    --------
+    - Save sinogram data:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile)
+        >>> 
+        >>> # Save data
+        >>> output_file='tmp/slice_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        
+    - Save first 16 projections:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, projections_start=0, projections_end=16)
+        >>> 
+        >>> # Save data
+        >>> output_file='tmp/projection_'
+        >>> tomopy.xtomo_writer(data, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
+        
+    - Save reconstructed slices:
+        
+        >>> import tomopy
+        >>> 
+        >>> # Load data
+        >>> myfile = 'demo/data.h5'
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile)
+        >>> 
+        >>> # Perform reconstruction
+        >>> d = tomopy.xtomo_dataset(log='error')
+        >>> d.dataset(data, white, dark, theta)
+        >>> d.center = 661.5
+        >>> d.gridrec()
+        >>> 
+        >>> # Save data
+        >>> output_file='tmp/reconstruction_'
+        >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
+        >>> print "Images are succesfully saved at " + output_file + '...'
     """
     if output_file == None:
         output_file = "tmp/img_" 
