@@ -132,7 +132,7 @@ def xtomo_reader(file_name,
 
 
 
-def xtomo_writer(data, output_file=None, x_start=0, x_end=None, 
+def xtomo_writer(data, output_file=None, x_start=0,
                  digits=5, axis=0, overwrite=False):
     """ 
     Write 3-D data to a stack of tif files.
@@ -144,10 +144,6 @@ def xtomo_writer(data, output_file=None, x_start=0, x_end=None,
 
     x_start : scalar, optional
         First index of the data on first dimension
-        of the array.
-
-    x_end : scalar, optional
-        Last index of the data on first dimension
         of the array.
 
     digits : scalar, optional
@@ -237,13 +233,12 @@ def xtomo_writer(data, output_file=None, x_start=0, x_end=None,
 
     # Select desired x from whole data.
     num_x, num_y, num_z = data.shape
-    if x_end is None:
-        if axis == 0:
-            x_end = x_start+num_x
-        elif axis == 1:
-            x_end = x_start+num_y
-        elif axis == 2:
-            x_end = x_start+num_z
+    if axis == 0:
+        x_end = x_start+num_x
+    elif axis == 1:
+        x_end = x_start+num_y
+    elif axis == 2:
+        x_end = x_start+num_z
 
     # Write data.
     file_index = ["" for x in range(digits)]
