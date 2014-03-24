@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -56,13 +57,22 @@ def normalize(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=0)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    data, args, ind_start, ind_end = args
-    data_white, data_dark, cutoff = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
-
-    for m in range(ind_end-ind_start):
+    data_white, data_dark, cutoff = inputs
+    
+    for m in ind:
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, 
                                   data_white-data_dark)
     if cutoff is not None:
         data[data > cutoff] = cutoff
-    return ind_start, ind_end, data
+    
+    
+    
+    
+    
+    
+    
+    
+    

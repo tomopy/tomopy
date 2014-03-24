@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scipy.ndimage import filters
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -48,9 +49,10 @@ def median_filter(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    data, args, ind_start, ind_end = args
-    size = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
-    for m in range(ind_end-ind_start):
+    size = inputs
+    
+    for m in ind:
         data[:, m, :] = filters.median_filter(data[:, m, :], (1, size))
-    return ind_start, ind_end, data

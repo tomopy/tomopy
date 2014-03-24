@@ -3,6 +3,8 @@
 import numpy as np
 from tomopy.tools import constants
 from tomopy.tools import fftw
+import tomopy.tools.multiprocess_shared as mp
+import time
 
 # --------------------------------------------------------------------
 
@@ -17,8 +19,21 @@ def phase_retrieval(args):
         3-D tomographic data with dimensions:
         [projections, slices, pixels]
 
-    H : ndarray
-        2-D Paganin filter.
+    pixel_size : scalar
+        Detector pixel size in cm.
+
+    dist : scalar
+        Propagation distance of x-rays in cm.
+
+    energy : scalar
+        Energy of x-rays in keV.
+
+    alpha : scalar, optional
+        Regularization parameter.
+
+    padding : bool, optional
+        Applies padding for Fourier transform. For quick testing
+        you can use False for faster results.
 
     Returns
     -------
@@ -63,12 +78,18 @@ def phase_retrieval(args):
         >>> tomopy.xtomo_writer(d.data_recon, output_file)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    data, args, ind_start, ind_end = args
-    H, x_shift, y_shift, tmp_proj, padding = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
-    num_proj, dx, dy = data.shape # dx:slices, dy:pixels
+    pixel_size, dist, energy, alpha, padding = inputs
+
+    # Compute the filter.
+    H, x_shift, y_shift, tmp_proj = paganin_filter(data,
+                                    pixel_size, dist, energy, alpha, padding)    
+
+    num_proj, dx, dy = dshape # dx:slices, dy:pixels
     
-    for m in range(num_proj):
+    for m in ind:
         proj = data[m, :, :]
         
         if padding:
@@ -84,8 +105,6 @@ def phase_retrieval(args):
             proj = np.real(fftw.ifftw2(filtered_proj))/np.max(H)
         
         data[m, :, :] = proj
-        
-    return ind_start, ind_end, data
     
 # --------------------------------------------------------------------
 
@@ -147,6 +166,7 @@ def paganin_filter(data, pixel_size, dist, energy, alpha, padding):
     elif not padding:
         num_x, num_y = dx, dy
         x_shift, y_shift, tmp_proj = None, None, None
+        tmp_proj = np.ones((dx, dy), dtype='float32')
                 
     # Sampling in reciprocal space.
     indx = (1 / ((num_x-1) * pixel_size)) * np.arange(-(num_x-1)*0.5, num_x*0.5)

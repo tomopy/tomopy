@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scipy import ndimage
 from skimage.filter import threshold_adaptive
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -41,10 +42,12 @@ def adaptive_segment(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_threshold_adaptive.html \
     <http://scikit-image.org/docs/dev/auto_examples/plot_threshold_adaptive.html>`_
     """
-    data, args, ind_start, ind_end = args
-    block_size, offset = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
+
+    block_size, offset = inputs
     
-    for m in range(ind_end-ind_start):
+    for m in ind:
         img = data[m, :, :]
         
         # Perform scikit adaptive thresholding.
@@ -57,4 +60,3 @@ def adaptive_segment(args):
         img = ndimage.binary_closing(img)
 
         data[m, :, :] = img
-    return ind_start, ind_end, data

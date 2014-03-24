@@ -4,6 +4,7 @@ Module for multiprocessing.
 """
 import numpy as np
 import multiprocessing as mp
+import ctypes
 
 # --------------------------------------------------------------------
 
@@ -148,6 +149,11 @@ def distribute_jobs(data, func, args, axis,
     
     # Create multi-processing object.
     multip = Multiprocess(worker(func), num_cores=num_cores)
+    
+    # Create shared array
+    print data.size
+    shared_arr = mp.Array(ctypes.c_double, data.shape)
+    arr = np.frombuffer(shared_arr.get_obj())
                           
     # Populate jobs.
     for m in range(pool_size):
@@ -166,7 +172,8 @@ def distribute_jobs(data, func, args, axis,
         
         # Add to queue.
         if axis == 0:
-            multip.add_job((data[ind_start:ind_end, :, :], args, ind_start, ind_end))
+            multip.add_job((data, args, ind_start, ind_end))
+            #multip.add_job((data[ind_start:ind_end, :, :], args, ind_start, ind_end))
         elif axis == 1:
             multip.add_job((data[:, ind_start:ind_end, :], args, ind_start, ind_end))
         elif axis == 2:

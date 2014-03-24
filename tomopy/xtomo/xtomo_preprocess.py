@@ -16,12 +16,12 @@ from tomopy.algorithms.preprocess.correct_drift import correct_drift
 from tomopy.algorithms.preprocess.downsample import downsample2d, downsample3d
 from tomopy.algorithms.preprocess.median_filter import median_filter
 from tomopy.algorithms.preprocess.normalize import normalize
-from tomopy.algorithms.preprocess.phase_retrieval import phase_retrieval, paganin_filter
+from tomopy.algorithms.preprocess.phase_retrieval import phase_retrieval
 from tomopy.algorithms.preprocess.stripe_removal import stripe_removal
 from tomopy.algorithms.preprocess.zinger_removal import zinger_removal
 
 # Import multiprocessing module.
-from tomopy.tools.multiprocess import distribute_jobs
+from tomopy.tools.multiprocess_shared import distribute_jobs
 
 # --------------------------------------------------------------------
 
@@ -169,17 +169,13 @@ def _normalize(xtomo, cutoff=None,
 # --------------------------------------------------------------------
 
 def _phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
-                     energy=20, alpha=1e-5, padding=True,
+                     energy=20, alpha=1e-4, padding=True,
                      num_cores=None, chunk_size=None,
-                     overwrite=True):
-                     
-    # Compute the filter.
-    H, x_shift, y_shift, tmp_proj = paganin_filter(xtomo.data,
-                                    pixel_size, dist, energy, alpha, padding)                 
-                     
+                     overwrite=True):             
+
     # Distribute jobs.
     _func = phase_retrieval
-    _args = (H, x_shift, y_shift, tmp_proj, padding)
+    _args = (pixel_size, dist, energy, alpha, padding)
     _axis = 0 # Projection axis
     data = distribute_jobs(xtomo.data, _func, _args, _axis, 
                            num_cores, chunk_size)

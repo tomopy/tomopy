@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pywt
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -60,10 +61,12 @@ def stripe_removal(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    data, args, ind_start, ind_end = args
-    level, wname, sigma, padding = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
-    dx, num_slices, dy = data.shape
+    level, wname, sigma, padding = inputs
+    
+    dx, num_slices, dy = dshape
     
     # Padded temp image.
     num_x = dx
@@ -73,7 +76,7 @@ def stripe_removal(args):
     x_shift = int((num_x - dx) / 2.)
     sli = np.zeros((num_x, dy), dtype='float32')
     
-    for n in range(num_slices):
+    for n in ind:
         sli[x_shift:dx+x_shift, :] = data[:, n, :]
         
         # Wavelet decomposition.
@@ -106,4 +109,3 @@ def stripe_removal(args):
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
             
         data[:, n, :] = sli[x_shift:dx+x_shift, 0:dy]
-    return ind_start, ind_end, data
