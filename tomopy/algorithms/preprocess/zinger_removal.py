@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy.ndimage import filters
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -57,14 +58,14 @@ def zinger_removal(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    data, args, ind_start, ind_end = args
-    zinger_level, median_width = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
+    
+    zinger_level, median_width = inputs
 
     zinger_mask = np.zeros((1, data.shape[1], data.shape[2]))
 
-    for m in range(ind_end-ind_start):
+    for m in ind:
         tmp_img = filters.median_filter(data[m, :, :],(1, median_width))
         zinger_mask = ((data[m, :, :]-tmp_img) >= zinger_level).astype(int)
         data[m,:,:] = tmp_img*zinger_mask + data[m, :, :]*(1-zinger_mask)
-
-    return ind_start, ind_end, data

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from skimage.filter import threshold_otsu
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -34,14 +35,14 @@ def threshold_segment(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py \
     <http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py>`_
     """
-    data, args, ind_start, ind_end = args
-    cutoff = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
+
+    cutoff = inputs
     
-    for m in range(ind_end-ind_start):
+    for m in ind:
         img = data[m, :, :]
         if cutoff == None:
             cutoff = threshold_otsu(img)
         img = img > cutoff
         data[m, :, :] = img
-        
-    return ind_start, ind_end, data

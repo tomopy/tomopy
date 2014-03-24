@@ -2,6 +2,7 @@
 import numpy as np
 from skimage import morphology
 from skimage.filter import sobel
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -26,10 +27,12 @@ def region_segment(args):
     output : ndarray
         Segmented data.
     """
-    data, args, ind_start, ind_end = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
+
     low, high = args
     
-    for m in range(ind_end-ind_start):
+    for m in ind:
         img = data[m, :, :]
         elevation_map = sobel(img)
 
@@ -39,5 +42,3 @@ def region_segment(args):
 
         img = morphology.watershed(elevation_map, markers)
         data[m, :, :] = img
-        
-    return ind_start, ind_end, data

@@ -16,7 +16,7 @@ from tomopy.algorithms.postprocess.region_segment import region_segment
 from tomopy.algorithms.postprocess.threshold_segment import threshold_segment
 
 # Import multiprocessing module.
-from tomopy.tools.multiprocess import distribute_jobs
+from tomopy.tools.multiprocess_shared import distribute_jobs
 
 
 # --------------------------------------------------------------------

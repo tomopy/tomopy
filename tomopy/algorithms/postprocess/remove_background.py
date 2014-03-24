@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from skimage.morphology import reconstruction
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -28,9 +29,10 @@ def remove_background(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html \
     <http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html>`_
     """
-    data, args, ind_start, ind_end = args
+    ind, dshape, inputs = args
+    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
-    for m in range(ind_end-ind_start):
+    for m in ind:
         img = data[m, :, :]
         
         # first remove background.
@@ -39,5 +41,3 @@ def remove_background(args):
         img -= reconstruction(seed, img, method='dilation')
         
         data[m, :, :] = img
-        
-    return ind_start, ind_end, data
