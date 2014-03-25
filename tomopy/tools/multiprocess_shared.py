@@ -33,10 +33,10 @@ def distribute_jobs(data, func, args, axis,
     
     # Arrange chunk size.
     if chunk_size is None:
-        chunk_size = dims / num_cores
+        chunk_size = (dims-1)/num_cores+1
     
     # Determine pool size.
-    pool_size = dims / chunk_size + 1
+    pool_size = dims/chunk_size
     
     # Populate jobs.
     arg = []
