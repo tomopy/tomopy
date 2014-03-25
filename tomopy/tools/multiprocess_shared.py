@@ -14,7 +14,7 @@ def init(shared_arr_):
     shared_arr = shared_arr_ # must be inhereted, not passed as an argument
 
 def tonumpyarray(mp_arr, dshape):
-    a = np.frombuffer(mp_arr.get_obj())
+    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
     return np.reshape(a, dshape)
 
 # --------------------------------------------------------------------
@@ -74,7 +74,7 @@ def distribute_jobs(data, func, args, axis,
         chunk_size = (dims-1)/num_cores+1
     
     # Determine pool size.
-    pool_size = dims/chunk_size
+    pool_size = dims/chunk_size+1
     
     # Populate jobs.
     arg = []
@@ -88,7 +88,7 @@ def distribute_jobs(data, func, args, axis,
             
         arg += [(range(ind_start, ind_end), data.shape, args)]
 
-    shared_arr = mp.Array(ctypes.c_double, data.size) # takes time
+    shared_arr = mp.Array(ctypes.c_float, data.size) # takes time
     arr = tonumpyarray(shared_arr, data.shape)
     arr[:] = data
 
@@ -98,7 +98,7 @@ def distribute_jobs(data, func, args, axis,
     p.join()
     p.close()
     
-    return arr.astype('float32', copy=False) # FIXME: takes time to convert
+    return arr
 
 
 

@@ -67,6 +67,7 @@ def normalize(args):
     for m in ind:
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, 
                                   data_white-data_dark)
+
     if cutoff is not None:
         data[data > cutoff] = cutoff
     
