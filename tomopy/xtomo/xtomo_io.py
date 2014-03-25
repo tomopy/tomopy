@@ -133,7 +133,8 @@ def xtomo_reader(file_name,
 
 
 def xtomo_writer(data, output_file=None, x_start=0,
-                 digits=5, axis=0, overwrite=False):
+                 digits=5, axis=0, overwrite=False, 
+                 precision=True):
     """ 
     Write 3-D data to a stack of tif files.
 
@@ -155,7 +156,12 @@ def xtomo_writer(data, output_file=None, x_start=0,
         
     overwrite: bool, optional
         if overwrite=True the existing data in the
-        reconstruction folder will be overwritten   
+        reconstruction folder will be overwritten
+        
+    precision : bool, optional
+        Export data type precision. if True it 
+        saves 32-bit precision. Otherwise it
+        uses 8-bit precision.
     
     Notes
     -----
@@ -251,12 +257,20 @@ def xtomo_writer(data, output_file=None, x_start=0,
                 file_body = output_file + file_index[n] + str(ind[m])
                 file_name = file_body + '.tif'
                 break
-        if axis == 0:
-            img = misc.toimage(data[m, :, :])
-        elif axis == 1:
-            img = misc.toimage(data[:, m, :])
-        elif axis == 2:
-            img = misc.toimage(data[:, :, m])
+        if precision:
+            if axis == 0:
+                img = misc.toimage(data[m, :, :], mode='F')
+            elif axis == 1:
+                img = misc.toimage(data[:, m, :], mode='F')
+            elif axis == 2:
+                img = misc.toimage(data[:, :, m], mode='F')
+        else:
+            if axis == 0:
+                img = misc.toimage(data[m, :, :])
+            elif axis == 1:
+                img = misc.toimage(data[:, m, :])
+            elif axis == 2:
+                img = misc.toimage(data[:, :, m])
 
         # check if file exists.
         if os.path.isfile(file_name):
