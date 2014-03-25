@@ -156,6 +156,8 @@ def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data = -np.log(data);
     
     # Adjust center according to padding.
+    if not hasattr(xtomo, 'center'):
+        xtomo.center = xtomo.data.shape[2]/2
     center = xtomo.center + (data.shape[2]-num_pixels)/2.
 
     # Set default parameters.
@@ -216,6 +218,8 @@ def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data = np.abs(-np.log(data));
 
     # Adjust center according to padding.
+    if not hasattr(xtomo, 'center'):
+        xtomo.center = xtomo.data.shape[2]/2
     center = xtomo.center + (data.shape[2]-num_pixels)/2.
    
     # Set default parameters.
@@ -265,6 +269,8 @@ def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 def _gridrec(xtomo, overwrite=True, *args, **kwargs):
 
     # Check input.
+    if not hasattr(xtomo, 'center'):
+        xtomo.center = xtomo.data.shape[2]/2
     if not isinstance(xtomo.center, np.float32):
         xtomo.center = np.array(xtomo.center, dtype='float32')
     
