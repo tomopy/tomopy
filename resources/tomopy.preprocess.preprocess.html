@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>preprocess &mdash; tomopy 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="preprocess Module" href="tomopy.preprocess.html" />
+    <link rel="next" title="stripe_removal" href="tomopy.preprocess.stripe_removal.html" />
+    <link rel="prev" title="phase_retrieval" href="tomopy.preprocess.phase_retrieval.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.preprocess.stripe_removal.html" title="stripe_removal"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.preprocess.phase_retrieval.html" title="phase_retrieval"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.preprocess.html" accesskey="U"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.preprocess.preprocess">
+<span id="preprocess"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">preprocess</span></tt><a class="headerlink" href="#module-tomopy.preprocess.preprocess" title="Permalink to this headline">¶</a></h1>
+<p>This module containes a set of thin wrappers for the other
+modules in preprocess package to link them to TomoPy session. 
+Each wrapper first checks the arguments and then calls the method.
+The linking is mostly realized through the multiprocessing module.</p>
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.apply_padding">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">apply_padding</tt><big>(</big><em>tomo</em>, <em>num_pad=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#apply_padding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.apply_padding" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.correct_drift">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">correct_drift</tt><big>(</big><em>tomo</em>, <em>air_pixels=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#correct_drift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.correct_drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.downsample2d">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">downsample2d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#downsample2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.downsample2d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.downsample3d">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">downsample3d</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#downsample3d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.downsample3d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.median_filter">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">median_filter</tt><big>(</big><em>tomo</em>, <em>size=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#median_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.median_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply median filter to data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>size</strong> : scalar</p>
+<blockquote>
+<div><p>The size of the filter.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Median filtered data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.normalize">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">normalize</tt><big>(</big><em>tomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize raw projection data with
+the white field projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Raw projection data.</p>
+</div></blockquote>
+<p><strong>data_white</strong> : ndarray</p>
+<blockquote>
+<div><p>2-D white field projection data.</p>
+</div></blockquote>
+<p><strong>data_dark</strong> : ndarray</p>
+<blockquote>
+<div><p>2-D dark field projection data.</p>
+</div></blockquote>
+<p><strong>cutoff</strong> : scalar</p>
+<blockquote>
+<div><p>Permitted maximum vaue of the
+normalized data.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Normalized data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.phase_retrieval">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">phase_retrieval</tt><big>(</big><em>tomo</em>, <em>pixel_size=None</em>, <em>dist=None</em>, <em>energy=None</em>, <em>alpha=None</em>, <em>padding=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#phase_retrieval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.phase_retrieval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform single-material phase retrieval
+using projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>pixel_size</strong> : scalar</p>
+<blockquote>
+<div><p>Detector pixel size in cm.</p>
+</div></blockquote>
+<p><strong>dist</strong> : scalar</p>
+<blockquote>
+<div><p>Propagation distance of x-rays in cm.</p>
+</div></blockquote>
+<p><strong>energy</strong> : scalar</p>
+<blockquote>
+<div><p>Energy of x-rays in keV.</p>
+</div></blockquote>
+<p><strong>alpha</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Regularization parameter.</p>
+</div></blockquote>
+<p><strong>padding</strong> : bool, optional</p>
+<blockquote>
+<div><p>Applies padding for Fourier transform. For quick testing
+you can use False for faster results.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>phase</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Retrieved phase.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><a class="reference external" href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract">J. of Microscopy, Vol 206(1), 33-40, 2001</a></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.stripe_removal">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">stripe_removal</tt><big>(</big><em>tomo</em>, <em>level=None</em>, <em>wname=None</em>, <em>sigma=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#stripe_removal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.stripe_removal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove stripes from sinogram data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Projection data.</p>
+</div></blockquote>
+<p><strong>level</strong> : scalar</p>
+<blockquote>
+<div><p>Number of DWT levels.</p>
+</div></blockquote>
+<p><strong>wname</strong> : str</p>
+<blockquote>
+<div><p>Type of the wavelet filter.</p>
+</div></blockquote>
+<p><strong>sigma</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Damping parameter in Fourier space.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567">Optics Express, Vol 17(10), 8567-8591(2009)</a></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.preprocess.preprocess.zinger_removal">
+<tt class="descclassname">tomopy.preprocess.preprocess.</tt><tt class="descname">zinger_removal</tt><big>(</big><em>tomo</em>, <em>zinger_level=None</em>, <em>median_width=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/preprocess/preprocess.html#zinger_removal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.preprocess.preprocess.zinger_removal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Zinger removal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Input data.</p>
+</div></blockquote>
+<p><strong>zl</strong> : scalar</p>
+<blockquote>
+<div><p>Threshold of counts to cut zingers.</p>
+</div></blockquote>
+<p><strong>mw</strong> : scalar</p>
+<blockquote class="last">
+<div><p>Median filter width.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.preprocess.phase_retrieval.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">phase_retrieval</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tomopy.preprocess.stripe_removal.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">stripe_removal</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.preprocess.preprocess.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.preprocess.stripe_removal.html" title="stripe_removal"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.preprocess.phase_retrieval.html" title="phase_retrieval"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.preprocess.html" ><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fftw &mdash; tomopy 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="tools Module" href="tomopy.tools.html" />
+    <link rel="next" title="recon Module" href="tomopy.recon.html" />
+    <link rel="prev" title="constants" href="tomopy.tools.constants.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.recon.html" title="recon Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.tools.constants.html" title="constants"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.tools.html" accesskey="U"><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.tools.fftw">
+<span id="fftw"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">fftw</span></tt><a class="headerlink" href="#module-tomopy.tools.fftw" title="Permalink to this headline">¶</a></h1>
+<p>Module for FFTW wrappers.</p>
+<dl class="function">
+<dt id="tomopy.tools.fftw.fftw">
+<tt class="descclassname">tomopy.tools.fftw.</tt><tt class="descname">fftw</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/fftw.html#fftw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.fftw.fftw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the one-dimensional discrete Fourier Transform (DWT).</p>
+<p>This function computes the one-dimentional DFT with the
+efficient FFTW algorithm. It is a thin wrapper on FFTW
+C package (<a class="reference external" href="http://www.fftw.org">http://www.fftw.org</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : ndarray</p>
+<blockquote>
+<div><p>Input array, can be complex.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : complex ndarray</p>
+<blockquote class="last">
+<div><p>Output array.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw" title="tomopy.tools.fftw.ifftw"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw</span></tt></a></dt>
+<dd>The inverse of <cite>fft</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw2" title="tomopy.tools.fftw.ifftw2"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw2</span></tt></a></dt>
+<dd>The inverse of <cite>fft2</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw2" title="tomopy.tools.fftw.fftw2"><tt class="xref py py-obj docutils literal"><span class="pre">fftw2</span></tt></a></dt>
+<dd>The two-dimensional FFT.</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>It is calculated efficiently when the input array is
+symmetric, that is highest when the array sizes are 
+powers of 2.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.tools.fftw.fftw2">
+<tt class="descclassname">tomopy.tools.fftw.</tt><tt class="descname">fftw2</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/fftw.html#fftw2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.fftw.fftw2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the two-dimensional discrete Fourier Transform (DWT).</p>
+<p>This function computes the two-dimentional DFT with the
+efficient FFTW algorithm. It is a thin wrapper on FFTW
+C package (<a class="reference external" href="http://www.fftw.org">http://www.fftw.org</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : array_like</p>
+<blockquote>
+<div><p>Input array, can be complex.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : complex ndarray</p>
+<blockquote class="last">
+<div><p>Output array.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw" title="tomopy.tools.fftw.ifftw"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw</span></tt></a></dt>
+<dd>The inverse of <cite>fft</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw2" title="tomopy.tools.fftw.ifftw2"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw2</span></tt></a></dt>
+<dd>The inverse of <cite>fft2</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw" title="tomopy.tools.fftw.fftw"><tt class="xref py py-obj docutils literal"><span class="pre">fftw</span></tt></a></dt>
+<dd>The one-dimensional FFT.</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>It is calculated efficiently when the input array is
+symmetric, that is highest when the array sizes are
+powers of 2.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.tools.fftw.ifftw">
+<tt class="descclassname">tomopy.tools.fftw.</tt><tt class="descname">ifftw</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/fftw.html#ifftw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.fftw.ifftw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the one-dimensional inverse discrete Fourier Transform (DWT).</p>
+<p>This function computes the inverse of the one-dimentional DFT 
+computed by <cite>fftw</cite>. It is a thin wrapper on FFTW
+C package (<a class="reference external" href="http://www.fftw.org">http://www.fftw.org</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : array_like</p>
+<blockquote>
+<div><p>Input array, can be complex.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : complex ndarray</p>
+<blockquote class="last">
+<div><p>Output array.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw2" title="tomopy.tools.fftw.ifftw2"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw2</span></tt></a></dt>
+<dd>The inverse of <cite>fft2</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw" title="tomopy.tools.fftw.fftw"><tt class="xref py py-obj docutils literal"><span class="pre">fftw</span></tt></a></dt>
+<dd>The one-dimensional FFT.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw2" title="tomopy.tools.fftw.fftw2"><tt class="xref py py-obj docutils literal"><span class="pre">fftw2</span></tt></a></dt>
+<dd>The two-dimensional FFT.</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.tools.fftw.ifftw2">
+<tt class="descclassname">tomopy.tools.fftw.</tt><tt class="descname">ifftw2</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/fftw.html#ifftw2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.fftw.ifftw2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the two-dimensional inverse discrete Fourier Transform (DWT).</p>
+<p>This function computes the inverse of the two-dimentional DFT
+computed by <cite>fftw</cite>. It is a thin wrapper on FFTW
+C package (<a class="reference external" href="http://www.fftw.org">http://www.fftw.org</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : array_like</p>
+<blockquote>
+<div><p>Input array, can be complex.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : complex ndarray</p>
+<blockquote class="last">
+<div><p>Output array.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#tomopy.tools.fftw.ifftw" title="tomopy.tools.fftw.ifftw"><tt class="xref py py-obj docutils literal"><span class="pre">ifftw</span></tt></a></dt>
+<dd>The inverse of <cite>fft</cite>.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw" title="tomopy.tools.fftw.fftw"><tt class="xref py py-obj docutils literal"><span class="pre">fftw</span></tt></a></dt>
+<dd>The one-dimensional FFT.</dd>
+<dt><a class="reference internal" href="#tomopy.tools.fftw.fftw2" title="tomopy.tools.fftw.fftw2"><tt class="xref py py-obj docutils literal"><span class="pre">fftw2</span></tt></a></dt>
+<dd>The two-dimensional FFT.</dd>
+</dl>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.tools.constants.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">constants</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tomopy.recon.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.tools.fftw.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.recon.html" title="recon Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.tools.constants.html" title="constants"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.tools.html" ><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
