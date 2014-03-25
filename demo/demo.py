@@ -20,4 +20,3 @@ d.gridrec()
 # Write to stack of TIFFs.
 tomopy.xtomo_writer(d.data_recon, 'tmp/test_', axis=0)
 
-
