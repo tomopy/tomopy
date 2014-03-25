@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>multiprocess &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
+    <link rel="up" title="tools Module" href="tomopy.tools.html" />
+    <link rel="next" title="xtomo Module" href="tomopy.xtomo.html" />
+    <link rel="prev" title="fftw" href="tomopy.tools.fftw.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.xtomo.html" title="xtomo Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.tools.fftw.html" title="fftw"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.tools.html" accesskey="U"><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.tools.multiprocess_shared">
+<span id="multiprocess"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">multiprocess</span></tt><a class="headerlink" href="#module-tomopy.tools.multiprocess_shared" title="Permalink to this headline">¶</a></h1>
+<p>Module for multiprocessing.</p>
+<dl class="function">
+<dt id="tomopy.tools.multiprocess_shared.distribute_jobs">
+<tt class="descclassname">tomopy.tools.multiprocess_shared.</tt><tt class="descname">distribute_jobs</tt><big>(</big><em>data</em>, <em>func</em>, <em>args</em>, <em>axis</em>, <em>num_cores=None</em>, <em>chunk_size=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/multiprocess_shared.html#distribute_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.multiprocess_shared.distribute_jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distribute 3-D shared-memory data in chunks into cores.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>func</strong> : srt</p>
+<blockquote>
+<div><p>Name of the function to be parallelized.</p>
+</div></blockquote>
+<p><strong>args</strong> : list</p>
+<blockquote>
+<div><p>Arguments to that function in a list.</p>
+</div></blockquote>
+<p><strong>axis</strong> : scalar</p>
+<blockquote>
+<div><p>The dimension of data that the job distribution 
+will be performed. Data dimensions are like
+[projections, slices, pixels], so, if axis=0
+projections will be distributed across processors
+(e.g. for phase retrieval). If axis=1, slices will be 
+distributed across processors (e.g. for ring removal), 
+and for axis=2, pixels will be distributed across 
+processors(but this is rare).</p>
+</div></blockquote>
+<p><strong>num_cores</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Number of processor that will be assigned to jobs.
+If unspecisified maximum amount of processors will be used.</p>
+</div></blockquote>
+<p><strong>chunk_size</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Number of packet size for each processor. 
+For example, if axis=0, and chunk_size=8, each processor
+gets 8 projections.if axis=1, and chunk_size=8, each processor
+gets 8 slices, etc. If unspecified, the whole data
+will be distributed to processors in equal chunks such that
+each processor will get a single job to do.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>3-D output data after transformation.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.tools.multiprocess_shared.init">
+<tt class="descclassname">tomopy.tools.multiprocess_shared.</tt><tt class="descname">init</tt><big>(</big><em>shared_arr_</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/multiprocess_shared.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.multiprocess_shared.init" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tomopy.tools.multiprocess_shared.tonumpyarray">
+<tt class="descclassname">tomopy.tools.multiprocess_shared.</tt><tt class="descname">tonumpyarray</tt><big>(</big><em>mp_arr</em>, <em>dshape</em><big>)</big><a class="reference internal" href="../_modules/tomopy/tools/multiprocess_shared.html#tonumpyarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.tools.multiprocess_shared.tonumpyarray" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.tools.fftw.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">fftw</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tomopy.xtomo.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">xtomo</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.tools.multiprocess_shared.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.xtomo.html" title="xtomo Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.tools.fftw.html" title="fftw"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.tools.html" ><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

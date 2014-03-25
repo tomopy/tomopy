@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>diagnose_center &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
+    <link rel="up" title="recon Module" href="tomopy.algorithms.recon.html" />
+    <link rel="next" title="gridrec" href="tomopy.algorithms.recon.gridrec.html" />
+    <link rel="prev" title="art" href="tomopy.algorithms.recon.art.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.recon.gridrec.html" title="gridrec"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.recon.art.html" title="art"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.algorithms.html" ><tt class="docutils literal"><span class="pre">algorithms</span></tt> Module</a> &raquo;</li>
+          <li><a href="tomopy.algorithms.recon.html" accesskey="U"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tomopy.algorithms.recon.diagnose_center">
+<span id="diagnose-center"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">diagnose_center</span></tt><a class="headerlink" href="#module-tomopy.algorithms.recon.diagnose_center" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.recon.diagnose_center.diagnose_center">
+<tt class="descclassname">tomopy.algorithms.recon.diagnose_center.</tt><tt class="descname">diagnose_center</tt><big>(</big><em>data</em>, <em>theta</em>, <em>dir_path</em>, <em>slice_no</em>, <em>center_start</em>, <em>center_end</em>, <em>center_step</em>, <em>mask</em>, <em>ratio</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/diagnose_center.html#diagnose_center"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.diagnose_center.diagnose_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diagnostic tools to find rotation center.</p>
+<p>Helps finding the rotation center manually by
+visual inspection of the selected reconstructions
+with different centers. The outputs for different
+centers are put into <tt class="docutils literal"><span class="pre">data/diagnose</span></tt> directory
+and the corresponding center positions are printed
+so that one can skim through the images and
+select the best.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>3-D tomographic data with dimensions:
+[projections, slices, pixels]</p>
+</div></blockquote>
+<p><strong>theta</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>Projection angles.</p>
+</div></blockquote>
+<p><strong>dir_path</strong> : str</p>
+<blockquote>
+<div><p>Directory to save output images.</p>
+</div></blockquote>
+<p><strong>slice_no</strong> : scalar</p>
+<blockquote>
+<div><p>The index of the slice to be used for diagnostics.</p>
+</div></blockquote>
+<p><strong>center_start, center_end, center_step</strong> : scalar</p>
+<blockquote>
+<div><p>Values of the start, end and step of the center values to
+be used for diagnostics.</p>
+</div></blockquote>
+<p><strong>mask</strong> : bool</p>
+<blockquote>
+<div><p>If <tt class="docutils literal"><span class="pre">True</span></tt> applies a circular mask to the image.</p>
+</div></blockquote>
+<p><strong>ratio</strong> : scalar</p>
+<blockquote class="last">
+<div><p>The ratio of the radius of the circular mask to the
+edge of the reconstructed image.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Finding rotation center by visual inspection:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform reconstructions with different centers.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">diagnose_center</span><span class="p">(</span><span class="n">center_start</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">center_end</span><span class="o">=</span><span class="mi">670</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at tmp/&quot;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.algorithms.recon.art.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">art</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tomopy.algorithms.recon.gridrec.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">gridrec</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.algorithms.recon.diagnose_center.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.recon.gridrec.html" title="gridrec"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.recon.art.html" title="art"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
+          <li><a href="tomopy.algorithms.html" ><tt class="docutils literal"><span class="pre">algorithms</span></tt> Module</a> &raquo;</li>
+          <li><a href="tomopy.algorithms.recon.html" ><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

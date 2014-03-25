@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tomopy.algorithms.postprocess.apply_mask &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for tomopy.algorithms.postprocess.apply_mask</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="apply_mask"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.postprocess.apply_mask.html#tomopy.algorithms.postprocess.apply_mask.apply_mask">[docs]</a><span class="k">def</span> <span class="nf">apply_mask</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply circular mask to reconstructed data.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray, float32</span>
+<span class="sd">        3-D reconstructed data with dimensions:</span>
+<span class="sd">        [slices, pixels, pixels]</span>
+<span class="sd">        </span>
+<span class="sd">    ratio : scalar, int</span>
+<span class="sd">        Ratio of the circular mask&#39;s diameter in pixels</span>
+<span class="sd">        to the number of reconstructed image pixels </span>
+<span class="sd">        (i.e., the dimension of the images).</span>
+<span class="sd">         </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output : ndarray</span>
+<span class="sd">        Masked data.</span>
+<span class="sd">        </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    - Apply mask after reconstruction:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; import tomopy</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Load data</span>
+<span class="sd">        &gt;&gt;&gt; myfile = &#39;demo/data.h5&#39;</span>
+<span class="sd">        &gt;&gt;&gt; data, white, dark, theta = tomopy.xtomo_reader(myfile,  slices_start=0, slices_end=1)</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Construct tomo object</span>
+<span class="sd">        &gt;&gt;&gt; d = tomopy.xtomo_dataset(log=&#39;error&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; d.dataset(data, white, dark, theta)</span>
+<span class="sd">        &gt;&gt;&gt; d.normalize()</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Reconstruct data</span>
+<span class="sd">        &gt;&gt;&gt; d.center=661.5</span>
+<span class="sd">        &gt;&gt;&gt; d.gridrec()</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Save reconstructed data before masking</span>
+<span class="sd">        &gt;&gt;&gt; output_file=&#39;tmp/before_masking_&#39;</span>
+<span class="sd">        &gt;&gt;&gt; tomopy.xtomo_writer(d.data_recon, output_file)</span>
+<span class="sd">        &gt;&gt;&gt; print &quot;Images are succesfully saved at &quot; + output_file + &#39;...&#39;</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Apply masking</span>
+<span class="sd">        &gt;&gt;&gt; d.apply_mask()</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Save reconstructed data after masking</span>
+<span class="sd">        &gt;&gt;&gt; output_file=&#39;tmp/after_masking_&#39;</span>
+<span class="sd">        &gt;&gt;&gt; tomopy.xtomo_writer(d.data_recon, output_file)</span>
+<span class="sd">        &gt;&gt;&gt; print &quot;Images are succesfully saved at &quot; + output_file + &#39;...&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_slices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_pixels</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c"># Apply circular mask.</span>
+    <span class="n">rad</span> <span class="o">=</span> <span class="n">num_pixels</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="o">-</span><span class="n">rad</span><span class="p">:</span><span class="n">rad</span><span class="p">,</span> <span class="o">-</span><span class="n">rad</span><span class="p">:</span><span class="n">rad</span><span class="p">]</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">ratio</span><span class="o">*</span><span class="n">ratio</span><span class="o">*</span><span class="n">rad</span><span class="o">*</span><span class="n">rad</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_slices</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+    <span class="k">return</span> <span class="n">data</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

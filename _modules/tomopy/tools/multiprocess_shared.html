@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tomopy.tools.multiprocess_shared &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for tomopy.tools.multiprocess_shared</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module for multiprocessing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="kn">as</span> <span class="nn">mp</span>
+<span class="kn">import</span> <span class="nn">ctypes</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../resources/tomopy.tools.multiprocess_shared.html#tomopy.tools.multiprocess_shared.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">shared_arr_</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">shared_arr</span>
+    <span class="n">shared_arr</span> <span class="o">=</span> <span class="n">shared_arr_</span> <span class="c"># must be inhereted, not passed as an argument</span>
+</div>
+<div class="viewcode-block" id="tonumpyarray"><a class="viewcode-back" href="../../../resources/tomopy.tools.multiprocess_shared.html#tomopy.tools.multiprocess_shared.tonumpyarray">[docs]</a><span class="k">def</span> <span class="nf">tonumpyarray</span><span class="p">(</span><span class="n">mp_arr</span><span class="p">,</span> <span class="n">dshape</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">mp_arr</span><span class="o">.</span><span class="n">get_obj</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dshape</span><span class="p">)</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+</div>
+<div class="viewcode-block" id="distribute_jobs"><a class="viewcode-back" href="../../../resources/tomopy.tools.multiprocess_shared.html#tomopy.tools.multiprocess_shared.distribute_jobs">[docs]</a><span class="k">def</span> <span class="nf">distribute_jobs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span>
+                    <span class="n">num_cores</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Distribute 3-D shared-memory data in chunks into cores.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : srt</span>
+<span class="sd">        Name of the function to be parallelized.</span>
+<span class="sd">    </span>
+<span class="sd">    args : list</span>
+<span class="sd">        Arguments to that function in a list.</span>
+
+<span class="sd">    axis : scalar</span>
+<span class="sd">        The dimension of data that the job distribution </span>
+<span class="sd">        will be performed. Data dimensions are like</span>
+<span class="sd">        [projections, slices, pixels], so, if axis=0</span>
+<span class="sd">        projections will be distributed across processors</span>
+<span class="sd">        (e.g. for phase retrieval). If axis=1, slices will be </span>
+<span class="sd">        distributed across processors (e.g. for ring removal), </span>
+<span class="sd">        and for axis=2, pixels will be distributed across </span>
+<span class="sd">        processors(but this is rare).</span>
+<span class="sd">        </span>
+<span class="sd">    num_cores : scalar, optional</span>
+<span class="sd">        Number of processor that will be assigned to jobs.</span>
+<span class="sd">        If unspecisified maximum amount of processors will be used.</span>
+<span class="sd">    </span>
+<span class="sd">    chunk_size : scalar, optional</span>
+<span class="sd">        Number of packet size for each processor. </span>
+<span class="sd">        For example, if axis=0, and chunk_size=8, each processor</span>
+<span class="sd">        gets 8 projections.if axis=1, and chunk_size=8, each processor</span>
+<span class="sd">        gets 8 slices, etc. If unspecified, the whole data</span>
+<span class="sd">        will be distributed to processors in equal chunks such that</span>
+<span class="sd">        each processor will get a single job to do.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : ndarray</span>
+<span class="sd">        3-D output data after transformation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Arrange number of processors.</span>
+    <span class="k">if</span> <span class="n">num_cores</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">num_cores</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+    
+    <span class="c"># Maximum number of available processors for the task.</span>
+    <span class="k">if</span> <span class="n">dims</span> <span class="o">&lt;</span> <span class="n">num_cores</span><span class="p">:</span>
+        <span class="n">num_cores</span> <span class="o">=</span> <span class="n">dims</span>
+    
+    <span class="c"># Arrange chunk size.</span>
+    <span class="k">if</span> <span class="n">chunk_size</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">dims</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">num_cores</span><span class="o">+</span><span class="mi">1</span>
+    
+    <span class="c"># Determine pool size.</span>
+    <span class="n">pool_size</span> <span class="o">=</span> <span class="n">dims</span><span class="o">/</span><span class="n">chunk_size</span><span class="o">+</span><span class="mi">1</span>
+    
+    <span class="c"># Populate jobs.</span>
+    <span class="n">arg</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pool_size</span><span class="p">):</span>
+        <span class="n">ind_start</span> <span class="o">=</span> <span class="n">m</span><span class="o">*</span><span class="n">chunk_size</span>
+        <span class="n">ind_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">chunk_size</span>
+        <span class="k">if</span> <span class="n">ind_start</span> <span class="o">&gt;=</span> <span class="n">dims</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="n">ind_end</span> <span class="o">&gt;</span> <span class="n">dims</span><span class="p">:</span>
+            <span class="n">ind_end</span> <span class="o">=</span> <span class="n">dims</span>
+            
+        <span class="n">arg</span> <span class="o">+=</span> <span class="p">[(</span><span class="nb">range</span><span class="p">(</span><span class="n">ind_start</span><span class="p">,</span> <span class="n">ind_end</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">args</span><span class="p">)]</span>
+
+    <span class="n">shared_arr</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">c_float</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="c"># takes time</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">tonumpyarray</span><span class="p">(</span><span class="n">shared_arr</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">arr</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="c"># write to arr from different processes</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">initializer</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">initargs</span><span class="o">=</span><span class="p">(</span><span class="n">shared_arr</span><span class="p">,)))</span> <span class="k">as</span> <span class="n">p</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">arr</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

@@ -3,9 +3,9 @@
 =====================
 
 .. toctree::
-   tomopy.tools.colorer
    tomopy.tools.constants
    tomopy.tools.fftw
+   tomopy.tools.multiprocess_shared
 
 .. automodule:: tomopy.tools
    :members:

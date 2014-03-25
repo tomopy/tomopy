@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tomopy.algorithms.recon.diagnose_center &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for tomopy.algorithms.recon.diagnose_center</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">misc</span>
+
+<span class="kn">from</span> <span class="nn">gridrec</span> <span class="kn">import</span> <span class="n">Gridrec</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="diagnose_center"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.recon.diagnose_center.html#tomopy.algorithms.recon.diagnose_center.diagnose_center">[docs]</a><span class="k">def</span> <span class="nf">diagnose_center</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">,</span> <span class="n">slice_no</span><span class="p">,</span> 
+                    <span class="n">center_start</span><span class="p">,</span> <span class="n">center_end</span><span class="p">,</span> <span class="n">center_step</span><span class="p">,</span> 
+                    <span class="n">mask</span><span class="p">,</span> <span class="n">ratio</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Diagnostic tools to find rotation center.</span>
+<span class="sd">    </span>
+<span class="sd">    Helps finding the rotation center manually by</span>
+<span class="sd">    visual inspection of the selected reconstructions</span>
+<span class="sd">    with different centers. The outputs for different</span>
+<span class="sd">    centers are put into ``data/diagnose`` directory</span>
+<span class="sd">    and the corresponding center positions are printed</span>
+<span class="sd">    so that one can skim through the images and</span>
+<span class="sd">    select the best.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray, float32</span>
+<span class="sd">        3-D tomographic data with dimensions:</span>
+<span class="sd">        [projections, slices, pixels]</span>
+<span class="sd">        </span>
+<span class="sd">    theta : ndarray, float32</span>
+<span class="sd">        Projection angles.</span>
+<span class="sd">        </span>
+<span class="sd">    dir_path : str</span>
+<span class="sd">        Directory to save output images.</span>
+<span class="sd">    </span>
+<span class="sd">    slice_no : scalar</span>
+<span class="sd">        The index of the slice to be used for diagnostics.</span>
+<span class="sd">    </span>
+<span class="sd">    center_start, center_end, center_step : scalar</span>
+<span class="sd">        Values of the start, end and step of the center values to</span>
+<span class="sd">        be used for diagnostics.</span>
+<span class="sd">        </span>
+<span class="sd">    mask : bool</span>
+<span class="sd">        If ``True`` applies a circular mask to the image.</span>
+<span class="sd">        </span>
+<span class="sd">    ratio : scalar</span>
+<span class="sd">        The ratio of the radius of the circular mask to the</span>
+<span class="sd">        edge of the reconstructed image.</span>
+<span class="sd">        </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    - Finding rotation center by visual inspection:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; import tomopy</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Load data</span>
+<span class="sd">        &gt;&gt;&gt; myfile = &#39;demo/data.h5&#39;</span>
+<span class="sd">        &gt;&gt;&gt; data, white, dark, theta = tomopy.xtomo_reader(myfile)</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Construct tomo object</span>
+<span class="sd">        &gt;&gt;&gt; d = tomopy.xtomo_dataset(log=&#39;error&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; d.dataset(data, white, dark, theta)</span>
+<span class="sd">        &gt;&gt;&gt; d.normalize()</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Perform reconstructions with different centers.</span>
+<span class="sd">        &gt;&gt;&gt; d.diagnose_center(center_start=640, center_end=670)</span>
+<span class="sd">        &gt;&gt;&gt; print &quot;Images are succesfully saved at tmp/&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_projections</span> <span class="o">=</span>  <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_pixels</span> <span class="o">=</span>  <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    
+    <span class="c"># Don&#39;t ask why. Just do that.</span>
+    <span class="n">center_step</span> <span class="o">/=</span> <span class="mf">2.</span>
+    
+    <span class="c"># Make preperations for the slices and corresponding centers.</span>
+    <span class="n">slice_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">slice_no</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">center_start</span><span class="p">,</span> <span class="n">center_end</span><span class="p">,</span> <span class="n">center_step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">num_center</span> <span class="o">=</span> <span class="n">center</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">stacked_slices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_projections</span><span class="p">,</span> <span class="n">num_center</span><span class="p">,</span> <span class="n">num_pixels</span><span class="p">),</span>
+                              <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                              
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_center</span><span class="p">):</span>
+        <span class="n">stacked_slices</span><span class="p">[:,</span> <span class="n">m</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">slice_data</span>
+
+    <span class="c"># Reconstruct the same slice with different centers.</span>
+    <span class="n">recon</span> <span class="o">=</span> <span class="n">Gridrec</span><span class="p">(</span><span class="n">stacked_slices</span><span class="p">)</span>
+    <span class="n">recon</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">(</span><span class="n">stacked_slices</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="n">center</span><span class="p">)</span>
+    
+    <span class="c"># Apply circular mask.</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">rad</span> <span class="o">=</span> <span class="n">num_pixels</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="o">-</span><span class="n">rad</span><span class="p">:</span><span class="n">rad</span><span class="p">,</span> <span class="o">-</span><span class="n">rad</span><span class="p">:</span><span class="n">rad</span><span class="p">]</span>
+        <span class="n">msk</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">ratio</span><span class="o">*</span><span class="n">ratio</span><span class="o">*</span><span class="n">rad</span><span class="o">*</span><span class="n">rad</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">center</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">recon</span><span class="o">.</span><span class="n">data_recon</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">msk</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+
+    <span class="c"># Save it to a temporary directory for manual inspection.</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">center</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># 2 slices same bec of gridrec.</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">toimage</span><span class="p">(</span><span class="n">recon</span><span class="o">.</span><span class="n">data_recon</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">dir_path</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">center</span><span class="p">[</span><span class="n">m</span><span class="p">]))</span> <span class="o">+</span> <span class="s">&quot;.tif&quot;</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

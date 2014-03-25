@@ -3,10 +3,9 @@
 =====================
 
 .. toctree::
+   tomopy.algorithms
    tomopy.tools
-   tomopy.recon
-   tomopy.dataio
-   tomopy.preprocess
+   tomopy.xtomo
 
 .. automodule:: tomopy
     :members:

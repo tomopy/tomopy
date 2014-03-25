@@ -62,10 +62,11 @@ SciPy       0.13.2   http://www.scipy.org
 H5Py        2.2.1    http://www.h5py.org
 PyWt        0.2.2    http://www.pybytes.com/pywavelets
 Pillow      2.3.0    https://pypi.python.org/pypi/Pillow
+Skimage     0.10     http://scikit-image.org
 ==========  =======  =====================================
 
 Environment Variables
-*************************
+*********************
 
 Make sure you have Python 2.6 or 2.7
 and the above dependencies installed in your system. 
@@ -104,7 +105,6 @@ source      #. download latest source tarball from https://github.com/tomopy/tom
             #. ``python setup.py install`` in the directory where *setup.py* resides
 ==========  ==========================================================================================
             
-
 For some configurations you may need to specifically add 
 the install directory to your ``PYTHONPATH``. 
 

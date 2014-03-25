@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>algorithms Module &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
+    <link rel="up" title="tomopy Package" href="tomopy.html" />
+    <link rel="next" title="preprocess Module" href="tomopy.algorithms.preprocess.html" />
+    <link rel="prev" title="tomopy Package" href="tomopy.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.preprocess.html" title="preprocess Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.html" title="tomopy Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" accesskey="U"><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="algorithms-module">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">algorithms</span></tt> Module<a class="headerlink" href="#algorithms-module" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tomopy.algorithms.preprocess.html"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.apply_padding.html"><tt class="docutils literal"><span class="pre">apply_padding</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.correct_drift.html"><tt class="docutils literal"><span class="pre">correct_drift</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.downsample.html"><tt class="docutils literal"><span class="pre">downsample</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.median_filter.html"><tt class="docutils literal"><span class="pre">median_filter</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.normalize.html"><tt class="docutils literal"><span class="pre">normalize</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.phase_retrieval.html"><tt class="docutils literal"><span class="pre">phase_retrieval</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.stripe_removal.html"><tt class="docutils literal"><span class="pre">stripe_removal</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.preprocess.zinger_removal.html"><tt class="docutils literal"><span class="pre">zinger_removal</span></tt></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tomopy.algorithms.recon.html"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.art.html"><tt class="docutils literal"><span class="pre">art</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.diagnose_center.html"><tt class="docutils literal"><span class="pre">diagnose_center</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.gridrec.html"><tt class="docutils literal"><span class="pre">gridrec</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.mlem.html"><tt class="docutils literal"><span class="pre">mlem</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.optimize_center.html"><tt class="docutils literal"><span class="pre">optimize_center</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.recon.upsample.html"><tt class="docutils literal"><span class="pre">upsample</span></tt></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tomopy.algorithms.postprocess.html"><tt class="docutils literal"><span class="pre">postprocess</span></tt> Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.postprocess.adaptive_segment.html"><tt class="docutils literal"><span class="pre">adaptive_segment</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.postprocess.apply_mask.html"><tt class="docutils literal"><span class="pre">apply_mask</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.postprocess.region_segment.html"><tt class="docutils literal"><span class="pre">region_segment</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.postprocess.remove_background.html"><tt class="docutils literal"><span class="pre">remove_background</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.algorithms.postprocess.threshold_segment.html"><tt class="docutils literal"><span class="pre">threshold_segment</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</div>
+<span class="target" id="module-tomopy.algorithms"></span></div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tomopy.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tomopy.algorithms.preprocess.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/resources/tomopy.algorithms.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tomopy.algorithms.preprocess.html" title="preprocess Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tomopy.html" title="tomopy Package"
+             >previous</a> |</li>
+        <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+    </div>
+  </body>
+</html>

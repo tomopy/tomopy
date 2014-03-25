@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to tomopy’s documentation! &mdash; tomopy 0.0.2 documentation</title>
+    <title>Welcome to TomoPy’s documentation! &mdash; tomopy 0.0.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.2',
+        VERSION:     '0.0.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="tomopy 0.0.2 documentation" href="#" />
+    <link rel="top" title="tomopy 0.0.3 documentation" href="#" />
     <link rel="next" title="About TomoPy" href="readme.html" /> 
   </head>
   <body>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="readme.html" title="About TomoPy"
              accesskey="N">next</a> |</li>
-        <li><a href="#">tomopy 0.0.2 documentation</a> &raquo;</li> 
+        <li><a href="#">tomopy 0.0.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,41 +53,291 @@
           <div class="body">
             
   <div class="section" id="welcome-to-tomopy-s-documentation">
-<h1>Welcome to tomopy&#8217;s documentation!<a class="headerlink" href="#welcome-to-tomopy-s-documentation" title="Permalink to this headline">¶</a></h1>
+<h1>Welcome to TomoPy&#8217;s documentation!<a class="headerlink" href="#welcome-to-tomopy-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>TomoPy is a Python toolbox to perform data processing and
-image reconstruction tasks at APS. It uses <a class="reference external" href="https://subversion.xray.aps.anl.gov/DataExchange/doc/trunk/">HDF5 file format</a> as
-the standard means of data exchange.</p>
-<p>Installation details are provided later: <a class="reference internal" href="install.html#installation"><em>Installing TomoPy</em></a>.</p>
-</div>
-<div class="section" id="development">
-<h1>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h1>
-<p>TomoPy uses the <a class="reference external" href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">numpy/scipy documentation standard</a>
-for code development.</p>
-</div>
+image reconstruction tasks at APS.</p>
 <div class="section" id="contents">
-<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">About TomoPy</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#external-dependencies">External Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#python-dependencies">Python Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#installing-tomopy">Installing TomoPy</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="resources/tomopy.html"><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.tools.html"><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.recon.html"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.dataio.html"><tt class="docutils literal"><span class="pre">dataio</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.preprocess.html"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">About TomoPy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing TomoPy</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#external-dependencies">External Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#external-dependencies">External Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="install.html#quick-install">Quick Install</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#python-dependencies">Python Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#environment-variables">Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#environment-variables">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="install.html#install-example">Install Example</a></li>
 </ul>
 </li>
 </ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources/tomopy.html"><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.algorithms.html"><tt class="docutils literal"><span class="pre">algorithms</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.algorithms.preprocess.html"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.algorithms.recon.html"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.algorithms.postprocess.html"><tt class="docutils literal"><span class="pre">postprocess</span></tt> Module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.tools.html"><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.tools.constants.html"><tt class="docutils literal"><span class="pre">constants</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.tools.fftw.html"><tt class="docutils literal"><span class="pre">fftw</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.tools.multiprocess_shared.html"><tt class="docutils literal"><span class="pre">multiprocess</span></tt></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="resources/tomopy.xtomo.html"><tt class="docutils literal"><span class="pre">xtomo</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.xtomo.xtomo_dataset.html"><tt class="docutils literal"><span class="pre">xtomo_dataset</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="resources/tomopy.xtomo.xtomo_io.html"><tt class="docutils literal"><span class="pre">xtomo_io</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="installing-tomopy">
+<span id="installation"></span><h2>Installing TomoPy<a class="headerlink" href="#installing-tomopy" title="Permalink to this headline">¶</a></h2>
+<p>Make sure you have Python 2.6 or 2.7
+and these dependencies installed in your system.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="88%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Python</th>
+<th class="head">URL</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2.6</td>
+<td><a class="reference external" href="http://www.python.org/download/releases/2.6">http://www.python.org/download/releases/2.6</a></td>
+</tr>
+<tr class="row-odd"><td>2.7</td>
+<td><a class="reference external" href="http://www.python.org/download/releases/2.7">http://www.python.org/download/releases/2.7</a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This code was developed using the Enthought Python
+Distribution (www.enthought.com) which satisfies most of the
+above-stated Python Dependencies.</p>
+</div>
+<div class="section" id="external-dependencies">
+<h3>External Dependencies<a class="headerlink" href="#external-dependencies" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="8%" />
+<col width="22%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">dependency</th>
+<th class="head">version</th>
+<th class="head">URL</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>FFTW3</td>
+<td>3.3.3</td>
+<td><a class="reference external" href="http://www.fftw.org">http://www.fftw.org</a></td>
+<td>only float library is required</td>
+</tr>
+<tr class="row-odd"><td>Boost C++</td>
+<td>1.55.0</td>
+<td><a class="reference external" href="http://www.boost.org">http://www.boost.org</a></td>
+<td>only thread, system and date_time libraries are required</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="quick-install">
+<h4>Quick Install<a class="headerlink" href="#quick-install" title="Permalink to this headline">¶</a></h4>
+<p>For a quick install of these external dependencies, use:</p>
+<div class="highlight-python"><div class="highlight"><pre>python install.py --boost --fftw
+</pre></div>
+</div>
+<p>provided with the TomoPy source code.
+By default it installs them into <tt class="docutils literal"><span class="pre">/usr/local</span></tt>.
+If you wish to install them into a different directory, use:</p>
+<div class="highlight-python"><div class="highlight"><pre>python install.py &lt;desired-directory&gt; --boost --fftw
+</pre></div>
+</div>
+<p>In this case, be sure that &lt;desired-directory&gt; is added to your
+environment variables for runtime use of TomoPy:</p>
+<div class="highlight-python"><div class="highlight"><pre>setenv LD_LIBRARY_PATH &lt;desired-directory&gt;/lib
+setenv C_INCLUDE_PATH &lt;desired-directory&gt;/include
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="python-dependencies">
+<h3>Python Dependencies<a class="headerlink" href="#python-dependencies" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="13%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">dependency</th>
+<th class="head">version</th>
+<th class="head">URL</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>NumPy</td>
+<td>1.8.0</td>
+<td><a class="reference external" href="http://www.numpy.org">http://www.numpy.org</a></td>
+</tr>
+<tr class="row-odd"><td>SciPy</td>
+<td>0.13.2</td>
+<td><a class="reference external" href="http://www.scipy.org">http://www.scipy.org</a></td>
+</tr>
+<tr class="row-even"><td>H5Py</td>
+<td>2.2.1</td>
+<td><a class="reference external" href="http://www.h5py.org">http://www.h5py.org</a></td>
+</tr>
+<tr class="row-odd"><td>PyWt</td>
+<td>0.2.2</td>
+<td><a class="reference external" href="http://www.pybytes.com/pywavelets">http://www.pybytes.com/pywavelets</a></td>
+</tr>
+<tr class="row-even"><td>Pillow</td>
+<td>2.3.0</td>
+<td><a class="reference external" href="https://pypi.python.org/pypi/Pillow">https://pypi.python.org/pypi/Pillow</a></td>
+</tr>
+<tr class="row-odd"><td>Skimage</td>
+<td>0.10</td>
+<td><a class="reference external" href="http://scikit-image.org">http://scikit-image.org</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="environment-variables">
+<h3>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this headline">¶</a></h3>
+<p>Make sure you have Python 2.6 or 2.7
+and the above dependencies installed in your system.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="88%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Python</th>
+<th class="head">URL</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2.6</td>
+<td><a class="reference external" href="http://www.python.org/download/releases/2.6">http://www.python.org/download/releases/2.6</a></td>
+</tr>
+<tr class="row-odd"><td>2.7</td>
+<td><a class="reference external" href="http://www.python.org/download/releases/2.7">http://www.python.org/download/releases/2.7</a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This code was developed using the Enthought Python
+Distribution (www.enthought.com) which satisfies most of the
+above-stated Python Dependencies.</p>
+</div>
+<p>Then, permanently set the following environment variables in the shell.
+For <em>/bin/csh</em> or <em>/bin/tcsh</em> (note: this will overwrite any previous
+definitions of these terms):</p>
+<div class="highlight-python"><div class="highlight"><pre>setenv LD_LIBRARY_PATH &lt;my-boost-lib-dir&gt;:&lt;my-fftw-lib-dir&gt;
+setenv C_INCLUDE_PATH &lt;my-boost-include-dir&gt;:&lt;my-fftw-include-dir&gt;
+</pre></div>
+</div>
+<p>For <em>/bin/bash</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre>export LD_LIBRARY_PATH=&lt;my-boost-lib-dir&gt;:&lt;my-fftw-lib-dir&gt;
+export C_INCLUDE_PATH=&lt;my-boost-include-dir&gt;:&lt;my-fftw-include-dir&gt;
+</pre></div>
+</div>
+<p>Once the environment variables are set correctly, then any of these methods should work:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">from</th>
+<th class="head">procedure</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Python egg</td>
+<td><ol class="first last arabic simple">
+<li>download latest released egg from <a class="reference external" href="https://github.com/tomopy/tomopy/releases">https://github.com/tomopy/tomopy/releases</a></li>
+<li><tt class="docutils literal"><span class="pre">easy_install</span> <span class="pre">my-egg-name</span></tt> in the directory where the egg resides.</li>
+</ol>
+</td>
+</tr>
+<tr class="row-odd"><td>source</td>
+<td><ol class="first last arabic simple">
+<li>download latest source tarball from <a class="reference external" href="https://github.com/tomopy/tomopy/releases">https://github.com/tomopy/tomopy/releases</a></li>
+<li><tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt> in the directory where <em>setup.py</em> resides</li>
+</ol>
+</td>
+</tr>
+</tbody>
+</table>
+<p>For some configurations you may need to specifically add
+the install directory to your <tt class="docutils literal"><span class="pre">PYTHONPATH</span></tt>.</p>
+<p>To test if installation was succesfull:</p>
+<ol class="arabic">
+<li><p class="first">open a new command shell</p>
+</li>
+<li><p class="first"><strong>change to a different directory than the tomopy source</strong></p>
+</li>
+<li><p class="first">try:</p>
+<div class="highlight-python"><div class="highlight"><pre>python -c &quot;import tomopy&quot;
+</pre></div>
+</div>
+</li>
+</ol>
+<p>If it doesn&#8217;t complain you are good to go!</p>
+<div class="section" id="install-example">
+<h4>Install Example<a class="headerlink" href="#install-example" title="Permalink to this headline">¶</a></h4>
+<p>Here is a complete example of the installation, including
+a different <em>&lt;desired-directory&gt;</em> for Boost, fftw3, and tomopy:</p>
+<ol class="arabic">
+<li><p class="first">download latest source .tar.gz from <a class="reference external" href="https://github.com/tomopy/tomopy/releases">https://github.com/tomopy/tomopy/releases</a></p>
+</li>
+<li><p class="first">expand the source .tar.gz into a new directory, build and install with these commands:</p>
+<div class="highlight-python"><div class="highlight"><pre>/bin/tcsh
+setenv SANDBOX /tmp/sandbox
+mkdir -p $SANDBOX/lib/python2.7/site-packages/
+cd /tmp
+tar xzf ~/Downloads/tomopy-0.0.2.tar.gz
+cd tomopy-0.0.2/
+python install.py $SANDBOX --boost --fftw
+setenv LD_LIBRARY_PATH $SANDBOX/lib
+setenv C_INCLUDE_PATH $SANDBOX/include
+setenv PYTHONPATH $SANDBOX/lib/python2.7/site-packages/
+python setup.py install --prefix=$SANDBOX
+cd /tmp
+
+echo &quot;SANDBOX = $SANDBOX&quot;
+echo &quot;LD_LIBRARY_PATH = $LD_LIBRARY_PATH&quot;
+echo &quot;C_INCLUDE_PATH = $C_INCLUDE_PATH&quot;
+echo &quot;PYTHONPATH = $PYTHONPATH&quot;
+python -c &quot;import tomopy&quot;
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="section" id="development">
+<h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
+<p>TomoPy uses the <a class="reference external" href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">numpy/scipy documentation standard</a>
+for code development.</p>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -98,7 +348,7 @@ for code development.</p>
 <li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
 </ul>
 <hr class="docutils" />
-<p>documentation was built March 18, 2014</p>
+<p>documentation was built March 25, 2014</p>
 </div>
 
 
@@ -109,9 +359,23 @@ for code development.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to tomopy&#8217;s documentation!</a></li>
-<li><a class="reference internal" href="#development">Development</a></li>
+<li><a class="reference internal" href="#">Welcome to TomoPy&#8217;s documentation!</a><ul>
 <li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#installing-tomopy">Installing TomoPy</a><ul>
+<li><a class="reference internal" href="#external-dependencies">External Dependencies</a><ul>
+<li><a class="reference internal" href="#quick-install">Quick Install</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#python-dependencies">Python Dependencies</a></li>
+<li><a class="reference internal" href="#environment-variables">Environment Variables</a><ul>
+<li><a class="reference internal" href="#install-example">Install Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#development">Development</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
@@ -155,12 +419,12 @@ for code development.</p>
         <li class="right" >
           <a href="readme.html" title="About TomoPy"
              >next</a> |</li>
-        <li><a href="#">tomopy 0.0.2 documentation</a> &raquo;</li> 
+        <li><a href="#">tomopy 0.0.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
     </div>
   </body>
 </html>
