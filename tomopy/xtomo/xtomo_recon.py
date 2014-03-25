@@ -250,7 +250,7 @@ def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
         
     if not isinstance(init_matrix, np.float32):
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
-
+    
     # Initialize and perform reconstruction.
     data_recon = mlem(data, theta, center, num_grid, iters, init_matrix)
 
