@@ -49,9 +49,11 @@ def median_filter(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     size = inputs
     
     for m in ind:

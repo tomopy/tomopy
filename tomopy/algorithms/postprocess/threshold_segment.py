@@ -35,9 +35,11 @@ def threshold_segment(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py \
     <http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py>`_
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
-
+    
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     cutoff = inputs
     
     for m in ind:

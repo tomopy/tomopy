@@ -82,7 +82,7 @@ class XTomoDataset:
         # Assign theta
         if theta is None:
             xtomo.theta = np.linspace(0, num_projs, num_projs)*180/(num_projs+1)
-            xtomo.logger.warning("assign 180-degree rotation [ok]")
+            xtomo.logger.warning("assumed 180-degree rotation [ok]")
             
         # Impose data types.
         if not isinstance(xtomo.data, np.float32):

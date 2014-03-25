@@ -1,7 +1,5 @@
 .. APS Imaging toolbox
 
-.. _development:
-
 ===========
 Development
 ===========

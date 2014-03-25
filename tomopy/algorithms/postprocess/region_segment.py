@@ -27,10 +27,12 @@ def region_segment(args):
     output : ndarray
         Segmented data.
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
 
-    low, high = args
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
+    low, high = inputs
     
     for m in ind:
         img = data[m, :, :]

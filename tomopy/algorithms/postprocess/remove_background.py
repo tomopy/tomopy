@@ -29,8 +29,11 @@ def remove_background(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html \
     <http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html>`_
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
+    
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     
     for m in ind:
         img = data[m, :, :]

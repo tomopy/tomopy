@@ -6,8 +6,7 @@ Welcome to TomoPy's documentation!
 TomoPy is a Python toolbox to perform data processing and
 image reconstruction tasks at APS.
 
-Installation details are provided later: :ref:`installation`.
-
+========
 Contents
 ========
 
@@ -19,7 +18,8 @@ Contents
    development
    resources/tomopy
 
-
+.. include:: install.rst
+.. include:: development.rst
 
 Indices and tables
 ==================
