@@ -61,9 +61,11 @@ def stripe_removal(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     level, wname, sigma, padding = inputs
     
     dx, num_slices, dy = dshape

@@ -1,4 +1,5 @@
-v0.0.3, Mar 21 2014 -- Updated release.
+v0.0.3, Mar 25 2014 -- Updated release.
+        Mar 24 2014 -- Multi-processing with shared arrays.
         Mar 20 2014 -- More docs added.
         Mar 19 2014 -- Region of interest option added to optimize_center
         Mar 18 2014 -- apply_mask added

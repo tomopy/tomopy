@@ -42,9 +42,11 @@ def adaptive_segment(args):
     - `http://scikit-image.org/docs/dev/auto_examples/plot_threshold_adaptive.html \
     <http://scikit-image.org/docs/dev/auto_examples/plot_threshold_adaptive.html>`_
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
 
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     block_size, offset = inputs
     
     for m in ind:

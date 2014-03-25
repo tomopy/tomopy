@@ -21,6 +21,44 @@ def tonumpyarray(mp_arr, dshape):
 
 def distribute_jobs(data, func, args, axis,
                     num_cores=None, chunk_size=None):
+    """
+    Distribute 3-D shared-memory data in chunks into cores.
+    
+    Parameters
+    ----------
+    func : srt
+        Name of the function to be parallelized.
+    
+    args : list
+        Arguments to that function in a list.
+
+    axis : scalar
+        The dimension of data that the job distribution 
+        will be performed. Data dimensions are like
+        [projections, slices, pixels], so, if axis=0
+        projections will be distributed across processors
+        (e.g. for phase retrieval). If axis=1, slices will be 
+        distributed across processors (e.g. for ring removal), 
+        and for axis=2, pixels will be distributed across 
+        processors(but this is rare).
+        
+    num_cores : scalar, optional
+        Number of processor that will be assigned to jobs.
+        If unspecisified maximum amount of processors will be used.
+    
+    chunk_size : scalar, optional
+        Number of packet size for each processor. 
+        For example, if axis=0, and chunk_size=8, each processor
+        gets 8 projections.if axis=1, and chunk_size=8, each processor
+        gets 8 slices, etc. If unspecified, the whole data
+        will be distributed to processors in equal chunks such that
+        each processor will get a single job to do.
+        
+    Returns
+    -------
+    out : ndarray
+        3-D output data after transformation.
+    """
 
     # Arrange number of processors.
     if num_cores is None:
@@ -59,7 +97,8 @@ def distribute_jobs(data, func, args, axis,
         p.map_async(func, arg)
     p.join()
     p.close()
-    return arr.astype('float32', copy=False) # takes time to convert
+    
+    return arr.astype('float32', copy=False) # FIXME: takes time to convert
 
 
 

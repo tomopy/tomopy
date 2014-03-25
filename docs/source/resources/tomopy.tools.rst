@@ -5,7 +5,7 @@
 .. toctree::
    tomopy.tools.constants
    tomopy.tools.fftw
-   tomopy.tools.multiprocess
+   tomopy.tools.multiprocess_shared
 
 .. automodule:: tomopy.tools
    :members:

@@ -36,13 +36,13 @@ def normalize(args):
         
         >>> import tomopy
         >>> 
-        >>> # Load data
+        >>> # Load sinogram
         >>> myfile = 'demo/data.h5'
-        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, projections_start=0, projections_end=1)
+        >>> data, white, dark, theta = tomopy.xtomo_reader(myfile, slices_start=0, slices_end=1)
         >>> 
-        >>> # Save data before normalization
+        >>> # Save sinogram before normalization
         >>> output_file='tmp/before_normalization_'
-        >>> tomopy.xtomo_writer(data, output_file, axis=0)
+        >>> tomopy.xtomo_writer(data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
         >>> 
         >>> # Construct tomo object
@@ -52,14 +52,16 @@ def normalize(args):
         >>> # Perform normalization
         >>> d.normalize()
         >>> 
-        >>> # Save data after normalization
+        >>> # Save sinogram after normalization
         >>> output_file='tmp/after_normalization_'
-        >>> tomopy.xtomo_writer(d.data, output_file, axis=0)
+        >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
+    # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
-    data = mp.tonumpyarray(mp.shared_arr, dshape)
     
+    # Function inputs
+    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     data_white, data_dark, cutoff = inputs
     
     for m in ind:
