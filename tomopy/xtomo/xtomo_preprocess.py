@@ -90,7 +90,7 @@ def _correct_drift(xtomo, air_pixels=20,
     
 # --------------------------------------------------------------------
 
-def _correct_tilt(xtomo, angle=1, overwrite=True):
+def _correct_tilt(xtomo, angle=0, overwrite=True):
 
     data = correct_tilt(xtomo.data, angle)
     data_white = correct_tilt(xtomo.data_white, angle)
