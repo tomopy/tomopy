@@ -93,14 +93,19 @@ def _correct_drift(xtomo, air_pixels=20,
 def _correct_tilt(xtomo, angle=1, overwrite=True):
 
     data = correct_tilt(xtomo.data, angle)
+    data_white = correct_tilt(xtomo.data_white, angle)
+    data_dark = correct_tilt(xtomo.data_dark, angle)
                                          
     # Update log.
     xtomo.logger.debug("correct_tilt: ratio: " + str(angle))
     xtomo.logger.info("correct_tilt [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
-    else: return data
+    if overwrite: 
+    	xtomo.data = data
+    	xtomo.data_white = data
+    	xtomo.data_dark = data
+    else: return data, data_white, data_dark
 
 # --------------------------------------------------------------------
 
