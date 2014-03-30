@@ -12,7 +12,9 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available functons in the package.
 from tomopy.algorithms.preprocess.apply_padding import apply_padding
+from tomopy.algorithms.preprocess.circular_roi import circular_roi
 from tomopy.algorithms.preprocess.correct_drift import correct_drift
+from tomopy.algorithms.preprocess.correct_tilt import correct_tilt
 from tomopy.algorithms.preprocess.downsample import downsample2d, downsample3d
 from tomopy.algorithms.preprocess.median_filter import median_filter
 from tomopy.algorithms.preprocess.normalize import normalize
@@ -52,6 +54,20 @@ def _apply_padding(xtomo, num_pad=None,
 
 # --------------------------------------------------------------------
 
+def _circular_roi(xtomo, ratio=1, overwrite=True):
+
+    data = circular_roi(xtomo.data, ratio)
+                                         
+    # Update log.
+    xtomo.logger.debug("circular_roi: ratio: " + str(ratio))
+    xtomo.logger.info("circular_roi [ok]")
+    
+    # Update returned values.
+    if overwrite: xtomo.data = data
+    else: return data
+
+# --------------------------------------------------------------------
+
 def _correct_drift(xtomo, air_pixels=20, 
                    num_cores=None, chunk_size=None,
                    overwrite=True):
@@ -71,6 +87,25 @@ def _correct_drift(xtomo, air_pixels=20,
     # Update returned values.
     if overwrite: xtomo.data = data
     else: return data
+    
+# --------------------------------------------------------------------
+
+def _correct_tilt(xtomo, angle=0, overwrite=True):
+
+    data = correct_tilt(xtomo.data, angle)
+    data_white = correct_tilt(xtomo.data_white, angle)
+    data_dark = correct_tilt(xtomo.data_dark, angle)
+                                         
+    # Update log.
+    xtomo.logger.debug("correct_tilt: ratio: " + str(angle))
+    xtomo.logger.info("correct_tilt [ok]")
+    
+    # Update returned values.
+    if overwrite: 
+    	xtomo.data = data
+    	xtomo.data_white = data
+    	xtomo.data_dark = data
+    else: return data, data_white, data_dark
 
 # --------------------------------------------------------------------
 
@@ -256,7 +291,9 @@ def _zinger_removal(xtomo, zinger_level=1000, median_width=3,
     
 # Hook all these methods to TomoPy.
 setattr(XTomoDataset, 'apply_padding', _apply_padding)
+setattr(XTomoDataset, 'circular_roi', _circular_roi)
 setattr(XTomoDataset, 'correct_drift', _correct_drift)
+setattr(XTomoDataset, 'correct_tilt', _correct_tilt)
 setattr(XTomoDataset, 'downsample2d', _downsample2d)
 setattr(XTomoDataset, 'downsample3d', _downsample3d)
 setattr(XTomoDataset, 'median_filter', _median_filter)
