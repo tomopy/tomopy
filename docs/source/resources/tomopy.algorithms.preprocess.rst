@@ -6,6 +6,7 @@
    tomopy.algorithms.preprocess.apply_padding
    tomopy.algorithms.preprocess.correct_drift
    tomopy.algorithms.preprocess.correct_fov
+   tomopy.algorithms.preprocess.correct_tilt
    tomopy.algorithms.preprocess.downsample
    tomopy.algorithms.preprocess.median_filter
    tomopy.algorithms.preprocess.normalize
