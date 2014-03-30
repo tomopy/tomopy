@@ -47,11 +47,7 @@ def _adaptive_segment(xtomo, block_size=256, offset=0,
 
 # --------------------------------------------------------------------
 
-def _apply_mask(xtomo, ratio=1, overwrite=True):    
-    
-    # Normalize data first.
-    data = xtomo.data_recon - xtomo.data_recon.min()
-    data /= data.max() 
+def _apply_mask(xtomo, ratio=1, overwrite=True):
 
     # Distribute jobs.
     data_recon = apply_mask(xtomo.data_recon, ratio)
