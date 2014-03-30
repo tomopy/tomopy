@@ -14,6 +14,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 from tomopy.algorithms.preprocess.apply_padding import apply_padding
 from tomopy.algorithms.preprocess.circular_roi import circular_roi
 from tomopy.algorithms.preprocess.correct_drift import correct_drift
+from tomopy.algorithms.preprocess.correct_fov import correct_fov
 from tomopy.algorithms.preprocess.correct_tilt import correct_tilt
 from tomopy.algorithms.preprocess.downsample import downsample2d, downsample3d
 from tomopy.algorithms.preprocess.median_filter import median_filter
@@ -87,7 +88,21 @@ def _correct_drift(xtomo, air_pixels=20,
     # Update returned values.
     if overwrite: xtomo.data = data
     else: return data
+
+# --------------------------------------------------------------------
+
+def _correct_fov(xtomo, num_overlap_pixels=None):
     
+    data = correct_fov(xtomo.data, num_overlap_pixels)
+    
+    # Update log.
+    xtomo.logger.debug("correct_fov: num_overlap_pixels: " + str(num_overlap_pixels))
+    xtomo.logger.info("correct_fov [ok]")
+    
+    # Update returned values.
+    if overwrite: xtomo.data = data
+    else: return data
+
 # --------------------------------------------------------------------
 
 def _correct_tilt(xtomo, angle=0, overwrite=True):
@@ -293,6 +308,7 @@ def _zinger_removal(xtomo, zinger_level=1000, median_width=3,
 setattr(XTomoDataset, 'apply_padding', _apply_padding)
 setattr(XTomoDataset, 'circular_roi', _circular_roi)
 setattr(XTomoDataset, 'correct_drift', _correct_drift)
+setattr(XTomoDataset, 'correct_fov', _correct_fov)
 setattr(XTomoDataset, 'correct_tilt', _correct_tilt)
 setattr(XTomoDataset, 'downsample2d', _downsample2d)
 setattr(XTomoDataset, 'downsample3d', _downsample3d)
