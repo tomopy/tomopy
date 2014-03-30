@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scipy.ndimage.interpolation import rotate
+from scipy import ndimage
 
 # --------------------------------------------------------------------
 
@@ -47,6 +47,6 @@ def correct_tilt(data, angle):
     
     
     for m in range(num_projections):
-        data[m, :, :] = rotate(data[m, :, :], angle, reshape=False)
+        data[m, :, :] = ndimage.interpolation.rotate(data[m, :, :], angle, reshape=False)
         
     return data
