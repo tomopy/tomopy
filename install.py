@@ -15,6 +15,7 @@ import hashlib
 import shlex
 from distutils import version
 import subprocess
+import urllib
 
 
 VERBOSE = False
@@ -121,7 +122,7 @@ def download_expand_tarball(name, URL, SHA1):
             print(" -> file exists, skipping download")
     if download_it:
         print(" -> downloading")
-        open(ext_file, 'wb').write(urlopen(URL).read())
+        open(ext_file, 'wb').write(urllib.urlopen(URL).read())
     print(" -> expanding tarfile")
     t = tarfile.open(ext_file, 'r:gz')
     t.extractall()
