@@ -77,6 +77,10 @@ ext_recon = Extension(name='tomopy.lib.librecon',
                                      '-lboost_system',
                                      '-lboost_date_time'])
 
+
+ext_test = Extension(name='tomopy.lib.libtest',
+                    sources=['tomopy/algorithms/recon/mlem_transmission.c'])
+
 # Main setup configuration.
 setup(
       name='tomopy',
@@ -85,7 +89,8 @@ setup(
       packages = find_packages(),
       include_package_data = True,
 
-      ext_modules=[ext_fftw, ext_recon, ext_prep],
+      #ext_modules=[ext_fftw, ext_recon, ext_prep, ext_test],
+      ext_modules=[ext_test],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',

@@ -28,7 +28,7 @@ from tomopy.tools.multiprocess_shared import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def _apply_padding(xtomo, num_pad=None,
+def _apply_padding(xtomo, num_pad=None, pad_val=0.,
                    num_cores=None, chunk_size=None,
                    overwrite=True):
 
@@ -43,15 +43,21 @@ def _apply_padding(xtomo, num_pad=None,
     if not isinstance(num_pad, np.int32):
         num_pad = np.array(num_pad, dtype='int32')
 
-    data = apply_padding(xtomo.data, num_pad)
+    data = apply_padding(xtomo.data, num_pad, pad_val)
+    data_white = apply_padding(xtomo.data_white, num_pad, pad_val)
+    data_dark = apply_padding(xtomo.data_dark, num_pad, pad_val)
     
     # Update log.
     xtomo.logger.debug("apply_padding: num_pad: " + str(num_pad))
     xtomo.logger.info("apply_padding [ok]")
 
     # Update returned values.
-    if overwrite: xtomo.data = data
-    else: return data
+    if overwrite:
+        xtomo.data = data
+        xtomo.data_white = data_white
+        xtomo.data_dark = data_dark
+    else: return data, data_white, data_dark
+
 
 # --------------------------------------------------------------------
 
