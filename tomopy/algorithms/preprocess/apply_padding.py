@@ -12,9 +12,9 @@ libprep = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def apply_padding(data, num_pad):
+def apply_padding(data, num_pad, pad_val):
     """
-    Applies zero padding to each projection data.
+    Applies padding to each projection data.
     
     Parameters
     ----------
@@ -25,6 +25,9 @@ def apply_padding(data, num_pad):
     num_pad : scalar, int32
         New dimension of the projections  
         after padding.
+        
+    pad_val : scalar, float32
+        Pad value.
          
     Returns
     -------
@@ -68,7 +71,7 @@ def apply_padding(data, num_pad):
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     
-    padded_data = np.ones((num_projections, num_slices, num_pad), 
+    padded_data = pad_val * np.ones((num_projections, num_slices, num_pad), 
                            dtype='float32')
     
     libprep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
