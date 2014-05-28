@@ -96,6 +96,7 @@ def xtomo_reader(file_name,
     data = hdfdata[projections_start:projections_end:projections_step,
                    slices_start:slices_end:slices_step,
                    pixels_start:pixels_end:pixels_step]
+    data = np.nan_to_num(data)
     
     try:
         # Now read white fields.
@@ -105,6 +106,7 @@ def xtomo_reader(file_name,
         data_white = hdfdata[white_start:white_end,
                              slices_start:slices_end:slices_step,
                              pixels_start:pixels_end:pixels_step]
+        data_white = np.nan_to_num(data_white)
     except KeyError:
         data_white = None
         
@@ -116,6 +118,7 @@ def xtomo_reader(file_name,
         data_dark = hdfdata[dark_start:dark_end,
                             slices_start:slices_end:slices_step,
                             pixels_start:pixels_end:pixels_step]
+        data_dark = np.nan_to_num(data_dark)
     except KeyError:
         data_dark = None
     
@@ -123,6 +126,7 @@ def xtomo_reader(file_name,
         # Read projection angles.
         hdfdata = f["/exchange/theta"]
         theta = hdfdata[projections_start:projections_end:projections_step]
+        theta = np.nan_to_num(theta)
     except KeyError:
         theta = None
     
