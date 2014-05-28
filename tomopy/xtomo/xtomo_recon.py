@@ -14,6 +14,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 
 # Import available reconstruction functons in the package.
 from tomopy.algorithms.recon.art import art
+from tomopy.algorithms.recon.sirt import sirt
 from tomopy.algorithms.recon.gridrec import Gridrec
 from tomopy.algorithms.recon.mlem_emission import mlem_emission
 from tomopy.algorithms.recon.mlem_transmission import mlem_transmission
@@ -201,6 +202,65 @@ def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     else: return data_recon
     
 # --------------------------------------------------------------------
+
+def _sirt(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+    
+    # Dimensions:
+    num_pixels = xtomo.data.shape[2]
+        
+    # This works with radians.
+    if np.max(xtomo.theta) > 90: # then theta is obviously in radians.
+        xtomo.theta *= np.pi/180
+
+    # Pad data first.
+    data, white, dark = xtomo.apply_padding(overwrite=False, pad_val=1)
+    #data = 1-data;
+    data = -np.log(data);
+    
+    # Adjust center according to padding.
+    if not hasattr(xtomo, 'center'):
+        xtomo.center = xtomo.data.shape[2]/2
+    center = xtomo.center + (data.shape[2]-num_pixels)/2.
+
+    # Set default parameters.
+    if num_grid is None or num_grid > num_pixels:
+        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+    if init_matrix is None:   
+        init_matrix = np.zeros((data.shape[1], num_grid, num_grid), dtype='float32')
+        
+    # Check inputs.
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32', copy=False)
+
+    if not isinstance(xtomo.theta, np.float32):
+        theta = np.array(xtomo.theta, dtype='float32')
+
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+        
+    if not isinstance(iters, np.int32):
+        iters = np.array(iters, dtype='int32')
+
+    if not isinstance(num_grid, np.int32):
+        num_grid = np.array(num_grid, dtype='int32')
+        
+    if not isinstance(init_matrix, np.float32):
+        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
+
+    # Initialize and perform reconstruction.
+    data_recon = sirt(data, theta, center, num_grid, iters, init_matrix)
+    
+    # Update log.
+    xtomo.logger.debug("sirt: iters: " + str(iters))
+    xtomo.logger.debug("sirt: center: " + str(center))
+    xtomo.logger.debug("sirt: num_grid: " + str(num_grid))
+    xtomo.logger.info("sirt [ok]")
+    
+    # Update returned values.
+    if overwrite: xtomo.data_recon = data_recon
+    else: return data_recon
+    
+# --------------------------------------------------------------------
     
 def _mlem_emission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
@@ -347,6 +407,7 @@ setattr(XTomoDataset, 'optimize_center', _optimize_center)
 setattr(XTomoDataset, 'upsample2d', _upsample2d)
 setattr(XTomoDataset, 'upsample3d', _upsample3d)
 setattr(XTomoDataset, 'art', _art)
+setattr(XTomoDataset, 'sirt', _sirt)
 setattr(XTomoDataset, 'gridrec', _gridrec)
 setattr(XTomoDataset, 'mlem_emission', _mlem_emission)
 setattr(XTomoDataset, 'mlem_transmission', _mlem_transmission)
