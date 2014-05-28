@@ -15,7 +15,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 # Import available reconstruction functons in the package.
 from tomopy.algorithms.recon.art import art
 from tomopy.algorithms.recon.gridrec import Gridrec
-from tomopy.algorithms.recon.mlem import mlem
+from tomopy.algorithms.recon.mlem_emission import mlem_emission
 from tomopy.algorithms.recon.mlem_transmission import mlem_transmission
 
 # Import helper functons in the package.
@@ -202,7 +202,7 @@ def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
 # --------------------------------------------------------------------
     
-def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _mlem_emission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
     # Dimensions:
     num_pixels = xtomo.data.shape[2]
@@ -247,13 +247,13 @@ def _mlem(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
     
     # Initialize and perform reconstruction.
-    data_recon = mlem(data, theta, center, num_grid, iters, init_matrix)
+    data_recon = mlem_emission(data, theta, center, num_grid, iters, init_matrix)
 
     # Update log.
-    xtomo.logger.debug("mlem: iters: " + str(iters))
-    xtomo.logger.debug("mlem: center: " + str(center))
-    xtomo.logger.debug("mlem: num_grid: " + str(num_grid))
-    xtomo.logger.info("mlem [ok]")
+    xtomo.logger.debug("mlem_emission: iters: " + str(iters))
+    xtomo.logger.debug("mlem_emission: center: " + str(center))
+    xtomo.logger.debug("mlem_emission: num_grid: " + str(num_grid))
+    xtomo.logger.info("mlem_emission [ok]")
     
     # Update returned values.
     if overwrite: xtomo.data_recon = data_recon
@@ -348,6 +348,6 @@ setattr(XTomoDataset, 'upsample2d', _upsample2d)
 setattr(XTomoDataset, 'upsample3d', _upsample3d)
 setattr(XTomoDataset, 'art', _art)
 setattr(XTomoDataset, 'gridrec', _gridrec)
-setattr(XTomoDataset, 'mlem', _mlem)
+setattr(XTomoDataset, 'mlem_emission', _mlem_emission)
 setattr(XTomoDataset, 'mlem_transmission', _mlem_transmission)
 
