@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-void mlem(float* data, float* theta, float center, 
+void mlem_emission(float* data, float* theta, float center, 
           int num_projections, int num_slices, int num_pixels, 
           int num_grid, int iters, float* recon) {
               
@@ -53,7 +53,7 @@ void mlem(float* data, float* theta, float center,
     
     for (t = 0; t < iters; t++) {
         
-        printf ("mlem iteration: %i \n", t);
+        printf ("mlem_emission iteration: %i \n", t);
         
         suma = (float *)calloc((num_grid*num_grid), sizeof(float));
         sumay = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));

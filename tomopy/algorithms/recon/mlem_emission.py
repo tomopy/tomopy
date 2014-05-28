@@ -12,7 +12,7 @@ librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
-def mlem(data, theta, center, num_grid, iters, init_matrix):
+def mlem_emission(data, theta, center, num_grid, iters, init_matrix):
     """
     Applies Maximum-Likelihood Expectation-Maximization (MLEM)
     method to obtain reconstructions.
@@ -61,8 +61,8 @@ def mlem(data, theta, center, num_grid, iters, init_matrix):
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    librecon.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
-    librecon.mlem(data.ctypes.data_as(c_float_p),
+    librecon.mlem_emission.restype = ctypes.POINTER(ctypes.c_void_p)
+    librecon.mlem_emission(data.ctypes.data_as(c_float_p),
                   theta.ctypes.data_as(c_float_p),
                   ctypes.c_float(center),
                   ctypes.c_int(num_projections),

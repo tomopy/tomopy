@@ -58,122 +58,102 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
         sum_num = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
         sum_denom = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
 
-        q = 0;
-        for (ext1 = 0; ext1 < 9; ext1++) {
+        for (q = 0; q < num_projections; q++) {
+            iproj = q * (num_slices * num_pixels);
             
+            sinq = sin(theta[q]);
+            cosq =  cos(theta[q]);
             
-            for (ext2 = 0; ext2 < 20; ext2++) {
-                printf ("mlem_transmission iteration: %i \n", q);
-                iproj = q * (num_slices * num_pixels);
+            if ((theta[q] >= 0 && theta[q] < PI/2) || 
+                    (theta[q] >= PI && theta[q] < 3*PI/2)) {
+                quadrant = true;
+            } else {
+                quadrant = false;
+            }
+
+            for (m = 0; m < num_pixels; m++) {
                 
-                sinq = sin(theta[q]);
-                cosq =  cos(theta[q]);
+                xi = 1e6;
+                yi = -(num_pixels-1)/2. + m + mov;
+
+                srcx = xi * cosq - yi * sinq;
+                srcy = xi * sinq + yi * cosq;
+                detx = -xi * cosq - yi * sinq;
+                dety = -xi * sinq + yi * cosq;
                 
-                if ((theta[q] >= 0 && theta[q] < PI/2) || 
-                        (theta[q] >= PI && theta[q] < 3*PI/2)) {
-                    quadrant = true;
-                } else {
-                    quadrant = false;
+                slope = (srcy - dety) / (srcx - detx);
+                islope = 1 / slope;
+                
+                for (n = 0; n <= num_grid; n++) {
+                    coordx[n] = islope * (gridy[n] - srcy) + srcx;
+                    coordy[n] = slope * (gridx[n] - srcx) + srcy;
                 }
-    
-                for (m = 0; m < num_pixels; m++) {
-                    
-                    xi = 1e6;
-                    yi = -(num_pixels-1)/2. + m + mov;
-    
-                    srcx = xi * cosq - yi * sinq;
-                    srcy = xi * sinq + yi * cosq;
-                    detx = -xi * cosq - yi * sinq;
-                    dety = -xi * sinq + yi * cosq;
-                    
-                    slope = (srcy - dety) / (srcx - detx);
-                    islope = 1 / slope;
-                    
-                    for (n = 0; n <= num_grid; n++) {
-                        coordx[n] = islope * (gridy[n] - srcy) + srcx;
-                        coordy[n] = slope * (gridx[n] - srcx) + srcy;
-                    }
-                    
-                    alen = 0;
-                    blen = 0;
-                    for (n = 0; n <= num_grid; n++) {
-                        if (coordx[n] > gridx[0]) {
-                            if (coordx[n] < gridx[num_grid]) {
-                                ax[alen] = coordx[n];
-                                ay[alen] = gridy[n];
-                                alen++;
-                            }
-                        }
-                        if (coordy[n] > gridy[0]) {
-                            if (coordy[n] < gridy[num_grid]) {
-                                bx[blen] = gridx[n];
-                                by[blen] = coordy[n];
-                                blen++;
-                            }
+                
+                alen = 0;
+                blen = 0;
+                for (n = 0; n <= num_grid; n++) {
+                    if (coordx[n] > gridx[0]) {
+                        if (coordx[n] < gridx[num_grid]) {
+                            ax[alen] = coordx[n];
+                            ay[alen] = gridy[n];
+                            alen++;
                         }
                     }
-                    len = alen+blen;
-                    
-                    
-                    i = 0;
-                    j = 0;
-                    k = 0;
-                    if (quadrant) {
-                        
-                        while (i < alen && j < blen)
-                        {
-                            if (ax[i] < bx[j]) {
-                                coorx[k] = ax[i];
-                                coory[k] = ay[i];
-                                i++;
-                                k++;
-                            } else {
-                                coorx[k] = bx[j];
-                                coory[k] = by[j];
-                                j++;
-                                k++;
-                            }
-                            
+                    if (coordy[n] > gridy[0]) {
+                        if (coordy[n] < gridy[num_grid]) {
+                            bx[blen] = gridx[n];
+                            by[blen] = coordy[n];
+                            blen++;
                         }
-                        
-                        while (i < alen) {
+                    }
+                }
+                len = alen+blen;
+                
+                
+                i = 0;
+                j = 0;
+                k = 0;
+                if (quadrant) {
+                    
+                    while (i < alen && j < blen)
+                    {
+                        if (ax[i] < bx[j]) {
                             coorx[k] = ax[i];
                             coory[k] = ay[i];
                             i++;
                             k++;
-                        }
-                        
-                        while (j < blen) {
+                        } else {
                             coorx[k] = bx[j];
                             coory[k] = by[j];
                             j++;
                             k++;
                         }
                         
-                    } else {
-                        while (i < alen && j < blen)
-                        {
-                            if (ax[alen-1-i] < bx[j]) {
-                                coorx[k] = ax[alen-1-i];
-                                coory[k] = ay[alen-1-i];
-                                i++;
-                                k++;
-                            } else {
-                                coorx[k] = bx[j];
-                                coory[k] = by[j];
-                                j++;
-                                k++;
-                            }
-                        }
-                        
-                        while (i < alen) {
+                    }
+                    
+                    while (i < alen) {
+                        coorx[k] = ax[i];
+                        coory[k] = ay[i];
+                        i++;
+                        k++;
+                    }
+                    
+                    while (j < blen) {
+                        coorx[k] = bx[j];
+                        coory[k] = by[j];
+                        j++;
+                        k++;
+                    }
+                    
+                } else {
+                    while (i < alen && j < blen)
+                    {
+                        if (ax[alen-1-i] < bx[j]) {
                             coorx[k] = ax[alen-1-i];
                             coory[k] = ay[alen-1-i];
                             i++;
                             k++;
-                        }
-                        
-                        while (j < blen) {
+                        } else {
                             coorx[k] = bx[j];
                             coory[k] = by[j];
                             j++;
@@ -181,55 +161,63 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
                         }
                     }
                     
-                    
-                    for (n = 0; n < len-1; n++) {
-                        diffx = coorx[n+1] - coorx[n];
-                        diffy = coory[n+1] - coory[n];
-                        leng[n] = sqrt(diffx * diffx + diffy * diffy);
-                        
-                        midx = (coorx[n+1] + coorx[n])/2;
-                        midy = (coory[n+1] + coory[n])/2;
-                        
-                        x1 = midx + num_grid/2.;
-                        x2 = midy + num_grid/2.;
-                        
-                        i1 = (int)(midx + num_grid/2.);
-                        i2 = (int)(midy + num_grid/2.);
-    
-                        indx[n] = i1 - (i1 > x1);
-                        indy[n] = i2 - (i2 > x2);
-                        
-                        //indx[n] = floor(midx + num_grid/2.);
-                        //indy[n] = floor(midy + num_grid/2.);
+                    while (i < alen) {
+                        coorx[k] = ax[alen-1-i];
+                        coory[k] = ay[alen-1-i];
+                        i++;
+                        k++;
                     }
                     
-                    
-                    for (n = 0; n < len-1; n++) {
-                        indi[n] = indx[n] + (indy[n] * num_grid);
-                        //suma[indi[n]] += leng[n];
-                    }
-                    
-                    for (k = 0; k < num_slices; k++) {
-                        i = k * num_grid * num_grid;
-                        io = iproj + m + (k * num_pixels);
-                        
-                        simdata = 0;
-                        for (n = 0; n < len-1; n++) {
-                            simdata += recon[indi[n]+i] * leng[n] * 1e-4;
-                            //
-                        }
-                        //printf ("simdata %f: \n", recon[indi[0]]);
-                        simintensity = white[m + (k * num_pixels)] * exp(-simdata);
-                        //printf ("simintensity %i, %i: %f - %f \n", m, k, simintensity, data[io]);
-                        
-                        for (n = 0; n < len-1; n++) {
-                            sum_num[indi[n]+i] += (simintensity-data[io])*leng[n];
-                            sum_denom[indi[n]+i] += (simdata*simintensity*leng[n]);
-                        }
+                    while (j < blen) {
+                        coorx[k] = bx[j];
+                        coory[k] = by[j];
+                        j++;
+                        k++;
                     }
                 }
-            
-                q++;
+                
+                
+                for (n = 0; n < len-1; n++) {
+                    diffx = coorx[n+1] - coorx[n];
+                    diffy = coory[n+1] - coory[n];
+                    leng[n] = sqrt(diffx * diffx + diffy * diffy);
+                    
+                    midx = (coorx[n+1] + coorx[n])/2;
+                    midy = (coory[n+1] + coory[n])/2;
+                    
+                    x1 = midx + num_grid/2.;
+                    x2 = midy + num_grid/2.;
+                    
+                    i1 = (int)(midx + num_grid/2.);
+                    i2 = (int)(midy + num_grid/2.);
+
+                    indx[n] = i1 - (i1 > x1);
+                    indy[n] = i2 - (i2 > x2);
+                    
+                    //indx[n] = floor(midx + num_grid/2.);
+                    //indy[n] = floor(midy + num_grid/2.);
+                }
+                
+                
+                for (n = 0; n < len-1; n++) {
+                    indi[n] = indx[n] + (indy[n] * num_grid);
+                }
+                
+                for (k = 0; k < num_slices; k++) {
+                    i = k * num_grid * num_grid;
+                    io = iproj + m + (k * num_pixels);
+                    
+                    simdata = 0;
+                    for (n = 0; n < len-1; n++) {
+                        simdata += recon[indi[n]+i] * leng[n] * 1e-4;
+                    }
+                    simintensity = white[m + (k * num_pixels)] * exp(-simdata);
+                    
+                    for (n = 0; n < len-1; n++) {
+                        sum_num[indi[n]+i] += (simintensity-data[io])*leng[n];
+                        sum_denom[indi[n]+i] += (simdata*simintensity*leng[n]);
+                    }
+                }
             }
             
             for (n = 0; n < num_slices*num_grid*num_grid; n++) {
