@@ -58,7 +58,14 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
         sum_num = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
         sum_denom = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
 
+        //q = 0;
+        //for (ext1 = 0; ext1 < 9; ext1++) {
+            
+            
         for (q = 0; q < num_projections; q++) {
+            
+            //printf ("mlem_transmission iteration: %i \n", q);
+            
             iproj = q * (num_slices * num_pixels);
             
             sinq = sin(theta[q]);
@@ -201,6 +208,7 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
                 
                 for (n = 0; n < len-1; n++) {
                     indi[n] = indx[n] + (indy[n] * num_grid);
+                    //suma[indi[n]] += leng[n];
                 }
                 
                 for (k = 0; k < num_slices; k++) {
@@ -210,8 +218,11 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
                     simdata = 0;
                     for (n = 0; n < len-1; n++) {
                         simdata += recon[indi[n]+i] * leng[n] * 1e-4;
+                        //
                     }
+                    //printf ("simdata %f: \n", recon[indi[0]]);
                     simintensity = white[m + (k * num_pixels)] * exp(-simdata);
+                    //printf ("simintensity %i, %i: %f - %f \n", m, k, simintensity, data[io]);
                     
                     for (n = 0; n < len-1; n++) {
                         sum_num[indi[n]+i] += (simintensity-data[io])*leng[n];
@@ -219,12 +230,15 @@ void mlem_transmission(float* data, float* white, float* theta, float center,
                     }
                 }
             }
-            
-            for (n = 0; n < num_slices*num_grid*num_grid; n++) {
-                recon[n] = recon[n]+ recon[n]*(sum_num[n] / sum_denom[n]);
-            }
-            
+        
+            //q++;
         }
+        
+        for (n = 0; n < num_slices*num_grid*num_grid; n++) {
+            recon[n] = recon[n]+ recon[n]*(sum_num[n] / sum_denom[n]);
+        }
+            
+        //}
         free(sum_num);
         free(sum_denom);
         
