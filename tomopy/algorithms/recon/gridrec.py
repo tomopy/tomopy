@@ -192,7 +192,7 @@ class Gridrec():
         if paddedSinogramWidth is None:
             paddedSinogramWidth = 0
             powerN = 1
-            while (paddedSinogramWidth < data.shape[2]):
+            while (paddedSinogramWidth < 2*data.shape[2]):
                 paddedSinogramWidth = 2 ** powerN
                 powerN += 1
         self.params.paddedSinogramWidth = paddedSinogramWidth
