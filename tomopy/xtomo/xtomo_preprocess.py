@@ -49,6 +49,7 @@ def _apply_padding(xtomo, num_pad=None, pad_val=0.,
     
     # Update log.
     xtomo.logger.debug("apply_padding: num_pad: " + str(num_pad))
+    xtomo.logger.debug("apply_padding: pad_val: " + str(pad_val))
     xtomo.logger.info("apply_padding [ok]")
 
     # Update returned values.
