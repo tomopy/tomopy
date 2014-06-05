@@ -17,6 +17,7 @@ from tomopy.algorithms.preprocess.correct_drift import correct_drift
 from tomopy.algorithms.preprocess.correct_fov import correct_fov
 from tomopy.algorithms.preprocess.correct_tilt import correct_tilt
 from tomopy.algorithms.preprocess.downsample import downsample2d, downsample3d
+from tomopy.algorithms.preprocess.focus_region import focus_region
 from tomopy.algorithms.preprocess.median_filter import median_filter
 from tomopy.algorithms.preprocess.normalize import normalize
 from tomopy.algorithms.preprocess.phase_retrieval import phase_retrieval
@@ -98,7 +99,7 @@ def _correct_drift(xtomo, air_pixels=20,
 
 # --------------------------------------------------------------------
 
-def _correct_fov(xtomo, num_overlap_pixels=None):
+def _correct_fov(xtomo, num_overlap_pixels=None, overwrite=True):
     
     data = correct_fov(xtomo.data, num_overlap_pixels)
     
@@ -172,6 +173,42 @@ def _downsample3d(xtomo, level=1,
     # Update returned values.
     if overwrite: xtomo.data = data
     else: return data	
+	
+# --------------------------------------------------------------------
+
+def _focus_region(xtomo, xcoord, ycoord, diameter, 
+                  padded=False, correction=True,
+                  overwrite=True):
+         
+    # Check input.         
+    if not isinstance(xcoord, np.float):
+        xcoord = np.array(xcoord, dtype='float')
+    if not isinstance(ycoord, np.float):
+        ycoord = np.array(ycoord, dtype='float')
+    if not isinstance(diameter, np.float):
+        diameter = np.array(diameter, dtype='float')
+
+    data = focus_region(xtomo.data, xcoord, ycoord, diameter, 
+                        xtomo.center, padded, correction)
+
+    # Adjust center
+    if padded is False: center = data.shape[2]/2.
+    else: center = xtomo.center
+    
+    # Update log.
+    xtomo.logger.debug("focus_region: xcoord: " + str(xcoord))
+    xtomo.logger.debug("focus_region: ycoord: " + str(ycoord))
+    xtomo.logger.debug("focus_region: diameter: " + str(diameter))
+    xtomo.logger.debug("focus_region: center: " + str(xtomo.center))
+    xtomo.logger.debug("focus_region: padded: " + str(padded))
+    xtomo.logger.debug("focus_region: correction: " + str(correction))
+    xtomo.logger.info("focus_region [ok]")
+    
+    # Update returned values.
+    if overwrite: 
+        xtomo.data = data
+        xtomo.center = center
+    else: return data, center
 
 # --------------------------------------------------------------------
 
@@ -319,6 +356,7 @@ setattr(XTomoDataset, 'correct_fov', _correct_fov)
 setattr(XTomoDataset, 'correct_tilt', _correct_tilt)
 setattr(XTomoDataset, 'downsample2d', _downsample2d)
 setattr(XTomoDataset, 'downsample3d', _downsample3d)
+setattr(XTomoDataset, 'focus_region', _focus_region)
 setattr(XTomoDataset, 'median_filter', _median_filter)
 setattr(XTomoDataset, 'normalize', _normalize)
 setattr(XTomoDataset, 'phase_retrieval', _phase_retrieval)
