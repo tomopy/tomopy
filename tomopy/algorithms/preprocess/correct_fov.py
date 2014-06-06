@@ -28,16 +28,24 @@ def correct_fov(data, num_overlap_pixels=None):
     if num_overlap_pixels is None:
         num_overlap_pixels = _optimize_num_overlap_pixels(data)
     
+    #num_projection, num_slices, num_pixels = data.shape
+    #if num_projection % 2 != 0: # if odd
+    #    img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]
+    #    img_second_half = data[num_projection/2:num_projection - 1]
+    #else:
+    #    img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]
+    #    img_second_half = data[num_projection/2:num_projection]
+
     num_projection, num_slices, num_pixels = data.shape
     if num_projection % 2 != 0: # if odd
-        img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]
+        img_first_half = data[1:num_projection/2 + 1, :, 0:num_pixels-num_overlap_pixels]
         img_second_half = data[num_projection/2:num_projection - 1]
     else:
-        img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]
+        img_first_half = data[1:num_projection/2 + 1, :, 0:num_pixels-num_overlap_pixels]
         img_second_half = data[num_projection/2:num_projection]
     
     ind = range(0, num_pixels)[::-1]
-    data = np.c_[img_second_half[:, :, ind], img_first_half]
+    data = np.c_[img_first_half, img_second_half[:, :, ind]]
     return data
 
 # --------------------------------------------------------------------
