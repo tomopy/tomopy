@@ -36,6 +36,7 @@ def focus_region(data, xcoord, ycoord, diameter, center, padded=False, correctio
         Modified ROI data.
     """
     num_projections = data.shape[0]
+    num_pixels = data.shape[2]
     
     rad = np.sqrt(xcoord*xcoord+ycoord*ycoord)
     alpha = np.arctan2(xcoord, ycoord)
@@ -48,13 +49,23 @@ def focus_region(data, xcoord, ycoord, diameter, center, padded=False, correctio
 
     delphi = np.pi/num_projections
     for m in range(num_projections):
-        ind1 = np.cos(alpha-m*delphi)*(l2-l1)+l1
-        ind2 = np.cos(alpha-m*delphi)*(l2-l1)+l1+diameter
+        ind1 = np.ceil(np.cos(alpha-m*delphi)*(l2-l1)+l1)
+        ind2 = np.floor(np.cos(alpha-m*delphi)*(l2-l1)+l1+diameter)
+        
+        if ind1 < 0:
+            ind1 = 0
+        if ind2 < 0:
+            ind2 = 0
+        if ind1 > num_pixels:
+            ind1 = num_pixels
+        if ind2 > num_pixels:
+            ind2 = num_pixels
+            
         if padded: 
             if correction: roidata[m, :, ind1:ind2] = correct_drift(np.expand_dims(data[m, :, ind1:ind2], axis=1), air_pixels=5)
             else: roidata[m, :, ind1:ind2] = data[m, :, ind1:ind2]
         else: 
-            if correction: roidata[m, :, :] = correct_drift(np.expand_dims(data[m, :, ind1:ind2], axis=1), air_pixels=5)
-            else: roidata[m, :, :] = data[m, :, ind1:ind2]
+            if correction: roidata[m, :,0:(ind2-ind1)] = correct_drift(np.expand_dims(data[m, :, ind1:ind2], axis=1), air_pixels=5)
+            else: roidata[m, :, 0:(ind2-ind1)] = data[m, :, ind1:ind2]
       
     return roidata
