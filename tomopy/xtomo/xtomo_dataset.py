@@ -4,7 +4,7 @@ import logging
 
 
 class XTomoDataset:
-    def __init__(xtomo, log='INFO', color_log=True):
+    def __init__(self, log='INFO', color_log=True):
         """
         Constructor.
         
@@ -24,23 +24,18 @@ class XTomoDataset:
             from tomopy.tools import colorer
 
         # Set the log level.
-        xtomo.logger = None
-        xtomo._log_level = str(log).upper()
-        xtomo._init_logging()
+        self.logger = None
+        self._log_level = str(log).upper()
+        self._init_logging()
 
 
-    def dataset(xtomo, data, data_white=None, 
+    def dataset(self, data, data_white=None, 
                 data_dark=None, theta=None):
         """
         Import X-ray absorption tomography data object.
         
         Parameters
         ----------
-        xtomo : tomopy data object
-            This is the core X-ray absorption tomography 
-            data object that all low-level 
-            attributes and methods are bound to.
-            
         data : ndarray
             3-D X-ray absorption tomography raw data. 
             Size of the dimensions should be: 
@@ -58,75 +53,75 @@ class XTomoDataset:
         """
  
         # Set the numpy Data-Exchange structure.
-        xtomo.data = data
-        xtomo.data_white = data_white
-        xtomo.data_dark = data_dark
-        xtomo.theta = np.squeeze(theta)
+        self.data = data
+        self.data_white = data_white
+        self.data_dark = data_dark
+        self.theta = np.squeeze(theta)
         
         # Dimensions:
-        num_projs = xtomo.data.shape[0]
-        num_slices = xtomo.data.shape[1]
-        num_pixels = xtomo.data.shape[2]
+        num_projs = self.data.shape[0]
+        num_slices = self.data.shape[1]
+        num_pixels = self.data.shape[2]
         
         # Assign data_white
         if data_white is None:
-            xtomo.data_white = np.zeros((1, num_slices, num_pixels))
-            xtomo.data_white += np.mean(xtomo.data[:])
-            xtomo.logger.warning('auto-normalization [ok]')
+            self.data_white = np.zeros((1, num_slices, num_pixels))
+            self.data_white += np.mean(self.data[:])
+            self.logger.warning('auto-normalization [ok]')
             
         # Assign data_dark
         if data_dark is None:
-            xtomo.data_dark = np.zeros((1, num_slices, num_pixels))
-            xtomo.logger.warning('dark-field assumed as zeros [ok]')
+            self.data_dark = np.zeros((1, num_slices, num_pixels))
+            self.logger.warning('dark-field assumed as zeros [ok]')
                 
         # Assign theta
         if theta is None:
-            xtomo.theta = np.linspace(0, num_projs, num_projs)*180/(num_projs+1)
-            xtomo.logger.warning("assumed 180-degree rotation [ok]")
+            self.theta = np.linspace(0, num_projs, num_projs)*180/(num_projs+1)
+            self.logger.warning("assumed 180-degree rotation [ok]")
             
         # Impose data types.
-        if not isinstance(xtomo.data, np.float32):
-            xtomo.data = np.array(xtomo.data, dtype='float32', copy=False)
-        if not isinstance(xtomo.data_white, np.float32):
-            xtomo.data_white = np.array(xtomo.data_white, dtype='float32')
-        if not isinstance(xtomo.data_dark, np.float32):
-            xtomo.data_dark = np.array(xtomo.data_dark, dtype='float32')
-        if not isinstance(xtomo.theta, np.float32):
-            xtomo.theta = np.array(xtomo.theta, dtype='float32')
+        if not isinstance(self.data, np.float32):
+            self.data = np.array(self.data, dtype='float32', copy=False)
+        if not isinstance(self.data_white, np.float32):
+            self.data_white = np.array(self.data_white, dtype='float32')
+        if not isinstance(self.data_dark, np.float32):
+            self.data_dark = np.array(self.data_dark, dtype='float32')
+        if not isinstance(self.theta, np.float32):
+            self.theta = np.array(self.theta, dtype='float32')
             
         # Update log.
-        xtomo.logger.debug('data shape: [%i, %i, %i]', 
+        self.logger.debug('data shape: [%i, %i, %i]', 
                            num_projs, num_slices, num_pixels)
 
 
-    def _init_logging(xtomo):
+    def _init_logging(self):
         """
         Setup and start command line logging.
         """
         # Top-level log setup.
-        xtomo.logger = logging.getLogger("tomopy") 
-        if xtomo._log_level == 'DEBUG':
-            xtomo.logger.setLevel(logging.DEBUG)
-        elif xtomo._log_level == 'INFO':
-            xtomo.logger.setLevel(logging.INFO) 
-        elif xtomo._log_level == 'WARN':
-            xtomo.logger.setLevel(logging.WARN)
-        elif xtomo._log_level == 'WARNING':
-            xtomo.logger.setLevel(logging.WARNING)
-        elif xtomo._log_level == 'ERROR':
-            xtomo.logger.setLevel(logging.ERROR)
+        self.logger = logging.getLogger("tomopy") 
+        if self._log_level == 'DEBUG':
+            self.logger.setLevel(logging.DEBUG)
+        elif self._log_level == 'INFO':
+            self.logger.setLevel(logging.INFO) 
+        elif self._log_level == 'WARN':
+            self.logger.setLevel(logging.WARN)
+        elif self._log_level == 'WARNING':
+            self.logger.setLevel(logging.WARNING)
+        elif self._log_level == 'ERROR':
+            self.logger.setLevel(logging.ERROR)
         
         # Terminal stream log.
         ch = logging.StreamHandler()
-        if xtomo._log_level == 'DEBUG':
+        if self._log_level == 'DEBUG':
             ch.setLevel(logging.DEBUG)
-        elif xtomo._log_level == 'INFO':
+        elif self._log_level == 'INFO':
             ch.setLevel(logging.INFO) 
-        elif xtomo._log_level == 'WARN':
+        elif self._log_level == 'WARN':
             ch.setLevel(logging.WARN)
-        elif xtomo._log_level == 'WARNING':
+        elif self._log_level == 'WARNING':
             ch.setLevel(logging.WARNING)
-        elif xtomo._log_level == 'ERROR':
+        elif self._log_level == 'ERROR':
             ch.setLevel(logging.ERROR)
         
         # Show date and time.
@@ -134,5 +129,5 @@ class XTomoDataset:
         ch.setFormatter(formatter)
             
         # Update logger.
-        if not len(xtomo.logger.handlers): # For fist time create handlers.
-            xtomo.logger.addHandler(ch)
+        if not len(self.logger.handlers): # For fist time create handlers.
+            self.logger.addHandler(ch)
