@@ -64,9 +64,13 @@ def normalize(args):
     data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
     data_white, data_dark, cutoff = inputs
     
+    # Avoid zero division in normalization
+    denominator = data_white-data_dark
+    if denominator == 0:
+        denominator = 1
+    
     for m in ind:
-        data[m, :, :] = np.divide(data[m, :, :]-data_dark, 
-                                  data_white-data_dark)
+        data[m, :, :] = np.divide(data[m, :, :]-data_dark, denominator)
 
     if cutoff is not None:
         data[data > cutoff] = cutoff
