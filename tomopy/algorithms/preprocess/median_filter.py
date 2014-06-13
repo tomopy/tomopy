@@ -16,6 +16,10 @@ def median_filter(args):
         
     size : scalar
         The size of the filter. 
+        
+    axis : scalar
+        Define the axis of data for filtering.
+        0: projections, 1:sinograms, 2:pixels
 
     Returns
     -------
@@ -54,7 +58,19 @@ def median_filter(args):
     
     # Function inputs
     data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
-    size = inputs
+    size, axis = inputs
     
-    for m in ind:
-        data[:, m, :] = filters.median_filter(data[:, m, :], (1, size))
+    if axis == 0:
+        for m in ind:
+            data[m, :, :] = filters.median_filter(data[m, :, :], (size, size))
+    elif axis == 1:
+        for m in ind:
+            data[:, m, :] = filters.median_filter(data[:, m, :], (size, size))
+    elif axis == 2:
+        for m in ind:
+            data[:, :, m] = filters.median_filter(data[:, :, m], (size, size))
+
+
+
+
+

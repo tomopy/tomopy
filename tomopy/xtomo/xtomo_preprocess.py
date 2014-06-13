@@ -212,7 +212,7 @@ def _focus_region(self, xcoord, ycoord, diameter,
 
 # --------------------------------------------------------------------
 
-def _median_filter(self, size=5, 
+def _median_filter(self, size=5, axis=1,
                    num_cores=None, chunk_size=None,
                    overwrite=True):
                   
@@ -222,13 +222,14 @@ def _median_filter(self, size=5,
         
     # Distribute jobs.
     _func = median_filter
-    _args = (size)
-    _axis = 1 # Slice axis
+    _args = (size, axis)
+    _axis = axis
     data = distribute_jobs(self.data, _func, _args, _axis, 
                            num_cores, chunk_size)
    
     # Update log.
     self.logger.debug("median_filter: size: " + str(size))
+    self.logger.debug("median_filter: axis: " + str(axis))
     self.logger.info("median_filter [ok]")
     
     # Update returned values.
