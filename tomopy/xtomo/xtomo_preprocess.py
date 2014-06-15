@@ -29,12 +29,12 @@ from tomopy.tools.multiprocess_shared import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def _apply_padding(xtomo, num_pad=None, pad_val=0.,
+def _apply_padding(self, num_pad=None, pad_val=0.,
                    num_cores=None, chunk_size=None,
                    overwrite=True):
 
     # Set default parameters.
-    num_pixels = xtomo.data.shape[2]
+    num_pixels = self.data.shape[2]
     if num_pad is None:
         num_pad = np.ceil(num_pixels * np.sqrt(2))
     elif num_pad < num_pixels:
@@ -44,40 +44,40 @@ def _apply_padding(xtomo, num_pad=None, pad_val=0.,
     if not isinstance(num_pad, np.int32):
         num_pad = np.array(num_pad, dtype='int32')
 
-    data = apply_padding(xtomo.data, num_pad, pad_val)
-    data_white = apply_padding(xtomo.data_white, num_pad, pad_val)
-    data_dark = apply_padding(xtomo.data_dark, num_pad, pad_val)
+    data = apply_padding(self.data, num_pad, pad_val)
+    data_white = apply_padding(self.data_white, num_pad, pad_val)
+    data_dark = apply_padding(self.data_dark, num_pad, pad_val)
     
     # Update log.
-    xtomo.logger.debug("apply_padding: num_pad: " + str(num_pad))
-    xtomo.logger.debug("apply_padding: pad_val: " + str(pad_val))
-    xtomo.logger.info("apply_padding [ok]")
+    self.logger.debug("apply_padding: num_pad: " + str(num_pad))
+    self.logger.debug("apply_padding: pad_val: " + str(pad_val))
+    self.logger.info("apply_padding [ok]")
 
     # Update returned values.
     if overwrite:
-        xtomo.data = data
-        xtomo.data_white = data_white
-        xtomo.data_dark = data_dark
+        self.data = data
+        self.data_white = data_white
+        self.data_dark = data_dark
     else: return data, data_white, data_dark
 
 
 # --------------------------------------------------------------------
 
-def _circular_roi(xtomo, ratio=1, overwrite=True):
+def _circular_roi(self, ratio=1, overwrite=True):
 
-    data = circular_roi(xtomo.data, ratio)
+    data = circular_roi(self.data, ratio)
                                          
     # Update log.
-    xtomo.logger.debug("circular_roi: ratio: " + str(ratio))
-    xtomo.logger.info("circular_roi [ok]")
+    self.logger.debug("circular_roi: ratio: " + str(ratio))
+    self.logger.info("circular_roi [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data
 
 # --------------------------------------------------------------------
 
-def _correct_drift(xtomo, air_pixels=20, 
+def _correct_drift(self, air_pixels=20, 
                    num_cores=None, chunk_size=None,
                    overwrite=True):
     
@@ -87,52 +87,52 @@ def _correct_drift(xtomo, air_pixels=20,
     if not isinstance(air_pixels, np.int32):
         air_pixels = np.array(air_pixels, dtype='int32')
     
-    data = correct_drift(xtomo.data, air_pixels)
+    data = correct_drift(self.data, air_pixels)
    
     # Update log.
-    xtomo.logger.debug("correct_drift: air_pixels: " + str(air_pixels))
-    xtomo.logger.info("correct_drift [ok]")
+    self.logger.debug("correct_drift: air_pixels: " + str(air_pixels))
+    self.logger.info("correct_drift [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data
 
 # --------------------------------------------------------------------
 
-def _correct_fov(xtomo, num_overlap_pixels=None, overwrite=True):
+def _correct_fov(self, num_overlap_pixels=None, overwrite=True):
     
-    data = correct_fov(xtomo.data, num_overlap_pixels)
+    data = correct_fov(self.data, num_overlap_pixels)
     
     # Update log.
-    xtomo.logger.debug("correct_fov: num_overlap_pixels: " + str(num_overlap_pixels))
-    xtomo.logger.info("correct_fov [ok]")
+    self.logger.debug("correct_fov: num_overlap_pixels: " + str(num_overlap_pixels))
+    self.logger.info("correct_fov [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data
 
 # --------------------------------------------------------------------
 
-def _correct_tilt(xtomo, angle=0, overwrite=True):
+def _correct_tilt(self, angle=0, overwrite=True):
 
-    data = correct_tilt(xtomo.data, angle)
-    data_white = correct_tilt(xtomo.data_white, angle)
-    data_dark = correct_tilt(xtomo.data_dark, angle)
+    data = correct_tilt(self.data, angle)
+    data_white = correct_tilt(self.data_white, angle)
+    data_dark = correct_tilt(self.data_dark, angle)
                                          
     # Update log.
-    xtomo.logger.debug("correct_tilt: ratio: " + str(angle))
-    xtomo.logger.info("correct_tilt [ok]")
+    self.logger.debug("correct_tilt: ratio: " + str(angle))
+    self.logger.info("correct_tilt [ok]")
     
     # Update returned values.
     if overwrite: 
-    	xtomo.data = data
-    	xtomo.data_white = data
-    	xtomo.data_dark = data
+    	self.data = data
+    	self.data_white = data
+    	self.data_dark = data
     else: return data, data_white, data_dark
 
 # --------------------------------------------------------------------
 
-def _downsample2d(xtomo, level=1,
+def _downsample2d(self, level=1,
                   num_cores=None, chunk_size=None,
                   overwrite=True):
     
@@ -142,19 +142,19 @@ def _downsample2d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data = downsample2d(xtomo.data, level)
+    data = downsample2d(self.data, level)
     
     # Update log.
-    xtomo.logger.debug("downsample2d: level: " + str(level))
-    xtomo.logger.info("downsample2d [ok]")
+    self.logger.debug("downsample2d: level: " + str(level))
+    self.logger.info("downsample2d [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data
 	
 # --------------------------------------------------------------------
 
-def _downsample3d(xtomo, level=1,
+def _downsample3d(self, level=1,
                   num_cores=None, chunk_size=None,
                   overwrite=True):
 
@@ -164,19 +164,19 @@ def _downsample3d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data = downsample3d(xtomo.data, level)
+    data = downsample3d(self.data, level)
     
     # Update log.
-    xtomo.logger.debug("downsample3d: level: " + str(level))
-    xtomo.logger.info("downsample3d [ok]")
+    self.logger.debug("downsample3d: level: " + str(level))
+    self.logger.info("downsample3d [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data	
 	
 # --------------------------------------------------------------------
 
-def _focus_region(xtomo, xcoord, ycoord, diameter, 
+def _focus_region(self, xcoord, ycoord, diameter, 
                   padded=False, correction=True,
                   overwrite=True):
          
@@ -188,31 +188,31 @@ def _focus_region(xtomo, xcoord, ycoord, diameter,
     if not isinstance(diameter, np.float):
         diameter = np.array(diameter, dtype='float')
 
-    data = focus_region(xtomo.data, xcoord, ycoord, diameter, 
-                        xtomo.center, padded, correction)
+    data = focus_region(self.data, xcoord, ycoord, diameter, 
+                        self.center, padded, correction)
 
     # Adjust center
     if padded is False: center = data.shape[2]/2.
-    else: center = xtomo.center
+    else: center = self.center
     
     # Update log.
-    xtomo.logger.debug("focus_region: xcoord: " + str(xcoord))
-    xtomo.logger.debug("focus_region: ycoord: " + str(ycoord))
-    xtomo.logger.debug("focus_region: diameter: " + str(diameter))
-    xtomo.logger.debug("focus_region: center: " + str(xtomo.center))
-    xtomo.logger.debug("focus_region: padded: " + str(padded))
-    xtomo.logger.debug("focus_region: correction: " + str(correction))
-    xtomo.logger.info("focus_region [ok]")
+    self.logger.debug("focus_region: xcoord: " + str(xcoord))
+    self.logger.debug("focus_region: ycoord: " + str(ycoord))
+    self.logger.debug("focus_region: diameter: " + str(diameter))
+    self.logger.debug("focus_region: center: " + str(self.center))
+    self.logger.debug("focus_region: padded: " + str(padded))
+    self.logger.debug("focus_region: correction: " + str(correction))
+    self.logger.info("focus_region [ok]")
     
     # Update returned values.
     if overwrite: 
-        xtomo.data = data
-        xtomo.center = center
+        self.data = data
+        self.center = center
     else: return data, center
 
 # --------------------------------------------------------------------
 
-def _median_filter(xtomo, size=5, 
+def _median_filter(self, size=5, axis=1,
                    num_cores=None, chunk_size=None,
                    overwrite=True):
                   
@@ -222,47 +222,48 @@ def _median_filter(xtomo, size=5,
         
     # Distribute jobs.
     _func = median_filter
-    _args = (size)
-    _axis = 1 # Slice axis
-    data = distribute_jobs(xtomo.data, _func, _args, _axis, 
+    _args = (size, axis)
+    _axis = axis
+    data = distribute_jobs(self.data, _func, _args, _axis, 
                            num_cores, chunk_size)
    
     # Update log.
-    xtomo.logger.debug("median_filter: size: " + str(size))
-    xtomo.logger.info("median_filter [ok]")
+    self.logger.debug("median_filter: size: " + str(size))
+    self.logger.debug("median_filter: axis: " + str(axis))
+    self.logger.info("median_filter [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data	
 
 # --------------------------------------------------------------------
 
-def _normalize(xtomo, cutoff=None, 
+def _normalize(self, cutoff=None, 
                num_cores=None, chunk_size=None,
                overwrite=True):
 
     # Calculate average white and dark fields for normalization.
-    avg_white = np.mean(xtomo.data_white, axis=0)
-    avg_dark = np.mean(xtomo.data_dark, axis=0)
+    avg_white = np.mean(self.data_white, axis=0)
+    avg_dark = np.mean(self.data_dark, axis=0)
     
     # Distribute jobs.
     _func = normalize
     _args = (avg_white, avg_dark, cutoff)
     _axis = 0 # Projection axis
-    data = distribute_jobs(xtomo.data, _func, _args, _axis, 
+    data = distribute_jobs(self.data, _func, _args, _axis, 
 			   num_cores, chunk_size)
 
     # Update log.
-    xtomo.logger.debug("normalize: cutoff: " + str(cutoff))
-    xtomo.logger.info("normalize [ok]")
+    self.logger.debug("normalize: cutoff: " + str(cutoff))
+    self.logger.info("normalize [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data	
 
 # --------------------------------------------------------------------
 
-def _phase_retrieval(xtomo, pixel_size=1e-4, dist=50, 
+def _phase_retrieval(self, pixel_size=1e-4, dist=50, 
                      energy=20, alpha=1e-4, padding=True,
                      num_cores=None, chunk_size=None,
                      overwrite=True):             
@@ -271,53 +272,53 @@ def _phase_retrieval(xtomo, pixel_size=1e-4, dist=50,
     _func = phase_retrieval
     _args = (pixel_size, dist, energy, alpha, padding)
     _axis = 0 # Projection axis
-    data = distribute_jobs(xtomo.data, _func, _args, _axis, 
+    data = distribute_jobs(self.data, _func, _args, _axis, 
                            num_cores, chunk_size)
 
     # Update log.
-    xtomo.logger.debug("phase_retrieval: pixel_size: " + str(pixel_size))
-    xtomo.logger.debug("phase_retrieval: dist: " + str(dist))
-    xtomo.logger.debug("phase_retrieval: energy: " + str(energy))
-    xtomo.logger.debug("phase_retrieval: alpha: " + str(alpha))
-    xtomo.logger.debug("phase_retrieval: padding: " + str(padding))
-    xtomo.logger.info("phase_retrieval [ok]")
+    self.logger.debug("phase_retrieval: pixel_size: " + str(pixel_size))
+    self.logger.debug("phase_retrieval: dist: " + str(dist))
+    self.logger.debug("phase_retrieval: energy: " + str(energy))
+    self.logger.debug("phase_retrieval: alpha: " + str(alpha))
+    self.logger.debug("phase_retrieval: padding: " + str(padding))
+    self.logger.info("phase_retrieval [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data	
 
 # --------------------------------------------------------------------
 
-def _stripe_removal(xtomo, level=None, wname='db5', sigma=2, padding=False,
+def _stripe_removal(self, level=None, wname='db5', sigma=2, padding=False,
                     num_cores=None, chunk_size=None,
                     overwrite=True):
 
     # Find the higest level possible.
     if level is None:
-        size = np.max(xtomo.data.shape)
+        size = np.max(self.data.shape)
         level = int(np.ceil(np.log2(size)))
         
     # Distribute jobs.
     _func = stripe_removal
     _args = (level, wname, sigma, padding)
     _axis = 1 # Slice axis
-    data = distribute_jobs(xtomo.data, _func, _args, _axis,
+    data = distribute_jobs(self.data, _func, _args, _axis,
                            num_cores, chunk_size)
 			
     # Update log.
-    xtomo.logger.debug("stripe_removal: level: " + str(level))
-    xtomo.logger.debug("stripe_removal: wname: " + str(wname))
-    xtomo.logger.debug("stripe_removal: sigma: " + str(sigma))
-    xtomo.logger.debug("stripe_removal: padding: " + str(padding))
-    xtomo.logger.info("stripe_removal [ok]")
+    self.logger.debug("stripe_removal: level: " + str(level))
+    self.logger.debug("stripe_removal: wname: " + str(wname))
+    self.logger.debug("stripe_removal: sigma: " + str(sigma))
+    self.logger.debug("stripe_removal: padding: " + str(padding))
+    self.logger.info("stripe_removal [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data = data
+    if overwrite: self.data = data
     else: return data	
 
 # --------------------------------------------------------------------
 
-def _zinger_removal(xtomo, zinger_level=1000, median_width=3,
+def _zinger_removal(self, zinger_level=1000, median_width=3,
                     num_cores=None, chunk_size=None,
                     overwrite=True):
 
@@ -325,25 +326,25 @@ def _zinger_removal(xtomo, zinger_level=1000, median_width=3,
     _func = zinger_removal
     _args = (zinger_level, median_width)
     _axis = 0 # Projection axis
-    data = distribute_jobs(xtomo.data, _func, _args, _axis,
+    data = distribute_jobs(self.data, _func, _args, _axis,
                            num_cores, chunk_size)
 
-    data_white = distribute_jobs(xtomo.data_white, _func, _args, _axis,
+    data_white = distribute_jobs(self.data_white, _func, _args, _axis,
                            num_cores, chunk_size)
     
-    data_dark = distribute_jobs(xtomo.data_dark, _func, _args, _axis,
+    data_dark = distribute_jobs(self.data_dark, _func, _args, _axis,
                            num_cores, chunk_size)
 
     # Update log.
-    xtomo.logger.debug("zinger_removal: zinger_level: " + str(zinger_level))
-    xtomo.logger.debug("zinger_removal: median_width: " + str(median_width))
-    xtomo.logger.info("zinger_removal [ok]")
+    self.logger.debug("zinger_removal: zinger_level: " + str(zinger_level))
+    self.logger.debug("zinger_removal: median_width: " + str(median_width))
+    self.logger.info("zinger_removal [ok]")
 
     # Update returned values.
     if overwrite:
-        xtomo.data = data
-        xtomo.data_white = data_white
-        xtomo.data_dark = data_dark
+        self.data = data
+        self.data_white = data_white
+        self.data_dark = data_dark
     else: return data, data_white, data_dark
 
 # --------------------------------------------------------------------
