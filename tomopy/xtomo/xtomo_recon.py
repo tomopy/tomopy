@@ -26,13 +26,13 @@ from tomopy.algorithms.recon.upsample import upsample2d, upsample3d
 
 # --------------------------------------------------------------------
 
-def _diagnose_center(xtomo, dir_path=None, slice_no=None,
+def _diagnose_center(self, dir_path=None, slice_no=None,
 		     center_start=None, center_end=None, center_step=None, 
 		     mask=True, ratio=1):
 	
     # Dimensions:
-    num_slices = xtomo.data.shape[1]
-    num_pixels = xtomo.data.shape[2]
+    num_slices = self.data.shape[1]
+    num_pixels = self.data.shape[2]
 
     # Set default parameters.
     if dir_path is None: # Create one at at data location for output images.
@@ -53,27 +53,27 @@ def _diagnose_center(xtomo, dir_path=None, slice_no=None,
         center_step = 1
 
     # Call function.
-    diagnose_center(xtomo.data, xtomo.theta, dir_path, slice_no, 
+    diagnose_center(self.data, self.theta, dir_path, slice_no, 
                      center_start, center_end, center_step, mask, ratio)
 
     # Update log.
-    xtomo.logger.debug("diagnose_center: dir_path: " + str(dir_path))
-    xtomo.logger.debug("diagnose_center: slice_no: " + str(slice_no))
-    xtomo.logger.debug("diagnose_center: center_start: " + str(center_start))
-    xtomo.logger.debug("diagnose_center: center_end: " + str(center_end))
-    xtomo.logger.debug("diagnose_center: center_step: " + str(center_step))
-    xtomo.logger.debug("diagnose_center: mask: " + str(mask))
-    xtomo.logger.debug("diagnose_center: ratio: " + str(ratio))
-    xtomo.logger.info("diagnose_center [ok]")
+    self.logger.debug("diagnose_center: dir_path: " + str(dir_path))
+    self.logger.debug("diagnose_center: slice_no: " + str(slice_no))
+    self.logger.debug("diagnose_center: center_start: " + str(center_start))
+    self.logger.debug("diagnose_center: center_end: " + str(center_end))
+    self.logger.debug("diagnose_center: center_step: " + str(center_step))
+    self.logger.debug("diagnose_center: mask: " + str(mask))
+    self.logger.debug("diagnose_center: ratio: " + str(ratio))
+    self.logger.info("diagnose_center [ok]")
 
 # --------------------------------------------------------------------
 
-def _optimize_center(xtomo, slice_no=None, center_init=None, 
+def _optimize_center(self, slice_no=None, center_init=None, 
                      tol=0.5, overwrite=True, mask=True, ratio=1):
                     
     # Dimensions:
-    num_slices = xtomo.data.shape[1]
-    num_pixels = xtomo.data.shape[2]
+    num_slices = self.data.shape[1]
+    num_pixels = self.data.shape[2]
 
     # Set default parameters.
     if slice_no is None:
@@ -87,24 +87,24 @@ def _optimize_center(xtomo, slice_no=None, center_init=None,
         center_init = np.array(center_init, dtype='float32')
 
     # All set, give me center now.
-    center = optimize_center(xtomo.data, xtomo.theta, slice_no, 
+    center = optimize_center(self.data, self.theta, slice_no, 
                               center_init, tol, mask, ratio)
     
     # Update log.
-    xtomo.logger.debug("optimize_center: slice_no: " + str(slice_no))
-    xtomo.logger.debug("optimize_center: center_init: " + str(center_init))
-    xtomo.logger.debug("optimize_center: tol: " + str(tol))
-    xtomo.logger.debug("optimize_center: mask: " + str(mask))
-    xtomo.logger.debug("optimize_center: ratio: " + str(ratio))
-    xtomo.logger.info("optimize_center [ok]")
+    self.logger.debug("optimize_center: slice_no: " + str(slice_no))
+    self.logger.debug("optimize_center: center_init: " + str(center_init))
+    self.logger.debug("optimize_center: tol: " + str(tol))
+    self.logger.debug("optimize_center: mask: " + str(mask))
+    self.logger.debug("optimize_center: ratio: " + str(ratio))
+    self.logger.info("optimize_center [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.center = center
+    if overwrite: self.center = center
     else: return center
 	    
 # --------------------------------------------------------------------
 
-def _upsample2d(xtomo, level=1,
+def _upsample2d(self, level=1,
                 num_cores=None, chunk_size=None,
                 overwrite=True):
 
@@ -112,19 +112,19 @@ def _upsample2d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = upsample2d(xtomo.data_recon, level)
+    data_recon = upsample2d(self.data_recon, level)
     
     # Update log.
-    xtomo.logger.debug("upsample2d: level: " + str(level))
-    xtomo.logger.info("upsample2d [ok]")
+    self.logger.debug("upsample2d: level: " + str(level))
+    self.logger.info("upsample2d [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 	    
 # --------------------------------------------------------------------
 
-def _upsample3d(xtomo, level=1,
+def _upsample3d(self, level=1,
                 num_cores=None, chunk_size=None,
                 overwrite=True):
 
@@ -132,36 +132,36 @@ def _upsample3d(xtomo, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = upsample3d(xtomo.data_recon, level)
+    data_recon = upsample3d(self.data_recon, level)
     
     # Update log.
-    xtomo.logger.debug("upsample3d: level: " + str(level))
-    xtomo.logger.info("upsample3d [ok]")
+    self.logger.debug("upsample3d: level: " + str(level))
+    self.logger.info("upsample3d [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon 
+    if overwrite: self.data_recon = data_recon 
     else: return data_recon
     
 # --------------------------------------------------------------------
     
-def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _art(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
     # Dimensions:
-    num_pixels = xtomo.data.shape[2]
+    num_pixels = self.data.shape[2]
         
     # This works with radians.
-    if np.max(xtomo.theta) > 90: # then theta is obviously in radians.
-        xtomo.theta *= np.pi/180
+    if np.max(self.theta) > 90: # then theta is obviously in radians.
+        self.theta *= np.pi/180
 
     # Pad data first.
-    data, white, dark = xtomo.apply_padding(overwrite=False, pad_val=1)
+    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
     #data = 1-data;
     data = -np.log(data);
     
     # Adjust center according to padding.
-    if not hasattr(xtomo, 'center'):
-        xtomo.center = xtomo.data.shape[2]/2
-    center = xtomo.center + (data.shape[2]-num_pixels)/2.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
@@ -173,8 +173,8 @@ def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     if not isinstance(data, np.float32):
         data = np.array(data, dtype='float32', copy=False)
 
-    if not isinstance(xtomo.theta, np.float32):
-        theta = np.array(xtomo.theta, dtype='float32')
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
 
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
@@ -192,35 +192,35 @@ def _art(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data_recon = art(data, theta, center, num_grid, iters, init_matrix)
     
     # Update log.
-    xtomo.logger.debug("art: iters: " + str(iters))
-    xtomo.logger.debug("art: center: " + str(center))
-    xtomo.logger.debug("art: num_grid: " + str(num_grid))
-    xtomo.logger.info("art [ok]")
+    self.logger.debug("art: iters: " + str(iters))
+    self.logger.debug("art: center: " + str(center))
+    self.logger.debug("art: num_grid: " + str(num_grid))
+    self.logger.info("art [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
     
 # --------------------------------------------------------------------
 
-def _sirt(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _sirt(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
     # Dimensions:
-    num_pixels = xtomo.data.shape[2]
+    num_pixels = self.data.shape[2]
         
     # This works with radians.
-    if np.max(xtomo.theta) > 90: # then theta is obviously in radians.
-        xtomo.theta *= np.pi/180
+    if np.max(self.theta) > 90: # then theta is obviously in radians.
+        self.theta *= np.pi/180
 
     # Pad data first.
-    data, white, dark = xtomo.apply_padding(overwrite=False, pad_val=1)
+    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
     #data = 1-data;
     data = -np.log(data);
     
     # Adjust center according to padding.
-    if not hasattr(xtomo, 'center'):
-        xtomo.center = xtomo.data.shape[2]/2
-    center = xtomo.center + (data.shape[2]-num_pixels)/2.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
@@ -232,8 +232,8 @@ def _sirt(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     if not isinstance(data, np.float32):
         data = np.array(data, dtype='float32', copy=False)
 
-    if not isinstance(xtomo.theta, np.float32):
-        theta = np.array(xtomo.theta, dtype='float32')
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
 
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
@@ -251,35 +251,35 @@ def _sirt(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data_recon = sirt(data, theta, center, num_grid, iters, init_matrix)
     
     # Update log.
-    xtomo.logger.debug("sirt: iters: " + str(iters))
-    xtomo.logger.debug("sirt: center: " + str(center))
-    xtomo.logger.debug("sirt: num_grid: " + str(num_grid))
-    xtomo.logger.info("sirt [ok]")
+    self.logger.debug("sirt: iters: " + str(iters))
+    self.logger.debug("sirt: center: " + str(center))
+    self.logger.debug("sirt: num_grid: " + str(num_grid))
+    self.logger.info("sirt [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
     
 # --------------------------------------------------------------------
     
-def _mlem_emission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _mlem_emission(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
     # Dimensions:
-    num_pixels = xtomo.data.shape[2]
+    num_pixels = self.data.shape[2]
         
     # This works with radians.
-    if np.max(xtomo.theta) > 90: # then theta is obviously in radians.
-        xtomo.theta *= np.pi/180
+    if np.max(self.theta) > 90: # then theta is obviously in radians.
+        self.theta *= np.pi/180
 
     # Pad data first.
-    data, white, dark = xtomo.apply_padding(overwrite=False, pad_val=1)
+    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
     data = -np.log(data)
     data[data < 0] = 0
 
     # Adjust center according to padding.
-    if not hasattr(xtomo, 'center'):
-        xtomo.center = xtomo.data.shape[2]/2
-    center = xtomo.center + (data.shape[2]-num_pixels)/2.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
    
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
@@ -291,8 +291,8 @@ def _mlem_emission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=Tr
     if not isinstance(data, np.float32):
         data = np.array(data, dtype='float32', copy=False)
 
-    if not isinstance(xtomo.theta, np.float32):
-        theta = np.array(xtomo.theta, dtype='float32')
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
 
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
@@ -310,34 +310,34 @@ def _mlem_emission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=Tr
     data_recon = mlem_emission(data, theta, center, num_grid, iters, init_matrix)
 
     # Update log.
-    xtomo.logger.debug("mlem_emission: iters: " + str(iters))
-    xtomo.logger.debug("mlem_emission: center: " + str(center))
-    xtomo.logger.debug("mlem_emission: num_grid: " + str(num_grid))
-    xtomo.logger.info("mlem_emission [ok]")
+    self.logger.debug("mlem_emission: iters: " + str(iters))
+    self.logger.debug("mlem_emission: center: " + str(center))
+    self.logger.debug("mlem_emission: num_grid: " + str(num_grid))
+    self.logger.info("mlem_emission [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
     
     # --------------------------------------------------------------------
     
-def _mlem_transmission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _mlem_transmission(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
 
     # Dimensions:
-    num_pixels = xtomo.data.shape[2]
+    num_pixels = self.data.shape[2]
         
     # This works with radians.
-    if np.max(xtomo.theta) > 90: # then theta is obviously in radians.
-        xtomo.theta *= np.pi/180
+    if np.max(self.theta) > 90: # then theta is obviously in radians.
+        self.theta *= np.pi/180
 
     # Pad data first.
-    print np.mean(xtomo.data_white)
-    data, white, dark = xtomo.apply_padding(overwrite=False, pad_val=np.mean(xtomo.data_white))
+    print np.mean(self.data_white)
+    data, white, dark = self.apply_padding(overwrite=False, pad_val=np.mean(self.data_white))
 
     # Adjust center according to padding.
-    if not hasattr(xtomo, 'center'):
-        xtomo.center = xtomo.data.shape[2]/2
-    center = xtomo.center + (data.shape[2]-num_pixels)/2.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
    
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
@@ -350,8 +350,8 @@ def _mlem_transmission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrit
     if not isinstance(data, np.float32):
         data = np.array(data, dtype='float32', copy=False)
 
-    if not isinstance(xtomo.theta, np.float32):
-        theta = np.array(xtomo.theta, dtype='float32')
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
 
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
@@ -369,34 +369,34 @@ def _mlem_transmission(xtomo, iters=1, num_grid=None, init_matrix=None, overwrit
     data_recon = mlem_transmission(white, data, theta, center, num_grid, iters, init_matrix)
 
     # Update log.
-    xtomo.logger.debug("mlem_transmission: iters: " + str(iters))
-    xtomo.logger.debug("mlem_transmission: center: " + str(center))
-    xtomo.logger.debug("mlem_transmission: num_grid: " + str(num_grid))
-    xtomo.logger.info("mlem_transmission [ok]")
+    self.logger.debug("mlem_transmission: iters: " + str(iters))
+    self.logger.debug("mlem_transmission: center: " + str(center))
+    self.logger.debug("mlem_transmission: num_grid: " + str(num_grid))
+    self.logger.info("mlem_transmission [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
     
-def _gridrec(xtomo, overwrite=True, *args, **kwargs):
+def _gridrec(self, overwrite=True, *args, **kwargs):
 
     # Check input.
-    if not hasattr(xtomo, 'center'):
-        xtomo.center = xtomo.data.shape[2]/2
-    if not isinstance(xtomo.center, np.float32):
-        xtomo.center = np.array(xtomo.center, dtype='float32')
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    if not isinstance(self.center, np.float32):
+        self.center = np.array(self.center, dtype='float32')
     
     # Initialize and perform reconstruction.    
-    recon = Gridrec(xtomo.data, *args, **kwargs)
-    data_recon = recon.reconstruct(xtomo.data, xtomo.center, xtomo.theta)
+    recon = Gridrec(self.data, *args, **kwargs)
+    data_recon = recon.reconstruct(self.data, self.center, self.theta)
     
     # Update provenance and log.
-    xtomo.logger.info("gridrec [ok]")
+    self.logger.info("gridrec [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------

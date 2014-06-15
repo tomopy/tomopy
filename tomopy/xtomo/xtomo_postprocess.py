@@ -21,12 +21,12 @@ from tomopy.tools.multiprocess_shared import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def _adaptive_segment(xtomo, block_size=256, offset=0,
+def _adaptive_segment(self, block_size=256, offset=0,
                       num_cores=None, chunk_size=None,
                       overwrite=True):    
     
     # Normalize data first.
-    data = xtomo.data_recon - xtomo.data_recon.min()
+    data = self.data_recon - self.data_recon.min()
     data /= data.max() 
 
     # Distribute jobs.
@@ -37,37 +37,37 @@ def _adaptive_segment(xtomo, block_size=256, offset=0,
                                  num_cores, chunk_size)
                                          
     # Update log.
-    xtomo.logger.debug("adaptive_segment: block_size: " + str(block_size))
-    xtomo.logger.debug("adaptive_segment: offset: " + str(offset))
-    xtomo.logger.info("adaptive_segment [ok]")
+    self.logger.debug("adaptive_segment: block_size: " + str(block_size))
+    self.logger.debug("adaptive_segment: offset: " + str(offset))
+    self.logger.info("adaptive_segment [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
 
-def _apply_mask(xtomo, ratio=1, overwrite=True):
+def _apply_mask(self, ratio=1, overwrite=True):
 
     # Distribute jobs.
-    data_recon = apply_mask(xtomo.data_recon, ratio)
+    data_recon = apply_mask(self.data_recon, ratio)
                                          
     # Update log.
-    xtomo.logger.debug("apply_mask: ratio: " + str(ratio))
-    xtomo.logger.info("apply_mask [ok]")
+    self.logger.debug("apply_mask: ratio: " + str(ratio))
+    self.logger.info("apply_mask [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
 
-def _region_segment(xtomo, low=None, high=None,
+def _region_segment(self, low=None, high=None,
                     num_cores=None, chunk_size=None,
                     overwrite=True):
     
     # Normalize data first.
-    data = xtomo.data_recon - xtomo.data_recon.min()
+    data = self.data_recon - self.data_recon.min()
     data /= data.max()
     
     # Distribute jobs.
@@ -78,17 +78,17 @@ def _region_segment(xtomo, low=None, high=None,
                                  num_cores, chunk_size)
 
     # Update provenance.
-    xtomo.logger.debug("region_segment: low: " + str(low))
-    xtomo.logger.debug("region_segment: high: " + str(high))
-    xtomo.logger.info("region_segment [ok]")
+    self.logger.debug("region_segment: low: " + str(low))
+    self.logger.debug("region_segment: high: " + str(high))
+    self.logger.info("region_segment [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
 
-def _remove_background(xtomo, 
+def _remove_background(self, 
                        num_cores=None, chunk_size=None,
                        overwrite=True):
     
@@ -96,24 +96,24 @@ def _remove_background(xtomo,
     _func = remove_background
     _args = ()
     _axis = 0 # Slice axis
-    data_recon = distribute_jobs(xtomo.data_recon, _func, _args, _axis, 
+    data_recon = distribute_jobs(self.data_recon, _func, _args, _axis, 
                                  num_cores, chunk_size)
                                          
     # Update provenance.
-    xtomo.logger.info("remove_background [ok]")
+    self.logger.info("remove_background [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
 
-def _threshold_segment(xtomo, cutoff=None,
+def _threshold_segment(self, cutoff=None,
                        num_cores=None, chunk_size=None,
                        overwrite=True):
     
     # Normalize data first.
-    data = xtomo.data_recon - xtomo.data_recon.min()
+    data = self.data_recon - self.data_recon.min()
     data /= data.max()
 
     # Distribute jobs.
@@ -124,11 +124,11 @@ def _threshold_segment(xtomo, cutoff=None,
                                  num_cores, chunk_size)
                                                       
     # Update provenance.
-    xtomo.logger.debug("threshold_segment: cutoff: " + str(cutoff))
-    xtomo.logger.info("threshold_segment [ok]")
+    self.logger.debug("threshold_segment: cutoff: " + str(cutoff))
+    self.logger.info("threshold_segment [ok]")
     
     # Update returned values.
-    if overwrite: xtomo.data_recon = data_recon
+    if overwrite: self.data_recon = data_recon
     else: return data_recon
 
 # --------------------------------------------------------------------
