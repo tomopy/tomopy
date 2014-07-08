@@ -6,9 +6,6 @@ import shutil
 import os
 import h5py
 
-# append current directory to the path because we need to find tifffile.py
-import sys
-sys.path.insert(0, os.path.dirname(__file__))
 
 def xtomo_reader(file_name,
                  projections_start=None,

@@ -4,6 +4,10 @@ try:
     __version__ = pkg_resources.require("tomopy")[0].version
 except:
     pass
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__)+'/tools')
     
 # ---------X-ray absorption tomography imports---------
 
