@@ -6,9 +6,6 @@ import shutil
 import os
 import h5py
 
-# append current directory to the path because we need to find tifffile.py
-import sys
-sys.path.insert(0, os.path.dirname(__file__))
 
 def xtomo_reader(file_name,
                  projections_start=None,
@@ -142,7 +139,7 @@ def xtomo_reader(file_name,
 
 def xtomo_writer(data, output_file=None, x_start=0,
                  digits=5, axis=0, overwrite=False, 
-                 precision=True):
+                 dtype='float32', data_min=None, data_max=None):
     """ 
     Write 3-D data to a stack of tif files.
 
@@ -166,10 +163,13 @@ def xtomo_writer(data, output_file=None, x_start=0,
         if overwrite=True the existing data in the
         reconstruction folder will be overwritten
         
-    precision : bool, optional
-        Export data type precision. if True it 
-        saves 32-bit precision. Otherwise it
-        uses 8-bit precision.
+    dtype : bool, optional
+        Export data type precision.
+        
+    data_min, data_max : scalar, optional
+        User defined minimum and maximum values
+        in the data that will be used to scale 
+        the dataset when saving.
     
     Notes
     -----
@@ -231,6 +231,17 @@ def xtomo_writer(data, output_file=None, x_start=0,
         output_file = "tmp/img_" 
     output_file =  os.path.abspath(output_file)
     dir_path = os.path.dirname(output_file)
+        
+    # Find max min of data for scaling
+    if data_max is None:
+        data_max = np.max(data)
+    if data_min is None:
+        data_min = np.min(data)
+        
+    if data_max < np.max(data):
+        data[data>data_max] = data_max
+    if data_min > np.min(data):
+        data[data>data_min] = data_min
     
     # Remove TIFF extension if there is.
     if (output_file.endswith('tif') or
@@ -287,8 +298,13 @@ def xtomo_writer(data, output_file=None, x_start=0,
         elif axis == 2:
             arr = data[:, :, m]
 
-        if precision:
-            arr = arr.astype(np.float32)
+        if dtype is 'uint8':
+            arr = ((arr*1.0 - data_min)/(data_max-data_min)*255).astype('uint8')
+        elif dtype is 'uint16':
+            arr = ((arr*1.0 - data_min)/(data_max-data_min)*65535).astype('uint16')
+        elif dtype is 'float32':
+            arr = arr.astype('float32')
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             skimage.io.imsave(file_name, arr, plugin='tifffile')
