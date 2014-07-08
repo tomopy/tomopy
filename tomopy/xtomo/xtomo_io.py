@@ -139,7 +139,7 @@ def xtomo_reader(file_name,
 
 def xtomo_writer(data, output_file=None, x_start=0,
                  digits=5, axis=0, overwrite=False, 
-                 precision=True):
+                 dtype='float32'):
     """ 
     Write 3-D data to a stack of tif files.
 
@@ -163,10 +163,8 @@ def xtomo_writer(data, output_file=None, x_start=0,
         if overwrite=True the existing data in the
         reconstruction folder will be overwritten
         
-    precision : bool, optional
-        Export data type precision. if True it 
-        saves 32-bit precision. Otherwise it
-        uses 8-bit precision.
+    dtype : bool, optional
+        Export data type precision.
     
     Notes
     -----
@@ -250,6 +248,10 @@ def xtomo_writer(data, output_file=None, x_start=0,
         x_end = x_start+num_y
     elif axis == 2:
         x_end = x_start+num_z
+        
+    # Find max min of data for scaling
+    data_max = np.max(data)
+    data_min = np.min(data)
 
     # Write data.
     file_index = ["" for x in range(digits)]
@@ -284,8 +286,13 @@ def xtomo_writer(data, output_file=None, x_start=0,
         elif axis == 2:
             arr = data[:, :, m]
 
-        if precision:
-            arr = arr.astype(np.float32)
+        if dtype is 'uint8':
+            arr = ((arr*1.0 - data_min)/(data_max-data_min)*255).astype('uint8')
+        elif dtype is 'uint16':
+            arr = ((arr*1.0 - data_min)/(data_max-data_min)*65535).astype('uint16')
+        elif dtype is 'float32':
+            arr = arr.astype('float32')
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             skimage.io.imsave(file_name, arr, plugin='tifffile')
