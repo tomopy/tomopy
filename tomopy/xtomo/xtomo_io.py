@@ -138,7 +138,7 @@ def xtomo_reader(file_name,
 
 
 def xtomo_writer(data, output_file=None, x_start=0,
-                 digits=5, axis=0, overwrite=False, 
+                 digits=5, axis=0, overwrite=False, delete=False,
                  dtype='float32', data_min=None, data_max=None):
     """ 
     Write 3-D data to a stack of tif files.
@@ -160,8 +160,13 @@ def xtomo_writer(data, output_file=None, x_start=0,
         Imaages is read along that axis.
         
     overwrite: bool, optional
-        if overwrite=True the existing data in the
+        if overwrite=True the existing files in the
         reconstruction folder will be overwritten
+        with the new ones.
+        
+    delete: bool, optional
+        if delete=True the reconstruction
+        folder and its contents will be deleted.
         
     dtype : bool, optional
         Export data type precision.
@@ -248,7 +253,7 @@ def xtomo_writer(data, output_file=None, x_start=0,
         output_file.endswith('tiff')) :
             output_file = output_file.split(".")[-2]
   
-    if overwrite:
+    if delete:
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
             
@@ -278,18 +283,19 @@ def xtomo_writer(data, output_file=None, x_start=0,
                 break
 
         # check if file exists.
-        if os.path.isfile(file_name):
-            # generate new file unique name.
-            indq = 1
-            FLAG_SAVE = False
-            while not FLAG_SAVE:
-                new_file_body = file_body + '-' + str(indq)
-                new_file_name = new_file_body + '.tif'
-                if not os.path.isfile(new_file_name):
-                    FLAG_SAVE = True
-                    file_name = new_file_name
-                else:
-                    indq += 1
+        if not overwrite:
+            if os.path.isfile(file_name):
+                # generate new file unique name.
+                indq = 1
+                FLAG_SAVE = False
+                while not FLAG_SAVE:
+                    new_file_body = file_body + '-' + str(indq)
+                    new_file_name = new_file_body + '.tif'
+                    if not os.path.isfile(new_file_name):
+                        FLAG_SAVE = True
+                        file_name = new_file_name
+                    else:
+                        indq += 1
 
         if axis == 0:
             arr = data[m, :, :]
