@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy import misc
+import warnings
+import skimage.io
 import shutil
 import os
 import h5py
 
+# append current directory to the path because we need to find tifffile.py
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
 
 def xtomo_reader(file_name,
                  projections_start=None,
@@ -261,34 +265,31 @@ def xtomo_writer(data, output_file=None, x_start=0,
                 file_body = output_file + file_index[n] + str(ind[m])
                 file_name = file_body + '.tif'
                 break
-        if precision:
-            if axis == 0:
-                img = misc.toimage(data[m, :, :], mode='F')
-            elif axis == 1:
-                img = misc.toimage(data[:, m, :], mode='F')
-            elif axis == 2:
-                img = misc.toimage(data[:, :, m], mode='F')
-        else:
-            if axis == 0:
-                img = misc.toimage(data[m, :, :])
-            elif axis == 1:
-                img = misc.toimage(data[:, m, :])
-            elif axis == 2:
-                img = misc.toimage(data[:, :, m])
 
         # check if file exists.
         if os.path.isfile(file_name):
-            # genarate new file name.
+            # generate new file unique name.
             indq = 1
             FLAG_SAVE = False
             while not FLAG_SAVE:
                 new_file_body = file_body + '-' + str(indq)
                 new_file_name = new_file_body + '.tif'
                 if not os.path.isfile(new_file_name):
-                    img.save(new_file_name)
                     FLAG_SAVE = True
                     file_name = new_file_name
                 else:
                     indq += 1
-        else:
-            img.save(file_name)
+
+        if axis == 0:
+            arr = data[m, :, :]
+        elif axis == 1:
+            arr = data[:, m, :]
+        elif axis == 2:
+            arr = data[:, :, m]
+
+        if precision:
+            arr = arr.astype(np.float32)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            skimage.io.imsave(file_name, arr, plugin='tifffile')
+
