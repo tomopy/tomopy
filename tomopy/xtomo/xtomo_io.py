@@ -241,7 +241,7 @@ def xtomo_writer(data, output_file=None, x_start=0,
     if data_max < np.max(data):
         data[data>data_max] = data_max
     if data_min > np.min(data):
-        data[data>data_min] = data_min
+        data[data<data_min] = data_min
     
     # Remove TIFF extension if there is.
     if (output_file.endswith('tif') or
