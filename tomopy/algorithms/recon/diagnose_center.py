@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy import misc
+import skimage.io
+import warnings
 
 from gridrec import Gridrec
 
@@ -8,7 +9,7 @@ from gridrec import Gridrec
 
 def diagnose_center(data, theta, dir_path, slice_no, 
                     center_start, center_end, center_step, 
-                    mask, ratio):
+                    mask, ratio, dtype, data_min, data_max):
     """ 
     Diagnostic tools to find rotation center.
     
@@ -45,6 +46,14 @@ def diagnose_center(data, theta, dir_path, slice_no,
     ratio : scalar
         The ratio of the radius of the circular mask to the
         edge of the reconstructed image.
+        
+    dtype : bool, optional
+        Export data type precision.
+        
+    data_min, data_max : scalar, optional
+        User defined minimum and maximum values
+        of the reconstructions that will be used to scale 
+        the images when saving.
         
     Examples
     --------
@@ -93,10 +102,34 @@ def diagnose_center(data, theta, dir_path, slice_no,
         for m in range(center.size):
             recon.data_recon[m, msk] = 0
         
+    # Find max min of data for scaling
+    if data_max is None:
+        data_max = np.max(recon.data_recon)
+    if data_min is None:
+        data_min = np.min(recon.data_recon)
+        
+    if data_max < np.max(recon.data_recon):
+        recon.data_recon[recon.data_recon>data_max] = data_max
+    if data_min > np.min(recon.data_recon):
+        recon.data_recon[recon.data_recon<data_min] = data_min
 
     # Save it to a temporary directory for manual inspection.
     for m in range(center.size):
         if m % 2 == 0: # 2 slices same bec of gridrec.
-            img = misc.toimage(recon.data_recon[m, :, :])
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
-            img.save(file_name)
+            arr = recon.data_recon[m, :, :]
+            print data_min, data_max
+            print np.min(arr), np.max(arr)
+            if dtype is 'uint8':
+                arr = ((arr*1.0 - data_min)/(data_max-data_min)*255).astype('uint8')
+            elif dtype is 'uint16':
+                arr = ((arr*1.0 - data_min)/(data_max-data_min)*65535).astype('uint16')
+            elif dtype is 'float32':
+                arr = ((arr*1.0 - data_min)/(data_max-data_min)).astype('float32')
+            print np.min(arr), np.max(arr)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                skimage.io.imsave(file_name, arr, plugin='tifffile')
+    
+    return dtype, data_max, data_min
