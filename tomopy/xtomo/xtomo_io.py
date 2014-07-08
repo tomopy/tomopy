@@ -139,7 +139,7 @@ def xtomo_reader(file_name,
 
 def xtomo_writer(data, output_file=None, x_start=0,
                  digits=5, axis=0, overwrite=False, 
-                 dtype='float32'):
+                 dtype='float32', data_min=None, data_max=None):
     """ 
     Write 3-D data to a stack of tif files.
 
@@ -165,6 +165,11 @@ def xtomo_writer(data, output_file=None, x_start=0,
         
     dtype : bool, optional
         Export data type precision.
+        
+    data_min, data_max : scalar, optional
+        User defined minimum and maximum values
+        in the data that will be used to scale 
+        the dataset when saving.
     
     Notes
     -----
@@ -226,6 +231,17 @@ def xtomo_writer(data, output_file=None, x_start=0,
         output_file = "tmp/img_" 
     output_file =  os.path.abspath(output_file)
     dir_path = os.path.dirname(output_file)
+        
+    # Find max min of data for scaling
+    if data_max is None:
+        data_max = np.max(data)
+    if data_min is None:
+        data_min = np.min(data)
+        
+    if data_max < np.max(data):
+        data[data>data_max] = data_max
+    if data_min > np.min(data):
+        data[data>data_min] = data_min
     
     # Remove TIFF extension if there is.
     if (output_file.endswith('tif') or
@@ -248,10 +264,6 @@ def xtomo_writer(data, output_file=None, x_start=0,
         x_end = x_start+num_y
     elif axis == 2:
         x_end = x_start+num_z
-        
-    # Find max min of data for scaling
-    data_max = np.max(data)
-    data_min = np.min(data)
 
     # Write data.
     file_index = ["" for x in range(digits)]
