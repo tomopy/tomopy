@@ -37,12 +37,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -60,63 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.recon.mlem">
-<span id="mlem"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">mlem</span></tt><a class="headerlink" href="#module-tomopy.algorithms.recon.mlem" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.recon.mlem.mlem">
-<tt class="descclassname">tomopy.algorithms.recon.mlem.</tt><tt class="descname">mlem</tt><big>(</big><em>data</em>, <em>theta</em>, <em>center</em>, <em>num_grid</em>, <em>iters</em>, <em>init_matrix</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/mlem.html#mlem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.mlem.mlem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies Maximum-Likelihood Expectation-Maximization (MLEM)
-method to obtain reconstructions.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>theta</strong> : ndarray, float32</p>
-<blockquote>
-<div><p>Projection angles in radians.</p>
-</div></blockquote>
-<p><strong>center</strong> : scalar, float32</p>
-<blockquote>
-<div><p>Pixel index corresponding to the 
-center of rotation axis.</p>
-</div></blockquote>
-<p><strong>num_grid</strong> : scalar, int32</p>
-<blockquote>
-<div><p>Grid size of the econstructed images.</p>
-</div></blockquote>
-<p><strong>iters</strong> : scalar int32</p>
-<blockquote>
-<div><p>Number of mlem iterations.</p>
-</div></blockquote>
-<p><strong>init_matrix</strong> : ndarray</p>
-<blockquote>
-<div><p>Initial guess for the reconstruction. Its
-shape is the same as the reconstructed data.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Reconstructed data with dimensions:
-[slices, num_grid, num_grid]</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">References</p>
-<ul class="simple">
-<li><a class="reference external" href="http://en.wikipedia.org/wiki/Maximum_likelihood">http://en.wikipedia.org/wiki/Maximum_likelihood</a></li>
-<li><a class="reference external" href="http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm</a></li>
-<li><a class="reference external" href="http://www.jstor.org/discover/10.2307/2984875?uid=17682872&amp;uid=3739656&amp;uid=2&amp;uid=3&amp;uid=67&amp;uid=16752384&amp;uid=62&amp;uid=3739256&amp;sid=21103820705023">Dempster, A. P.; Laird, N. M.; Rubin, D. B. Maximum likelihood from incomplete data via the EM algorithm. With discussion. J. Roy. Statist. Soc. Ser. B 39 (1977), no. 1, 1–38</a></li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="mlem">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">mlem</span></tt><a class="headerlink" href="#mlem" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -160,12 +99,6 @@ shape is the same as the reconstructed data.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
              >next</a> |</li>
         <li class="right" >
@@ -179,7 +112,7 @@ shape is the same as the reconstructed data.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

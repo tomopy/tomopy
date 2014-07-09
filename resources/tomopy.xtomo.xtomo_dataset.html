@@ -37,12 +37,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.xtomo.xtomo_io.html" title="xtomo_io"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -59,156 +53,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.xtomo.xtomo_dataset">
-<span id="xtomo-dataset"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">xtomo_dataset</span></tt><a class="headerlink" href="#module-tomopy.xtomo.xtomo_dataset" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset">
-<em class="property">class </em><tt class="descclassname">tomopy.xtomo.xtomo_dataset.</tt><tt class="descname">XTomoDataset</tt><big>(</big><em>xtomo</em>, <em>log='INFO'</em>, <em>color_log=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_dataset.html#XTomoDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.adaptive_segment">
-<tt class="descname">adaptive_segment</tt><big>(</big><em>xtomo</em>, <em>block_size=256</em>, <em>offset=0</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.adaptive_segment" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.apply_mask">
-<tt class="descname">apply_mask</tt><big>(</big><em>xtomo</em>, <em>ratio=1</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.apply_mask" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.apply_padding">
-<tt class="descname">apply_padding</tt><big>(</big><em>xtomo</em>, <em>num_pad=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.apply_padding" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.art">
-<tt class="descname">art</tt><big>(</big><em>xtomo</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.art" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.correct_drift">
-<tt class="descname">correct_drift</tt><big>(</big><em>xtomo</em>, <em>air_pixels=20</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.correct_drift" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.dataset">
-<tt class="descname">dataset</tt><big>(</big><em>xtomo</em>, <em>data</em>, <em>data_white=None</em>, <em>data_dark=None</em>, <em>theta=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_dataset.html#XTomoDataset.dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Import X-ray absorption tomography data object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xtomo</strong> : tomopy data object</p>
-<blockquote>
-<div><p>This is the core X-ray absorption tomography 
-data object that all low-level 
-attributes and methods are bound to.</p>
-</div></blockquote>
-<p><strong>data</strong> : ndarray</p>
-<blockquote>
-<div><p>3-D X-ray absorption tomography raw data. 
-Size of the dimensions should be: 
-[projections, slices, pixels].</p>
-</div></blockquote>
-<p><strong>data_white, data_dark</strong> : ndarray,  optional</p>
-<blockquote>
-<div><p>3-D white-field/dark_field data. Multiple 
-projections are stacked together to obtain 
-a 3-D matrix. 2nd and 3rd dimensions should 
-be the same as data: [shots, slices, pixels].</p>
-</div></blockquote>
-<p><strong>theta</strong> : ndarray, optional</p>
-<blockquote class="last">
-<div><p>Data acquisition angles corresponding
-to each projection.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.diagnose_center">
-<tt class="descname">diagnose_center</tt><big>(</big><em>xtomo</em>, <em>dir_path=None</em>, <em>slice_no=None</em>, <em>center_start=None</em>, <em>center_end=None</em>, <em>center_step=None</em>, <em>mask=True</em>, <em>ratio=1</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.diagnose_center" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.downsample2d">
-<tt class="descname">downsample2d</tt><big>(</big><em>xtomo</em>, <em>level=1</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.downsample2d" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.downsample3d">
-<tt class="descname">downsample3d</tt><big>(</big><em>xtomo</em>, <em>level=1</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.downsample3d" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.gridrec">
-<tt class="descname">gridrec</tt><big>(</big><em>xtomo</em>, <em>overwrite=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.gridrec" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.median_filter">
-<tt class="descname">median_filter</tt><big>(</big><em>xtomo</em>, <em>size=5</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.median_filter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem">
-<tt class="descname">mlem</tt><big>(</big><em>xtomo</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.normalize">
-<tt class="descname">normalize</tt><big>(</big><em>xtomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.normalize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.optimize_center">
-<tt class="descname">optimize_center</tt><big>(</big><em>xtomo</em>, <em>slice_no=None</em>, <em>center_init=None</em>, <em>tol=0.5</em>, <em>overwrite=True</em>, <em>mask=True</em>, <em>ratio=1</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.optimize_center" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.phase_retrieval">
-<tt class="descname">phase_retrieval</tt><big>(</big><em>xtomo</em>, <em>pixel_size=0.0001</em>, <em>dist=50</em>, <em>energy=20</em>, <em>alpha=0.0001</em>, <em>padding=True</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.phase_retrieval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.region_segment">
-<tt class="descname">region_segment</tt><big>(</big><em>xtomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.region_segment" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.remove_background">
-<tt class="descname">remove_background</tt><big>(</big><em>xtomo</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.remove_background" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.stripe_removal">
-<tt class="descname">stripe_removal</tt><big>(</big><em>xtomo</em>, <em>level=None</em>, <em>wname='db5'</em>, <em>sigma=2</em>, <em>padding=False</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.stripe_removal" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.threshold_segment">
-<tt class="descname">threshold_segment</tt><big>(</big><em>xtomo</em>, <em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.threshold_segment" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2d">
-<tt class="descname">upsample2d</tt><big>(</big><em>xtomo</em>, <em>level=1</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2d" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample3d">
-<tt class="descname">upsample3d</tt><big>(</big><em>xtomo</em>, <em>level=1</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample3d" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.zinger_removal">
-<tt class="descname">zinger_removal</tt><big>(</big><em>xtomo</em>, <em>zinger_level=1000</em>, <em>median_width=3</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.zinger_removal" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+  <div class="section" id="xtomo-dataset">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">xtomo_dataset</span></tt><a class="headerlink" href="#xtomo-dataset" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -252,12 +98,6 @@ to each projection.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.xtomo.xtomo_io.html" title="xtomo_io"
              >next</a> |</li>
         <li class="right" >
@@ -270,7 +110,7 @@ to each projection.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

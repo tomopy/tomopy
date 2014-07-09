@@ -26,7 +26,7 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
     <link rel="up" title="preprocess Module" href="tomopy.algorithms.preprocess.html" />
-    <link rel="next" title="correct_drift" href="tomopy.algorithms.preprocess.correct_drift.html" />
+    <link rel="next" title="circular_roi" href="tomopy.algorithms.preprocess.circular_roi.html" />
     <link rel="prev" title="preprocess Module" href="tomopy.algorithms.preprocess.html" /> 
   </head>
   <body>
@@ -37,13 +37,7 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.preprocess.correct_drift.html" title="correct_drift"
+          <a href="tomopy.algorithms.preprocess.circular_roi.html" title="circular_roi"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.html" title="preprocess Module"
@@ -60,67 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.preprocess.apply_padding">
-<span id="apply-padding"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">apply_padding</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.apply_padding" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.preprocess.apply_padding.apply_padding">
-<tt class="descclassname">tomopy.algorithms.preprocess.apply_padding.</tt><tt class="descname">apply_padding</tt><big>(</big><em>data</em>, <em>num_pad</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/apply_padding.html#apply_padding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.apply_padding.apply_padding" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies zero padding to each projection data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>num_pad</strong> : scalar, int32</p>
-<blockquote>
-<div><p>New dimension of the projections  
-after padding.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Padded data.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Examples</p>
-<ul>
-<li><p class="first">Apply padding:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">slices_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data before padding</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/before_pad_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform padding</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">apply_padding</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data after padding</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_pad_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="apply-padding">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">apply_padding</span></tt><a class="headerlink" href="#apply-padding" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -133,8 +68,8 @@ after padding.</p>
   <p class="topless"><a href="tomopy.algorithms.preprocess.html"
                         title="previous chapter"><tt class="docutils literal"><span class="pre">preprocess</span></tt> Module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tomopy.algorithms.preprocess.correct_drift.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">correct_drift</span></tt></a></p>
+  <p class="topless"><a href="tomopy.algorithms.preprocess.circular_roi.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">circular_roi</span></tt></a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/resources/tomopy.algorithms.preprocess.apply_padding.txt"
@@ -164,13 +99,7 @@ after padding.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.preprocess.correct_drift.html" title="correct_drift"
+          <a href="tomopy.algorithms.preprocess.circular_roi.html" title="circular_roi"
              >next</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.html" title="preprocess Module"
@@ -183,7 +112,7 @@ after padding.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

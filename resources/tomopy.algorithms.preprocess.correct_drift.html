@@ -26,8 +26,8 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
     <link rel="up" title="preprocess Module" href="tomopy.algorithms.preprocess.html" />
-    <link rel="next" title="downsample" href="tomopy.algorithms.preprocess.downsample.html" />
-    <link rel="prev" title="apply_padding" href="tomopy.algorithms.preprocess.apply_padding.html" /> 
+    <link rel="next" title="correct_fov" href="tomopy.algorithms.preprocess.correct_fov.html" />
+    <link rel="prev" title="circular_roi" href="tomopy.algorithms.preprocess.circular_roi.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,16 +37,10 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.preprocess.downsample.html" title="downsample"
+          <a href="tomopy.algorithms.preprocess.correct_fov.html" title="correct_fov"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="tomopy.algorithms.preprocess.apply_padding.html" title="apply_padding"
+          <a href="tomopy.algorithms.preprocess.circular_roi.html" title="circular_roi"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
@@ -60,73 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.preprocess.correct_drift">
-<span id="correct-drift"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_drift</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.correct_drift" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.preprocess.correct_drift.correct_drift">
-<tt class="descclassname">tomopy.algorithms.preprocess.correct_drift.</tt><tt class="descname">correct_drift</tt><big>(</big><em>data</em>, <em>air_pixels</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/correct_drift.html#correct_drift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.correct_drift.correct_drift" title="Permalink to this definition">¶</a></dt>
-<dd><p>Corrects for drifts in the sinogram.</p>
-<p>It normalizes sinogram such that the left and 
-the right boundaries are set to one and
-all intermediate values between the boundaries 
-are normalized linearly. It can be used if white
-field is absent.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>air_pixels</strong> : scalar, int32</p>
-<blockquote>
-<div><p>number of pixels at each boundaries that
-the white field will be approximated
-for normalization.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Normalized data.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Examples</p>
-<ul>
-<li><p class="first">Auto-normalize and correct for drifts in sinogram:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">slices_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data before correction</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/before_correction_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform correction</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">correct_drift</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data after correction</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_correction_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="correct-drift">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_drift</span></tt><a class="headerlink" href="#correct-drift" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -136,11 +65,11 @@ for normalization.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="tomopy.algorithms.preprocess.apply_padding.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">apply_padding</span></tt></a></p>
+  <p class="topless"><a href="tomopy.algorithms.preprocess.circular_roi.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">circular_roi</span></tt></a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tomopy.algorithms.preprocess.downsample.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">downsample</span></tt></a></p>
+  <p class="topless"><a href="tomopy.algorithms.preprocess.correct_fov.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">correct_fov</span></tt></a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/resources/tomopy.algorithms.preprocess.correct_drift.txt"
@@ -170,16 +99,10 @@ for normalization.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.preprocess.downsample.html" title="downsample"
+          <a href="tomopy.algorithms.preprocess.correct_fov.html" title="correct_fov"
              >next</a> |</li>
         <li class="right" >
-          <a href="tomopy.algorithms.preprocess.apply_padding.html" title="apply_padding"
+          <a href="tomopy.algorithms.preprocess.circular_roi.html" title="circular_roi"
              >previous</a> |</li>
         <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
@@ -189,7 +112,7 @@ for normalization.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

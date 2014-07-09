@@ -37,12 +37,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.preprocess.stripe_removal.html" title="stripe_removal"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -60,144 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.preprocess.phase_retrieval">
-<span id="phase-retrieval"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">phase_retrieval</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.phase_retrieval" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.preprocess.phase_retrieval.paganin_filter">
-<tt class="descclassname">tomopy.algorithms.preprocess.phase_retrieval.</tt><tt class="descname">paganin_filter</tt><big>(</big><em>data</em>, <em>pixel_size</em>, <em>dist</em>, <em>energy</em>, <em>alpha</em>, <em>padding</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/phase_retrieval.html#paganin_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.phase_retrieval.paganin_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates Paganin-type filter.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>pixel_size</strong> : scalar</p>
-<blockquote>
-<div><p>Detector pixel size in cm.</p>
-</div></blockquote>
-<p><strong>dist</strong> : scalar</p>
-<blockquote>
-<div><p>Propagation distance of x-rays in cm.</p>
-</div></blockquote>
-<p><strong>energy</strong> : scalar</p>
-<blockquote>
-<div><p>Energy of x-rays in keV.</p>
-</div></blockquote>
-<p><strong>alpha</strong> : scalar, optional</p>
-<blockquote>
-<div><p>Regularization parameter.</p>
-</div></blockquote>
-<p><strong>padding</strong> : bool, optional</p>
-<blockquote>
-<div><p>Applies padding for Fourier transform. For quick testing
-you can use False for faster results.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>phase</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Paganin filter.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">References</p>
-<ul class="simple">
-<li><a class="reference external" href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract">J. of Microscopy, Vol 206(1), 33-40, 2001</a></li>
-</ul>
-</dd></dl>
-
-<dl class="function">
-<dt id="tomopy.algorithms.preprocess.phase_retrieval.phase_retrieval">
-<tt class="descclassname">tomopy.algorithms.preprocess.phase_retrieval.</tt><tt class="descname">phase_retrieval</tt><big>(</big><em>args</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/phase_retrieval.html#phase_retrieval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.phase_retrieval.phase_retrieval" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform single-material phase retrieval
-using projection data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>pixel_size</strong> : scalar</p>
-<blockquote>
-<div><p>Detector pixel size in cm.</p>
-</div></blockquote>
-<p><strong>dist</strong> : scalar</p>
-<blockquote>
-<div><p>Propagation distance of x-rays in cm.</p>
-</div></blockquote>
-<p><strong>energy</strong> : scalar</p>
-<blockquote>
-<div><p>Energy of x-rays in keV.</p>
-</div></blockquote>
-<p><strong>alpha</strong> : scalar, optional</p>
-<blockquote>
-<div><p>Regularization parameter.</p>
-</div></blockquote>
-<p><strong>padding</strong> : bool, optional</p>
-<blockquote>
-<div><p>Applies padding for Fourier transform. For quick testing
-you can use False for faster results.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>phase</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Retrieved phase.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">References</p>
-<ul class="simple">
-<li><a class="reference external" href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract">J. of Microscopy, Vol 206(1), 33-40, 2001</a></li>
-</ul>
-<p class="rubric">Examples</p>
-<ul>
-<li><p class="first">Phase retrieval:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Reconstruct data before phase retrieval</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">center</span><span class="o">=</span><span class="mf">661.5</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">gridrec</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save reconstructed data before phase retrieval</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/before_phase_retrieval_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Reconstruct data after phase retrieval</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">phase_retrieval</span><span class="p">(</span><span class="n">pixel_size</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">energy</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">gridrec</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save reconstructed data after phase retrieval</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_phase_retrieval_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="phase-retrieval">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">phase_retrieval</span></tt><a class="headerlink" href="#phase-retrieval" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -241,12 +99,6 @@ you can use False for faster results.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.preprocess.stripe_removal.html" title="stripe_removal"
              >next</a> |</li>
         <li class="right" >
@@ -260,7 +112,7 @@ you can use False for faster results.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

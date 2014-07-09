@@ -37,12 +37,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.preprocess.zinger_removal.html" title="zinger_removal"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -60,78 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.preprocess.stripe_removal">
-<span id="stripe-removal"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">stripe_removal</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.stripe_removal" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.preprocess.stripe_removal.stripe_removal">
-<tt class="descclassname">tomopy.algorithms.preprocess.stripe_removal.</tt><tt class="descname">stripe_removal</tt><big>(</big><em>args</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/stripe_removal.html#stripe_removal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.stripe_removal.stripe_removal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove stripes from sinogram data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
-<blockquote>
-<div><p>3-D tomographic data with dimensions:
-[projections, slices, pixels]</p>
-</div></blockquote>
-<p><strong>level</strong> : scalar</p>
-<blockquote>
-<div><p>Number of DWT levels.</p>
-</div></blockquote>
-<p><strong>wname</strong> : str</p>
-<blockquote>
-<div><p>Type of the wavelet filter.</p>
-</div></blockquote>
-<p><strong>sigma</strong> : scalar</p>
-<blockquote>
-<div><p>Damping parameter in Fourier space.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Corrected data.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">References</p>
-<ul class="simple">
-<li><a class="reference external" href="http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567">Optics Express, Vol 17(10), 8567-8591(2009)</a></li>
-</ul>
-<p class="rubric">Examples</p>
-<ul>
-<li><p class="first">Remove sinogram stripes:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">slices_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data before stripe removal</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/before_stripe_removal_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform stripe removal</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">stripe_removal</span><span class="p">(</span><span class="n">padding</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data after stripe removal</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_stripe_removal_&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="stripe-removal">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">stripe_removal</span></tt><a class="headerlink" href="#stripe-removal" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -175,12 +99,6 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.preprocess.zinger_removal.html" title="zinger_removal"
              >next</a> |</li>
         <li class="right" >
@@ -194,7 +112,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

@@ -37,12 +37,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.postprocess.threshold_segment.html" title="threshold_segment"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -60,40 +54,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.postprocess.remove_background">
-<span id="remove-background"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">remove_background</span></tt><a class="headerlink" href="#module-tomopy.algorithms.postprocess.remove_background" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="tomopy.algorithms.postprocess.remove_background.remove_background">
-<tt class="descclassname">tomopy.algorithms.postprocess.remove_background.</tt><tt class="descname">remove_background</tt><big>(</big><em>args</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/postprocess/remove_background.html#remove_background"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.postprocess.remove_background.remove_background" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove background from reconstructed data.</p>
-<p>We use morphological reconstruction to create 
-a background image, which we can subtract from 
-the original image to isolate bright features.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
-<blockquote>
-<div><p>3-D reconstructed data with dimensions:
-[slices, pixels, pixels]</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
-<blockquote class="last">
-<div><p>Background removed data.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">References</p>
-<ul class="simple">
-<li><a class="reference external" href="http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html">http://scikit-image.org/docs/dev/auto_examples/plot_regional_maxima.html</a></li>
-</ul>
-</dd></dl>
-
+  <div class="section" id="remove-background">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">remove_background</span></tt><a class="headerlink" href="#remove-background" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -137,12 +99,6 @@ the original image to isolate bright features.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.postprocess.threshold_segment.html" title="threshold_segment"
              >next</a> |</li>
         <li class="right" >
@@ -156,7 +112,7 @@ the original image to isolate bright features.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>
