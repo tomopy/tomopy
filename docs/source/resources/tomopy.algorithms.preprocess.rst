@@ -4,10 +4,12 @@
 
 .. toctree::
    tomopy.algorithms.preprocess.apply_padding
+   tomopy.algorithms.preprocess.circular_roi
    tomopy.algorithms.preprocess.correct_drift
    tomopy.algorithms.preprocess.correct_fov
    tomopy.algorithms.preprocess.correct_tilt
    tomopy.algorithms.preprocess.downsample
+   tomopy.algorithms.preprocess.focus_region
    tomopy.algorithms.preprocess.median_filter
    tomopy.algorithms.preprocess.normalize
    tomopy.algorithms.preprocess.phase_retrieval
