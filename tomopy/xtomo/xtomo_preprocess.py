@@ -293,7 +293,7 @@ def _median_filter(self, size=5, axis=1,
 
 # --------------------------------------------------------------------
 
-def _normalize(self, cutoff=None, 
+def _normalize(self, cutoff=None, negvals=1,
                num_cores=None, chunk_size=None,
                overwrite=True):
 
@@ -303,13 +303,14 @@ def _normalize(self, cutoff=None,
     
     # Distribute jobs.
     _func = normalize
-    _args = (avg_white, avg_dark, cutoff)
+    _args = (avg_white, avg_dark, cutoff, negvals)
     _axis = 0 # Projection axis
     data = distribute_jobs(self.data, _func, _args, _axis, 
 			   num_cores, chunk_size)
 
     # Update log.
     self.logger.debug("normalize: cutoff: " + str(cutoff))
+    self.logger.debug("normalize: negvals: " + str(negvals))
     self.logger.info("normalize [ok]")
     
     # Update returned values.
