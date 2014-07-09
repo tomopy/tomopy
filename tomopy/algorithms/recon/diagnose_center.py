@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import skimage.io
+from skimage import io as skimage_io 
 import warnings
 
 from gridrec import Gridrec
@@ -130,6 +130,6 @@ def diagnose_center(data, theta, dir_path, slice_no,
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                skimage.io.imsave(file_name, arr, plugin='tifffile')
+                skimage_io.imsave(file_name, arr, plugin='tifffile')
     
     return dtype, data_max, data_min
