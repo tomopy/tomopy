@@ -37,6 +37,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.algorithms.recon.upsample.html" title="upsample"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -54,8 +60,84 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="sirt">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">sirt</span></tt><a class="headerlink" href="#sirt" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.recon.sirt">
+<span id="sirt"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">sirt</span></tt><a class="headerlink" href="#module-tomopy.algorithms.recon.sirt" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.recon.sirt.sirt">
+<tt class="descclassname">tomopy.algorithms.recon.sirt.</tt><tt class="descname">sirt</tt><big>(</big><em>data</em>, <em>theta</em>, <em>center</em>, <em>num_grid</em>, <em>iters</em>, <em>init_matrix</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/sirt.html#sirt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.sirt.sirt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies Simultaneous Iterative Reconstruction Technique (SIRT) 
+to obtain reconstructions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>3-D tomographic data with dimensions:
+[projections, slices, pixels]</p>
+</div></blockquote>
+<p><strong>theta</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>Projection angles in radians.</p>
+</div></blockquote>
+<p><strong>center</strong> : scalar, float32</p>
+<blockquote>
+<div><p>Pixel index corresponding to the 
+center of rotation axis.</p>
+</div></blockquote>
+<p><strong>num_grid</strong> : scalar, int32</p>
+<blockquote>
+<div><p>Grid size of the econstructed images.</p>
+</div></blockquote>
+<p><strong>iters</strong> : scalar int32</p>
+<blockquote>
+<div><p>Number of mlem iterations.</p>
+</div></blockquote>
+<p><strong>init_matrix</strong> : ndarray</p>
+<blockquote>
+<div><p>Initial guess for the reconstruction. Its
+shape is the same as the reconstructed data.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Reconstructed data with dimensions:
+[slices, num_grid, num_grid]</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Reconstruct using SIRT:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">slices_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">correct_drift</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="mi">662</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform reconstruction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">sirt</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save reconstructed data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/recon_&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
 </div>
 
 
@@ -98,6 +180,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.recon.upsample.html" title="upsample"
              >next</a> |</li>

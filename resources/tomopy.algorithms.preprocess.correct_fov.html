@@ -37,6 +37,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.algorithms.preprocess.correct_tilt.html" title="correct_tilt"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -54,8 +60,40 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="correct-fov">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_fov</span></tt><a class="headerlink" href="#correct-fov" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.preprocess.correct_fov">
+<span id="correct-fov"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_fov</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.correct_fov" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.preprocess.correct_fov.correct_fov">
+<tt class="descclassname">tomopy.algorithms.preprocess.correct_fov.</tt><tt class="descname">correct_fov</tt><big>(</big><em>data</em>, <em>num_overlap_pixels=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/correct_fov.html#correct_fov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.correct_fov.correct_fov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stich 180-360 degree projections on 0-180 degree
+projections. This is usually the case when field
+of view of the detector is smaller than the
+object to be imaged.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>Input data.</p>
+</div></blockquote>
+<p><strong>num_overlap_pixels</strong> : scalar, optional</p>
+<blockquote>
+<div><p>The overlapping regions between 0-180 and 180-360
+degree projections.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Output processed data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -98,6 +136,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.correct_tilt.html" title="correct_tilt"
              >next</a> |</li>

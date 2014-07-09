@@ -36,6 +36,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.xtomo.xtomo_dataset.html" title="xtomo_dataset"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
@@ -49,8 +55,195 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="xtomo-io">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">xtomo_io</span></tt><a class="headerlink" href="#xtomo-io" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.xtomo.xtomo_io">
+<span id="xtomo-io"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">xtomo_io</span></tt><a class="headerlink" href="#module-tomopy.xtomo.xtomo_io" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.xtomo.xtomo_io.xtomo_reader">
+<tt class="descclassname">tomopy.xtomo.xtomo_io.</tt><tt class="descname">xtomo_reader</tt><big>(</big><em>file_name</em>, <em>projections_start=None</em>, <em>projections_end=None</em>, <em>projections_step=None</em>, <em>slices_start=None</em>, <em>slices_end=None</em>, <em>slices_step=None</em>, <em>pixels_start=None</em>, <em>pixels_end=None</em>, <em>pixels_step=None</em>, <em>white_start=None</em>, <em>white_end=None</em>, <em>dark_start=None</em>, <em>dark_end=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_io.html#xtomo_reader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_io.xtomo_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Data Exchange HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>file_name</strong> : str</p>
+<blockquote>
+<div><p>Input file.</p>
+</div></blockquote>
+<p><strong>projections_start, projections_end, projections_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the projections to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>slices_start, slices_end, slices_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the slices to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>pixels_start, pixels_end, pixels_step</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start, end and step of the pixels to
+be used for slicing for the whole data.</p>
+</div></blockquote>
+<p><strong>white_start, white_end</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Values of the start and end of the
+slicing for the whole white field shots.</p>
+</div></blockquote>
+<p><strong>dark_start, dark_end</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>Values of the start and end of the
+slicing for the whole dark field shots.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Import data, white-field, dark-field and projection angles
+from HDF5 file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Image data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Import only 4th slice from HDF5 file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span>  <span class="n">slices_start</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Image data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.xtomo.xtomo_io.xtomo_writer">
+<tt class="descclassname">tomopy.xtomo.xtomo_io.</tt><tt class="descname">xtomo_writer</tt><big>(</big><em>data</em>, <em>output_file=None</em>, <em>x_start=0</em>, <em>digits=5</em>, <em>axis=0</em>, <em>overwrite=False</em>, <em>delete=False</em>, <em>dtype='float32'</em>, <em>data_min=None</em>, <em>data_max=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_io.html#xtomo_writer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_io.xtomo_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write 3-D data to a stack of tif files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output_file</strong> : str, optional</p>
+<blockquote>
+<div><p>Name of the output file.</p>
+</div></blockquote>
+<p><strong>x_start</strong> : scalar, optional</p>
+<blockquote>
+<div><p>First index of the data on first dimension
+of the array.</p>
+</div></blockquote>
+<p><strong>digits</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Number of digits used for file indexing.
+For example if 4: test_XXXX.tiff</p>
+</div></blockquote>
+<p><strong>axis</strong> : scalar, optional</p>
+<blockquote>
+<div><p>Imaages is read along that axis.</p>
+</div></blockquote>
+<p><strong>overwrite: bool, optional</strong> :</p>
+<blockquote>
+<div><p>if overwrite=True the existing files in the
+reconstruction folder will be overwritten
+with the new ones.</p>
+</div></blockquote>
+<p><strong>delete: bool, optional</strong> :</p>
+<blockquote>
+<div><p>if delete=True the reconstruction
+folder and its contents will be deleted.</p>
+</div></blockquote>
+<p><strong>dtype</strong> : bool, optional</p>
+<blockquote>
+<div><p>Export data type precision.</p>
+</div></blockquote>
+<p><strong>data_min, data_max</strong> : scalar, optional</p>
+<blockquote class="last">
+<div><p>User defined minimum and maximum values
+in the data that will be used to scale 
+the dataset when saving.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If file exists, saves it with a modified name.</p>
+<p>If output location is not specified, the data is
+saved inside <tt class="docutils literal"><span class="pre">recon</span></tt> folder where the input data
+resides. The name of the reconstructed files will
+be initialized with <tt class="docutils literal"><span class="pre">recon</span></tt></p>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Save sinogram data:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/slice_&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Save first 16 projections:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">projections_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">projections_end</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/projection_&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Save reconstructed slices:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform reconstruction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="mf">661.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">gridrec</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/reconstruction_&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
 </div>
 
 
@@ -90,6 +283,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.xtomo.xtomo_dataset.html" title="xtomo_dataset"
              >previous</a> |</li>

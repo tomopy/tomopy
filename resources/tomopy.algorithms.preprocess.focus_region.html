@@ -37,6 +37,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.algorithms.preprocess.median_filter.html" title="median_filter"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -54,8 +60,54 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="focus-region">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">focus_region</span></tt><a class="headerlink" href="#focus-region" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.preprocess.focus_region">
+<span id="focus-region"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">focus_region</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.focus_region" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.preprocess.focus_region.focus_region">
+<tt class="descclassname">tomopy.algorithms.preprocess.focus_region.</tt><tt class="descname">focus_region</tt><big>(</big><em>data</em>, <em>xcoord</em>, <em>ycoord</em>, <em>diameter</em>, <em>center</em>, <em>padded=False</em>, <em>correction=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/focus_region.html#focus_region"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.focus_region.focus_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses only a portion of the sinogram for reconstructing
+a circular region of interest (ROI).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>3-D tomographic data with dimensions:
+[projections, slices, pixels]</p>
+</div></blockquote>
+<p><strong>xcoord, ycoord</strong> : scalar</p>
+<blockquote>
+<div><p>X- and Y-coordinates of the center location of the circular ROI.</p>
+</div></blockquote>
+<p><strong>diameter</strong> : scalar</p>
+<blockquote>
+<div><p>Diameter of the circular ROI.</p>
+</div></blockquote>
+<p><strong>center</strong> : scalar</p>
+<blockquote>
+<div><p>Center of rotation of the original dataset.</p>
+</div></blockquote>
+<p><strong>padded</strong> : bool, optional</p>
+<blockquote>
+<div><p>True if the original sinogram size is preserved.</p>
+</div></blockquote>
+<p><strong>correction</strong> : bool, optional</p>
+<blockquote>
+<div><p>True if the correct_drift is applied after ROI selection.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>roidata</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Modified ROI data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -98,6 +150,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.median_filter.html" title="median_filter"
              >next</a> |</li>

@@ -37,6 +37,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.algorithms.preprocess.correct_drift.html" title="correct_drift"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -54,8 +60,39 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="circular-roi">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">circular_roi</span></tt><a class="headerlink" href="#circular-roi" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.preprocess.circular_roi">
+<span id="circular-roi"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">circular_roi</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.circular_roi" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.preprocess.circular_roi.circular_roi">
+<tt class="descclassname">tomopy.algorithms.preprocess.circular_roi.</tt><tt class="descname">circular_roi</tt><big>(</big><em>data</em>, <em>ratio</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/circular_roi.html#circular_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.circular_roi.circular_roi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply circular mask to projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>3-D reconstructed data with dimensions:
+[projections, slices, pixels]</p>
+</div></blockquote>
+<p><strong>ratio</strong> : scalar, int</p>
+<blockquote>
+<div><p>Ratio of the circular mask&#8217;s diameter in pixels
+to the number of reconstructed image pixels 
+(i.e., the dimension of the images).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Masked data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -98,6 +135,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.correct_drift.html" title="correct_drift"
              >next</a> |</li>

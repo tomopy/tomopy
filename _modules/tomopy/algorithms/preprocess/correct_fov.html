@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tomopy.algorithms.preprocess.correct_fov &mdash; tomopy 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="tomopy 0.0.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for tomopy.algorithms.preprocess.correct_fov</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="correct_fov"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.preprocess.correct_fov.html#tomopy.algorithms.preprocess.correct_fov.correct_fov">[docs]</a><span class="k">def</span> <span class="nf">correct_fov</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">num_overlap_pixels</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Stich 180-360 degree projections on 0-180 degree</span>
+<span class="sd">    projections. This is usually the case when field</span>
+<span class="sd">    of view of the detector is smaller than the</span>
+<span class="sd">    object to be imaged.</span>
+<span class="sd">        </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray</span>
+<span class="sd">        Input data.</span>
+<span class="sd">        </span>
+<span class="sd">    num_overlap_pixels : scalar, optional</span>
+<span class="sd">        The overlapping regions between 0-180 and 180-360</span>
+<span class="sd">        degree projections.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data : ndarray</span>
+<span class="sd">        Output processed data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">num_overlap_pixels</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">num_overlap_pixels</span> <span class="o">=</span> <span class="n">_optimize_num_overlap_pixels</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    
+    <span class="c">#num_projection, num_slices, num_pixels = data.shape</span>
+    <span class="c">#if num_projection % 2 != 0: # if odd</span>
+    <span class="c">#    img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]</span>
+    <span class="c">#    img_second_half = data[num_projection/2:num_projection - 1]</span>
+    <span class="c">#else:</span>
+    <span class="c">#    img_first_half = data[1:num_projection/2 + 1, :, num_overlap_pixels:num_pixels]</span>
+    <span class="c">#    img_second_half = data[num_projection/2:num_projection]</span>
+
+    <span class="n">num_projection</span><span class="p">,</span> <span class="n">num_slices</span><span class="p">,</span> <span class="n">num_pixels</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">num_projection</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># if odd</span>
+        <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">num_pixels</span><span class="o">-</span><span class="n">num_overlap_pixels</span><span class="p">]</span>
+        <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span><span class="n">num_projection</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">num_pixels</span><span class="o">-</span><span class="n">num_overlap_pixels</span><span class="p">]</span>
+        <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span><span class="n">num_projection</span><span class="p">]</span>
+    
+    <span class="n">ind</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_pixels</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">img_first_half</span><span class="p">,</span> <span class="n">img_second_half</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ind</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+<span class="c"># --------------------------------------------------------------------</span>
+</div>
+<span class="k">def</span> <span class="nf">_optimize_num_overlap_pixels</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_projection</span><span class="p">,</span> <span class="n">num_slices</span><span class="p">,</span> <span class="n">num_pixels</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">num_projection</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># if odd</span>
+        <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_slices</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span><span class="n">num_projection</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_slices</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_slices</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">num_projection</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span><span class="n">num_projection</span><span class="p">,</span> <span class="n">num_slices</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_pixels</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">img_second_half</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span>
+    
+    <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img_first_half</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img_second_half</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="n">gx1</span><span class="p">,</span> <span class="n">gy1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">img_first_half</span><span class="p">)</span>
+    <span class="n">gx2</span><span class="p">,</span> <span class="n">gy2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">img_second_half</span><span class="p">)</span>
+    <span class="n">img_first_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">gx1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">gy1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">img_second_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">gx2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">gy2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="n">img1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">img_first_half</span><span class="p">)</span>
+    <span class="n">img2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">img_second_half</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">img2</span><span class="p">),</span> <span class="n">img1</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tmp</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Argonne National Laboratory.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

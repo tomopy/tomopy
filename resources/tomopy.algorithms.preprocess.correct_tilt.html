@@ -37,6 +37,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tomopy.algorithms.preprocess.downsample.html" title="downsample"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -54,8 +60,61 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="correct-tilt">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_tilt</span></tt><a class="headerlink" href="#correct-tilt" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.preprocess.correct_tilt">
+<span id="correct-tilt"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">correct_tilt</span></tt><a class="headerlink" href="#module-tomopy.algorithms.preprocess.correct_tilt" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tomopy.algorithms.preprocess.correct_tilt.correct_tilt">
+<tt class="descclassname">tomopy.algorithms.preprocess.correct_tilt.</tt><tt class="descname">correct_tilt</tt><big>(</big><em>data</em>, <em>angle</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/preprocess/correct_tilt.html#correct_tilt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.preprocess.correct_tilt.correct_tilt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Correct for tilt of the raw projection data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote>
+<div><p>3-D tomographic data with dimensions:
+[projections, slices, pixels]</p>
+</div></blockquote>
+<p><strong>angle</strong> : scalar</p>
+<blockquote>
+<div><p>angle of rotation applied to data, data_white and data_dark data.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>rotated data.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Rotate by 0.5 deg:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Load sinogram</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform rotation</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Save sinogram after rotation</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_rotation_&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
 </div>
 
 
@@ -98,6 +157,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.preprocess.downsample.html" title="downsample"
              >next</a> |</li>
