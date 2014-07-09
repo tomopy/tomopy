@@ -72,6 +72,9 @@ def normalize(args):
     for m in ind:
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, denominator)
 
+    # Enforce data nonnegativity
+    data[data < 0] = 0
+
     if cutoff is not None:
         data[data > cutoff] = cutoff
     
