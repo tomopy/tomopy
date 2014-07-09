@@ -8,6 +8,7 @@
    tomopy.algorithms.recon.gridrec
    tomopy.algorithms.recon.mlem
    tomopy.algorithms.recon.optimize_center
+   tomopy.algorithms.recon.sirt
    tomopy.algorithms.recon.upsample
 
 .. automodule:: tomopy.algorithms.recon
