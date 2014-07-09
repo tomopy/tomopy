@@ -28,7 +28,8 @@ from tomopy.algorithms.recon.upsample import upsample2d, upsample3d
 
 def _diagnose_center(self, dir_path=None, slice_no=None,
 		     center_start=None, center_end=None, center_step=None, 
-		     mask=True, ratio=1):
+		     mask=True, ratio=1, 
+                     dtype='float32', data_min=None, data_max=None):
 	
     # Dimensions:
     num_slices = self.data.shape[1]
@@ -53,8 +54,10 @@ def _diagnose_center(self, dir_path=None, slice_no=None,
         center_step = 1
 
     # Call function.
-    diagnose_center(self.data, self.theta, dir_path, slice_no, 
-                     center_start, center_end, center_step, mask, ratio)
+    dtype, data_max, data_min = diagnose_center(
+                     self.data, self.theta, dir_path, slice_no, 
+                     center_start, center_end, center_step, mask, ratio, 
+                     dtype, data_min, data_max)
 
     # Update log.
     self.logger.debug("diagnose_center: dir_path: " + str(dir_path))
@@ -64,6 +67,9 @@ def _diagnose_center(self, dir_path=None, slice_no=None,
     self.logger.debug("diagnose_center: center_step: " + str(center_step))
     self.logger.debug("diagnose_center: mask: " + str(mask))
     self.logger.debug("diagnose_center: ratio: " + str(ratio))
+    self.logger.debug("diagnose_center: dtype: " + str(dtype))
+    self.logger.debug("diagnose_center: data_max: " + str(data_max))
+    self.logger.debug("diagnose_center: data_min: " + str(data_min))
     self.logger.info("diagnose_center [ok]")
 
 # --------------------------------------------------------------------
