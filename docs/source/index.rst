@@ -19,10 +19,6 @@ Contents
    development
    resources/tomopy
 
-.. include:: cite.rst
-.. include:: install.rst
-.. include:: development.rst
-
 Indices and tables
 ==================
 
