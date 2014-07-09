@@ -24,6 +24,10 @@ def normalize(args):
     cutoff : scalar
         Permitted maximum vaue of the
         normalized data. 
+        
+    negvals : scalar
+        Assigns new value to the nonpositive
+        alues after normalization.
 
     Returns
     -------
@@ -62,7 +66,7 @@ def normalize(args):
     
     # Function inputs
     data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
-    data_white, data_dark, cutoff = inputs
+    data_white, data_dark, cutoff, badpixels = inputs
     
     # Avoid zero division in normalization
     denominator = data_white-data_dark
@@ -72,9 +76,9 @@ def normalize(args):
     for m in ind:
         data[m, :, :] = np.divide(data[m, :, :]-data_dark, denominator)
 
-    # Enforce data nonnegativity
-    data[data < 0] = 0
-
+    # Reassign bad pixels
+    data[data <= 0] = negvals
+    
     if cutoff is not None:
         data[data > cutoff] = cutoff
     
