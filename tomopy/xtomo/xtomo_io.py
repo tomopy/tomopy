@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import warnings
-import skimage.io
+from skimage import io as skimage_io 
 import shutil
 import os
 import h5py
@@ -313,5 +313,5 @@ def xtomo_writer(data, output_file=None, x_start=0,
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            skimage.io.imsave(file_name, arr, plugin='tifffile')
+            skimage_io.imsave(file_name, arr, plugin='tifffile')
 
