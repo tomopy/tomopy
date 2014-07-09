@@ -132,6 +132,61 @@ def _correct_tilt(self, angle=0, overwrite=True):
 
 # --------------------------------------------------------------------
 
+def _diagnose(self):
+    
+    # Update log.
+    self.logger.debug("diagnose: data: shape: " + str(self.data.shape))
+    self.logger.debug("diagnose: data: dtype: " + str(self.data.dtype))
+    self.logger.debug("diagnose: data: size: %.2fMB", self.data.nbytes*9.53674e-7)
+    self.logger.debug("diagnose: data: nans: " + str(np.sum(np.isnan(self.data))))
+    self.logger.debug("diagnose: data: -inf: " + str(np.sum(np.isneginf(self.data))))
+    self.logger.debug("diagnose: data: +inf: " + str(np.sum(np.isposinf(self.data))))
+    self.logger.debug("diagnose: data: positives: " + str(np.sum(self.data>0)))
+    self.logger.debug("diagnose: data: negatives: " + str(np.sum(self.data<0)))
+    self.logger.debug("diagnose: data: mean: " + str(np.mean(self.data)))
+    self.logger.debug("diagnose: data: min: " + str(np.min(self.data)))
+    self.logger.debug("diagnose: data: max: " + str(np.max(self.data)))
+    
+    self.logger.debug("diagnose: data_white: shape: " + str(self.data_white.shape))
+    self.logger.debug("diagnose: data_white: dtype: " + str(self.data_white.dtype))
+    self.logger.debug("diagnose: data_white: size: %.2fMB", self.data_white.nbytes*9.53674e-7)
+    self.logger.debug("diagnose: data_white: nans: " + str(np.sum(np.isnan(self.data_white))))
+    self.logger.debug("diagnose: data_white: -inf: " + str(np.sum(np.isneginf(self.data_white))))
+    self.logger.debug("diagnose: data_white: +inf: " + str(np.sum(np.isposinf(self.data_white))))
+    self.logger.debug("diagnose: data_white: positives: " + str(np.sum(self.data_white>0)))
+    self.logger.debug("diagnose: data_white: negatives: " + str(np.sum(self.data_white<0)))
+    self.logger.debug("diagnose: data_white: mean: " + str(np.mean(self.data_white)))
+    self.logger.debug("diagnose: data_white: min: " + str(np.min(self.data_white)))
+    self.logger.debug("diagnose: data_white: max: " + str(np.max(self.data_white)))
+    
+    self.logger.debug("diagnose: data_dark: shape: " + str(self.data_dark.shape))
+    self.logger.debug("diagnose: data_dark: dtype: " + str(self.data_dark.dtype))
+    self.logger.debug("diagnose: data_dark: size: %.2fMB", self.data_dark.nbytes*9.53674e-7)
+    self.logger.debug("diagnose: data_dark: nans: " + str(np.sum(np.isnan(self.data_dark))))
+    self.logger.debug("diagnose: data_dark: -inf: " + str(np.sum(np.isneginf(self.data_dark))))
+    self.logger.debug("diagnose: data_dark: +inf: " + str(np.sum(np.isposinf(self.data_dark))))
+    self.logger.debug("diagnose: data_dark: positives: " + str(np.sum(self.data_dark>0)))
+    self.logger.debug("diagnose: data_dark: negatives: " + str(np.sum(self.data_dark<0)))
+    self.logger.debug("diagnose: data_dark: mean: " + str(np.mean(self.data_dark)))
+    self.logger.debug("diagnose: data_dark: min: " + str(np.min(self.data_dark)))
+    self.logger.debug("diagnose: data_dark: max: " + str(np.max(self.data_dark)))
+    
+    self.logger.debug("diagnose: theta: shape: " + str(self.theta.shape))
+    self.logger.debug("diagnose: theta: dtype: " + str(self.theta.dtype))
+    self.logger.debug("diagnose: theta: size: %.2fMB", self.theta.nbytes*9.53674e-7)
+    self.logger.debug("diagnose: theta: nans: " + str(np.sum(np.isnan(self.theta))))
+    self.logger.debug("diagnose: theta: -inf: " + str(np.sum(np.isneginf(self.theta))))
+    self.logger.debug("diagnose: theta: +inf: " + str(np.sum(np.isposinf(self.theta))))
+    self.logger.debug("diagnose: theta: positives: " + str(np.sum(self.theta>0)))
+    self.logger.debug("diagnose: theta: negatives: " + str(np.sum(self.theta<0)))
+    self.logger.debug("diagnose: theta: mean: " + str(np.mean(self.theta)))
+    self.logger.debug("diagnose: theta: min: " + str(np.min(self.theta)))
+    self.logger.debug("diagnose: theta: max: " + str(np.max(self.theta)))
+    
+    self.logger.info("diagnose [ok]")
+
+# --------------------------------------------------------------------
+
 def _downsample2d(self, level=1,
                   num_cores=None, chunk_size=None,
                   overwrite=True):
@@ -355,6 +410,7 @@ setattr(XTomoDataset, 'circular_roi', _circular_roi)
 setattr(XTomoDataset, 'correct_drift', _correct_drift)
 setattr(XTomoDataset, 'correct_fov', _correct_fov)
 setattr(XTomoDataset, 'correct_tilt', _correct_tilt)
+setattr(XTomoDataset, 'diagnose', _diagnose)
 setattr(XTomoDataset, 'downsample2d', _downsample2d)
 setattr(XTomoDataset, 'downsample3d', _downsample3d)
 setattr(XTomoDataset, 'focus_region', _focus_region)

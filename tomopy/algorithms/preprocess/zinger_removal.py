@@ -68,6 +68,6 @@ def zinger_removal(args):
     zinger_mask = np.zeros((1, data.shape[1], data.shape[2]))
 
     for m in ind:
-        tmp_img = filters.median_filter(data[m, :, :],(1, median_width))
+        tmp_img = filters.median_filter(data[m, :, :],(median_width, median_width))
         zinger_mask = ((data[m, :, :]-tmp_img) >= zinger_level).astype(int)
         data[m,:,:] = tmp_img*zinger_mask + data[m, :, :]*(1-zinger_mask)
