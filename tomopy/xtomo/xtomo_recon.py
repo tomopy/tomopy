@@ -16,8 +16,7 @@ from tomopy.xtomo.xtomo_dataset import XTomoDataset
 from tomopy.algorithms.recon.art import art
 from tomopy.algorithms.recon.sirt import sirt
 from tomopy.algorithms.recon.gridrec import Gridrec
-from tomopy.algorithms.recon.mlem_emission import mlem_emission
-from tomopy.algorithms.recon.mlem_transmission import mlem_transmission
+from tomopy.algorithms.recon.mlem import mlem
 
 # Import helper functons in the package.
 from tomopy.algorithms.recon.diagnose_center import diagnose_center
@@ -150,7 +149,9 @@ def _upsample3d(self, level=1,
     
 # --------------------------------------------------------------------
     
-def _art(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _art(self, emission=False, 
+         iters=1, num_grid=None, 
+         init_matrix=None, overwrite=True):
     
     # Dimensions:
     num_pixels = self.data.shape[2]
@@ -159,10 +160,12 @@ def _art(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     if np.max(self.theta) > 90: # then theta is obviously in radians.
         self.theta *= np.pi/180
 
-    # Pad data first.
-    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
-    #data = 1-data;
-    data = -np.log(data);
+    # Pad data.
+    if emission:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+    else:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = -np.log(data);
     
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
@@ -198,6 +201,7 @@ def _art(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data_recon = art(data, theta, center, num_grid, iters, init_matrix)
     
     # Update log.
+    self.logger.debug("art: emission: " + str(emission))
     self.logger.debug("art: iters: " + str(iters))
     self.logger.debug("art: center: " + str(center))
     self.logger.debug("art: num_grid: " + str(num_grid))
@@ -209,7 +213,9 @@ def _art(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
 # --------------------------------------------------------------------
 
-def _sirt(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _sirt(self, emission=False, 
+         iters=1, num_grid=None, 
+         init_matrix=None, overwrite=True):
     
     # Dimensions:
     num_pixels = self.data.shape[2]
@@ -218,10 +224,12 @@ def _sirt(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     if np.max(self.theta) > 90: # then theta is obviously in radians.
         self.theta *= np.pi/180
 
-    # Pad data first.
-    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
-    #data = 1-data;
-    data = -np.log(data);
+    # Pad data.
+    if emission:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+    else:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = -np.log(data);
     
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
@@ -257,6 +265,7 @@ def _sirt(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     data_recon = sirt(data, theta, center, num_grid, iters, init_matrix)
     
     # Update log.
+    self.logger.debug("sirt: emission: " + str(emission))
     self.logger.debug("sirt: iters: " + str(iters))
     self.logger.debug("sirt: center: " + str(center))
     self.logger.debug("sirt: num_grid: " + str(num_grid))
@@ -268,7 +277,9 @@ def _sirt(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
     
 # --------------------------------------------------------------------
     
-def _mlem_emission(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
+def _mlem(self, emission=False, 
+         iters=1, num_grid=None, 
+         init_matrix=None, overwrite=True):
 
     # Dimensions:
     num_pixels = self.data.shape[2]
@@ -277,10 +288,12 @@ def _mlem_emission(self, iters=1, num_grid=None, init_matrix=None, overwrite=Tru
     if np.max(self.theta) > 90: # then theta is obviously in radians.
         self.theta *= np.pi/180
 
-    # Pad data first.
-    data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
-    data = -np.log(data)
-    data[data < 0] = 0
+    # Pad data.
+    if emission:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+    else:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = -np.log(data);
 
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
@@ -313,72 +326,14 @@ def _mlem_emission(self, iters=1, num_grid=None, init_matrix=None, overwrite=Tru
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
     
     # Initialize and perform reconstruction.
-    data_recon = mlem_emission(data, theta, center, num_grid, iters, init_matrix)
+    data_recon = mlem(data, theta, center, num_grid, iters, init_matrix)
 
     # Update log.
-    self.logger.debug("mlem_emission: iters: " + str(iters))
-    self.logger.debug("mlem_emission: center: " + str(center))
-    self.logger.debug("mlem_emission: num_grid: " + str(num_grid))
-    self.logger.info("mlem_emission [ok]")
-    
-    # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
-    
-    # --------------------------------------------------------------------
-    
-def _mlem_transmission(self, iters=1, num_grid=None, init_matrix=None, overwrite=True):
-
-    # Dimensions:
-    num_pixels = self.data.shape[2]
-        
-    # This works with radians.
-    if np.max(self.theta) > 90: # then theta is obviously in radians.
-        self.theta *= np.pi/180
-
-    # Pad data first.
-    print np.mean(self.data_white)
-    data, white, dark = self.apply_padding(overwrite=False, pad_val=np.mean(self.data_white))
-
-    # Adjust center according to padding.
-    if not hasattr(self, 'center'):
-        self.center = self.data.shape[2]/2
-    center = self.center + (data.shape[2]-num_pixels)/2.
-   
-    # Set default parameters.
-    if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
-    if init_matrix is None:
-        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
-    
-
-    # Check again.
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32', copy=False)
-
-    if not isinstance(self.theta, np.float32):
-        theta = np.array(self.theta, dtype='float32')
-
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-        
-    if not isinstance(iters, np.int32):
-        iters = np.array(iters, dtype='int32')
-
-    if not isinstance(num_grid, np.int32):
-        num_grid = np.array(num_grid, dtype='int32')
-        
-    if not isinstance(init_matrix, np.float32):
-        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
-    
-    # Initialize and perform reconstruction.
-    data_recon = mlem_transmission(white, data, theta, center, num_grid, iters, init_matrix)
-
-    # Update log.
-    self.logger.debug("mlem_transmission: iters: " + str(iters))
-    self.logger.debug("mlem_transmission: center: " + str(center))
-    self.logger.debug("mlem_transmission: num_grid: " + str(num_grid))
-    self.logger.info("mlem_transmission [ok]")
+    self.logger.debug("mlem: emission: " + str(emission))
+    self.logger.debug("mlem: iters: " + str(iters))
+    self.logger.debug("mlem: center: " + str(center))
+    self.logger.debug("mlem: num_grid: " + str(num_grid))
+    self.logger.info("mlem [ok]")
     
     # Update returned values.
     if overwrite: self.data_recon = data_recon
@@ -415,6 +370,5 @@ setattr(XTomoDataset, 'upsample3d', _upsample3d)
 setattr(XTomoDataset, 'art', _art)
 setattr(XTomoDataset, 'sirt', _sirt)
 setattr(XTomoDataset, 'gridrec', _gridrec)
-setattr(XTomoDataset, 'mlem_emission', _mlem_emission)
-setattr(XTomoDataset, 'mlem_transmission', _mlem_transmission)
+setattr(XTomoDataset, 'mlem', _mlem)
 

@@ -6,9 +6,8 @@ import ctypes
 # --------------------------------------------------------------------
 
 # Get the shared library.
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                       '../..', 'lib/libprep.so'))
-libprep = ctypes.CDLL(libpath)
+libpath = os.path.join(os.path.dirname(__file__), '../../lib/libprep.so')
+libprep = ctypes.CDLL(os.path.abspath(libpath))
 
 # --------------------------------------------------------------------
 
