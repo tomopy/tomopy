@@ -62,8 +62,7 @@ ext_prep = Extension(name='tomopy.lib.libprep',
 ext_recon = Extension(name='tomopy.lib.librecon',
                     sources=['tomopy/algorithms/recon/art.c',
                              'tomopy/algorithms/recon/sirt.c',
-                             'tomopy/algorithms/recon/mlem_emission.c',
-                             'tomopy/algorithms/recon/mlem_transmission.c',
+                             'tomopy/algorithms/recon/mlem.c',
                              'tomopy/algorithms/recon/upsample.c',
                              'tomopy/algorithms/recon/gridrec/filters.cpp',
                              'tomopy/algorithms/recon/gridrec/grid.cpp',
@@ -82,8 +81,8 @@ ext_recon = Extension(name='tomopy.lib.librecon',
 ext_test = Extension(name='tomopy.lib.libtest',
                     sources=['tomopy/algorithms/recon/art.c',
                              'tomopy/algorithms/recon/sirt.c',
-                             'tomopy/algorithms/recon/mlem_emission.c',
-                             'tomopy/algorithms/recon/mlem_transmission.c'])
+                             'tomopy/algorithms/recon/mlem.c',
+                             'tomopy/algorithms/recon/apml.c'])
 
 # Main setup configuration.
 setup(
@@ -94,6 +93,7 @@ setup(
       include_package_data = True,
 
       ext_modules=[ext_fftw, ext_recon, ext_prep, ext_test],
+      #ext_modules=[ext_test],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
