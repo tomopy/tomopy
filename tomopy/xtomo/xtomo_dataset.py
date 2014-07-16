@@ -4,7 +4,7 @@ import logging
 
 
 class XTomoDataset:
-    def __init__(self, log='INFO', color_log=True):
+    def __init__(self, log='INFO', color_log=True, stream_handler=True):
         """
         Constructor.
         
@@ -26,7 +26,7 @@ class XTomoDataset:
         # Set the log level.
         self.logger = None
         self._log_level = str(log).upper()
-        self._init_logging()
+        self._init_logging(stream_handler)
 
 
     def dataset(self, data, data_white=None, 
@@ -94,7 +94,7 @@ class XTomoDataset:
                            num_projs, num_slices, num_pixels)
 
 
-    def _init_logging(self):
+    def _init_logging(self, stream_handler):
         """
         Setup and start command line logging.
         """
@@ -127,7 +127,10 @@ class XTomoDataset:
         # Show date and time.
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         ch.setFormatter(formatter)
-            
+         
         # Update logger.
         if not len(self.logger.handlers): # For fist time create handlers.
-            self.logger.addHandler(ch)
+            if stream_handler:
+                self.logger.addHandler(ch)
+            else:
+                self.logger.addHandler(logging.NullHandler())
