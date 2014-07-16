@@ -94,7 +94,6 @@ setup(
       include_package_data = True,
 
       ext_modules=[ext_fftw, ext_recon, ext_prep, ext_test],
-      #ext_modules=[ext_test],
 
       author='Doga Gursoy',
       author_email='dgursoy@aps.anl.gov',
