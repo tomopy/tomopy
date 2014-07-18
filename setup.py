@@ -63,6 +63,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
                     sources=['tomopy/algorithms/recon/art.c',
                              'tomopy/algorithms/recon/sirt.c',
                              'tomopy/algorithms/recon/mlem.c',
+                             'tomopy/algorithms/recon/pml.c',
                              'tomopy/algorithms/recon/upsample.c',
                              'tomopy/algorithms/recon/gridrec/filters.cpp',
                              'tomopy/algorithms/recon/gridrec/grid.cpp',
@@ -82,7 +83,7 @@ ext_test = Extension(name='tomopy.lib.libtest',
                     sources=['tomopy/algorithms/recon/art.c',
                              'tomopy/algorithms/recon/sirt.c',
                              'tomopy/algorithms/recon/mlem.c',
-                             'tomopy/algorithms/recon/apml.c'])
+                             'tomopy/algorithms/recon/pml.c'])
 
 # Main setup configuration.
 setup(
