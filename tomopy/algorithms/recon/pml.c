@@ -58,7 +58,7 @@ void pml(float* data, float* theta, float center,
     
     // For each iteration
     for (t = 0; t < iters; t++) {
-        printf ("apml iteration: %i \n", t+1);
+        printf ("pml iteration: %i \n", t+1);
         
         suma = (float *)calloc((num_grid*num_grid), sizeof(float));
         E = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));
