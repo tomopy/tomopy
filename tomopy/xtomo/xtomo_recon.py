@@ -17,7 +17,6 @@ from tomopy.algorithms.recon.art import art
 from tomopy.algorithms.recon.sirt import sirt
 from tomopy.algorithms.recon.gridrec import Gridrec
 from tomopy.algorithms.recon.mlem import mlem
-from tomopy.algorithms.recon.mlemos import mlemos
 from tomopy.algorithms.recon.pml import pml
 
 # Import helper functons in the package.
@@ -457,6 +456,5 @@ setattr(XTomoDataset, 'art', _art)
 setattr(XTomoDataset, 'sirt', _sirt)
 setattr(XTomoDataset, 'gridrec', _gridrec)
 setattr(XTomoDataset, 'mlem', _mlem)
-setattr(XTomoDataset, 'mlemos', _mlemos)
 setattr(XTomoDataset, 'pml', _pml)
 
