@@ -2,6 +2,8 @@
 import numpy as np
 import os
 import ctypes
+from tomopy.tools.fftw import fftw2, ifftw2
+import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
@@ -154,3 +156,54 @@ def upsample3d(data, level):
                         ctypes.c_int(level),
                         upsampled_data.ctypes.data_as(c_float_p))
     return upsampled_data
+
+
+# --------------------------------------------------------------------
+
+def upsample2df(data, level):
+    """
+    Upsample the slices in Fourier domain.
+    
+    Parameters
+    ----------
+    data : ndarray, float32
+        3-D reconstructed data with dimensions:
+        [slices, pixels, pixels]
+        
+    level : scalar, int32
+        Upsampling level. For example level=2 
+        means, the sinogram will be upsampled by 4,
+        and level=3 means upsampled by 8.
+    
+    Returns
+    -------
+    output : ndarray
+        Downsampled reconstructed 3-D data with dimensions:
+        [slices, pixels*level^2, pixels*level^2]
+        
+    """
+    num_slices = np.array(data.shape[0], dtype='int32')
+    num_pixels = np.array(data.shape[1], dtype='int32')
+    
+    binsize = np.power(2, level)
+    fftw2data = np.zeros((num_pixels*binsize, 
+                          num_pixels*binsize),
+                          dtype='complex')
+    upsampled_data = np.zeros((num_slices, 
+                          num_pixels*binsize, 
+                          num_pixels*binsize),
+                          dtype='float32')
+    
+    ind = slice(num_pixels*(binsize-1)/2, num_pixels*(binsize-1)/2+num_pixels, 1)
+    for m in range(num_slices):
+        fftw2data[ind, ind] = np.fft.fftshift(fftw2(data[m, :, :]))
+        upsampled_data[m, :, :] = np.real(ifftw2(np.fft.ifftshift(fftw2data)))
+
+    return upsampled_data
+    
+    
+    
+    
+    
+    
+    
