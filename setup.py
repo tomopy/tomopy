@@ -80,10 +80,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
                                      
 
 ext_test = Extension(name='tomopy.lib.libtest',
-                    sources=['tomopy/algorithms/recon/art.c',
-                             'tomopy/algorithms/recon/sirt.c',
-                             'tomopy/algorithms/recon/mlem.c',
-                             'tomopy/algorithms/recon/pml.c'])
+                    sources=['tomopy/algorithms/recon/mlem.c'])
 
 # Main setup configuration.
 setup(
