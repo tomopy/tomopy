@@ -22,7 +22,7 @@ from tomopy.algorithms.recon.pml import pml
 # Import helper functons in the package.
 from tomopy.algorithms.recon.diagnose_center import diagnose_center
 from tomopy.algorithms.recon.optimize_center import optimize_center
-from tomopy.algorithms.recon.upsample import upsample2d, upsample3d
+from tomopy.algorithms.recon.upsample import upsample2d, upsample3d, upsample2df
 
 # --------------------------------------------------------------------
 
@@ -107,6 +107,25 @@ def _optimize_center(self, slice_no=None, center_init=None,
     # Update returned values.
     if overwrite: self.center = center
     else: return center
+    
+# --------------------------------------------------------------------
+
+def _upsample2df(self, level=1,
+                overwrite=True):
+
+    # Check input.
+    if not isinstance(level, np.int32):
+        level = np.array(level, dtype='int32')
+
+    data_recon = upsample2df(self.data_recon, level)
+    
+    # Update log.
+    self.logger.debug("upsample2df: level: " + str(level))
+    self.logger.info("upsample2df [ok]")
+    
+    # Update returned values.
+    if overwrite: self.data_recon = data_recon
+    else: return data_recon
 	    
 # --------------------------------------------------------------------
 
@@ -431,6 +450,7 @@ def _gridrec(self, overwrite=True, *args, **kwargs):
 # Hook all these methods to TomoPy.
 setattr(XTomoDataset, 'diagnose_center', _diagnose_center)
 setattr(XTomoDataset, 'optimize_center', _optimize_center)
+setattr(XTomoDataset, 'upsample2df', _upsample2df)
 setattr(XTomoDataset, 'upsample2d', _upsample2d)
 setattr(XTomoDataset, 'upsample3d', _upsample3d)
 setattr(XTomoDataset, 'art', _art)
