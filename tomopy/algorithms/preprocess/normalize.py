@@ -27,7 +27,7 @@ def normalize(args):
         
     negvals : scalar
         Assigns new value to the nonpositive
-        alues after normalization.
+        values after normalization.
 
     Returns
     -------
@@ -72,15 +72,13 @@ def normalize(args):
     denominator = data_white-data_dark
     denominator[denominator == 0] = 1
     
-    for m in ind:
-        data[m, :, :] = np.divide(data[m, :, :]-data_dark, denominator)
-
-    # Reassign bad pixels
-    data[data <= 0] = negvals
-    
-    if cutoff is not None:
-        data[data > cutoff] = cutoff
-    
+     for m in ind:
+       proj = data[m, :, :]
+       proj = np.divide(proj-data_dark, denominator)
+       proj[proj <= 0] = negvals
+       if cutoff is not None:
+           proj[proj > cutoff] = cutoff
+       data[m, :, :] = proj
     
     
     
