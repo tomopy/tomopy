@@ -118,15 +118,12 @@ def diagnose_center(data, theta, dir_path, slice_no,
         if m % 2 == 0: # 2 slices same bec of gridrec.
             file_name = dir_path + str(np.squeeze(center[m])) + ".tif"
             arr = recon.data_recon[m, :, :]
-            print data_min, data_max
-            print np.min(arr), np.max(arr)
             if dtype is 'uint8':
                 arr = ((arr*1.0 - data_min)/(data_max-data_min)*255).astype('uint8')
             elif dtype is 'uint16':
                 arr = ((arr*1.0 - data_min)/(data_max-data_min)*65535).astype('uint16')
             elif dtype is 'float32':
                 arr = ((arr*1.0 - data_min)/(data_max-data_min)).astype('float32')
-            print np.min(arr), np.max(arr)
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
