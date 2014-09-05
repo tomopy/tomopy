@@ -8,6 +8,7 @@ import h5py
 
 
 def xtomo_reader(file_name,
+                 exchange_rank = "/exchange",
                  projections_start=None,
                  projections_end=None,
                  projections_step=None,
@@ -28,7 +29,13 @@ def xtomo_reader(file_name,
     ----------
     file_name : str
         Input file.
-    
+
+    exchange_rank : str
+        exchange tag under which are the tomographic data to process. When
+        are from the detector exchange = "/exchange", if are the result of
+        some intemedite processing step then   exchange = "/exchange1", 
+        exchange = "/exchange2" etc.
+
     projections_start, projections_end, projections_step : scalar, optional
         Values of the start, end and step of the projections to
         be used for slicing for the whole data.
@@ -83,10 +90,10 @@ def xtomo_reader(file_name,
 
     # Start working on checks and stuff.
     file_name = os.path.abspath(file_name)
-    
+
     # Start reading data.
     f = h5py.File(file_name, "r")
-    hdfdata = f["/exchange/data"]
+    hdfdata = f[exchange_rank + "/data"]
     num_x, num_y, num_z = hdfdata.shape
     if projections_end is None:
         projections_end = num_x
@@ -101,7 +108,7 @@ def xtomo_reader(file_name,
     
     try:
         # Now read white fields.
-        hdfdata = f["/exchange/data_white"]
+        hdfdata = f[exchange_rank + "/data_white"]
         if white_end is None:
             white_end = num_x
         data_white = hdfdata[white_start:white_end,
@@ -113,7 +120,7 @@ def xtomo_reader(file_name,
         
     try:
         # Now read dark fields. 
-        hdfdata = f["/exchange/data_dark"]
+        hdfdata = f[exchange_rank + "/data_dark"]
         if dark_end is None:
             dark_end = num_x
         data_dark = hdfdata[dark_start:dark_end,
@@ -125,7 +132,7 @@ def xtomo_reader(file_name,
     
     try:
         # Read projection angles.
-        hdfdata = f["/exchange/theta"]
+        hdfdata = f[exchange_rank + "/theta"]
         theta = hdfdata[projections_start:projections_end:projections_step]
         theta = np.nan_to_num(theta)
     except KeyError:
