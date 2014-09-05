@@ -31,11 +31,11 @@ def xtomo_reader(file_name,
         Input file.
 
     exchange_rank : scalar, optional
-        exchange rank is added to /exchange to point tomopy to the data to recontruct.
+        exchange rank is added to "exchange" to point tomopy to the data to recontruct.
         if rank is not set then the data are raw from the detector and are located under
-        exchange = "/exchange/...", if we want to process data that are the result of
+        exchange = "exchange/...", if we want to process data that are the result of
         some intemedite processing step then exchange_rank = 1 will direct tomopy 
-        to process "/exchange1/...", 
+        to process "exchange1/...", 
 
     projections_start, projections_end, projections_step : scalar, optional
         Values of the start, end and step of the projections to
