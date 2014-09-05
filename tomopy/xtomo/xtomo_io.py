@@ -120,7 +120,7 @@ def xtomo_reader(file_name,
         
     try:
         # Now read dark fields. 
-        hdfdata = f[exchange_rank + "data_dark"]
+        hdfdata = f[exchange_rank + "/data_dark"]
         if dark_end is None:
             dark_end = num_x
         data_dark = hdfdata[dark_start:dark_end,
@@ -132,7 +132,7 @@ def xtomo_reader(file_name,
     
     try:
         # Read projection angles.
-        hdfdata = f[exchange_rank + "theta"]
+        hdfdata = f[exchange_rank + "/theta"]
         theta = hdfdata[projections_start:projections_end:projections_step]
         theta = np.nan_to_num(theta)
     except KeyError:
