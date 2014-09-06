@@ -30,7 +30,7 @@ def xtomo_reader(file_name,
     file_name : str
         Input file.
 
-    exchange_rank : scalar, optional
+    exchange_rank : int, optional
         exchange rank is added to "exchange" to point tomopy to the data to recontruct.
         if rank is not set then the data are raw from the detector and are located under
         exchange = "exchange/...", if we want to process data that are the result of
@@ -96,11 +96,11 @@ def xtomo_reader(file_name,
     f = h5py.File(file_name, "r")
 
     if exchange_rank > 0:
-        exchange_base = 'exchange{:d}'.format(exchange_rank)
-        hdfdata = f['/'.join([exchange_base, "data"])]
+        exchange_base = 'exchange{:d}'.format(int(exchange_rank))
     else:
-        hdfdata = f["exchange/data"]
+        exchange_base = "exchange"
 
+    hdfdata = f['/'.join([exchange_base, "data"])]        
     num_x, num_y, num_z = hdfdata.shape
     if projections_end is None:
         projections_end = num_x
@@ -115,11 +115,7 @@ def xtomo_reader(file_name,
     
     try:
         # Now read white fields.
-        if exchange_rank > 0:
-            exchange_base = 'exchange{:d}'.format(exchange_rank)
-            hdfdata = f['/'.join([exchange_base, "data_white"])]
-        else:
-            hdfdata = f["exchange/data_white"]
+        hdfdata = f['/'.join([exchange_base, "data_white"])]
         if white_end is None:
             white_end = num_x
         data_white = hdfdata[white_start:white_end,
@@ -131,11 +127,7 @@ def xtomo_reader(file_name,
         
     try:
         # Now read dark fields. 
-        if exchange_rank > 0:
-            exchange_base = 'exchange{:d}'.format(exchange_rank)
-            hdfdata = f['/'.join([exchange_base, "data_dark"])]
-        else:
-            hdfdata = f["exchange/data_dark"]
+        hdfdata = f['/'.join([exchange_base, "data_dark"])]
         if dark_end is None:
             dark_end = num_x
         data_dark = hdfdata[dark_start:dark_end,
@@ -147,11 +139,7 @@ def xtomo_reader(file_name,
     
     try:
         # Read projection angles.
-        if exchange_rank > 0:
-            exchange_base = 'exchange{:d}'.format(exchange_rank)
-            hdfdata = f['/'.join([exchange_base, "theta"])]
-        else:
-            hdfdata = f["exchange/theta"]
+        hdfdata = f['/'.join([exchange_base, "theta"])]
         theta = hdfdata[projections_start:projections_end:projections_step]
         theta = np.nan_to_num(theta)
     except KeyError:
