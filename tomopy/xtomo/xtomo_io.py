@@ -8,6 +8,7 @@ import h5py
 
 
 def xtomo_reader(file_name,
+                 exchange_rank = 0,
                  projections_start=None,
                  projections_end=None,
                  projections_step=None,
@@ -28,7 +29,14 @@ def xtomo_reader(file_name,
     ----------
     file_name : str
         Input file.
-    
+
+    exchange_rank : int, optional
+        exchange rank is added to "exchange" to point tomopy to the data to recontruct.
+        if rank is not set then the data are raw from the detector and are located under
+        exchange = "exchange/...", if we want to process data that are the result of
+        some intemedite processing step then exchange_rank = 1 will direct tomopy 
+        to process "exchange1/...", 
+
     projections_start, projections_end, projections_step : scalar, optional
         Values of the start, end and step of the projections to
         be used for slicing for the whole data.
@@ -83,10 +91,16 @@ def xtomo_reader(file_name,
 
     # Start working on checks and stuff.
     file_name = os.path.abspath(file_name)
-    
+
     # Start reading data.
     f = h5py.File(file_name, "r")
-    hdfdata = f["/exchange/data"]
+
+    if exchange_rank > 0:
+        exchange_base = 'exchange{:d}'.format(int(exchange_rank))
+    else:
+        exchange_base = "exchange"
+
+    hdfdata = f['/'.join([exchange_base, "data"])]        
     num_x, num_y, num_z = hdfdata.shape
     if projections_end is None:
         projections_end = num_x
@@ -101,7 +115,7 @@ def xtomo_reader(file_name,
     
     try:
         # Now read white fields.
-        hdfdata = f["/exchange/data_white"]
+        hdfdata = f['/'.join([exchange_base, "data_white"])]
         if white_end is None:
             white_end = num_x
         data_white = hdfdata[white_start:white_end,
@@ -113,7 +127,7 @@ def xtomo_reader(file_name,
         
     try:
         # Now read dark fields. 
-        hdfdata = f["/exchange/data_dark"]
+        hdfdata = f['/'.join([exchange_base, "data_dark"])]
         if dark_end is None:
             dark_end = num_x
         data_dark = hdfdata[dark_start:dark_end,
@@ -125,7 +139,7 @@ def xtomo_reader(file_name,
     
     try:
         # Read projection angles.
-        hdfdata = f["/exchange/theta"]
+        hdfdata = f['/'.join([exchange_base, "theta"])]
         theta = hdfdata[projections_start:projections_end:projections_step]
         theta = np.nan_to_num(theta)
     except KeyError:
