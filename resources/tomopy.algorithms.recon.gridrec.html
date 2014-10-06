@@ -26,7 +26,7 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
     <link rel="up" title="recon Module" href="tomopy.algorithms.recon.html" />
-    <link rel="next" title="optimize_center" href="tomopy.algorithms.recon.optimize_center.html" />
+    <link rel="next" title="mlem" href="tomopy.algorithms.recon.mlem.html" />
     <link rel="prev" title="diagnose_center" href="tomopy.algorithms.recon.diagnose_center.html" /> 
   </head>
   <body>
@@ -40,10 +40,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
+          <a href="tomopy.algorithms.recon.mlem.html" title="mlem"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.recon.diagnose_center.html" title="diagnose_center"
@@ -65,7 +62,7 @@
 <p>Module for wrapper to gridrec.</p>
 <dl class="class">
 <dt id="tomopy.algorithms.recon.gridrec.Gridrec">
-<em class="property">class </em><tt class="descclassname">tomopy.algorithms.recon.gridrec.</tt><tt class="descname">Gridrec</tt><big>(</big><em>data</em>, <em>sinoScale=10000.0</em>, <em>reconScale=1</em>, <em>paddedSinogramWidth=None</em>, <em>airPixels=10</em>, <em>ringWidth=0</em>, <em>fluorescence=0</em>, <em>reconMethod=0</em>, <em>reconMethodTomoRecon=0</em>, <em>numThreads=24</em>, <em>slicesPerChunk=32</em>, <em>debugFileName=''</em>, <em>debug=0</em>, <em>geom=0</em>, <em>pswfParam=6</em>, <em>sampl=1</em>, <em>MaxPixSiz=1</em>, <em>ROI=1</em>, <em>X0=0</em>, <em>Y0=0</em>, <em>ltbl=512</em>, <em>fname='shepp'</em>, <em>BP_Method=0</em>, <em>BP_filterName='shepp'</em>, <em>BP_filterSize=100</em>, <em>RiemannInterpolation=0</em>, <em>RadonInterpolation=0</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/gridrec.html#Gridrec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.gridrec.Gridrec" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">tomopy.algorithms.recon.gridrec.</tt><tt class="descname">Gridrec</tt><big>(</big><em>data</em>, <em>sinoScale=10000.0</em>, <em>reconScale=1</em>, <em>paddedSinogramWidth=None</em>, <em>airPixels=10</em>, <em>ringWidth=0</em>, <em>fluorescence=0</em>, <em>reconMethod=0</em>, <em>reconMethodTomoRecon=0</em>, <em>numThreads=8</em>, <em>slicesPerChunk=32</em>, <em>debugFileName=''</em>, <em>debug=0</em>, <em>geom=0</em>, <em>pswfParam=6</em>, <em>sampl=1</em>, <em>MaxPixSiz=1</em>, <em>ROI=1</em>, <em>X0=0</em>, <em>Y0=0</em>, <em>ltbl=512</em>, <em>fname='shepp'</em>, <em>BP_Method=0</em>, <em>BP_filterName='shepp'</em>, <em>BP_filterSize=100</em>, <em>RiemannInterpolation=0</em>, <em>RadonInterpolation=0</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/gridrec.html#Gridrec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.gridrec.Gridrec" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="tomopy.algorithms.recon.gridrec.Gridrec.reconstruct">
 <tt class="descname">reconstruct</tt><big>(</big><em>data</em>, <em>center</em>, <em>theta</em>, <em>slice_no=None</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/gridrec.html#Gridrec.reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.gridrec.Gridrec.reconstruct" title="Permalink to this definition">¶</a></dt>
@@ -144,8 +141,8 @@ uses standard Boost libraries for multi-threading.</p>
   <p class="topless"><a href="tomopy.algorithms.recon.diagnose_center.html"
                         title="previous chapter"><tt class="docutils literal"><span class="pre">diagnose_center</span></tt></a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tomopy.algorithms.recon.optimize_center.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">optimize_center</span></tt></a></p>
+  <p class="topless"><a href="tomopy.algorithms.recon.mlem.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">mlem</span></tt></a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/resources/tomopy.algorithms.recon.gridrec.txt"
@@ -178,10 +175,7 @@ uses standard Boost libraries for multi-threading.</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
+          <a href="tomopy.algorithms.recon.mlem.html" title="mlem"
              >next</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.recon.diagnose_center.html" title="diagnose_center"

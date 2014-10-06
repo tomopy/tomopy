@@ -40,9 +40,6 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.algorithms.postprocess.html" title="postprocess Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -124,6 +121,38 @@ and level=3 means upsampled by 8.</p>
 </div>
 </li>
 </ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomopy.algorithms.recon.upsample.upsample2df">
+<tt class="descclassname">tomopy.algorithms.recon.upsample.</tt><tt class="descname">upsample2df</tt><big>(</big><em>data</em>, <em>level</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/upsample.html#upsample2df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.upsample.upsample2df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upsample the slices in Fourier domain.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
+<blockquote>
+<div><p>3-D reconstructed data with dimensions:
+[slices, pixels, pixels]</p>
+</div></blockquote>
+<p><strong>level</strong> : scalar, int32</p>
+<blockquote>
+<div><p>Upsampling level. For example level=2 
+means, the sinogram will be upsampled by 4,
+and level=3 means upsampled by 8.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Downsampled reconstructed 3-D data with dimensions:
+[slices, pixels*level^2, pixels*level^2]</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -234,9 +263,6 @@ and level=3 means upsampled by 8.</p>
              >index</a></li>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.algorithms.postprocess.html" title="postprocess Module"

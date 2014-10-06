@@ -40,9 +40,6 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="tomopy.xtomo.xtomo_io.html" title="xtomo_io"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -63,7 +60,7 @@
 <span id="xtomo-dataset"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">xtomo_dataset</span></tt><a class="headerlink" href="#module-tomopy.xtomo.xtomo_dataset" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset">
-<em class="property">class </em><tt class="descclassname">tomopy.xtomo.xtomo_dataset.</tt><tt class="descname">XTomoDataset</tt><big>(</big><em>log='INFO'</em>, <em>color_log=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_dataset.html#XTomoDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">tomopy.xtomo.xtomo_dataset.</tt><tt class="descname">XTomoDataset</tt><big>(</big><em>log='INFO'</em>, <em>color_log=True</em>, <em>stream_handler=True</em><big>)</big><a class="reference internal" href="../_modules/tomopy/xtomo/xtomo_dataset.html#XTomoDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.adaptive_segment">
 <tt class="descname">adaptive_segment</tt><big>(</big><em>block_size=256</em>, <em>offset=0</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.adaptive_segment" title="Permalink to this definition">¶</a></dt>
@@ -81,7 +78,7 @@
 
 <dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.art">
-<tt class="descname">art</tt><big>(</big><em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.art" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">art</tt><big>(</big><em>emission=False</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.art" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -172,13 +169,8 @@ to each projection.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem_emission">
-<tt class="descname">mlem_emission</tt><big>(</big><em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem_emission" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem_transmission">
-<tt class="descname">mlem_transmission</tt><big>(</big><em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem_transmission" title="Permalink to this definition">¶</a></dt>
+<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem">
+<tt class="descname">mlem</tt><big>(</big><em>emission=False</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.mlem" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -197,6 +189,11 @@ to each projection.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.pml">
+<tt class="descname">pml</tt><big>(</big><em>emission=False</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>beta=1</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.pml" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.region_segment">
 <tt class="descname">region_segment</tt><big>(</big><em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.region_segment" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -208,7 +205,7 @@ to each projection.</p>
 
 <dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.sirt">
-<tt class="descname">sirt</tt><big>(</big><em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.sirt" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">sirt</tt><big>(</big><em>emission=False</em>, <em>iters=1</em>, <em>num_grid=None</em>, <em>init_matrix=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.sirt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -224,6 +221,11 @@ to each projection.</p>
 <dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2d">
 <tt class="descname">upsample2d</tt><big>(</big><em>level=1</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2df">
+<tt class="descname">upsample2df</tt><big>(</big><em>level=1</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.upsample2df" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -282,9 +284,6 @@ to each projection.</p>
              >index</a></li>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
           <a href="tomopy.xtomo.xtomo_io.html" title="xtomo_io"
