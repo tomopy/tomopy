@@ -37,8 +37,9 @@ C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
 if C_INCLUDE_PATH is None:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
-    C_INCLUDE_PATH = ''
-C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+    C_INCLUDE_PATH = []
+else:
+    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
 # add ourselves to the list
 C_INCLUDE_PATH += [os.path.abspath('tomopy/algorithms/recon/gridrec')]
