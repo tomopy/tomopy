@@ -10,7 +10,8 @@ install_requires = [
             'numpy>=1.8.0',
             'scipy>=0.13.2',
             'h5py>=2.2.1',
-            'pywavelets>=0.2.2'
+            'pywavelets>=0.2.2',
+            'scikit-image>=0.10'
             ]
 
 # enforce these same requirements at packaging time
