@@ -10,7 +10,8 @@ install_requires = [
             'numpy>=1.8.0',
             'scipy>=0.13.2',
             'h5py>=2.2.1',
-            'pywavelets>=0.2.2'
+            'pywavelets>=0.2.2',
+            'scikit-image>=0.10'
             ]
 
 # enforce these same requirements at packaging time
@@ -37,8 +38,9 @@ C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
 if C_INCLUDE_PATH is None:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
-    C_INCLUDE_PATH = ''
-C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+    C_INCLUDE_PATH = []
+else:
+    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
 # add ourselves to the list
 C_INCLUDE_PATH += [os.path.abspath('tomopy/algorithms/recon/gridrec')]
