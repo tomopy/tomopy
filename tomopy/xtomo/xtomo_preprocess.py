@@ -23,7 +23,7 @@ from tomopy.algorithms.preprocess.normalize import normalize
 from tomopy.algorithms.preprocess.phase_retrieval import phase_retrieval
 from tomopy.algorithms.preprocess.stripe_removal import stripe_removal
 from tomopy.algorithms.preprocess.zinger_removal import zinger_removal
-from tomopy.algorithms.preprocess.ring_removal import ring_removal
+from tomopy.algorithms.preprocess.stripe_removal2 import stripe_removal2
 
 # Import multiprocessing module.
 from tomopy.tools.multiprocess_shared import distribute_jobs
@@ -406,25 +406,23 @@ def _zinger_removal(self, zinger_level=1000, median_width=3,
 
 # --------------------------------------------------------------------
 
-def _ring_removal(self, level=None, num_cores=None, 
+def _stripe_removal2(self, nblocks=0, alpha=1.5, num_cores=None, 
                     chunk_size=None,
                     overwrite=True):
 
-    # Find the higest level possible.
-    if level is None:
-        size = np.max(self.data.shape)
-        level = int(np.ceil(np.log2(size)))
         
     # Distribute jobs.
-    _func = ring_removal
-    _args = (level)
+    _func = stripe_removal2
+    _args = (nblocks, alpha)
     _axis = 1 # Slice axis
+
     data = distribute_jobs(self.data, _func, _args, _axis,
                            num_cores, chunk_size)
 			
     # Update log.
-    self.logger.debug("ring_removal: level: " + str(level))
-    self.logger.info("ring_removal [ok]")
+    self.logger.debug("stripe_removal2: nblocks: " + str(nblocks))
+    self.logger.debug("stripe_removal2: alpha: " + str(alpha))
+    self.logger.info("stripe_removal2 [ok]")
     
     # Update returned values.
     if overwrite: self.data = data
@@ -447,5 +445,5 @@ setattr(XTomoDataset, 'normalize', _normalize)
 setattr(XTomoDataset, 'phase_retrieval', _phase_retrieval)
 setattr(XTomoDataset, 'stripe_removal', _stripe_removal)
 setattr(XTomoDataset, 'zinger_removal', _zinger_removal)
-setattr(XTomoDataset, 'ring_removal', _ring_removal)
+setattr(XTomoDataset, 'stripe_removal2', _stripe_removal2)
 
