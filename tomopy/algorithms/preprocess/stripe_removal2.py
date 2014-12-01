@@ -2,7 +2,7 @@
 import numpy
 import tomopy.tools.multiprocess_shared as mp
 
-"""ring_removal.py: Code for ring suppression"""
+"""stripe_removal2.py: Code for ring suppression"""
 
 __author__     = "Eduardo X Miqueles"
 __copyright__  = "Copyright 2014, CNPEM/LNLS" 
@@ -11,7 +11,7 @@ __maintainer__ = "Eduardo X Miqueles"
 __email__      = "edu.miqueles@gmail.com" 
 __date__       = "14.Jan.2014" 
 
-def ring_removal(args):
+def stripe_removal2(args):
     """
     Remove stripes from sinogram data.
 
@@ -21,6 +21,12 @@ def ring_removal(args):
         3-D tomographic data with dimensions:
         [projections, slices, pixels]
          
+    nblocks : scalar
+        Number of blocks
+
+    alpha : scalar
+        Damping factor.
+
     Returns
     -------
     output : ndarray
@@ -51,7 +57,7 @@ def ring_removal(args):
         >>> d.dataset(data, white, dark, theta)
         >>> 
         >>> # Perform stripe removal
-        >>> d.ring_removal()
+        >>> d.stripe_removal2()
         >>> 
         >>> # Save data after stripe removal
         >>> output_file='tmp/after_stripe_removal_'
@@ -63,20 +69,27 @@ def ring_removal(args):
     
     # Function inputs
     data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
-    level = inputs # not used yet ... just for testing
+    nblocks, alpha = inputs 
     
     dx, num_slices, dy = dshape
-    
-    d1 = ring(data,1,1)
-    d2 = ring(data,2,1)
 
-    p = d1*d2
-
-    alpha = 1.5
-
-    d = numpy.sqrt(p + alpha*numpy.abs(p.min()))
-
-    data = d
+    sino = numpy.zeros((dx, dy), dtype='float32')
+    for n in ind:
+        sino[:, :] = -numpy.log(data[:, n, :])
+        if (nblocks == 0):
+            d1 = ring(sino,1,1)
+            d2 = ring(sino,2,1)
+            p = d1*d2
+            d = numpy.sqrt(p + alpha*numpy.abs(p.min()))
+        else:
+	        #half = int(sino.shape[0]/2)
+            size = int(sino.shape[0]/nblocks)
+            d1 = ringb(sino,1,1,size)
+            d2 = ringb(sino,2,1,size)
+            p = d1*d2
+            d = numpy.sqrt(p + alpha*numpy.fabs(p.min()))
+                    
+        data[:, n, :] = numpy.exp(-d[:, :])
 
 def kernel(m,n):
     v = [
