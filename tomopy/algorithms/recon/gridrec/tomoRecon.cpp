@@ -26,10 +26,7 @@ tomoRecon::tomoRecon(tomoParams_t *pTomoParams, float *pAngles)
    reconComplete_(1),
    shutDown_(0)
 {
-
-   char workerTaskName[20];
    char *debugFileName = pTomoParams_->debugFileName;
-   int i;
    static const char *functionName="tomoRecon::tomoRecon";
 
    debugFile_ = stdout;
@@ -50,8 +47,6 @@ tomoRecon::tomoRecon(tomoParams_t *pTomoParams, float *pAngles)
 
 tomoRecon::~tomoRecon() 
 {
-   int i;
-   int status;
    static const char *functionName = "tomoRecon:~tomoRecon";
 
    if (debug_) logMsg("%s: entry, shutting down and cleaning up", functionName);
@@ -328,7 +323,6 @@ void tomoRecon::workerTask(int taskNum)
       if (0==slicesRemaining_) break;
    }
 
-   done:
    if (sin1) free(sin1);
    if (sin2) free(sin2);
    if (recon1) free(recon1);
@@ -354,7 +348,6 @@ void tomoRecon::sinogram(float *pIn, float *pOut)
    float airLeft, airRight, airSlope, ratio, outData;
    float *pInData;
    float *pOutData;
-   static const char *functionName = "tomoRecon::sinogram";
 
    if (numAir > 0) air = (float *) malloc(paddedWidth_*sizeof(float));
    if (ringWidth > 0)
@@ -453,15 +446,13 @@ void tomoRecon::logMsg(const char *pFormat, ...)
 {
 
    va_list pvar;
-   char nowText[40];
    char message[256];
    char temp[256];
 
    boost::posix_time::ptime now;
    now = boost::posix_time::second_clock::local_time();
 
-   nowText[0] = 0;
-   sprintf(message,"%s ",to_simple_string(now).c_str());
+   snprintf(message, 256, "%s ",to_simple_string(now).c_str());
    va_start(pvar,pFormat);
    vsprintf(temp, pFormat, pvar);
    va_end(pvar);
@@ -470,7 +461,7 @@ void tomoRecon::logMsg(const char *pFormat, ...)
       strcat(message, "\r\n");
    else
       strcat(message, "\n");
-      fprintf(debugFile_, message);
+      fputs(message, debugFile_);
       fflush(debugFile_);
 
 }
