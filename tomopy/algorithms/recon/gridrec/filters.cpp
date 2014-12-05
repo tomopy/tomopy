@@ -25,7 +25,7 @@ float ramp(float x){	/* Ramp filter */
 	return abs(x);
 }
 
-struct {const char* name; float (*fp)(float);} fltbl[]= {
+struct filters {const char* name; float (*fp)(float);} fltbl[]= {
         {"none",none},
 	{"shlo",shlo},		/* The default choice */
 	{"shepp",shlo},
