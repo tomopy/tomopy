@@ -461,7 +461,7 @@ void tomoRecon::logMsg(const char *pFormat, ...)
       strcat(message, "\r\n");
    else
       strcat(message, "\n");
-      fprintf(debugFile_, message);
+      fputs(message, debugFile_);
       fflush(debugFile_);
 
 }
