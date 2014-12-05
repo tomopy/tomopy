@@ -348,7 +348,6 @@ void tomoRecon::sinogram(float *pIn, float *pOut)
    float airLeft, airRight, airSlope, ratio, outData;
    float *pInData;
    float *pOutData;
-   //static const char *functionName = "tomoRecon::sinogram";
 
    if (numAir > 0) air = (float *) malloc(paddedWidth_*sizeof(float));
    if (ringWidth > 0)
@@ -461,7 +460,7 @@ void tomoRecon::logMsg(const char *pFormat, ...)
    if (debugFile_ == stdout)
       strcat(message, "\r\n");
    else
-      strcat(message, " \n");
+      strcat(message, "\n");
       fprintf(debugFile_, message);
       fflush(debugFile_);
 
