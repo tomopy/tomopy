@@ -11,9 +11,9 @@
 # modification, are permitted provided that the following conditions are met:
 #
 # * Redistributions of source code must retain the above copyright
-#   notice, this list of conditions and the following disclaimer.
+# notice, this list of conditions and the following disclaimer.
 # * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in the
+# notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
 # * Neither the name of the copyright holders nor the names of any
 #   contributors may be used to endorse or promote products derived
@@ -222,19 +222,19 @@ def imsave(filename, data, photometric=None, planarconfig=None,
     >>> imsave('temp.tif', data, extratags=[(270, 's', 0, value, True)])
 
     """
-    assert(photometric in (None, 'minisblack', 'miniswhite', 'rgb'))
-    assert(planarconfig in (None, 'contig', 'planar'))
-    assert(byteorder in (None, '<', '>'))
-    assert(0 <= compress <= 9)
+    assert (photometric in (None, 'minisblack', 'miniswhite', 'rgb'))
+    assert (planarconfig in (None, 'contig', 'planar'))
+    assert (byteorder in (None, '<', '>'))
+    assert (0 <= compress <= 9)
 
     if byteorder is None:
         byteorder = '<' if sys.byteorder == 'little' else '>'
 
-    data = numpy.asarray(data, dtype=byteorder+data.dtype.char, order='C')
+    data = numpy.asarray(data, dtype=byteorder + data.dtype.char, order='C')
     data_shape = shape = data.shape
     data = numpy.atleast_2d(data)
 
-    if not bigtiff and data.size * data.dtype.itemsize < 2000*2**20:
+    if not bigtiff and data.size * data.dtype.itemsize < 2000 * 2 ** 20:
         bigtiff = False
         offset_size = 4
         tag_size = 12
@@ -308,7 +308,7 @@ def imsave(filename, data, photometric=None, planarconfig=None,
     tags = []  # list of (code, ifdentry, ifdvalue, writeonce)
 
     def pack(fmt, *val):
-        return struct.pack(byteorder+fmt, *val)
+        return struct.pack(byteorder + fmt, *val)
 
     def addtag(code, dtype, count, value, writeonce=False):
         # compute ifdentry and ifdvalue bytes from code, dtype, count, value
@@ -333,10 +333,10 @@ def imsave(filename, data, photometric=None, planarconfig=None,
                 value = value[0]
             ifdentry.append(pack(val_format, pack(dtype, value)))
         elif struct.calcsize(dtype) * count <= offset_size:
-            ifdentry.append(pack(val_format, pack(str(count)+dtype, *value)))
+            ifdentry.append(pack(val_format, pack(str(count) + dtype, *value)))
         else:
             ifdentry.append(pack(offset_format, 0))
-            ifdvalue = pack(str(count)+dtype, *value)
+            ifdvalue = pack(str(count) + dtype, *value)
         tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
 
     def rational(arg, max_denominator=1000000):
@@ -370,7 +370,7 @@ def imsave(filename, data, photometric=None, planarconfig=None,
            {'miniswhite': 0, 'minisblack': 1, 'rgb': 2}[photometric])
     addtag('samples_per_pixel', 'H', 1, samplesperpixel)
     if planarconfig:
-        addtag('planar_configuration', 'H', 1, 1 if planarconfig=='contig'
+        addtag('planar_configuration', 'H', 1, 1 if planarconfig == 'contig'
                else 2)
         addtag('bits_per_sample', 'H', samplesperpixel,
                (data.dtype.itemsize * 8, ) * samplesperpixel)
@@ -432,7 +432,7 @@ def imsave(filename, data, photometric=None, planarconfig=None,
             for tagindex, tag in enumerate(tags):
                 if tag[2]:
                     pos = tell()
-                    seek(tag_offset + tagindex*tag_size + offset_size + 4)
+                    seek(tag_offset + tagindex * tag_size + offset_size + 4)
                     write(offset_format, pos)
                     seek(pos)
                     if tag[0] == 273:
@@ -465,7 +465,7 @@ def imsave(filename, data, photometric=None, planarconfig=None,
                             write(offset_format, strip_offset)
                             strip_offset += size
                     else:
-                        seek(tag_offset + tagindex*tag_size + offset_size + 4)
+                        seek(tag_offset + tagindex * tag_size + offset_size + 4)
                         write(offset_format, data_offset)
                 elif tag[0] == 279:  # strip_byte_counts
                     if compress:
@@ -474,7 +474,7 @@ def imsave(filename, data, photometric=None, planarconfig=None,
                             for size in strip_byte_counts:
                                 write(offset_format, size)
                         else:
-                            seek(tag_offset + tagindex*tag_size +
+                            seek(tag_offset + tagindex * tag_size +
                                  offset_size + 4)
                             write(offset_format, strip_byte_counts[0])
                     break
@@ -585,6 +585,7 @@ class TiffFile(object):
     ...     tif.close()
 
     """
+
     def __init__(self, arg, name=None, multifile=False):
         """Initialize instance from file.
 
@@ -636,9 +637,9 @@ class TiffFile(object):
             self.byteorder = {b'II': '<', b'MM': '>'}[self._fh.read(2)]
         except KeyError:
             raise ValueError("not a valid TIFF file")
-        version = struct.unpack(self.byteorder+'H', self._fh.read(2))[0]
+        version = struct.unpack(self.byteorder + 'H', self._fh.read(2))[0]
         if version == 43:  # BigTiff
-            self.offset_size, zero = struct.unpack(self.byteorder+'HH',
+            self.offset_size, zero = struct.unpack(self.byteorder + 'HH',
                                                    self._fh.read(4))
             if zero or self.offset_size != 8:
                 raise ValueError("not a valid BigTIFF file")
@@ -690,7 +691,7 @@ class TiffFile(object):
                 pages = [p for p in self.pages if p.is_reduced]
                 cp = 1
                 i = 0
-                while cp < len(pages) and i < len(shape)-2:
+                while cp < len(pages) and i < len(shape) - 2:
                     cp *= shape[i]
                     i += 1
                 shape = shape[:i] + list(pages[0].shape)
@@ -806,7 +807,7 @@ class TiffFile(object):
                 result.shape = self.series[series].shape
             except ValueError:
                 warnings.warn("failed to reshape %s to %s" % (
-                              result.shape, self.series[series].shape))
+                    result.shape, self.series[series].shape))
                 result.shape = (-1,) + pages[0].shape
         else:
             result.shape = (-1,) + pages[0].shape
@@ -852,7 +853,7 @@ class TiffFile(object):
                     continue
                 atr = pixels.attrib
                 axes = "".join(reversed(atr['DimensionOrder']))
-                shape = list(int(atr['Size'+ax]) for ax in axes)
+                shape = list(int(atr['Size' + ax]) for ax in axes)
                 size = numpy.prod(shape[:-2])
                 ifds = [None] * size
                 for data in pixels:
@@ -862,7 +863,7 @@ class TiffFile(object):
                     ifd = int(atr.get('IFD', 0))
                     num = int(atr.get('NumPlanes', 1 if 'IFD' in atr else 0))
                     num = int(atr.get('PlaneCount', num))
-                    idx = [int(atr.get('First'+ax, 0)) for ax in axes[:-2]]
+                    idx = [int(atr.get('First' + ax, 0)) for ax in axes[:-2]]
                     idx = numpy.ravel_multi_index(idx, shape[:-2])
                     for uuid in data:
                         if uuid.tag.endswith('UUID'):
@@ -902,8 +903,8 @@ class TiffFile(object):
                     record.axes = record.axes.replace(axis, newaxis, 1)
                 else:
                     record.shape[i] //= size
-                    record.shape.insert(i+1, size)
-                    record.axes = record.axes.replace(axis, axis+newaxis, 1)
+                    record.shape.insert(i + 1, size)
+                    record.axes = record.axes.replace(axis, axis + newaxis, 1)
 
         return result
 
@@ -1030,6 +1031,7 @@ class TiffPage(object):
     All attributes are read-only.
 
     """
+
     def __init__(self, parent):
         """Initialize instance from file."""
         self.parent = parent
@@ -1096,14 +1098,14 @@ class TiffPage(object):
             pos = fh.tell()
             for name, reader in CZ_LSM_INFO_READERS.items():
                 try:
-                    offset = self.cz_lsm_info['offset_'+name]
+                    offset = self.cz_lsm_info['offset_' + name]
                 except KeyError:
                     continue
                 if not offset:
                     continue
                 fh.seek(offset)
                 try:
-                    setattr(self, 'cz_lsm_'+name, reader(fh, byteorder))
+                    setattr(self, 'cz_lsm_' + name, reader(fh, byteorder))
                 except ValueError:
                     pass
             fh.seek(pos)
@@ -1135,7 +1137,7 @@ class TiffPage(object):
             self.bits_per_sample = tag.value
         else:
             value = tag.value[:self.samples_per_pixel]
-            if any((v-value[0] for v in value)):
+            if any((v - value[0] for v in value)):
                 self.bits_per_sample = value
             else:
                 self.bits_per_sample = value[0]
@@ -1145,7 +1147,7 @@ class TiffPage(object):
             self.sample_format = TIFF_SAMPLE_FORMATS[tag.value]
         else:
             value = tag.value[:self.samples_per_pixel]
-            if any((v-value[0] for v in value)):
+            if any((v - value[0] for v in value)):
                 self.sample_format = [TIFF_SAMPLE_FORMATS[v] for v in value]
             else:
                 self.sample_format = TIFF_SAMPLE_FORMATS[value[0]]
@@ -1218,8 +1220,8 @@ class TiffPage(object):
                                self.image_length, self.image_width, 1)
                 self.shape = self._shape[:4]
                 self.axes = 'PSYX'
-            if self.is_palette and (self.color_map.shape[1]
-                                    >= 2**self.bits_per_sample):
+            if self.is_palette and (self.color_map.shape[1] >= 2 **
+                                    self.bits_per_sample):
                 self.shape = (3, planes, self.image_length, self.image_width)
                 self.axes = 'CPYX'
             else:
@@ -1235,7 +1237,7 @@ class TiffPage(object):
             else:
                 self._shape = (
                     1, samples, self.image_length, self.image_width, 1)
-            if self.color_map.shape[1] >= 2**self.bits_per_sample:
+            if self.color_map.shape[1] >= 2 ** self.bits_per_sample:
                 self.shape = (3, self.image_length, self.image_width)
                 self.axes = 'CYX'
             else:
@@ -1304,11 +1306,11 @@ class TiffPage(object):
                 self.sample_format, self.bits_per_sample))
         if self.compression not in TIFF_DECOMPESSORS:
             raise ValueError("cannot decompress %s" % self.compression)
-        if ('ycbcr_subsampling' in self.tags
-                and self.tags['ycbcr_subsampling'].value not in (1, (1, 1))):
+        if ('ycbcr_subsampling' in self.tags and self.tags[
+                'ycbcr_subsampling'].value not in (1, (1, 1))):
             raise ValueError("YCbCr subsampling not supported")
         tag = self.tags['sample_format']
-        if tag.count != 1 and any((i-tag.value[0] for i in tag.value)):
+        if tag.count != 1 and any((i - tag.value[0] for i in tag.value)):
             raise ValueError("sample formats don't match %s" % str(tag.value))
 
         dtype = self._dtype
@@ -1335,7 +1337,7 @@ class TiffPage(object):
             tile_length = self.tile_length
             tw = (image_width + tile_width - 1) // tile_width
             tl = (image_length + tile_length - 1) // tile_length
-            shape = shape[:-3] + (tl*tile_length, tw*tile_width, shape[-1])
+            shape = shape[:-3] + (tl * tile_length, tw * tile_width, shape[-1])
             tile_shape = (tile_length, tile_width, shape[-1])
             runlen = tile_width
         else:
@@ -1351,10 +1353,12 @@ class TiffPage(object):
         if any(o < 2 for o in offsets):
             raise ValueError("corrupted page")
 
-        if (not self.is_tiled and (self.is_stk or (not self.compression
-            and bits_per_sample in (8, 16, 32, 64)
-            and all(offsets[i] == offsets[i+1] - byte_counts[i]
-                    for i in range(len(offsets)-1))))):
+        if (not self.is_tiled and
+                (self.is_stk or
+                 (not self.compression and bits_per_sample in
+                     (8, 16, 32, 64) and all(offsets[i] == offsets[i + 1] -
+                                             byte_counts[i] for i in
+                                             range(ln(offsets) - 1))))):
             # contiguous data
             if (memmap and not (self.is_tiled or self.predictor or
                                 ('extra_samples' in self.tags) or
@@ -1390,8 +1394,8 @@ class TiffPage(object):
                     tile.shape = tile_shape
                     if self.predictor == 'horizontal':
                         numpy.cumsum(tile, axis=-2, dtype=dtype, out=tile)
-                    result[0, pl, tl:tl+tile_length,
-                           tw:tw+tile_width, :] = tile
+                    result[0, pl, tl:tl + tile_length, tw:tw + tile_width, :] =\
+                        tile
                     del tile
                     tw += tile_width
                     if tw >= shape[-2]:
@@ -1410,7 +1414,7 @@ class TiffPage(object):
                     strip = unpack(decompress(strip))
                     size = min(result.size, strip.size, strip_size,
                                result.size - index)
-                    result[index:index+size] = strip[:size]
+                    result[index:index + size] = strip[:size]
                     del strip
                     index += size
 
@@ -1422,7 +1426,7 @@ class TiffPage(object):
                 numpy.cumsum(result, axis=-2, dtype=dtype, out=result)
 
         if colormapped and self.is_palette:
-            if self.color_map.shape[1] >= 2**bits_per_sample:
+            if self.color_map.shape[1] >= 2 ** bits_per_sample:
                 # FluoView and LSM might fail here
                 result = numpy.take(self.color_map,
                                     result[:, 0, :, :, 0], axis=1)
@@ -1434,9 +1438,9 @@ class TiffPage(object):
             for i, exs in enumerate(extra_samples):
                 if exs in ('unassalpha', 'assocalpha', 'unspecified'):
                     if self.planar_configuration == 'contig':
-                        result = result[..., [0, 1, 2, 3+i]]
+                        result = result[..., [0, 1, 2, 3 + i]]
                     else:
-                        result = result[:, [0, 1, 2, 3+i]]
+                        result = result[:, [0, 1, 2, 3 + i]]
                     break
             else:
                 if self.planar_configuration == 'contig':
@@ -1623,12 +1627,13 @@ class TiffTag(object):
         except KeyError:
             raise TiffTag.Error("unknown tag data type %i" % dtype)
 
-        fmt = '%s%i%s' % (byteorder, count*int(dtype[0]), dtype[1])
+        fmt = '%s%i%s' % (byteorder, count * int(dtype[0]), dtype[1])
         size = struct.calcsize(fmt)
         if size > parent.offset_size or code in CUSTOM_TAGS:
             pos = fh.tell()
             tof = {4: 'I', 8: 'Q'}[parent.offset_size]
-            self.value_offset = offset = struct.unpack(byteorder+tof, value)[0]
+            self.value_offset = offset = struct.unpack(byteorder + tof, value)[
+                0]
             if offset < 0 or offset > parent._fsize:
                 raise TiffTag.Error("corrupt file - invalid tag value offset")
             elif offset < 4:
@@ -1776,7 +1781,7 @@ class TiffSequence(object):
         result = numpy.zeros(result_shape, dtype=im.dtype)
         result = result.reshape(-1, *im.shape)
         for index, fname in zip(self._indices, self.files):
-            index = [i-j for i, j in zip(index, self._start_index)]
+            index = [i - j for i, j in zip(index, self._start_index)]
             index = numpy.ravel_multi_index(index, self.shape)
             im = self.imread(fname, *args, **kwargs)
             result[index] = im
@@ -1806,7 +1811,7 @@ class TiffSequence(object):
             indices.append([int(m) for m in matches[1::2] if m])
         shape = tuple(numpy.max(indices, axis=0))
         start_index = tuple(numpy.min(indices, axis=0))
-        shape = tuple(i-j+1 for i, j in zip(shape, start_index))
+        shape = tuple(i - j + 1 for i, j in zip(shape, start_index))
         if numpy.prod(shape) != len(self.files):
             warnings.warn("files are missing. Missing data are zeroed")
 
@@ -1870,6 +1875,7 @@ class Record(dict):
 
 class TiffTags(Record):
     """Dictionary of TiffTags with attribute access."""
+
     def __str__(self):
         """Return string with information about all tags."""
         s = []
@@ -1883,12 +1889,12 @@ class TiffTags(Record):
 
 def read_bytes(fh, byteorder, dtype, count):
     """Read tag data from file and return as byte string."""
-    return numpy_fromfile(fh, byteorder+dtype[-1], count).tostring()
+    return numpy_fromfile(fh, byteorder + dtype[-1], count).tostring()
 
 
 def read_numpy(fh, byteorder, dtype, count):
     """Read tag data from file and return as numpy array."""
-    return numpy_fromfile(fh, byteorder+dtype[-1], count)
+    return numpy_fromfile(fh, byteorder + dtype[-1], count)
 
 
 def read_json(fh, byteorder, dtype, count):
@@ -1903,13 +1909,13 @@ def read_mm_header(fh, byteorder, dtype, count):
 
 def read_mm_stamp(fh, byteorder, dtype, count):
     """Read MM_STAMP tag from file and return as numpy.array."""
-    return numpy_fromfile(fh, byteorder+'8f8', 1)[0]
+    return numpy_fromfile(fh, byteorder + '8f8', 1)[0]
 
 
 def read_mm_uic1(fh, byteorder, dtype, count):
     """Read MM_UIC1 tag from file and return as dictionary."""
-    t = fh.read(8*count)
-    t = struct.unpack('%s%iI' % (byteorder, 2*count), t)
+    t = fh.read(8 * count)
+    t = struct.unpack('%s%iI' % (byteorder, 2 * count), t)
     return dict((MM_TAG_IDS[k], v) for k, v in zip(t[::2], t[1::2])
                 if k in MM_TAG_IDS)
 
@@ -1917,7 +1923,7 @@ def read_mm_uic1(fh, byteorder, dtype, count):
 def read_mm_uic2(fh, byteorder, dtype, count):
     """Read MM_UIC2 tag from file and return as dictionary."""
     result = {'number_planes': count}
-    values = numpy_fromfile(fh, byteorder+'I', 6*count)
+    values = numpy_fromfile(fh, byteorder + 'I', 6 * count)
     result['z_distance'] = values[0::6] // values[1::6]
     #result['date_created'] = tuple(values[2::6])
     #result['time_created'] = tuple(values[3::6])
@@ -1928,13 +1934,13 @@ def read_mm_uic2(fh, byteorder, dtype, count):
 
 def read_mm_uic3(fh, byteorder, dtype, count):
     """Read MM_UIC3 tag from file and return as dictionary."""
-    t = numpy_fromfile(fh, byteorder+'I', 2*count)
+    t = numpy_fromfile(fh, byteorder + 'I', 2 * count)
     return {'wavelengths': t[0::2] // t[1::2]}
 
 
 def read_mm_uic4(fh, byteorder, dtype, count):
     """Read MM_UIC4 tag from file and return as dictionary."""
-    t = struct.unpack(byteorder + 'hI'*count, fh.read(6*count))
+    t = struct.unpack(byteorder + 'hI' * count, fh.read(6 * count))
     return dict((MM_TAG_IDS[k], v) for k, v in zip(t[::2], t[1::2])
                 if k in MM_TAG_IDS)
 
@@ -1949,19 +1955,19 @@ def read_cz_lsm_info(fh, byteorder, dtype, count):
 
 def read_cz_lsm_time_stamps(fh, byteorder):
     """Read LSM time stamps from file and return as list."""
-    size, count = struct.unpack(byteorder+'II', fh.read(8))
+    size, count = struct.unpack(byteorder + 'II', fh.read(8))
     if size != (8 + 8 * count):
         raise ValueError("lsm_time_stamps block is too short")
     return struct.unpack(('%s%dd' % (byteorder, count)),
-                         fh.read(8*count))
+                         fh.read(8 * count))
 
 
 def read_cz_lsm_event_list(fh, byteorder):
     """Read LSM events from file and return as list of (time, type, text)."""
-    count = struct.unpack(byteorder+'II', fh.read(8))[1]
+    count = struct.unpack(byteorder + 'II', fh.read(8))[1]
     events = []
     while count > 0:
-        esize, etime, etype = struct.unpack(byteorder+'IdI', fh.read(16))
+        esize, etime, etype = struct.unpack(byteorder + 'IdI', fh.read(16))
         etext = stripnull(fh.read(esize - 16))
         events.append((etime, etype, etext))
         count -= 1
@@ -1973,17 +1979,17 @@ def read_cz_lsm_scan_info(fh, byteorder):
     block = Record()
     blocks = [block]
     unpack = struct.unpack
-    if 0x10000000 != struct.unpack(byteorder+"I", fh.read(4))[0]:
+    if 0x10000000 != struct.unpack(byteorder + "I", fh.read(4))[0]:
         raise ValueError("not a lsm_scan_info structure")
     fh.read(8)
     while True:
-        entry, dtype, size = unpack(byteorder+"III", fh.read(12))
+        entry, dtype, size = unpack(byteorder + "III", fh.read(12))
         if dtype == 2:
             value = stripnull(fh.read(size))
         elif dtype == 4:
-            value = unpack(byteorder+"i", fh.read(4))[0]
+            value = unpack(byteorder + "i", fh.read(4))[0]
         elif dtype == 5:
-            value = unpack(byteorder+"d", fh.read(8))[0]
+            value = unpack(byteorder + "d", fh.read(8))[0]
         else:
             value = 0
         if entry in CZ_LSM_SCAN_INFO_ARRAYS:
@@ -2027,21 +2033,22 @@ def imagej_metadata(data, bytecounts, byteorder):
         return _str(stripnull(data[0 if byteorder == '<' else 1::2]))
 
     def read_double(data, byteorder):
-        return struct.unpack(byteorder+('d' * (len(data) // 8)), data)
+        return struct.unpack(byteorder + ('d' * (len(data) // 8)), data)
 
     def read_bytes(data, byteorder):
         #return struct.unpack('b' * len(data), data)
         return numpy.fromstring(data, 'uint8')
 
     metadata_types = {  # big endian
-        b'info': ('info', read_string),
-        b'labl': ('labels', read_string),
-        b'rang': ('ranges', read_double),
-        b'luts': ('luts', read_bytes),
-        b'roi ': ('roi', read_bytes),
-        b'over': ('overlays', read_bytes)}
+                        b'info': ('info', read_string),
+                        b'labl': ('labels', read_string),
+                        b'rang': ('ranges', read_double),
+                        b'luts': ('luts', read_bytes),
+                        b'roi ': ('roi', read_bytes),
+                        b'over': ('overlays', read_bytes)}
     metadata_types.update(  # little endian
-        dict((k[::-1], v) for k, v in metadata_types.items()))
+                            dict((k[::-1], v) for k, v in
+                                 metadata_types.items()))
 
     if not bytecounts:
         raise ValueError("no ImageJ meta data")
@@ -2054,7 +2061,7 @@ def imagej_metadata(data, bytecounts, byteorder):
         raise ValueError("invalid ImageJ meta data header size")
 
     ntypes = (header_size - 4) // 8
-    header = struct.unpack(byteorder+'4sI'*ntypes, data[4:4+ntypes*8])
+    header = struct.unpack(byteorder + '4sI' * ntypes, data[4:4 + ntypes * 8])
     pos = 4 + ntypes * 8
     counter = 0
     result = {}
@@ -2072,6 +2079,7 @@ def imagej_metadata(data, bytecounts, byteorder):
 
 def imagej_description(description):
     """Return dict from ImageJ image_description tag."""
+
     def _bool(val):
         return {b'true': True, b'false': False}[val.lower()]
 
@@ -2111,8 +2119,8 @@ def read_micromanager_metadata(fh):
     results = {}
     fh.seek(8)
     (index_header, index_offset, display_header, display_offset,
-     comments_header, comments_offset, summary_header, summary_length
-     ) = struct.unpack(byteorder + "IIIIIIII", fh.read(32))
+     comments_header, comments_offset, summary_header, summary_length) = \
+        struct.unpack(byteorder + "IIIIIIII", fh.read(32))
 
     if summary_header != 2355492:
         raise ValueError("invalid MicroManager summary_header")
@@ -2124,7 +2132,7 @@ def read_micromanager_metadata(fh):
     header, count = struct.unpack(byteorder + "II", fh.read(8))
     if header != 3453623:
         raise ValueError("invalid MicroManager index_header")
-    data = struct.unpack(byteorder + "IIIII"*count, fh.read(20*count))
+    data = struct.unpack(byteorder + "IIIII" * count, fh.read(20 * count))
     results['index_map'] = {
         'channel': data[::5], 'slice': data[1::5], 'frame': data[2::5],
         'position': data[3::5], 'offset': data[4::5]}
@@ -2189,10 +2197,10 @@ def decodepackbits(encoded):
             n = func(encoded[i]) + 1
             i += 1
             if n < 129:
-                result_extend(encoded[i:i+n])
+                result_extend(encoded[i:i + n])
                 i += n
             elif n > 129:
-                result_extend(encoded[i:i+1] * (258-n))
+                result_extend(encoded[i:i + 1] * (258 - n))
                 i += 1
     except IndexError:
         pass
@@ -2222,20 +2230,20 @@ def decodelzw(encoded):
     def next_code():
         """Return integer of `bitw` bits at `bitcount` position in encoded."""
         start = bitcount // 8
-        s = encoded[start:start+4]
+        s = encoded[start:start + 4]
         try:
             code = unpack('>I', s)[0]
         except Exception:
-            code = unpack('>I', s + b'\x00'*(4-len(s)))[0]
+            code = unpack('>I', s + b'\x00' * (4 - len(s)))[0]
         code <<= bitcount % 8
         code &= mask
         return code >> shr
 
     switchbitch = {  # code: bit-width, shr-bits, bit-mask
-        255: (9, 23, int(9*'1'+'0'*23, 2)),
-        511: (10, 22, int(10*'1'+'0'*22, 2)),
-        1023: (11, 21, int(11*'1'+'0'*21, 2)),
-        2047: (12, 20, int(12*'1'+'0'*20, 2)), }
+                     255: (9, 23, int(9 * '1' + '0' * 23, 2)),
+                     511: (10, 22, int(10 * '1' + '0' * 22, 2)),
+                     1023: (11, 21, int(11 * '1' + '0' * 21, 2)),
+                     2047: (12, 20, int(12 * '1' + '0' * 20, 2)), }
     bitw, shr, mask = switchbitch[255]
     bitcount = 0
 
@@ -2323,29 +2331,29 @@ def unpackints(data, dtype, itemsize, runlen=0):
         raise ValueError("dtype.itemsize too small")
     if runlen == 0:
         runlen = len(data) // itembytes
-    skipbits = runlen*itemsize % 8
+    skipbits = runlen * itemsize % 8
     if skipbits:
         skipbits = 8 - skipbits
-    shrbits = itembytes*8 - itemsize
-    bitmask = int(itemsize*'1'+'0'*shrbits, 2)
+    shrbits = itembytes * 8 - itemsize
+    bitmask = int(itemsize * '1' + '0' * shrbits, 2)
     dtypestr = '>' + dtype.char  # dtype always big endian?
 
     unpack = struct.unpack
-    l = runlen * (len(data)*8 // (runlen*itemsize + skipbits))
+    l = runlen * (len(data) * 8 // (runlen * itemsize + skipbits))
     result = numpy.empty((l, ), dtype)
     bitcount = 0
     for i in range(len(result)):
         start = bitcount // 8
-        s = data[start:start+itembytes]
+        s = data[start:start + itembytes]
         try:
             code = unpack(dtypestr, s)[0]
         except Exception:
-            code = unpack(dtypestr, s + b'\x00'*(itembytes-len(s)))[0]
+            code = unpack(dtypestr, s + b'\x00' * (itembytes - len(s)))[0]
         code <<= bitcount % 8
         code &= bitmask
         result[i] = code >> shrbits
         bitcount += itemsize
-        if (i+1) % runlen == 0:
+        if (i + 1) % runlen == 0:
             bitcount += skipbits
     return result
 
@@ -2385,20 +2393,20 @@ def unpackrgb(data, dtype='<B', bitspersample=(5, 6, 5), rescale=True):
     """
     dtype = numpy.dtype(dtype)
     bits = int(numpy.sum(bitspersample))
-    if not (bits <= 32 and all(i <= dtype.itemsize*8 for i in bitspersample)):
+    if not (bits <= 32 and all(i <= dtype.itemsize * 8 for i in bitspersample)):
         raise ValueError("sample size not supported %s" % str(bitspersample))
-    dt = next(i for i in 'BHI' if numpy.dtype(i).itemsize*8 >= bits)
-    data = numpy.fromstring(data, dtype.byteorder+dt)
+    dt = next(i for i in 'BHI' if numpy.dtype(i).itemsize * 8 >= bits)
+    data = numpy.fromstring(data, dtype.byteorder + dt)
     result = numpy.empty((data.size, len(bitspersample)), dtype.char)
     for i, bps in enumerate(bitspersample):
-        t = data >> int(numpy.sum(bitspersample[i+1:]))
-        t &= int('0b'+'1'*bps, 2)
+        t = data >> int(numpy.sum(bitspersample[i + 1:]))
+        t &= int('0b' + '1' * bps, 2)
         if rescale:
             o = ((dtype.itemsize * 8) // bps + 1) * bps
             if o > data.dtype.itemsize * 8:
                 t = t.astype('I')
-            t *= (2**o - 1) // (2**bps - 1)
-            t //= 2**(o - (dtype.itemsize * 8))
+            t *= (2 ** o - 1) // (2 ** bps - 1)
+            t //= 2 ** (o - (dtype.itemsize * 8))
         result[:, i] = t
     return result.reshape(-1)
 
@@ -2445,7 +2453,7 @@ def numpy_fromfile(arg, dtype=float, count=-1, sep=''):
         return numpy.fromfile(arg, dtype, count, sep)
     except IOError:
         if count < 0:
-            size = 2**30
+            size = 2 ** 30
         else:
             size = count * numpy.dtype(dtype).itemsize
         data = arg.read(int(size))
@@ -2473,8 +2481,10 @@ def natural_sorted(iterable):
     ['f1', 'f2', 'f10']
 
     """
+
     def sortkey(x):
         return [(int(c) if c.isdigit() else c) for c in re.split(numbers, x)]
+
     numbers = re.compile('(\d+)')
     return sorted(iterable, key=sortkey)
 
@@ -2531,10 +2541,10 @@ def test_tifffile(directory='testimages', verbose=True):
         if verbose:
             print("%s, %s %s, %s, %.0f ms" % (
                 str(tif), str(img.shape), img.dtype, tif[0].compression,
-                (time.time()-t0) * 1e3))
+                (time.time() - t0) * 1e3))
     if verbose:
         print("\nSuccessfully read %i of %i files in %.3f s\n" % (
-            successful, successful+failed, time.time()-start))
+            successful, successful + failed, time.time() - start))
 
 
 class TIFF_SUBFILE_TYPES(object):
@@ -2602,20 +2612,20 @@ TIFF_DECOMPESSORS = {
 }
 
 TIFF_DATA_TYPES = {
-    1: '1B',   # BYTE 8-bit unsigned integer.
-    2: '1s',   # ASCII 8-bit byte that contains a 7-bit ASCII code;
-               #   the last byte must be NULL (binary zero).
-    3: '1H',   # SHORT 16-bit (2-byte) unsigned integer
-    4: '1I',   # LONG 32-bit (4-byte) unsigned integer.
-    5: '2I',   # RATIONAL Two LONGs: the first represents the numerator of
-               #   a fraction; the second, the denominator.
-    6: '1b',   # SBYTE An 8-bit signed (twos-complement) integer.
-    7: '1B',   # UNDEFINED An 8-bit byte that may contain anything,
-               #   depending on the definition of the field.
-    8: '1h',   # SSHORT A 16-bit (2-byte) signed (twos-complement) integer.
-    9: '1i',   # SLONG A 32-bit (4-byte) signed (twos-complement) integer.
+    1: '1B',  # BYTE 8-bit unsigned integer.
+    2: '1s',  # ASCII 8-bit byte that contains a 7-bit ASCII code;
+    #   the last byte must be NULL (binary zero).
+    3: '1H',  # SHORT 16-bit (2-byte) unsigned integer
+    4: '1I',  # LONG 32-bit (4-byte) unsigned integer.
+    5: '2I',  # RATIONAL Two LONGs: the first represents the numerator of
+    #   a fraction; the second, the denominator.
+    6: '1b',  # SBYTE An 8-bit signed (twos-complement) integer.
+    7: '1B',  # UNDEFINED An 8-bit byte that may contain anything,
+    #   depending on the definition of the field.
+    8: '1h',  # SSHORT A 16-bit (2-byte) signed (twos-complement) integer.
+    9: '1i',  # SLONG A 32-bit (4-byte) signed (twos-complement) integer.
     10: '2i',  # SRATIONAL Two SLONGs: the first represents the numerator
-               #   of a fraction, the second the denominator.
+    #   of a fraction, the second the denominator.
     11: '1f',  # FLOAT Single precision (4-byte) IEEE format.
     12: '1d',  # DOUBLE Double precision (8-byte) IEEE format.
     13: '1I',  # IFD unsigned 4 byte IFD offset.
@@ -3193,7 +3203,7 @@ TIFF_TAGS = {
     273: ('strip_offsets', None, 4, None, None),
     274: ('orientation', 1, 3, 1, TIFF_ORIENTATIONS),
     277: ('samples_per_pixel', 1, 3, 1, None),
-    278: ('rows_per_strip', 2**32-1, 4, 1, None),
+    278: ('rows_per_strip', 2 ** 32 - 1, 4, 1, None),
     279: ('strip_byte_counts', None, 4, None, None),
     280: ('min_sample_value', None, 3, None, None),
     281: ('max_sample_value', None, 3, None, None),  # 2**bits_per_sample
@@ -3344,7 +3354,7 @@ def imshow(data, title=None, vmin=0, vmax=None, cmap=None,
         elif not isinstance(bitspersample, int):
             # bitspersample can be tuple, e.g. (5, 6, 5)
             bitspersample = data.dtype.itemsize * 8
-        datamax = 2**bitspersample
+        datamax = 2 ** bitspersample
         if isrgb:
             if bitspersample < 8:
                 data <<= 8 - bitspersample
@@ -3389,7 +3399,7 @@ def imshow(data, title=None, vmin=0, vmax=None, cmap=None,
             figure.canvas.manager.window.title(title)
         except Exception:
             pass
-        pyplot.subplots_adjust(bottom=0.03*(dims+2), top=0.9,
+        pyplot.subplots_adjust(bottom=0.03 * (dims + 2), top=0.9,
                                left=0.1, right=0.95, hspace=0.05, wspace=0.0)
     subplot = pyplot.subplot(subplot)
 
@@ -3433,8 +3443,8 @@ def imshow(data, title=None, vmin=0, vmax=None, cmap=None,
         current = list((0, ) * dims)
         cur_ax_dat = [0, data[tuple(current)].squeeze()]
         sliders = [pyplot.Slider(
-            pyplot.axes([0.125, 0.03*(axis+1), 0.725, 0.025]),
-            'Dimension %i' % axis, 0, data.shape[axis]-1, 0, facecolor='0.5',
+            pyplot.axes([0.125, 0.03 * (axis + 1), 0.725, 0.025]),
+            'Dimension %i' % axis, 0, data.shape[axis] - 1, 0, facecolor='0.5',
             valfmt='%%.0f [%i]' % data.shape[axis]) for axis in range(dims)]
         for slider in sliders:
             slider.drawon = False
@@ -3473,9 +3483,9 @@ def imshow(data, title=None, vmin=0, vmax=None, cmap=None,
             elif key == 'left':
                 on_changed(current[axis] - 1, axis)
             elif key == 'up':
-                cur_ax_dat[0] = 0 if axis == len(data.shape)-1 else axis + 1
+                cur_ax_dat[0] = 0 if axis == len(data.shape) - 1 else axis + 1
             elif key == 'down':
-                cur_ax_dat[0] = len(data.shape)-1 if axis == 0 else axis - 1
+                cur_ax_dat[0] = len(data.shape) - 1 if axis == 0 else axis - 1
             elif key == 'end':
                 on_changed(data.shape[axis] - 1, axis)
             elif key == 'home':
@@ -3537,6 +3547,7 @@ def main(argv=None):
 
     if settings.doctest:
         import doctest
+
         doctest.testmod()
         return 0
     if not path:
@@ -3564,7 +3575,7 @@ def main(argv=None):
         else:
             print("\n", e)
             sys.exit(0)
-    print("%.3f ms" % ((time.time()-start) * 1e3))
+    print("%.3f ms" % ((time.time() - start) * 1e3))
 
     if tif.is_ome:
         settings.norgb = True
@@ -3575,6 +3586,7 @@ def main(argv=None):
 
         def notnone(x):
             return next(i for i in x if i is not None)
+
         start = time.time()
         try:
             if settings.page >= 0:
@@ -3596,7 +3608,7 @@ def main(argv=None):
                         else:
                             print("\n* series %i failed: %s... " % (i, e),
                                   end='')
-            print("%.3f ms" % ((time.time()-start) * 1e3))
+            print("%.3f ms" % ((time.time() - start) * 1e3))
         except Exception as e:
             if settings.debug:
                 raise
@@ -3608,7 +3620,7 @@ def main(argv=None):
     print("\nTIFF file:", tif)
     print()
     for i, s in enumerate(tif.series):
-        print ("Series %i" % i)
+        print("Series %i" % i)
         print(s)
         print()
     for i, page in images:
@@ -3629,6 +3641,7 @@ def main(argv=None):
     if images and not settings.noplot:
         try:
             import matplotlib
+
             matplotlib.use('TkAgg')
             from matplotlib import pyplot
         except ImportError as e:
@@ -3666,4 +3679,3 @@ if sys.version_info[0] > 2:
 
 if __name__ == "__main__":
     sys.exit(main())
-
