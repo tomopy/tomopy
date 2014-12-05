@@ -37,9 +37,6 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="../../../../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
         <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
@@ -59,9 +56,8 @@
 <span class="c"># --------------------------------------------------------------------</span>
 
 <span class="c"># Get the shared library.</span>
-<span class="n">libpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span>
-                          <span class="s">&#39;../..&#39;</span><span class="p">,</span> <span class="s">&#39;lib/libprep.so&#39;</span><span class="p">))</span>
-<span class="n">libprep</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">CDLL</span><span class="p">(</span><span class="n">libpath</span><span class="p">)</span>
+<span class="n">libpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;../../lib/libprep.so&#39;</span><span class="p">)</span>
+<span class="n">libprep</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">CDLL</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">libpath</span><span class="p">))</span>
 
 <span class="c"># --------------------------------------------------------------------</span>
 
@@ -167,9 +163,6 @@
              >index</a></li>
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../../../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li><a href="../../../../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li> 

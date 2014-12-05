@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>threshold_segment &mdash; tomopy 0.0.3 documentation</title>
+    <title>mlem &mdash; tomopy 0.0.3 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,9 +25,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="tomopy 0.0.3 documentation" href="../index.html" />
-    <link rel="up" title="postprocess Module" href="tomopy.algorithms.postprocess.html" />
-    <link rel="next" title="tools Module" href="tomopy.tools.html" />
-    <link rel="prev" title="remove_background" href="tomopy.algorithms.postprocess.remove_background.html" /> 
+    <link rel="up" title="recon Module" href="tomopy.algorithms.recon.html" />
+    <link rel="next" title="optimize_center" href="tomopy.algorithms.recon.optimize_center.html" />
+    <link rel="prev" title="gridrec" href="tomopy.algorithms.recon.gridrec.html" /> 
   </head>
   <body>
     <div class="related">
@@ -40,15 +40,15 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tomopy.tools.html" title="tools Module"
+          <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="tomopy.algorithms.postprocess.remove_background.html" title="remove_background"
+          <a href="tomopy.algorithms.recon.gridrec.html" title="gridrec"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
           <li><a href="tomopy.algorithms.html" ><tt class="docutils literal"><span class="pre">algorithms</span></tt> Module</a> &raquo;</li>
-          <li><a href="tomopy.algorithms.postprocess.html" accesskey="U"><tt class="docutils literal"><span class="pre">postprocess</span></tt> Module</a> &raquo;</li> 
+          <li><a href="tomopy.algorithms.recon.html" accesskey="U"><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,35 +57,50 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-tomopy.algorithms.postprocess.threshold_segment">
-<span id="threshold-segment"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">threshold_segment</span></tt><a class="headerlink" href="#module-tomopy.algorithms.postprocess.threshold_segment" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tomopy.algorithms.recon.mlem">
+<span id="mlem"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">mlem</span></tt><a class="headerlink" href="#module-tomopy.algorithms.recon.mlem" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="tomopy.algorithms.postprocess.threshold_segment.threshold_segment">
-<tt class="descclassname">tomopy.algorithms.postprocess.threshold_segment.</tt><tt class="descname">threshold_segment</tt><big>(</big><em>args</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/postprocess/threshold_segment.html#threshold_segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.postprocess.threshold_segment.threshold_segment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies threshold based on Otsu&#8217;s method to reconstructed data.</p>
-<p>Otsu’s method calculates an “optimal” threshold 
-(marked by a red line in the histogram below) by 
-maximizing the variance between two classes of pixels, 
-which are separated by the threshold. Equivalently, 
-this threshold minimizes the intra-class variance.</p>
+<dt id="tomopy.algorithms.recon.mlem.mlem">
+<tt class="descclassname">tomopy.algorithms.recon.mlem.</tt><tt class="descname">mlem</tt><big>(</big><em>data</em>, <em>theta</em>, <em>center</em>, <em>num_grid</em>, <em>iters</em>, <em>init_matrix</em><big>)</big><a class="reference internal" href="../_modules/tomopy/algorithms/recon/mlem.html#mlem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tomopy.algorithms.recon.mlem.mlem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies Maximum-Likelihood Expectation-Maximization (MLEM)
+method to obtain reconstructions.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray, float32</p>
 <blockquote>
-<div><p>3-D reconstructed data with dimensions:
-[slices, pixels, pixels]</p>
+<div><p>3-D tomographic data with dimensions:
+[projections, slices, pixels]</p>
 </div></blockquote>
-<p><strong>cutoff</strong> : scalar, int</p>
+<p><strong>theta</strong> : ndarray, float32</p>
 <blockquote>
-<div><p>Manually selected threshold value.</p>
+<div><p>Projection angles in radians.</p>
+</div></blockquote>
+<p><strong>center</strong> : scalar, float32</p>
+<blockquote>
+<div><p>Pixel index corresponding to the 
+center of rotation axis.</p>
+</div></blockquote>
+<p><strong>num_grid</strong> : scalar, int32</p>
+<blockquote>
+<div><p>Grid size of the econstructed images.</p>
+</div></blockquote>
+<p><strong>iters</strong> : scalar int32</p>
+<blockquote>
+<div><p>Number of mlem iterations.</p>
+</div></blockquote>
+<p><strong>init_matrix</strong> : ndarray</p>
+<blockquote>
+<div><p>Initial guess for the reconstruction. Its
+shape is the same as the reconstructed data.</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
 <blockquote class="last">
-<div><p>Thresholded data.</p>
+<div><p>Reconstructed data with dimensions:
+[slices, num_grid, num_grid]</p>
 </div></blockquote>
 </td>
 </tr>
@@ -93,8 +108,9 @@ this threshold minimizes the intra-class variance.</p>
 </table>
 <p class="rubric">References</p>
 <ul class="simple">
-<li><a class="reference external" href="http://en.wikipedia.org/wiki/Otsu’s_method">http://en.wikipedia.org/wiki/Otsu’s_method</a></li>
-<li><a class="reference external" href="http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py">http://scikit-image.org/docs/dev/auto_examples/plot_otsu.html#example-plot-otsu-py</a></li>
+<li><a class="reference external" href="http://en.wikipedia.org/wiki/Maximum_likelihood">http://en.wikipedia.org/wiki/Maximum_likelihood</a></li>
+<li><a class="reference external" href="http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm</a></li>
+<li><a class="reference external" href="http://www.jstor.org/discover/10.2307/2984875?uid=17682872&amp;uid=3739656&amp;uid=2&amp;uid=3&amp;uid=67&amp;uid=16752384&amp;uid=62&amp;uid=3739256&amp;sid=21103820705023">Dempster, A. P.; Laird, N. M.; Rubin, D. B. Maximum likelihood from incomplete data via the EM algorithm. With discussion. J. Roy. Statist. Soc. Ser. B 39 (1977), no. 1, 1–38</a></li>
 </ul>
 </dd></dl>
 
@@ -107,14 +123,14 @@ this threshold minimizes the intra-class variance.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="tomopy.algorithms.postprocess.remove_background.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">remove_background</span></tt></a></p>
+  <p class="topless"><a href="tomopy.algorithms.recon.gridrec.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">gridrec</span></tt></a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tomopy.tools.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">tools</span></tt> Module</a></p>
+  <p class="topless"><a href="tomopy.algorithms.recon.optimize_center.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">optimize_center</span></tt></a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/resources/tomopy.algorithms.postprocess.threshold_segment.txt"
+    <li><a href="../_sources/resources/tomopy.algorithms.recon.mlem.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -144,15 +160,15 @@ this threshold minimizes the intra-class variance.</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tomopy.tools.html" title="tools Module"
+          <a href="tomopy.algorithms.recon.optimize_center.html" title="optimize_center"
              >next</a> |</li>
         <li class="right" >
-          <a href="tomopy.algorithms.postprocess.remove_background.html" title="remove_background"
+          <a href="tomopy.algorithms.recon.gridrec.html" title="gridrec"
              >previous</a> |</li>
         <li><a href="../index.html">tomopy 0.0.3 documentation</a> &raquo;</li>
           <li><a href="tomopy.html" ><tt class="docutils literal"><span class="pre">tomopy</span></tt> Package</a> &raquo;</li>
           <li><a href="tomopy.algorithms.html" ><tt class="docutils literal"><span class="pre">algorithms</span></tt> Module</a> &raquo;</li>
-          <li><a href="tomopy.algorithms.postprocess.html" ><tt class="docutils literal"><span class="pre">postprocess</span></tt> Module</a> &raquo;</li> 
+          <li><a href="tomopy.algorithms.recon.html" ><tt class="docutils literal"><span class="pre">recon</span></tt> Module</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
