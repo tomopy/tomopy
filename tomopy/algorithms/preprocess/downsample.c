@@ -6,7 +6,7 @@ void downsample2d(float* data, int num_projections,
                   int num_slices, int num_pixels,
                   int level, float* downsampled_data) {
 
-    int m, n, k, i, p, q, iproj, ind;
+    int m, n, k, i, p, iproj, ind;
     int binsize;
     
     binsize = pow(2, level);
