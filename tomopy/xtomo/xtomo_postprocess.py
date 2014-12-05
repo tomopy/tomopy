@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+
 """
-This module containes a set of thin wrappers to 
-hook the methods in postprocess package to X-ray 
-absorption tomography data object.
+This module containes a set of thin wrappers to hook the methods in
+postprocess package to X-ray absorption tomography data object.
 """
 
 # Import main TomoPy object.
@@ -21,97 +21,102 @@ from tomopy.tools.multiprocess_shared import distribute_jobs
 
 # --------------------------------------------------------------------
 
-def _adaptive_segment(self, block_size=256, offset=0,
-                      num_cores=None, chunk_size=None,
-                      overwrite=True):    
-    
+def _adaptive_segment(self, block_size=256, offset=0, num_cores=None,
+                      chunk_size=None, overwrite=True):
+
     # Normalize data first.
     data = self.data_recon - self.data_recon.min()
-    data /= data.max() 
+    data /= data.max()
 
     # Distribute jobs.
     _func = adaptive_segment
     _args = (block_size, offset)
-    _axis = 0 # Slice axis
-    data_recon = distribute_jobs(data, _func, _args, _axis, 
-                                 num_cores, chunk_size)
-                                         
+    _axis = 0  # Slice axis
+    data_recon = distribute_jobs(data, _func, _args, _axis, num_cores,
+                                 chunk_size)
+
     # Update log.
     self.logger.debug("adaptive_segment: block_size: " + str(block_size))
     self.logger.debug("adaptive_segment: offset: " + str(offset))
     self.logger.info("adaptive_segment [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
+    if overwrite:
+        self.data_recon = data_recon
+    else:
+        return data_recon
 
 # --------------------------------------------------------------------
+
 
 def _apply_mask(self, ratio=1, overwrite=True):
 
     # Distribute jobs.
     data_recon = apply_mask(self.data_recon, ratio)
-                                         
+
     # Update log.
     self.logger.debug("apply_mask: ratio: " + str(ratio))
     self.logger.info("apply_mask [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
+    if overwrite:
+        self.data_recon = data_recon
+    else:
+        return data_recon
 
 # --------------------------------------------------------------------
 
-def _region_segment(self, low=None, high=None,
-                    num_cores=None, chunk_size=None,
+
+def _region_segment(self, low=None, high=None, num_cores=None, chunk_size=None,
                     overwrite=True):
-    
+
     # Normalize data first.
     data = self.data_recon - self.data_recon.min()
     data /= data.max()
-    
+
     # Distribute jobs.
     _func = region_segment
     _args = (low, high)
-    _axis = 0 # Slice axis
-    data_recon = distribute_jobs(data, _func, _args, _axis, 
-                                 num_cores, chunk_size)
+    _axis = 0  # Slice axis
+    data_recon = distribute_jobs(data, _func, _args, _axis, num_cores,
+                                 chunk_size)
 
     # Update provenance.
     self.logger.debug("region_segment: low: " + str(low))
     self.logger.debug("region_segment: high: " + str(high))
     self.logger.info("region_segment [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
+    if overwrite:
+        self.data_recon = data_recon
+    else:
+        return data_recon
 
 # --------------------------------------------------------------------
 
-def _remove_background(self, 
-                       num_cores=None, chunk_size=None,
-                       overwrite=True):
-    
+
+def _remove_background(self, num_cores=None, chunk_size=None, overwrite=True):
     # Distribute jobs.
     _func = remove_background
     _args = ()
-    _axis = 0 # Slice axis
-    data_recon = distribute_jobs(self.data_recon, _func, _args, _axis, 
+    _axis = 0  # Slice axis
+    data_recon = distribute_jobs(self.data_recon, _func, _args, _axis,
                                  num_cores, chunk_size)
-                                         
+
     # Update provenance.
     self.logger.info("remove_background [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
+    if overwrite:
+        self.data_recon = data_recon
+    else:
+        return data_recon
 
 # --------------------------------------------------------------------
 
-def _threshold_segment(self, cutoff=None,
-                       num_cores=None, chunk_size=None,
+
+def _threshold_segment(self, cutoff=None, num_cores=None, chunk_size=None,
                        overwrite=True):
-    
     # Normalize data first.
     data = self.data_recon - self.data_recon.min()
     data /= data.max()
@@ -119,17 +124,19 @@ def _threshold_segment(self, cutoff=None,
     # Distribute jobs.
     _func = threshold_segment
     _args = ()
-    _axis = 0 # Slice axis
-    data_recon = distribute_jobs(data, _func, _args, _axis, 
-                                 num_cores, chunk_size)
-                                                      
+    _axis = 0  # Slice axis
+    data_recon = distribute_jobs(data, _func, _args, _axis, num_cores,
+                                 chunk_size)
+
     # Update provenance.
     self.logger.debug("threshold_segment: cutoff: " + str(cutoff))
     self.logger.info("threshold_segment [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
+    if overwrite:
+        self.data_recon = data_recon
+    else:
+        return data_recon
 
 # --------------------------------------------------------------------
 
