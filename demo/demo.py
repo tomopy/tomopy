@@ -2,7 +2,7 @@
 import tomopy
 
 # Read HDF5 file.
-data, white, dark, theta = tomopy.xtomo_reader('demo/data.h5',
+data, white, dark, theta = tomopy.xtomo_reader('./data.h5',
                                                slices_start=0,
                                                slices_end=16)
 
