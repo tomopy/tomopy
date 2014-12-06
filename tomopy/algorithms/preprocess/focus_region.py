@@ -60,12 +60,13 @@ def focus_region(data, xcoord, ycoord, diameter, center, padded=False, correctio
             ind1 = num_pixels
         if ind2 > num_pixels:
             ind2 = num_pixels
-            
+
+        arr = np.expand_dims(data[m, :, ind1:ind2], axis=0)
         if padded: 
-            if correction: roidata[m, :, ind1:ind2] = correct_drift(np.expand_dims(data[m, :, ind1:ind2], axis=1), air_pixels=5)
-            else: roidata[m, :, ind1:ind2] = data[m, :, ind1:ind2]
+            if correction: roidata[m, :, ind1:ind2] = correct_drift(arr, air_pixels=5)
+            else: roidata[m, :, ind1:ind2] = arr
         else: 
-            if correction: roidata[m, :,0:(ind2-ind1)] = correct_drift(np.expand_dims(data[m, :, ind1:ind2], axis=1), air_pixels=5)
-            else: roidata[m, :, 0:(ind2-ind1)] = data[m, :, ind1:ind2]
+            if correction: roidata[m, :,0:(ind2-ind1)] = correct_drift(arr, air_pixels=5)
+            else: roidata[m, :, 0:(ind2-ind1)] = arr
       
     return roidata
