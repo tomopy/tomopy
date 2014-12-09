@@ -111,15 +111,15 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : ndarray</p>
 <blockquote>
-<div><p>3-D X-ray absorption tomography raw data. 
-Size of the dimensions should be: 
+<div><p>3-D X-ray absorption tomography raw data.
+Size of the dimensions should be:
 [projections, slices, pixels].</p>
 </div></blockquote>
 <p><strong>data_white, data_dark</strong> : ndarray,  optional</p>
 <blockquote>
-<div><p>3-D white-field/dark_field data. Multiple 
-projections are stacked together to obtain 
-a 3-D matrix. 2nd and 3rd dimensions should 
+<div><p>3-D white-field/dark_field data. Multiple
+projections are stacked together to obtain
+a 3-D matrix. 2nd and 3rd dimensions should
 be the same as data: [shots, slices, pixels].</p>
 </div></blockquote>
 <p><strong>theta</strong> : ndarray, optional</p>
@@ -214,6 +214,11 @@ to each projection.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.stripe_removal2">
+<tt class="descname">stripe_removal2</tt><big>(</big><em>nblocks=0</em>, <em>alpha=1.5</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.stripe_removal2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="tomopy.xtomo.xtomo_dataset.XTomoDataset.threshold_segment">
 <tt class="descname">threshold_segment</tt><big>(</big><em>cutoff=None</em>, <em>num_cores=None</em>, <em>chunk_size=None</em>, <em>overwrite=True</em><big>)</big><a class="headerlink" href="#tomopy.xtomo.xtomo_dataset.XTomoDataset.threshold_segment" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -298,7 +303,7 @@ to each projection.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Argonne National Laboratory.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
