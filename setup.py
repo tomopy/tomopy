@@ -26,7 +26,7 @@ for requirement in install_requires:
         raise pkg_resources.DistributionNotFound, msg
 
 # Get shared library locations (list of directories).
-LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
+LD_LIBRARY_PATH = '/usr/lib' #os.environ.get('LD_LIBRARY_PATH', None)
 if LD_LIBRARY_PATH is None:
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
                   "link the shared libraries correctly")
@@ -34,7 +34,7 @@ if LD_LIBRARY_PATH is None:
 LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
 
 # Get header file locations (list of directories).
-C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
+C_INCLUDE_PATH = '/usr/include' #os.environ.get('C_INCLUDE_PATH', None)
 if C_INCLUDE_PATH is None:
     warnings.warn("you may need to manually set C_INCLUDE_PATH to " +
                   "link the shared libraries correctly")
