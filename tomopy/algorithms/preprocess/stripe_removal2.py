@@ -1,15 +1,30 @@
 # -*- coding: utf-8 -*-
+"""Remove stripes from sinogram data.
+
+.. module:: stripe_removal2.py
+   :platform: Unix
+   :synopsis: Remove stripes from sinogram data.
+
+:Author:
+  `Eduardo X Miqueles <mailto: edu.miqueles@gmail.com>`_
+
+:Credits:
+  Juan V. Bermudez & Hugo H. Slepicka
+
+:Maintainer:
+  `Eduardo X Miqueles <mailto: edu.miqueles@gmail.com>`_
+
+:Organization:
+  Brazilian National Laboratory of Synchrotron Light (CNPEM/LNLS), Campinas, Brazil
+
+:Version: 14.Jan.2014
+
+:Copyright:
+  2014, CNPEM/LNLS
+"""
+
 import numpy
 import tomopy.tools.multiprocess_shared as mp
-
-"""stripe_removal2.py: Code for ring suppression"""
-
-__author__     = "Eduardo X Miqueles"
-__copyright__  = "Copyright 2014, CNPEM/LNLS" 
-__credits__    = "Juan V.Bermudez & Hugo H.Slepicka"
-__maintainer__ = "Eduardo X Miqueles"
-__email__      = "edu.miqueles@gmail.com" 
-__date__       = "14.Jan.2014" 
 
 def stripe_removal2(args):
     """
@@ -64,6 +79,7 @@ def stripe_removal2(args):
         >>> tomopy.xtomo_writer(d.data, output_file, axis=1)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
+
     # Arguments passed by multi-processing wrapper
     ind, dshape, inputs = args
     
