@@ -7,8 +7,8 @@ except:
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__)+'/tools')
-    
+sys.path.insert(0, os.path.dirname(__file__) + '/tools')
+
 # ---------X-ray absorption tomography imports---------
 
 # Reader/Writer functions for xtomo data.
@@ -22,4 +22,3 @@ from xtomo.xtomo_dataset import XTomoDataset as xtomo_dataset
 import xtomo.xtomo_preprocess
 import xtomo.xtomo_recon
 import xtomo.xtomo_postprocess
-

@@ -3,7 +3,6 @@
 
 '''install necessary external libraries for TomoPy'''
 
-
 from __future__ import print_function
 
 import os
@@ -23,69 +22,71 @@ VERBOSE = False
 
 def get_cmd_opts():
     import argparse
+
     doc = __doc__.strip()
     parser = argparse.ArgumentParser(prog=sys.argv[0], description=doc)
 
     prefix = '/usr/local'
     msg = 'Installation directory (default: ' + prefix + ')'
-    parser.add_argument('installation_path', 
-                        action='store', 
-                        nargs='?', 
+    parser.add_argument('installation_path',
+                        action='store',
+                        nargs='?',
                         help=msg,
                         default=prefix)
 
-    parser.add_argument('--fftw', 
+    parser.add_argument('--fftw',
                         action='store_true',
                         dest='install_fftw',
                         help='install fftw library',
                         default=False)
-    parser.add_argument('--boost', 
+    parser.add_argument('--boost',
                         action='store_true',
                         dest='install_boost',
                         help='install Boost library',
                         default=False)
-    parser.add_argument('--hdf5', 
+    parser.add_argument('--hdf5',
                         action='store_true',
                         dest='install_hdf5',
                         help='install HDF5 library',
                         default=False)
 
     fc = 'gfortran'
-    msg = 'specify the Fortran compiler (default: '+fc+')'
+    msg = 'specify the Fortran compiler (default: ' + fc + ')'
     parser.add_argument('--fc-compiler',
-                        action='store', 
-                        dest='fc_compiler', 
-                        help=msg, 
+                        action='store',
+                        dest='fc_compiler',
+                        help=msg,
                         default=fc)
     cc = 'gcc'
-    msg = 'specify the C compiler (default: '+cc+')'
+    msg = 'specify the C compiler (default: ' + cc + ')'
     parser.add_argument('--cc-compiler',
-                        action='store', 
-                        dest='cc_compiler', 
-                        help=msg, 
+                        action='store',
+                        dest='cc_compiler',
+                        help=msg,
                         default=cc)
     cxx = 'g++'
-    msg = 'specify the C++ compiler (default: '+cxx+')'
+    msg = 'specify the C++ compiler (default: ' + cxx + ')'
     parser.add_argument('--cxx-compiler',
-                        action='store', 
-                        dest='cxx_compiler', 
-                        help=msg, 
+                        action='store',
+                        dest='cxx_compiler',
+                        help=msg,
                         default=cxx)
 
-    parser.add_argument('--verbose', 
+    parser.add_argument('--verbose',
                         action='store_true',
                         dest='verbose',
                         help='send standard output to terminal',
                         default=False)
 
     return parser.parse_args()
-    
+
 
 def run(command, logfile):
     def do_bash(command):
-        return subprocess.call(command, 
-                               shell=True, 
+        return subprocess.call(command,
+                               shell=True,
                                executable="/bin/bash")
+
     if VERBOSE:
         status = do_bash(command + ' 2>&1 | tee ' + logfile)
     else:
@@ -198,7 +199,8 @@ def install_hdf5(prefix, fc, is_g95, is_gfortran, gfortran_version):
     print(" -> configuring")
     command = './configure'
     command += ' FC="' + fc + '"'
-    command += ' --with-zlib={prefix}/include,{prefix}/lib'.format(prefix=prefix)
+    command += ' --with-zlib={prefix}/include,{prefix}/lib'.format(
+        prefix=prefix)
     command += ' --prefix={prefix}'.format(prefix=prefix)
     run(command, 'log_configure')
     print(" -> making")
@@ -210,19 +212,19 @@ def install_hdf5(prefix, fc, is_g95, is_gfortran, gfortran_version):
 def main():
     global VERBOSE
     cmd_opts = get_cmd_opts()
-    INSTALL_HDF5  = cmd_opts.install_hdf5
-    INSTALL_FFTW  = cmd_opts.install_fftw
+    INSTALL_HDF5 = cmd_opts.install_hdf5
+    INSTALL_FFTW = cmd_opts.install_fftw
     INSTALL_BOOST = cmd_opts.install_boost
-    VERBOSE       = cmd_opts.verbose
-    fc            = cmd_opts.fc_compiler
-    cc            = cmd_opts.cc_compiler
-    cxx           = cmd_opts.cxx_compiler
-    prefix        = cmd_opts.installation_path
-    
+    VERBOSE = cmd_opts.verbose
+    fc = cmd_opts.fc_compiler
+    cc = cmd_opts.cc_compiler
+    cxx = cmd_opts.cxx_compiler
+    prefix = cmd_opts.installation_path
+
     if (INSTALL_HDF5 or INSTALL_FFTW or INSTALL_BOOST) is False:
         print("Nothing to install! Use 'python install.py --help' for options.")
         sys.exit(1)
-    
+
     print(" ")
     print("Determining system setup")
     start_dir = os.path.abspath('.')
@@ -241,46 +243,48 @@ def main():
     else:
         system_version = ''
     print(system, '/', system_version)
-    
-    # The following section deals with issues that occur 
-    # when using the intel fortran compiler with gcc.
-    
+
+    # The following section deals with issues that occur when using the intel
+    # fortran compiler with gcc.
+
     # Check whether C compiler is gcc
     # FIXME: does not find 'gcc' : gcc (Ubuntu/Linaro 4.7.3-1ubuntu1) 4.7.3
     output = p_get_first_line(cc + ' --version')
-#     is_gcc = 'GCC' in output
+    # is_gcc = 'GCC' in output
     is_gcc = 'GCC' in output.lower()
-    
+
     # get the Fortran compiler response to a version request
     try:
         output = p_get_first_line(fc + ' --version')
     except OSError:
         msg = 'Fortran compiler not found: ' + fc
-        raise OSError, msg
+        raise OSError(msg)
     # Check whether Fortran compiler is ifort
     # FIXME: is_ifort is unused
     is_ifort = '(IFORT)' in output
 
     # Check whether Fortran compiler is g95
     is_g95 = 'g95' in output
-    
+
     # Check whether Fortran compiler is pgfortran
     # FIXME: is_pgfortran is unused
     is_pgfortran = 'pgfortran' in output or \
                    'pgf95' in output
-    
+
     # Check whether Fortran compiler is gfortran
     is_gfortran = 'GNU Fortran' in output
     if is_gfortran:
-        gfortran_version = version.LooseVersion(p_get_first_line(fc + ' -dumpversion').split()[-1])
-    
+        gfortran_version = version.LooseVersion(
+            p_get_first_line(fc + ' -dumpversion').split()[-1])
+
     # On MacOS X, when using gcc 4.5 or 4.6, the fortran compiler needs to link
     # with libgcc_eh that is in the gcc library directory. This is not needed if
     # using gfortran 4.5 or 4.6, but it's easier to just add it for all
     # compilers.
     if system == 'Darwin' and is_gcc:
         # Determine gcc version
-        gcc_version = version.LooseVersion(p_get_first_line(cc + ' -dumpversion'))
+        gcc_version = version.LooseVersion(
+            p_get_first_line(cc + ' -dumpversion'))
         if gcc_version >= version.LooseVersion('4.5.0'):
             output = p_get_first_line(cc + ' -print-search-dirs')
             if output.startswith('install:'):
@@ -290,23 +294,25 @@ def main():
                 fc += libs
                 print(" -> SPECIAL CASE: adjusting fortran compiler:", fc)
             else:
-                print("ERROR: unexpected output for %s -print-search-dirs: %s" % (cc, output))
+                print(
+                    "ERROR: unexpected output for %s -print-search-dirs: %s" % (
+                        cc, output))
                 sys.exit(1)
-    
+
     if INSTALL_FFTW:
         install_fftw(prefix, fc, cc, cxx)
         os.chdir(work_dir)
-    
+
     if INSTALL_BOOST:
         install_boost(prefix)
         os.chdir(work_dir)
-    
+
     if INSTALL_HDF5:
         install_zlib(prefix)
         os.chdir(work_dir)
         install_hdf5(prefix, fc, is_g95, is_gfortran, gfortran_version)
         os.chdir(work_dir)
-    
+
     # Go back to starting directory
     os.chdir(start_dir)
     print(" ")
@@ -314,17 +320,21 @@ def main():
     print(" ")
     print("Before you start installing TomoPy, don't forget to:")
     print(" ")
-    print("    1) Set LD_LIBRARY_PATH permanently in your shell to: %s" % prefix + '/lib')
-    print("       hint: setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:%s" % prefix + '/lib')
+    print(
+        "    1) Set LD_LIBRARY_PATH permanently in your shell to: %s" % prefix + '/lib')
+    print(
+        "       hint: setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:%s" % prefix + '/lib')
     print(" ")
-    print("    2) Set C_INCLUDE_PATH permanently in your shell to: %s" % prefix + '/include')
-    print("       hint: setenv C_INCLUDE_PATH ${C_INCLUDE_PATH}:%s" % prefix + '/include')
+    print(
+        "    2) Set C_INCLUDE_PATH permanently in your shell to: %s" % prefix + '/include')
+    print(
+        "       hint: setenv C_INCLUDE_PATH ${C_INCLUDE_PATH}:%s" % prefix + '/include')
     print(" ")
 
 
 if __name__ == '__main__':
-    #sys.argv = sys.argv[:1]
+    # sys.argv = sys.argv[:1]
     # sys.argv.append('-h')
-    #sys.argv += '/tmp/sandbox --verbose --boost --fftw'.split()
-    #sys.argv += '/tmp/sandbox --verbose --hdf5'.split()
+    # sys.argv += '/tmp/sandbox --verbose --boost --fftw'.split()
+    # sys.argv += '/tmp/sandbox --verbose --hdf5'.split()
     main()
