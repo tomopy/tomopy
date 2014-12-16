@@ -6,22 +6,23 @@ import tomopy.tools.multiprocess_shared as mp
 
 # --------------------------------------------------------------------
 
+
 def region_segment(args):
     """
     Applies an region-based segementation to reconstructed data.
-    
+
     Parameters
     ----------
     data : ndarray, float32
         3-D reconstructed data with dimensions:
         [slices, pixels, pixels]
-        
+
     low : scalar, int
        Lowest value for the marker.
-        
+
     high : scalar, int
-       Higest value for the marker.
-         
+       Highest value for the marker.
+
     Returns
     -------
     output : ndarray
@@ -31,9 +32,9 @@ def region_segment(args):
     ind, dshape, inputs = args
 
     # Function inputs
-    data = mp.tonumpyarray(mp.shared_arr, dshape) # shared-array
+    data = mp.tonumpyarray(mp.shared_arr, dshape)  # shared-array
     low, high = inputs
-    
+
     for m in ind:
         img = data[m, :, :]
         elevation_map = sobel(img)
