@@ -467,30 +467,30 @@ def _zinger_removal(self, zinger_level=1000, median_width=3,
 
 # --------------------------------------------------------------------
 
-def _stripe_removal2(self, nblocks=0, alpha=1.5, num_cores=None, 
-                    chunk_size=None,
-                    overwrite=True):
 
-        
+def _stripe_removal2(self, nblocks=0, alpha=1.5, num_cores=None,
+                     chunk_size=None, overwrite=True):
     # Distribute jobs.
     _func = stripe_removal2
     _args = (nblocks, alpha)
-    _axis = 1 # Slice axis
+    _axis = 1  # Slice axis
 
     data = distribute_jobs(self.data, _func, _args, _axis,
                            num_cores, chunk_size)
-			
+
     # Update log.
     self.logger.debug("stripe_removal2: nblocks: " + str(nblocks))
     self.logger.debug("stripe_removal2: alpha: " + str(alpha))
     self.logger.info("stripe_removal2 [ok]")
-    
+
     # Update returned values.
-    if overwrite: self.data = data
-    else: return data	
+    if overwrite:
+        self.data = data
+    else:
+        return data
 
 # --------------------------------------------------------------------
-    
+
 # Hook all these methods to TomoPy.
 setattr(XTomoDataset, 'apply_padding', _apply_padding)
 setattr(XTomoDataset, 'circular_roi', _circular_roi)
@@ -507,4 +507,3 @@ setattr(XTomoDataset, 'phase_retrieval', _phase_retrieval)
 setattr(XTomoDataset, 'stripe_removal', _stripe_removal)
 setattr(XTomoDataset, 'zinger_removal', _zinger_removal)
 setattr(XTomoDataset, 'stripe_removal2', _stripe_removal2)
-
