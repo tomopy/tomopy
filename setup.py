@@ -17,8 +17,7 @@ for requirement in install_requires:
         pkg_resources.require(requirement)
     except pkg_resources.DistributionNotFound:
         msg = 'Python package requirement not satisfied: ' + requirement
-        msg += '\nsuggest using this command:'
-        msg += '\n\tpip install -U ' + requirement.split('=')[0].rstrip('>')
+        msg += '\n\nInstall all required packages with\n\tpip install -r requirements.txt'
         raise pkg_resources.DistributionNotFound, msg
 
 # Get shared library locations (list of directories).
