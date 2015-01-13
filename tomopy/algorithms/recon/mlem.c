@@ -3,7 +3,19 @@
 #include <math.h>
 #include <stdbool.h>
 
-void mlem(float* data, float* theta, float center, 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
+
+//for windows build
+void initlibtest()
+{
+
+}
+
+DLL void mlem(float* data, float* theta, float center, 
           int num_projections, int num_slices, int num_pixels, 
           int num_grid, int iters, float* recon) {
               
