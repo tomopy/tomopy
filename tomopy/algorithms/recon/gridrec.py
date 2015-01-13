@@ -11,9 +11,12 @@ import multiprocessing as mp
 # --------------------------------------------------------------------
 
 # Get the shared library for gridrec.
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 
-                          '../..', 'lib/librecon.so'))
-librecon = ctypes.CDLL(libpath)
+if os.name == 'nt':
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'lib/librecon.pyd'))
+    librecon = ctypes.CDLL(libpath)
+else:
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'lib/librecon.so'))
+    librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
