@@ -1,7 +1,12 @@
 #include <stdio.h>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
 
-void correct_drift(float* data, int num_projections, 
+DLL void correct_drift(float* data, int num_projections, 
                    int num_slices, int num_pixels, int air_pixels) {
                        
     int n, m, i, j, iproj;

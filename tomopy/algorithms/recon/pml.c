@@ -3,7 +3,13 @@
 #include <math.h>
 #include <stdbool.h>
 
-void pml(float* data, float* theta, float center, 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
+
+DLL void pml(float* data, float* theta, float center, 
          int num_projections, int num_slices, int num_pixels, 
          int num_grid, int iters, float beta, float* recon) {
               
