@@ -8,8 +8,13 @@ import tomopy.tools.multiprocess_shared as mp
 # --------------------------------------------------------------------
 
 # Get the shared library.
-libpath = os.path.join(os.path.dirname(__file__), '../../lib/librecon.so')
-librecon = ctypes.CDLL(os.path.abspath(libpath))
+# Get the shared library.
+if os.name == 'nt':
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'lib/librecon.pyd'))
+    librecon = ctypes.CDLL(libpath)
+else:
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'lib/librecon.so'))
+    librecon = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
