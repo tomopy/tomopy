@@ -8,8 +8,12 @@ import os
 
 # --------------------------------------------------------------------
 
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libfftw.so'))
-libfftw = ctypes.CDLL(libpath)
+if os.name == 'nt':
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libfftw.pyd'))
+    libfftw = ctypes.CDLL(libpath)
+else:
+    libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib/libfftw.so'))
+    libfftw = ctypes.CDLL(libpath)
 
 # --------------------------------------------------------------------
 
