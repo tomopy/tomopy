@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
 
-void apply_padding(float* data, int num_projections, 
+DLL void apply_padding(float* data, int num_projections, 
                    int num_slices, int num_pixels, 
                    int num_pad, float* padded_data) {
     

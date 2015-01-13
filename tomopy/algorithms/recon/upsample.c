@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
 
-void upsample2d(float* data, int num_slices, int num_pixels,
+DLL void upsample2d(float* data, int num_slices, int num_pixels,
                 int level, float* upsampled_data) {
 
     long m, n, k, i, p, q, iproj, ind;
@@ -31,7 +36,7 @@ void upsample2d(float* data, int num_slices, int num_pixels,
 }
 
 
-void upsample3d(float* data, int num_slices, int num_pixels,
+DLL void upsample3d(float* data, int num_slices, int num_pixels,
                 int level, float* upsampled_data) {
 
     int m, n, k, i, p, q, j, iproj, ind;
