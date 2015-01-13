@@ -1,8 +1,18 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
 
-void downsample2d(float* data, int num_projections,
+//Needed for windows build
+void initlibprep()
+{
+}
+
+DLL void downsample2d(float* data, int num_projections,
                   int num_slices, int num_pixels,
                   int level, float* downsampled_data) {
 
@@ -30,7 +40,7 @@ void downsample2d(float* data, int num_projections,
     }
 }
 
-void downsample3d(float* data, int num_projections,
+DLL void downsample3d(float* data, int num_projections,
                   int num_slices, int num_pixels,
                   int level, float* downsampled_data) {
 
