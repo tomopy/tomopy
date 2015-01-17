@@ -53,21 +53,22 @@
 
 <span class="c"># --------------------------------------------------------------------</span>
 
+
 <div class="viewcode-block" id="circular_roi"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.preprocess.circular_roi.html#tomopy.algorithms.preprocess.circular_roi.circular_roi">[docs]</a><span class="k">def</span> <span class="nf">circular_roi</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply circular mask to projection data.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : ndarray, float32</span>
 <span class="sd">        3-D reconstructed data with dimensions:</span>
 <span class="sd">        [projections, slices, pixels]</span>
-<span class="sd">        </span>
+
 <span class="sd">    ratio : scalar, int</span>
 <span class="sd">        Ratio of the circular mask&#39;s diameter in pixels</span>
-<span class="sd">        to the number of reconstructed image pixels </span>
+<span class="sd">        to the number of reconstructed image pixels</span>
 <span class="sd">        (i.e., the dimension of the images).</span>
-<span class="sd">         </span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    output : ndarray</span>
@@ -76,22 +77,22 @@
     <span class="n">num_projections</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">num_slices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">num_pixels</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-    
+
     <span class="k">if</span> <span class="n">num_slices</span> <span class="o">&lt;</span> <span class="n">num_pixels</span><span class="p">:</span>
         <span class="n">ind1</span> <span class="o">=</span> <span class="n">num_slices</span>
         <span class="n">ind2</span> <span class="o">=</span> <span class="n">num_pixels</span>
-    <span class="k">else</span><span class="p">:</span>        
+    <span class="k">else</span><span class="p">:</span>
         <span class="n">ind1</span> <span class="o">=</span> <span class="n">num_pixels</span>
         <span class="n">ind2</span> <span class="o">=</span> <span class="n">num_slices</span>
 
     <span class="c"># Apply circular mask.</span>
-    <span class="n">rad1</span> <span class="o">=</span> <span class="n">ind1</span><span class="o">/</span><span class="mi">2</span>
-    <span class="n">rad2</span> <span class="o">=</span> <span class="n">ind2</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">rad1</span> <span class="o">=</span> <span class="n">ind1</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">rad2</span> <span class="o">=</span> <span class="n">ind2</span> <span class="o">/</span> <span class="mi">2</span>
     <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="o">-</span><span class="n">rad1</span><span class="p">:</span><span class="n">rad1</span><span class="p">,</span> <span class="o">-</span><span class="n">rad2</span><span class="p">:</span><span class="n">rad2</span><span class="p">]</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">ratio</span><span class="o">*</span><span class="n">ratio</span><span class="o">*</span><span class="n">rad1</span><span class="o">*</span><span class="n">rad2</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="n">ratio</span> <span class="o">*</span> <span class="n">ratio</span> <span class="o">*</span> <span class="n">rad1</span> <span class="o">*</span> <span class="n">rad2</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_projections</span><span class="p">):</span>
         <span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="o">~</span><span class="n">mask</span><span class="p">])</span>
-        
+
     <span class="k">return</span> <span class="n">data</span></div>
 </pre></div>
 

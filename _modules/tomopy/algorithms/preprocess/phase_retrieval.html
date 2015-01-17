@@ -58,6 +58,7 @@
 
 <span class="c"># --------------------------------------------------------------------</span>
 
+
 <div class="viewcode-block" id="phase_retrieval"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.preprocess.phase_retrieval.html#tomopy.algorithms.preprocess.phase_retrieval.phase_retrieval">[docs]</a><span class="k">def</span> <span class="nf">phase_retrieval</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform single-material phase retrieval</span>
@@ -94,35 +95,35 @@
 <span class="sd">    ----------</span>
 <span class="sd">    - `J. of Microscopy, Vol 206(1), 33-40, 2001 \</span>
 <span class="sd">    &lt;http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract&gt;`_</span>
-<span class="sd">        </span>
+
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    - Phase retrieval:</span>
-<span class="sd">        </span>
+
 <span class="sd">        &gt;&gt;&gt; import tomopy</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Load data</span>
 <span class="sd">        &gt;&gt;&gt; myfile = &#39;demo/data.h5&#39;</span>
 <span class="sd">        &gt;&gt;&gt; data, white, dark, theta = tomopy.xtomo_reader(myfile)</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Construct tomo object</span>
 <span class="sd">        &gt;&gt;&gt; d = tomopy.xtomo_dataset(log=&#39;error&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; d.dataset(data, white, dark, theta)</span>
 <span class="sd">        &gt;&gt;&gt; d.normalize()</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Reconstruct data before phase retrieval</span>
 <span class="sd">        &gt;&gt;&gt; d.center=661.5</span>
 <span class="sd">        &gt;&gt;&gt; d.gridrec()</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Save reconstructed data before phase retrieval</span>
 <span class="sd">        &gt;&gt;&gt; output_file=&#39;tmp/before_phase_retrieval_&#39;</span>
 <span class="sd">        &gt;&gt;&gt; tomopy.xtomo_writer(d.data_recon, output_file)</span>
 <span class="sd">        &gt;&gt;&gt; print &quot;Images are succesfully saved at &quot; + output_file + &#39;...&#39;</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Reconstruct data after phase retrieval</span>
 <span class="sd">        &gt;&gt;&gt; d.phase_retrieval(pixel_size=1e-4, dist=70, energy=20)</span>
 <span class="sd">        &gt;&gt;&gt; d.gridrec()</span>
-<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Save reconstructed data after phase retrieval</span>
 <span class="sd">        &gt;&gt;&gt; output_file=&#39;tmp/after_phase_retrieval_&#39;</span>
 <span class="sd">        &gt;&gt;&gt; tomopy.xtomo_writer(d.data_recon, output_file)</span>
@@ -130,40 +131,41 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c"># Arguments passed by multi-processing wrapper</span>
     <span class="n">ind</span><span class="p">,</span> <span class="n">dshape</span><span class="p">,</span> <span class="n">inputs</span> <span class="o">=</span> <span class="n">args</span>
-    
+
     <span class="c"># Function inputs</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">tonumpyarray</span><span class="p">(</span><span class="n">mp</span><span class="o">.</span><span class="n">shared_arr</span><span class="p">,</span> <span class="n">dshape</span><span class="p">)</span> <span class="c"># shared-array</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">tonumpyarray</span><span class="p">(</span><span class="n">mp</span><span class="o">.</span><span class="n">shared_arr</span><span class="p">,</span> <span class="n">dshape</span><span class="p">)</span>  <span class="c"># shared-array</span>
     <span class="n">pixel_size</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="n">inputs</span>
 
     <span class="c"># Compute the filter.</span>
-    <span class="n">H</span><span class="p">,</span> <span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">,</span> <span class="n">tmp_proj</span> <span class="o">=</span> <span class="n">paganin_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
-                                    <span class="n">pixel_size</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>    
+    <span class="n">H</span><span class="p">,</span> <span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">,</span> <span class="n">tmp_proj</span> <span class="o">=</span> <span class="n">paganin_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span>
+                                                   <span class="n">energy</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
 
-    <span class="n">num_proj</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">dshape</span> <span class="c"># dx:slices, dy:pixels</span>
-    
+    <span class="n">num_proj</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">dshape</span>  <span class="c"># dx:slices, dy:pixels</span>
+
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">:</span>
         <span class="n">proj</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
-        
+
         <span class="k">if</span> <span class="n">padding</span><span class="p">:</span>
-            <span class="n">tmp_proj</span><span class="p">[</span><span class="n">x_shift</span><span class="p">:</span><span class="n">dx</span><span class="o">+</span><span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">:</span><span class="n">dy</span><span class="o">+</span><span class="n">y_shift</span><span class="p">]</span> <span class="o">=</span> <span class="n">proj</span>
+            <span class="n">tmp_proj</span><span class="p">[</span><span class="n">x_shift</span><span class="p">:</span><span class="n">dx</span> <span class="o">+</span> <span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">:</span><span class="n">dy</span> <span class="o">+</span> <span class="n">y_shift</span><span class="p">]</span> <span class="o">=</span> <span class="n">proj</span>
             <span class="n">fft_proj</span> <span class="o">=</span> <span class="n">fftw</span><span class="o">.</span><span class="n">fftw2</span><span class="p">(</span><span class="n">tmp_proj</span><span class="p">)</span>
             <span class="n">filtered_proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">fft_proj</span><span class="p">)</span>
-            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fftw</span><span class="o">.</span><span class="n">ifftw2</span><span class="p">(</span><span class="n">filtered_proj</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
-            <span class="n">proj</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">x_shift</span><span class="p">:</span><span class="n">dx</span><span class="o">+</span><span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">:</span><span class="n">dy</span><span class="o">+</span><span class="n">y_shift</span><span class="p">]</span>   
-                
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fftw</span><span class="o">.</span><span class="n">ifftw2</span><span class="p">(</span><span class="n">filtered_proj</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">proj</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">x_shift</span><span class="p">:</span><span class="n">dx</span> <span class="o">+</span> <span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">:</span><span class="n">dy</span> <span class="o">+</span> <span class="n">y_shift</span><span class="p">]</span>
+
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">padding</span><span class="p">:</span>
             <span class="n">fft_proj</span> <span class="o">=</span> <span class="n">fftw</span><span class="o">.</span><span class="n">fftw2</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
             <span class="n">filtered_proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">fft_proj</span><span class="p">)</span>
-            <span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fftw</span><span class="o">.</span><span class="n">ifftw2</span><span class="p">(</span><span class="n">filtered_proj</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
-        
+            <span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fftw</span><span class="o">.</span><span class="n">ifftw2</span><span class="p">(</span><span class="n">filtered_proj</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+
         <span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">proj</span>
-    
+
 <span class="c"># --------------------------------------------------------------------</span>
+
 </div>
 <div class="viewcode-block" id="paganin_filter"><a class="viewcode-back" href="../../../../resources/tomopy.algorithms.preprocess.phase_retrieval.html#tomopy.algorithms.preprocess.phase_retrieval.paganin_filter">[docs]</a><span class="k">def</span> <span class="nf">paganin_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">padding</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates Paganin-type filter.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : ndarray</span>
@@ -196,33 +198,32 @@
 <span class="sd">    - `J. of Microscopy, Vol 206(1), 33-40, 2001 \</span>
 <span class="sd">    &lt;http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract&gt;`_</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">num_proj</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="c"># dx:slices, dy:pixels</span>
-    <span class="n">wavelength</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PI</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PLANCK_CONSTANT</span> <span class="o">*</span> \
-                <span class="n">constants</span><span class="o">.</span><span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="n">energy</span>
-                
+    <span class="n">num_proj</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>  <span class="c"># dx:slices, dy:pixels</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PI</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PLANCK_CONSTANT</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="n">energy</span>
+
     <span class="k">if</span> <span class="n">padding</span><span class="p">:</span>
         <span class="c"># Find padding values.</span>
-        <span class="n">pad_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">dy</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-        
+        <span class="n">pad_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">dy</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
         <span class="c"># Fourier padding in powers of 2.</span>
         <span class="n">pad_pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">PI</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">*</span> <span class="n">dist</span> <span class="o">/</span> <span class="n">pixel_size</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        
+
         <span class="n">num_x</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">dx</span> <span class="o">+</span> <span class="n">pad_pixels</span><span class="p">)))</span>
         <span class="n">num_y</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">dy</span> <span class="o">+</span> <span class="n">pad_pixels</span><span class="p">)))</span>
         <span class="n">x_shift</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">num_x</span> <span class="o">-</span> <span class="n">dx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
         <span class="n">y_shift</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">num_y</span> <span class="o">-</span> <span class="n">dy</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
-        
+
         <span class="c"># Template padded image.</span>
         <span class="n">tmp_proj</span> <span class="o">=</span> <span class="n">pad_value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_x</span><span class="p">,</span> <span class="n">num_y</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float32&#39;</span><span class="p">)</span>
-        
+
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">padding</span><span class="p">:</span>
         <span class="n">num_x</span><span class="p">,</span> <span class="n">num_y</span> <span class="o">=</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span>
         <span class="n">x_shift</span><span class="p">,</span> <span class="n">y_shift</span><span class="p">,</span> <span class="n">tmp_proj</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
         <span class="n">tmp_proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float32&#39;</span><span class="p">)</span>
-                
+
     <span class="c"># Sampling in reciprocal space.</span>
-    <span class="n">indx</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">((</span><span class="n">num_x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">num_x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">num_x</span><span class="o">*</span><span class="mf">0.5</span><span class="p">)</span>
-    <span class="n">indy</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">((</span><span class="n">num_y</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">num_y</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">num_y</span><span class="o">*</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">indx</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">((</span><span class="n">num_x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">num_x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">num_x</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">indy</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">((</span><span class="n">num_y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">num_y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">num_y</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
     <span class="n">du</span><span class="p">,</span> <span class="n">dv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">indy</span><span class="p">,</span> <span class="n">indx</span><span class="p">)</span>
     <span class="n">w2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">du</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 

@@ -75,7 +75,7 @@
 <p><strong>ratio</strong> : scalar, int</p>
 <blockquote>
 <div><p>Ratio of the circular mask&#8217;s diameter in pixels
-to the number of reconstructed image pixels 
+to the number of reconstructed image pixels
 (i.e., the dimension of the images).</p>
 </div></blockquote>
 </td>
@@ -92,28 +92,28 @@ to the number of reconstructed image pixels
 <ul>
 <li><p class="first">Apply mask after reconstruction:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Load data</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span>  <span class="n">slices_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slices_end</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Reconstruct data</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">center</span><span class="o">=</span><span class="mf">661.5</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">gridrec</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Save reconstructed data before masking</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/before_masking_&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;Images are succesfully saved at &quot;</span> <span class="o">+</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s">&#39;...&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Apply masking</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">apply_mask</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Save reconstructed data after masking</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_masking_&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data_recon</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>

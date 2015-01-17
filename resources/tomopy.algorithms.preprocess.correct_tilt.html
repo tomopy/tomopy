@@ -90,18 +90,18 @@
 <ul>
 <li><p class="first">Rotate by 0.5 deg:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tomopy</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Load sinogram</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">myfile</span> <span class="o">=</span> <span class="s">&#39;demo/data.h5&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_reader</span><span class="p">(</span><span class="n">myfile</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Construct tomo object</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_dataset</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">white</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Perform rotation</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># Save sinogram after rotation</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s">&#39;tmp/after_rotation_&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tomopy</span><span class="o">.</span><span class="n">xtomo_writer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>

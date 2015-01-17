@@ -233,10 +233,17 @@ export C_INCLUDE_PATH=&lt;my-boost-include-dir&gt;:&lt;my-fftw-include-dir&gt;
 </ol>
 </td>
 </tr>
-<tr class="row-odd"><td>source</td>
+<tr class="row-odd"><td>release</td>
 <td><ol class="first last arabic simple">
 <li>download latest source tarball from <a class="reference external" href="https://github.com/tomopy/tomopy/releases">https://github.com/tomopy/tomopy/releases</a></li>
 <li><tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt> in the directory where <em>setup.py</em> resides</li>
+</ol>
+</td>
+</tr>
+<tr class="row-even"><td>github</td>
+<td><ol class="first last arabic simple">
+<li>clone the tomopy repository <tt class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/tomopy/tomopy.git</span> <span class="pre">tomopy</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt> in the <tt class="docutils literal"><span class="pre">tomopy</span></tt> directory where <em>setup.py</em> resides</li>
 </ol>
 </td>
 </tr>
@@ -289,6 +296,43 @@ python -c &quot;import tomopy&quot;
 </ol>
 </div>
 </div>
+<div class="section" id="windows-installation">
+<h2>Windows Installation<a class="headerlink" href="#windows-installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>Download and install Anaconda Windows 64-bit Python 2.7 (the install has options for non-admin installs):</dt>
+<dd><p class="first last"><a class="reference external" href="http://continuum.io/downloads">http://continuum.io/downloads</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Open command prompt and run:</dt>
+<dd><p class="first last"><tt class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span> <span class="pre">pywavelets</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Download FFTW3 for windows:</dt>
+<dd><p class="first last"><a class="reference external" href="ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4-dll64.zip">ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4-dll64.zip</a></p>
+</dd>
+</dl>
+</li>
+<li><p class="first">Unzip and copy libfftw3f-3.dll to anaconda root directory, ex. C:\Anaconda</p>
+</li>
+<li><dl class="first docutils">
+<dt>Download tomopy.egg from the build server:</dt>
+<dd><p class="first last"><a class="reference external" href="https://jenkins.aps.anl.gov/view/Python/job/Tomopy_trunk/ws/dist/tomopy-0.0.3-py2.7-win-amd64.egg">https://jenkins.aps.anl.gov/view/Python/job/Tomopy_trunk/ws/dist/tomopy-0.0.3-py2.7-win-amd64.egg</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Open command prompt where tomopy.egg is saved and run:</dt>
+<dd><p class="first last"><tt class="docutils literal"><span class="pre">easy_install</span> <span class="pre">tomopy-0.0.3-py2.7-win-amd64.egg</span></tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
 </div>
 
 
@@ -309,6 +353,7 @@ python -c &quot;import tomopy&quot;
 <li><a class="reference internal" href="#install-example">Install Example</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#windows-installation">Windows Installation</a></li>
 </ul>
 </li>
 </ul>
