@@ -6,7 +6,7 @@ import ipdb
 import imreg
 from pylab import show, matshow
 
-def align_projections(data, align_to_channel=None, method='cross-correlation', output_gifs=False, output_dir=None):
+def align_projections(data, compute_alignment=True, method='cross-correlation'):
     """
     Align projections in rotation series.
 
@@ -19,12 +19,11 @@ def align_projections(data, align_to_channel=None, method='cross-correlation', o
     Parameters
     ----------
     data : ndarray, float32
-        4-D tomographic data with dimensions:
-        [channels, projections, slices, pixels]
+        3-D tomographic data with dimensions:
+        [projections, slices, pixels]
 
-    align_to_channel: int32
-        specify which channel to use when calculating (x,y) shifts for each projection.
-        If None, sum channels.
+    compute_alignment: boolean
+        Specify whether to compute the alignment between projections or use an existing alignment (self.alignment_translations)
 
     method: string
         Specify which method to use to align the projections.
@@ -47,7 +46,7 @@ def align_projections(data, align_to_channel=None, method='cross-correlation', o
 
     output: ndarray
         Shifts that have been applied to data.
-        Format [theta, x, y]
+        Format dict[slice] = [ x, y]
 
     References
     ----------
@@ -83,40 +82,41 @@ def align_projections(data, align_to_channel=None, method='cross-correlation', o
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
 
-    num_channels = data.shape[0]
-    num_projections = data.shape[1]
-    num_slices = data.shape[2]
-    num_pixels = data.shape[3]
+    num_projections = data.shape[0]
+    num_slices = data.shape[1]
+    num_pixels = data.shape[2]
 
-    if align_to_channel:
-        unaligned = data[align_to_channel,:,:,:]
-    else:
-        unaligned = np.sum(data,axis=0)
+    aligned = np.zeros_like(data)
+    aligned[0,:,:] = data[0,:,:]
+    if compute_alignment:
+        shifts = {}
+        shifts[0] = [0,0]
+        if method == 'cross-correlation':
+            for n in range(1, num_projections):
+                t0, t1 = cross_correlate(data[n,:,:], data[n-1,:,:])
+                aligned[n,:,:] = translate(data[n,:,:], -t0, -t1)
+                shifts[n] = [t0,t1]
+        elif method == 'phase-correlation':
+            for n in range(1, num_projections):
+                t0, t1 = phase_correlate(data[n,:,:], data[n-1,:,:])
+                aligned[n,:,:] = translate(data[n,:,:], t0, t1)
+                shifts[n] = [t0,t1]
+        elif method == 'rotation_and_scale_invariant_phase_correlation':
+            for n in range(1, num_projections):
+                aligned[n,:,:], scale, angle, (t0, t1) = imreg.similarity(data[n,:,:], data[n-1,:,:])
+                shifts.append([t0,t1])
+        else:
+            self.logger.error('Projection alignment method not found: {:s}\nChoose one of "cross-correlation", "phase-correlation", "rotation_and_scale_invariant_phase_correlation"'.format(method))
+            sys.exit(1)
+    else: # Use pre-calculated shift values
+        try:
+            shifts = self.alignment_translations
+        except AttributeError:
+            self.logger.error('If compute_alignment=False you must specify the translations to apply to each projection as a dict:\n\tself.alignment_translations[slice] = [x, y].')
+            sys.exit(1)
 
-    shifts = []
-    ipdb.set_trace()
-    if method == 'cross-correlation':
-        for n in range(1, num_projections):
-            t0, t1 = cross_correlate(unaligned[n,:,:], unaligned[n-1,:,:])
-            unaligned[n,:,:] = translate(unaligned[n,:,:], -t0, -t1)
-            #matshow(unaligned[n,:,:])
-            #matshow(unaligned[n-1,:,:])
-            #show()
-            shifts.append([t0,t1])
-    elif method == 'phase-correlation':
-        for n in range(1, num_projections):
-            t0, t1 = phase_correlate(unaligned[n,:,:], unaligned[n-1,:,:])
-            unaligned[n,:,:] = translate(unaligned[n,:,:], t0, t1)
-            shifts.append([t0,t1])
-    elif method == 'rotation_and_scale_invariant_phase_correlation':
-        for n in range(1, num_projections):
-            img, scale, angle, (t0, t1) = imreg.similarity(unaligned[n,:,:], unaligned[n-1,:,:])
-            unaligned[n,:,:] = img
-            shifts.append([t0,t1])
-    else:
-        return
-
-    aligned = unaligned
+        for key, val in shifts.keys():
+            aligned[key,:,:] = translate(data, val[0], val[1])
 
     return aligned, shifts
 
