@@ -28,13 +28,13 @@ import xtomo.xtomo_postprocess
 # ---------X-ray fluorescence tomography imports---------
 
 # Reader/Writer functions for xftomo data.
-#from xtomo.xtomo_io import xtomo_reader
-#from xtomo.xtomo_io import xtomo_writer
+from xftomo.xftomo_io import import_aps_2ide
+from xftomo.xftomo_io import xftomo_writer
 
 # Main xtomo object constructor.
 from xftomo.xftomo_dataset import XFTomoDataset as xftomo_dataset
 
 # Hooks to other functions.
-#import xtomo.xtomo_preprocess
-#import xtomo.xtomo_recon
+import xftomo.xftomo_preprocess
+import xftomo.xftomo_recon
 #import xtomo.xtomo_postprocess

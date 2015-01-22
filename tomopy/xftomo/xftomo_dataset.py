@@ -25,7 +25,7 @@ import numpy as np
 
 class XFTomoDataset(object):
 
-    def __init__(self, data, theta=None, log='INFO', color_log=True, stream_handler=True):
+    def __init__(self, data, theta=None, channel_names=None, log='INFO', color_log=True, stream_handler=True):
         """
 
         An XFTomo_Dataset instance has a ``data`` attribute with dimensions [channel, projections, slices, pixels]. This is analogous with an XTomo_Dataset object which is use for phase/absoprtion tomography but with an additional dimension to contain multiple fluorescence channels or scalers.
@@ -54,6 +54,7 @@ class XFTomoDataset(object):
         # Get data
         self.data = data
         self.theta = theta
+        self.channel_names = channel_names
 
         # Dimensions:
         num_channels = self.data.shape[0]
@@ -63,7 +64,7 @@ class XFTomoDataset(object):
 
 
         # Assign theta
-        if not theta:
+        if theta is None:
             self.theta = np.linspace(0, num_projs, num_projs) * 180 / (
                 num_projs + 1)
             self.logger.warning("assumed 180-degree rotation [ok]")
