@@ -2,11 +2,12 @@
 import numpy as np
 import scipy as sp
 import scipy.fftpack as spf
+import scipy.ndimage.interpolation as spni
 import ipdb
 import imreg
 from pylab import show, matshow
 
-def align_projections(data, compute_alignment=True, method='cross-correlation'):
+def align_projections(data, compute_alignment=True, method='cross-correlation', alignment_translations=None):
     """
     Align projections in rotation series.
 
@@ -93,30 +94,33 @@ def align_projections(data, compute_alignment=True, method='cross-correlation'):
         shifts[0] = [0,0]
         if method == 'cross-correlation':
             for n in range(1, num_projections):
-                t0, t1 = cross_correlate(data[n,:,:], data[n-1,:,:])
-                aligned[n,:,:] = translate(data[n,:,:], -t0, -t1)
+                t0, t1 = cross_correlate(data[n,:,:], aligned[n-1,:,:])
+                aligned[n,:,:] = spni.shift(data[n,:,:], (t0, t1))
                 shifts[n] = [t0,t1]
         elif method == 'phase-correlation':
             for n in range(1, num_projections):
-                t0, t1 = phase_correlate(data[n,:,:], data[n-1,:,:])
-                aligned[n,:,:] = translate(data[n,:,:], t0, t1)
+                t0, t1 = phase_correlate(data[n,:,:], aligned[n-1,:,:])
+                aligned[n,:,:] = spni.shift(data[n,:,:], (t0, t1))
                 shifts[n] = [t0,t1]
         elif method == 'rotation_and_scale_invariant_phase_correlation':
             for n in range(1, num_projections):
-                aligned[n,:,:], scale, angle, (t0, t1) = imreg.similarity(data[n,:,:], data[n-1,:,:])
-                shifts.append([t0,t1])
+                aligned[n,:,:], scale, angle, (t0, t1) = imreg.similarity(aligned[n-1,:,:], data[n,:,:])
+                if abs(t0)>3:
+                    aligned[n,:,:] = spni.shift(data[n,:,:],(0,-t1))
+                    t0=0
+                shifts[n] = [t0,t1]
         else:
             self.logger.error('Projection alignment method not found: {:s}\nChoose one of "cross-correlation", "phase-correlation", "rotation_and_scale_invariant_phase_correlation"'.format(method))
             sys.exit(1)
     else: # Use pre-calculated shift values
         try:
-            shifts = self.alignment_translations
+            shifts = alignment_translations
         except AttributeError:
-            self.logger.error('If compute_alignment=False you must specify the translations to apply to each projection as a dict:\n\tself.alignment_translations[slice] = [x, y].')
+            self.logger.error('If compute_alignment=False you must specify the translations to apply to each projection as a dict:\n\talignment_translations[slice] = [x, y].')
             sys.exit(1)
 
-        for key, val in shifts.keys():
-            aligned[key,:,:] = translate(data, val[0], val[1])
+        for key in shifts.keys():
+            aligned[key,:,:] = spni.shift(data[key,:,:], (shifts[key][0], shifts[key][1]))
 
     return aligned, shifts
 
