@@ -282,7 +282,6 @@ def xftomo_writer(data, output_file=None, x_start=0,
         >>> tomopy.xtomo_writer(d.data_recon, output_file, axis=0)
         >>> print "Images are succesfully saved at " + output_file + '...'
     """
-    ipdb.set_trace()
     if output_file is None:
         output_file = "tmp/img_{:d}_{:d}.tif"
     output_file = os.path.abspath(output_file)
@@ -308,7 +307,10 @@ def xftomo_writer(data, output_file=None, x_start=0,
         os.makedirs(dir_path)
 
     # Select desired x from whole data.
+    if len(data.shape)==3:
+        data=data[np.newaxis,:,:,:]
     num_channels, num_x, num_y, num_z = data.shape
+
     if axis == 0:
         x_end = x_start + num_x
     elif axis == 1:
