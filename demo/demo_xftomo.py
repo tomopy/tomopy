@@ -4,6 +4,9 @@
 import tomopy
 import ipdb
 
+
+
+"""
 # Read HDF5 files.
 data, theta, channel_names = tomopy.import_aps_2ide('/home/david/python/tomopy/demo/data/tomo/2xfm_{:04d}.h5',
                             f_start=100,
@@ -28,4 +31,4 @@ tomopy.xftomo_write(d.data_recon, output_file='/tmp/mlem_{:}_{:}.tif')
 d.pml()
 tomopy.xftomo_write(d.data_recon, output_file='/tmp/pml_{:}_{:}.tif')
 ipdb.set_trace()
-
+"""
