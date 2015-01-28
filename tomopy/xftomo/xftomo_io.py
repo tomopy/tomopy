@@ -24,6 +24,7 @@ Examples
 """
 from __future__ import print_function
 import numpy as np
+import scipy.misc
 import h5py
 import ipdb
 import sys
@@ -175,8 +176,8 @@ def import_aps_2ide(
                     h5_str = '/MAPS/scalers'
                 data[j, i, :, :] = f_handle[h5_str][ch_idx, slices_start:slices_end, :]
                 data[j, i, :, :] = np.where(np.isfinite(data[j, i, :, :]), data[j, i, :, :], 0)
-                if i == 0:
-                    theta[j] = float(f_handle['MAPS/extra_pvs'][1, angpv_idx])
+                if j == 0:
+                    theta[i] = float(f_handle['MAPS/extra_pvs'][1, angpv_idx])
 
     print('Reading in files. Done.')
     return data, theta, channels
@@ -286,6 +287,7 @@ def xftomo_writer(data, output_file=None, x_start=0,
         output_file = "tmp/img_{:d}_{:d}.tif"
     output_file = os.path.abspath(output_file)
     dir_path = os.path.dirname(output_file)
+    ext = output_file.split('.')[-1].lower()
 
     # Find max min of data for scaling
     if data_max is None:
@@ -319,37 +321,40 @@ def xftomo_writer(data, output_file=None, x_start=0,
         x_end = x_start + num_z
 
     # Write data.
-    if channel:
+    if channel is not None:
         channels = [channel]
     else:
         channels = range(data.shape[0])
-        ind = range(x_start, x_end)
-        for channel in channels:
-            for m in range(len(ind)):
+    ind = range(x_start, x_end)
+    for channel in channels:
+        for m in range(len(ind)):
 
-                if axis == 0:
-                    arr = data[channel, m, :, :]
-                elif axis == 1:
-                    arr = data[channel, :, m, :]
-                elif axis == 2:
-                    arr = data[channel, :, :, m]
+            if axis == 0:
+                arr = data[channel, m, :, :]
+            elif axis == 1:
+                arr = data[channel, :, m, :]
+            elif axis == 2:
+                arr = data[channel, :, :, m]
 
-                if dtype is 'uint8':
-                    arr = ((arr * 1.0 - data_min) / (data_max - data_min) * 255).astype(
-                        'uint8')
-                elif dtype is 'uint16':
-                    arr = (
-                        (arr * 1.0 - data_min) / (data_max - data_min) * 65535).astype(
-                        'uint16')
-                elif dtype is 'float32':
-                    arr = arr.astype('float32')
+            if dtype is 'uint8':
+                arr = ((arr * 1.0 - data_min) / (data_max - data_min) * 255).astype(
+                    'uint8')
+            elif dtype is 'uint16':
+                arr = (
+                    (arr * 1.0 - data_min) / (data_max - data_min) * 65535).astype(
+                    'uint16')
+            elif dtype is 'float32':
+                arr = arr.astype('float32')
 
-                if channel_names:
-                    channel_name = self.channel_names[channel]
+            if channel_names:
+                channel_name = self.channel_names[channel]
+            else:
+                channel_name = channel
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if ext=='png':
+                    scipy.misc.toimage(arr).save(output_file.format(channel_name, m))
                 else:
-                    channel_name = channel
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
                     skimage.io.imsave(output_file.format(channel_name, m), arr, plugin='tifffile')
 
 if __name__ == '__main__':

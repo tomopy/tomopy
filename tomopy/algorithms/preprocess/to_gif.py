@@ -45,7 +45,7 @@ def to_gif(datasets, title='Projection: {:d}',
             ax.imshow(datasets[i][nframe,:,:])
             if i==0:
                 plt.title(title.format(nframe))
-        plt.savefig(output_filename.split('.')[0]+'_{:d}.png'.format(nframe))
+        #plt.savefig(output_filename.split('.')[0]+'_{:d}.png'.format(nframe))
 
 
     fig, axes = plt.subplots(ncols = n_datasets, nrows=1)
