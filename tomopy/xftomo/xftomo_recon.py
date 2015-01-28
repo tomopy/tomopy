@@ -534,15 +534,12 @@ def _gridrec(self, overwrite=True, channel=None, *args, **kwargs):
         self.center = np.array(self.center, dtype='float32')
 
     # Initialize and perform reconstruction.
-    recon = Gridrec(self.data, *args, **kwargs)
-    data_recon = recon.reconstruct(self.data, self.center, self.theta)
-    # Initialize and perform reconstruction.
     if channel:
         recon = Gridrec(self.data[channel,:,:,:], *args, **kwargs)
         data_recon = recon.reconstruct(self.data[channel,:,:,:], self.center, self.theta)
     else:
         data_list=[]
-        for channel in range(data.shape[0]):
+        for channel in range(self.data.shape[0]):
             try:
                 self.logger.info("gridrec: now reconstructing {:s}".format(self.channel_names[channel]))
             except:
@@ -550,7 +547,7 @@ def _gridrec(self, overwrite=True, channel=None, *args, **kwargs):
             recon = Gridrec(self.data[channel,:,:,:], *args, **kwargs)
             data_list.append(recon.reconstruct(self.data[channel,:,:,:], self.center, self.theta))
         recon_shape = data_list[0].shape
-        data_recon = np.zeros((data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        data_recon = np.zeros((self.data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
         for i, recon in enumerate(data_list):
             data_recon[i,:,:,:] = recon
 
