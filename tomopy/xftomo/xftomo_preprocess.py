@@ -81,12 +81,12 @@ def _align_projections(self, align_to_channel=None, method='rotation_and_scale_i
     data = distribute_jobs(data, zinger_removal, (10000, 3), 0, None, None)
 
     # Edge detection filter
-    for i in range(data.shape[0]):
-        data[i,:,:] = np.hypot(spn.sobel(data[i,:,:], 0), spn.sobel(data[i,:,:], 1))
-        data[i,:,:] = spn.median_filter(data[i,:,:], 3)
+    if method not in ['least_squares_fit']:
+        for i in range(data.shape[0]):
+            data[i,:,:] = np.hypot(spn.sobel(data[i,:,:], 0), spn.sobel(data[i,:,:], 1))
+            data[i,:,:] = spn.median_filter(data[i,:,:], 3)
 
-
-    data, translations = align_projections(data, method=method)
+    data, translations = align_projections(data, method=method, theta=self.theta)
 
     if output_gifs:
         to_gif([unaligned_data, data], output_filename=output_filename)

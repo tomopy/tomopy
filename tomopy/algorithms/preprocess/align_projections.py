@@ -11,7 +11,7 @@ import ipdb
 import imreg
 from pylab import show, matshow
 
-def align_projections(data, compute_alignment=True, method='cross-correlation', alignment_translations=None):
+def align_projections(data, compute_alignment=True, method='cross-correlation', alignment_translations=None, theta=None):
     """
     Align projections in rotation series.
 
@@ -114,7 +114,7 @@ def align_projections(data, compute_alignment=True, method='cross-correlation', 
                     t0=0
                 shifts[n] = [t0,t1]
         elif method == 'least_squares_fit':
-            least_sq(data)
+            aligned, shifts = least_sq(data, theta)
 
         else:
             self.logger.error('Projection alignment method not found: {:s}\nChoose one of "cross-correlation", "phase-correlation", "rotation_and_scale_invariant_phase_correlation"'.format(method))
@@ -197,7 +197,7 @@ def least_sq(sino_in, theta, degrees=True):
     else:
         for i, x in enumerate(err):
             sino_in[i,:] = spni.shift(sino_in[i,:],(-x,))
-    return sino_in
+    return sino_in, np.array([(0, -x) for x in err])
 
 
 
