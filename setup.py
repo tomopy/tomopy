@@ -26,7 +26,11 @@ if LD_LIBRARY_PATH is None:
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
                   "link the shared libraries correctly")
     LD_LIBRARY_PATH = ''
-LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
+#for windows split with ; , unix split with :
+if os.name == 'nt':
+    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(';')
+else:
+    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
 
 # Get header file locations (list of directories).
 C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
@@ -35,18 +39,37 @@ if C_INCLUDE_PATH is None:
                   "link the shared libraries correctly")
     C_INCLUDE_PATH = []
 else:
-    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+    #for windows split with ; , unix split with :
+    if os.name == 'nt':
+        C_INCLUDE_PATH = C_INCLUDE_PATH.split(';')
+    else:
+        C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
 # add ourselves to the list
 C_INCLUDE_PATH += [os.path.abspath('tomopy/algorithms/recon/gridrec')]
 
 
+#for windows we need to know the boost version
+if os.name == 'nt':
+    BOOST_VER = os.environ.get('BOOST_VER', None)
+    if BOOST_VER is None:
+        warnings.warn("you may need to manually set BOOST_VER to " +
+                      "the compiled version. defaulting to 'mgw47-mt-1_57'")
+        BOOST_VER = 'mgw47-mt-1_57'
+
+if os.name == 'nt':
+    fftw_extra_link_args = ['-lfftw3f-3']
+    recon_extra_link_args = ['-lfftw3f-3', '-lboost_thread-'+BOOST_VER, '-lboost_system-'+BOOST_VER, '-lboost_date_time-'+BOOST_VER]
+else:
+    fftw_extra_link_args = ['-lfftw3f']
+    recon_extra_link_args = ['-lfftw3f', '-lboost_thread', '-lboost_system', '-lboost_date_time']
+	
 # Create FFTW shared-library.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
                      sources=['tomopy/tools/fftw.cpp'],
                      include_dirs=C_INCLUDE_PATH,
                      library_dirs=LD_LIBRARY_PATH,
-                     extra_link_args=['-lfftw3f'])
+                     extra_link_args=fftw_extra_link_args)
 
 # Create preprocessing shared-library.
 ext_prep = Extension(name='tomopy.lib.libprep',
@@ -70,10 +93,7 @@ ext_recon = Extension(name='tomopy.lib.librecon',
                                'tomopy/algorithms/recon/gridrec/tomoReconPy.cpp'],
                       include_dirs=C_INCLUDE_PATH,
                       library_dirs=LD_LIBRARY_PATH,
-                      extra_link_args=['-lfftw3f',
-                                       '-lboost_thread',
-                                       '-lboost_system',
-                                       '-lboost_date_time'])
+                      extra_link_args=recon_extra_link_args)
 
 ext_test = Extension(name='tomopy.lib.libtest',
                      sources=['tomopy/algorithms/recon/mlem.c'])
