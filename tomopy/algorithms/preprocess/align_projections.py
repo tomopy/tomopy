@@ -105,7 +105,7 @@ def align_projections(data, compute_alignment=True, method='cross-correlation', 
         elif method == 'rotation_and_scale_invariant_phase_correlation':
             for n in range(1, num_projections):
                 aligned[n,:,:], scale, angle, (t0, t1) = imreg.similarity(aligned[n-1,:,:], data[n,:,:])
-                if abs(t0)>3:
+                if abs(t0)>30:
                     aligned[n,:,:] = spni.shift(data[n,:,:],(0,-t1))
                     t0=0
                 shifts[n] = [t0,t1]
@@ -120,7 +120,7 @@ def align_projections(data, compute_alignment=True, method='cross-correlation', 
             sys.exit(1)
 
         for key in shifts.keys():
-            aligned[key,:,:] = spni.shift(data[key,:,:], (shifts[key][0], shifts[key][1]))
+            aligned[key,:,:] = spni.shift(data[key,:,:], (-shifts[key][0], -shifts[key][1]))
 
     return aligned, shifts
 
