@@ -8,7 +8,7 @@ import phantom
 import numpy as np
 from skimage.transform import radon
 import pylab as pyl
-#pyl.ion()
+pyl.ion()
 
 """
 # SIMULATED TOMO DATA
@@ -64,34 +64,50 @@ tomopy.xftomo_writer(d.data_recon, output_file='/tmp/pml/pml_{:}_{:}.tif')
 data, theta, channel_names = tomopy.import_aps_2ide('/home/david/python/tomopy/demo/data/tomo/2xfm_{:04d}.h5',
                             f_start=100,
                             f_end=164,
-                            f_exclude=[140, 141, 142, 143, 145]
+                            f_exclude=[140, 141, 142, 143, 145],
+                            #slices_start=125,
+                            #slices_end=128
                             )
 
-channel=15
+theta -= theta.min()
+channel=6
+iters=10
 # xftomo object creation and pipeline of methods.
 d = tomopy.xftomo_dataset(data=data, theta=theta, channel_names=channel_names, log='debug')
-tomopy.xftomo_writer(d.data, output_file='/tmp/projections/projection_{:}_{:}.png')
-ipdb.set_trace()
+#tomopy.xftomo_writer(d.data, output_file='/tmp/projections/projection_{:}_{:}.png')
 
 d.zinger_removal(zinger_level=10000, median_width=3)
-d.align_projections(output_gifs=True, output_filename='/tmp/projections.gif')
-d.diagnose_center()
-d.optimize_center()
-tomopy.xftomo_writer(d.data, channel=channel, output_file='/tmp/projections/projection_{:}_{:}.tif')
-ipdb.set_trace()
-d.art(channel=channel)
+d.align_projections(align_to_channel=channel, output_gifs=True, output_filename='/tmp/projections.gif')
+"""
+for c in range(120, 140):
+    print('Center: ', c)
+    d.center = c
+    d.theta = theta
+    d.art(channel=channel)
+    tomopy.xftomo_writer(d.data_recon, output_file='/tmp/art/art_{:}.png'.format(str(c)+'_{:}_{:}'))
+"""
+d.center = 129.5
+#d.diagnose_center()
+#d.optimize_center(slice_no=126, center_init=d.center)
+tomopy.xftomo_writer(d.data, channel=channel, output_file='/tmp/projections/png/projection_{:}_{:}.png')
+tomopy.xftomo_writer(d.data, channel=channel, output_file='/tmp/projections/tif/projection_{:}_{:}.tif')
+
+d.theta=theta
+d.art(channel=channel, iters=iters)
 tomopy.xftomo_writer(d.data_recon, output_file='/tmp/art/art_{:}_{:}.tif')
 
-d.sirt(channel=channel)
+d.theta = theta
+d.sirt(channel=channel, iters=iters)
 tomopy.xftomo_writer(d.data_recon, output_file='/tmp/sirt/sirt_{:}_{:}.tif')
 
 d.theta=theta
 d.gridrec(channel=channel, fluorescence=1)
 tomopy.xftomo_writer(d.data_recon, output_file='/tmp/gridrec/gridrec_{:}_{:}.tif')
 
-d.mlem(channel=channel)
+d.theta=theta
+d.mlem(channel=channel, iters=iters)
 tomopy.xftomo_writer(d.data_recon, output_file='/tmp/mlem/mlem_{:}_{:}.tif')
 
-d.pml(channel=channel)
+d.theta=theta
+d.pml(channel=channel, iters=iters)
 tomopy.xftomo_writer(d.data_recon, output_file='/tmp/pml/pml_{:}_{:}.tif')
-
