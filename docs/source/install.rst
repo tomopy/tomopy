@@ -101,8 +101,10 @@ from        procedure
 ==========  ==========================================================================================
 Python egg  #. download latest released egg from https://github.com/tomopy/tomopy/releases
             #. ``easy_install my-egg-name`` in the directory where the egg resides.
-source      #. download latest source tarball from https://github.com/tomopy/tomopy/releases
+release     #. download latest source tarball from https://github.com/tomopy/tomopy/releases
             #. ``python setup.py install`` in the directory where *setup.py* resides
+github      #. clone the tomopy repository ``git clone https://github.com/tomopy/tomopy.git tomopy``
+            #. ``python setup.py install`` in the ``tomopy`` directory where *setup.py* resides
 ==========  ==========================================================================================
             
 For some configurations you may need to specifically add 
@@ -145,3 +147,17 @@ a different *<desired-directory>* for Boost, fftw3, and tomopy:
      echo "C_INCLUDE_PATH = $C_INCLUDE_PATH"
      echo "PYTHONPATH = $PYTHONPATH"
      python -c "import tomopy"
+
+Windows Installation
+********************
+#. Download and install Anaconda Windows 64-bit Python 2.7 (the install has options for non-admin installs):
+     http://continuum.io/downloads
+#. Open command prompt and run:
+     ``pip install -U pywavelets``
+#. Download FFTW3 for windows:
+     ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4-dll64.zip
+#. Unzip and copy libfftw3f-3.dll to anaconda root directory, ex. C:\\Anaconda\
+#. Download tomopy.egg from the build server: 
+     https://jenkins.aps.anl.gov/view/Python/job/Tomopy_trunk/ws/dist/tomopy-0.0.3-py2.7-win-amd64.egg
+#. Open command prompt where tomopy.egg is saved and run:
+     ``easy_install tomopy-0.0.3-py2.7-win-amd64.egg``

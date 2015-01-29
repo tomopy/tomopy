@@ -5,13 +5,25 @@
 #include <functional>
 #include <iostream>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
+
 static tomoRecon *pTomoRecon = NULL;
 static tomoParams_t tomoParams;
 static float *angles = NULL;
 
 extern "C" {
 
-void reconCreate(tomoParams_t *pTomoParams, float *pAngles)
+//Needed for windows build
+void initlibrecon()
+{
+
+}
+
+DLL void reconCreate(tomoParams_t *pTomoParams, float *pAngles)
 {
     if (angles) free(angles);
     angles = NULL;
@@ -23,7 +35,7 @@ void reconCreate(tomoParams_t *pTomoParams, float *pAngles)
     pTomoRecon = new tomoRecon(&tomoParams, angles);
 }
 
-void reconDelete()
+DLL void reconDelete()
 {
     if (pTomoRecon) delete pTomoRecon;
     pTomoRecon = NULL;
@@ -31,7 +43,7 @@ void reconDelete()
     angles = NULL;
 }
 
-void reconRun(int *numSlices,
+DLL void reconRun(int *numSlices,
              float *pCenter,
              float *pIn,
              float *pOut)
@@ -40,7 +52,7 @@ void reconRun(int *numSlices,
     pTomoRecon -> reconstruct(*numSlices, pCenter, pIn, pOut);
 }
 
-void reconPoll(int *pReconComplete,
+DLL void reconPoll(int *pReconComplete,
                int *pSlicesRemaining)
 {
     if (pTomoRecon == NULL) return;
