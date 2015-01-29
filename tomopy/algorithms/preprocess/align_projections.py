@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import math
 import numpy as np
 import scipy as sp
 import scipy.fftpack as spf
 import scipy.ndimage.interpolation as spni
+import scipy.ndimage.measurements as spnm
+import scipy.optimize as spo
+from skimage.transform import radon, iradon
 import ipdb
 import imreg
 from pylab import show, matshow
@@ -109,6 +113,9 @@ def align_projections(data, compute_alignment=True, method='cross-correlation', 
                     aligned[n,:,:] = spni.shift(data[n,:,:],(0,-t1))
                     t0=0
                 shifts[n] = [t0,t1]
+        elif method == 'least_squares_fit':
+            least_sq(data)
+
         else:
             self.logger.error('Projection alignment method not found: {:s}\nChoose one of "cross-correlation", "phase-correlation", "rotation_and_scale_invariant_phase_correlation"'.format(method))
             sys.exit(1)
@@ -153,7 +160,51 @@ def phase_correlate(a, b):
         t1 -= shape[1]
     return [t0, t1]
 
+def least_sq(sino_in, theta, degrees=True):
+    angular_range = abs(max(theta)-min(theta))
+    if degrees:
+        angular_range*=math.pi/180
+    n_projections = sino_in.shape[0]
+    w = angular_range/n_projections
+    f = lambda x, a, b, c: a+b*np.sin(w*x-c)
+
+    xdata = range(n_projections)
+    x0 = [0.0, 1.0, 0.0]
+
+    # For a stack of sinograms use the one with the thighest value
+    #Maybe this should be highest standard deviation?
+    if len(sino_in.shape)==3:
+        t0, t1, t2 = np.unravel_index(np.argmax(sino_in), sino_in.shape)
+        sino = sino_in[:,t1,:]
+    else:
+        sino = sino_in
+
+    ydata = np.zeros(n_projections)
+    for x in xdata:
+        ydata[x] = spnm.center_of_mass(sino[x,:])[0]
+        #ydata = np.unravel_index(np.argmax(sino[x,:]), sino[x,:].shape)
+
+    fits, cov = spo.curve_fit(f, xdata, ydata, x0)
+    y_fit = np.array([f(x,fits[0], fits[1], fits[2]) for x in xdata])
+
+    # Calculate translation correction
+    err = ydata-y_fit
+
+    # Apply corrections:
+    if len(sino_in.shape)==3:
+        for i, x in enumerate(err):
+            sino_in[i,:,:] = spni.shift(sino_in[i,:,:],(0, -x,))
+    else:
+        for i, x in enumerate(err):
+            sino_in[i,:] = spni.shift(sino_in[i,:],(-x,))
+    return sino_in
+
+
+
 def test_case():
+    import pylab as pyl
+    pyl.ion()
+    from pylab import matshow, show, plot
     # Generate test data
     lena = sp.misc.lena()
     shape = lena.shape
@@ -161,6 +212,38 @@ def test_case():
     lena *= mask
 
     shift = [10,15]
+
+    # Test least squares
+    try:
+        sample = np.zeros((128,128))
+        sample[34,64]=1e3
+        theta = np.linspace(0,180,num=200,endpoint=True)
+        sino = np.rollaxis(radon(sample, theta=theta, circle=True), 1, 0)
+        sino3D = np.zeros((200,128,128))
+        for i in range(54,74):
+            sino3D[:,i,:] = sino
+
+        # Test 2D sinogram
+        #=================
+        # Insert random misalignment
+        for i in range(200):
+            sx = 12*(np.random.random()-0.5)
+            sino[i,:] = spni.shift(sino[i,:],(sx,))
+        sino_out=least_sq(sino, theta)
+        assert(np.allclose(sino, sino_out))
+
+        # Test 3D sinogram
+        #=================
+        # Insert random misalignment
+        for i in range(200):
+            sx = 12*(np.random.random()-0.5)
+            sino3D[i,:,:] = spni.shift(sino3D[i,:,:],(0,sx))
+        sino_out=least_sq(sino3D, theta)
+        assert(np.allclose(sino3D, sino_out))
+
+        print('Least squares sinogram alignment: PASSED')
+    except AssertionError:
+        print('Least squares sinogram alignment: FAILED')
 
     # Test cross correlation
     try:
@@ -188,6 +271,7 @@ def test_case():
     except AssertionError:
         print('Invariant correlation test: FAILED')
         ipdb.set_trace()
+
 
 
 if __name__ == '__main__':
