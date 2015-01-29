@@ -2,6 +2,12 @@
 #include <string.h>
 #include <fftw3.h>
 
+#ifdef WIN32
+#define DLL __declspec(dllexport)
+#else
+#define DLL 
+#endif
+
 extern "C" {
     
     void test ()
@@ -9,7 +15,12 @@ extern "C" {
         std::cout << "Hey!" << std::endl;
     }
     
-    void fftw_1d (float *argv1, int *argv2, int *argv3)
+	void initlibfftw()
+	{
+	
+	}
+	
+    DLL void fftw_1d (float *argv1, int *argv2, int *argv3)
     {
         
         float *data = (float *)argv1;
@@ -36,7 +47,7 @@ extern "C" {
         memcpy(data, in, n*sizeof(fftwf_complex));
     }
     
-    void fftw_2d (float *argv1, int *argv2, int *argv3,  int *argv4)
+    DLL void fftw_2d (float *argv1, int *argv2, int *argv3,  int *argv4)
     {
         
         float *data = (float *)argv1;
