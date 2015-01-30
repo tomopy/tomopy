@@ -8,6 +8,8 @@ except:
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__) + '/tools')
+os.environ['LD_LIBRARY_PATH'] = os.path.abspath(os.path.dirname(__file__)+'/lib')
+os.environ['C_INCLUDE_PATH'] = os.path.abspath(os.path.dirname(__file__)+'/lib')
 
 # ---------X-ray absorption tomography imports---------
 
@@ -22,3 +24,17 @@ from xtomo.xtomo_dataset import XTomoDataset as xtomo_dataset
 import xtomo.xtomo_preprocess
 import xtomo.xtomo_recon
 import xtomo.xtomo_postprocess
+
+# ---------X-ray fluorescence tomography imports---------
+
+# Reader/Writer functions for xftomo data.
+from xftomo.xftomo_io import import_aps_2ide
+from xftomo.xftomo_io import xftomo_writer
+
+# Main xtomo object constructor.
+from xftomo.xftomo_dataset import XFTomoDataset as xftomo_dataset
+
+# Hooks to other functions.
+import xftomo.xftomo_preprocess
+import xftomo.xftomo_recon
+#import xtomo.xtomo_postprocess
