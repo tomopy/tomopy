@@ -1,60 +1,41 @@
-# Compiled source #
-###################
-*.com
-*.class
-*.dll
-*.exe
-*.o
+*.py[cod]
+
+# C extensions
 *.so
 
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Logs and databases #
-######################
-*.log
-*.sql
-*.sqlite
-
-# OS generated files #
-######################
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-.spyderworkspace
-*.*~
-
-# Python pyproducts #
-#####################
-*.pyc
-build
+# Packages
+*.egg
+*.egg-info
 dist
-docs/build
-*egg-info
-.settings
+include
+share
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
 
-# LaTex generated files #
-#########################
-*.aux
-*.cls
-*.layout
-*.bst
+# Installer logs
+pip-log.txt
 
-# Test files #
-##############
-test.py
-main.py
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Translations
+*.mo
+
+# Mercurial
+.hg
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
