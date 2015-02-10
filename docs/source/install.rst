@@ -154,6 +154,7 @@ Windows Installation
      http://continuum.io/downloads
 #. Open command prompt and run:
      ``pip install -U pywavelets``
+     ``pip install -U ipdb``
 #. Download FFTW3 for windows:
      ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4-dll64.zip
 #. Unzip and copy libfftw3f-3.dll to anaconda root directory, ex. C:\\Anaconda\
