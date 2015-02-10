@@ -6,6 +6,7 @@
 *.exe
 *.o
 *.so
+*.dylib
 
 # Packages #
 ############
@@ -19,6 +20,22 @@
 *.rar
 *.tar
 *.zip
+*.egg
+*.egg-info
+dist
+include
+share
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
 
 # Logs and databases #
 ######################
@@ -38,7 +55,7 @@ Thumbs.db
 .spyderworkspace
 *.*~
 
-# Python pyproducts #
+# Python byproducts #
 #####################
 *.pyc
 build
@@ -46,6 +63,7 @@ dist
 docs/build
 *egg-info
 .settings
+pip-log.txt
 
 # LaTex generated files #
 #########################
@@ -58,3 +76,27 @@ docs/build
 ##############
 test.py
 main.py
+
+# Installer logs
+##############
+pip-log.txt
+
+# Unit test / coverage reports #
+################################
+.coverage
+.tox
+nosetests.xml
+
+# Translations #
+################
+*.mo
+
+# Mercurial #
+#############
+.hg
+
+# Mr Developer #
+################
+.mr.developer.cfg
+.project
+.pydevproject
