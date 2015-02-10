@@ -1,5 +1,5 @@
-numpy>=1.8.0
-scipy>=0.13.2
-h5py>=2.2.1
-pywavelets>=0.2.2
-scikit-image>=0.9
+numpy
+scipy
+h5py
+pywavelets
+scikit-image
