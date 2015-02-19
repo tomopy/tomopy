@@ -1,9 +1,25 @@
-*.py[cod]
-
-# C extensions
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
 *.so
+*.dylib
 
-# Packages
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
 *.egg
 *.egg-info
 dist
@@ -21,21 +37,66 @@ lib
 lib64
 __pycache__
 
-# Installer logs
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.spyderworkspace
+*.*~
+
+# Python byproducts #
+#####################
+*.pyc
+build
+dist
+docs/build
+*egg-info
+.settings
 pip-log.txt
 
-# Unit test / coverage reports
+# LaTex generated files #
+#########################
+*.aux
+*.cls
+*.layout
+*.bst
+
+# Test files #
+##############
+test.py
+main.py
+
+# Installer logs
+##############
+pip-log.txt
+
+# Unit test / coverage reports #
+################################
 .coverage
 .tox
 nosetests.xml
 
-# Translations
+# Translations #
+################
 *.mo
 
-# Mercurial
+# Mercurial #
+#############
 .hg
 
-# Mr Developer
+# Mr Developer #
+################
 .mr.developer.cfg
 .project
 .pydevproject
