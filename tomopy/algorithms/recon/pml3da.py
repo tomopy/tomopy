@@ -15,7 +15,7 @@ else:
 
 # --------------------------------------------------------------------
 
-def pml3d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw1, regw2, init_matrix):
+def pml3da(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw, init_matrix):
     """
     Applies Accelerated Penalized Maximum-Likelihood (APML)
     method to obtain reconstructions. 
@@ -73,8 +73,8 @@ def pml3d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    librecon.pml3d.restype = ctypes.POINTER(ctypes.c_void_p)
-    librecon.pml3d(data.ctypes.data_as(c_float_p),
+    librecon.pml3da.restype = ctypes.POINTER(ctypes.c_void_p)
+    librecon.pml3da(data.ctypes.data_as(c_float_p),
                   theta.ctypes.data_as(c_float_p),
                   ctypes.c_float(center),
                   ctypes.c_int(num_projections),
@@ -86,7 +86,6 @@ def pml3d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw
                   ctypes.c_float(delta),
                   ctypes.c_float(beta1),
                   ctypes.c_float(delta1),
-                  ctypes.c_float(regw1),
-                  ctypes.c_float(regw2),
+                  ctypes.c_float(regw),
                   init_matrix.ctypes.data_as(c_float_p))
     return init_matrix
