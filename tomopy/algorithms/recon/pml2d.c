@@ -3,15 +3,9 @@
 #include <math.h>
 #include <stdbool.h>
 
-#ifdef WIN32
-#define DLL __declspec(dllexport)
-#else
-#define DLL 
-#endif
-
 void pml2d(float* data, float* theta, float center, 
           int num_projections, int num_slices, int num_pixels, 
-          int num_grid, int iters, float beta, float delta, float beta1, float delta1, float regw, 
+          int num_grid, int iters, float beta, float delta, 
           float* recon) {
               
     float* gridx = (float *)malloc((num_grid+1)*sizeof(float));
@@ -29,8 +23,6 @@ void pml2d(float* data, float* theta, float center,
     
     
     const double PI = 3.141592653589793238462;
-
-    float totalwg;
     
     int m, n, k, q, i, j, t;
     bool quadrant;
@@ -51,11 +43,11 @@ void pml2d(float* data, float* theta, float center,
     float* E;
     float* F;
     float* G;
-    int ind0, indg[10];
-    float rg[10];
-    float mg[10];
-    float wg[10];
-    float gammag[10];
+    int ind0, indg[8];
+    float rg[8];
+    float mg[8];
+    float wg[8];
+    float gammag[8];
         
     mov = num_pixels/2-center;
     if (mov-ceil(mov) < 1e-6) {
@@ -251,35 +243,19 @@ void pml2d(float* data, float* theta, float center,
                 }
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
            
         // Weights for inner neighborhoods.
-        totalwg = 4+4/sqrt(2)+2*regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = 1/sqrt(2)/totalwg;
-        wg[6] = 1/sqrt(2)/totalwg;
-        wg[7] = 1/sqrt(2)/totalwg;
-        wg[8] = regw/totalwg;
-        wg[9] = regw/totalwg;
+        wg[0] = 0.1464466094;
+        wg[1] = 0.1464466094;
+        wg[2] = 0.1464466094;
+        wg[3] = 0.1464466094;
+        wg[4] = 0.10355339059;
+        wg[5] = 0.10355339059;
+        wg[6] = 0.10355339059;
+        wg[7] = 0.10355339059;
         
         // (inner region)
-        for (k = 1; k < num_slices-1; k++) {
+        for (k = 0; k < num_slices; k++) {
             for (n = 1; n < num_grid-1; n++) {
                 for (m = 1; m < num_grid-1; m++) {
                     ind0 = m + n*num_grid + k*num_grid*num_grid;
@@ -292,8 +268,6 @@ void pml2d(float* data, float* theta, float center,
                     indg[5] = ind0+num_grid-1;
                     indg[6] = ind0-num_grid+1;
                     indg[7] = ind0-num_grid-1;
-                    indg[8] = ind0+num_grid*num_grid;
-                    indg[9] = ind0-num_grid*num_grid;
                     
                     for (q = 0; q < 8; q++) {
                         mg[q] = recon[ind0]+recon[indg[q]];
@@ -302,30 +276,19 @@ void pml2d(float* data, float* theta, float center,
                         F[ind0] += 2*beta*wg[q]*gammag[q];
                         G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
                     }
-
-                    for (q = 8; q < 10; q++) {
-                        mg[q] = recon[ind0]+recon[indg[q]];
-                        rg[q] = recon[ind0]-recon[indg[q]];
-                        gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                        F[ind0] += 2*beta1*wg[q]*gammag[q];
-                        G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                    }
                 }
             }
         }
         
         // Weights for edges.
-        totalwg = 3+2/sqrt(2)+2*regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/sqrt(2)/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = regw/totalwg;
-        wg[6] = regw/totalwg;
+        wg[0] = 0.226540919667;
+        wg[1] = 0.226540919667;
+        wg[2] = 0.226540919667;
+        wg[3] = 0.1601886205;
+        wg[4] = 0.1601886205;
         
         // (top)
-        for (k = 1; k < num_slices-1; k++) {
+        for (k = 0; k < num_slices; k++) {
             for (m = 1; m < num_grid-1; m++) {
                 ind0 = m + k*num_grid*num_grid;
                 
@@ -334,8 +297,6 @@ void pml2d(float* data, float* theta, float center,
                 indg[2] = ind0+num_grid;
                 indg[3] = ind0+num_grid+1; 
                 indg[4] = ind0+num_grid-1;
-                indg[5] = ind0+num_grid*num_grid;
-                indg[6] = ind0-num_grid*num_grid;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind0]+recon[indg[q]];
@@ -344,19 +305,11 @@ void pml2d(float* data, float* theta, float center,
                     F[ind0] += 2*beta*wg[q]*gammag[q];
                     G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
                 }
-                    
-                for (q = 5; q < 7; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
             }
         }
 
         // (bottom)
-        for (k = 1; k < num_slices-1; k++) {
+        for (k = 0; k < num_slices; k++) {
             for (m = 1; m < num_grid-1; m++) {
                 ind0 = m + (num_grid-1)*num_grid + k*num_grid*num_grid;
                 
@@ -365,8 +318,6 @@ void pml2d(float* data, float* theta, float center,
                 indg[2] = ind0-num_grid;
                 indg[3] = ind0-num_grid+1;
                 indg[4] = ind0-num_grid-1;
-                indg[5] = ind0+num_grid*num_grid;
-                indg[6] = ind0-num_grid*num_grid;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind0]+recon[indg[q]];
@@ -375,19 +326,11 @@ void pml2d(float* data, float* theta, float center,
                     F[ind0] += 2*beta*wg[q]*gammag[q];
                     G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
                 }
-                    
-                for (q = 5; q < 7; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
             }
         }
 
         // (left)  
-        for (k = 1; k < num_slices-1; k++) {
+        for (k = 0; k < num_slices; k++) {
             for (n = 1; n < num_grid-1; n++) {
                 ind0 = n*num_grid + k*num_grid*num_grid;
                 
@@ -396,8 +339,6 @@ void pml2d(float* data, float* theta, float center,
                 indg[2] = ind0-num_grid;
                 indg[3] = ind0+num_grid+1; 
                 indg[4] = ind0-num_grid+1;
-                indg[5] = ind0+num_grid*num_grid;
-                indg[6] = ind0-num_grid*num_grid;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind0]+recon[indg[q]];
@@ -406,19 +347,11 @@ void pml2d(float* data, float* theta, float center,
                     F[ind0] += 2*beta*wg[q]*gammag[q];
                     G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
                 }
-                    
-                for (q = 5; q < 7; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
             }
         }
 
         // (right)                
-        for (k = 1; k < num_slices-1; k++) {
+        for (k = 0; k < num_slices; k++) {
             for (n = 1; n < num_grid-1; n++) {
                 ind0 = (num_grid-1) + n*num_grid + k*num_grid*num_grid;
                 
@@ -427,8 +360,6 @@ void pml2d(float* data, float* theta, float center,
                 indg[2] = ind0-num_grid;
                 indg[3] = ind0+num_grid-1;
                 indg[4] = ind0-num_grid-1;
-                indg[5] = ind0+num_grid*num_grid;
-                indg[6] = ind0-num_grid*num_grid;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind0]+recon[indg[q]];
@@ -437,34 +368,21 @@ void pml2d(float* data, float* theta, float center,
                     F[ind0] += 2*beta*wg[q]*gammag[q];
                     G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
                 }
-                    
-                for (q = 5; q < 7; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
             }
         }
         
         // Weights for corners.
-        totalwg = 2+1/sqrt(2)+2*regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/sqrt(2)/totalwg;
-        wg[3] = regw/totalwg;
-        wg[4] = regw/totalwg;
+        wg[0] = 0.36939806251;
+        wg[1] = 0.36939806251;
+        wg[2] = 0.26120387496;
         
         // (top-left)
-        for (k = 1; k < num_slices-1; k++) {     
+        for (k = 0; k < num_slices; k++) {     
             ind0 = k*num_grid*num_grid;
             
             indg[0] = ind0+1;
             indg[1] = ind0+num_grid;
             indg[2] = ind0+num_grid+1; 
-            indg[3] = ind0+num_grid*num_grid;
-            indg[4] = ind0-num_grid*num_grid;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind0]+recon[indg[q]];
@@ -473,25 +391,15 @@ void pml2d(float* data, float* theta, float center,
                 F[ind0] += 2*beta*wg[q]*gammag[q];
                 G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
             }
-                    
-            for (q = 3; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
         }
 
         // (top-right)
-        for (k = 1; k < num_slices-1; k++) {     
+        for (k = 0; k < num_slices; k++) {     
             ind0 = (num_grid-1) + k*num_grid*num_grid;
             
             indg[0] = ind0-1;
             indg[1] = ind0+num_grid;
             indg[2] = ind0+num_grid-1;
-            indg[3] = ind0+num_grid*num_grid;
-            indg[4] = ind0-num_grid*num_grid;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind0]+recon[indg[q]];
@@ -500,25 +408,15 @@ void pml2d(float* data, float* theta, float center,
                 F[ind0] += 2*beta*wg[q]*gammag[q];
                 G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
             }
-                    
-            for (q = 3; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
         }
 
         // (bottom-left)
-        for (k = 1; k < num_slices-1; k++) {     
+        for (k = 0; k < num_slices; k++) {     
             ind0 = (num_grid-1)*num_grid + k*num_grid*num_grid;
             
             indg[0] = ind0+1;
             indg[1] = ind0-num_grid;
             indg[2] = ind0-num_grid+1;
-            indg[3] = ind0+num_grid*num_grid;
-            indg[4] = ind0-num_grid*num_grid;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind0]+recon[indg[q]];
@@ -527,25 +425,15 @@ void pml2d(float* data, float* theta, float center,
                 F[ind0] += 2*beta*wg[q]*gammag[q];
                 G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
             }
-                    
-            for (q = 3; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
         }
 
         // (bottom-right)        
-        for (k = 1; k < num_slices-1; k++) {     
+        for (k = 0; k < num_slices; k++) {     
             ind0 = (num_grid-1) + (num_grid-1)*num_grid + k*num_grid*num_grid;
             
             indg[0] = ind0-1;
             indg[1] = ind0-num_grid;
             indg[2] = ind0-num_grid-1;
-            indg[3] = ind0+num_grid*num_grid;
-            indg[4] = ind0-num_grid*num_grid;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind0]+recon[indg[q]];
@@ -554,589 +442,7 @@ void pml2d(float* data, float* theta, float center,
                 F[ind0] += 2*beta*wg[q]*gammag[q];
                 G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
             }
-                    
-            for (q = 3; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Weights for inner neighborhoods.
-        totalwg = 4+4/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = 1/sqrt(2)/totalwg;
-        wg[6] = 1/sqrt(2)/totalwg;
-        wg[7] = 1/sqrt(2)/totalwg;
-        wg[8] = regw/totalwg;
-        
-        // (inner region)
-        for (n = 1; n < num_grid-1; n++) {
-            for (m = 1; m < num_grid-1; m++) {
-                ind0 = m + n*num_grid;
-                
-                indg[0] = ind0+1;
-                indg[1] = ind0-1;
-                indg[2] = ind0+num_grid;
-                indg[3] = ind0-num_grid;
-                indg[4] = ind0+num_grid+1; 
-                indg[5] = ind0+num_grid-1;
-                indg[6] = ind0-num_grid+1;
-                indg[7] = ind0-num_grid-1;
-                indg[8] = ind0+num_grid*num_grid;
-                
-                for (q = 0; q < 8; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta));
-                    F[ind0] += 2*beta*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-                }
-                
-                for (q = 8; q < 9; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
-            }
-        }
-        
-        // Weights for edges.
-        totalwg = 3+2/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/sqrt(2)/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = regw/totalwg;
-        
-        // (top)
-        for (m = 1; m < num_grid-1; m++) {
-            ind0 = m;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0-1;
-            indg[2] = ind0+num_grid;
-            indg[3] = ind0+num_grid+1; 
-            indg[4] = ind0+num_grid-1;
-            indg[5] = ind0+num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (bottom)
-        for (m = 1; m < num_grid-1; m++) {
-            ind0 = m + (num_grid-1)*num_grid;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0-1;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0-num_grid+1;
-            indg[4] = ind0-num_grid-1;
-            indg[5] = ind0+num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (left)  
-        for (n = 1; n < num_grid-1; n++) {
-            ind0 = n*num_grid;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0+num_grid;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0+num_grid+1; 
-            indg[4] = ind0-num_grid+1;
-            indg[5] = ind0+num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (right)                
-        for (n = 1; n < num_grid-1; n++) {
-            ind0 = (num_grid-1) + n*num_grid;
-            
-            indg[0] = ind0-1;
-            indg[1] = ind0+num_grid;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0+num_grid-1;
-            indg[4] = ind0-num_grid-1;
-            indg[5] = ind0+num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-        
-        // Weights for corners.
-        totalwg = 2+1/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/sqrt(2)/totalwg;
-        wg[3] = regw/totalwg;
-        
-        // (top-left)   
-        ind0 = 0;
-        
-        indg[0] = ind0+1;
-        indg[1] = ind0+num_grid;
-        indg[2] = ind0+num_grid+1; 
-        indg[3] = ind0+num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (top-right)    
-        ind0 = (num_grid-1);
-        
-        indg[0] = ind0-1;
-        indg[1] = ind0+num_grid;
-        indg[2] = ind0+num_grid-1;
-        indg[3] = ind0+num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (bottom-left) 
-        ind0 = (num_grid-1)*num_grid;
-        
-        indg[0] = ind0+1;
-        indg[1] = ind0-num_grid;
-        indg[2] = ind0-num_grid+1;
-        indg[3] = ind0+num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (bottom-right)         
-        ind0 = (num_grid-1) + (num_grid-1)*num_grid;
-        
-        indg[0] = ind0-1;
-        indg[1] = ind0-num_grid;
-        indg[2] = ind0-num_grid-1;
-        indg[3] = ind0+num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Weights for inner neighborhoods.
-        totalwg = 4+4/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = 1/sqrt(2)/totalwg;
-        wg[6] = 1/sqrt(2)/totalwg;
-        wg[7] = 1/sqrt(2)/totalwg;
-        wg[8] = regw/totalwg;
-        
-        // (inner region)
-        for (n = 1; n < num_grid-1; n++) {
-            for (m = 1; m < num_grid-1; m++) {
-                ind0 = m + n*num_grid + (num_slices-1)*num_grid*num_grid;
-                
-                indg[0] = ind0+1;
-                indg[1] = ind0-1;
-                indg[2] = ind0+num_grid;
-                indg[3] = ind0-num_grid;
-                indg[4] = ind0+num_grid+1; 
-                indg[5] = ind0+num_grid-1;
-                indg[6] = ind0-num_grid+1;
-                indg[7] = ind0-num_grid-1;
-                indg[8] = ind0-num_grid*num_grid;
-                
-                for (q = 0; q < 8; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta));
-                    F[ind0] += 2*beta*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-                }
-                
-                for (q = 8; q < 9; q++) {
-                    mg[q] = recon[ind0]+recon[indg[q]];
-                    rg[q] = recon[ind0]-recon[indg[q]];
-                    gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                    F[ind0] += 2*beta1*wg[q]*gammag[q];
-                    G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-                }
-            }
-        }
-        
-        // Weights for edges.
-        totalwg = 3+2/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/totalwg;
-        wg[3] = 1/sqrt(2)/totalwg;
-        wg[4] = 1/sqrt(2)/totalwg;
-        wg[5] = regw/totalwg;
-        
-        // (top)
-        for (m = 1; m < num_grid-1; m++) {
-            ind0 = m + (num_slices-1)*num_grid*num_grid;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0-1;
-            indg[2] = ind0+num_grid;
-            indg[3] = ind0+num_grid+1; 
-            indg[4] = ind0+num_grid-1;
-            indg[5] = ind0-num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (bottom)
-        for (m = 1; m < num_grid-1; m++) {
-            ind0 = m + (num_grid-1)*num_grid + (num_slices-1)*num_grid*num_grid;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0-1;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0-num_grid+1;
-            indg[4] = ind0-num_grid-1;
-            indg[5] = ind0-num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (left)  
-        for (n = 1; n < num_grid-1; n++) {
-            ind0 = n*num_grid + (num_slices-1)*num_grid*num_grid;
-            
-            indg[0] = ind0+1;
-            indg[1] = ind0+num_grid;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0+num_grid+1; 
-            indg[4] = ind0-num_grid+1;
-            indg[5] = ind0-num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-
-        // (right)                
-        for (n = 1; n < num_grid-1; n++) {
-            ind0 = (num_grid-1) + n*num_grid + (num_slices-1)*num_grid*num_grid;
-            
-            indg[0] = ind0-1;
-            indg[1] = ind0+num_grid;
-            indg[2] = ind0-num_grid;
-            indg[3] = ind0+num_grid-1;
-            indg[4] = ind0-num_grid-1;
-            indg[5] = ind0-num_grid*num_grid;
-                
-            for (q = 0; q < 5; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta));
-                F[ind0] += 2*beta*wg[q]*gammag[q];
-                G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-            }
-                
-            for (q = 5; q < 6; q++) {
-                mg[q] = recon[ind0]+recon[indg[q]];
-                rg[q] = recon[ind0]-recon[indg[q]];
-                gammag[q] = 1/(1+fabs(rg[q]/delta1));
-                F[ind0] += 2*beta1*wg[q]*gammag[q];
-                G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-            }
-        }
-        
-        // Weights for corners.
-        totalwg = 2+1/sqrt(2)+regw;
-        wg[0] = 1/totalwg;
-        wg[1] = 1/totalwg;
-        wg[2] = 1/sqrt(2)/totalwg;
-        wg[3] = regw/totalwg;
-        
-        // (top-left)
-        ind0 = (num_slices-1)*num_grid*num_grid;
-        
-        indg[0] = ind0+1;
-        indg[1] = ind0+num_grid;
-        indg[2] = ind0+num_grid+1; 
-        indg[3] = ind0-num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (top-right)   
-        ind0 = (num_grid-1) + (num_slices-1)*num_grid*num_grid;
-        
-        indg[0] = ind0-1;
-        indg[1] = ind0+num_grid;
-        indg[2] = ind0+num_grid-1;
-        indg[3] = ind0-num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (bottom-left)   
-        ind0 = (num_grid-1)*num_grid + (num_slices-1)*num_grid*num_grid;
-        
-        indg[0] = ind0+1;
-        indg[1] = ind0-num_grid;
-        indg[2] = ind0-num_grid+1;
-        indg[3] = ind0-num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-        // (bottom-right)          
-        ind0 = (num_grid-1) + (num_grid-1)*num_grid + (num_slices-1)*num_grid*num_grid;
-        
-        indg[0] = ind0-1;
-        indg[1] = ind0-num_grid;
-        indg[2] = ind0-num_grid-1;
-        indg[3] = ind0-num_grid*num_grid;
-                
-        for (q = 0; q < 3; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta));
-            F[ind0] += 2*beta*wg[q]*gammag[q];
-            G[ind0] -= 2*beta*wg[q]*gammag[q]*mg[q];
-        }
-                
-        for (q = 3; q < 4; q++) {
-            mg[q] = recon[ind0]+recon[indg[q]];
-            rg[q] = recon[ind0]-recon[indg[q]];
-            gammag[q] = 1/(1+fabs(rg[q]/delta1));
-            F[ind0] += 2*beta1*wg[q]*gammag[q];
-            G[ind0] -= 2*beta1*wg[q]*gammag[q]*mg[q];
-        }
-
-
-
-
-
-
-
-
-
-
 
         i = 0;
         for (k = 0; k < num_slices; k++) {

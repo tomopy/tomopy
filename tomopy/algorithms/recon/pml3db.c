@@ -9,7 +9,7 @@
 #define DLL 
 #endif
 
-void pml3d(float* data, float* theta, float center, 
+void pml3db(float* data, float* theta, float center, 
           int num_projections, int num_slices, int num_pixels, 
           int num_grid, int iters, float beta, float delta, float beta1, float delta1, float regw1, float regw2, 
           float* recon) {
@@ -70,7 +70,7 @@ void pml3d(float* data, float* theta, float center,
     
     // For each iteration
     for (t = 0; t < iters; t++) {
-        printf ("pml3d iteration: %i \n", t+1);
+        printf ("pml3db iteration: %i \n", t+1);
         
         suma = (float *)calloc((num_grid*num_grid), sizeof(float));
         E = (float *)calloc((num_slices*num_grid*num_grid), sizeof(float));

@@ -15,9 +15,9 @@ else:
 
 # --------------------------------------------------------------------
 
-def pml2d(data, theta, center, num_grid, iters, beta, delta, init_matrix):
+def pml3db(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw1, regw2, init_matrix):
     """
-    Applies Accelerated Penalized Maximum-Likelihood (pml2d)
+    Applies Accelerated Penalized Maximum-Likelihood (APML)
     method to obtain reconstructions. 
     
     It is based on standard decoupled surrogate functions
@@ -73,8 +73,8 @@ def pml2d(data, theta, center, num_grid, iters, beta, delta, init_matrix):
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    librecon.pml2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    librecon.pml2d(data.ctypes.data_as(c_float_p),
+    librecon.pml3db.restype = ctypes.POINTER(ctypes.c_void_p)
+    librecon.pml3db(data.ctypes.data_as(c_float_p),
                   theta.ctypes.data_as(c_float_p),
                   ctypes.c_float(center),
                   ctypes.c_int(num_projections),
@@ -84,5 +84,9 @@ def pml2d(data, theta, center, num_grid, iters, beta, delta, init_matrix):
                   ctypes.c_int(iters),
                   ctypes.c_float(beta),
                   ctypes.c_float(delta),
+                  ctypes.c_float(beta1),
+                  ctypes.c_float(delta1),
+                  ctypes.c_float(regw1),
+                  ctypes.c_float(regw2),
                   init_matrix.ctypes.data_as(c_float_p))
     return init_matrix
