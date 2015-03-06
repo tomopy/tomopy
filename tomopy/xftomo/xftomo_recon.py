@@ -6,12 +6,12 @@ package to X-ray absorption tomography data object.
 """
 
 import numpy as np
+import ipdb
 import os
 import shutil
-import ipdb
 
 # Import main TomoPy object.
-from tomopy.xtomo.xtomo_dataset import XTomoDataset
+from tomopy.xftomo.xftomo_dataset import XFTomoDataset
 
 # Import available reconstruction functons in the package.
 from tomopy.algorithms.recon.art import art
@@ -19,8 +19,6 @@ from tomopy.algorithms.recon.sirt import sirt
 from tomopy.algorithms.recon.gridrec import Gridrec
 from tomopy.algorithms.recon.mlem import mlem
 from tomopy.algorithms.recon.pml import pml
-from tomopy.algorithms.recon.pml2d import pml2d
-from tomopy.algorithms.recon.pml3d import pml3d
 
 # Import helper functons in the package.
 from tomopy.algorithms.recon.diagnose_center import diagnose_center
@@ -33,10 +31,10 @@ from tomopy.algorithms.recon.upsample import upsample2d, upsample3d, upsample2df
 def _diagnose_center(self, dir_path=None, slice_no=None,
                      center_start=None, center_end=None, center_step=None,
                      mask=True, ratio=1,
-                     dtype='float32', data_min=None, data_max=None):
+                     dtype='float32', data_min=None, data_max=None, channel=None):
     # Dimensions:
-    num_slices = self.data.shape[1]
-    num_pixels = self.data.shape[2]
+    num_slices = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # Set default parameters.
     if dir_path is None:  # Create one at at data location for output images.
@@ -56,9 +54,15 @@ def _diagnose_center(self, dir_path=None, slice_no=None,
     if center_step is None:
         center_step = 1
 
+    # If XF channel is specified, use it. Else sum over all channels.
+    if channel:
+        data = self.data[channel,:,:,:]
+    else:
+        data = np.sum(self.data,axis=0)
+
     # Call function.
     dtype, data_max, data_min = diagnose_center(
-        self.data, self.theta, dir_path, slice_no,
+        data, self.theta, dir_path, slice_no,
         center_start, center_end, center_step, mask, ratio,
         dtype, data_min, data_max)
 
@@ -79,10 +83,11 @@ def _diagnose_center(self, dir_path=None, slice_no=None,
 # --------------------------------------------------------------------
 
 def _optimize_center(self, slice_no=None, center_init=None,
-                     tol=0.5, overwrite=True, mask=True, ratio=1):
+                     tol=0.5, overwrite=True, mask=True, ratio=1,
+                     channel=None):
     # Dimensions:
-    num_slices = self.data.shape[1]
-    num_pixels = self.data.shape[2]
+    num_slices = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # Set default parameters.
     if slice_no is None:
@@ -95,8 +100,14 @@ def _optimize_center(self, slice_no=None, center_init=None,
     if not isinstance(center_init, np.float32):
         center_init = np.array(center_init, dtype='float32')
 
+    # If XF channel is specified, use it. Else sum over all channels.
+    if channel:
+        data = self.data[channel,:,:,:]
+    else:
+        data = np.sum(self.data,axis=0)
+
     # All set, give me center now.
-    center = optimize_center(self.data, self.theta, slice_no,
+    center = optimize_center(data, self.theta, slice_no,
                              center_init, tol, mask, ratio)
 
     # Update log.
@@ -122,7 +133,9 @@ def _upsample2df(self, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = upsample2df(self.data_recon, level)
+    data_recon = np.zeros_like(self.data_recon)
+    for channel in range(data_recon.shape[0]):
+        data_recon[channel,:,:,:] = upsample2df(self.data_recon[channel,:,:,:], level)
 
     # Update log.
     self.logger.debug("upsample2df: level: " + str(level))
@@ -144,7 +157,9 @@ def _upsample2d(self, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = upsample2d(self.data_recon, level)
+    data_recon = np.zeros_like(self.data_recon)
+    for channel in range(self.data.shape[0]):
+        data_recon[channel,:,:,:] = upsample2d(self.data_recon[channel,:,:,:], level)
 
     # Update log.
     self.logger.debug("upsample2d: level: " + str(level))
@@ -166,7 +181,9 @@ def _upsample3d(self, level=1,
     if not isinstance(level, np.int32):
         level = np.array(level, dtype='int32')
 
-    data_recon = upsample3d(self.data_recon, level)
+    data_recon = np.zeros_like(self.data_recon)
+    for channel in range(self.data.shape[0]):
+        data_recon[channel,:,:,:] = upsample3d(self.data_recon[channel,:,:,:], level)
 
     # Update log.
     self.logger.debug("upsample3d: level: " + str(level))
@@ -177,178 +194,39 @@ def _upsample3d(self, level=1,
         self.data_recon = data_recon
     else:
         return data_recon
-# --------------------------------------------------------------------
-    
-def _pml2d(self, emission=False, 
-         iters=1, num_grid=None, 
-         beta=1, delta=1, regw=1, beta1=1, delta1=1,
-         init_matrix=None, overwrite=True):
 
-    # Dimensions:
-    num_pixels = self.data.shape[2]
-        
-    # This works with radians.
-    if np.max(self.theta) > 10: # then theta is obviously in radians.
-        self.theta *= np.pi/180
-
-    # Pad data.
-    if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
-    else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
-        data = -np.log(data);
-    # data[data < 0] = 0
-
-    # Adjust center according to padding.
-    if not hasattr(self, 'center'):
-        self.center = self.data.shape[2]/2
-    center = self.center + (data.shape[2]-num_pixels)/2.
-   
-    # Set default parameters.
-    if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
-    if init_matrix is None:
-        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
-
-    # Check again.
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32', copy=False)
-
-    if not isinstance(self.theta, np.float32):
-        theta = np.array(self.theta, dtype='float32')
-
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-        
-    if not isinstance(iters, np.int32):
-        iters = np.array(iters, dtype='int32')
-
-    if not isinstance(num_grid, np.int32):
-        num_grid = np.array(num_grid, dtype='int32')
-        
-    if not isinstance(init_matrix, np.float32):
-        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
-    
-    # Initialize and perform reconstruction.
-    data_recon = pml2d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw, init_matrix)
-
-    # Update log.
-    self.logger.debug("pml2d: emission: " + str(emission))
-    self.logger.debug("pml2d: iters: " + str(iters))
-    self.logger.debug("pml2d: center: " + str(center))
-    self.logger.debug("pml2d: num_grid: " + str(num_grid))
-    self.logger.debug("pml2d: beta: " + str(beta))
-    self.logger.debug("pml2d: delta: " + str(delta))
-    self.logger.debug("pml2d: beta1: " + str(beta1))
-    self.logger.debug("pml2d: delta1: " + str(delta1))
-    self.logger.debug("pml2d: regw: " + str(regw))
-    self.logger.info("pml2d [ok]")
-    
-    # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
-
-# --------------------------------------------------------------------
-    
-def _pml3d(self, emission=False, 
-         iters=1, num_grid=None, 
-         beta=1, delta=1, regw1=1, regw2=1, beta1=1, delta1=1,
-         init_matrix=None, overwrite=True):
-
-    # Dimensions:
-    num_pixels = self.data.shape[2]
-        
-    # This works with radians.
-    if np.max(self.theta) > 10: # then theta is obviously in radians.
-        self.theta *= np.pi/180
-
-    # Pad data.
-    if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
-    else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
-        data = -np.log(data);
-    data[data < 0] = 0
-
-    # Adjust center according to padding.
-    if not hasattr(self, 'center'):
-        self.center = self.data.shape[2]/2
-    center = self.center + (data.shape[2]-num_pixels)/2.
-   
-    # Set default parameters.
-    if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
-    if init_matrix is None:
-        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
-
-    # Check again.
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32', copy=False)
-
-    if not isinstance(self.theta, np.float32):
-        theta = np.array(self.theta, dtype='float32')
-
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-        
-    if not isinstance(iters, np.int32):
-        iters = np.array(iters, dtype='int32')
-
-    if not isinstance(num_grid, np.int32):
-        num_grid = np.array(num_grid, dtype='int32')
-        
-    if not isinstance(init_matrix, np.float32):
-        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
-    
-    # Initialize and perform reconstruction.
-    data_recon = pml3d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw1, regw2, init_matrix)
-
-    # Update log.
-    self.logger.debug("pml3d: emission: " + str(emission))
-    self.logger.debug("pml3d: iters: " + str(iters))
-    self.logger.debug("pml3d: center: " + str(center))
-    self.logger.debug("pml3d: num_grid: " + str(num_grid))
-    self.logger.debug("pml3d: beta: " + str(beta))
-    self.logger.debug("pml3d: delta: " + str(delta))
-    self.logger.debug("pml3d: beta1: " + str(beta1))
-    self.logger.debug("pml3d: delta1: " + str(delta1))
-    self.logger.debug("pml3d: regw1: " + str(regw1))
-    self.logger.debug("pml3d: regw2: " + str(regw2))
-    self.logger.info("pml3d [ok]")
-    
-    # Update returned values.
-    if overwrite: self.data_recon = data_recon
-    else: return data_recon
 
 # --------------------------------------------------------------------
 
-def _art(self, emission=False,
+def _art(self, emission=True,
          iters=1, num_grid=None,
-         init_matrix=None, overwrite=True):
+         init_matrix=None, overwrite=True,
+         channel = None):
+
     # Dimensions:
-    num_pixels = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # This works with radians.
-    if np.max(self.theta) > 10:  # then theta is obviously in radians.
+    if np.max(self.theta) > 90:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
     if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+        data= self.apply_padding(overwrite=False, pad_val=0)
     else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data= self.apply_padding(overwrite=False, pad_val=1)
         data = -np.log(data)
 
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
-        self.center = self.data.shape[2] / 2
-    center = self.center + (data.shape[2] - num_pixels) / 2.
+        self.center = self.data.shape[3] / 2
+    center = self.center + (data.shape[3] - num_pixels) / 2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[3] / np.sqrt(2))
     if init_matrix is None:
-        init_matrix = np.zeros((data.shape[1], num_grid, num_grid),
+        init_matrix = np.zeros((data.shape[2], num_grid, num_grid),
                                dtype='float32')
 
     # Check inputs.
@@ -371,7 +249,21 @@ def _art(self, emission=False,
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = art(data, theta, center, num_grid, iters, init_matrix)
+    if channel:
+        data_recon = art(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix)
+    else:
+        data_list = []
+        for channel in range(data.shape[0]):
+            try:
+                self.logger.info("art: now reconstructing {:s}".format(self.channel_names[channel]))
+            except:
+                pass
+            data_list.append( art(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix) )
+        recon_shape = data_list[0].shape
+        data_recon = np.zeros((data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        for i, recon in enumerate(data_list):
+            data_recon[i,:,:,:] = data_list[i]
+
 
     # Update log.
     self.logger.debug("art: emission: " + str(emission))
@@ -389,33 +281,34 @@ def _art(self, emission=False,
 
 # --------------------------------------------------------------------
 
-def _sirt(self, emission=False,
+def _sirt(self, emission=True,
           iters=1, num_grid=None,
-          init_matrix=None, overwrite=True):
+          init_matrix=None, overwrite=True,
+          channel=None):
     # Dimensions:
-    num_pixels = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # This works with radians.
-    if np.max(self.theta) > 10:  # then theta is obviously in radians.
+    if np.max(self.theta) > 90:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
     if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+        data= self.apply_padding(overwrite=False, pad_val=0)
     else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data= self.apply_padding(overwrite=False, pad_val=1)
         data = -np.log(data)
 
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
-        self.center = self.data.shape[2] / 2
-    center = self.center + (data.shape[2] - num_pixels) / 2.
+        self.center = self.data.shape[3] / 2
+    center = self.center + (data.shape[3] - num_pixels) / 2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[3] / np.sqrt(2))
     if init_matrix is None:
-        init_matrix = np.zeros((data.shape[1], num_grid, num_grid),
+        init_matrix = np.zeros((data.shape[2], num_grid, num_grid),
                                dtype='float32')
 
     # Check inputs.
@@ -438,7 +331,21 @@ def _sirt(self, emission=False,
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = sirt(data, theta, center, num_grid, iters, init_matrix)
+    if channel:
+        data_recon = sirt(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix)
+    else:
+        data_list=[]
+        for channel in range(data.shape[0]):
+            try:
+                self.logger.info("sirt: now reconstructing {:s}".format(self.channel_names[channel]))
+            except:
+                pass
+            data_list.append(sirt(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix))
+        recon_shape = data_list[0].shape
+        data_recon = np.zeros((data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        for i, recon in enumerate(data_list):
+            data_recon[i,:,:,:] = recon
+
 
     # Update log.
     self.logger.debug("sirt: emission: " + str(emission))
@@ -456,33 +363,34 @@ def _sirt(self, emission=False,
 
 # --------------------------------------------------------------------
 
-def _mlem(self, emission=False,
+def _mlem(self, emission=True,
           iters=1, num_grid=None,
-          init_matrix=None, overwrite=True):
+          init_matrix=None, overwrite=True,
+          channel=None):
     # Dimensions:
-    num_pixels = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # This works with radians.
-    if np.max(self.theta) > 10:  # then theta is obviously in radians.
+    if np.max(self.theta) > 90:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
     if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+        data= self.apply_padding(overwrite=False, pad_val=0)
     else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data= self.apply_padding(overwrite=False, pad_val=1)
         data = -np.log(data)
 
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
-        self.center = self.data.shape[2] / 2
-    center = self.center + (data.shape[2] - num_pixels) / 2.
+        self.center = self.data.shape[3] / 2
+    center = self.center + (data.shape[3] - num_pixels) / 2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[3] / np.sqrt(2))
     if init_matrix is None:
-        init_matrix = np.ones((data.shape[1], num_grid, num_grid),
+        init_matrix = np.ones((data.shape[2], num_grid, num_grid),
                               dtype='float32')
 
     # Check again.
@@ -505,7 +413,20 @@ def _mlem(self, emission=False,
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = mlem(data, theta, center, num_grid, iters, init_matrix)
+    if channel:
+        data_recon = mlem(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix)
+    else:
+        data_list=[]
+        for channel in range(data.shape[0]):
+            try:
+                self.logger.info("mlem: now reconstructing {:s}".format(self.channel_names[channel]))
+            except:
+                pass
+            data_list.append(mlem(data[channel,:,:,:], theta, center, num_grid, iters, init_matrix))
+        recon_shape = data_list[0].shape
+        data_recon = np.zeros((data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        for i, recon in enumerate(data_list):
+            data_recon[i,:,:,:] = recon
 
     # Update log.
     self.logger.debug("mlem: emission: " + str(emission))
@@ -523,33 +444,34 @@ def _mlem(self, emission=False,
 
 # --------------------------------------------------------------------
 
-def _pml(self, emission=False,
+def _pml(self, emission=True,
          iters=1, num_grid=None, beta=1,
-         init_matrix=None, overwrite=True):
+         init_matrix=None, overwrite=True,
+         channel=None):
     # Dimensions:
-    num_pixels = self.data.shape[2]
+    num_pixels = self.data.shape[3]
 
     # This works with radians.
-    if np.max(self.theta) > 10:  # then theta is obviously in radians.
+    if np.max(self.theta) > 90:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
     if emission:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+        data = self.apply_padding(overwrite=False, pad_val=0)
     else:
-        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = self.apply_padding(overwrite=False, pad_val=1)
         data = -np.log(data)
 
     # Adjust center according to padding.
     if not hasattr(self, 'center'):
-        self.center = self.data.shape[2] / 2
-    center = self.center + (data.shape[2] - num_pixels) / 2.
+        self.center = self.data.shape[3] / 2
+    center = self.center + (data.shape[3] - num_pixels) / 2.
 
     # Set default parameters.
     if num_grid is None or num_grid > num_pixels:
-        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+        num_grid = np.floor(data.shape[3] / np.sqrt(2))
     if init_matrix is None:
-        init_matrix = np.ones((data.shape[1], num_grid, num_grid),
+        init_matrix = np.ones((data.shape[2], num_grid, num_grid),
                               dtype='float32')
 
     # Check again.
@@ -572,7 +494,20 @@ def _pml(self, emission=False,
         init_matrix = np.array(init_matrix, dtype='float32', copy=False)
 
     # Initialize and perform reconstruction.
-    data_recon = pml(data, theta, center, num_grid, iters, beta, init_matrix)
+    if channel:
+        data_recon = pml(data[channel,:,:,:], theta, center, num_grid, iters, beta, init_matrix)
+    else:
+        data_list=[]
+        for channel in range(data.shape[0]):
+            try:
+                self.logger.info("pml: now reconstructing {:s}".format(self.channel_names[channel]))
+            except:
+                pass
+            data_list.append(pml(data[channel,:,:,:], theta, center, num_grid, iters, beta, init_matrix))
+        recon_shape = data_list[0].shape
+        data_recon = np.zeros((data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        for i, recon in enumerate(data_list):
+            data_recon[i,:,:,:] = recon
 
     # Update log.
     self.logger.debug("pml: emission: " + str(emission))
@@ -591,16 +526,30 @@ def _pml(self, emission=False,
 
 # --------------------------------------------------------------------
 
-def _gridrec(self, overwrite=True, emission=False, *args, **kwargs):
+def _gridrec(self, overwrite=True, channel=None, *args, **kwargs):
     # Check input.
     if not hasattr(self, 'center'):
-        self.center = self.data.shape[2] / 2
+        self.center = self.data.shape[3] / 2
     if not isinstance(self.center, np.float32):
         self.center = np.array(self.center, dtype='float32')
 
     # Initialize and perform reconstruction.
-    recon = Gridrec(self.data, emission, *args, **kwargs)
-    data_recon = recon.reconstruct(self.data, self.center, self.theta)
+    if channel:
+        recon = Gridrec(self.data[channel,:,:,:], *args, **kwargs)
+        data_recon = recon.reconstruct(self.data[channel,:,:,:], self.center, self.theta)
+    else:
+        data_list=[]
+        for channel in range(self.data.shape[0]):
+            try:
+                self.logger.info("gridrec: now reconstructing {:s}".format(self.channel_names[channel]))
+            except:
+                pass
+            recon = Gridrec(self.data[channel,:,:,:], *args, **kwargs)
+            data_list.append(recon.reconstruct(self.data[channel,:,:,:], self.center, self.theta))
+        recon_shape = data_list[0].shape
+        data_recon = np.zeros((self.data.shape[0], recon_shape[0], recon_shape[1], recon_shape[2]))
+        for i, recon in enumerate(data_list):
+            data_recon[i,:,:,:] = recon
 
     # Update provenance and log.
     self.logger.info("gridrec [ok]")
@@ -614,15 +563,13 @@ def _gridrec(self, overwrite=True, emission=False, *args, **kwargs):
 # --------------------------------------------------------------------
 
 # Hook all these methods to TomoPy.
-setattr(XTomoDataset, 'diagnose_center', _diagnose_center)
-setattr(XTomoDataset, 'optimize_center', _optimize_center)
-setattr(XTomoDataset, 'upsample2df', _upsample2df)
-setattr(XTomoDataset, 'upsample2d', _upsample2d)
-setattr(XTomoDataset, 'upsample3d', _upsample3d)
-setattr(XTomoDataset, 'art', _art)
-setattr(XTomoDataset, 'sirt', _sirt)
-setattr(XTomoDataset, 'gridrec', _gridrec)
-setattr(XTomoDataset, 'mlem', _mlem)
-setattr(XTomoDataset, 'pml', _pml)
-setattr(XTomoDataset, 'pml2d', _pml2d)
-setattr(XTomoDataset, 'pml3d', _pml3d)
+setattr(XFTomoDataset, 'diagnose_center', _diagnose_center)
+setattr(XFTomoDataset, 'optimize_center', _optimize_center)
+setattr(XFTomoDataset, 'upsample2df', _upsample2df)
+setattr(XFTomoDataset, 'upsample2d', _upsample2d)
+setattr(XFTomoDataset, 'upsample3d', _upsample3d)
+setattr(XFTomoDataset, 'art', _art)
+setattr(XFTomoDataset, 'sirt', _sirt)
+setattr(XFTomoDataset, 'gridrec', _gridrec)
+setattr(XFTomoDataset, 'mlem', _mlem)
+setattr(XFTomoDataset, 'pml', _pml)
