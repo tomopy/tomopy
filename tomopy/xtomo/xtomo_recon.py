@@ -18,6 +18,8 @@ from tomopy.algorithms.recon.sirt import sirt
 from tomopy.algorithms.recon.gridrec import Gridrec
 from tomopy.algorithms.recon.mlem import mlem
 from tomopy.algorithms.recon.pml import pml
+from tomopy.algorithms.recon.pml2d import pml2d
+from tomopy.algorithms.recon.pml3d import pml3d
 
 # Import helper functons in the package.
 from tomopy.algorithms.recon.diagnose_center import diagnose_center
@@ -174,7 +176,148 @@ def _upsample3d(self, level=1,
         self.data_recon = data_recon
     else:
         return data_recon
+# --------------------------------------------------------------------
+    
+def _pml2d(self, emission=False, 
+         iters=1, num_grid=None, 
+         beta=1, delta=1, regw=1, beta1=1, delta1=1,
+         init_matrix=None, overwrite=True):
 
+    # Dimensions:
+    num_pixels = self.data.shape[2]
+        
+    # This works with radians.
+    if np.max(self.theta) > 10: # then theta is obviously in radians.
+        self.theta *= np.pi/180
+
+    # Pad data.
+    if emission:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+    else:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = -np.log(data);
+    # data[data < 0] = 0
+
+    # Adjust center according to padding.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
+   
+    # Set default parameters.
+    if num_grid is None or num_grid > num_pixels:
+        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+    if init_matrix is None:
+        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
+
+    # Check again.
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32', copy=False)
+
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
+
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+        
+    if not isinstance(iters, np.int32):
+        iters = np.array(iters, dtype='int32')
+
+    if not isinstance(num_grid, np.int32):
+        num_grid = np.array(num_grid, dtype='int32')
+        
+    if not isinstance(init_matrix, np.float32):
+        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
+    
+    # Initialize and perform reconstruction.
+    data_recon = pml2d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw, init_matrix)
+
+    # Update log.
+    self.logger.debug("pml2d: emission: " + str(emission))
+    self.logger.debug("pml2d: iters: " + str(iters))
+    self.logger.debug("pml2d: center: " + str(center))
+    self.logger.debug("pml2d: num_grid: " + str(num_grid))
+    self.logger.debug("pml2d: beta: " + str(beta))
+    self.logger.debug("pml2d: delta: " + str(delta))
+    self.logger.debug("pml2d: beta1: " + str(beta1))
+    self.logger.debug("pml2d: delta1: " + str(delta1))
+    self.logger.debug("pml2d: regw: " + str(regw))
+    self.logger.info("pml2d [ok]")
+    
+    # Update returned values.
+    if overwrite: self.data_recon = data_recon
+    else: return data_recon
+
+# --------------------------------------------------------------------
+    
+def _pml3d(self, emission=False, 
+         iters=1, num_grid=None, 
+         beta=1, delta=1, regw1=1, regw2=1, beta1=1, delta1=1,
+         init_matrix=None, overwrite=True):
+
+    # Dimensions:
+    num_pixels = self.data.shape[2]
+        
+    # This works with radians.
+    if np.max(self.theta) > 10: # then theta is obviously in radians.
+        self.theta *= np.pi/180
+
+    # Pad data.
+    if emission:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=0)
+    else:
+        data, white, dark = self.apply_padding(overwrite=False, pad_val=1)
+        data = -np.log(data);
+    data[data < 0] = 0
+
+    # Adjust center according to padding.
+    if not hasattr(self, 'center'):
+        self.center = self.data.shape[2]/2
+    center = self.center + (data.shape[2]-num_pixels)/2.
+   
+    # Set default parameters.
+    if num_grid is None or num_grid > num_pixels:
+        num_grid = np.floor(data.shape[2] / np.sqrt(2))
+    if init_matrix is None:
+        init_matrix = np.ones((data.shape[1], num_grid, num_grid), dtype='float32')
+
+    # Check again.
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32', copy=False)
+
+    if not isinstance(self.theta, np.float32):
+        theta = np.array(self.theta, dtype='float32')
+
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+        
+    if not isinstance(iters, np.int32):
+        iters = np.array(iters, dtype='int32')
+
+    if not isinstance(num_grid, np.int32):
+        num_grid = np.array(num_grid, dtype='int32')
+        
+    if not isinstance(init_matrix, np.float32):
+        init_matrix = np.array(init_matrix, dtype='float32', copy=False)
+    
+    # Initialize and perform reconstruction.
+    data_recon = pml3d(data, theta, center, num_grid, iters, beta, delta, beta1, delta1, regw1, regw2, init_matrix)
+
+    # Update log.
+    self.logger.debug("pml3d: emission: " + str(emission))
+    self.logger.debug("pml3d: iters: " + str(iters))
+    self.logger.debug("pml3d: center: " + str(center))
+    self.logger.debug("pml3d: num_grid: " + str(num_grid))
+    self.logger.debug("pml3d: beta: " + str(beta))
+    self.logger.debug("pml3d: delta: " + str(delta))
+    self.logger.debug("pml3d: beta1: " + str(beta1))
+    self.logger.debug("pml3d: delta1: " + str(delta1))
+    self.logger.debug("pml3d: regw1: " + str(regw1))
+    self.logger.debug("pml3d: regw2: " + str(regw2))
+    self.logger.info("pml3d [ok]")
+    
+    # Update returned values.
+    if overwrite: self.data_recon = data_recon
+    else: return data_recon
 
 # --------------------------------------------------------------------
 
@@ -185,7 +328,7 @@ def _art(self, emission=False,
     num_pixels = self.data.shape[2]
 
     # This works with radians.
-    if np.max(self.theta) > 90:  # then theta is obviously in radians.
+    if np.max(self.theta) > 10:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
@@ -252,7 +395,7 @@ def _sirt(self, emission=False,
     num_pixels = self.data.shape[2]
 
     # This works with radians.
-    if np.max(self.theta) > 90:  # then theta is obviously in radians.
+    if np.max(self.theta) > 10:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
@@ -319,7 +462,7 @@ def _mlem(self, emission=False,
     num_pixels = self.data.shape[2]
 
     # This works with radians.
-    if np.max(self.theta) > 90:  # then theta is obviously in radians.
+    if np.max(self.theta) > 10:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
@@ -386,7 +529,7 @@ def _pml(self, emission=False,
     num_pixels = self.data.shape[2]
 
     # This works with radians.
-    if np.max(self.theta) > 90:  # then theta is obviously in radians.
+    if np.max(self.theta) > 10:  # then theta is obviously in radians.
         self.theta *= np.pi / 180
 
     # Pad data.
@@ -447,7 +590,7 @@ def _pml(self, emission=False,
 
 # --------------------------------------------------------------------
 
-def _gridrec(self, overwrite=True, *args, **kwargs):
+def _gridrec(self, overwrite=True, emission=False, *args, **kwargs):
     # Check input.
     if not hasattr(self, 'center'):
         self.center = self.data.shape[2] / 2
@@ -455,7 +598,7 @@ def _gridrec(self, overwrite=True, *args, **kwargs):
         self.center = np.array(self.center, dtype='float32')
 
     # Initialize and perform reconstruction.
-    recon = Gridrec(self.data, *args, **kwargs)
+    recon = Gridrec(self.data, emission, *args, **kwargs)
     data_recon = recon.reconstruct(self.data, self.center, self.theta)
 
     # Update provenance and log.
@@ -480,3 +623,5 @@ setattr(XTomoDataset, 'sirt', _sirt)
 setattr(XTomoDataset, 'gridrec', _gridrec)
 setattr(XTomoDataset, 'mlem', _mlem)
 setattr(XTomoDataset, 'pml', _pml)
+setattr(XTomoDataset, 'pml2d', _pml2d)
+setattr(XTomoDataset, 'pml3d', _pml3d)
