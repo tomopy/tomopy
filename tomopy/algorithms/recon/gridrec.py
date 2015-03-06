@@ -66,12 +66,12 @@ class GridrecCStruct(ctypes.Structure):
 class Gridrec():
     def __init__(self,
                  data,
+                 emission, 
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
                  airPixels=10,
                  ringWidth=0,
-                 fluorescence=0,
                  reconMethod=0,
                  reconMethodTomoRecon=0,
                  numThreads=mp.cpu_count(),
@@ -123,8 +123,8 @@ class Gridrec():
         ringWidth : scalar
             Number of pixels to smooth by when removing ring artifacts.
 
-        fluorescence : scalar
-            0=absorption data, 1=fluorescence.
+        emission : bool
+            False=absorption data, True=emission data.
 
         reconMethod : scalar
             0=tomoRecon, 1=Gridrec, 2=Backproject.
@@ -201,7 +201,10 @@ class Gridrec():
         self.params.paddedSinogramWidth = paddedSinogramWidth
         self.params.airPixels = airPixels
         self.params.ringWidth = ringWidth
-        self.params.fluorescence = fluorescence
+        if emission is True:
+            self.params.fluorescence = 1
+        else:
+            self.params.fluorescence = 0
         self.params.reconMethod = reconMethod
         self.params.reconMethodTomoRecon = 0
         self.params.reconMethodGridrec = 1

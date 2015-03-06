@@ -142,6 +142,8 @@ def xtomo_reader(file_name,
         hdfdata = f['/'.join([exchange_base, "theta"])]
         theta = hdfdata[projections_start:projections_end:projections_step]
         theta = np.nan_to_num(theta)
+        if theta.min() <= 0:
+            theta += abs(theta.min())
     except KeyError:
         theta = None
 
