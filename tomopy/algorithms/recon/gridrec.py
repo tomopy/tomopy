@@ -66,7 +66,7 @@ class GridrecCStruct(ctypes.Structure):
 class Gridrec():
     def __init__(self,
                  data,
-                 emission, 
+                 emission=False, 
                  sinoScale=1e4,
                  reconScale=1,
                  paddedSinogramWidth=None,
