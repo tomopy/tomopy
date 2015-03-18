@@ -25,12 +25,12 @@ LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
 if LD_LIBRARY_PATH is None:
     warnings.warn("you may need to manually set LD_LIBRARY_PATH to " +
                   "link the shared libraries correctly")
-    LD_LIBRARY_PATH = ''
-#for windows split with ; , unix split with :
-if os.name == 'nt':
-    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(';')
 else:
-    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
+    #for windows split with ; , unix split with :
+    if os.name == 'nt':
+        LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(';')
+    else:
+        LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
 
 # Get header file locations (list of directories).
 C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
@@ -63,7 +63,7 @@ if os.name == 'nt':
 else:
     fftw_extra_link_args = ['-lfftw3f']
     recon_extra_link_args = ['-lfftw3f', '-lboost_thread', '-lboost_system', '-lboost_date_time']
-	
+
 # Create FFTW shared-library.
 ext_fftw = Extension(name='tomopy.lib.libfftw',
                      sources=['tomopy/tools/fftw.cpp'],
