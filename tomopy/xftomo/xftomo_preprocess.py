@@ -13,7 +13,9 @@ import scipy.ndimage as spn
 import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
-plt.style.use('ggplot')
+
+if hasattr(plt, 'style'):
+    plt.style.use('ggplot')
 
 # Import main TomoPy object.
 from tomopy.xftomo.xftomo_dataset import XFTomoDataset

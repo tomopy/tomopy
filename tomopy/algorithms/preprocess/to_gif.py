@@ -2,7 +2,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
-plt.style.use('ggplot')
+
+if hasattr(plt, 'style'):
+    plt.style.use('ggplot')
 
 # --------------------------------------------------------------------
 
