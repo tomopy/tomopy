@@ -25,14 +25,14 @@ test:
   requires:
     - nose
   imports:
-    - tomogrid
-    - tomogrid.io.data
-    - tomogrid.io.phantom
-    - tomogrid.io.recipes
-    - tomogrid.prep
-    - tomogrid.recon
+    - tomopy
+    - tomopy.io.data
+    - tomopy.io.phantom
+    - tomopy.io.recipes
+    - tomopy.prep
+    - tomopy.recon
 
 about:
-  home: http://tomogrid.readthedocs.org
+  home: http://tomopy.readthedocs.org
   license: BSD
   summary: 'X-ray imaging toolbox'
