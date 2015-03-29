@@ -46,4 +46,47 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module describing recipes for beamline/experiment specific data format.
+
+:Author: Doga Gursoy
+:Organization: Argonne National Laboratory
+
+"""
+
 from __future__ import absolute_import, division, print_function
+
+from skimage import io as sio
+import numpy as np
+import os
+import h5py
+import logging
+import warnings
+
+
+__docformat__ = 'restructuredtext en'
+__all__ = ['read_aps1id',
+           'read_aps2bm',
+           'read_aps7bm',
+           'read_aps13id',
+           'read_aps32id']
+
+
+def read_aps1id():
+    pass
+
+
+def read_aps2bm():
+    pass
+
+
+def read_aps7bm():
+    pass
+
+
+def read_aps13id():
+    pass
+
+
+def read_aps32id():
+    pass

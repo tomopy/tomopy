@@ -1,6 +1,5 @@
 include README.rst
-include CHANGES.txt
 include LICENSE.txt
-recursive-include tomopy/algorithms *
-recursive-include tomopy/tools *
-recursive-include tomopy/xtomo *
+include requirements.txt
+include VERSION
+recursive-include tomopy/data *
