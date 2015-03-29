@@ -26,6 +26,7 @@ test:
     - nose
   imports:
     - tomopy
+    - tomopy.io
     - tomopy.io.data
     - tomopy.io.phantom
     - tomopy.io.recipes

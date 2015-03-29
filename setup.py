@@ -12,7 +12,7 @@ prep = Extension(
 
 
 recon = Extension(
-    name='tomogrid.lib.libtomopy_recon',
+    name='tomopy.lib.libtomopy_recon',
     extra_compile_args=['-std=c99'],
     sources=[
         'tomopy/src/utils.c',
@@ -40,7 +40,7 @@ setup(
     author_email='dgursoy@aps.anl.gov',
     description='X-ray imaging toolbox',
     keywords=['tomography', 'reconstruction', 'imaging'],
-    url='http://tomogrid.readthedocs.org',
+    url='http://tomopy.readthedocs.org',
     download_url='http://github.com/tomopy/tomopy.git',
     license='BSD',
     platforms='Any',
