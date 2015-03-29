@@ -47,3 +47,63 @@
 # #########################################################################
 
 from __future__ import absolute_import, division, print_function
+
+from tomopy.io.phantom import *
+import numpy as np
+import os
+import shutil
+import h5py
+from nose.tools import assert_equals
+
+
+def test_baboon():
+    out = baboon()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_barbara():
+    out = barbara()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_cameraman():
+    out = cameraman()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_checkerboard():
+    out = checkerboard()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_lena():
+    out = lena()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_peppers():
+    out = peppers()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_shepp2d():
+    out = shepp2d()
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_shepp3d():
+    out = shepp3d((6, 8, 10))
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (6, 8, 10))
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

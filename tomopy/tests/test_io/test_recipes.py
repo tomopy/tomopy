@@ -47,3 +47,35 @@
 # #########################################################################
 
 from __future__ import absolute_import, division, print_function
+
+from tomopy.io.recipes import *
+import numpy as np
+import os
+import shutil
+import h5py
+from nose.tools import assert_equals
+
+
+def test_read_aps1id():
+    read_aps1id()
+
+
+def test_read_aps2bm():
+    read_aps2bm()
+
+
+def test_read_aps7bm():
+    read_aps7bm()
+
+
+def test_read_aps13id():
+    read_aps13id()
+
+
+def test_read_aps32id():
+    read_aps32id()
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
