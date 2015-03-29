@@ -47,3 +47,104 @@
 # #########################################################################
 
 from __future__ import absolute_import, division, print_function
+
+from tomopy.io.data import *
+from tomopy.io.data import _add_index_to_string, _suggest_new_fname
+import numpy as np
+import os
+import shutil
+import h5py
+from nose.tools import assert_equals
+
+
+def test_as_uint8():
+    arr = np.arange(5, dtype='float32')
+    out = as_uint8(arr)
+    assert_equals(out.dtype, 'uint8')
+    out = as_uint8(arr, dmin=1.)
+    assert_equals((out == [0, 0, 85, 170, 255]).all(), True)
+    out = as_uint8(arr, dmax=3.)
+    assert_equals((out == [0, 85, 170, 255, 255]).all(), True)
+
+
+def test_as_uint16():
+    arr = np.arange(5, dtype='float32')
+    out = as_uint16(arr)
+    assert_equals(out.dtype, 'uint16')
+    out = as_uint16(arr, dmin=1.)
+    assert_equals((out == [0, 0, 21845, 43690, 65535]).all(), True)
+    out = as_uint16(arr, dmax=3.)
+    assert_equals((out == [0, 21845, 43690, 65535, 65535]).all(), True)
+
+
+def test_remove_neg():
+    arr = np.arange(-2, 2, dtype='float32')
+    out = remove_neg(arr)
+    assert_equals(out[out < 0].size, 0)
+
+
+def test_remove_nan():
+    arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
+    out = remove_nan(arr)
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_read_hdf5():
+    out = read_hdf5(fname='tomopy/io/data/lena.h5')
+    assert_equals(out.dtype, 'float32')
+    assert_equals(out.shape, (1, 512, 512))
+
+
+def test_write_hdf5():
+    dest = 'tomopy/tests/youcandeleteme/'
+    fname = dest + 'youcandeleteme'
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    os.mkdir(dest)
+
+    arr = np.ones((3, 3, 3), dtype='float32')
+    write_hdf5(arr, fname=fname)
+    f = h5py.File(fname + '.h5', "r")
+    assert_equals(f['/exchange/data'][:].shape, (3, 3, 3))
+    assert_equals(f['/exchange/data'][:].dtype, 'float32')
+
+    shutil.rmtree(dest)
+
+
+def test__add_index_to_string():
+    out = _add_index_to_string(string='test', ind=12, digits=5)
+    assert_equals(out, 'test_00012')
+
+
+def test__suggest_new_fname():
+    out = _suggest_new_fname('lena.tiff')
+    assert_equals(out, 'lena-1.tiff')
+
+
+def test_write_tiff_stack():
+    dest = 'tomopy/tests/youcandeleteme/'
+    fname = dest + 'youcandeleteme'
+
+    arr = np.ones((1, 2, 3), dtype='float32')
+    write_tiff_stack(arr, fname=fname, axis=0, digits=4, dtype='uint8')
+    assert_equals(os.path.isfile(fname + '_0000.tiff'), True)
+    shutil.rmtree(dest)
+
+    write_tiff_stack(arr, fname=fname, axis=1, digits=5, dtype='uint16')
+    assert_equals(os.path.isfile(fname + '_00000.tiff'), True)
+    assert_equals(os.path.isfile(fname + '_00001.tiff'), True)
+    shutil.rmtree(dest)
+
+    write_tiff_stack(arr, fname=fname, axis=2, id=6, dtype='float32')
+    assert_equals(os.path.isfile(fname + '_00006.tiff'), True)
+    assert_equals(os.path.isfile(fname + '_00007.tiff'), True)
+    assert_equals(os.path.isfile(fname + '_00008.tiff'), True)
+    shutil.rmtree(dest)
+
+    write_tiff_stack(arr, fname=fname, axis=2)
+    shutil.rmtree(dest)
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
