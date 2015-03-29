@@ -18,11 +18,9 @@ References
 ==========
 .. [#] Gursoy D, De Carlo F, Xiao X, Jacobsen C. 
    TomoPy: A framework for the analysis of synchrotron tomographic data. 
-   **Journal of Synchrotron Radiation**, vol.21, no.5, pp.1188-1193, 2014
-    `[link] <http://dx.doi.org/10.1107/S1600577514013939>`_
+   **Journal of Synchrotron Radiation**, vol.21, no.5, pp.1188-1193, 2014. `[link] <http://dx.doi.org/10.1107/S1600577514013939>`_
 
 .. [#] De Carlo F, Gursoy D, Marone F, Rivers M, Parkinson YD, Khan F, Schwarz N, Vine DJ, Vogt S, Gleber SC, Narayanan S, Newville M, Lanzirotti T, Sun Y, Hong YP, Jacobsen C. 
     Scientific Data Exchange: a schema for HDF5-based storage of raw and analyzed data. 
-    **Journal of Synchrotron Radiation**, vol.21, no.6, 2014 
-    `[link] <http://dx.doi.org/10.1107/S160057751401604X>`_
+    **Journal of Synchrotron Radiation**, vol.21, no.6, 2014. `[link] <http://dx.doi.org/10.1107/S160057751401604X>`_
     
