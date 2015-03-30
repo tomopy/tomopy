@@ -2,13 +2,11 @@
 TomoPy Guide
 ============
 
-TomoPy is a Python toolbox to perform data processing and
-image reconstruction tasks. This is a test bed and will be 
-merged with `TomoPy <https://github.com/tomopy/tomopy.git>`_ 
-once matured.
+TomoPy is a Python toolbox to perform tomographic data processing and image 
+reconstruction tasks at the `Advanced Photon Source <http://www.aps.anl.gov>`_.
 
 This guide is currently maintained on 
-`GitHub <https://github.com/dgursoy/tomogrid>`_.
+`GitHub <https://github.com/dgursoy/tomopy>`_.
 
 .. toctree::
    :maxdepth: 1
