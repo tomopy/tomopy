@@ -12,34 +12,6 @@ This section is for TomoPy developers.
    :local:
 
 
-For Beginners
-=============
-
-Short descriptions of some of the files in the root folder of the project:
-
-:.gitignore: Specifies intentionally untracked files that 
-    `Git <http://git-scm.com>`_ should ignore.
-
-:bld.bat: Windows build script which is executed using ``cmd``.
-
-:build.sh: Unix build script which is executed using bash. 
-
-:MANIFEST.in: Specifies the files in the project that will go into the 
-    final distribution.
-
-:meta.yaml: Contains metadata for the 
-    `Conda <http://conda.pydata.org/docs/build.html>`_ build.
-
-:requirements.txt: Contains a list of items to be installed using 
-    `pip install <https://pip.pypa.io/en/latest/user_guide.html#requirements-files>`_
-
-:setup.cfg: Contains the distribution's optional metadata and build
-    configuration which are not provided in ``setup.py``
-
-:setup.py: Contains metadata and configuration for building and
-    installing the package distribution. 
-
-
 Coding Syntax
 =============
 
