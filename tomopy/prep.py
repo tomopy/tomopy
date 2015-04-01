@@ -115,6 +115,13 @@ def normalize(data, white, dark, cutoff=None, ind=None):
     data : ndarray
         Normalized data.
     """
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
+
+    if ind is None:
+        ind = np.arange(0, dx)
+
     # Calculate average white and dark fields for normalization.
     white = white.mean(axis=0)
     dark = dark.mean(axis=0)
@@ -123,8 +130,6 @@ def normalize(data, white, dark, cutoff=None, ind=None):
     denom = white - dark
     denom[denom == 0] = 1e-6
 
-    if ind is None:
-        ind = np.arange(0, data.shape[0])
     for m in ind:
         proj = data[m, :, :]
         proj = np.divide(proj-dark, denom)
@@ -135,7 +140,7 @@ def normalize(data, white, dark, cutoff=None, ind=None):
 
 def stripe_removal(
         data, level=None, wname='db5',
-        sigma=2, pad=True):
+        sigma=2, pad=True, ind=None):
     """
     Remove stripes from sinogram data using
     the Fourier-Wavelet based method.
@@ -164,21 +169,26 @@ def stripe_removal(
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
+
     # Find the higest level possible.
     if level is None:
         size = np.max(data.shape)
         level = int(np.ceil(np.log2(size)))
+    
+    if ind is None:
+        ind = np.arange(0, dy)
 
     # pad temp image.
-    dx, nslices, dy = data.shape
     nx = dx
     if pad:
-        nx = dx + dx / 8
+        nx = dx + dx/8
 
-    xshft = int((nx - dx) / 2.)
-    sli = np.zeros((nx, dy), dtype='float32')
+    xshft = int((nx-dx)/2.)
+    sli = np.zeros((nx, dz), dtype='float32')
 
-    ind = np.arange(0, data.shape[1])
     for n in ind:
         sli[xshft:dx + xshft, :] = data[:, n, :]
 
@@ -211,12 +221,12 @@ def stripe_removal(
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
 
-        data[:, n, :] = sli[xshft:dx + xshft, 0:dy]
+        data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
 
 
 def phase_retrieval(
         data, psize=1e-4, dist=50,
-        energy=20, alpha=1e-4, pad=True):
+        energy=20, alpha=1e-4, pad=True, ind=None):
     """
     Perform single-material phase retrieval
     using projection data.
@@ -253,24 +263,25 @@ def phase_retrieval(
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
 
     # Compute the filter.
     H, xshft, yshft, prj = paganin_filter(
         data, psize, dist, energy, alpha, pad)
 
-    nprojs, dx, dy = data.shape  # dx:slices
+    if ind is None:
+        ind = np.arange(0, dx)
 
-    ind = np.arange(0, data.shape[0])
     for m in ind:
         proj = data[m, :, :]
-
         if pad:
-            prj[xshft:dx+xshft, yshft:dy+yshft] = proj
+            prj[xshft:dy+xshft, yshft:dz+yshft] = proj
             fproj = np.fft.fft2(prj)
             filtproj = np.multiply(H, fproj)
             tmp = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-            proj = tmp[xshft:dx+xshft, yshft:dy+yshft]
-
+            proj = tmp[xshft:dy+xshft, yshft:dz+yshft]
         elif not pad:
             fproj = np.fft.fft2(proj)
             filtproj = np.multiply(H, fproj)
@@ -314,28 +325,28 @@ def paganin_filter(data, psize, dist, energy, alpha, pad):
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
-    nprojs, dx, dy = data.shape  # dx:slices, dy:pixels
+    dx, dy, dz = data.shape
     wavelen = 2*const.PI*const.PLANCK_CONSTANT*const.SPEED_OF_LIGHT/energy
 
     if pad:
         # Find pad values.
-        val = np.mean((data[:, :, 0] + data[:, :, dy-1])/2)
+        val = np.mean((data[:, :, 0] + data[:, :, dz-1])/2)
 
         # Fourier pad in powers of 2.
         padpix = np.ceil(const.PI*wavelen*dist/psize**2)
 
-        nx = pow(2, np.ceil(np.log2(dx + padpix)))
-        ny = pow(2, np.ceil(np.log2(dy + padpix)))
-        xshft = int((nx-dx)/2.)
-        yshft = int((ny-dy)/2.)
+        nx = pow(2, np.ceil(np.log2(dy + padpix)))
+        ny = pow(2, np.ceil(np.log2(dz + padpix)))
+        xshft = int((nx-dy)/2.)
+        yshft = int((ny-dz)/2.)
 
         # Template pad image.
         prj = val * np.ones((nx, ny), dtype='float32')
 
     elif not pad:
-        nx, ny = dx, dy
+        nx, ny = dy, dz
         xshft, yshft, prj = None, None, None
-        prj = np.ones((dx, dy), dtype='float32')
+        prj = np.ones((dy, dz), dtype='float32')
 
     # Sampling in reciprocal space.
     indx = (1/((nx-1)*psize)) * np.arange(-(nx-1)*0.5, nx*0.5)
@@ -349,7 +360,7 @@ def paganin_filter(data, psize, dist, energy, alpha, pad):
     return H, xshft, yshft, prj
 
 
-def circular_roi(data, ratio=1, val=None):
+def circular_roi(data, ratio=1, val=None, ind=None):
     """
     Apply circular mask to projection data.
 
@@ -372,16 +383,19 @@ def circular_roi(data, ratio=1, val=None):
     output : ndarray
         Masked data.
     """
-    nprojs = data.shape[0]
-    nslices = data.shape[1]
-    npixels = data.shape[2]
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
 
-    if nslices < npixels:
-        ind1 = nslices
-        ind2 = npixels
+    if ind is None:
+        ind = np.arange(0, dx)
+
+    if dy < dz:
+        ind1 = dy
+        ind2 = dz
     else:
-        ind1 = npixels
-        ind2 = nslices
+        ind1 = dz
+        ind2 = dy
 
     # Apply circular mask.
     rad1 = ind1/2
@@ -390,13 +404,14 @@ def circular_roi(data, ratio=1, val=None):
     mask = x*x+y*y > ratio*ratio*rad1*rad2
     if val is None:
         val = np.mean(data[:, ~mask])
-    for m in range(nprojs):
+
+    for m in ind:
         data[m, mask] = val
 
 
 def focus_region(
         data, xcoord=0, ycoord=0,
-        dia=256, center=None, pad=False, corr=True):
+        dia=256, center=None, pad=False, corr=True, ind=None):
     """
     Uses only a portion of the sinogram for reconstructing
     a circular region of interest (ROI).
@@ -431,11 +446,15 @@ def focus_region(
     roi : ndarray
         Modified ROI data.
     """
-    nprojs = data.shape[0]
-    npixels = data.shape[2]
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
+
+    if ind is None:
+        ind = np.arange(0, dx)
 
     if center is None:
-        center = npixels/2.
+        center = dz/2.
 
     rad = np.sqrt(xcoord*xcoord + ycoord*ycoord)
     alpha = np.arctan2(xcoord, ycoord)
@@ -443,13 +462,12 @@ def focus_region(
     l1 = center - dia/2
     l2 = center - dia/2 + rad
 
-    dx, dy, dz = data.shape
     roi = np.ones((dx, dy, dia), dtype='float32')
     if pad:
         roi = np.ones((dx, dy, dz), dtype='float32')
 
-    delphi = const.PI/nprojs
-    for m in range(nprojs):
+    delphi = const.PI/dx
+    for m in ind:
         ind1 = np.ceil(np.cos(alpha-m * delphi) * (l2-l1)+l1)
         ind2 = np.floor(np.cos(alpha-m * delphi) * (l2-l1)+l1+dia)
 
@@ -457,10 +475,10 @@ def focus_region(
             ind1 = 0
         if ind2 < 0:
             ind2 = 0
-        if ind1 > npixels:
-            ind1 = npixels
-        if ind2 > npixels:
-            ind2 = npixels
+        if ind1 > dz:
+            ind1 = dz
+        if ind2 > dz:
+            ind2 = dz
 
         arr = np.expand_dims(data[m, :, ind1:ind2], axis=0)
         if pad:
@@ -473,14 +491,12 @@ def focus_region(
                 roi[m, :, 0:(ind2-ind1)] = correct_air(arr, air=5)
             else:
                 roi[m, :, 0:(ind2-ind1)] = arr
-
-        # New center
         if not pad:
-            center = npixels/2.
+            center = dz/2.
     return roi, center
 
 
-def median_filter(data, size=3, axis=0):
+def median_filter(data, size=3, axis=0, ind=None):
     """
     Apply median filter to data.
 
@@ -502,25 +518,33 @@ def median_filter(data, size=3, axis=0):
     output : ndarray
         Median filtered data.
     """
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
+
+    if ind is None:
+        if axis == 0:
+            ind = np.arange(0, dx)
+        elif axis == 1:
+            ind = np.arange(0, dy)
+        elif axis == 2:
+            ind = np.arange(0, dz)
 
     if axis == 0:
-        ind = np.arange(0, data.shape[0])
         for m in ind:
             data[m, :, :] = filters.median_filter(
                 data[m, :, :], (size, size))
     elif axis == 1:
-        ind = np.arange(0, data.shape[1])
         for m in ind:
             data[:, m, :] = filters.median_filter(
                 data[:, m, :], (size, size))
     elif axis == 2:
-        ind = np.arange(0, data.shape[2])
         for m in ind:
             data[:, :, m] = filters.median_filter(
                 data[:, :, m], (size, size))
 
 
-def zinger_removal(data, dif=1000, size=3):
+def zinger_removal(data, dif=1000, size=3, ind=None):
     """
     Zinger removal.
 
@@ -542,16 +566,21 @@ def zinger_removal(data, dif=1000, size=3):
     output : ndarray
         Zinger removed data.
     """
-    mask = np.zeros((1, data.shape[1], data.shape[2]))
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
 
-    ind = np.arange(0, data.shape[0])
+    if ind is None:
+        ind = np.arange(0, dx)
+
+    mask = np.zeros((1, dy, dz))
     for m in ind:
         tmp = filters.median_filter(data[m, :, :], (size, size))
         mask = ((data[m, :, :]-tmp) >= dif).astype(int)
         data[m, :, :] = tmp*mask + data[m, :, :]*(1-mask)
 
 
-def correct_air(data, air=10):
+def correct_air(data, air=10, ind=None):
     """
     Corrects for drifts in the sinogram.
 
@@ -577,10 +606,9 @@ def correct_air(data, air=10):
     output : ndarray
         Normalized data.
     """
-
-    nprojs = np.array(data.shape[0], dtype='int32')
-    nslices = np.array(data.shape[1], dtype='int32')
-    npixels = np.array(data.shape[2], dtype='int32')
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
 
     if air <= 0:
         return data
@@ -590,12 +618,12 @@ def correct_air(data, air=10):
     libtg.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
     libtg.correct_air(
         data.ctypes.data_as(c_float_p),
-        ctypes.c_int(nprojs), ctypes.c_int(nslices),
-        ctypes.c_int(npixels), ctypes.c_int(air))
+        ctypes.c_int(dx), ctypes.c_int(dy),
+        ctypes.c_int(dz), ctypes.c_int(air))
     return data
 
 
-def apply_padding(data, npad=None, val=0.):
+def apply_padding(data, npad=None, val=0., ind=None):
     """
     Applies padding to each projection data.
 
@@ -617,31 +645,31 @@ def apply_padding(data, npad=None, val=0.):
     padded : ndarray
         Padded data.
     """
-    nprojs = np.array(data.shape[0], dtype='int32')
-    nslices = np.array(data.shape[1], dtype='int32')
-    npixels = np.array(data.shape[2], dtype='int32')
+    if data == 'SHARED':
+        data = mp.shared_data
+    dx, dy, dz = data.shape
 
     # Set default parameters.
     if npad is None:
-        npad = np.ceil(npixels * np.sqrt(2))
-    elif npad < npixels:
-        npad = npixels
+        npad = np.ceil(dz * np.sqrt(2))
+    elif npad < dz:
+        npad = dz
 
-    if npad < npixels:
+    if npad < dz:
         return data
 
     if not isinstance(npad, np.int32):
         npad = np.array(npad, dtype='int32')
 
-    padded = val * np.ones((nprojs, nslices, npad), dtype='float32')
+    padded = val * np.ones((dx, dy, npad), dtype='float32')
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtg.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
     libtg.apply_padding(
         data.ctypes.data_as(c_float_p),
-        ctypes.c_int(nprojs), ctypes.c_int(nslices),
-        ctypes.c_int(npixels), ctypes.c_int(npad),
+        ctypes.c_int(dx), ctypes.c_int(dy),
+        ctypes.c_int(dz), ctypes.c_int(npad),
         padded.ctypes.data_as(c_float_p))
     return padded
 
