@@ -58,6 +58,8 @@ from __future__ import absolute_import, division, print_function
 
 from skimage import io as sio
 import numpy as np
+import multiprocessing as mp
+import ctypes
 import os
 import h5py
 import logging
@@ -65,7 +67,8 @@ import warnings
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_float32',
+__all__ = ['as_shared_array',
+           'as_float32',
            'as_uint8',
            'as_uint16',
            'remove_neg',
@@ -73,6 +76,27 @@ __all__ = ['as_float32',
            'read_hdf5',
            'write_hdf5',
            'write_tiff_stack']
+
+
+def as_shared_array(arr):
+    """
+    Converts array to a shared memory array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array
+
+    Returns
+    -------
+    out : ndarray
+        Output array
+    """
+    sarr = mp.Array(ctypes.c_float, arr.size)
+    sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
+    sarr = np.reshape(sarr, arr.shape)
+    sarr[:] = arr
+    return sarr
 
 
 def as_float32(arr):
