@@ -63,18 +63,7 @@ from contextlib import closing
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['distribute_jobs',
-           'to_numpy_array']
-
-
-def _init(shared_arr_):
-    global shared_arr
-    shared_arr = shared_arr_  # must be inhereted, not passed as an argument
-
-
-def to_numpy_array(mp_arr, dshape):
-    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
-    return np.reshape(a, dshape)
+__all__ = ['distribute_jobs']
 
 
 def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
@@ -114,31 +103,52 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
 
     # Arrange chunk size.
     if nchunk is None:
-        nchunk = (dims-1) // ncore + 1
+        nchunk = (dims-1) // ncore+1
 
     # Determine pool size.
     npool = dims // nchunk+1
 
-    # Populate jobs.
+    # Populate arguments for workers.
     arg = []
     for m in range(npool):
         ind_start = m * nchunk
         ind_end = (m + 1) * nchunk
         if ind_start >= dims:
+            npool -= 1;
             break
         if ind_end > dims:
             ind_end = dims
+        
+        arr = []
+        arr.append(func)
+        arr.append("SHARED")
+        for a in args:
+            arr.append(a)
+        arr.append(range(ind_start, ind_end))
+        arg.append(arr)
 
-        arg += [(range(ind_start, ind_end), data.shape, args)]
-
-    shared_arr = mp.Array(ctypes.c_float, data.size)  # takes time
-    arr = to_numpy_array(shared_arr, data.shape)
-    arr[:] = data
+    shared_data = mp.Array(ctypes.c_float, data.size)
+    shared_data = _to_numpy_array(shared_data, data.shape)
+    shared_data[:] = data
 
     # write to arr from different processes
-    with closing(mp.Pool(initializer=_init, initargs=(shared_arr,))) as p:
-        p.map_async(func, arg)
+    with closing(mp.Pool(initializer=_init, initargs=(shared_data,))) as p:
+        p.map_async(_helper, arg)
     p.join()
     p.close()
+    return shared_data
 
-    return arr
+
+def _helper(args):
+    func = args[0]
+    func(*args[1::])
+
+
+def _init(shared_data_):
+    global shared_data
+    shared_data = shared_data_
+
+
+def _to_numpy_array(mp_arr, dshape):
+    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
+    return np.reshape(a, dshape)
