@@ -134,7 +134,7 @@ def simulate(model, theta, center=None):
 
 class ReconCStruct(ctypes.Structure):
     """
-    Reconstruction parameter structure for the C extension library.
+    Reconstruction parameter structure.
     """
     _fields_ = [("niter", ctypes.c_int),
                 ("beta", ctypes.c_float),
@@ -215,7 +215,7 @@ def art(*args, **kwargs):
         ctypes.byref(rargs),
         recon.ctypes.data_as(c_float_p))
     return recon
-    
+
 
 def reg_term(
         model, beta=1, delta=1, ngridx=None,
