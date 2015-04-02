@@ -114,15 +114,15 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
         ind_start = m * nchunk
         ind_end = (m + 1) * nchunk
         if ind_start >= dims:
-            npool -= 1;
+            npool -= 1
             break
         if ind_end > dims:
             ind_end = dims
-        
+
         arr = []
         arr.append(func)
         arr.append("SHARED")
-        for a in args:
+        for a in str(args):
             arr.append(a)
         arr.append(range(ind_start, ind_end))
         arg.append(arr)
@@ -132,19 +132,20 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
     shared_data[:] = data
 
     # write to arr from different processes
-    with closing(mp.Pool(initializer=_init, initargs=(shared_data,))) as p:
-        p.map_async(_helper, arg)
+    with closing(mp.Pool(
+            initializer=_init_shared, initargs=(shared_data,))) as p:
+        p.map_async(_arg_parser, arg)
     p.join()
     p.close()
     return shared_data
 
 
-def _helper(args):
+def _arg_parser(args):
     func = args[0]
     func(*args[1::])
 
 
-def _init(shared_data_):
+def _init_shared(shared_data_):
     global shared_data
     shared_data = shared_data_
 

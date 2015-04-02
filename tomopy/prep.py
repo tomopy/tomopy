@@ -58,23 +58,30 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
-import tomopy.const as const
 import logging
 import os
 import ctypes
-from scipy.ndimage import filters
 import tomopy.multiprocess as mp
+from scipy.ndimage import filters
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['normalize',
+__all__ = ['apply_padding',
+           'normalize',
            'stripe_removal',
            'phase_retrieval',
            'zinger_removal',
            'median_filter',
            'circular_roi',
            'focus_region',
-           'correct_air']
+           'correct_air',
+           'downsample2d',
+           'downsample3d']
+
+
+BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
+SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
+PI = 3.14159265359
 
 
 # Get the path and import the C-shared library.
@@ -82,11 +89,11 @@ try:
     if os.name == 'nt':
         libpath = os.path.join(
             os.path.dirname(__file__), 'lib/libtomopy_prep.pyd')
-        libtg = ctypes.CDLL(os.path.abspath(libpath))
+        libtomopy_prep = ctypes.CDLL(os.path.abspath(libpath))
     else:
         libpath = os.path.join(
             os.path.dirname(__file__), 'lib/libtomopy_prep.so')
-        libtg = ctypes.CDLL(os.path.abspath(libpath))
+        libtomopy_prep = ctypes.CDLL(os.path.abspath(libpath))
 except OSError as e:
     pass
 
@@ -110,15 +117,23 @@ def normalize(data, white, dark, cutoff=None, ind=None):
     cutoff : scalar
         Permitted maximum vaue of the normalized data.
 
+    ind : ndarray
+        An index list.
+
     Returns
     -------
     data : ndarray
         Normalized data.
     """
-    if data == 'SHARED':
+    if type(data) == str and data == 'SHARED':
         data = mp.shared_data
-    dx, dy, dz = data.shape
+    else:
+        arr = mp.distribute_jobs(
+            data, func=normalize, axis=0,
+            args=(data, white, dark, cutoff))
+        return arr
 
+    dx, dy, dz = data.shape
     if ind is None:
         ind = np.arange(0, dx)
 
@@ -171,15 +186,20 @@ def stripe_removal(
     """
     if data == 'SHARED':
         data = mp.shared_data
+    else:
+        arr = mp.distribute_jobs(
+            data, func=stripe_removal, axis=1,
+            args=(level, wname, sigma, pad))
+        return arr
+
     dx, dy, dz = data.shape
+    if ind is None:
+        ind = np.arange(0, dy)
 
     # Find the higest level possible.
     if level is None:
         size = np.max(data.shape)
         level = int(np.ceil(np.log2(size)))
-    
-    if ind is None:
-        ind = np.arange(0, dy)
 
     # pad temp image.
     nx = dx
@@ -265,14 +285,19 @@ def phase_retrieval(
     """
     if data == 'SHARED':
         data = mp.shared_data
+    else:
+        arr = mp.distribute_jobs(
+            data, func=phase_retrieval,
+            args=(psize, dist, energy, alpha, pad), axis=0)
+        return arr
+
     dx, dy, dz = data.shape
-
-    # Compute the filter.
-    H, xshft, yshft, prj = paganin_filter(
-        data, psize, dist, energy, alpha, pad)
-
     if ind is None:
         ind = np.arange(0, dx)
+
+    # Compute the filter.
+    H, xshft, yshft, prj = _paganin_filter(
+        data, psize, dist, energy, alpha, pad)
 
     for m in ind:
         proj = data[m, :, :]
@@ -289,7 +314,7 @@ def phase_retrieval(
         data[m, :, :] = proj
 
 
-def paganin_filter(data, psize, dist, energy, alpha, pad):
+def _paganin_filter(data, psize, dist, energy, alpha, pad):
     """
     Calculates Paganin-type filter.
 
@@ -326,14 +351,14 @@ def paganin_filter(data, psize, dist, energy, alpha, pad):
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
     dx, dy, dz = data.shape
-    wavelen = 2*const.PI*const.PLANCK_CONSTANT*const.SPEED_OF_LIGHT/energy
+    wavelen = 2*PI*PLANCK_CONSTANT*SPEED_OF_LIGHT/energy
 
     if pad:
         # Find pad values.
         val = np.mean((data[:, :, 0] + data[:, :, dz-1])/2)
 
         # Fourier pad in powers of 2.
-        padpix = np.ceil(const.PI*wavelen*dist/psize**2)
+        padpix = np.ceil(PI*wavelen*dist/psize**2)
 
         nx = pow(2, np.ceil(np.log2(dy + padpix)))
         ny = pow(2, np.ceil(np.log2(dz + padpix)))
@@ -355,12 +380,12 @@ def paganin_filter(data, psize, dist, energy, alpha, pad):
     w2 = np.square(du) + np.square(dv)
 
     # Filter in Fourier space.
-    H = 1 / (wavelen*dist*w2 / (4*const.PI)+alpha)
+    H = 1 / (wavelen*dist*w2 / (4*PI)+alpha)
     H = np.fft.fftshift(H)
     return H, xshft, yshft, prj
 
 
-def circular_roi(data, ratio=1, val=None, ind=None):
+def circular_roi(data, ratio=1, val=None):
     """
     Apply circular mask to projection data.
 
@@ -383,35 +408,31 @@ def circular_roi(data, ratio=1, val=None, ind=None):
     output : ndarray
         Masked data.
     """
-    if data == 'SHARED':
-        data = mp.shared_data
     dx, dy, dz = data.shape
+    ind = np.arange(0, dx)
 
-    if ind is None:
-        ind = np.arange(0, dx)
-
-    if dy < dz:
-        ind1 = dy
-        ind2 = dz
-    else:
-        ind1 = dz
-        ind2 = dy
-
-    # Apply circular mask.
+    ind1 = dy
+    ind2 = dz
     rad1 = ind1/2
     rad2 = ind2/2
+    if dy < dz:
+        r2 = rad1*rad1
+    else:
+        r2 = rad2*rad2
     y, x = np.ogrid[-rad1:rad1, -rad2:rad2]
-    mask = x*x+y*y > ratio*ratio*rad1*rad2
+    mask = x*x+y*y > ratio*ratio*r2
+    print(mask.shape, data.shape)
     if val is None:
         val = np.mean(data[:, ~mask])
 
     for m in ind:
         data[m, mask] = val
+    return data
 
 
 def focus_region(
         data, xcoord=0, ycoord=0,
-        dia=256, center=None, pad=False, corr=True, ind=None):
+        dia=256, center=None, pad=False, corr=True):
     """
     Uses only a portion of the sinogram for reconstructing
     a circular region of interest (ROI).
@@ -446,19 +467,14 @@ def focus_region(
     roi : ndarray
         Modified ROI data.
     """
-    if data == 'SHARED':
-        data = mp.shared_data
     dx, dy, dz = data.shape
-
-    if ind is None:
-        ind = np.arange(0, dx)
+    ind = np.arange(0, dx)
 
     if center is None:
         center = dz/2.
 
     rad = np.sqrt(xcoord*xcoord + ycoord*ycoord)
     alpha = np.arctan2(xcoord, ycoord)
-
     l1 = center - dia/2
     l2 = center - dia/2 + rad
 
@@ -466,7 +482,7 @@ def focus_region(
     if pad:
         roi = np.ones((dx, dy, dz), dtype='float32')
 
-    delphi = const.PI/dx
+    delphi = PI/dx
     for m in ind:
         ind1 = np.ceil(np.cos(alpha-m * delphi) * (l2-l1)+l1)
         ind2 = np.floor(np.cos(alpha-m * delphi) * (l2-l1)+l1+dia)
@@ -483,7 +499,7 @@ def focus_region(
         arr = np.expand_dims(data[m, :, ind1:ind2], axis=0)
         if pad:
             if corr:
-                roi[m, :, ind1:ind2] = correct_air(arr, air=5)
+                roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=5)
             else:
                 roi[m, :, ind1:ind2] = arr
         else:
@@ -520,8 +536,13 @@ def median_filter(data, size=3, axis=0, ind=None):
     """
     if data == 'SHARED':
         data = mp.shared_data
-    dx, dy, dz = data.shape
+    else:
+        arr = mp.distribute_jobs(
+            data, func=median_filter, axis=axis,
+            args=(size, axis))
+        return arr
 
+    dx, dy, dz = data.shape
     if ind is None:
         if axis == 0:
             ind = np.arange(0, dx)
@@ -568,6 +589,12 @@ def zinger_removal(data, dif=1000, size=3, ind=None):
     """
     if data == 'SHARED':
         data = mp.shared_data
+    else:
+        arr = mp.distribute_jobs(
+            data, func=zinger_removal, axis=0,
+            args=(dif, size))
+        return arr
+
     dx, dy, dz = data.shape
 
     if ind is None:
@@ -606,17 +633,10 @@ def correct_air(data, air=10, ind=None):
     output : ndarray
         Normalized data.
     """
-    if data == 'SHARED':
-        data = mp.shared_data
     dx, dy, dz = data.shape
-
-    if air <= 0:
-        return data
-
-    # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.correct_air(
+    libtomopy_prep.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_prep.correct_air(
         data.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(air))
@@ -645,28 +665,19 @@ def apply_padding(data, npad=None, val=0., ind=None):
     padded : ndarray
         Padded data.
     """
-    if data == 'SHARED':
-        data = mp.shared_data
     dx, dy, dz = data.shape
-
-    # Set default parameters.
     if npad is None:
         npad = np.ceil(dz * np.sqrt(2))
     elif npad < dz:
         npad = dz
 
-    if npad < dz:
-        return data
-
-    if not isinstance(npad, np.int32):
-        npad = np.array(npad, dtype='int32')
-
+    npad = np.array(npad, dtype='int32')
     padded = val * np.ones((dx, dy, npad), dtype='float32')
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.apply_padding(
+    libtomopy_prep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_prep.apply_padding(
         data.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(npad),
@@ -695,26 +706,21 @@ def downsample2d(data, level=1):
         Downsampled 3-D tomographic data with dimensions:
         [projections, slices/level^2, pixels]
     """
-    nprojs = np.array(data.shape[0], dtype='int32')
-    nslices = np.array(data.shape[1], dtype='int32')
-    npixels = np.array(data.shape[2], dtype='int32')
+    dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
 
     binsize = np.power(2, level)
     downdat = np.zeros(
-        (nprojs, nslices, npixels/binsize),
+        (dx, dy, dz/binsize),
         dtype='float32')
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.downsample2d(
+    libtomopy_prep.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_prep.downsample2d(
         data.ctypes.data_as(c_float_p),
-        ctypes.c_int(nprojs), ctypes.c_int(nslices),
-        ctypes.c_int(npixels), ctypes.c_int(level),
+        ctypes.c_int(dx), ctypes.c_int(dy),
+        ctypes.c_int(dz), ctypes.c_int(level),
         downdat.ctypes.data_as(c_float_p))
     return downdat
 
@@ -740,9 +746,7 @@ def downsample3d(data, level=1):
         Downsampled 3-D tomographic data with dimensions:
         [projections, slices/level^2, pixels/level^2]
     """
-    nprojs = np.array(data.shape[0], dtype='int32')
-    nslices = np.array(data.shape[1], dtype='int32')
-    npixels = np.array(data.shape[2], dtype='int32')
+    dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
 
     if level < 0:
@@ -750,15 +754,15 @@ def downsample3d(data, level=1):
 
     binsize = np.power(2, level)
     downdat = np.zeros(
-        (nprojs, nslices/binsize, npixels/binsize),
+        (dx, dy/binsize, dz/binsize),
         dtype='float32')
 
     # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.downsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.downsample3d(
+    libtomopy_prep.downsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_prep.downsample3d(
         data.ctypes.data_as(c_float_p),
-        ctypes.c_int(nprojs), ctypes.c_int(nslices),
-        ctypes.c_int(npixels), ctypes.c_int(level),
+        ctypes.c_int(dx), ctypes.c_int(dy),
+        ctypes.c_int(dz), ctypes.c_int(level),
         downdat.ctypes.data_as(c_float_p))
     return downdat
