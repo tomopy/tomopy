@@ -64,7 +64,7 @@ import logging
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['theta', 'simulate', 'reconstruct']
+__all__ = ['simulate', 'art']
 
 
 # Get the path and import the C-shared library.
@@ -72,51 +72,13 @@ try:
     if os.name == 'nt':
         libpath = os.path.join(
             os.path.dirname(__file__), 'lib/libtomopy_recon.pyd')
-        libtg = ctypes.CDLL(os.path.abspath(libpath))
+        libtomopy_recon = ctypes.CDLL(os.path.abspath(libpath))
     else:
         libpath = os.path.join(
             os.path.dirname(__file__), 'lib/libtomopy_recon.so')
-        libtg = ctypes.CDLL(os.path.abspath(libpath))
+        libtomopy_recon = ctypes.CDLL(os.path.abspath(libpath))
 except OSError as e:
     pass
-
-
-def theta(
-        nprojs=180, theta_start=0,
-        theta_end=180, degrees=False):
-    """
-    Projection angles.
-
-    Parameters
-    ----------
-    nprojs : scalar
-        Number of projections.
-
-    theta_start : scalar
-        Projection angle of the first projection.
-
-    theta_end : scalar
-        Projection angle of the last projection.
-
-    degrees : bool
-        If True, the unit is in degrees,
-        otherwise in radians.
-
-    Returns
-    -------
-    theta : 1-D array (float32)
-        Projection angles.
-    """
-    if degrees:
-        theta = np.linspace(
-            theta_start, theta_end,
-            nprojs, dtype='float32')
-    else:
-        scl = np.pi/180.
-        theta = np.linspace(
-            theta_start*scl, theta_end*scl,
-            nprojs, dtype='float32')
-    return theta
 
 
 def simulate(model, theta, center=None):
@@ -125,10 +87,8 @@ def simulate(model, theta, center=None):
 
     Parameters
     ----------
-    model : 3-D array
-        1st dim: Slices
-        2nd dim: Rows
-        3rd dim: Columns
+    model : ndarray
+        Stacked sinograms as 3-D data.
 
     theta : 1-D array
         Projection angles.
@@ -138,253 +98,141 @@ def simulate(model, theta, center=None):
 
     Returns
     -------
-    simdata : simulated 3-D data
-        1st dim: Projections
-        2nd dim: Slices
-        3rd dim: Pixels
+    data : ndarray
+        Simulated 3-D data
     """
-    num_slices = np.array(model.shape[0], dtype='int32')
-    num_grids_x = np.array(model.shape[1], dtype='int32')
-    num_grids_y = np.array(model.shape[2], dtype='int32')
-
-    # Init final simdata matrix.
-    nprojs = np.array(theta.size, dtype='int32')
-    tmp = np.ceil(np.sqrt(num_grids_x*num_grids_x+num_grids_y*num_grids_y))
-    num_pixels = np.array(tmp, dtype='int32')
+    nslice, ngridx, ngridy = model.shape
+    nproj = theta.size
+    npixel = np.ceil(np.sqrt(ngridx*ngridx+ngridy*ngridy)).astype('int')
     if center is None:
-        center = num_pixels/2.0
-    msize = (nprojs, num_slices, num_pixels)
-    simdata = np.zeros(msize, dtype='float32')
+        center = npixel/2.0
+    data = np.zeros((nproj, nslice, npixel), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    model = np.array(model, dtype='float32')
-    theta = np.array(theta, dtype='float32')
-    center = np.array(center, dtype='float32')
+    if not isinstance(model, np.float32):
+        model = np.array(model, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
 
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.simulate(
+    libtomopy_recon.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.simulate(
         model.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         ctypes.c_float(center),
-        ctypes.c_int(nprojs),
-        ctypes.c_int(num_slices),
-        ctypes.c_int(num_pixels),
-        ctypes.c_int(num_grids_x),
-        ctypes.c_int(num_grids_y),
-        simdata.ctypes.data_as(c_float_p))
-    return simdata
+        ctypes.c_int(nproj),
+        ctypes.c_int(nslice),
+        ctypes.c_int(npixel),
+        ctypes.c_int(ngridx),
+        ctypes.c_int(ngridy),
+        data.ctypes.data_as(c_float_p))
+    return data
 
 
-# Reconstruction
+class ReconCStruct(ctypes.Structure):
+    """
+    Reconstruction parameter structure for the C extension library.
+    """
+    _fields_ = [("niter", ctypes.c_int),
+                ("beta", ctypes.c_float),
+                ("delta", ctypes.c_float),
+                ("center", ctypes.c_float),
+                ("nproj", ctypes.c_int),
+                ("nslice", ctypes.c_int),
+                ("npixel", ctypes.c_int),
+                ("ngridx", ctypes.c_int),
+                ("ngridy", ctypes.c_int),
+                ("isubset", ctypes.c_float),
+                ("nsubset", ctypes.c_int),
+                ("emission", ctypes.c_bool)]
 
-def reconstruct(
+
+def _init_recon(
         data, theta,
-        method='art', num_iters=1, beta=1, delta=1, center=None,
-        num_grids_x=None, num_grids_y=None,
-        emission=True, subset_ind=None, num_subset=1, recon=None):
-
-    nprojs = np.array(data.shape[0], dtype='int32')
-    num_slices = np.array(data.shape[1], dtype='int32')
-    num_pixels = np.array(data.shape[2], dtype='int32')
-
+        niter=1, beta=1, delta=1, center=None,
+        nproj=None, nslice=None, npixel=None,
+        ngridx=None, ngridy=None, emission=None,
+        isubset=None, nsubset=1, recon=None):
+    """
+    Initialize reconstruction parameters
+    """
+    nproj, nslice, npixel = data.shape
     if center is None:
-        center = num_pixels/2.
+        center = npixel/2.
+    if isubset is None:
+        # isubset = np.arange(0, nproj)
+        isubset = 1.
+    if ngridx is None:
+        ngridx = npixel
+    if ngridy is None:
+        ngridy = npixel
+    if emission is None:
+        emission = True
+    if recon is None:
+        recon = 1e-5*np.ones(
+            (nslice, ngridx, ngridy),
+            dtype='float32')
 
-    subset_ind = np.arange(0, theta.shape[0], 1).astype('int32')
-
-    # Init recon matrix.
-    if num_grids_x is None:
-        num_grids_x = num_pixels
-    if num_grids_y is None:
-        num_grids_y = num_pixels
-    msize = (num_slices, num_grids_x, num_grids_y)
-    recon = 1e-5*np.ones(msize, dtype='float32')
+    rargs = ReconCStruct()
+    rargs.niter = niter
+    rargs.beta = beta
+    rargs.delta = delta
+    rargs.center = center
+    rargs.nproj = nproj
+    rargs.nslice = nslice
+    rargs.npixel = npixel
+    rargs.ngridx = ngridx
+    rargs.ngridy = ngridy
+    rargs.isubset = isubset
+    rargs.nsubset = nsubset
+    rargs.emission = emission
 
     # Make sure that inputs datatypes are correct
-    data = np.array(data, dtype='float32')
-    theta = np.array(theta, dtype='float32')
-    center = np.array(center, dtype='float32')
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
 
-    if method.lower() == 'art':
-        # Call C function to reconstruct recon matrix.
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.art.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.art(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            recon.ctypes.data_as(c_float_p))
+    return data, theta, rargs, recon
 
-    if method.lower() == 'bart':
-        # Call C function to reconstruct recon matrix.
-        c_int_p = ctypes.POINTER(ctypes.c_int)
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.bart.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.bart(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            ctypes.c_int(num_subset),
-            subset_ind.ctypes.data_as(c_int_p),
-            recon.ctypes.data_as(c_float_p))
 
-    if method.lower() == 'sirt':
-        # Call C function to reconstruct recon matrix.
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.sirt(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            recon.ctypes.data_as(c_float_p))
+def art(*args, **kwargs):
+    """
+    Algebraic reconstruction technique.
+    """
+    data, theta, rargs, recon = _init_recon(*args, **kwargs)
 
-    if method.lower() == 'mlem':
-        # Call C function to reconstruct recon matrix.
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.mlem(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            recon.ctypes.data_as(c_float_p))
-
-    if method.lower() == 'osem':
-        # Call C function to reconstruct recon matrix.
-        c_int_p = ctypes.POINTER(ctypes.c_int)
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.osem.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.osem(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            ctypes.c_int(num_subset),
-            subset_ind.ctypes.data_as(c_int_p),
-            recon.ctypes.data_as(c_float_p))
-
-    if method.lower() == 'pml':
-        # Call C function to reconstruct recon matrix.
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.pml.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.pml(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_float(beta),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            recon.ctypes.data_as(c_float_p))
-
-    if method.lower() == 'ospml':
-        # Call C function to reconstruct recon matrix.
-        c_int_p = ctypes.POINTER(ctypes.c_int)
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.ospml.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.ospml(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_float(beta),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            ctypes.c_int(num_subset),
-            subset_ind.ctypes.data_as(c_int_p),
-            recon.ctypes.data_as(c_float_p))
-
-    if method.lower() == 'ospmlh':
-        # Call C function to reconstruct recon matrix.
-        c_int_p = ctypes.POINTER(ctypes.c_int)
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.ospmlh.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.ospmlh(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_float(beta),
-            ctypes.c_float(delta),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            ctypes.c_int(num_iters),
-            ctypes.c_int(num_subset),
-            subset_ind.ctypes.data_as(c_int_p),
-            recon.ctypes.data_as(c_float_p))
-
-    if method.lower() == 'fbp':
-        # Call C function to reconstruct recon matrix.
-        c_float_p = ctypes.POINTER(ctypes.c_float)
-        libtg.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
-        libtg.fbp(
-            data.ctypes.data_as(c_float_p),
-            theta.ctypes.data_as(c_float_p),
-            ctypes.c_float(center),
-            ctypes.c_int(nprojs),
-            ctypes.c_int(num_slices),
-            ctypes.c_int(num_pixels),
-            ctypes.c_int(num_grids_x),
-            ctypes.c_int(num_grids_y),
-            recon.ctypes.data_as(c_float_p))
-
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.art.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.art(
+        data.ctypes.data_as(c_float_p),
+        theta.ctypes.data_as(c_float_p),
+        ctypes.byref(rargs),
+        recon.ctypes.data_as(c_float_p))
     return recon
-
+    
 
 def reg_term(
-        model, beta=1, delta=1, num_grids_x=None,
-        num_grids_y=None, reg=None):
-    num_slices = np.array(model.shape[0], dtype='int32')
-    num_grids_x = np.array(model.shape[1], dtype='int32')
-    num_grids_y = np.array(model.shape[2], dtype='int32')
-    msize = (num_slices, num_grids_x, num_grids_y)
+        model, beta=1, delta=1, ngridx=None,
+        ngridy=None, reg=None):
+    nslice = np.array(model.shape[0], dtype='int32')
+    ngridx = np.array(model.shape[1], dtype='int32')
+    ngridy = np.array(model.shape[2], dtype='int32')
+    msize = (nslice, ngridx, ngridy)
     reg = np.zeros(msize, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtg.reg_term.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtg.reg_term(model.ctypes.data_as(
+    libtomopy_recon.reg_term.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.reg_term(model.ctypes.data_as(
         c_float_p),
-        ctypes.c_int(num_slices),
-        ctypes.c_int(num_grids_x),
-        ctypes.c_int(num_grids_y),
+        ctypes.c_int(nslice),
+        ctypes.c_int(ngridx),
+        ctypes.c_int(ngridy),
         ctypes.c_float(beta),
         ctypes.c_float(delta),
         reg.ctypes.data_as(c_float_p))

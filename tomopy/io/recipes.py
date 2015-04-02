@@ -56,12 +56,10 @@ Module describing recipes for beamline/experiment specific data format.
 
 from __future__ import absolute_import, division, print_function
 
-from skimage import io as sio
 import numpy as np
 import os
-import h5py
 import logging
-import warnings
+import tomopy.io.data as dio
 
 
 __docformat__ = 'restructuredtext en'
@@ -76,8 +74,31 @@ def read_aps1id():
     pass
 
 
-def read_aps2bm():
-    pass
+def read_aps2bm(fname):
+    """
+    Reads APS 2-BM standard data format.
+
+    Parameters
+    ----------
+    fname : string
+        Path to hdf5 file.
+
+    Returns
+    -------
+    data : 3-D array (float32)
+        Data array.
+
+    white : 3-D array (float32)
+        White (flat) field array.
+
+    dark : 3-D array (float32)
+        Dark field array.
+    """
+    fname = os.path.abspath(fname)
+    data = dio.read_hdf5(fname, gname='/exchange/data')
+    white = dio.read_hdf5(fname, gname='/exchange/data_white')
+    dark = dio.read_hdf5(fname, gname='/exchange/data_dark')
+    return data, white, dark
 
 
 def read_aps7bm():
@@ -88,5 +109,28 @@ def read_aps13id():
     pass
 
 
-def read_aps32id():
-    pass
+def read_aps32id(fname):
+    """
+    Reads APS 32-ID standard data format.
+
+    Parameters
+    ----------
+    fname : string
+        Path to hdf5 file.
+
+    Returns
+    -------
+    data : 3-D array (float32)
+        Data array.
+
+    white : 3-D array (float32)
+        White (flat) field array.
+
+    dark : 3-D array (float32)
+        Dark field array.
+    """
+    fname = os.path.abspath(fname)
+    data = dio.read_hdf5(fname, gname='/exchange/data')
+    white = dio.read_hdf5(fname, gname='/exchange/data_white')
+    dark = dio.read_hdf5(fname, gname='/exchange/data_dark')
+    return data, white, dark
