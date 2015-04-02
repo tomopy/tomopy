@@ -53,6 +53,7 @@
 #include <pthread.h>
 #include "string.h"
 
+
 #define _USE_MATH_DEFINES
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -64,23 +65,44 @@
 #define DLL 
 #endif
 
+
+typedef struct {
+  int niter;
+  float beta;
+  float delta;
+  float center;
+  int nproj;
+  int nslice;
+  int npixel;
+  int ngridx;
+  int ngridy;
+  int isubset;
+  int nsubset;
+  bool emission;
+} recon_pars;
+
+
+void art(
+        float *data, float *theta, 
+        recon_pars *pars, float *model);
+
 void preprocessing(
-        int num_grids_x, int num_grids_y, 
-        int num_pixels, float center, 
+        int ngridx, int ngridy, 
+        int npixel, float center, 
         float *mov, float *gridx, float *gridy);
 
 bool calc_quadrant(
         float theta_p); 
 
 void calc_coords(
-        int num_grids_x, int num_grids_y,
+        int ngridx, int ngridy,
         float xi, float yi,
         float sin_p, float cos_p,
         float *gridx, float *gridy,
         float *coordx, float *coordy);
 
 void trim_coords(
-        int num_grids_x, int num_grids_y,
+        int ngridx, int ngridy,
         float *coordx, float *coordy, 
         float *gridx, float* gridy, 
         int *asize, float *ax, float *ay, 
@@ -93,14 +115,14 @@ void sort_intersections(
         int *csize, float *coorx, float *coory);
 
 void calc_dist(
-        int num_grids_x, int num_grids_y, 
+        int ngridx, int ngridy, 
         int csize, float *coorx, float *coory, 
         int *indi, float *dist);
 
 void calc_simdata(
         int p, int s, int c, 
-        int num_grids_x, int num_grids_y, 
-        int num_slices, int num_pixels, 
+        int ngridx, int ngridy, 
+        int nslice, int npixel, 
         int csize, int *indi, float *dist, 
         float *model, float *simdata);
 

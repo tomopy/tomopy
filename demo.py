@@ -1,25 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
-from tomopy import prep
-from tomopy.io import data
-import tomopy.multiprocess as mp
-import h5py
+from tomopy.prep import *
+from tomopy.io import *
+from tomopy.io.recipes import *
+from tomopy.io.data import *
+from tomopy.io.phantom import *
+from tomopy.recon import *
 
-# arr = phantom.shepp3d((256, 256, 256))
-# arr = 3*np.ones((2, 2))
+
 fname = '/home/oxygen/DGURSOY/Data/APS2BM/xpcdata.h5'
-arr = data.read_hdf5(fname)
+data, white, dark = read_aps2bm(fname)
 
-arr = mp.distribute_jobs(
-		arr, func=prep.median_filter, 
-		args=(10, 0), axis=0)
+# data = normalize(data, white, dark, cutoff=0.8) # X
+# data = stripe_removal(data, level=None, wname='db5', sigma=2, pad=None)
+# data = phase_retrieval(data, psize=1e-4, dist=50, energy=20, alpha=1e-4, pad=True)
+# data = circular_roi(data, ratio=1, val=2) 
+# roi, center = focus_region(data, xcoord=0, ycoord=0, dia=1000, center=None, pad=True, corr=True)
+# data = median_filter(data, size=10)
+# data = zinger_removal(data, dif=1000, size=3)
+# data = correct_air(data, air=10, ind=None)
+# padded = apply_padding(data, npad=None, val=0.)
+# downdat = downsample2d(data, level=2)
+# downdat = downsample3d(data, level=2)
 
-arr = mp.distribute_jobs(
-		arr, func=prep.phase_retrieval, 
-		args=(1.2e-4, 60, 18, 1e-3, False), axis=0)
+# data = lena()
+theta = np.linspace(0, np.pi, 60)
+# sdata = simulate(data, theta)
+art(data, theta, delta=34256, beta=123, niter=2)
 
-data.write_tiff_stack(arr, 'tmp1/test', axis=1, overwrite=True)
+
+
+# write_tiff_stack(sdata, 'tmp/test', axis=1, dtype='float32', overwrite=True)
 
 
 
