@@ -45,6 +45,7 @@ __pycache__
 
 # OS generated files #
 ######################
+core
 .DS_Store
 .DS_Store?
 ._*
@@ -74,6 +75,7 @@ pip-log.txt
 
 # Test files #
 ##############
+tmp
 test.py
 main.py
 
