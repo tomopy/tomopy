@@ -17,10 +17,10 @@ Coding Syntax
 
 TomoPy uses the following style guides for code development:
 
-1. `PEP7 <https://www.python.org/dev/peps/pep-0007/>`_ for Python 
+1. `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ for Python 
    codes.
 
-2. `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ for C codes.
+2. `PEP7 <https://www.python.org/dev/peps/pep-0007/>`_ for C codes.
 
 3. `PEP287 <https://www.python.org/dev/peps/pep-0287/>`_ for 
    Python docstring
