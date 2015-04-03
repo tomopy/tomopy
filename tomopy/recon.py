@@ -64,7 +64,17 @@ import logging
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['simulate', 'art']
+__all__ = ['simulate',
+           'art',
+           'bart',
+           'fbp',
+           'mlem',
+           'osem',
+           'ospml_hybrid',
+           'ospml_quad',
+           'pml_hybrid',
+           'pml_quad',
+           'sirt']
 
 
 # Get the path and import the C-shared library.
@@ -81,14 +91,47 @@ except OSError as e:
     pass
 
 
-def simulate(model, theta, center=None):
+class ObjectStruct(ctypes.Structure):
     """
-    Python wrapper for the simulate.c function.
+    Data parameter structure.
+    """
+    _fields_ = [("ox", ctypes.c_int),
+                ("oy", ctypes.c_int),
+                ("oz", ctypes.c_int)]
+
+
+class DataStruct(ctypes.Structure):
+    """
+    Data parameter structure.
+    """
+    _fields_ = [("dx", ctypes.c_int),
+                ("dy", ctypes.c_int),
+                ("dz", ctypes.c_int),
+                ("center", ctypes.c_float),
+                ("proj_angle", ctypes.POINTER(ctypes.c_float))]
+
+
+class ReconStruct(ctypes.Structure):
+    """
+    Reconstruction parameter structure.
+    """
+    _fields_ = [("num_iter", ctypes.c_int),
+                ("reg_par",ctypes.POINTER(ctypes.c_float)),
+                ("rx", ctypes.c_int),
+                ("ry", ctypes.c_int),
+                ("rz", ctypes.c_int),
+                ("ind_block", ctypes.POINTER(ctypes.c_float)),
+                ("num_block", ctypes.c_int)]
+
+
+def simulate(obj, theta, center=None):
+    """
+    Simulates projection data for a given 3-D object.
 
     Parameters
     ----------
-    model : ndarray
-        Stacked sinograms as 3-D data.
+    object : ndarray
+        Voxelized 3-D object.
 
     theta : 1-D array
         Projection angles.
@@ -99,96 +142,71 @@ def simulate(model, theta, center=None):
     Returns
     -------
     data : ndarray
-        Simulated 3-D data
+        Simulated 3-D projection data
     """
-    nslice, ngridx, ngridy = model.shape
-    nproj = theta.size
-    npixel = np.ceil(np.sqrt(ngridx*ngridx+ngridy*ngridy)).astype('int')
+    ox, oy, oz = obj.shape
+    dx = theta.size
+    dy = ox
+    dz = np.ceil(np.sqrt(oy*oy+oz*oz)).astype('int')
     if center is None:
-        center = npixel/2.0
-    data = np.zeros((nproj, nslice, npixel), dtype='float32')
+        center = dz/2.0
+    data = np.zeros((dx, dy, dz), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(model, np.float32):
-        model = np.array(model, dtype='float32')
+    if not isinstance(obj, np.float32):
+        obj = np.array(obj, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
 
+    # Initialize struct for object parameteres
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    opars = ObjectStruct()
+    opars.ox = ox
+    opars.oy = oy
+    opars.oz = oz
+
+    # Initialize struct for data parameteres
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    dpars = DataStruct()
+    dpars.dx = dx
+    dpars.dy = dy
+    dpars.dz = dz
+    dpars.center = center
+    dpars.proj_angle = theta.ctypes.data_as(c_float_p)
+
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.simulate(
-        model.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        ctypes.c_float(center),
-        ctypes.c_int(nproj),
-        ctypes.c_int(nslice),
-        ctypes.c_int(npixel),
-        ctypes.c_int(ngridx),
-        ctypes.c_int(ngridy),
-        data.ctypes.data_as(c_float_p))
+        obj.ctypes.data_as(c_float_p), ctypes.byref(opars),
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars))
     return data
 
 
-class ReconCStruct(ctypes.Structure):
-    """
-    Reconstruction parameter structure.
-    """
-    _fields_ = [("niter", ctypes.c_int),
-                ("beta", ctypes.c_float),
-                ("delta", ctypes.c_float),
-                ("center", ctypes.c_float),
-                ("nproj", ctypes.c_int),
-                ("nslice", ctypes.c_int),
-                ("npixel", ctypes.c_int),
-                ("ngridx", ctypes.c_int),
-                ("ngridy", ctypes.c_int),
-                ("isubset", ctypes.c_float),
-                ("nsubset", ctypes.c_int),
-                ("emission", ctypes.c_bool)]
-
-
 def _init_recon(
-        data, theta,
-        niter=1, beta=1, delta=1, center=None,
-        nproj=None, nslice=None, npixel=None,
-        ngridx=None, ngridy=None, emission=None,
-        isubset=None, nsubset=1, recon=None):
+        data, theta, num_iter=1, reg_par=None, center=None,
+        num_gridx=None, num_gridy=None, emission=None,
+        ind_block=None, num_block=1, recon=None):
     """
     Initialize reconstruction parameters
     """
-    nproj, nslice, npixel = data.shape
+    dx, dy, dz = data.shape
     if center is None:
-        center = npixel/2.
-    if isubset is None:
-        # isubset = np.arange(0, nproj)
-        isubset = 1.
-    if ngridx is None:
-        ngridx = npixel
-    if ngridy is None:
-        ngridy = npixel
+        center = dz/2.
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if reg_par is None:
+        reg_par = np.ones(10, dtype="float32")
     if emission is None:
         emission = True
     if recon is None:
-        recon = 1e-5*np.ones(
-            (nslice, ngridx, ngridy),
-            dtype='float32')
-
-    rargs = ReconCStruct()
-    rargs.niter = niter
-    rargs.beta = beta
-    rargs.delta = delta
-    rargs.center = center
-    rargs.nproj = nproj
-    rargs.nslice = nslice
-    rargs.npixel = npixel
-    rargs.ngridx = ngridx
-    rargs.ngridy = ngridy
-    rargs.isubset = isubset
-    rargs.nsubset = nsubset
-    rargs.emission = emission
+        recon = 1e-6*np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
     if not isinstance(data, np.float32):
@@ -197,43 +215,162 @@ def _init_recon(
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(reg_par, np.float32):
+        reg_par = np.array(reg_par, dtype='float32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
 
-    return data, theta, rargs, recon
+    # Initialize struct for data parameteres
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    dpars = DataStruct()
+    dpars.dx = dx
+    dpars.dy = dy
+    dpars.dz = dz
+    dpars.center = center
+    dpars.proj_angle = theta.ctypes.data_as(c_float_p)
+    
+    # Initialize struct for reconstruction parameteres
+    rpars = ReconStruct()
+    rpars.num_iter = num_iter
+    rpars.reg_par = reg_par.ctypes.data_as(c_float_p)
+    rpars.rx = dy
+    rpars.ry = num_gridx
+    rpars.rz = num_gridy
+    rpars.ind_block = ind_block.ctypes.data_as(c_float_p)
+    rpars.num_block = num_block
+
+    return data, dpars, recon, rpars
 
 
 def art(*args, **kwargs):
     """
     Algebraic reconstruction technique.
     """
-    data, theta, rargs, recon = _init_recon(*args, **kwargs)
-
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.art.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.art(
-        data.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        ctypes.byref(rargs),
-        recon.ctypes.data_as(c_float_p))
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
     return recon
 
 
-def reg_term(
-        model, beta=1, delta=1, ngridx=None,
-        ngridy=None, reg=None):
-    nslice = np.array(model.shape[0], dtype='int32')
-    ngridx = np.array(model.shape[1], dtype='int32')
-    ngridy = np.array(model.shape[2], dtype='int32')
-    msize = (nslice, ngridx, ngridy)
-    reg = np.zeros(msize, dtype='float32')
-
+def bart(*args, **kwargs):
+    """
+    Block algebraic reconstruction technique.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.reg_term.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.reg_term(model.ctypes.data_as(
-        c_float_p),
-        ctypes.c_int(nslice),
-        ctypes.c_int(ngridx),
-        ctypes.c_int(ngridy),
-        ctypes.c_float(beta),
-        ctypes.c_float(delta),
-        reg.ctypes.data_as(c_float_p))
-    return reg
+    libtomopy_recon.bart.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.bart(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def fbp(*args, **kwargs):
+    """
+    Filtered backprojection.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.fbp(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def mlem(*args, **kwargs):
+    """
+    Maximum-likelihood expectation-maximization.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.mlem(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def osem(*args, **kwargs):
+    """
+    Ordered-subset expectation-maximization.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.osem.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.osem(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def ospml_hybrid(*args, **kwargs):
+    """
+    Ordered-subset penalized maximum likelihood with weighted linear
+    and quadratic penalties.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.ospml_hybrid(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def ospml_quad(*args, **kwargs):
+    """
+    Ordered-subset penalized maximum likelihood with quadratic penalty.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.ospml_quad(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def pml_hybrid(*args, **kwargs):
+    """
+    Penalized maximum likelihood with weighted linear and quadratic 
+    penalties.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.pml_hybrid(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def pml_quad(*args, **kwargs):
+    """
+    Penalized maximum likelihood with quadratic penalty.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.pml_quad(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
+
+
+def sirt(*args, **kwargs):
+    """
+    Simultaneous iterative reconstruction technique.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.sirt(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon

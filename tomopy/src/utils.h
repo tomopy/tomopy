@@ -66,64 +66,196 @@
 #endif
 
 
-typedef struct {
-  int niter;
-  float beta;
-  float delta;
+// Data structures
+
+typedef struct 
+{
+  int ox;
+  int oy;
+  int oz;
+} obj_pars;
+
+typedef struct 
+{
+  int dx;
+  int dy;
+  int dz;
   float center;
-  int nproj;
-  int nslice;
-  int npixel;
-  int ngridx;
-  int ngridy;
-  int isubset;
-  int nsubset;
-  bool emission;
+  float *proj_angle;
+} data_pars;
+
+typedef struct 
+{
+  int num_iter;
+  float *reg_pars;
+  int rx;
+  int ry;
+  int rz;
+  float *ind_block;
+  int num_block;
 } recon_pars;
 
+// Data simulation
 
-void art(
-        float *data, float *theta, 
-        recon_pars *pars, float *model);
+void 
+simulate(
+    float *obj,
+    obj_pars *opars,
+    float *data,
+    data_pars *dpars);
 
-void preprocessing(
-        int ngridx, int ngridy, 
-        int npixel, float center, 
-        float *mov, float *gridx, float *gridy);
+// Reconstruction algorithms
 
-bool calc_quadrant(
-        float theta_p); 
+void 
+art(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
 
-void calc_coords(
-        int ngridx, int ngridy,
-        float xi, float yi,
-        float sin_p, float cos_p,
-        float *gridx, float *gridy,
-        float *coordx, float *coordy);
+void 
+bart(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
 
-void trim_coords(
-        int ngridx, int ngridy,
-        float *coordx, float *coordy, 
-        float *gridx, float* gridy, 
-        int *asize, float *ax, float *ay, 
-        int *bsize, float *bx, float *by);
+void 
+fbp(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
 
-void sort_intersections(
-        int ind_condition, 
-        int asize, float *ax, float *ay, 
-        int bsize, float *bx, float *by, 
-        int *csize, float *coorx, float *coory);
+void 
+mlem(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
 
-void calc_dist(
-        int ngridx, int ngridy, 
-        int csize, float *coorx, float *coory, 
-        int *indi, float *dist);
+void 
+osem(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
 
-void calc_simdata(
-        int p, int s, int c, 
-        int ngridx, int ngridy, 
-        int nslice, int npixel, 
-        int csize, int *indi, float *dist, 
-        float *model, float *simdata);
+void 
+ospml_hybrid(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
+
+void 
+ospml_quad(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
+
+void 
+pml_hybrid(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
+
+void 
+pml_quad(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
+
+void 
+sirt(
+    float *data,
+    data_pars *dpars,
+    float *recon,
+    recon_pars *rpars);
+
+// Utility functions for data simultation
+
+void 
+preprocessing(
+    int ry, 
+    int rz, 
+    int dz, 
+    float center, 
+    float *mov, 
+    float *gridx, 
+    float *gridy);
+
+bool 
+calc_quadrant(
+    float theta_p); 
+
+void 
+calc_coords(
+    int ry, 
+    int rz,
+    float xi, 
+    float yi,
+    float sin_p, 
+    float cos_p,
+    float *gridx, 
+    float *gridy,
+    float *coordx, 
+    float *coordy);
+
+void 
+trim_coords(
+    int ry, 
+    int rz,
+    float *coordx, 
+    float *coordy, 
+    float *gridx, 
+    float *gridy, 
+    int *asize, 
+    float *ax, 
+    float *ay, 
+    int *bsize, 
+    float *bx, 
+    float *by);
+
+void 
+sort_intersections(
+    int ind_condition, 
+    int asize, 
+    float *ax, 
+    float *ay, 
+    int bsize, 
+    float *bx, 
+    float *by, 
+    int *csize, 
+    float *coorx, 
+    float *coory);
+
+void 
+calc_dist(
+    int ry, 
+    int rz, 
+    int csize, 
+    float *coorx, 
+    float *coory, 
+    int *indi, 
+    float *dist);
+
+void 
+calc_simdata(
+    int p, 
+    int s, 
+    int d, 
+    int ry, 
+    int rz, 
+    int dy, 
+    int dz, 
+    int csize, 
+    int *indi, 
+    float *dist, 
+    float *model, 
+    float *simdata);
 
 #endif
