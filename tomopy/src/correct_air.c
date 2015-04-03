@@ -49,19 +49,26 @@
 #define DLL 
 #endif
 
-DLL void correct_air(float* data, int nprojs, 
-        int nslices, int npixels, int nair) {
+
+DLL void 
+correct_air(
+    float* data, int nprojs, 
+    int nslices, int npixels, int nair) 
+{
                        
     int n, m, i, j, iproj;
     double air_left, air_right, air_slope, air;
 
-    for (m = 0; m < nprojs; m++) {
+    for (m = 0; m < nprojs; m++) 
+    {
         iproj = m * (npixels * nslices);
             
-        for (n = 0; n < nslices; n++) {
+        for (n = 0; n < nslices; n++) 
+        {
             i = iproj + n * npixels;
 
-            for (j = 0, air_left = 0, air_right = 0; j < nair; j++) {
+            for (j = 0, air_left = 0, air_right = 0; j < nair; j++) 
+            {
                 air_left += data[i+j];
                 air_right += data[i+npixels-1-j];
             }
@@ -69,16 +76,19 @@ DLL void correct_air(float* data, int nprojs,
             air_left /= (float)nair;
             air_right /= (float)nair;
             
-            if (air_left <= 0.) {
+            if (air_left <= 0.) 
+            {
                 air_left = 1.;
             }
-            if (air_right <= 0.) {
+            if (air_right <= 0.) 
+            {
                 air_right = 1.;
             }
             
             air_slope = (air_right - air_left) / (npixels - 1);
 
-            for (j = 0; j < npixels; j++) {
+            for (j = 0; j < npixels; j++) 
+            {
                 air = air_left + air_slope*j;
                 data[i+j] = data[i+j] / air;
             }

@@ -45,17 +45,19 @@
 
 
 void 
-bart(
+ospml_quad(
     float *data, data_pars *dpars, 
     float *recon, recon_pars *rpars)
 {
     int dx, dy, dz, ry, rz;
+    float beta;
 
     dx = dpars->dx;
     dy = dpars->dy;
     dz = dpars->dz;
     ry = rpars->ry;
     rz = rpars->rz;
+    beta = rpars->reg_pars[0];
 
     float *gridx = (float *)malloc((ry+1)*sizeof(float));
     float *gridy = (float *)malloc((rz+1)*sizeof(float));
@@ -81,10 +83,12 @@ bart(
     int asize, bsize, csize;
     float *simdata;
     float upd;
-    int ind_data, ind_recon;
+    int ind_data;
     float *sum_dist;
     float sum_dist2;
-    float *update;
+    float *E, *F, *G;
+    int ind0, ind1, indg[8];
+    float totalwg, wg[8], mg[8];
     int subset_ind1, subset_ind2;
 
     preprocessing(ry, rz, dz, dpars->center, 
@@ -92,7 +96,7 @@ bart(
 
     for (i=0; i<rpars->num_iter; i++) 
     {
-        printf("BART iteration : %i\n", i+1);
+        printf("OSPML_QUAD iteration : %i\n", i+1);
 
         subset_ind1 = dx/rpars->num_block;
         subset_ind2 = subset_ind1;
@@ -111,7 +115,9 @@ bart(
                 }
 
                 sum_dist = (float *)calloc((ry*rz), sizeof(float));
-                update = (float *)calloc((ry*rz), sizeof(float));
+                E = (float *)calloc((ry*rz), sizeof(float));
+                F = (float *)calloc((ry*rz), sizeof(float));
+                G = (float *)calloc((ry*rz), sizeof(float));
                 
                 // For each projection angle 
                 for (q=0; q<subset_ind2; q++) 
@@ -174,29 +180,214 @@ bart(
                         if (sum_dist2 != 0.0) 
                         {
                             ind_data = d+s*dz+p*dy*dz;
-                            upd = (data[ind_data]-simdata[ind_data])/sum_dist2;
+                            upd = data[ind_data]/simdata[ind_data];
                             for (n=0; n<csize-1; n++) 
                             {
-                                update[indi[n]] += upd*dist[n];
+                                E[indi[n]] -= recon[indi[n]]*upd*dist[n];
                             }
                         }
                     }
                 }
 
-                m = 0;
-                for (n = 0; n < ry*rz; n++) {
-                    if (sum_dist[n] != 0.0) {
-                        ind_recon = s*ry*rz;
-                        recon[m+ind_recon] += update[m]/sum_dist[n];
+                // Weights for inner neighborhoods.
+                totalwg = 4+4/sqrt(2);
+                wg[0] = 1/totalwg;
+                wg[1] = 1/totalwg;
+                wg[2] = 1/totalwg;
+                wg[3] = 1/totalwg;
+                wg[4] = 1/sqrt(2)/totalwg;
+                wg[5] = 1/sqrt(2)/totalwg;
+                wg[6] = 1/sqrt(2)/totalwg;
+                wg[7] = 1/sqrt(2)/totalwg;
+
+                // (inner region)
+                for (n = 1; n < ry-1; n++) {
+                    for (m = 1; m < rz-1; m++) {
+                        ind0 = m + n*rz;
+                        ind1 = ind0 + s*ry*rz;
+                        
+                        indg[0] = ind1+1;
+                        indg[1] = ind1-1;
+                        indg[2] = ind1+rz;
+                        indg[3] = ind1-rz;
+                        indg[4] = ind1+rz+1; 
+                        indg[5] = ind1+rz-1;
+                        indg[6] = ind1-rz+1;
+                        indg[7] = ind1-rz-1;
+                        
+
+                        for (q = 0; q < 8; q++) {
+                            mg[q] = recon[ind1]+recon[indg[q]];
+                            F[ind0] += 2*beta*wg[q];
+                            G[ind0] -= 2*beta*wg[q]*mg[q];
+                        }
                     }
-                    m++;
+                }
+
+                // Weights for edges.
+                totalwg = 3+2/sqrt(2);
+                wg[0] = 1/totalwg;
+                wg[1] = 1/totalwg;
+                wg[2] = 1/totalwg;
+                wg[3] = 1/sqrt(2)/totalwg;
+                wg[4] = 1/sqrt(2)/totalwg;
+                
+                // (top)
+                for (m = 1; m < rz-1; m++) {
+                    ind0 = m;
+                    ind1 = ind0 + s*ry*rz;
+                    
+                    indg[0] = ind1+1;
+                    indg[1] = ind1-1;
+                    indg[2] = ind1+rz;
+                    indg[3] = ind1+rz+1; 
+                    indg[4] = ind1+rz-1;
+                        
+                    for (q = 0; q < 5; q++) {
+                        mg[q] = recon[ind1]+recon[indg[q]];
+                        F[ind0] += 2*beta*wg[q];
+                        G[ind0] -= 2*beta*wg[q]*mg[q];
+                    }
+                }
+
+                // (bottom)
+                for (m = 1; m < rz-1; m++) {
+                    ind0 = m + (ry-1)*rz;
+                    ind1 = ind0 + s*ry*rz;
+                    
+                    indg[0] = ind1+1;
+                    indg[1] = ind1-1;
+                    indg[2] = ind1-rz;
+                    indg[3] = ind1-rz+1;
+                    indg[4] = ind1-rz-1;
+                        
+                    for (q = 0; q < 5; q++) {
+                        mg[q] = recon[ind1]+recon[indg[q]];
+                        F[ind0] += 2*beta*wg[q];
+                        G[ind0] -= 2*beta*wg[q]*mg[q];
+                    }
+                }
+
+                // (left)  
+                for (n = 1; n < ry-1; n++) {
+                    ind0 = n*rz;
+                    ind1 = ind0 + s*ry*rz;
+                    
+                    indg[0] = ind1+1;
+                    indg[1] = ind1+rz;
+                    indg[2] = ind1-rz;
+                    indg[3] = ind1+rz+1; 
+                    indg[4] = ind1-rz+1;
+                        
+                    for (q = 0; q < 5; q++) {
+                        mg[q] = recon[ind1]+recon[indg[q]];
+                        F[ind0] += 2*beta*wg[q];
+                        G[ind0] -= 2*beta*wg[q]*mg[q];
+                    }
+                }
+
+                // (right)                
+                for (n = 1; n < ry-1; n++) {
+                    ind0 = (rz-1) + n*rz;
+                    ind1 = ind0 + s*ry*rz;
+                    
+                    indg[0] = ind1-1;
+                    indg[1] = ind1+rz;
+                    indg[2] = ind1-rz;
+                    indg[3] = ind1+rz-1;
+                    indg[4] = ind1-rz-1;
+                        
+                    for (q = 0; q < 5; q++) {
+                        mg[q] = recon[ind1]+recon[indg[q]];
+                        F[ind0] += 2*beta*wg[q];
+                        G[ind0] -= 2*beta*wg[q]*mg[q];
+                    }
+                }
+                
+                // Weights for corners.
+                totalwg = 2+1/sqrt(2);
+                wg[0] = 1/totalwg;
+                wg[1] = 1/totalwg;
+                wg[2] = 1/sqrt(2)/totalwg;
+                
+                // (top-left)
+                ind0 = 0;
+                ind1 = ind0 + s*ry*rz;
+                
+                indg[0] = ind1+1;
+                indg[1] = ind1+rz;
+                indg[2] = ind1+rz+1; 
+                        
+                for (q = 0; q < 3; q++) {
+                    mg[q] = recon[ind1]+recon[indg[q]];
+                    F[ind0] += 2*beta*wg[q];
+                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                }
+
+                // (top-right)
+                ind0 = (rz-1);
+                ind1 = ind0 + s*ry*rz;
+                
+                indg[0] = ind1-1;
+                indg[1] = ind1+rz;
+                indg[2] = ind1+rz-1;
+                        
+                for (q = 0; q < 3; q++) {
+                    mg[q] = recon[ind1]+recon[indg[q]];
+                    F[ind0] += 2*beta*wg[q];
+                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                }
+
+                // (bottom-left)  
+                ind0 = (ry-1)*rz;
+                ind1 = ind0 + s*ry*rz;
+                
+                indg[0] = ind1+1;
+                indg[1] = ind1-rz;
+                indg[2] = ind1-rz+1;
+                        
+                for (q = 0; q < 3; q++) {
+                    mg[q] = recon[ind1]+recon[indg[q]];
+                    F[ind0] += 2*beta*wg[q];
+                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                }
+
+                // (bottom-right)           
+                ind0 = (rz-1) + (ry-1)*rz;
+                ind1 = ind0 + s*ry*rz;
+                
+                indg[0] = ind1-1;
+                indg[1] = ind1-rz;
+                indg[2] = ind1-rz-1;
+                        
+                for (q = 0; q < 3; q++) {
+                    mg[q] = recon[ind1]+recon[indg[q]];
+                    F[ind0] += 2*beta*wg[q];
+                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                }
+
+                q = 0;
+                for (n = 0; n < ry*rz; n++) {
+                    G[q] += sum_dist[n];
+                    q++;
+                }
+
+                for (n = 0; n < ry; n++) {
+                    for (m = 0; m < rz; m++) {
+                        q = m + n*rz + s*ry*rz;
+                        if (F[q] != 0.0) {
+                            recon[q] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
+                        }
+                    }
                 }
 
                 free(sum_dist);
-                free(update);
+                free(E);
+                free(F);
+                free(G);
             }
         }
-
+            
         free(simdata);
     }
 

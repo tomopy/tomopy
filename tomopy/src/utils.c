@@ -43,45 +43,57 @@
 
 #include "utils.h"
 
-void preprocessing(
-	    int num_grids_x, int num_grids_y,
-	    int num_pixels, float center, 
-	    float *mov, float *gridx, float *gridy) 
+
+void 
+preprocessing(
+    int ry, int rz,
+    int num_pixels, float center, 
+    float *mov, float *gridx, float *gridy) 
 {
     int i;
 
-    for(i=0; i<=num_grids_x; i++){
-        gridx[i] = -num_grids_x/2.+i;
+    for(i=0; i<=ry; i++)
+    {
+        gridx[i] = -ry/2.+i;
     }
 
-    for(i=0; i<=num_grids_y; i++){
-        gridy[i] = -num_grids_y/2.+i;
+    for(i=0; i<=rz; i++)
+    {
+        gridy[i] = -rz/2.+i;
     }
 
     *mov = (float)num_pixels/2.0-center;
-    if(*mov-ceil(*mov) < 1e-2)
+    if(*mov-ceil(*mov) < 1e-2) {
         *mov += 1e-2;
+    }
 }
 
-bool calc_quadrant(
-			float theta_p) 
+
+bool 
+calc_quadrant(
+    float theta_p) 
 {
     bool quadrant;
     if ((theta_p >= 0 && theta_p < M_PI/2) ||
-            (theta_p >= M_PI && theta_p < 3*M_PI/2)) {
+            (theta_p >= M_PI && theta_p < 3*M_PI/2)) 
+    {
         quadrant = true;
-    } else {
+    } 
+    else 
+    {
         quadrant = false;
     }
     return quadrant;
 }
 
-void calc_coords(
-        int num_grids_x, int num_grids_y,
-        float xi, float yi,
-        float sin_p, float cos_p,
-        float *gridx, float *gridy,
-        float *coordx, float *coordy)
+
+void 
+calc_coords(
+    int ry, int rz,
+    float xi, float yi,
+    float sin_p, float cos_p,
+    float *gridx, float *gridy,
+    float *coordx, float *coordy)
 {
     float srcx, srcy, detx, dety;
     float slope, islope;
@@ -94,37 +106,47 @@ void calc_coords(
 
     slope = (srcy-dety)/(srcx-detx);
     islope = 1/slope;
-    for (n=0; n<=num_grids_x; n++) {
+    for (n=0; n<=ry; n++) 
+    {
         coordy[n] = slope*(gridx[n]-srcx)+srcy;
     }
-    for (n=0; n<=num_grids_y; n++) {
+    for (n=0; n<=rz; n++) 
+    {
         coordx[n] = islope*(gridy[n]-srcy)+srcx;
     }
 }
 
-void trim_coords(
-        int num_grids_x, int num_grids_y,
-        float *coordx, float *coordy, 
-        float *gridx, float* gridy, 
-        int *asize, float *ax, float *ay, 
-        int *bsize, float *bx, float *by)
+
+void 
+trim_coords(
+    int ry, int rz,
+    float *coordx, float *coordy, 
+    float *gridx, float* gridy, 
+    int *asize, float *ax, float *ay, 
+    int *bsize, float *bx, float *by)
 {
     int n;
 
     *asize = 0;
     *bsize = 0;
-    for (n=0; n<=num_grids_y; n++) {
-        if (coordx[n] > gridx[0]) {
-            if (coordx[n] < gridx[num_grids_x]) {
+    for (n=0; n<=rz; n++) 
+    {
+        if (coordx[n] > gridx[0]) 
+        {
+            if (coordx[n] < gridx[ry]) 
+            {
                 ax[*asize] = coordx[n];
                 ay[*asize] = gridy[n];
                 (*asize)++;
             }
         }
     }
-    for (n=0; n<=num_grids_x; n++) {
-        if (coordy[n] > gridy[0]) {
-            if (coordy[n] < gridy[num_grids_y]) {
+    for (n=0; n<=ry; n++) 
+    {
+        if (coordy[n] > gridy[0]) 
+        {
+            if (coordy[n] < gridy[rz]) 
+            {
                 bx[*bsize] = gridx[n];
                 by[*bsize] = coordy[n];
                 (*bsize)++;
@@ -133,37 +155,44 @@ void trim_coords(
     }
 }
 
-void sort_intersections(
-        int ind_condition, 
-        int asize, float *ax, float *ay, 
-        int bsize, float *bx, float *by, 
-        int *csize, float *coorx, float *coory)
+
+void 
+sort_intersections(
+    int ind_condition, 
+    int asize, float *ax, float *ay, 
+    int bsize, float *bx, float *by, 
+    int *csize, float *coorx, float *coory)
 {
     int i=0, j=0, k=0;
     int a_ind;
     while (i<asize && j<bsize)
     {
         a_ind = (ind_condition) ? i : (asize-1-i);
-        if (ax[a_ind] < bx[j]) {
+        if (ax[a_ind] < bx[j]) 
+        {
             coorx[k] = ax[a_ind];
             coory[k] = ay[a_ind];
             i++;
             k++;
-        } else {
+        } 
+        else 
+        {
             coorx[k] = bx[j];
             coory[k] = by[j];
             j++;
             k++;
         }
     }
-    while (i < asize) {
+    while (i < asize) 
+    {
         a_ind = (ind_condition) ? i : (asize-1-i);
         coorx[k] = ax[a_ind];
         coory[k] = ay[a_ind];
         i++;
         k++;
     }
-    while (j < bsize) {
+    while (j < bsize) 
+    {
         coorx[k] = bx[j];
         coory[k] = by[j];
         j++;
@@ -172,43 +201,49 @@ void sort_intersections(
     *csize = asize+bsize;
 }
 
-void calc_dist(
-	    int num_grids_x, int num_grids_y, 
-	    int csize, float *coorx, float *coory, 
-	    int *indi, float *dist)
+
+void 
+calc_dist(
+    int ry, int rz, 
+    int csize, float *coorx, float *coory, 
+    int *indi, float *dist)
 {
     int n, x1, x2, i1, i2;
     float diffx, diffy, midx, midy;
     int indx, indy;
 
-    for (n=0; n<csize-1; n++) {
+    for (n=0; n<csize-1; n++) 
+    {
         diffx = coorx[n+1]-coorx[n];
         diffy = coory[n+1]-coory[n];
         dist[n] = sqrt(diffx*diffx+diffy*diffy);
         midx = (coorx[n+1]+coorx[n])/2;
         midy = (coory[n+1]+coory[n])/2;
-        x1 = midx+num_grids_x/2.;
-        x2 = midy+num_grids_y/2.;
-        i1 = (int)(midx+num_grids_x/2.);
-        i2 = (int)(midy+num_grids_y/2.);
+        x1 = midx+ry/2.;
+        x2 = midy+rz/2.;
+        i1 = (int)(midx+ry/2.);
+        i2 = (int)(midy+rz/2.);
         indx = i1-(i1>x1);
         indy = i2-(i2>x2);
-        indi[n] = indy+(indx*num_grids_y);
+        indi[n] = indy+(indx*rz);
     }
 }
 
-void calc_simdata(
-	    int p, int s, int c, 
-	    int num_grids_x, int num_grids_y, 
-	    int num_slices, int num_pixels, 
-	    int csize, int *indi, float *dist, 
-	    float *model, float *simdata)
+
+void 
+calc_simdata(
+    int p, int s, int c, 
+    int ry, int rz, 
+    int num_slices, int num_pixels, 
+    int csize, int *indi, float *dist, 
+    float *model, float *simdata)
 {
     int n;
 
-    int index_model = s*num_grids_x*num_grids_y;
+    int index_model = s*ry*rz;
     int index_data = c+s*num_pixels+p*num_slices*num_pixels;
-    for (n=0; n<csize-1; n++) {
+    for (n=0; n<csize-1; n++) 
+    {
         simdata[index_data] += model[indi[n]+index_model]*dist[n];
     }
 }
