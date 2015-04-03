@@ -43,127 +43,147 @@
 
 #include "utils.h"
 
-void sirt(
-        float *data, float* theta, float center,
-        int num_projs, int num_slices, int num_pixels,
-        int num_grids_x, int num_grids_y, int num_iters,
-        float *model) // Recon is reductiom object
+
+void 
+sirt(
+    float *data, data_pars *dpars, 
+    float *recon, recon_pars *rpars)
 {
-    float* gridx = (float *)malloc((num_grids_x+1)*sizeof(float));
-    float* gridy = (float *)malloc((num_grids_y+1)*sizeof(float));
-    float* coordx = (float *)malloc((num_grids_y+1)*sizeof(float));
-    float* coordy = (float *)malloc((num_grids_x+1)*sizeof(float));
-    float* ax = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* ay = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* bx = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* by = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* coorx = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* coory = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    float* dist = (float *)malloc((num_grids_x+num_grids_y)*sizeof(float));
-    int* indi = (int *)malloc((num_grids_x+num_grids_y)*sizeof(int));
+    int dx, dy, dz, ry, rz;
+
+    dx = dpars->dx;
+    dy = dpars->dy;
+    dz = dpars->dz;
+    ry = rpars->ry;
+    rz = rpars->rz;
+
+    float *gridx = (float *)malloc((ry+1)*sizeof(float));
+    float *gridy = (float *)malloc((rz+1)*sizeof(float));
+    float *coordx = (float *)malloc((rz+1)*sizeof(float));
+    float *coordy = (float *)malloc((ry+1)*sizeof(float));
+    float *ax = (float *)malloc((ry+rz)*sizeof(float));
+    float *ay = (float *)malloc((ry+rz)*sizeof(float));
+    float *bx = (float *)malloc((ry+rz)*sizeof(float));
+    float *by = (float *)malloc((ry+rz)*sizeof(float));
+    float *coorx = (float *)malloc((ry+rz)*sizeof(float));
+    float *coory = (float *)malloc((ry+rz)*sizeof(float));
+    float *dist = (float *)malloc((ry+rz)*sizeof(float));
+    int *indi = (int *)malloc((ry+rz)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
         coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
-    int s, p, c;
-    int i, n, index;
+    int s, p, d, i, m, n;
     int quadrant;
-    float theta_p;
-    float mov;
-    float sin_p, cos_p;
-    float xi, yi;
+    float proj_angle, sin_p, cos_p;
+    float mov, xi, yi;
     int asize, bsize, csize;
-    float* simdata;
-    float* sum_dist;
-    float* update;
+    float *simdata;
     float upd;
-    int index_model, index_data;
+    int ind_data, ind_recon;
+    float *sum_dist;
+    float sum_dist2;
+    float *update;
 
-    preprocessing(num_grids_x, num_grids_y, num_pixels, center, 
+    preprocessing(ry, rz, dz, dpars->center, 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-    for (i=0; i<num_iters; i++) {
-	    printf("iteration : %i\n", i+1);
+    for (i=0; i<rpars->num_iter; i++) 
+    {
+        printf("SIRT iteration : %i\n", i+1);
 
-	    simdata = (float *)calloc((num_projs*num_slices*num_pixels), sizeof(float));
+        simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
-	    // For each slice
-	    for (s=0; s<num_slices; s++) {
+        // For each slice
+        for (s=0; s<dy; s++) 
+        {
+            sum_dist = (float *)calloc((ry*rz), sizeof(float));
+            update = (float *)calloc((ry*rz), sizeof(float));
+            
+            // For each projection angle 
+            for (p=0; p<dx; p++) 
+            {
+                // Calculate the sin and cos values 
+                // of the projection angle and find
+                // at which quadrant on the cartesian grid.
+                proj_angle = fmod(dpars->proj_angle[p], 2*M_PI);
+                quadrant = calc_quadrant(proj_angle);
+                sin_p = sinf(proj_angle);
+                cos_p = cosf(proj_angle);
 
-		    sum_dist = (float *)calloc((num_grids_x*num_grids_y), sizeof(float));
-		    update = (float *)calloc((num_grids_x*num_grids_y), sizeof(float));
+                // For each detector pixel 
+                for (d=0; d<dz; d++) 
+                {
+                    // Calculate coordinates
+                    xi = -1e6;
+                    yi = -(dz-1)/2.0+d+mov;
+                    calc_coords(
+                        ry, rz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                        coordx, coordy);
 
-	        // For each projection angle
-	        for (p=0; p<num_projs; p++) {
+                    // Merge the (coordx, gridy) and (gridx, coordy)
+                    trim_coords(
+                        ry, rz, coordx, coordy, gridx, gridy, 
+                        &asize, ax, ay, &bsize, bx, by);
 
-	            // Calculate the sin and cos values 
-	            // of the projection angle and find
-	            // at which quadrant on the cartesian grid.
-	            theta_p = fmod(theta[p], 2*M_PI);
-	            quadrant = calc_quadrant(theta_p);
-	            sin_p = sinf(theta_p);
-	            cos_p = cosf(theta_p);
+                    // Sort the array of intersection points (ax, ay) and
+                    // (bx, by). The new sorted intersection points are 
+                    // stored in (coorx, coory). Total number of points 
+                    // are csize.
+                    sort_intersections(
+                        quadrant, asize, ax, ay, bsize, bx, by, 
+                        &csize, coorx, coory);
 
-	            for (c=0; c<num_pixels; c++) {
-	                // Calculate coordinates
-	                xi = -1e6;
-	                yi = -(num_pixels-1)/2.0+c+mov;
-	                calc_coords(num_grids_x, num_grids_y, xi, yi, sin_p, cos_p, gridx, gridy, 
-	                        coordx, coordy); // Outputs: coordx, coordy
+                    // Calculate the distances (dist) between the 
+                    // intersection points (coorx, coory). Find the 
+                    // indices of the pixels on the reconstruction grid.
+                    calc_dist(
+                        ry, rz, csize, coorx, coory, 
+                        indi, dist);
 
-	                // Merge the (coordx, gridy) and (gridx, coordy)
-	                trim_coords(num_grids_x, num_grids_y, coordx, coordy, gridx, gridy, 
-	                        &asize, ax, ay, &bsize, bx, by); // Outputs: asize and after
+                    // Calculate simdata 
+                    calc_simdata(p, s, d, ry, rz, dy, dz,
+                        csize, indi, dist, recon,
+                        simdata); // Output: simdata
 
-	                // Sort the array of intersection points (ax, ay) and (bx, by)
-	                // The new sorted intersection points are stored in (coorx, coory).
-	                // Total number of points are csize.
-	                sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, 
-	                    &csize, coorx, coory); // Outputs: csize, coorx, coory
 
-	                // Calculate the distances (dist) between the 
-	                // intersection points (coorx, coory). Find 
-	                // the indices of the pixels on the reconstruction grid (ind_recon).
-	                calc_dist(num_grids_x, num_grids_y, csize, coorx, coory, 
-	                    indi, dist); // Outputs: indi, dist 
+                    // Calculate dist*dist
+                    sum_dist2 = 0.0;
+                    for (n=0; n<csize-1; n++) 
+                    {
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indi[n]] += dist[n];
+                    }
 
-	                // Calculate simdata 
-	                calc_simdata(p, s, c, num_grids_x, num_grids_y, 
-	                	num_slices, num_pixels, csize, indi, dist, model,
-	                    simdata); // Output: simdata
+                    // Update
+                    if (sum_dist2 != 0.0) 
+                    {
+                        ind_data = d+s*dz+p*dy*dz;
+                        upd = (data[ind_data]-simdata[ind_data])/sum_dist2;
+                        for (n=0; n<csize-1; n++) 
+                        {
+                            update[indi[n]] += upd*dist[n];
+                        }
+                    }
+                }
+            }
 
-	                // Calculate dist*dist
-	                float sum_dist2 = 0.0;
-	                for (n=0; n<csize-1; n++) {
-	       		 		sum_dist2 += dist[n]*dist[n];
-	       		 		sum_dist[indi[n]] += dist[n];
-	    			}
+            m = 0;
+            for (n = 0; n < ry*rz; n++) {
+                if (sum_dist[n] != 0.0) {
+                    ind_recon = s*ry*rz;
+                    recon[m+ind_recon] += update[m]/sum_dist[n];
+                }
+                m++;
+            }
 
-	                // Update
-	                index_data = c+s*num_pixels+p*num_slices*num_pixels;
-	                upd = (data[index_data]-simdata[index_data])/sum_dist2;
-	                for (n=0; n<csize-1; n++) {
-						update[indi[n]] += upd*dist[n];
-					}
-	            }
-	        }
-        
-	        index = 0;
-            for (n = 0; n < num_grids_x*num_grids_y; n++) {
-            	if (sum_dist[n] != 0.0) {
-	            	index_model = s*num_grids_x*num_grids_y;
-	                model[index+index_model] += update[index]/sum_dist[n];
-            	}
-                index ++;
-	        }
+            free(sum_dist);
+            free(update);
+        }
 
-		    free(sum_dist);
-		    free(update);
-	    }
-
-	    free(simdata);
-	}
+        free(simdata);
+    }
 
     free(gridx);
     free(gridy);

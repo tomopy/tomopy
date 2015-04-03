@@ -19,14 +19,14 @@ recon = Extension(
         'tomopy/src/simulate.c',
         'tomopy/src/art.c',
         'tomopy/src/bart.c',
-        'tomopy/src/sirt.c',
+        'tomopy/src/fbp.c',
         'tomopy/src/mlem.c',
         'tomopy/src/osem.c',
-        'tomopy/src/pml.c',
-        'tomopy/src/ospml.c',
-        'tomopy/src/ospmlh.c',
-        'tomopy/src/fbp.c',
-        'tomopy/src/reg.c'])
+        'tomopy/src/ospml_hybrid.c',
+        'tomopy/src/ospml_quad.c',
+        'tomopy/src/pml_hybrid.c',
+        'tomopy/src/pml_quad.c',
+        'tomopy/src/sirt.c'])
 
 
 setup(

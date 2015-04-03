@@ -9,8 +9,8 @@ from tomopy.io.phantom import *
 from tomopy.recon import *
 
 
-fname = '/home/oxygen/DGURSOY/Data/APS2BM/xpcdata.h5'
-data, white, dark = read_aps2bm(fname)
+# fname = '/home/oxygen/DGURSOY/Data/APS2BM/xpcdata.h5'
+# data, white, dark = read_aps2bm(fname)
 
 # data = normalize(data, white, dark, cutoff=0.8) # X
 # data = stripe_removal(data, level=None, wname='db5', sigma=2, pad=None)
@@ -24,14 +24,11 @@ data, white, dark = read_aps2bm(fname)
 # downdat = downsample2d(data, level=2)
 # downdat = downsample3d(data, level=2)
 
-# data = lena()
-theta = np.linspace(0, np.pi, 60)
-# sdata = simulate(data, theta)
-art(data, theta, delta=34256, beta=123, niter=2)
-
-
-
-# write_tiff_stack(sdata, 'tmp/test', axis=1, dtype='float32', overwrite=True)
+data = lena()
+theta = np.linspace(0, np.pi, 180, dtype='float32')
+sdata = simulate(data, theta)
+recon = fbp(sdata, theta, num_block=20, reg_par=[1e-2, 1e-3], num_iter=1, num_gridx=512, num_gridy=512)
+write_tiff_stack(recon, 'tmp/test', axis=0, dtype='float32', overwrite=True)
 
 
 
