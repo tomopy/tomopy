@@ -14,4 +14,5 @@ in the following issue of the Journal :cite:`decarlo14a`.
 We kindly request that you cite these papers if you use TomoPy.
 
 .. bibliography:: ref.bib
+    :list: enumerated
     
