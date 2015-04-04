@@ -35,7 +35,8 @@ to specify the type of the output data for convenience. For example::
 
     >>> arr = tomopy.lena(dtype='float32')
 
-If we summarize the key points::
+
+If we summarize the key points: 
 
 1. All input data must be Numpy arrays.
 
