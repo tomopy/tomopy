@@ -50,6 +50,7 @@ Then we can image the sinogram::
     >>> plt.show()
 
 .. image:: img/sinogram.png
+    :height: 225px
     :width: 425px
 
 Image reconstruction
