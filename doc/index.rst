@@ -12,6 +12,7 @@ This guide is currently maintained on
    :maxdepth: 1
    
    install
+   quickstart
    developer
    userguide
    questions
