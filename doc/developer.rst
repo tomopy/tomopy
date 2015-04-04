@@ -15,6 +15,9 @@ This section is for TomoPy developers.
 How to contribute?
 ==================
 
+Cloning the repository
+----------------------
+
 The project is maintained on GitHub, which is a version control and a 
 collaboration platform for software developers. To start first register 
 on `GitHub <https://github.com>`_ and fork the TomoPy repository by 
@@ -25,16 +28,17 @@ clicking the **Fork** button in the header of the
 
 At this point you've successfully forked the project to your personal
 GitHub account. The next thing you want to do is to clone it to your 
-local machine. You can do this either by opening a terminal window and
-running::
-
-    git clone https://github.com/YOUR-USERNAME/tomopy.git
-
-or clicking the **Clone in Desktop** button in the bottom of the right 
-hand side bar and following the instructions on downloading and using the
-GitHub Desktop Application: 
+local machine. You can do this by clicking the **Clone in Desktop** 
+button in the bottom of the right hand side bar:
 
 .. image:: img/clone-in-desktop.png
+
+Follow the instructions on downloading and installing the GitHub Desktop 
+Application.
+
+.. note:: Some developers may prefer using basic Git terminal commands. 
+    For more information on this, read the 
+    `Fork a Repo guide <https://help.github.com/articles/fork-a-repo/>`__.
 
 Git commit messages
 ------------------- 
