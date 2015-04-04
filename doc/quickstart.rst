@@ -31,8 +31,7 @@ This creates a single slice of the 3-D phantom::
     >>> plt.show()
 
 .. image:: img/shepp.png
-    :height: 200px
-    :width: 200px
+    :width: 300px
 
 We can then define the projection angles and pass it with the generated 
 object to ``simulate`` function::
@@ -51,8 +50,7 @@ Then we can image the sinogram::
     >>> plt.show()
 
 .. image:: img/sinogram.png
-    :height: 150px
-    :width: 200px
+    :width: 300px
 
 Image reconstruction
 ====================
