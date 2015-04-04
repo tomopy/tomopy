@@ -31,10 +31,11 @@ This creates a single slice of the 3-D phantom::
     >>> plt.show()
 
 .. image:: img/shepp.png
+    :height: 300px
     :width: 300px
 
 We can then define the projection angles and pass it with the generated 
-object to ``simulate`` function::
+object to the ``simulate`` function::
 
     >>> import numpy as np
     >>> theta = np.linspace(0, np.pi, 360)
@@ -50,8 +51,23 @@ Then we can image the sinogram::
     >>> plt.show()
 
 .. image:: img/sinogram.png
-    :height: 225px
-    :width: 425px
+    :height: 250px
+    :width: 500px
 
 Image reconstruction
 ====================
+
+For reconstruction we require the sinogram and the projection angles::
+
+    >>> recon = tomopy.art(data, theta, num_iter=1, num_gridx=512, num_gridy=512)
+    >>> plt.imshow(recon[0], cmap='gray')
+    >>> plt.show()
+
+.. image:: img/art.png
+    :height: 300px
+    :width: 300px
+
+The reconstruction grid size can be adjusted using the ``num_gridx`` and 
+``num_gridy`` arguments. For more information about arguments please read
+the function docs.
+
