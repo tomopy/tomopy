@@ -3,7 +3,7 @@ Install Directions
 ==================
 
 :Page Status: Incomplete
-:Last Reviewed: 2015-03-23
+:Last Reviewed: 2015-04-04
 
 
 This section covers the basics of how to install TomoPy.
@@ -15,32 +15,20 @@ This section covers the basics of how to install TomoPy.
 Installing from Conda/Binstar
 =============================
 
-To use this you must have `Conda <https://store.continuum.io/>`_
+To use this you must have `Conda <http://continuum.io/downloads>`_ 
 installed first. Open a terminal and run::
 
     conda install -c dgursoy tomopy
 
 
-Installing from GitHub
-======================
-
-You need to have `Git <http://git-scm.com>`_ installed. Then:
-
-1. Go to a directory where you would like to put the package.
-
-2. Clone the project from GitHub repository::
-
-    git clone https://github.com/dgursoy/tomopy.git
-
-3. Go to the root directory of the project and run the 
-   following command from a terminal::
-
-    python setup.py install
-
-
 Updating the Installation
 =========================
 
-To update the installation use::
+This is an active project, so we suggest you update your installation 
+frequently. To update the installation run::
 
     conda update -c dgursoy tomopy
+
+.. note:: For some more information about using Conda, see the 
+    `docs <http://conda.pydata.org/docs>`__.
+    
