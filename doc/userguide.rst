@@ -24,22 +24,18 @@ Although most cameras capture images in 16-bit dynamic range, many
 functions in the package support 32-bit float precision data for 
 processing. So, you should ALWAYS convert the raw data into 
 ``float32`` before calling a function. You can simply do this by
-using ``data_as_float32`` function in ``io`` module::
+using ``as_float32`` function::
 
-    from tomopy.io.data import *
-    import numpy as np
-
-    dat = np.array([0, 1, 2], dtype='int')
-    dat = as_float32(dat)
-
-This will create a one to one conversion of int to float.
+    >>> import tomopy
+    >>> arr = range(0, 10)
+    >>> arr = tomopy.as_float32(arr)
 
 The built-in functions for data importing have the ``dtype`` argument
 to specify the type of the output data for convenience. For example::
 
-     dat = lena(dtype='float32')
+    >>> arr = tomopy.lena(dtype='float32')
 
-If we summarize the key points:
+If we summarize the key points::
 
 1. All input data must be Numpy arrays;
 
@@ -49,7 +45,6 @@ If we summarize the key points:
     use ``astype='float'``, which by default creates data in 64-bit 
     precision.
 
-
 Output data types
 -----------------
 
@@ -57,8 +52,11 @@ Output data is almost always in ``float32`` precision, and can be
 converted to 8-bit or 16-bit integer to save some space. See the 
 following example to convert an array into ``uint16``::
 
-    dat = np.arange(0, 1, 0.1).astype('float32')
-    dat = as_uint16(dat, dmin=0.1, dmax=0.8)
+    >>> import numpy
+    >>> arr = numpy.arange(0, 1, 0.1).astype('float32')
+    >>> arr = tomopy.as_uint16(arr, dmin=0.4, dmax=0.8)
+    >>> print(arr)
+    [    0     0     0     0     0 16383 32767 49151 65535 65535]
 
 You can use ``dmin`` and ``dmax`` arguments to set a desired scaling 
 range. Otherwise the minimum and maximum values of the data will be 
@@ -75,37 +73,29 @@ Loading from HDF5 files
 -----------------------
 Data can be imported from a group in an HDF5 file using::
 
-    from tomopy.io import data
-    mydata = data.read_hdf5(fname='path/mydata', gname='/exchange/data')
-
+    >>> arr = tomopy.read_hdf5(fname='path/mydata', gname='/exchange/data')
 
 Loading built-in test data
 --------------------------
-Various built-in test data are available in ``tomopy.io.phantom`` module.
-They can be loaded as follows::
+Various built-in test data can be loaded simply as follows::
 
-    from tomopy.io import phantom 
-    arr = phantom.lena()
+    >>> arr = tomopy.lena()
 
 The returned data are by default 3-D and in ``float32`` precision. You 
 can also try ``baboon``, ``barbara``, ``cameraman``, ``lena``, ``peppers``, 
-``shepp2d`` or ``shepp3d`` functions.
-
+``shepp2d`` or ``shepp3d`` built-in functions.
 
 Saving as HDF5 files
 ---------------------
 Data can be written to a group in an HDF5 file using::
- 
-    from tomopy.io import data
-    data.write_hdf5(mydata, fname='path/mydata', gname='/exchange')
 
+    >>> tomopy.write_hdf5(mydata, fname='path/mydata', gname='/exchange')
 
 Saving as a TIFF stack
 ----------------------
 A 3-D data can be written as a stack of TIFF images using::
 
-    from tomopy.io import data
-    data.write_tiff_stack(mydata, file_name='path/mydata', axis=0)
+    >>> tomopy.write_tiff_stack(mydata, file_name='path/mydata', axis=0)
 
 ``axis`` argument determines the axis to be used for slicing the 3-D data
 volume.
@@ -121,17 +111,21 @@ Negative values
 ---------------
 In principle the measurement data should not contain any negative
 values. However for some cases this is not true, and needs to 
-be corrected. ``rm_negval`` function can be used to set 
+be corrected. ``remove_neg`` function can be used to set 
 these values to a specified value::
 
-    dat = np.array([-1., 1., 2.], dtype='float32')
-    dat = rm_negval(dat, val=0.)
-
+    >>> import numpy
+    >>> arr = numpy.arange(-5, 5)
+    >>> arr = tomopy.remove_neg(arr, val=0.)
+    >>> print(arr)
+    [0 0 0 0 0 0 1 2 3 4]
 
 NaN values
 ----------
 Similar to the negative value correction, NaN values can be replaced 
-by any specified value using ``rm_nan`` function::
+by any specified value using ``remove_nan`` function::
 
-    dat = np.array([-1., 1., np.nan], dtype='float32')
-    dat = rm_nan(dat, val=0.)
+    >>> arr = numpy.array([-1., 1., np.nan])
+    >>> arr = tomopy.remove_nan(arr, val=123.)
+    >>> print(arr)
+    [-1.  1.  123.]
