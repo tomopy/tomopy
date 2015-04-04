@@ -45,7 +45,7 @@ Run the following command from a terminal to build the
 Using Git
 =========
 
-Here is a list of descriptions for commit messages:
+Here is a list of descriptions for commit messages: 
 
 * API: api related commits
 
