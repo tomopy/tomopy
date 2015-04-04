@@ -244,6 +244,10 @@ def stripe_removal(
         data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
 
 
+def myfunc():
+    print("Hello world!")
+
+
 def phase_retrieval(
         data, psize=1e-4, dist=50,
         energy=20, alpha=1e-4, pad=True, ind=None):
