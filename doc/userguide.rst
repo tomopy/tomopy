@@ -52,8 +52,8 @@ Output data is almost always in ``float32`` precision, and can be
 converted to 8-bit or 16-bit integer to save some space. See the 
 following example to convert an array into ``uint16``::
 
-    >>> import numpy
-    >>> arr = numpy.arange(0, 1, 0.1).astype('float32')
+    >>> import numpy as np
+    >>> arr = np.arange(0, 1, 0.1).astype('float32')
     >>> arr = tomopy.as_uint16(arr, dmin=0.4, dmax=0.8)
     >>> print(arr)
     [    0     0     0     0     0 16383 32767 49151 65535 65535]
@@ -114,8 +114,7 @@ values. However for some cases this is not true, and needs to
 be corrected. ``remove_neg`` function can be used to set 
 these values to a specified value::
 
-    >>> import numpy
-    >>> arr = numpy.arange(-5, 5)
+    >>> arr = np.arange(-5, 5)
     >>> arr = tomopy.remove_neg(arr, val=0.)
     >>> print(arr)
     [0 0 0 0 0 0 1 2 3 4]
@@ -125,7 +124,7 @@ NaN values
 Similar to the negative value correction, NaN values can be replaced 
 by any specified value using ``remove_nan`` function::
 
-    >>> arr = numpy.array([-1., 1., np.nan])
+    >>> arr = np.array([-1., 1., np.nan])
     >>> arr = tomopy.remove_nan(arr, val=123.)
     >>> print(arr)
     [-1.  1.  123.]
