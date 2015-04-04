@@ -116,7 +116,7 @@ class ReconStruct(ctypes.Structure):
     Reconstruction parameter structure.
     """
     _fields_ = [("num_iter", ctypes.c_int),
-                ("reg_par",ctypes.POINTER(ctypes.c_float)),
+                ("reg_par", ctypes.POINTER(ctypes.c_float)),
                 ("rx", ctypes.c_int),
                 ("ry", ctypes.c_int),
                 ("rz", ctypes.c_int),
@@ -230,7 +230,7 @@ def _init_recon(
     dpars.dz = dz
     dpars.center = center
     dpars.proj_angle = theta.ctypes.data_as(c_float_p)
-    
+
     # Initialize struct for reconstruction parameteres
     rpars = ReconStruct()
     rpars.num_iter = num_iter
@@ -338,7 +338,7 @@ def ospml_quad(*args, **kwargs):
 
 def pml_hybrid(*args, **kwargs):
     """
-    Penalized maximum likelihood with weighted linear and quadratic 
+    Penalized maximum likelihood with weighted linear and quadratic
     penalties.
     """
     data, dpars, recon, rpars = _init_recon(*args, **kwargs)
