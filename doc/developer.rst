@@ -17,7 +17,7 @@ Coding Syntax
 
 TomoPy uses the following style guides for code development:
 
-1. `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ for Python 
+1. `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ for Python 
    codes.
 
 2. `PEP7 <https://www.python.org/dev/peps/pep-0007/>`_ for C codes.
@@ -26,10 +26,10 @@ TomoPy uses the following style guides for code development:
    Python docstring
 
 It is recommended to use the Python packages 
-`pep8 <https://pypi.python.org/pypi/pep8>`_ and 
+`pep8 <https://pypi.python.org/pypi/pep8>`__ and 
 `pyFlakes <https://pypi.python.org/pypi/pyflakes>`_ to check for
 syntax and warnings. They are available in
-`Conda <http://docs.continuum.io/anaconda/pkg-docs.html>`_
+`Conda <http://docs.continuum.io/anaconda/pkg-docs.html>`__
 as well as in `PyPI <https://pypi.python.org>`_.
 
 
@@ -37,7 +37,7 @@ Conda Packaging
 ===============
 
 Run the following command from a terminal to build the 
-`Conda <https://store.continuum.io>`_  package for TomoPy::
+`Conda <https://store.continuum.io>`__  package for TomoPy::
 
     conda build /path/to/tomopy/folder
 

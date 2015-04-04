@@ -37,7 +37,7 @@ to specify the type of the output data for convenience. For example::
 
 If we summarize the key points::
 
-1. All input data must be Numpy arrays;
+1. All input data must be Numpy arrays.
 
 2. All data types must be converted to ``float32`` before processing.
 
