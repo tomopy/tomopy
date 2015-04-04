@@ -12,6 +12,55 @@ This section is for TomoPy developers.
    :local:
 
 
+How to contribute?
+==================
+
+The project is maintained on GitHub, which is a version control and a 
+collaboration platform for software developers. To start first register 
+on `GitHub <https://github.com>`_ and fork the TomoPy repository by 
+clicking the **Fork** button in the header of the 
+`TomoPy repository <https://github.com/dgursoy/tomopy>`__: 
+
+.. image:: img/fork-repo.png
+
+At this point you've successfully forked the project to your personal
+GitHub account. The next thing you want to do is to clone it to your 
+local machine. You can do this either by opening a terminal window and
+running::
+
+    git clone https://github.com/YOUR-USERNAME/tomopy.git
+
+or clicking the **Clone in Desktop** button in the bottom of the right 
+hand side bar and following the instructions on downloading and using the
+GitHub Desktop Application: 
+
+.. image:: img/clone-in-desktop.png
+
+Git commit messages
+------------------- 
+
+Here is a list of descriptions for commit messages: 
+
+* API: api related commits
+
+* BLD: changes related to building
+
+* BUG: bug fixes
+
+* DOC: documentation
+
+* ENH: enhancement
+
+* MNT: maintenance
+
+* STR: code restructuring, moving files
+
+* STY: style fixes
+
+* TST: addition or modification of tests
+
+* WIP: for work in progress
+
 Coding Syntax
 =============
 
@@ -40,32 +89,6 @@ Run the following command from a terminal to build the
 `Conda <https://store.continuum.io>`__  package for TomoPy::
 
     conda build /path/to/tomopy/folder
-
-
-Using Git
-=========
-
-Here is a list of descriptions for commit messages: 
-
-* API: api related commits
-
-* BLD: changes related to building
-
-* BUG: bug fixes
-
-* DOC: documentation
-
-* ENH: enhancement
-
-* MNT: maintenance
-
-* STR: code restructuring, moving files
-
-* STY: style fixes
-
-* TST: addition or modification of tests
-
-* WIP: for work in progress
 
 
 Testing
