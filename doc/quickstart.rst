@@ -16,8 +16,7 @@ objects from tomography data with TomoPy.
 Data simulation
 ===============
 
-Let us first import the `Shepp-Logan phantom <http://en.wikipedia.org/wiki/Shepp–Logan_phantom>`_ 
-first::
+Let us first import the `Shepp-Logan phantom <http://en.wikipedia.org/wiki/Shepp–Logan_phantom>`_ ::
 
     >>> import tomopy
     >>> obj = tomopy.shepp2d()
