@@ -2,12 +2,8 @@
 Quickstart Guide
 ================
 
-:Page Status: Incomplete
-:Last Reviewed: 2015-04-03
-
-
 This section gives a quick start on how to simulate data and reconstruct 
-objects from tomography data with TomoPy.
+objects.
 
 .. contents:: Contents
    :local:
@@ -15,6 +11,8 @@ objects from tomography data with TomoPy.
 
 Data simulation
 ===============
+
+
 
 Let us first import the `Shepp-Logan phantom <http://en.wikipedia.org/wiki/Shepp–Logan_phantom>`_ ::
 
@@ -55,6 +53,11 @@ Then we can image the sinogram::
 
 Image reconstruction
 ====================
+
+Tomographic reconstruction creates three-dimensional views of an object 
+by combining two-dimensional projection images taken from multiple 
+directions, for example in how a CAT (computer-aided tomography) 
+scanner allows 3D views of the heart or brain.
 
 For reconstruction we require the sinogram and the projection angles::
 

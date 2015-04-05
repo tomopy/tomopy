@@ -2,10 +2,6 @@
 Install Directions
 ==================
 
-:Page Status: Incomplete
-:Last Reviewed: 2015-04-04
-
-
 This section covers the basics of how to install TomoPy.
 
 .. contents:: Contents

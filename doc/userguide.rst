@@ -2,10 +2,6 @@
 User's Guide
 ============
 
-:Page Status: Incomplete
-:Last Reviewed: 2015-04-05
-
-
 This section explains the basics of TomoPy usage.
 
 .. contents:: Contents
