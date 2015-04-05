@@ -153,10 +153,6 @@ def normalize(data, white, dark, cutoff=None, ind=None):
         data[m, :, :] = proj
 
 
-def myfunc():
-    print("Hello world!")
-
-
 def stripe_removal(
         data, level=None, wname='db5',
         sigma=2, pad=True, ind=None):
@@ -246,10 +242,6 @@ def stripe_removal(
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
 
         data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
-
-
-def myfunc():
-    print("Hello world!")
 
 
 def phase_retrieval(
