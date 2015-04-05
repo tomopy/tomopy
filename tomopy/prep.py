@@ -147,7 +147,7 @@ def normalize(data, white, dark, cutoff=None, ind=None):
 
     for m in ind:
         proj = data[m, :, :]
-        proj = np.divide(proj-dark, denom)
+        proj = np.divide(proj - dark, denom)
         if cutoff is not None:
             proj[proj > cutoff] = cutoff
         data[m, :, :] = proj
@@ -204,9 +204,9 @@ def stripe_removal(
     # pad temp image.
     nx = dx
     if pad:
-        nx = dx + dx/8
+        nx = dx + dx / 8
 
-    xshft = int((nx-dx)/2.)
+    xshft = int((nx - dx) / 2.)
     sli = np.zeros((nx, dz), dtype='float32')
 
     for n in ind:
@@ -302,11 +302,11 @@ def phase_retrieval(
     for m in ind:
         proj = data[m, :, :]
         if pad:
-            prj[xshft:dy+xshft, yshft:dz+yshft] = proj
+            prj[xshft:dy + xshft, yshft:dz + yshft] = proj
             fproj = np.fft.fft2(prj)
             filtproj = np.multiply(H, fproj)
             tmp = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-            proj = tmp[xshft:dy+xshft, yshft:dz+yshft]
+            proj = tmp[xshft:dy + xshft, yshft:dz + yshft]
         elif not pad:
             fproj = np.fft.fft2(proj)
             filtproj = np.multiply(H, fproj)
@@ -351,19 +351,19 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
     dx, dy, dz = data.shape
-    wavelen = 2*PI*PLANCK_CONSTANT*SPEED_OF_LIGHT/energy
+    wavelen = 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
 
     if pad:
         # Find pad values.
-        val = np.mean((data[:, :, 0] + data[:, :, dz-1])/2)
+        val = np.mean((data[:, :, 0] + data[:, :, dz - 1]) / 2)
 
         # Fourier pad in powers of 2.
-        padpix = np.ceil(PI*wavelen*dist/psize**2)
+        padpix = np.ceil(PI * wavelen * dist / psize ** 2)
 
         nx = pow(2, np.ceil(np.log2(dy + padpix)))
         ny = pow(2, np.ceil(np.log2(dz + padpix)))
-        xshft = int((nx-dy)/2.)
-        yshft = int((ny-dz)/2.)
+        xshft = int((nx - dy) / 2.)
+        yshft = int((ny - dz) / 2.)
 
         # Template pad image.
         prj = val * np.ones((nx, ny), dtype='float32')
@@ -374,13 +374,13 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
         prj = np.ones((dy, dz), dtype='float32')
 
     # Sampling in reciprocal space.
-    indx = (1/((nx-1)*psize)) * np.arange(-(nx-1)*0.5, nx*0.5)
-    indy = (1/((ny-1)*psize)) * np.arange(-(ny-1)*0.5, ny*0.5)
+    indx = (1 / ((nx - 1) * psize)) * np.arange(-(nx - 1) * 0.5, nx * 0.5)
+    indy = (1 / ((ny - 1) * psize)) * np.arange(-(ny - 1) * 0.5, ny * 0.5)
     du, dv = np.meshgrid(indy, indx)
     w2 = np.square(du) + np.square(dv)
 
     # Filter in Fourier space.
-    H = 1 / (wavelen*dist*w2 / (4*PI)+alpha)
+    H = 1 / (wavelen * dist * w2 / (4 * PI) + alpha)
     H = np.fft.fftshift(H)
     return H, xshft, yshft, prj
 
@@ -413,14 +413,14 @@ def circular_roi(data, ratio=1, val=None):
 
     ind1 = dy
     ind2 = dz
-    rad1 = ind1/2
-    rad2 = ind2/2
+    rad1 = ind1 / 2
+    rad2 = ind2 / 2
     if dy < dz:
-        r2 = rad1*rad1
+        r2 = rad1 * rad1
     else:
-        r2 = rad2*rad2
+        r2 = rad2 * rad2
     y, x = np.ogrid[-rad1:rad1, -rad2:rad2]
-    mask = x*x+y*y > ratio*ratio*r2
+    mask = x * x + y * y > ratio * ratio * r2
     print(mask.shape, data.shape)
     if val is None:
         val = np.mean(data[:, ~mask])
@@ -471,21 +471,21 @@ def focus_region(
     ind = np.arange(0, dx)
 
     if center is None:
-        center = dz/2.
+        center = dz / 2.
 
-    rad = np.sqrt(xcoord*xcoord + ycoord*ycoord)
+    rad = np.sqrt(xcoord * xcoord + ycoord * ycoord)
     alpha = np.arctan2(xcoord, ycoord)
-    l1 = center - dia/2
-    l2 = center - dia/2 + rad
+    l1 = center - dia / 2
+    l2 = center - dia / 2 + rad
 
     roi = np.ones((dx, dy, dia), dtype='float32')
     if pad:
         roi = np.ones((dx, dy, dz), dtype='float32')
 
-    delphi = PI/dx
+    delphi = PI / dx
     for m in ind:
-        ind1 = np.ceil(np.cos(alpha-m * delphi) * (l2-l1)+l1)
-        ind2 = np.floor(np.cos(alpha-m * delphi) * (l2-l1)+l1+dia)
+        ind1 = np.ceil(np.cos(alpha - m * delphi) * (l2 - l1) + l1)
+        ind2 = np.floor(np.cos(alpha - m * delphi) * (l2 - l1) + l1 + dia)
 
         if ind1 < 0:
             ind1 = 0
@@ -504,11 +504,11 @@ def focus_region(
                 roi[m, :, ind1:ind2] = arr
         else:
             if corr:
-                roi[m, :, 0:(ind2-ind1)] = correct_air(arr, air=5)
+                roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=5)
             else:
-                roi[m, :, 0:(ind2-ind1)] = arr
+                roi[m, :, 0:(ind2 - ind1)] = arr
         if not pad:
-            center = dz/2.
+            center = dz / 2.
     return roi, center
 
 
@@ -603,8 +603,8 @@ def zinger_removal(data, dif=1000, size=3, ind=None):
     mask = np.zeros((1, dy, dz))
     for m in ind:
         tmp = filters.median_filter(data[m, :, :], (size, size))
-        mask = ((data[m, :, :]-tmp) >= dif).astype(int)
-        data[m, :, :] = tmp*mask + data[m, :, :]*(1-mask)
+        mask = ((data[m, :, :] - tmp) >= dif).astype(int)
+        data[m, :, :] = tmp * mask + data[m, :, :] * (1 - mask)
 
 
 def correct_air(data, air=10, ind=None):
@@ -711,7 +711,7 @@ def downsample2d(data, level=1):
 
     binsize = np.power(2, level)
     downdat = np.zeros(
-        (dx, dy, dz/binsize),
+        (dx, dy, dz / binsize),
         dtype='float32')
 
     # Call C function.
@@ -754,7 +754,7 @@ def downsample3d(data, level=1):
 
     binsize = np.power(2, level)
     downdat = np.zeros(
-        (dx, dy/binsize, dz/binsize),
+        (dx, dy / binsize, dz / binsize),
         dtype='float32')
 
     # Call C function.
