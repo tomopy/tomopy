@@ -1,8 +1,8 @@
-============
-TomoPy Guide
-============
+.. image:: img/tomopy-logo.png
+   :width: 320px
 
-.. warning:: This is a beta version for testing!
+| 
+
 
 TomoPy is an open-sourced Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
@@ -11,6 +11,7 @@ processing and image reconstruction tasks at the
 This guide and the TomoPy project is maintained on 
 `GitHub <https://github.com/dgursoy/tomopy>`_.
 
+.. warning:: This is a beta version for testing!
 
 .. toctree::
    :maxdepth: 2
