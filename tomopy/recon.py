@@ -92,6 +92,7 @@ except OSError as e:
 
 
 class ObjectStruct(ctypes.Structure):
+
     """
     Data parameter structure.
     """
@@ -101,6 +102,7 @@ class ObjectStruct(ctypes.Structure):
 
 
 class DataStruct(ctypes.Structure):
+
     """
     Data parameter structure.
     """
@@ -112,6 +114,7 @@ class DataStruct(ctypes.Structure):
 
 
 class ReconStruct(ctypes.Structure):
+
     """
     Reconstruction parameter structure.
     """
@@ -147,9 +150,9 @@ def simulate(obj, theta, center=None):
     ox, oy, oz = obj.shape
     dx = theta.size
     dy = ox
-    dz = np.ceil(np.sqrt(oy*oy+oz*oz)).astype('int')
+    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
     if center is None:
-        center = dz/2.0
+        center = dz / 2.0
     data = np.zeros((dx, dy, dz), dtype='float32')
 
     # Make sure that inputs datatypes are correct
@@ -194,7 +197,7 @@ def _init_recon(
     """
     dx, dy, dz = data.shape
     if center is None:
-        center = dz/2.
+        center = dz / 2.
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
     if num_gridx is None:
@@ -206,7 +209,7 @@ def _init_recon(
     if emission is None:
         emission = True
     if recon is None:
-        recon = 1e-6*np.ones((dy, num_gridx, num_gridy), dtype='float32')
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
     if not isinstance(data, np.float32):
