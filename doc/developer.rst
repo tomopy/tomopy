@@ -2,10 +2,6 @@
 Developer's Guide
 =================
 
-:Page Status: Incomplete
-:Last Reviewed: 2015-04-05
-
-
 This section explains the basics for developers who wish to contribute 
 to the TomoPy project.
 
