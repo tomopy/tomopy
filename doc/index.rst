@@ -20,6 +20,7 @@ This guide and the TomoPy project is maintained on
    quickstart
    userguide
    developer
+   api
    questions
    credits
 
