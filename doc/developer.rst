@@ -105,3 +105,4 @@ this Pull Request in the first place.
 When you’re ready typing out your heartfelt argument, click on **Send 
 pull request**. You’re done!
 
+.. This text is partially adopted from GitHub guides.
