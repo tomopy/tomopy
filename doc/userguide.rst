@@ -1,5 +1,5 @@
 ============
-User's Guide
+User's guide
 ============
 
 This section explains the basics of TomoPy usage.
