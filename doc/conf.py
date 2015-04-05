@@ -31,9 +31,8 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
-
-# otherwise, readthedocs.org uses their theme by default, so no need to specify it
+sys.path.insert(0, os.path.abspath(os.path.join('..')))
+sys.path.insert(0, os.path.abspath(os.path.join('..', 'io')))
 
 # -- General configuration ------------------------------------------------
 
@@ -46,7 +45,8 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'numpydoc'
 ]
 try:
     import sphinxcontrib.bibtex
@@ -304,3 +304,6 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #ztexinfo_no_detailmenu = False
+
+# To turn-off the warnings at object generation.
+numpydoc_show_class_members = False
