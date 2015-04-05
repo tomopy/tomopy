@@ -25,18 +25,14 @@ Although most cameras capture images in 16-bit dynamic range, many
 functions in the package support 32-bit float precision data for 
 processing. So, you should ALWAYS convert the raw data into 
 ``float32`` before calling a function. You can simply do this by
-using ``as_float32`` function:
-
-.. code-block:: python
-
+using ``as_float32`` function::
+    
     >>> import tomopy
     >>> arr = range(0, 10)
     >>> arr = tomopy.as_float32(arr)
 
 The built-in functions for data importing have the ``dtype`` argument
 to specify the type of the output data for convenience. For example:
-
-.. code-block:: python
 
     >>> arr = tomopy.lena(dtype='float32')
 
