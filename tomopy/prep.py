@@ -243,25 +243,6 @@ def stripe_removal(
 
         data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
 
-def my_awesome_func(a, b):
-    """
-    Adds two numbers.
-
-    Parameters
-    ----------
-    a : scalar (float)
-        First number to add
-
-    b : scalar (float)
-        Second number to add
-
-    Returns
-    -------
-    output : scalar (float)
-        Added value
-    """
-    return a+b
-
 
 def phase_retrieval(
         data, psize=1e-4, dist=50,
