@@ -32,34 +32,22 @@ button in the bottom of the right hand side bar:
 .. image:: img/clone-in-desktop.png
 
 This will launch the GitHub desktop application 
-(available for `Mac <http://mac.github.com>`_ and 
+(available for both `Mac <http://mac.github.com>`_ and 
 `Win <http://windows.github.com>`_) 
-and ask us where we want to save it. Select a location in your 
+and ask you where you want to save it. Select a location in your 
 computer and feel comfortable with making modifications in the code.
 
-Commiting changes
-=================
+Coding conventions
+==================
 
-After making some changes in the code, you may want to take a 
-*snapshot* of the edits you made. That's when you make a *commit*. 
-To do this, launch the GitHub desktop application and it should 
-provide you all the changes in your code since your last commit.
-Write a brief *Summary* and *Description* about the changes you 
-made and click the **Commit** button: 
+We try to keep a consistent and readable code. So, please keep  
+in mind the following style and syntax guidance before you start
+coding. 
 
-.. image:: img/commit-screen.png
-
-You can continue to make changes, add modules, write your own functions, 
-and take more *Commit snapshots* of your code writing process.
-
-Coding syntax
-=============
-
-We try to keep a consistent and readable code. So, before 
-contributing back to the project please make sure that your code 
-is well documented, easy to understand, and that it will integrate 
-well into the rest of the project. For example, when you are writing 
-a new function always describe the function and the parameters::
+First of all the code should be well documented, easy to understand, 
+and integrate well into the rest of the project. For example, when you 
+are writing a new function always describe the purpose and the 
+parameters::
 
     def my_awesome_func(a, b):
         """
@@ -80,6 +68,20 @@ a new function always describe the function and the parameters::
         """
         return a+b
 
+Commiting changes
+=================
+
+After making some changes in the code, you may want to take a 
+*snapshot* of the edits you made. That's when you make a *commit*. 
+To do this, launch the GitHub desktop application and it should 
+provide you all the changes in your code since your last commit.
+Write a brief *Summary* and *Description* about the changes you 
+made and click the **Commit** button: 
+
+.. image:: img/commit-screen.png
+
+You can continue to make changes, add modules, write your own functions, 
+and take more *Commit snapshots* of your code writing process.
 
 Contributing back
 =================
