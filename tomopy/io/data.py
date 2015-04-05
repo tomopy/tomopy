@@ -209,6 +209,7 @@ def remove_neg(dat, val=0.):
     out : ndarray
        Corrected data.
     """
+    dat = as_float32(dat)
     dat[dat < 0.0] = val
     return dat
 
@@ -230,6 +231,7 @@ def remove_nan(dat, val=0.):
     out : ndarray
        Corrected data.
     """
+    dat = as_float32(dat)
     dat[np.isnan(dat)] = val
     return dat
 
