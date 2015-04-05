@@ -1,5 +1,5 @@
 ================
-Quickstart Guide
+Quickstart guide
 ================
 
 This section gives a quick start on how to simulate data and reconstruct 

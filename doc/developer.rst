@@ -1,5 +1,5 @@
 =================
-Developer's Guide
+Developer's guide
 =================
 
 This section explains the basics for developers who wish to contribute 
