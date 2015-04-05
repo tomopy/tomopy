@@ -21,7 +21,7 @@ installed first. Open a terminal and run::
     conda install -c dgursoy tomopy
 
 
-Updating the Installation
+Updating the installation
 =========================
 
 This is an active project, so we suggest you update your installation 

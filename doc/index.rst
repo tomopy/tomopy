@@ -16,8 +16,8 @@ This guide and the TomoPy project is maintained on
    
    install
    quickstart
-   developer
    userguide
+   developer
    questions
    credits
 
