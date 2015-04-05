@@ -153,6 +153,10 @@ def normalize(data, white, dark, cutoff=None, ind=None):
         data[m, :, :] = proj
 
 
+def myfunc():
+    print("Hello world!")
+
+
 def stripe_removal(
         data, level=None, wname='db5',
         sigma=2, pad=True, ind=None):

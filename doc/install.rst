@@ -25,7 +25,7 @@ Updating the Installation
 =========================
 
 This is an active project, so we suggest you update your installation 
-frequently. To update the installation run::
+frequently. To update the installation run in your terminal::
 
     conda update -c dgursoy tomopy
 
