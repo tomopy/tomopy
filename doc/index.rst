@@ -11,9 +11,11 @@ processing and image reconstruction tasks at the
 This guide and the TomoPy project is maintained on 
 `GitHub <https://github.com/dgursoy/tomopy>`_.
 
+
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
+   about
    install
    quickstart
    userguide
