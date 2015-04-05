@@ -1,5 +1,5 @@
 ==================
-Install Directions
+Install directions
 ==================
 
 This section covers the basics of how to install TomoPy.
