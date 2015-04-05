@@ -3,20 +3,18 @@ Developer's Guide
 =================
 
 :Page Status: Incomplete
-:Last Reviewed: 2015-03-14
+:Last Reviewed: 2015-04-05
 
 
-This section is for TomoPy developers.
+This section explains the basics for developers who wish to contribute 
+to the TomoPy project.
 
 .. contents:: Contents
    :local:
 
 
-How to contribute?
-==================
-
 Cloning the repository
-----------------------
+======================
 
 The project is maintained on GitHub, which is a version control and a 
 collaboration platform for software developers. To start first register 
@@ -33,81 +31,54 @@ button in the bottom of the right hand side bar:
 
 .. image:: img/clone-in-desktop.png
 
-Commiting changes
------------------
+This will launch the GitHub desktop application 
+(available for `Mac <http://mac.github.com>`_ and 
+`Win <http://windows.github.com>`_) 
+and ask us where we want to save it. Select a location in your 
+computer and feel comfortable with making modifications in the code.
 
-Make a change in the code, for example, add a function to one of the
-TomoPy modules. The changes you made are now visible in GitHub App. When
-you are happy with the changes, write a brief *Summary* and *Description* 
-about the changes you made and click the **Commit** button. 
+Commiting changes
+=================
+
+After making some changes in the code, you may want to take a 
+*snapshot* of the edits you made. That's when you make a *commit*. 
+To do this, launch the GitHub desktop application and it should 
+provide you all the changes in your code since your last commit.
+Write a brief *Summary* and *Description* about the changes you 
+made and click the **Commit** button: 
 
 .. image:: img/commit-screen.png
 
 You can continue to make changes, add modules, write your own functions, 
-and take more *Commit* snapshots of your development process. 
+and take more *Commit snapshots* of your code writing process.
 
-.. note:: Some developers may prefer using basic Git terminal commands. 
-    You can learn more on this by reading the 
-    `Fork a Repo guide <https://help.github.com/articles/fork-a-repo/>`__.
-
-Coding Syntax
+Coding syntax
 =============
 
-TomoPy uses the following style guides for code development:
+We try to keep a consistent and readable code. So, before 
+contributing back to the project please make sure that your code 
+is well documented, easy to understand, and that it will integrate 
+well into the rest of the project. For example, when you are writing 
+a new function always describe the function and the parameters::
 
-1. `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ for Python 
-   codes.
+    def my_awesome_func(a, b):
+        """
+        Adds two numbers.
 
-2. `PEP7 <https://www.python.org/dev/peps/pep-0007/>`_ for C codes.
+        Parameters
+        ----------
+        a : scalar (float)
+            First number to add
 
-3. `PEP287 <https://www.python.org/dev/peps/pep-0287/>`_ for 
-   Python docstring
+        b : scalar (float)
+            Second number to add
 
-It is recommended to use the Python packages 
-`pep8 <https://pypi.python.org/pypi/pep8>`__ and 
-`pyFlakes <https://pypi.python.org/pypi/pyflakes>`_ to check for
-syntax and warnings. They are available in
-`Conda <http://docs.continuum.io/anaconda/pkg-docs.html>`__
-as well as in `PyPI <https://pypi.python.org>`_.
-
-Style for Git commit messages
------------------------------
-
-Here is a list of abbreviations and corresponding descriptions for 
-writing your commit summaries: 
-
-* API: api related commits
-
-* BLD: changes related to building
-
-* BUG: bug fixes
-
-* DOC: documentation
-
-* ENH: enhancement
-
-* MNT: maintenance
-
-* STR: code restructuring, moving files
-
-* TST: addition or modification of tests
-
-* WIP: for work in progress
-
-Additional Remarks
-------------------
-
-Function naming conventions: 
-
-Testing
-=======
-
-Add the test scripts for the package or module in ``tomopy/tests``. To see
-the test coverage use the following command::
-
-    nosetests
-
-See ``setup.cfg`` for `nose <http://nose.readthedocs.org/en/latest/index.html>`_ configuration.
+        Returns
+        -------
+        output : scalar (float)
+            Added value
+        """
+        return a+b
 
 
 Contributing back
@@ -120,28 +91,19 @@ button to compare, review and create a pull request.
 
 .. image:: img/create-revision.png
 
-After clicking on the **Compare and Review** button, you are presented 
-with a review page where you can get a high-level overview of what exactly 
-has changed between your forked branch and the original TomoPy repository. 
-When you're ready to submit your pull request, click **Create pull request**.
+After clicking on theis button, you are presented with a review page 
+where you can get a high-level overview of what exactly has changed
+between your forked branch and the original TomoPy repository. 
+When you're ready to submit your pull request, click 
+**Create pull request**:
 
 .. image:: img/create-pr.png
 
 Clicking on **Create pull request** sends you to a discussion page,  
 where you can enter a title and optional description. It’s important to  
 provide as much useful information and a rationale for why you’re making  
-this Pull Request in the first place. The project owner needs to be able to 
-determine whether your change is as useful to everyone as you think it is.
+this Pull Request in the first place.
 
 When you’re ready typing out your heartfelt argument, click on **Send 
-pull request**. You’re done! 
-
-
-Conda Packaging
-===============
-
-Run the following command from a terminal to build the 
-`Conda <https://store.continuum.io>`__  package for TomoPy::
-
-    conda build /path/to/tomopy/folder
+pull request**. You’re done!
 
