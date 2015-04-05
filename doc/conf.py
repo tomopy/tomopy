@@ -45,17 +45,21 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
+    'sphinx.ext.todo'
 ]
 try:
     import sphinxcontrib.bibtex
     extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
+    'sphinx.ext.todo',
     'sphinxcontrib.bibtex']
 except ImportError:
     pass
 
+[extensions]
+todo_include_todos=True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
