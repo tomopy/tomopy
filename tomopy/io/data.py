@@ -151,7 +151,7 @@ def as_uint8(arr, dmin=None, dmax=None):
         if dmax == dmin:
             arr = arr.astype('uint8')
         else:
-            arr = ((arr*1.0-dmin)/(dmax-dmin)*255).astype('uint8')
+            arr = ((arr * 1.0 - dmin) / (dmax - dmin) * 255).astype('uint8')
     return arr
 
 
@@ -188,7 +188,7 @@ def as_uint16(arr, dmin=None, dmax=None):
         if dmax == dmin:
             arr = arr.astype('uint16')
         else:
-            arr = ((arr*1.0-dmin)/(dmax-dmin)*65535).astype('uint16')
+            arr = ((arr * 1.0 - dmin) / (dmax - dmin) * 65535).astype('uint16')
     return arr
 
 
@@ -262,12 +262,12 @@ def _add_index_to_string(string, ind, digits):
     # Index for stacking.
     string_index = ["" for x in range(digits)]
     for m in range(digits):
-        string_index[m] = '0' * (digits-m-1)
+        string_index[m] = '0' * (digits - m - 1)
 
     # This is to keep the digit size for various numbers.
     # E.g. 00123 includes 2 zeros and a 3 digit number
     for n in range(digits):
-        if ind < np.power(10, n+1):
+        if ind < np.power(10, n + 1):
             string += '_' + string_index[n] + str(ind)
             return string
 
@@ -295,7 +295,7 @@ def _suggest_new_fname(fname):
     _flag = False
     while not _flag:
         _fname = fname + '-' + str(indq)
-        if not os.path.isfile(_fname+ext):
+        if not os.path.isfile(_fname + ext):
             _flag = True
             fname = _fname
         else:
