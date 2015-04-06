@@ -59,6 +59,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import os
 import logging
+import h5py
 import tomopy.io.data as dio
 
 
@@ -74,7 +75,7 @@ def read_aps1id():
     pass
 
 
-def read_aps2bm(fname):
+def read_aps2bm(fname, proj=None, sino=None):
     """
     Reads APS 2-BM standard data format.
 
@@ -82,6 +83,12 @@ def read_aps2bm(fname):
     ----------
     fname : string
         Path to hdf5 file.
+
+    proj : slice object
+        Specifies the projections to read.
+
+    sino : slice object
+        Specifies the sinograms to read.
 
     Returns
     -------
@@ -95,9 +102,21 @@ def read_aps2bm(fname):
         Dark field array.
     """
     fname = os.path.abspath(fname)
-    data = dio.read_hdf5(fname, gname='/exchange/data')
-    white = dio.read_hdf5(fname, gname='/exchange/data_white')
-    dark = dio.read_hdf5(fname, gname='/exchange/data_dark')
+    f = h5py.File(fname, "r")
+    data = f['/exchange/data']
+    white = f['/exchange/data_white']
+    dark = f['/exchange/data_dark']
+
+    # Slice projection and sinogram axes.
+    if proj is None:
+        proj = slice(0, data.shape[0])
+    if sino is None:
+        sino = slice(0, data.shape[0])
+    data = data[proj, sino, :]
+    white = white[:, sino, :]
+    dark = dark[:, sino, :]
+    f.close()
+
     return data, white, dark
 
 
@@ -118,6 +137,12 @@ def read_aps32id(fname):
     fname : string
         Path to hdf5 file.
 
+    proj : slice object
+        Specifies the projections to read.
+
+    sino : slice object
+        Specifies the sinograms to read.
+
     Returns
     -------
     data : 3-D array (float32)
@@ -130,7 +155,19 @@ def read_aps32id(fname):
         Dark field array.
     """
     fname = os.path.abspath(fname)
-    data = dio.read_hdf5(fname, gname='/exchange/data')
-    white = dio.read_hdf5(fname, gname='/exchange/data_white')
-    dark = dio.read_hdf5(fname, gname='/exchange/data_dark')
+    f = h5py.File(fname, "r")
+    data = f['/exchange/data']
+    white = f['/exchange/data_white']
+    dark = f['/exchange/data_dark']
+
+    # Slice projection and sinogram axes.
+    if proj is None:
+        proj = slice(0, data.shape[0])
+    if sino is None:
+        sino = slice(0, data.shape[0])
+    data = data[proj, sino, :]
+    white = white[:, sino, :]
+    dark = dark[:, sino, :]
+    f.close()
+
     return data, white, dark
