@@ -237,11 +237,11 @@ def remove_nan(dat, val=0.):
     return dat
 
 
-def _add_index_to_string(string, ind, digits):
+def _add_index_to_string(string, ind, digit):
     """
     Add index to a string, usually for image stacking purposes.
 
-    For example if strng is "mydata", ind is 134 and digits is 5,
+    For example if strng is "mydata", ind is 134 and digit is 5,
     the output string is "mydata-00134".
 
     Parameters
@@ -252,8 +252,8 @@ def _add_index_to_string(string, ind, digits):
     ind : scalar
         The index to be added at the end of string.
 
-    digits : scalar
-        Number of digits for the string indexing.
+    digit : scalar
+        Number of digit for the string indexing.
 
     Returns
     -------
@@ -261,13 +261,13 @@ def _add_index_to_string(string, ind, digits):
         Indexed string.
     """
     # Index for stacking.
-    string_index = ["" for x in range(digits)]
-    for m in range(digits):
-        string_index[m] = '0' * (digits - m - 1)
+    string_index = ["" for x in range(digit)]
+    for m in range(digit):
+        string_index[m] = '0' * (digit - m - 1)
 
     # This is to keep the digit size for various numbers.
     # E.g. 00123 includes 2 zeros and a 3 digit number
-    for n in range(digits):
+    for n in range(digit):
         if ind < np.power(10, n + 1):
             string += '_' + string_index[n] + str(ind)
             return string
@@ -411,7 +411,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
 
 def write_tiff_stack(
         data, fname, axis=0, id=0,
-        digits=5, overwrite=False,
+        digit=5, overwrite=False,
         dtype='uint8', dmin=None, dmax=None):
     """
     Write 3-D data to a stack of tiff files.
@@ -427,8 +427,8 @@ def write_tiff_stack(
     id : scalar, optional
         First index of the data on first dimension of the array.
 
-    digits : scalar, optional
-        Number of digits used for file indexing.
+    digit : scalar, optional
+        Number of digit used for file indexing.
         For example if 4: test_XXXX.tiff
 
     axis : scalar, optional
@@ -475,7 +475,7 @@ def write_tiff_stack(
     # Range of indices for stacking tiffs
     ind = range(id, end_id)
     for m in range(len(ind)):
-        string = _add_index_to_string(fname, ind[m], digits)
+        string = _add_index_to_string(fname, ind[m], digit)
         new_fname = string + ext
         if not overwrite:
             if os.path.isfile(new_fname):

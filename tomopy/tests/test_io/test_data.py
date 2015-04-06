@@ -112,7 +112,7 @@ def test_write_hdf5():
 
 
 def test__add_index_to_string():
-    out = _add_index_to_string(string='test', ind=12, digits=5)
+    out = _add_index_to_string(string='test', ind=12, digit=5)
     assert_equals(out, 'test_00012')
 
 
@@ -126,11 +126,11 @@ def test_write_tiff_stack():
     fname = dest + 'youcandeleteme'
 
     arr = np.ones((1, 2, 3), dtype='float32')
-    write_tiff_stack(arr, fname=fname, axis=0, digits=4, dtype='uint8')
+    write_tiff_stack(arr, fname=fname, axis=0, digit=4, dtype='uint8')
     assert_equals(os.path.isfile(fname + '_0000.tiff'), True)
     shutil.rmtree(dest)
 
-    write_tiff_stack(arr, fname=fname, axis=1, digits=5, dtype='uint16')
+    write_tiff_stack(arr, fname=fname, axis=1, digit=5, dtype='uint16')
     assert_equals(os.path.isfile(fname + '_00000.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00001.tiff'), True)
     shutil.rmtree(dest)
