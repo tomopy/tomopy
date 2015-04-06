@@ -75,6 +75,7 @@ __all__ = ['as_shared_array',
            'remove_nan',
            'read_hdf5',
            'write_hdf5',
+           'read_tiff_stack',
            'write_tiff_stack']
 
 
@@ -362,6 +363,50 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
     exchangeGrp = f.create_group(gname)
     ds = exchangeGrp.create_dataset('data', data=data)
     f.close()
+
+
+def read_tiff_stack(fname, span, digit, ext='tiff'):
+    """
+    Read data from a tiff stack in a folder.
+
+    Parameters
+    ----------
+    fname : string
+        Path to hdf5 file.
+
+    span : list
+        (start, end) indices of the files to read.
+
+    digit : scalar
+        Determines the number of digits in indexing tiff images.
+
+    ext : string
+        Specifies the extension of tiff files (e.g., tiff or tif). 
+
+    Returns
+    -------
+    out : ndarray
+        Returned data.
+    """
+    d = ['0' * (digit - x - 1) for x in range(digit)]
+    ind = range(span[0], span[1] + 1)
+    for m in ind:
+        for n in range(digit):
+            if m < np.power(10, n + 1):
+                img = fname + d[n] + str(m) + '.' + ext
+                break
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                out = skimage_io.imread(img, plugin='tifffile')
+
+            if a == 0:
+                sx = ind.size
+                sy, sz = out.shape
+                data = np.zeros((sx, sy, sz), dtype='float32')
+
+            data[m] = out
+    return data
 
 
 def write_tiff_stack(
