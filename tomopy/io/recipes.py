@@ -112,9 +112,9 @@ def read_aps2bm(fname, proj=None, sino=None):
         proj = slice(0, data.shape[0])
     if sino is None:
         sino = slice(0, data.shape[0])
-    data = data[proj, sino, :]
-    white = white[:, sino, :]
-    dark = dark[:, sino, :]
+    data = data[proj, sino, :].astype('float32')
+    white = white[:, sino, :].astype('float32')
+    dark = dark[:, sino, :].astype('float32')
     f.close()
 
     return data, white, dark
@@ -124,11 +124,42 @@ def read_aps7bm():
     pass
 
 
-def read_aps13id():
-    pass
+def read_aps13id(fname, proj=None, sino=None):
+    """
+    Reads APS 13-ID standard data format.
+
+    Parameters
+    ----------
+    fname : string
+        Path to hdf5 file.
+
+    proj : slice object
+        Specifies the projections to read.
+
+    sino : slice object
+        Specifies the sinograms to read.
+
+    Returns
+    -------
+    data : 3-D array (float32)
+        Data array.
+    """
+    fname = os.path.abspath(fname)
+    f = h5py.File(fname, "r")
+    data = f['/xrfmap/roimap/sum_cor']
+
+    # Slice projection and sinogram axes.
+    if proj is None:
+        proj = slice(0, data.shape[1])
+    if sino is None:
+        sino = slice(0, data.shape[1])
+    data = data[:, proj, sino].astype('float32')
+    data = np.swapaxes(data, 0, 1)
+    data = np.swapaxes(data, 1, 2)
+    return data
 
 
-def read_aps32id(fname):
+def read_aps32id(fname, proj=None, sino=None):
     """
     Reads APS 32-ID standard data format.
 
@@ -165,9 +196,9 @@ def read_aps32id(fname):
         proj = slice(0, data.shape[0])
     if sino is None:
         sino = slice(0, data.shape[0])
-    data = data[proj, sino, :]
-    white = white[:, sino, :]
-    dark = dark[:, sino, :]
+    data = data[proj, sino, :].astype('float32')
+    white = white[:, sino, :].astype('float32')
+    dark = dark[:, sino, :].astype('float32')
     f.close()
 
     return data, white, dark
