@@ -76,7 +76,7 @@ pip-log.txt
 # Test files #
 ##############
 tmp
-demo.py
+demo.*
 test.py
 main.py
 
