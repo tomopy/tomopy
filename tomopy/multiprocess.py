@@ -103,10 +103,10 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
 
     # Arrange chunk size.
     if nchunk is None:
-        nchunk = (dims-1) // ncore+1
+        nchunk = (dims - 1) // ncore + 1
 
     # Determine pool size.
-    npool = dims // nchunk+1
+    npool = dims // nchunk + 1
 
     # Populate arguments for workers.
     arg = []

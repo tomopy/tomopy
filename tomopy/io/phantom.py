@@ -88,7 +88,7 @@ def baboon(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/baboon.tif"
+    fname = os.path.dirname(__file__) + "/data/baboon.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -109,7 +109,7 @@ def barbara(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/barbara.tif"
+    fname = os.path.dirname(__file__) + "/data/barbara.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -130,7 +130,7 @@ def cameraman(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/cameraman.tif"
+    fname = os.path.dirname(__file__) + "/data/cameraman.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -151,7 +151,7 @@ def checkerboard(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/checkerboard.tif"
+    fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -172,7 +172,7 @@ def lena(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/lena.tif"
+    fname = os.path.dirname(__file__) + "/data/lena.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -193,7 +193,7 @@ def peppers(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/peppers.tif"
+    fname = os.path.dirname(__file__) + "/data/peppers.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -214,7 +214,7 @@ def shepp2d(dtype='float32'):
     out : dnarray
         Output test data
     """
-    fname = os.path.dirname(__file__)+"/data/shepp2d.tif"
+    fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
