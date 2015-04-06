@@ -60,7 +60,6 @@ import numpy as np
 import os
 import logging
 import h5py
-import tomopy.io.data as dio
 
 
 __docformat__ = 'restructuredtext en'
@@ -111,7 +110,7 @@ def read_aps2bm(fname, proj=None, sino=None):
     if proj is None:
         proj = slice(0, data.shape[0])
     if sino is None:
-        sino = slice(0, data.shape[0])
+        sino = slice(0, data.shape[1])
     data = data[proj, sino, :].astype('float32')
     white = white[:, sino, :].astype('float32')
     dark = dark[:, sino, :].astype('float32')
@@ -120,8 +119,44 @@ def read_aps2bm(fname, proj=None, sino=None):
     return data, white, dark
 
 
-def read_aps7bm():
-    pass
+def read_aps7bm(fname, proj=None, sino=None):
+    """
+    Reads APS 7-BM standard data format.
+
+    Parameters
+    ----------
+    fname : string
+        Path to hdf5 file.
+
+    proj : slice object
+        Specifies the projections to read.
+
+    sino : slice object
+        Specifies the sinograms to read.
+
+    Returns
+    -------
+    data : 3-D array (float32)
+        Data array.
+
+    theta : 1-D array (float32)
+        Projection angles.
+    """
+    fname = os.path.abspath(fname)
+    f = h5py.File(fname, "r")
+    data = f['/exchange/data']
+    theta = f['/exchange/theta']
+
+    # Slice projection and sinogram axes.
+    if proj is None:
+        proj = slice(0, data.shape[0])
+    if sino is None:
+        sino = slice(0, data.shape[1])
+    data = data[proj, sino, :].astype('float32')
+    theta = theta[proj].astype('float32')
+    f.close()
+
+    return data, theta
 
 
 def read_aps13id(fname, proj=None, sino=None):
@@ -152,10 +187,12 @@ def read_aps13id(fname, proj=None, sino=None):
     if proj is None:
         proj = slice(0, data.shape[1])
     if sino is None:
-        sino = slice(0, data.shape[1])
+        sino = slice(0, data.shape[2])
     data = data[:, proj, sino].astype('float32')
     data = np.swapaxes(data, 0, 1)
-    data = np.swapaxes(data, 1, 2)
+    data = np.swapaxes(data, 1, 2).copy()
+    f.close()
+
     return data
 
 
@@ -195,7 +232,7 @@ def read_aps32id(fname, proj=None, sino=None):
     if proj is None:
         proj = slice(0, data.shape[0])
     if sino is None:
-        sino = slice(0, data.shape[0])
+        sino = slice(0, data.shape[1])
     data = data[proj, sino, :].astype('float32')
     white = white[:, sino, :].astype('float32')
     dark = dark[:, sino, :].astype('float32')
