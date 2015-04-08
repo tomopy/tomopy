@@ -15,18 +15,21 @@ recon = Extension(
     name='tomopy.lib.libtomopy_recon',
     extra_compile_args=['-std=c99'],
     sources=[
-        'tomopy/src/utils.c',
-        'tomopy/src/simulate.c',
-        'tomopy/src/art.c',
-        'tomopy/src/bart.c',
-        'tomopy/src/fbp.c',
-        'tomopy/src/mlem.c',
-        'tomopy/src/osem.c',
-        'tomopy/src/ospml_hybrid.c',
-        'tomopy/src/ospml_quad.c',
-        'tomopy/src/pml_hybrid.c',
-        'tomopy/src/pml_quad.c',
-        'tomopy/src/sirt.c'])
+        # 'tomopy/src/utils.c',
+        # 'tomopy/src/simulate.c',
+        'tomopy/src/gridrec.c',
+        'tomopy/src/fft.c',
+        # 'tomopy/src/art.c',
+        # 'tomopy/src/bart.c',
+        # 'tomopy/src/fbp.c',
+        # 'tomopy/src/mlem.c',
+        # 'tomopy/src/osem.c',
+        # 'tomopy/src/ospml_hybrid.c',
+        # 'tomopy/src/ospml_quad.c',
+        # 'tomopy/src/pml_hybrid.c',
+        # 'tomopy/src/pml_quad.c',
+        # 'tomopy/src/sirt.c'
+        ])
 
 
 setup(
@@ -34,7 +37,7 @@ setup(
     packages=['tomopy'],
     package_data={'tomopy': ['data/*.tif']},
     version=open('VERSION').read().strip(),
-    ext_modules=[prep, recon],
+    ext_modules=[recon],
     include_package_data=True,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',

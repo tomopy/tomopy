@@ -70,29 +70,29 @@
 
 typedef struct 
 {
-  int ox;
-  int oy;
-  int oz;
+    int ox;
+    int oy;
+    int oz;
 } obj_pars;
 
 typedef struct 
 {
-  int dx;
-  int dy;
-  int dz;
-  float center;
-  float *proj_angle;
+    int dx;
+    int dy;
+    int dz;
+    float center;
+    float *proj_angle;
 } data_pars;
 
 typedef struct 
 {
-  int num_iter;
-  float *reg_pars;
-  int rx;
-  int ry;
-  int rz;
-  float *ind_block;
-  int num_block;
+    int num_iter;
+    float *reg_pars;
+    int rx;
+    int ry;
+    int rz;
+    float *ind_block;
+    int num_block;
 } recon_pars;
 
 // Data simulation
