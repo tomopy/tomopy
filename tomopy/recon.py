@@ -64,17 +64,19 @@ import logging
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['simulate',
-           'art',
-           'bart',
-           'fbp',
-           'mlem',
-           'osem',
-           'ospml_hybrid',
-           'ospml_quad',
-           'pml_hybrid',
-           'pml_quad',
-           'sirt']
+__all__ = [
+    'simulate',
+    'gridrec',
+    'art',
+    'bart',
+    'fbp',
+    'mlem',
+    'osem',
+    'ospml_hybrid',
+    'ospml_quad',
+    'pml_hybrid',
+    'pml_quad',
+    'sirt']
 
 
 # Get the path and import the C-shared library.
@@ -209,7 +211,7 @@ def _init_recon(
     if emission is None:
         emission = True
     if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+        recon = 1e-6 * np.ones((dy, 2048, 2048), dtype='float32')
 
     # Make sure that inputs datatypes are correct
     if not isinstance(data, np.float32):
@@ -245,6 +247,19 @@ def _init_recon(
     rpars.num_block = num_block
 
     return data, dpars, recon, rpars
+
+
+def gridrec(*args, **kwargs):
+    """
+    Regridding algorithm.
+    """
+    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    libtomopy_recon.gridrec_main.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.gridrec_main(
+        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
+        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    return recon
 
 
 def art(*args, **kwargs):
