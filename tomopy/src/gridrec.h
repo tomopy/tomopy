@@ -41,9 +41,6 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gridrec_h
-#define _gridrec_h
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,16 +64,12 @@
              (A).i=(B).r*(C).i+(B).i*(C).r;}
 
 
-// Data structures
-
-typedef struct 
-{
-    float r; // Real part
-    float i; // Imaginary part
+typedef struct {
+    float r;
+    float i;
 } complex;
 
-typedef struct 
-{
+typedef struct {
     int dx;
     int dy;
     int dz;
@@ -84,75 +77,43 @@ typedef struct
     float *proj_angle;
 } data_pars;
 
-
-// Prolate spheroidal wave function (PSWF) parameters 
-typedef struct{ 
-    float C; // Parameter for particular 0th order pswf being used 
-    int nt; // Degree of Legendre polynomial expansion 
-    float lmbda; // Eigenvalue 
-    float coefs[15]; // Coefficients for Legendre polynomial expansion 
-} pswf_struct;
-
-
-// Parameters for gridrec algorithm 
 typedef struct {
-    pswf_struct *pswf; // Pointer to data for PSWF being used  
-    float sampl; // "Oversampling" ratio 
-    char fname[16]; // Name of filter function       
-    float (*filter)(float); // Pointer to filter function 
+    char fname[16];
+    float (*filter)(float);
 } grid_pars;
 
 
-typedef struct 
-{
-    int num_iter;
-    float *reg_pars;
-    int rx;
-    int ry;
-    int rz;
-    float *ind_block;
-    int num_block;
-} recon_pars;
-
-// Functions for regridding algorithm 
+void gridrec(
+    float *data, 
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
+    float *recon);
 
 void gridrec_init(
     data_pars *dpar,
     grid_pars *gpar);
 
 void gridrec_main(
-    float *data, 
+    float ***data, 
     data_pars *dpar, 
-    float *recon, 
-    recon_pars *rpar);
-
-void gridrec(
-    float *data, 
-    data_pars *dpar, 
-    float *recon, 
-    grid_pars *gpar);
+    float ***recon);
 
 void gridrec_free(void);
 
-
 float*** convert(float *arr, int dim0, int dim1, int dim2);
 float (*get_filter(char *name))(float);
-void get_pswf(float C, pswf_struct **P);
+float *malloc_vector_f(long n);
+complex *malloc_vector_c(long n);
+complex **malloc_matrix_c(long nr, long nc);
+void set_filter_tables(long pd, float fac, float(*pf)(float), complex *A);
+void set_trig_tables(data_pars *dpars, float **SP, float **CP);
+void set_pswf_tables(float C, int nt, float lmbda, float *coefs, long ltbl, long linv, float* wtbl, float* winv);
+float legendre(int n, float *coefs, float x);
 
+// Defined in fft.c (FFT routines from Numerical Recipes)
+void four1(float data[], unsigned long nn, int isign);
+void fourn(float data[], unsigned long nn[], int ndim, int isign);
 
-// FFT routines from Numerical Recipes
-
-void 
-four1(
-    float data[], 
-    unsigned long nn, 
-    int isign);
-
-void 
-fourn(
-    float data[], 
-    unsigned long nn[], 
-    int ndim, 
-    int isign);
-
-#endif

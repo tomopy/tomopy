@@ -249,16 +249,37 @@ def _init_recon(
     return data, dpars, recon, rpars
 
 
-def gridrec(*args, **kwargs):
+def gridrec(
+        data, theta, center=None,
+        num_gridx=None, num_gridy=None, recon=None):
     """
     Regridding algorithm.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz/2.
+
+    # Init recon matrix.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    
+    recon = 1e-6*np.ones((dy, dz, dz), dtype='float32')
+    data = np.array(data, dtype='float32')
+    theta = np.array(theta, dtype='float32')
+    center = np.array(center, dtype='float32')
+            
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.gridrec_main.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.gridrec_main(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+    libtomopy_recon.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
+    libtomopy_recon.gridrec(
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p))
     return recon
 
 
