@@ -19,7 +19,7 @@ Feel free to edit as you see fit!
    quickstart
    userguide
    developer
-   api
+   apidoc/tomopy
    questions
    credits
 
