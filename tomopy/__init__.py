@@ -49,7 +49,7 @@
 from __future__ import absolute_import, division, print_function
 
 from tomopy.io import *
-from tomopy.io.recipes import *
+from tomopy.io.recipe import *
 from tomopy.io.data import *
 from tomopy.io.phantom import *
 from tomopy.misc.morph import *

@@ -16,23 +16,10 @@
 import sys
 import os
 
-from mock import Mock as MagicMock
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
-
-MOCK_MODULES = [
-    'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 
-    'matplotlib.pylab', 'scikit-image', 'skimage.io', 'numpydoc']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath(os.path.join('..')))
-sys.path.insert(0, os.path.abspath(os.path.join('..', 'io')))
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -304,6 +291,36 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #ztexinfo_no_detailmenu = False
+
+# picked from http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules  # noqa
+class Mock(object):
+
+    __all__ = []
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock()
+
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name == 'c_byte':
+            return 0
+        else:
+            return Mock()
+
+MOCK_MODULES = [
+    'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 'ctypes',
+    'matplotlib.pylab', 'scikit-image', 'skimage.io', 'numpydoc', 
+    'scipy.ndimage', 'pywt', 'scipy.optimize', 'skimage',
+    'skimage.filter', 'skimage.morphology']
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
+
 
 # To turn-off the warnings at object generation.
 numpydoc_show_class_members = False
