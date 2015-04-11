@@ -36,4 +36,4 @@ test:
 about:
   home: http://tomopy.readthedocs.org
   license: BSD
-  summary: 'X-ray imaging toolbox'
+  summary: 'Tomographic reconstruction in Python'
