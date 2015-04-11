@@ -41,8 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _utils_h
-#define _utils_h
+#ifndef _recon_h
+#define _recon_h
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@
 typedef struct 
 {
     int ox;
-    int oy; 
+    int oy;
     int oz;
 } obj_pars;
 
@@ -180,10 +180,13 @@ sirt(
 
 void 
 preprocessing(
-    int ry, int rz, 
+    int ry, 
+    int rz, 
     int dz, 
-    float center, float *mov, 
-    float *gridx, float *gridy);
+    float center, 
+    float *mov, 
+    float *gridx, 
+    float *gridy);
 
 bool 
 calc_quadrant(
@@ -191,41 +194,64 @@ calc_quadrant(
 
 void 
 calc_coords(
-    int ry, int rz,
-    float xi, float yi,
-    float sin_p, float cos_p,
-    float *gridx, float *gridy,
-    float *coordx, float *coordy);
+    int ry, 
+    int rz,
+    float xi, 
+    float yi,
+    float sin_p, 
+    float cos_p,
+    float *gridx, 
+    float *gridy,
+    float *coordx, 
+    float *coordy);
 
 void 
 trim_coords(
-    int ry, int rz,
-    float *coordx, float *coordy, 
-    float *gridx, float *gridy, 
-    int *asize, float *ax, float *ay, 
-    int *bsize, float *bx, float *by);
+    int ry, 
+    int rz,
+    float *coordx, 
+    float *coordy, 
+    float *gridx, 
+    float *gridy, 
+    int *asize, 
+    float *ax, 
+    float *ay, 
+    int *bsize, 
+    float *bx, 
+    float *by);
 
 void 
 sort_intersections(
     int ind_condition, 
-    int asize, float *ax, float *ay, 
-    int bsize, float *bx, float *by, 
+    int asize, 
+    float *ax, 
+    float *ay, 
+    int bsize, 
+    float *bx, 
+    float *by, 
     int *csize, 
-    float *coorx, float *coory);
+    float *coorx, 
+    float *coory);
 
 void 
 calc_dist(
-    int ry, int rz, 
+    int ry, 
+    int rz, 
     int csize, 
-    float *coorx, float *coory, 
+    float *coorx, 
+    float *coory, 
     int *indi, 
     float *dist);
 
 void 
 calc_simdata(
-    int p, int s, int d, 
-    int ry, int rz, 
-    int dy, int dz, 
+    int p, 
+    int s, 
+    int d, 
+    int ry, 
+    int rz, 
+    int dy, 
+    int dz, 
     int csize, 
     int *indi, 
     float *dist, 

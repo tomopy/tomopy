@@ -42,66 +42,40 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "gridrec.h"
-
-
-static int dx, dy, dz;
-static long pdim, M, M0, M02, ltbl;
-static float L;
-static float *SINE, *COSE, *wtbl, *work, *winv;
-static complex *sino, *filphase, **H;
-
+#include "fft.h"
 
 
 void 
 gridrec(
     float *data, int dx, int dy, int dz, 
-    float center, float* theta, float *recon)
+    float center, float* proj_angle, 
+    float *recon, int ngridx, int ngridy, char *fname)
 {
-    data_pars dpars;
-    grid_pars gpars;
-
-    dpars.dx = dx;
-    dpars.dy = dy;
-    dpars.dz = dz;
-    dpars.center = center;
-    dpars.proj_angle = theta;
-
-    gpars.filter = get_filter(gpars.fname);
-
-    float ***data3d = convert(data, dx, dy, dz);
-    float ***recon3d = convert(recon, dy, dz, dz);
-    
-    gridrec_init(&dpars, &gpars);
-    gridrec_main(data3d, &dpars, recon3d);
-    gridrec_free();
-}
-
-
-void 
-gridrec_init(data_pars *dpars, grid_pars *gpars)
-{
-    float center;
+    int s, p, iu, iv;
     float (*filter)(float);
-    long itmp;
-    
+    float ***data3d, ***recon3d;
+    float *sine, *cose, *wtbl, *work, *winv;
+    float C, nt, lambda;
+    float L;
+    int ltbl = 512;
+    int itmp, pdim, M02;
+    complex *sino, *filphase, **H;
 
-    dx = dpars->dx;
-    dy = dpars->dy;
-    dz = dpars->dz;
-    center = dpars->center; 
-    
-    filter = gpars->filter;
-    ltbl = LTBL_DEF;
+    data3d = convert(data, dx, dy, dz);
+    recon3d = convert(recon, dy, ngridx, ngridy);
 
-    float C = 4.0;
-    int nt = 16;
-    float lmbda = 0.99588549;
-    float coefs[15] = {
-         0.5239891E+01, -0.5308499E+01,  0.1184591E+01, 
-        -0.1230763E-00,  0.7371623E-02, -0.2864074E-03,
-         0.7789983E-05, -0.1564700E-06,  0.2414647E-08};
+    filter = get_filter(fname);
+
+    C = 7.0;
+    nt = 20;
+    lambda = 0.99998546;
+    float coefs[11] = {
+         0.5767616E+02, -0.8931343E+02,  0.4167596E+02,
+        -0.1053599E+02,  0.1662374E+01, -0.1780527E-00,
+         0.1372983E-01, -0.7963169E-03,  0.3593372E-04,
+        -0.1295941E-05,  0.3817796E-07};
     
-    // Compute pdim = next power of 2 >=dz
+    // Compute pdim = next power of 2 >= dz
     pdim = 1;
     itmp = dz-1;
     while(itmp)
@@ -110,46 +84,35 @@ gridrec_init(data_pars *dpars, grid_pars *gpars)
         itmp >>= 1;
     }
 
-    M = pdim;
-    M0 = pdim-1;
     M02 = pdim/2-1;
     L = (int)2*C/PI;
 
     // Allocate storage for various arrays.
     sino = malloc_vector_c(pdim); 
-    filphase = malloc_vector_c(pdim / 2);   
+    filphase = malloc_vector_c(pdim/2);   
     H = malloc_matrix_c(pdim, pdim);
-    wtbl = malloc_vector_f(ltbl + 1);
-    winv = malloc_vector_f(pdim - 1);
-    work = malloc_vector_f((int)2*C/PI + 1);
+    wtbl = malloc_vector_f(ltbl+1);
+    winv = malloc_vector_f(pdim-1);
+    work = malloc_vector_f(L+1);
 
     // Set up table of sines and cosines.
-    set_trig_tables(dpars, &SINE, &COSE);
+    set_trig_tables(dx, proj_angle, &sine, &cose);
 
     // Set up table of combined filter-phase factors.
-    set_filter_tables(pdim, center, filter, filphase);           
+    set_filter_tables(dx, pdim, center, filter, filphase);           
 
     // Set up PSWF lookup tables.
-    set_pswf_tables(C, nt, lmbda, coefs, ltbl, M02, wtbl, winv);
-}
+    set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
-
-void 
-gridrec_main(
-    float*** data, data_pars *dpars, 
-    float*** recon)
-{
     // For each slice.
-    for(long s=0; s<dy-1; s+=2)
+    for(s=0; s<dy-1; s+=2)
     {
-        printf("slices [%d]: %lu, %lu \n", dy, s, s+1);
-
         // First clear the array H
-        for(long u=0; u<M; u++) 
+        for(iu=0; iu<pdim; iu++) 
         {
-            for(long v=0; v<M; v++)
+            for(iv=0; iv<pdim; iv++)
             {
-                H[u][v].r = H[u][v].i = 0.0;
+                H[iu][iv].r = H[iu][iv].i = 0.0;
             }
         }
 
@@ -197,23 +160,21 @@ gridrec_main(
         // an additional correction -- See Phase 3 below.
 
         complex Cdata1, Cdata2, Ctmp;
-        // float U, V, rtmp, L2 = (int)gpars->pswf->C/PI;
-        float U, V, rtmp, L2 = (int)4/PI;
+        float U, V, rtmp, L2 = (int)C/PI;
         float convolv, tblspcg = 2*ltbl/L;
 
-        long pdim2 = pdim >> 1, M2 = M >> 1;
-        long iul, iuh, iu, ivl, ivh, iv, p;
+        int pdim2 = pdim >> 1, M2 = pdim >> 1;
+        int iul, iuh, iu, ivl, ivh, iv;
+        int j, k;
 
         // For each projection
         for(p=0; p<dx; p++)
         {
-            int j, k;
-
             j = 0;
             while(j<dz)  
             {     
-                sino[j].r = data[p][s][j];
-                sino[j].i = data[p][s+1][j];
+                sino[j].r = data3d[p][s][j];
+                sino[j].i = data3d[p][s+1][j];
                 j++;
             }
 
@@ -237,15 +198,15 @@ gridrec_main(
                 Ctmp.i = -Ctmp.i;
                 Cmult(Cdata2, Ctmp, sino[pdim-j])
 
-                U = (rtmp=j) * COSE[p] + M2;
-                V = rtmp * SINE[p] + M2;
+                U = (rtmp=j) * cose[p] + M2;
+                V = rtmp * sine[p] + M2;
 
                 // Note freq space origin is at (M2,M2), but we
                 // offset the indices U, V, etc. to range from 0 to M-1.
                 iul = ceil(U-L2); iuh=floor(U+L2);
                 ivl = ceil(V-L2); ivh=floor(V+L2);
-                if(iul<1)iul = 1; if(iuh>=M)iuh = M-1; 
-                if(ivl<1)ivl = 1; if(ivh>=M)ivh = M-1; 
+                if(iul<1)iul = 1; if(iuh>=pdim)iuh = pdim-1; 
+                if(ivl<1)ivl = 1; if(ivh>=pdim)ivh = pdim-1; 
 
                 // Note aliasing value (at index=0) is forced to zero.
                 for(iv=ivl, k=0; iv<=ivh; iv++, k++) {
@@ -260,8 +221,8 @@ gridrec_main(
                         convolv = rtmp*work[k];
                         H[iu][iv].r += convolv*Cdata1.r;
                         H[iu][iv].i += convolv*Cdata1.i;
-                        H[M-iu][M-iv].r += convolv*Cdata2.r;
-                        H[M-iu][M-iv].i += convolv*Cdata2.i;
+                        H[pdim-iu][pdim-iv].r += convolv*Cdata2.r;
+                        H[pdim-iu][pdim-iv].i += convolv*Cdata2.i;
                     }
                 }
             }
@@ -278,7 +239,7 @@ gridrec_main(
         // (resp. left [X<0]) half of the image.
 
         unsigned long H_size[2];
-        H_size[0] = H_size[1] = M;
+        H_size[0] = H_size[1] = pdim;
         fourn((float*)(*H)-1, H_size-1, 2, -1);  
 
         // Copy the real and imaginary parts of the complex data from H[][],
@@ -314,65 +275,63 @@ gridrec_main(
         // convert to inverse cm (say), one must divide the data by the detector 
         // spacing in cm.
 
-        long j, k, ustart, vstart, ufin, vfin;
+        int ustart, vstart, ufin, vfin;
         float corrn_u, corrn;
-        long pad = (M-dz)/2;
-        long offset = M02+1-pad;
+        int padx = (pdim-ngridx)/2;
+        int pady = (pdim-ngridy)/2;
+        int offsetx = M02+1-padx;
+        int offsety = M02+1-pady;
 
-        ustart = M-offset;
-        ufin = M;
+        ustart = pdim-offsety;
+        ufin = pdim;
         j = 0;
-        while(j<dz)
+        while(j<ngridy)
         {
             for(iu=ustart; iu<ufin; j++, iu++)
             {
-                corrn_u = winv[j+pad];
-                vstart = M-offset;
-                vfin = M;
+                corrn_u = winv[j+pady];
+                vstart = pdim-offsetx;
+                vfin = pdim;
                 k = 0;
-                while(k<dz)
+                while(k<ngridx)
                 {
                     for(iv=vstart; iv<vfin; k++, iv++)
                     {
-                        corrn = corrn_u*winv[k+pad]; 
-                        recon[s][j][k] = corrn*H[iu][iv].r;
-                        recon[s+1][j][k] = corrn*H[iu][iv].i;
+                        corrn = corrn_u*winv[k+padx]; 
+                        recon3d[s][ngridx-1-k][j] = corrn*H[iu][iv].r;
+                        recon3d[s+1][ngridx-1-k][j] = corrn*H[iu][iv].i;
                     }
-                    if(k<dz)
+                    if(k<ngridx)
                     {
                         vstart = 0;
-                        vfin = dz-offset;
+                        vfin = ngridx-offsetx;
                     }
                 }
             }
-            if(j<dz) 
+            if(j<ngridy) 
             {
                 ustart = 0;
-                ufin = dz-offset;
+                ufin = ngridy-offsety;
             }
         }
     }
-    return;
-}
 
-
-void 
-gridrec_free(void)
-{
-    free(SINE);
-    free(COSE);
+    free(sine);
+    free(cose);
     free(sino);
     free(filphase);
     free(wtbl);
     free(winv);
     free(work);
     free_matrix(H);
+
+    return;
 }
 
 
 void 
 set_filter_tables(
-    long pd, float center, 
+    int dx, int pd, float center, 
     float(*pf)(float), complex *A)
 { 
     // Set up the complex array, filphase[], each element of which
@@ -380,7 +339,7 @@ set_filter_tables(
     // (*pf)()], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments in do_recon(), above.
 
-    long j, pd2 = pd>>1;
+    int j, pd2 = pd >> 1;
     float x, rtmp1 = 2*PI*center/pd, rtmp2;
     float norm = PI/pd/dx;
 
@@ -396,15 +355,15 @@ set_filter_tables(
 
 void 
 set_pswf_tables(
-    float C, int nt, float lmbda, float *coefs, long ltbl, long linv, 
-    float* wtbl, float* winv)                                            
+    float C, int nt, float lambda, float *coefs, 
+    int ltbl, int linv, float* wtbl, float* winv)                                            
 {
     // Set up lookup tables for convolvent (used in Phase 1 of   
     // do_recon()), and for the final correction factor (used in 
     // Phase 3).
 
+    int i;
     float polyz, norm, fac;
-    long i;
      
     polyz = legendre(nt, coefs, 0.);
 
@@ -419,7 +378,7 @@ set_pswf_tables(
     // norm^2.  This incorporates the normalization of the 2D
     // inverse FFT in Phase 2 as well as scale factors involved
     // in the inverse Fourier transform of the convolvent.
-    norm = sqrt(PI/2/C/lmbda) / 1.2;
+    norm = sqrt(PI/2/C/lambda) / 1.2;
 
     winv[linv] = norm / Cnvlvnt(0.);
     for(i=1; i<=linv; i++)
@@ -434,25 +393,24 @@ set_pswf_tables(
 
 
 void 
-set_trig_tables(data_pars *dpars, float **SP, float **CP)
+set_trig_tables(int dx, float *proj_angle, float **sine, float **cose)
 {
     // Set up tables of sines and cosines.
-    int j, dx = dpars->dx;
-    float *S, *C;
+    float *s, *c;
 
-    *SP = S = malloc_vector_f(dx);
-    *CP = C = malloc_vector_f(dx);
+    *sine = s = malloc_vector_f(dx);
+    *cose = c = malloc_vector_f(dx);
 
-    for(j=0; j<dx; j++)
+    for(int j=0; j<dx; j++)
     {
-        S[j] = sinf(dpars->proj_angle[j]);
-        C[j] = cosf(dpars->proj_angle[j]);
+        s[j] = sinf(proj_angle[j]);
+        c[j] = cosf(proj_angle[j]);
     }
 }
 
 
 float 
-legendre(int n,float *coefs, float x)
+legendre(int n, float *coefs, float x)
 {
     // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
     // where P(j,x) is the jth Legendre polynomial.
@@ -547,9 +505,17 @@ malloc_matrix_c(long nr, long nc)
 }
 
 
+// No filter
+float 
+filter_none(float x)
+{
+    return 1;
+}
+
+
 // Shepp-Logan filter
 float 
-shlo(float x)
+filter_shepp(float x)
 {
     return abs(sin(PI*x)/PI);
 }
@@ -557,7 +523,7 @@ shlo(float x)
 
 // Hann filter 
 float 
-hann(float x)
+filter_hann(float x)
 {
     return abs(x)*0.5*(1.+cos(2*PI*x));
 }
@@ -565,41 +531,38 @@ hann(float x)
 
 // Hamming filter 
 float 
-hamm(float x)
+filter_hamming(float x)
 {
     return abs(x)*(0.54+0.46*cos(2*PI*x));
 }
 
-// Ramp filter
+// Ramlak filter
 float 
-ramp(float x)
+filter_ramlak(float x)
 {
     return abs(x);
 }
 
-struct 
-{
-    char* name; 
-    float (*fp)(float);
-} fltbl[] = {
-    {"shlo",shlo}, // Default
-    {"shepp",shlo},
-    {"hann",hann},
-    {"hamm",hamm},
-    {"hamming",hamm},
-    {"ramp",ramp},
-    {"ramlak",ramp}
-};
-
 
 float (*get_filter(char *name))(float) 
 {
-    for(int i=0; i<LEN_FTBL; i++)
+    struct 
+    {
+        char* name; 
+        float (*fp)(float);
+    } fltbl[] = {
+        {"none", filter_none},
+        {"shepp", filter_shepp}, // Default
+        {"hann", filter_hann},
+        {"hamming", filter_hamming},
+        {"ramlak", filter_ramlak}};
+
+    for(int i=0; i<5; i++)
     {
         if(!strcmp(name, fltbl[i].name))
         {
             return fltbl[i].fp;
         }
     }
-    return fltbl[0].fp;   
+    return fltbl[1].fp;   
 }

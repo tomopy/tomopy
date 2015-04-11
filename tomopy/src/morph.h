@@ -41,7 +41,14 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
+// Module for data morphing.
+
+#ifndef _morph_h
+#define _morph_h
+
 #include <stdio.h>
+#include <math.h>
+
 
 #ifdef WIN32
 #define DLL __declspec(dllexport)
@@ -51,55 +58,33 @@
 
 
 DLL void 
-correct_air(
-    float* data, int nprojs, 
-    int nslices, int npixels, int nair) 
-{
-                       
-    int n, m, i, j, iproj;
-    double air_left, air_right, air_slope, air;
+apply_padding(
+    float* data, 
+    int dx, int dy, int dz, 
+    int npad, float* out);
 
-    for (m = 0; m < nprojs; m++) 
-    {
-        iproj = m * (npixels * nslices);
-            
-        for (n = 0; n < nslices; n++) 
-        {
-            i = iproj + n * npixels;
+DLL void 
+downsample2d(
+    float* data, 
+    int dx, int dy, int dz,
+    int level, float* out);
 
-            for (j = 0, air_left = 0, air_right = 0; j < nair; j++) 
-            {
-                air_left += data[i+j];
-                air_right += data[i+npixels-1-j];
-            }
-            
-            air_left /= (float)nair;
-            air_right /= (float)nair;
-            
-            if (air_left <= 0.) 
-            {
-                air_left = 1.;
-            }
-            if (air_right <= 0.) 
-            {
-                air_right = 1.;
-            }
-            
-            air_slope = (air_right - air_left) / (npixels - 1);
+DLL void 
+downsample3d(
+    float* data, 
+    int dx, int dy, int dz,
+    int level, float* out);
 
-            for (j = 0; j < npixels; j++) 
-            {
-                air = air_left + air_slope*j;
-                data[i+j] = data[i+j] / air;
-            }
-        }
-    }
-}
+DLL void 
+upsample2d(
+    float* data, 
+    int dy, int dz,
+    int level, float* out);
 
+DLL void 
+upsample3d(
+    float* data, 
+    int dy, int dz,
+    int level, float* out);
 
-
-
-
-
-
-
+#endif
