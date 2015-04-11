@@ -41,96 +41,25 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gridrec_h
-#define _gridrec_h
+// FFT routines from Numerical Recipes
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef _fft_h
+#define _fft_h
+
 #include <math.h>
-#include <stddef.h>
-#include <time.h>
-#include <sys/stat.h>
 
-
-#ifdef WIN32
-#define DLL __declspec(dllexport)
-#else
-#define DLL 
-#endif
-#define ANSI
-#define max(A,B) ((A)>(B)?(A):(B))
-#define min(A,B) ((A)<(B)?(A):(B))
-#define free_matrix(A) (free(*(A)),free(A))
-#define abs(A) ((A)>0 ?(A):-(A))
-#define PI 3.14159265359
-#define Cnvlvnt(X) (wtbl[(int)(X+0.5)])    
-#define Cmult(A,B,C) {(A).r=(B).r*(C).r-(B).i*(C).i;\
-             (A).i=(B).r*(C).i+(B).i*(C).r;}
-
-
-typedef struct {
-    float r;
-    float i;
-} complex;
 
 void 
-gridrec(
-    float *data,
-    int dx, int dy, int dz,
-    float center,
-    float *theta,
-    float *recon,
-    int ngridx, int ngridy,
-    char name[16]);
-
-float*** 
-convert(float *arr, int dim0, int dim1, int dim2);
-
-float* 
-malloc_vector_f(long n);
-
-complex* 
-malloc_vector_c(long n);
-
-complex**
-malloc_matrix_c(long nr, long nc);
-
-float 
-(*get_filter(char *name))(float);
-
-float 
-filter_none(float);
-
-float 
-filter_shepp(float);
-
-float 
-filter_hann(float);
-
-float 
-filter_hamming(float);
-
-float 
-filter_ramlak(float);
+four1(
+    float data[], 
+    unsigned long nn, 
+    int isign);
 
 void 
-set_filter_tables(
-    int dx, int pd, 
-    float fac, float(*pf)(float), 
-    complex *A);
-
-void 
-set_trig_tables(
-    int dx, float *proj_angle, 
-    float **SP, float **CP);
-
-void 
-set_pswf_tables(
-    float C, int nt, float lmbda, float *coefs, 
-    int ltbl, int linv, float* wtbl, float* winv);
-
-float 
-legendre(int n, float *coefs, float x);
+fourn(
+    float data[], 
+    unsigned long nn[], 
+    int ndim, 
+    int isign);
 
 #endif

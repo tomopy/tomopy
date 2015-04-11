@@ -61,22 +61,18 @@ import pywt
 import logging
 import os
 import ctypes
-import tomopy.multiprocess as mp
+import tomopy.misc.multiprocess as mp
 from scipy.ndimage import filters
 
 
 __docformat__ = 'restructuredtext en'
-__all__ = ['apply_padding',
-           'normalize',
-           'stripe_removal',
-           'phase_retrieval',
-           'zinger_removal',
+__all__ = ['normalize',
+           'remove_stripe',
+           'retrieve_phase',
+           'remove_zinger',
            'median_filter',
            'circular_roi',
-           'focus_region',
-           'correct_air',
-           'downsample2d',
-           'downsample3d']
+           'correct_air']
 
 
 BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
@@ -84,18 +80,23 @@ SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
 
 
-# Get the path and import the C-shared library.
-try:
-    if os.name == 'nt':
-        libpath = os.path.join(
-            os.path.dirname(__file__), 'lib/libtomopy_prep.pyd')
-        libtomopy_prep = ctypes.CDLL(os.path.abspath(libpath))
-    else:
-        libpath = os.path.join(
-            os.path.dirname(__file__), 'lib/libtomopy_prep.so')
-        libtomopy_prep = ctypes.CDLL(os.path.abspath(libpath))
-except OSError as e:
-    pass
+def import_shared_lib(lname):
+    """
+    Import the C-shared library.
+    """
+    try:
+        if os.name == 'nt':
+            lname = 'lib/' + lname + '.pyd'
+            libpath = os.path.join(os.path.dirname(__file__), lname)
+            return ctypes.CDLL(os.path.abspath(libpath))
+        else:
+            lname = 'lib/' + lname + '.so'
+            libpath = os.path.join(os.path.dirname(__file__), lname)
+            return ctypes.CDLL(os.path.abspath(libpath))
+    except OSError as e:
+        pass
+
+libtomopy_prep = import_shared_lib('libtomopy_prep')
 
 
 def normalize(data, white, dark, cutoff=None, ind=None):
@@ -153,7 +154,7 @@ def normalize(data, white, dark, cutoff=None, ind=None):
         data[m, :, :] = proj
 
 
-def stripe_removal(
+def remove_stripe(
         data, level=None, wname='db5',
         sigma=2, pad=True, ind=None):
     """
@@ -244,7 +245,7 @@ def stripe_removal(
         data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
 
 
-def phase_retrieval(
+def retrieve_phase(
         data, psize=1e-4, dist=50,
         energy=20, alpha=1e-4, pad=True, ind=None):
     """
@@ -565,7 +566,7 @@ def median_filter(data, size=3, axis=0, ind=None):
                 data[:, :, m], (size, size))
 
 
-def zinger_removal(data, dif=1000, size=3, ind=None):
+def remove_zinger(data, dif=1000, size=3, ind=None):
     """
     Zinger removal.
 
@@ -641,128 +642,3 @@ def correct_air(data, air=10, ind=None):
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(air))
     return data
-
-
-def apply_padding(data, npad=None, val=0., ind=None):
-    """
-    Applies padding to each projection data.
-
-    Parameters
-    ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
-
-    npad : scalar, int32
-        New dimension of the projections
-        after padding.
-
-    val : scalar, float32
-        Pad value.
-
-    Returns
-    -------
-    padded : ndarray
-        Padded data.
-    """
-    dx, dy, dz = data.shape
-    if npad is None:
-        npad = np.ceil(dz * np.sqrt(2))
-    elif npad < dz:
-        npad = dz
-
-    npad = np.array(npad, dtype='int32')
-    padded = val * np.ones((dx, dy, npad), dtype='float32')
-
-    # Call C function.
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.apply_padding(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(npad),
-        padded.ctypes.data_as(c_float_p))
-    return padded
-
-
-def downsample2d(data, level=1):
-    """
-    Downsample the slices by binning.
-
-    Parameters
-    ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
-
-    level : scalar, int32
-        Downsampling level. For example level=2
-        means, the sinogram will be downsampled by 4,
-        and level=3 means upsampled by 8.
-
-    Returns
-    -------
-    output : ndarray
-        Downsampled 3-D tomographic data with dimensions:
-        [projections, slices/level^2, pixels]
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    binsize = np.power(2, level)
-    downdat = np.zeros(
-        (dx, dy, dz / binsize),
-        dtype='float32')
-
-    # Call C function.
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.downsample2d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(level),
-        downdat.ctypes.data_as(c_float_p))
-    return downdat
-
-
-def downsample3d(data, level=1):
-    """
-    Downsample the slices and pixels by binning.
-
-    Parameters
-    ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
-
-    level : scalar, int32
-        Downsampling level. For example level=2
-        means, the sinogram will be downsampled by 4,
-        and level=3 means upsampled by 8.
-
-    Returns
-    -------
-    downdat : ndarray
-        Downsampled 3-D tomographic data with dimensions:
-        [projections, slices/level^2, pixels/level^2]
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    downdat = np.zeros(
-        (dx, dy / binsize, dz / binsize),
-        dtype='float32')
-
-    # Call C function.
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.downsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.downsample3d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(level),
-        downdat.ctypes.data_as(c_float_p))
-    return downdat

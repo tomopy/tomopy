@@ -79,18 +79,23 @@ __all__ = [
     'sirt']
 
 
-# Get the path and import the C-shared library.
-try:
-    if os.name == 'nt':
-        libpath = os.path.join(
-            os.path.dirname(__file__), 'lib/libtomopy_recon.pyd')
-        libtomopy_recon = ctypes.CDLL(os.path.abspath(libpath))
-    else:
-        libpath = os.path.join(
-            os.path.dirname(__file__), 'lib/libtomopy_recon.so')
-        libtomopy_recon = ctypes.CDLL(os.path.abspath(libpath))
-except OSError as e:
-    pass
+def import_lib(lname):
+    """
+    Get the path and import the C-shared library.
+    """
+    try:
+        if os.name == 'nt':
+            lname = 'lib/' + lname + '.pyd'
+            libpath = os.path.join(os.path.dirname(__file__), lname)
+            return ctypes.CDLL(os.path.abspath(libpath))
+        else:
+            lname = 'lib/' + lname + '.so'
+            libpath = os.path.join(os.path.dirname(__file__), lname)
+            return ctypes.CDLL(os.path.abspath(libpath))
+    except OSError as e:
+        pass
+
+libtomopy_recon = import_lib('libtomopy_recon')
 
 
 class ObjectStruct(ctypes.Structure):
@@ -211,7 +216,7 @@ def _init_recon(
     if emission is None:
         emission = True
     if recon is None:
-        recon = 1e-6 * np.ones((dy, 2048, 2048), dtype='float32')
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
     if not isinstance(data, np.float32):
@@ -251,25 +256,32 @@ def _init_recon(
 
 def gridrec(
         data, theta, center=None,
-        num_gridx=None, num_gridy=None, recon=None):
+        num_gridx=None, num_gridy=None,
+        filter_name='shepp', recon=None):
     """
     Regridding algorithm.
     """
+    flag = False
+    if data.shape[1] == 1:
+        flag = True
+        data = np.append(data, data, 1)
+
     dx, dy, dz = data.shape
     if center is None:
-        center = dz/2.
+        center = dz / 2.
 
-    # Init recon matrix.
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
-    
-    recon = 1e-6*np.ones((dy, dz, dz), dtype='float32')
+
+    recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     data = np.array(data, dtype='float32')
     theta = np.array(theta, dtype='float32')
     center = np.array(center, dtype='float32')
-            
+    filter_name = np.array(filter_name, dtype=(str, 16))
+
+    c_char_p = ctypes.POINTER(ctypes.c_char)
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.gridrec(
@@ -279,7 +291,13 @@ def gridrec(
         ctypes.c_int(dz),
         ctypes.c_float(center),
         theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p))
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        filter_name.ctypes.data_as(c_char_p))
+
+    if flag is True:
+        recon = recon[0:1]
     return recon
 
 
