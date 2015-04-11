@@ -312,7 +312,7 @@ def upsample2d(data, level=1):
         [slices, pixels, pixels]
 
     level : scalar, int32
-        Upsampling level. For example level=2 
+        Upsampling level. For example level=2
         means, the sinogram will be upsampled by 4,
         and level=3 means upsampled by 8.
 
@@ -353,7 +353,7 @@ def upsample3d(data, level=1):
         [slices, pixels, pixels]
 
     level : scalar, int32
-        Upsampling level. For example level=2 
+        Upsampling level. For example level=2
         means, the sinogram will be upsampled by 4,
         and level=3 means upsampled by 8.
 
@@ -394,7 +394,7 @@ def upsample2df(data, level):
         [slices, pixels, pixels]
 
     level : scalar, int32
-        Upsampling level. For example level=2 
+        Upsampling level. For example level=2
         means, the sinogram will be upsampled by 4,
         and level=3 means upsampled by 8.
 
