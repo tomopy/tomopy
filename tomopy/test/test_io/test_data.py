@@ -96,7 +96,7 @@ def test_read_hdf5():
 
 
 def test_write_hdf5():
-    dest = 'tomopy/tests/youcandeleteme/'
+    dest = 'tomopy/test/youcandeleteme/'
     fname = dest + 'youcandeleteme'
     if os.path.exists(dest):
         shutil.rmtree(dest)
@@ -122,7 +122,7 @@ def test__suggest_new_fname():
 
 
 def test_write_tiff_stack():
-    dest = 'tomopy/tests/youcandeleteme/'
+    dest = 'tomopy/test/youcandeleteme/'
     fname = dest + 'youcandeleteme'
 
     arr = np.ones((1, 2, 3), dtype='float32')

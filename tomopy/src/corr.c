@@ -41,32 +41,48 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <stdio.h>
-#include <math.h>
+#include "corr.h"
 
-#ifdef WIN32
-#define DLL __declspec(dllexport)
-#else
-#define DLL 
-#endif
 
-DLL void apply_padding(float* data, int nprojs, 
-        int nslices, int npixels, 
-        int npad, float* padded_data) {
-    
-    int n, m, i, j, k, iproj, ipproj;
-    int pad_width = (int)(npad-npixels)/2;
-    
-    for (m = 0; m < nprojs; m++) {
-        iproj = m * (npixels * nslices);
-        ipproj = pad_width + m * (npad * nslices);
+DLL void 
+correct_air(
+    float* data, int dx, int dy, int dz, int nair) 
+{
+    int n, m, i, j, iproj;
+    double air_left, air_right, air_slope, air;
 
-        for (n = 0; n < nslices; n++) {
-            i = iproj + n * npixels;
-            j = ipproj + n * npad;
+    for (m = 0; m < dx; m++) 
+    {
+        iproj = m * (dz * dy);
+            
+        for (n = 0; n < dy; n++) 
+        {
+            i = iproj + n * dz;
 
-            for (k = 0; k < npixels; k++) {
-                padded_data[j+k] = data[i+k];
+            for (j = 0, air_left = 0, air_right = 0; j < nair; j++) 
+            {
+                air_left += data[i+j];
+                air_right += data[i+dz-1-j];
+            }
+            
+            air_left /= (float)nair;
+            air_right /= (float)nair;
+            
+            if (air_left <= 0.) 
+            {
+                air_left = 1.;
+            }
+            if (air_right <= 0.) 
+            {
+                air_right = 1.;
+            }
+            
+            air_slope = (air_right - air_left) / (dz - 1);
+
+            for (j = 0; j < dz; j++) 
+            {
+                air = air_left + air_slope*j;
+                data[i+j] = data[i+j] / air;
             }
         }
     }
