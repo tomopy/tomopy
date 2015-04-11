@@ -6,10 +6,7 @@ prep = Extension(
     name='tomopy.lib.libtomopy_prep',
     extra_compile_args=['-std=c99'],
     sources=[
-        'tomopy/src/correct_air.c',
-        'tomopy/src/apply_padding.c',
-        'tomopy/src/downsample.c'
-        ])
+        'tomopy/src/corr.c'])
 
 
 recon = Extension(
@@ -29,8 +26,14 @@ recon = Extension(
         'tomopy/src/ospml_quad.c',
         'tomopy/src/pml_hybrid.c',
         'tomopy/src/pml_quad.c',
-        'tomopy/src/sirt.c'
-        ])
+        'tomopy/src/sirt.c'])
+
+
+misc = Extension(
+    name='tomopy.lib.libtomopy_misc',
+    extra_compile_args=['-std=c99'],
+    sources=[
+        'tomopy/src/morph.c'])
 
 
 setup(
@@ -38,7 +41,7 @@ setup(
     packages=['tomopy'],
     package_data={'tomopy': ['data/*.tif']},
     version=open('VERSION').read().strip(),
-    ext_modules=[prep, recon],
+    ext_modules=[prep, recon, misc],
     include_package_data=True,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',
