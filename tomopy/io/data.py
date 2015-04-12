@@ -377,7 +377,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
         Determines the number of digits in indexing tiff images.
 
     ext : string
-        Specifies the extension of tiff files (e.g., tiff or tif). 
+        Specifies the extension of tiff files (e.g., tiff or tif).
 
     Returns
     -------
@@ -394,7 +394,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                out = skimage_io.imread(img, plugin='tifffile')
+                out = sio.imread(img, plugin='tifffile')
 
             if a == 0:
                 sx = ind.size
