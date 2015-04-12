@@ -48,10 +48,6 @@
 
 """
 Module for generating synthetic phantoms.
-
-:Authors: Doga Gursoy
-:Organization: Argonne National Laboratory
-
 """
 
 from __future__ import absolute_import, division, print_function

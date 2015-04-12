@@ -48,10 +48,6 @@
 
 """
 Module for pre-processing tasks.
-
-:Author: Doga Gursoy
-:Organization: Argonne National Laboratory
-
 """
 
 from __future__ import absolute_import, division, print_function
@@ -61,7 +57,7 @@ import pywt
 import logging
 import os
 import ctypes
-import tomopy.misc.multiprocess as mp
+import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
 
 

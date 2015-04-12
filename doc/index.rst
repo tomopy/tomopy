@@ -7,20 +7,17 @@ TomoPy is an open-sourced Python toolbox to perform tomographic data
 processing and image reconstruction tasks at the 
 `Advanced Photon Source <http://www.aps.anl.gov>`_.
 
-This guide has been created with `Sphinx <http://sphinx-doc.org>`_ and 
-maintained on `GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_. 
-Feel free to edit as you see fit!
+This guide is created with `Sphinx <http://sphinx-doc.org>`_ and 
+maintained on `GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    about
    install
-   quickstart
-   userguide
-   developer
-   apidoc/tomopy
-   questions
+   devguide
+   api/tomopy
+   faq
    credits
 
 
