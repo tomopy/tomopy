@@ -47,11 +47,7 @@
 # #########################################################################
 
 """
-Reconstruction module.
-
-:Author: Doga Gursoy
-:Organization: Argonne National Laboratory
-
+Module for reconstruction tasks.
 """
 
 from __future__ import absolute_import, division, print_function

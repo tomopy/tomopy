@@ -1,11 +1,11 @@
-=================
-Developer's guide
-=================
+===========
+Development
+===========
 
 This section explains the basics for developers who wish to contribute 
 to the TomoPy project.
 
-.. contents:: Contents
+.. contents:: Contents:
    :local:
 
 

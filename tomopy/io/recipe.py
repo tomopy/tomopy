@@ -47,11 +47,7 @@
 # #########################################################################
 
 """
-Module describing recipes for beamline/experiment specific data format.
-
-:Author: Doga Gursoy
-:Organization: Argonne National Laboratory
-
+Module for describing beamline/experiment specific data recipes.
 """
 
 from __future__ import absolute_import, division, print_function
