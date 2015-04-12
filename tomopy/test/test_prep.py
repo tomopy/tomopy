@@ -48,10 +48,37 @@
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.recon import *
+from tomopy.prep import *
 import numpy as np
 from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
 
+
+def test_normalize():
+    data = np.array(
+        [[[29, 85, 39, 45], 
+          [24, 53, 12, 89]],
+         [[25, 74, 63, 98], 
+          [63, 27, 43, 68]],
+         [[13, 65, 33, 12], 
+          [42, 33, 87, 16]]], dtype='float32')
+    white = np.array(
+        [[[52, 53, 51, 56], 
+          [24, 53, 12, 89]],
+         [[51, 52, 49, 50], 
+          [42, 33, 87, 16]]], dtype='float32')
+    dark = np.array(
+        [[[1, 3, 0, 4], 
+          [1, 0, 0, 2]]], dtype='float32')
+    ndata = np.array(
+        [[[0.55445546, 1.65656567, 0.77999997, 0.83673471],
+          [0.71875000, 1.23255813, 0.24242425, 1.72277224]],
+         [[0.47524753, 1.43434346, 1.25999999, 1.91836739],
+          [1.93750000, 0.62790698, 0.86868685, 1.30693066]],
+         [[0.23762377, 1.25252521, 0.66000003, 0.16326530],
+          [1.28125000, 0.76744187, 1.75757575, 0.27722773]]]
+          , dtype='float32')
+    assert_array_almost_equal(normalize(data, white, dark), ndata)
 
 if __name__ == '__main__':
     import nose
