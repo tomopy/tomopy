@@ -61,7 +61,7 @@ import pywt
 import logging
 import os
 import ctypes
-import tomopy.misc.multiprocess as mp
+import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
 
 

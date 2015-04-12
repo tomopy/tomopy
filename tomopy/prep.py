@@ -127,7 +127,7 @@ def normalize(data, white, dark, cutoff=None, ind=None):
     else:
         arr = mp.distribute_jobs(
             data, func=normalize, axis=0,
-            args=(data, white, dark, cutoff))
+            args=(white, dark, cutoff))
         return arr
 
     dx, dy, dz = data.shape

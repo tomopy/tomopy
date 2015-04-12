@@ -122,7 +122,7 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
         arr = []
         arr.append(func)
         arr.append("SHARED")
-        for a in str(args):
+        for a in args:
             arr.append(a)
         arr.append(range(ind_start, ind_end))
         arg.append(arr)
