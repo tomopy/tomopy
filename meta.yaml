@@ -29,7 +29,9 @@ test:
     - tomopy.io
     - tomopy.io.data
     - tomopy.io.phantom
-    - tomopy.io.recipes
+    - tomopy.io.recipe
+    - tomopy.misc.morph
+    - tomopy.misc.mproc
     - tomopy.prep
     - tomopy.recon
 
