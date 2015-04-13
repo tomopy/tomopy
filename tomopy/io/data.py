@@ -437,7 +437,7 @@ def write_tiff_stack(
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
 
-    dtype : bool
+    dtype : string
         The desired data-type for saved images.
 
     dmin, dmax : scalar
