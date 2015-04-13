@@ -53,6 +53,11 @@ import numpy as np
 from nose.tools import assert_equals
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)

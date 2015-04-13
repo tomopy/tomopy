@@ -58,6 +58,8 @@ import logging
 import h5py
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_aps1id',
            'read_aps2bm',
@@ -87,13 +89,13 @@ def read_aps2bm(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : 3-D array (float32)
+    data : 3D array (float32)
         Data array.
 
-    white : 3-D array (float32)
-        White (flat) field array.
+    white : 3D array (float32)
+        White field array.
 
-    dark : 3-D array (float32)
+    dark : 3D array (float32)
         Dark field array.
     """
     fname = os.path.abspath(fname)
@@ -132,10 +134,10 @@ def read_aps7bm(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : 3-D array (float32)
+    data : 3D array (float32)
         Data array.
 
-    theta : 1-D array (float32)
+    theta : 1D array (float32)
         Projection angles.
     """
     fname = os.path.abspath(fname)
@@ -172,7 +174,7 @@ def read_aps13id(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : 3-D array (float32)
+    data : 3D array (float32)
         Data array.
     """
     fname = os.path.abspath(fname)
@@ -209,13 +211,13 @@ def read_aps32id(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : 3-D array (float32)
+    data : 3D array (float32)
         Data array.
 
-    white : 3-D array (float32)
+    white : 3D array (float32)
         White (flat) field array.
 
-    dark : 3-D array (float32)
+    dark : 3D array (float32)
         Dark field array.
     """
     fname = os.path.abspath(fname)

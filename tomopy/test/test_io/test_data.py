@@ -57,6 +57,11 @@ import h5py
 from nose.tools import assert_equals
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
 def test_as_uint8():
     arr = np.arange(5, dtype='float32')
     out = as_uint8(arr)

@@ -58,6 +58,8 @@ import os
 import logging
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['baboon',
            'barbara',
@@ -72,16 +74,16 @@ __all__ = ['baboon',
 
 def baboon(dtype='float32'):
     """
-    Loads test baboon image array.
+    Load test baboon image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/baboon.tif"
@@ -93,16 +95,16 @@ def baboon(dtype='float32'):
 
 def barbara(dtype='float32'):
     """
-    Loads test Barbara image array.
+    Load test Barbara image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/barbara.tif"
@@ -114,16 +116,16 @@ def barbara(dtype='float32'):
 
 def cameraman(dtype='float32'):
     """
-    Loads test cameraman image array.
+    Load test cameraman image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/cameraman.tif"
@@ -135,16 +137,16 @@ def cameraman(dtype='float32'):
 
 def checkerboard(dtype='float32'):
     """
-    Loads test checkerboard image array.
+    Load test checkerboard image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
@@ -156,16 +158,16 @@ def checkerboard(dtype='float32'):
 
 def lena(dtype='float32'):
     """
-    Loads test Lena image array.
+    Load test Lena image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/lena.tif"
@@ -177,16 +179,16 @@ def lena(dtype='float32'):
 
 def peppers(dtype='float32'):
     """
-    Loads test peppers image array.
+    Load test peppers image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/peppers.tif"
@@ -198,16 +200,16 @@ def peppers(dtype='float32'):
 
 def shepp2d(dtype='float32'):
     """
-    Loads test Shepp-Logan image array.
+    Load test Shepp-Logan image array.
 
     Parameters
     ----------
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
@@ -219,19 +221,19 @@ def shepp2d(dtype='float32'):
 
 def shepp3d(shape=(128, 128, 128), dtype='float32'):
     """
-    Loads 3-D Shepp-Logan image array.
+    Load 3D Shepp-Logan image array.
 
     Parameters
     ----------
     shape : list
-        Shape of the 3-D data.
+        Shape of the 3D data.
 
     dtype : string
-       Data type for the image.
+        The desired data-type for the array.
 
     Returns
     -------
-    out : dnarray
+    out : 3D array
         Output test data
     """
     shepp_params = _array_to_params(_get_shepp_array())
@@ -257,12 +259,14 @@ def phantom(shape, params, dtype='float32'):
     Returns
     -------
     cube: ndarray
-        3-D ndarray filled with the specified ellipsoids.
+        3D ndarray filled with the specified ellipsoids.
     """
     # instantiate ndarray cube
     cube = np.zeros(shape, dtype=dtype)
+
     # define coords
     coords = _define_coords(shape)
+
     # recursively add ellipsoids to cube
     for param in params:
         _ellipsoid(param, out=cube, coords=coords)
@@ -289,15 +293,19 @@ def _ellipsoid(params, shape=None, out=None, coords=None):
         raise ValueError("input shape must be lower or equal to 3")
     if coords is None:
         coords = _define_coords(shape)
+
     # rotate coords
     coords = _transform(coords, params)
+
     # recast as ndarray
     coords = [np.asarray(u) for u in coords]
+
     # reshape coords
     x, y, z = coords
     x.resize(shape)
     y.resize(shape)
     z.resize(shape)
+
     # fill ellipsoid with value
     out[(x ** 2 + y ** 2 + z ** 2) <= 1.] += params['A']
     return out
@@ -327,7 +335,7 @@ def _rotation_matrix(p):
 
 def _define_coords(shape):
     """
-    Generate a tuple of coords in 3d with a given shape
+    Generate a tuple of coords in 3D with a given shape.
     """
     mgrid = np.lib.index_tricks.nd_grid()
     cshape = np.asarray(1j) * shape
@@ -337,8 +345,7 @@ def _define_coords(shape):
 
 def _transform(coords, p):
     """
-    Apply rotation, translation and rescaling to a 3-tuple of
-    coords.
+    Apply rotation, translation and rescaling to a 3-tuple of coords.
     """
     alpha = _rotation_matrix(p)
     x, y, z = coords

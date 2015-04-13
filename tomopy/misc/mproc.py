@@ -58,6 +58,8 @@ import ctypes
 from contextlib import closing
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['distribute_jobs']
 
@@ -68,20 +70,20 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
 
     Parameters
     ----------
-    func : srt
+    func : string
         Name of the function to be parallelized.
 
     args : list
-        Arguments to that function in a list.
+        Arguments of the function in a list.
 
     axis : scalar
-        The axis for slicing data.
+        Axis along which parallelization is performed.
 
     ncore : scalar, optional
-        Number of processor that will be assigned to jobs.
+        Number of available cores that will be assigned to jobs.
 
     nchunk : scalar, optional
-        Number of data size for each processor.
+        Number of data chunk size for each core.
 
     Returns
     -------
