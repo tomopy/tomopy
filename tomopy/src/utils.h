@@ -65,122 +65,169 @@
 #define DLL 
 #endif
 
-
-// Data structures
-
-typedef struct 
-{
-    int ox;
-    int oy; 
-    int oz;
-} obj_pars;
-
-typedef struct 
-{
-    int dx;
-    int dy;
-    int dz;
-    float center;
-    float *proj_angle;
-} data_pars;
-
-typedef struct 
-{
-    int num_iter;
-    float *reg_pars;
-    int rx;
-    int ry;
-    int rz;
-    float *ind_block;
-    int num_block;
-} recon_pars;
-
 // Data simulation
 
 void 
 simulate(
     float *obj,
-    obj_pars *opars,
+    int ox, 
+    int oy, 
+    int oz,
     float *data,
-    data_pars *dpars);
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta);
 
 // Reconstruction algorithms
 
 void 
 art(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter);
 
 void 
 bart(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    int num_block,
+    float *ind_block);
 
 void 
 fbp(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy);
 
 void 
 mlem(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter);
 
 void 
 osem(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    int num_block,
+    float *ind_block);
 
 void 
 ospml_hybrid(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    float *reg_pars,
+    int num_block,
+    float *ind_block);
 
 void 
 ospml_quad(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    float *reg_pars,
+    int num_block,
+    float *ind_block);
 
 void 
 pml_hybrid(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    float *reg_pars);
 
 void 
 pml_quad(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    float *reg_pars);
 
 void 
 sirt(
     float *data,
-    data_pars *dpars,
+    int dx, 
+    int dy, 
+    int dz,
+    float center,
+    float *theta,
     float *recon,
-    recon_pars *rpars);
+    int ngridx,
+    int ngridy,
+    int num_iter);
 
 // Utility functions for data simultation
 
 void 
 preprocessing(
-    int ry, int rz, 
+    int ngridx, int ngridy, 
     int dz, 
     float center, float *mov, 
     float *gridx, float *gridy);
@@ -191,7 +238,7 @@ calc_quadrant(
 
 void 
 calc_coords(
-    int ry, int rz,
+    int ngridx, int ngridy,
     float xi, float yi,
     float sin_p, float cos_p,
     float *gridx, float *gridy,
@@ -199,7 +246,7 @@ calc_coords(
 
 void 
 trim_coords(
-    int ry, int rz,
+    int ngridx, int ngridy,
     float *coordx, float *coordy, 
     float *gridx, float *gridy, 
     int *asize, float *ax, float *ay, 
@@ -215,7 +262,7 @@ sort_intersections(
 
 void 
 calc_dist(
-    int ry, int rz, 
+    int ngridx, int ngridy, 
     int csize, 
     float *coorx, float *coory, 
     int *indi, 
@@ -224,7 +271,7 @@ calc_dist(
 void 
 calc_simdata(
     int p, int s, int d, 
-    int ry, int rz, 
+    int ngridx, int ngridy, 
     int dy, int dz, 
     int csize, 
     int *indi, 

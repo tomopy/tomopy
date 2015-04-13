@@ -48,7 +48,7 @@
 void 
 gridrec(
     float *data, int dx, int dy, int dz, 
-    float center, float* proj_angle, 
+    float center, float* theta, 
     float *recon, int ngridx, int ngridy, char *fname)
 {
     int s, p, iu, iv;
@@ -96,7 +96,7 @@ gridrec(
     work = malloc_vector_f(L+1);
 
     // Set up table of sines and cosines.
-    set_trig_tables(dx, proj_angle, &sine, &cose);
+    set_trig_tables(dx, theta, &sine, &cose);
 
     // Set up table of combined filter-phase factors.
     set_filter_tables(dx, pdim, center, filter, filphase);           
@@ -393,7 +393,7 @@ set_pswf_tables(
 
 
 void 
-set_trig_tables(int dx, float *proj_angle, float **sine, float **cose)
+set_trig_tables(int dx, float *theta, float **sine, float **cose)
 {
     // Set up tables of sines and cosines.
     float *s, *c;
@@ -403,8 +403,8 @@ set_trig_tables(int dx, float *proj_angle, float **sine, float **cose)
 
     for(int j=0; j<dx; j++)
     {
-        s[j] = sinf(proj_angle[j]);
-        c[j] = cosf(proj_angle[j]);
+        s[j] = sinf(theta[j]);
+        c[j] = cosf(theta[j]);
     }
 }
 

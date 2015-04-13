@@ -46,29 +46,22 @@
 
 void 
 bart(
-    float *data, data_pars *dpars, 
-    float *recon, recon_pars *rpars)
+    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *recon, int ngridx, int ngridy, int num_iter, 
+    int num_block, float *ind_block)
 {
-    int dx, dy, dz, ry, rz;
-
-    dx = dpars->dx;
-    dy = dpars->dy;
-    dz = dpars->dz;
-    ry = rpars->ry;
-    rz = rpars->rz;
-
-    float *gridx = (float *)malloc((ry+1)*sizeof(float));
-    float *gridy = (float *)malloc((rz+1)*sizeof(float));
-    float *coordx = (float *)malloc((rz+1)*sizeof(float));
-    float *coordy = (float *)malloc((ry+1)*sizeof(float));
-    float *ax = (float *)malloc((ry+rz)*sizeof(float));
-    float *ay = (float *)malloc((ry+rz)*sizeof(float));
-    float *bx = (float *)malloc((ry+rz)*sizeof(float));
-    float *by = (float *)malloc((ry+rz)*sizeof(float));
-    float *coorx = (float *)malloc((ry+rz)*sizeof(float));
-    float *coory = (float *)malloc((ry+rz)*sizeof(float));
-    float *dist = (float *)malloc((ry+rz)*sizeof(float));
-    int *indi = (int *)malloc((ry+rz)*sizeof(int));
+    float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
+    float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordx = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordy = (float *)malloc((ngridx+1)*sizeof(float));
+    float *ax = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *ay = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *bx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *by = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coorx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
@@ -76,7 +69,7 @@ bart(
 
     int s, q, p, d, i, m, n, os;
     int quadrant;
-    float proj_angle, sin_p, cos_p;
+    float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
     float *simdata;
@@ -87,14 +80,14 @@ bart(
     float *update;
     int subset_ind1, subset_ind2;
 
-    preprocessing(ry, rz, dz, dpars->center, 
+    preprocessing(ngridx, ngridy, dz, center, 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-    for (i=0; i<rpars->num_iter; i++) 
+    for (i=0; i<num_iter; i++) 
     {
         printf("BART iteration : %i\n", i+1);
 
-        subset_ind1 = dx/rpars->num_block;
+        subset_ind1 = dx/num_block;
         subset_ind2 = subset_ind1;
 
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
@@ -103,28 +96,28 @@ bart(
         for (s=0; s<dy; s++) 
         {
             // For each ordered-subset num_subset
-            for (os=0; os<rpars->num_block+1; os++) 
+            for (os=0; os<num_block+1; os++) 
             {
-                if (os == rpars->num_block) 
+                if (os == num_block) 
                 {
-                    subset_ind2 = dx%rpars->num_block;
+                    subset_ind2 = dx%num_block;
                 }
 
-                sum_dist = (float *)calloc((ry*rz), sizeof(float));
-                update = (float *)calloc((ry*rz), sizeof(float));
+                sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
+                update = (float *)calloc((ngridx*ngridy), sizeof(float));
                 
                 // For each projection angle 
                 for (q=0; q<subset_ind2; q++) 
                 {
-                    p = rpars->ind_block[q+os*subset_ind1];
+                    p = ind_block[q+os*subset_ind1];
 
                     // Calculate the sin and cos values 
                     // of the projection angle and find
                     // at which quadrant on the cartesian grid.
-                    proj_angle = fmod(dpars->proj_angle[p], 2*M_PI);
-                    quadrant = calc_quadrant(proj_angle);
-                    sin_p = sinf(proj_angle);
-                    cos_p = cosf(proj_angle);
+                    theta_p = fmod(theta[p], 2*M_PI);
+                    quadrant = calc_quadrant(theta_p);
+                    sin_p = sinf(theta_p);
+                    cos_p = cosf(theta_p);
 
                     // For each detector pixel 
                     for (d=0; d<dz; d++) 
@@ -133,12 +126,12 @@ bart(
                         xi = -1e6;
                         yi = -(dz-1)/2.0+d+mov;
                         calc_coords(
-                            ry, rz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                            ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                             coordx, coordy);
 
                         // Merge the (coordx, gridy) and (gridx, coordy)
                         trim_coords(
-                            ry, rz, coordx, coordy, gridx, gridy, 
+                            ngridx, ngridy, coordx, coordy, gridx, gridy, 
                             &asize, ax, ay, &bsize, bx, by);
 
                         // Sort the array of intersection points (ax, ay) and
@@ -153,11 +146,11 @@ bart(
                         // intersection points (coorx, coory). Find the 
                         // indices of the pixels on the reconstruction grid.
                         calc_dist(
-                            ry, rz, csize, coorx, coory, 
+                            ngridx, ngridy, csize, coorx, coory, 
                             indi, dist);
 
                         // Calculate simdata 
-                        calc_simdata(p, s, d, ry, rz, dy, dz,
+                        calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
                             csize, indi, dist, recon,
                             simdata); // Output: simdata
 
@@ -184,9 +177,9 @@ bart(
                 }
 
                 m = 0;
-                for (n = 0; n < ry*rz; n++) {
+                for (n = 0; n < ngridx*ngridy; n++) {
                     if (sum_dist[n] != 0.0) {
-                        ind_recon = s*ry*rz;
+                        ind_recon = s*ngridx*ngridy;
                         recon[m+ind_recon] += update[m]/sum_dist[n];
                     }
                     m++;
