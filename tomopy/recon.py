@@ -59,6 +59,8 @@ import os
 import logging
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = [
     'simulate',
@@ -96,23 +98,23 @@ libtomopy_recon = import_lib('libtomopy_recon')
 
 def simulate(obj, theta, center=None):
     """
-    Simulates projection data for a given 3-D object.
+    Simulate parallel projections of a given 3D object.
 
     Parameters
     ----------
-    object : ndarray
-        Voxelized 3-D object.
+    obj : 3D array (int or float)
+        Voxelized object.
 
-    theta : 1-D array
-        Projection angles.
+    theta : 1D array (float)
+        Projection angles in radian.
 
-    center : scalar
-        Rotation center.
+    center : scalar (float)
+        Location of rotation axis.
 
     Returns
     -------
-    data : ndarray
-        Simulated 3-D projection data
+    data : 3D array (float)
+        Simulated tomographic data.
     """
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
@@ -151,9 +153,32 @@ def simulate(obj, theta, center=None):
 def gridrec(
         data, theta, center=None,
         num_gridx=None, num_gridy=None,
-        filter_name='shepp', recon=None):
+        filter_name='shepp'):
     """
-    Regridding algorithm.
+    Reconstruct object from projection data using gridrec algorithm.
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    filter_name : string
+        Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
+        or 'none'.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     # Gridrec reconstructs 2 slices minimum.
     flag = False
@@ -208,7 +233,36 @@ def art(
         data, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
-    Algebraic reconstruction technique.
+    Reconstruct object from projection data using algebraic reconstruction
+    technique (ART).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -257,7 +311,42 @@ def bart(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
-    Block algebraic reconstruction technique.
+    Reconstruct object from projection data using block algebraic
+    reconstruction technique (BART).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    num_block : scalar (int)
+        Number of data blocks for intermediate updating the object.
+
+    ind_block : 1D array (int)
+        Order of projections to be used for updating.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -313,7 +402,33 @@ def fbp(
         data, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None):
     """
-    Filtered backprojection.
+    Reconstruct object from projection data using filtered back
+    projection (FBP).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -360,7 +475,36 @@ def mlem(
         data, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
-    Maximum-likelihood expectation-maximization.
+    Reconstruct object from projection data using maximum-likelihood
+    expectation-maximization algorithm. (ML-EM).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -409,7 +553,42 @@ def osem(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
-    Ordered-subset expectation-maximization.
+    Reconstruct object from projection data using ordered-subset
+    expectation-maximization (OS-EM).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    num_block : scalar (int)
+        Number of data blocks for intermediate updating the object.
+
+    ind_block : 1D array (int)
+        Order of projections to be used for updating.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -466,8 +645,46 @@ def ospml_hybrid(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
-    Ordered-subset penalized maximum likelihood with weighted linear
-    and quadratic penalties.
+    Reconstruct object from projection data using ordered-subset
+    penalized maximum likelihood algorithm with weighted linear and
+    quadratic penalties.
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    reg_par : array with 2 elements (float)
+        Regularization hyperparameters as an array, (beta, delta).
+
+    num_block : scalar (int)
+        Number of data blocks for intermediate updating the object.
+
+    ind_block : 1D array (int)
+        Order of projections to be used for updating.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -529,7 +746,45 @@ def ospml_quad(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
-    Ordered-subset penalized maximum likelihood with quadratic penalty.
+    Reconstruct object from projection data using ordered-subset
+    penalized maximum likelihood algorithm with quadratic penalty.
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    reg_par : scalar (float)
+        Regularization parameter for smoothing.
+
+    num_block : scalar (int)
+        Number of data blocks for intermediate updating the object.
+
+    ind_block : 1D array (int)
+        Order of projections to be used for updating.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -592,8 +847,45 @@ def pml_hybrid(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
-    Penalized maximum likelihood with weighted linear and quadratic
-    penalties.
+    Reconstruct object from projection data using penalized maximum
+    likelihood algorithm with weighted linear and quadratic penalties.
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    reg_par : array with 2 elements (float)
+        Regularization hyperparameters as an array, (beta, delta).
+
+    num_block : scalar (int)
+        Number of data blocks for intermediate updating the object.
+
+    ind_block : 1D array (int)
+        Order of projections to be used for updating.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -647,7 +939,39 @@ def pml_quad(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
-    Penalized maximum likelihood with quadratic penalty.
+    Reconstruct object from projection data using penalized maximum
+    likelihood algorithm with quadratic penalty.
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    reg_par : scalar (float)
+        Regularization parameter for smoothing.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -700,7 +1024,36 @@ def sirt(
         data, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
-    Simultaneous iterative reconstruction technique.
+    Reconstruct object from projection data using simultaneous
+    iterative reconstruction technique (SIRT).
+
+    Parameters
+    ----------
+    data : 3D array (float)
+        Tomographic data.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+
+    center : scalar (float)
+        Location of rotation axis.
+
+    emission : bool
+        Determines whether data is emission or transmission type.
+
+    recon : 3D array (float)
+        Initial values of the reconstruction object.
+
+    num_gridx, num_gridy : scalar (int)
+        Number of pixels along x- and y-axes in the reconstruction grid.
+
+    num_iter : scalar (int)
+        Number of algorithm iterations performed.
+
+    Returns
+    -------
+    recon : 3D array (float32)
+        Reconstructed object.
     """
     dx, dy, dz = data.shape
     if center is None:

@@ -61,6 +61,8 @@ import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['apply_pad',
            'focus_region',
@@ -90,84 +92,81 @@ def import_shared_lib(lname):
 libtomopy_misc = import_shared_lib('libtomopy_misc')
 
 
-def apply_pad(data, npad=None, val=0., ind=None):
+def apply_pad(arr, npad=None, val=0.):
     """
-    Applies padding to each projection data.
+    Extend size of a 3D array by padding with specified values.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    arr : 3D array (int or float)
+        Arbitrary 3D array.
 
-    npad : scalar, int32
-        New dimension of the projections
-        after padding.
+    npad : scalar (int)
+        New dimensions after padding.
 
-    val : scalar, float32
+    val : scalar (float)
         Pad value.
 
     Returns
     -------
-    padded : ndarray
-        Padded data.
+    out : 3D array (float32)
+        Padded array.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = arr.shape
     if npad is None:
         npad = np.ceil(dz * np.sqrt(2))
     elif npad < dz:
         npad = dz
 
     npad = np.array(npad, dtype='int32')
-    padded = val * np.ones((dx, dy, npad), dtype='float32')
+    out = val * np.ones((dx, dy, npad), dtype='float32')
 
-    # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_prep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_prep.apply_padding(
-        data.ctypes.data_as(c_float_p),
+        arr.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(npad),
-        padded.ctypes.data_as(c_float_p))
-    return padded
+        out.ctypes.data_as(c_float_p))
+    return out
 
 
 def focus_region(
-        data, xcoord=0, ycoord=0,
-        dia=256, center=None, pad=False, corr=True):
+        data, xcoord=0, ycoord=0, dia=256,
+        center=None, pad=False, corr=True):
     """
-    Uses only a portion of the sinogram for reconstructing
-    a circular region of interest (ROI).
+    Trims sinogram for reconstructing a circular region of interest (ROI).
 
     Note: Only valid for 0-180 degree span data.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    xcoord, ycoord : scalar
-        X- and Y-coordinates of the center
-        location of the circular ROI.
+    xcoord, ycoord : scalar (float)
+        x- and y-coordinates of the center location of the circular
+        ROI in reconstruction image.
 
-    dia : scalar
-        dia of the circular ROI.
+    dia : scalar (float)
+        Diameter of the circular ROI.
 
-    center : scalar
-        Center of rotation of the original dataset.
+    center : scalar (float)
+        Rotation axis location of the tomographic data.
 
-    pad : bool, optional
-        True if the original sinogram size is preserved.
+    pad : bool
+        If True, extend the size of the projections by padding with zeros.
 
     corr : bool, optional
-        True if the correct_drift is
-        applied after ROI selection.
+        If True, correct_air is applied after data is trimmed.
 
     Returns
     -------
-    roi : ndarray
-        Modified ROI data.
+    roi : 3D array (float)
+        Modified ROI tomographic data.
+
+    center : scalar (float)
+        New rotation axis location.
     """
     dx, dy, dz = data.shape
     ind = np.arange(0, dx)
@@ -216,34 +215,32 @@ def focus_region(
 
 def downsample2d(data, level=1):
     """
-    Downsample the slices by binning.
+    Downsample 3D data by binning.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        An arbitrary 3D array.
 
-    level : scalar, int32
-        Downsampling level. For example level=2
-        means, the sinogram will be downsampled by 4,
-        and level=3 means upsampled by 8.
+    level : scalar (int)
+        Downsampling level in powers of two.
 
     Returns
     -------
-    output : ndarray
-        Downsampled 3-D tomographic data with dimensions:
-        [projections, slices/level^2, pixels]
+    out : 3D array (float)
+        Downsampled data.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
+
+    if level < 0:
+        return data
 
     binsize = np.power(2, level)
     downdat = np.zeros(
         (dx, dy, dz / binsize),
         dtype='float32')
 
-    # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_prep.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_prep.downsample2d(
@@ -256,24 +253,20 @@ def downsample2d(data, level=1):
 
 def downsample3d(data, level=1):
     """
-    Downsample the slices and pixels by binning.
+    Downsample 3D data by binning.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        An arbitrary 3D array.
 
-    level : scalar, int32
-        Downsampling level. For example level=2
-        means, the sinogram will be downsampled by 4,
-        and level=3 means upsampled by 8.
+    level : scalar (int)
+        Downsampling level in powers of two.
 
     Returns
     -------
-    downdat : ndarray
-        Downsampled 3-D tomographic data with dimensions:
-        [projections, slices/level^2, pixels/level^2]
+    out : 3D array (float)
+        Downsampled data.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -286,7 +279,6 @@ def downsample3d(data, level=1):
         (dx, dy / binsize, dz / binsize),
         dtype='float32')
 
-    # Call C function.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_prep.downsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_prep.downsample3d(
@@ -299,24 +291,20 @@ def downsample3d(data, level=1):
 
 def upsample2d(data, level=1):
     """
-    Upsample the slices.
+    Upsample 3D data.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D reconstructed data with dimensions:
-        [slices, pixels, pixels]
+    data : 3D array (float)
+        An arbitrary 3D array.
 
-    level : scalar, int32
-        Upsampling level. For example level=2
-        means, the sinogram will be upsampled by 4,
-        and level=3 means upsampled by 8.
+    level : scalar (int)
+        Upsampling level in powers of two.
 
     Returns
     -------
-    output : ndarray
-        Downsampled reconstructed 3-D data with dimensions:
-        [slices, pixels*level^2, pixels*level^2]
+    out : 3D array (float)
+        Upsampled data.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -340,24 +328,20 @@ def upsample2d(data, level=1):
 
 def upsample3d(data, level=1):
     """
-    Upsample the slices and pixels.
+    Upsample 3D data.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D reconstructed data with dimensions:
-        [slices, pixels, pixels]
+    data : 3D array (float)
+        An arbitrary 3D array.
 
-    level : scalar, int32
-        Upsampling level. For example level=2
-        means, the sinogram will be upsampled by 4,
-        and level=3 means upsampled by 8.
+    level : scalar (int)
+        Upsampling level in powers of two.
 
     Returns
     -------
-    output : ndarray
-        Downsampled reconstructed 3-D data with dimensions:
-        [slices*level^2, pixels*level^2, pixels*level^2]
+    out : 3D array (float)
+        Upsampled data.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -379,27 +363,22 @@ def upsample3d(data, level=1):
     return updat
 
 
-def upsample2df(data, level):
+def upsample2df(data, level=1):
     """
-    Upsample the slices in Fourier domain.
+    Upsample 3D data in Fourier domain.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D reconstructed data with dimensions:
-        [slices, pixels, pixels]
+    data : 3D array (float)
+        An arbitrary 3D array.
 
-    level : scalar, int32
-        Upsampling level. For example level=2
-        means, the sinogram will be upsampled by 4,
-        and level=3 means upsampled by 8.
+    level : scalar (int)
+        Upsampling level in powers of two.
 
     Returns
     -------
-    output : ndarray
-        Downsampled reconstructed 3-D data with dimensions:
-        [slices, pixels*level^2, pixels*level^2]
-
+    out : 3D array (float)
+        Upsampled data.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -415,5 +394,4 @@ def upsample2df(data, level):
     for m in range(dy):
         fftw2data[ind, ind] = np.fft.fftshift(fftw2(data[m, :, :]))
         updat[m, :, :] = np.real(ifftw2(np.fft.ifftshift(fftw2data)))
-
     return updat

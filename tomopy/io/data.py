@@ -62,6 +62,8 @@ import logging
 import warnings
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['as_shared_array',
            'as_float32',
@@ -82,12 +84,12 @@ def as_shared_array(arr):
     Parameters
     ----------
     arr : ndarray
-        Input array
+        Input array.
 
     Returns
     -------
-    out : ndarray
-        Output array
+    out : ndarray (float32)
+        Output array.
     """
     sarr = mp.Array(ctypes.c_float, arr.size)
     sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
@@ -98,17 +100,17 @@ def as_shared_array(arr):
 
 def as_float32(arr):
     """
-    Convert a numpy array to ``float32``.
+    Convert a numpy array to float32.
 
     Parameters
     ----------
     arr : ndarray
-        Input array
+        Input array.
 
     Returns
     -------
-    out : ndarray
-        Output array
+    out : ndarray (float32)
+        Output array.
     """
     if not isinstance(arr, np.float32):
         arr = np.array(arr, dtype='float32')
@@ -117,23 +119,23 @@ def as_float32(arr):
 
 def as_uint8(arr, dmin=None, dmax=None):
     """
-    Convert a numpy array to ``uint8``.
+    Convert a numpy array to uint8.
 
     Parameters
     ----------
     arr : ndarray
-        Input array
+        Input array.
 
-    dmin : scalar
-        Mininum value to adjust float-to-int conversion dynamic range
+    dmin : scalar (float)
+        Mininum value to adjust float-to-int conversion range.
 
-    dmax : scalar
-        Maximum value to adjust float-to-int conversion dynamic range
+    dmax : scalar (float)
+        Maximum value to adjust float-to-int conversion range.
 
     Returns
     -------
-    out : ndarray
-        Output array
+    out : ndarray (uint8)
+        Output array.
     """
     if not isinstance(arr, np.int8):
         arr = arr.copy()
@@ -154,23 +156,23 @@ def as_uint8(arr, dmin=None, dmax=None):
 
 def as_uint16(arr, dmin=None, dmax=None):
     """
-    Convert a numpy array to ``uint16``.
+    Convert a numpy array to uint16.
 
     Parameters
     ----------
     arr : ndarray
-        Input array
+        Input array.
 
-    dmin : scalar
-        Mininum value to adjust float-to-int conversion dynamic range
+    dmin : scalar (float)
+        Mininum value to adjust float-to-int conversion range.
 
-    dmax : scalar
-        Maximum value to adjust float-to-int conversion dynamic range
+    dmax : scalar (float)
+        Maximum value to adjust float-to-int conversion range.
 
     Returns
     -------
-    out : ndarray
-        Output array
+    out : ndarray (uint16)
+        Output array.
     """
     if not isinstance(arr, np.int16):
         arr = arr.copy()
@@ -191,19 +193,19 @@ def as_uint16(arr, dmin=None, dmax=None):
 
 def remove_neg(dat, val=0.):
     """
-    Replace negative values in data with ``val``.
+    Replace negative values in data with a given value.
 
     Parameters
     ----------
-    dat : ndarray
+    dat : ndarray (float)
         Input data.
 
-    val : scalar
+    val : scalar (float)
         Values to be replaced with negative values in data.
 
     Returns
     -------
-    out : ndarray
+    out : ndarray (float)
        Corrected data.
     """
     dat = as_float32(dat)
@@ -213,19 +215,19 @@ def remove_neg(dat, val=0.):
 
 def remove_nan(dat, val=0.):
     """
-    Replace NaN values in data with ``val``.
+    Replace NaN values in data with a given value.
 
     Parameters
     ----------
-    dat : ndarray
+    dat : ndarray (float)
         Input data.
 
-    val : scalar
+    val : scalar (float)
         Values to be replaced with NaN values in data.
 
     Returns
     -------
-    out : ndarray
+    out : ndarray (float)
        Corrected data.
     """
     dat = as_float32(dat)
@@ -243,13 +245,13 @@ def _add_index_to_string(string, ind, digit):
     Parameters
     ----------
     string : string
-        Given string.
+        Given string (typically a file name).
 
-    ind : scalar
-        The index to be added at the end of string.
+    ind : scalar (int)
+        A value index to be added at the end of string.
 
-    digit : scalar
-        Number of digit for the string indexing.
+    digit : scalar (int)
+        Number of digits in indexing tiff images.
 
     Returns
     -------
@@ -271,8 +273,8 @@ def _add_index_to_string(string, ind, digit):
 
 def _suggest_new_fname(fname):
     """
-    Suggests a new file name with an attached (or increased) index
-    at the end of the file name.
+    Suggest new string with an attached (or increased) value indexing
+    at the end of a given string.
 
     For example if "myfile.tiff" exist, it will return "myfile-1.tiff".
 
@@ -284,7 +286,7 @@ def _suggest_new_fname(fname):
     Returns
     -------
     out : string
-        Indexed new file.
+        Indexed new string.
     """
     ext = '.' + fname.split(".")[-1]
     fname = fname.split(".")[-2]
@@ -311,11 +313,11 @@ def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
         Path to hdf5 file.
 
     gname : string
-        Path to group where data is.
+        Path to the group inside hdf5 file where data is located.
 
     Returns
     -------
-    out : ndarray (probably)
+    out : ndarray mostly
         Returned data.
     """
     fname = os.path.abspath(fname)
@@ -331,22 +333,22 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
 
     Parameters
     ----------
-    data : ndarray (probably)
+    data : ndarray mostly
         Input data.
 
     fname : string
         Path to hdf5 file without extension.
 
     gname : string
-        Path to group where data is.
+        Path to the group inside hdf5 file where data is located.
 
-    overwrite: bool, optional
-        if True the existing files in the reconstruction folder will be
+    overwrite: bool
+        if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
 
     Returns
     -------
-    out : ndarray (probably)
+    out : ndarray mostly
         Returned data.
     """
     fname += '.h5'
@@ -370,11 +372,11 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
     fname : string
         Path to hdf5 file.
 
-    span : list
+    span : list (int)
         (start, end) indices of the files to read.
 
-    digit : scalar
-        Determines the number of digits in indexing tiff images.
+    digit : scalar (int)
+        Number of digits in indexing tiff images.
 
     ext : string
         Specifies the extension of tiff files (e.g., tiff or tif).
@@ -412,36 +414,34 @@ def write_tiff_stack(
         digit=5, overwrite=False,
         dtype='uint8', dmin=None, dmax=None):
     """
-    Write 3-D data to a stack of tiff files.
+    Write 3D data to a stack of tiff files.
 
     Parameters
-    -----------
-    data : ndarray
-        3-D input data.
+    ----------
+    data : 3D data (int or float)
+        Input data as 3D array.
 
-    fname : str, optional
-        Path of the output file without any extensions.
+    fname : string
+        Path of output file without extension.
 
-    id : scalar, optional
-        First index of the data on first dimension of the array.
+    axis : scalar (int)
+        Axis along which saving is performed.
 
-    digit : scalar, optional
-        Number of digit used for file indexing.
-        For example if 4: test_XXXX.tiff
+    id : scalar (int)
+        First index of file for saving.
 
-    axis : scalar, optional
-        Images are read along that axis.
+    digit : scalar (int)
+        Number of digits in indexing tiff images.
 
-    overwrite: bool, optional
-        if True the existing files in the reconstruction folder will be
+    overwrite: bool
+        if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
 
-    dtype : bool, optional
-        Export data type precision.
+    dtype : bool
+        The desired data-type for saved images.
 
-    dmin, dmax : scalar, optional
-        User defined minimum and maximum values in the data that will be
-        used to scale the dataset when saving.
+    dmin, dmax : scalar
+        Minimum and maximum values in data for scaling before saving.
     """
     ext = '.tiff'
     fname = os.path.abspath(fname)
