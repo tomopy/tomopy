@@ -73,7 +73,7 @@ def synthetic_data():
 
 def test_normalize():
     data = synthetic_data()
-    
+
     # Synthetic white field data
     white = np.array(
         [[[52., 53., 51., 56., 55.],

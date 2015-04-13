@@ -46,31 +46,21 @@
 
 void 
 pml_quad(
-    float *data, data_pars *dpars, 
-    float *recon, recon_pars *rpars)
+    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *recon, int ngridx, int ngridy, int num_iter, float *reg_pars)
 {
-    int dx, dy, dz, ry, rz;
-    float beta;
-
-    dx = dpars->dx;
-    dy = dpars->dy;
-    dz = dpars->dz;
-    ry = rpars->ry;
-    rz = rpars->rz;
-    beta = rpars->reg_pars[0];
-
-    float *gridx = (float *)malloc((ry+1)*sizeof(float));
-    float *gridy = (float *)malloc((rz+1)*sizeof(float));
-    float *coordx = (float *)malloc((rz+1)*sizeof(float));
-    float *coordy = (float *)malloc((ry+1)*sizeof(float));
-    float *ax = (float *)malloc((ry+rz)*sizeof(float));
-    float *ay = (float *)malloc((ry+rz)*sizeof(float));
-    float *bx = (float *)malloc((ry+rz)*sizeof(float));
-    float *by = (float *)malloc((ry+rz)*sizeof(float));
-    float *coorx = (float *)malloc((ry+rz)*sizeof(float));
-    float *coory = (float *)malloc((ry+rz)*sizeof(float));
-    float *dist = (float *)malloc((ry+rz)*sizeof(float));
-    int *indi = (int *)malloc((ry+rz)*sizeof(int));
+    float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
+    float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordx = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordy = (float *)malloc((ngridx+1)*sizeof(float));
+    float *ax = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *ay = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *bx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *by = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coorx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
@@ -78,7 +68,7 @@ pml_quad(
 
     int s, p, d, i, m, n, q;
     int quadrant;
-    float proj_angle, sin_p, cos_p;
+    float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
     float *simdata;
@@ -90,10 +80,10 @@ pml_quad(
     int ind0, ind1, indg[8];
     float totalwg, wg[8], mg[8];
 
-    preprocessing(ry, rz, dz, dpars->center, 
+    preprocessing(ngridx, ngridy, dz, center, 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-    for (i=0; i<rpars->num_iter; i++) 
+    for (i=0; i<num_iter; i++) 
     {
         printf("PML_QUAD iteration : %i\n", i+1);
 
@@ -102,10 +92,10 @@ pml_quad(
         // For each slice
         for (s=0; s<dy; s++) 
         {
-            sum_dist = (float *)calloc((ry*rz), sizeof(float));
-            E = (float *)calloc((ry*rz), sizeof(float));
-            F = (float *)calloc((ry*rz), sizeof(float));
-            G = (float *)calloc((ry*rz), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
+            E = (float *)calloc((ngridx*ngridy), sizeof(float));
+            F = (float *)calloc((ngridx*ngridy), sizeof(float));
+            G = (float *)calloc((ngridx*ngridy), sizeof(float));
             
             // For each projection angle 
             for (p=0; p<dx; p++) 
@@ -113,10 +103,10 @@ pml_quad(
                 // Calculate the sin and cos values 
                 // of the projection angle and find
                 // at which quadrant on the cartesian grid.
-                proj_angle = fmod(dpars->proj_angle[p], 2*M_PI);
-                quadrant = calc_quadrant(proj_angle);
-                sin_p = sinf(proj_angle);
-                cos_p = cosf(proj_angle);
+                theta_p = fmod(theta[p], 2*M_PI);
+                quadrant = calc_quadrant(theta_p);
+                sin_p = sinf(theta_p);
+                cos_p = cosf(theta_p);
 
                 // For each detector pixel 
                 for (d=0; d<dz; d++) 
@@ -125,12 +115,12 @@ pml_quad(
                     xi = -1e6;
                     yi = -(dz-1)/2.0+d+mov;
                     calc_coords(
-                        ry, rz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                         coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(
-                        ry, rz, coordx, coordy, gridx, gridy, 
+                        ngridx, ngridy, coordx, coordy, gridx, gridy, 
                         &asize, ax, ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
@@ -145,11 +135,11 @@ pml_quad(
                     // intersection points (coorx, coory). Find the 
                     // indices of the pixels on the reconstruction grid.
                     calc_dist(
-                        ry, rz, csize, coorx, coory, 
+                        ngridx, ngridy, csize, coorx, coory, 
                         indi, dist);
 
                     // Calculate simdata 
-                    calc_simdata(p, s, d, ry, rz, dy, dz,
+                    calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
                         csize, indi, dist, recon,
                         simdata); // Output: simdata
 
@@ -187,25 +177,25 @@ pml_quad(
             wg[7] = 1/sqrt(2)/totalwg;
 
             // (inner region)
-            for (n = 1; n < ry-1; n++) {
-                for (m = 1; m < rz-1; m++) {
-                    ind0 = m + n*rz;
-                    ind1 = ind0 + s*ry*rz;
+            for (n = 1; n < ngridx-1; n++) {
+                for (m = 1; m < ngridy-1; m++) {
+                    ind0 = m + n*ngridy;
+                    ind1 = ind0 + s*ngridx*ngridy;
                     
                     indg[0] = ind1+1;
                     indg[1] = ind1-1;
-                    indg[2] = ind1+rz;
-                    indg[3] = ind1-rz;
-                    indg[4] = ind1+rz+1; 
-                    indg[5] = ind1+rz-1;
-                    indg[6] = ind1-rz+1;
-                    indg[7] = ind1-rz-1;
+                    indg[2] = ind1+ngridy;
+                    indg[3] = ind1-ngridy;
+                    indg[4] = ind1+ngridy+1; 
+                    indg[5] = ind1+ngridy-1;
+                    indg[6] = ind1-ngridy+1;
+                    indg[7] = ind1-ngridy-1;
                     
 
                     for (q = 0; q < 8; q++) {
                         mg[q] = recon[ind1]+recon[indg[q]];
-                        F[ind0] += 2*beta*wg[q];
-                        G[ind0] -= 2*beta*wg[q]*mg[q];
+                        F[ind0] += 2*reg_pars[0]*wg[q];
+                        G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                     }
                 }
             }
@@ -219,74 +209,74 @@ pml_quad(
             wg[4] = 1/sqrt(2)/totalwg;
             
             // (top)
-            for (m = 1; m < rz-1; m++) {
+            for (m = 1; m < ngridy-1; m++) {
                 ind0 = m;
-                ind1 = ind0 + s*ry*rz;
+                ind1 = ind0 + s*ngridx*ngridy;
                 
                 indg[0] = ind1+1;
                 indg[1] = ind1-1;
-                indg[2] = ind1+rz;
-                indg[3] = ind1+rz+1; 
-                indg[4] = ind1+rz-1;
+                indg[2] = ind1+ngridy;
+                indg[3] = ind1+ngridy+1; 
+                indg[4] = ind1+ngridy-1;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
-                    F[ind0] += 2*beta*wg[q];
-                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                    F[ind0] += 2*reg_pars[0]*wg[q];
+                    G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                 }
             }
 
             // (bottom)
-            for (m = 1; m < rz-1; m++) {
-                ind0 = m + (ry-1)*rz;
-                ind1 = ind0 + s*ry*rz;
+            for (m = 1; m < ngridy-1; m++) {
+                ind0 = m + (ngridx-1)*ngridy;
+                ind1 = ind0 + s*ngridx*ngridy;
                 
                 indg[0] = ind1+1;
                 indg[1] = ind1-1;
-                indg[2] = ind1-rz;
-                indg[3] = ind1-rz+1;
-                indg[4] = ind1-rz-1;
+                indg[2] = ind1-ngridy;
+                indg[3] = ind1-ngridy+1;
+                indg[4] = ind1-ngridy-1;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
-                    F[ind0] += 2*beta*wg[q];
-                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                    F[ind0] += 2*reg_pars[0]*wg[q];
+                    G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                 }
             }
 
             // (left)  
-            for (n = 1; n < ry-1; n++) {
-                ind0 = n*rz;
-                ind1 = ind0 + s*ry*rz;
+            for (n = 1; n < ngridx-1; n++) {
+                ind0 = n*ngridy;
+                ind1 = ind0 + s*ngridx*ngridy;
                 
                 indg[0] = ind1+1;
-                indg[1] = ind1+rz;
-                indg[2] = ind1-rz;
-                indg[3] = ind1+rz+1; 
-                indg[4] = ind1-rz+1;
+                indg[1] = ind1+ngridy;
+                indg[2] = ind1-ngridy;
+                indg[3] = ind1+ngridy+1; 
+                indg[4] = ind1-ngridy+1;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
-                    F[ind0] += 2*beta*wg[q];
-                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                    F[ind0] += 2*reg_pars[0]*wg[q];
+                    G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                 }
             }
 
             // (right)                
-            for (n = 1; n < ry-1; n++) {
-                ind0 = (rz-1) + n*rz;
-                ind1 = ind0 + s*ry*rz;
+            for (n = 1; n < ngridx-1; n++) {
+                ind0 = (ngridy-1) + n*ngridy;
+                ind1 = ind0 + s*ngridx*ngridy;
                 
                 indg[0] = ind1-1;
-                indg[1] = ind1+rz;
-                indg[2] = ind1-rz;
-                indg[3] = ind1+rz-1;
-                indg[4] = ind1-rz-1;
+                indg[1] = ind1+ngridy;
+                indg[2] = ind1-ngridy;
+                indg[3] = ind1+ngridy-1;
+                indg[4] = ind1-ngridy-1;
                     
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
-                    F[ind0] += 2*beta*wg[q];
-                    G[ind0] -= 2*beta*wg[q]*mg[q];
+                    F[ind0] += 2*reg_pars[0]*wg[q];
+                    G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                 }
             }
             
@@ -298,69 +288,69 @@ pml_quad(
             
             // (top-left)
             ind0 = 0;
-            ind1 = ind0 + s*ry*rz;
+            ind1 = ind0 + s*ngridx*ngridy;
             
             indg[0] = ind1+1;
-            indg[1] = ind1+rz;
-            indg[2] = ind1+rz+1; 
+            indg[1] = ind1+ngridy;
+            indg[2] = ind1+ngridy+1; 
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind1]+recon[indg[q]];
-                F[ind0] += 2*beta*wg[q];
-                G[ind0] -= 2*beta*wg[q]*mg[q];
+                F[ind0] += 2*reg_pars[0]*wg[q];
+                G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
             }
 
             // (top-right)
-            ind0 = (rz-1);
-            ind1 = ind0 + s*ry*rz;
+            ind0 = (ngridy-1);
+            ind1 = ind0 + s*ngridx*ngridy;
             
             indg[0] = ind1-1;
-            indg[1] = ind1+rz;
-            indg[2] = ind1+rz-1;
+            indg[1] = ind1+ngridy;
+            indg[2] = ind1+ngridy-1;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind1]+recon[indg[q]];
-                F[ind0] += 2*beta*wg[q];
-                G[ind0] -= 2*beta*wg[q]*mg[q];
+                F[ind0] += 2*reg_pars[0]*wg[q];
+                G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
             }
 
             // (bottom-left)  
-            ind0 = (ry-1)*rz;
-            ind1 = ind0 + s*ry*rz;
+            ind0 = (ngridx-1)*ngridy;
+            ind1 = ind0 + s*ngridx*ngridy;
             
             indg[0] = ind1+1;
-            indg[1] = ind1-rz;
-            indg[2] = ind1-rz+1;
+            indg[1] = ind1-ngridy;
+            indg[2] = ind1-ngridy+1;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind1]+recon[indg[q]];
-                F[ind0] += 2*beta*wg[q];
-                G[ind0] -= 2*beta*wg[q]*mg[q];
+                F[ind0] += 2*reg_pars[0]*wg[q];
+                G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
             }
 
             // (bottom-right)           
-            ind0 = (rz-1) + (ry-1)*rz;
-            ind1 = ind0 + s*ry*rz;
+            ind0 = (ngridy-1) + (ngridx-1)*ngridy;
+            ind1 = ind0 + s*ngridx*ngridy;
             
             indg[0] = ind1-1;
-            indg[1] = ind1-rz;
-            indg[2] = ind1-rz-1;
+            indg[1] = ind1-ngridy;
+            indg[2] = ind1-ngridy-1;
                     
             for (q = 0; q < 3; q++) {
                 mg[q] = recon[ind1]+recon[indg[q]];
-                F[ind0] += 2*beta*wg[q];
-                G[ind0] -= 2*beta*wg[q]*mg[q];
+                F[ind0] += 2*reg_pars[0]*wg[q];
+                G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
             }
 
             q = 0;
-            for (n = 0; n < ry*rz; n++) {
+            for (n = 0; n < ngridx*ngridy; n++) {
                 G[q] += sum_dist[n];
                 q++;
             }
 
-            for (n = 0; n < ry; n++) {
-                for (m = 0; m < rz; m++) {
-                    q = m + n*rz + s*ry*rz;
+            for (n = 0; n < ngridx; n++) {
+                for (m = 0; m < ngridy; m++) {
+                    q = m + n*ngridy + s*ngridx*ngridy;
                     if (F[q] != 0.0) {
                         recon[q] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
                     }
