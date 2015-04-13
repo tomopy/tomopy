@@ -61,6 +61,8 @@ import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['normalize',
            'remove_stripe',
@@ -97,30 +99,29 @@ libtomopy_prep = import_shared_lib('libtomopy_prep')
 
 def normalize(data, white, dark, cutoff=None, ind=None):
     """
-    Normalize raw projection data with
-    the white field projection data.
+    Normalize raw projection data using the white and dark field projections.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data.
+    data : 3D array (float)
+        Raw tomographic measurements.
 
-    white : ndarray
-        2-D white field projection data.
+    white : 3D array (float)
+        White field measurements.
 
-    dark : ndarray
-        2-D dark field projection data.
+    dark : 3D array (float)
+        Dark field measurements.
 
-    cutoff : scalar
-        Permitted maximum vaue of the normalized data.
+    cutoff : scalar (float)
+        Permitted maximum vaue for the normalized data.
 
-    ind : ndarray
-        An index list.
+    ind : array (int)
+        Projection indices at which the normalization is applied.
 
     Returns
     -------
-    data : ndarray
-        Normalized data.
+    out : 3D array (float)
+        Normalized measurements.
     """
     if type(data) == str and data == 'SHARED':
         data = mp.shared_data
@@ -154,26 +155,32 @@ def remove_stripe(
         data, level=None, wname='db5',
         sigma=2, pad=True, ind=None):
     """
-    Remove stripes from sinogram data using
-    the Fourier-Wavelet based method.
+    Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW)
+    based method.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data.
+    data : 3D array (float)
+        Tomographic data.
 
     level : scalar
-        Number of DWT levels.
+        Number of discrete wavelet transform levels.
 
     wname : str
-        Type of wavelet filter.
+        Type of the wavelet filter.
 
     sigma : scalar
         Damping parameter in Fourier space.
 
+    pad : bool
+        If True, extend the size of the sinogram by padding with zeros.
+
+    ind : array (int)
+        Sinogram indices at which the stripe removal is applied.
+
     Returns
     -------
-    output : ndarray
+    out : 3D array (float)
         Corrected data.
 
     References
@@ -181,7 +188,7 @@ def remove_stripe(
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
-    if data == 'SHARED':
+    if type(data) == str and data == 'SHARED':
         data = mp.shared_data
     else:
         arr = mp.distribute_jobs(
@@ -192,8 +199,6 @@ def remove_stripe(
     dx, dy, dz = data.shape
     if ind is None:
         ind = np.arange(0, dy)
-
-    # Find the higest level possible.
     if level is None:
         size = np.max(data.shape)
         level = int(np.ceil(np.log2(size)))
@@ -203,11 +208,11 @@ def remove_stripe(
     if pad:
         nx = dx + dx / 8
 
-    xshft = int((nx - dx) / 2.)
+    xshift = int((nx - dx) / 2.)
     sli = np.zeros((nx, dz), dtype='float32')
 
     for n in ind:
-        sli[xshft:dx + xshft, :] = data[:, n, :]
+        sli[xshift:dx + xshift, :] = data[:, n, :]
 
         # Wavelet decomposition.
         cH = []
@@ -238,49 +243,49 @@ def remove_stripe(
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
 
-        data[:, n, :] = sli[xshft:dx + xshft, 0:dz]
+        data[:, n, :] = sli[xshift:dx + xshift, 0:dz]
 
 
 def retrieve_phase(
-        data, psize=1e-4, dist=50,
-        energy=20, alpha=1e-4, pad=True, ind=None):
+        data, psize=1e-4, dist=50, energy=20,
+        alpha=1e-4, pad=True, ind=None):
     """
-    Perform single-material phase retrieval
-    using projection data.
+    Perform single-step phase retrieval from phase-contrast measurements.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    psize : scalar
+    psize : scalar (float)
         Detector pixel size in cm.
 
-    dist : scalar
-        Propagation distance of x-rays in cm.
+    dist : scalar (float)
+        Propagation distance of the wavefront in cm.
 
-    energy : scalar
-        Energy of x-rays in keV.
+    energy : scalar (float)
+        Energy of incident wave in keV.
 
-    alpha : scalar, optional
+    alpha : scalar (float)
         Regularization parameter.
 
-    pad : bool, optional
-        Applies pad for Fourier transform. For quick testing
-        you can use False for faster results.
+    pad : bool
+        If True, extend the size of the projections by padding with zeros.
+
+    ind : array (int)
+        Projection indices at which the phase retrieval is applied.
 
     Returns
     -------
-    phase : ndarray
-        Retrieved phase.
+    out : 3D array (float)
+        Approximated phase data.
 
     References
     ----------
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
-    if data == 'SHARED':
+    if type(data) == str and data == 'SHARED':
         data = mp.shared_data
     else:
         arr = mp.distribute_jobs(
@@ -293,17 +298,17 @@ def retrieve_phase(
         ind = np.arange(0, dx)
 
     # Compute the filter.
-    H, xshft, yshft, prj = _paganin_filter(
+    H, xshift, yshift, prj = _paganin_filter(
         data, psize, dist, energy, alpha, pad)
 
     for m in ind:
         proj = data[m, :, :]
         if pad:
-            prj[xshft:dy + xshft, yshft:dz + yshft] = proj
+            prj[xshift:dy + xshift, yshift:dz + yshift] = proj
             fproj = np.fft.fft2(prj)
             filtproj = np.multiply(H, fproj)
             tmp = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-            proj = tmp[xshft:dy + xshft, yshft:dz + yshft]
+            proj = tmp[xshift:dy + xshift, yshift:dz + yshift]
         elif not pad:
             fproj = np.fft.fft2(proj)
             filtproj = np.multiply(H, fproj)
@@ -313,39 +318,41 @@ def retrieve_phase(
 
 def _paganin_filter(data, psize, dist, energy, alpha, pad):
     """
-    Calculates Paganin-type filter.
+    Calculate Paganin-type 2D filter to be used for phase retrieval.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    psize : scalar
+    psize : scalar (float)
         Detector pixel size in cm.
 
-    dist : scalar
-        Propagation distance of x-rays in cm.
+    dist : scalar (float)
+        Propagation distance of the wavefront in cm.
 
-    energy : scalar
-        Energy of x-rays in keV.
+    energy : scalar (float)
+        Energy of incident wave in keV.
 
-    alpha : scalar, optional
+    alpha : scalar (float)
         Regularization parameter.
 
-    pad : bool, optional
-        Applies pad for Fourier transform. For quick testing
-        you can use False for faster results.
+    pad : bool
+        If True, extend the size of the projections by padding with zeros.
 
     Returns
     -------
-    phase : ndarray
+    H : 2D array (float)
         Paganin filter.
 
-    References
-    ----------
-    - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
-    <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
+    xshift : scalar (int)
+        Pad amount in projection axis.
+
+    yshift : scalar (int)
+        Pad amount in sinogram axis.
+
+    prj : 2D array (float)
+        Padded projection.
     """
     dx, dy, dz = data.shape
     wavelen = 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
@@ -359,15 +366,15 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
 
         nx = pow(2, np.ceil(np.log2(dy + padpix)))
         ny = pow(2, np.ceil(np.log2(dz + padpix)))
-        xshft = int((nx - dy) / 2.)
-        yshft = int((ny - dz) / 2.)
+        xshift = int((nx - dy) / 2.)
+        yshift = int((ny - dz) / 2.)
 
         # Template pad image.
         prj = val * np.ones((nx, ny), dtype='float32')
 
     elif not pad:
         nx, ny = dy, dz
-        xshft, yshft, prj = None, None, None
+        xshift, yshift, prj = None, None, None
         prj = np.ones((dy, dz), dtype='float32')
 
     # Sampling in reciprocal space.
@@ -379,31 +386,29 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
     # Filter in Fourier space.
     H = 1 / (wavelen * dist * w2 / (4 * PI) + alpha)
     H = np.fft.fftshift(H)
-    return H, xshft, yshft, prj
+    return H, xshift, yshift, prj
 
 
 def circular_roi(data, ratio=1, val=None):
     """
-    Apply circular mask to projection data.
+    Apply circular mask to projection images.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D reconstructed data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    ratio : scalar, int
-        Ratio of the circular mask's diameter in pixels
-        to the number of reconstructed image pixels
-        (i.e., the dimension of the images).
+    ratio : scalar (int)
+        Ratio of the circular mask's diameter in pixels to
+        the number of reconstructed image grid size.
 
-    val : scalar, int
+    val : scalar (int)
         Value for the masked region.
 
     Returns
     -------
-    output : ndarray
-        Masked data.
+    out : 3D array (float)
+        Masked data with shape same as data.
     """
     dx, dy, dz = data.shape
     ind = np.arange(0, dx)
@@ -427,111 +432,30 @@ def circular_roi(data, ratio=1, val=None):
     return data
 
 
-def focus_region(
-        data, xcoord=0, ycoord=0,
-        dia=256, center=None, pad=False, corr=True):
-    """
-    Uses only a portion of the sinogram for reconstructing
-    a circular region of interest (ROI).
-
-    Note: Only valid for 0-180 degree span data.
-
-    Parameters
-    ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
-
-    xcoord, ycoord : scalar
-        X- and Y-coordinates of the center
-        location of the circular ROI.
-
-    dia : scalar
-        dia of the circular ROI.
-
-    center : scalar
-        Center of rotation of the original dataset.
-
-    pad : bool, optional
-        True if the original sinogram size is preserved.
-
-    corr : bool, optional
-        True if the correct_drift is
-        applied after ROI selection.
-
-    Returns
-    -------
-    roi : ndarray
-        Modified ROI data.
-    """
-    dx, dy, dz = data.shape
-    ind = np.arange(0, dx)
-
-    if center is None:
-        center = dz / 2.
-
-    rad = np.sqrt(xcoord * xcoord + ycoord * ycoord)
-    alpha = np.arctan2(xcoord, ycoord)
-    l1 = center - dia / 2
-    l2 = center - dia / 2 + rad
-
-    roi = np.ones((dx, dy, dia), dtype='float32')
-    if pad:
-        roi = np.ones((dx, dy, dz), dtype='float32')
-
-    delphi = PI / dx
-    for m in ind:
-        ind1 = np.ceil(np.cos(alpha - m * delphi) * (l2 - l1) + l1)
-        ind2 = np.floor(np.cos(alpha - m * delphi) * (l2 - l1) + l1 + dia)
-
-        if ind1 < 0:
-            ind1 = 0
-        if ind2 < 0:
-            ind2 = 0
-        if ind1 > dz:
-            ind1 = dz
-        if ind2 > dz:
-            ind2 = dz
-
-        arr = np.expand_dims(data[m, :, ind1:ind2], axis=0)
-        if pad:
-            if corr:
-                roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=5)
-            else:
-                roi[m, :, ind1:ind2] = arr
-        else:
-            if corr:
-                roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=5)
-            else:
-                roi[m, :, 0:(ind2 - ind1)] = arr
-        if not pad:
-            center = dz / 2.
-    return roi, center
-
-
 def median_filter(data, size=3, axis=0, ind=None):
     """
-    Apply median filter to data.
+    Apply median filter to a 3D array along a specified axis.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Arbitrary 3D array.
 
-    size : scalar
+    size : scalar (int)
         The size of the filter.
 
-    axis : scalar
-        Define the axis of data for filtering.
-        0: projections, 1:sinograms, 2:pixels
+    axis : scalar (int)
+        Axis along which median filtering is performed.
+
+    ind : array (ind)
+        Indices at which the filtering is applied.
 
     Returns
     -------
-    output : ndarray
-        Median filtered data.
+    out : 3D array
+        Median filtered array.
     """
-    if data == 'SHARED':
+    if type(data) == str and data == 'SHARED':
         data = mp.shared_data
     else:
         arr = mp.distribute_jobs(
@@ -564,27 +488,29 @@ def median_filter(data, size=3, axis=0, ind=None):
 
 def remove_zinger(data, dif=1000, size=3, ind=None):
     """
-    Zinger removal.
+    Remove high intensity bright spots from tomographic data.
 
     Parameters
     ----------
-    data : ndarray
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    dif : scalar
-        Threshold for difference of fileterd
-        and unfiltered counts to cut zingers.
+    dif : scalar (float)
+        Expected difference value between outlier measurements and
+        the median filtered raw measurements.
 
-    size : scalar
-        Median filter size.
+    size : scalar (int)
+        Size of the median filter.
+
+    ind : array (int)
+        Projection indices at which the zinger removal is applied.
 
     Returns
     -------
-    output : ndarray
-        Zinger removed data.
+    out : 3D array (float)
+        Corrected tomographic data.
     """
-    if data == 'SHARED':
+    if type(data) == str and data == 'SHARED':
         data = mp.shared_data
     else:
         arr = mp.distribute_jobs(
@@ -604,33 +530,33 @@ def remove_zinger(data, dif=1000, size=3, ind=None):
         data[m, :, :] = tmp * mask + data[m, :, :] * (1 - mask)
 
 
-def correct_air(data, air=10, ind=None):
+def correct_air(data, air=10):
     """
-    Corrects for drifts in the sinogram.
-
-    It normalizes sinogram such that the left and
-    the right boundaries are set to one and
-    all intermediate values between the boundaries
-    are normalized linearly. It can be used if white
-    field is absent.
+    Weights sinogram such that the left and right image boundaries
+    (i.e., typically the air region around the object) are set to one
+    and all intermediate values are scaled linearly.
 
     Parameters
     ----------
-    data : ndarray, float32
-        3-D tomographic data with dimensions:
-        [projections, slices, pixels]
+    data : 3D array (float)
+        Tomographic data.
 
-    air : scalar, int32
-        number of pixels at each boundaries that
-        the white field will be approximated
-        for normalization.
+    air : scalar (int)
+        Number of pixels at each boundary to calculate the scaling factor.
 
     Returns
     -------
-    output : ndarray
-        Normalized data.
+    out : ndarray
+        Corrected data.
     """
     dx, dy, dz = data.shape
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(air, np.int32):
+        air = np.array(air, dtype='int32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_prep.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_prep.correct_air(

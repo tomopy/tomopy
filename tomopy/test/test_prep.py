@@ -54,7 +54,15 @@ from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
 def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
     data = np.array(
         [[[29., 85., 39., 45., 53.],
           [24., 53., 12., 89., 12.],
