@@ -48,10 +48,6 @@
 
 """
 Module for multiprocessing tasks.
-
-:Author: Doga Gursoy
-:Organization: Argonne National Laboratory
-
 """
 
 from __future__ import absolute_import, division, print_function
