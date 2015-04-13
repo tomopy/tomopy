@@ -48,10 +48,6 @@
 
 """
 Module for data size morphing functions.
-
-:Author: Doga Gursoy
-:Organization: Argonne National Laboratory
-
 """
 
 from __future__ import absolute_import, division, print_function
