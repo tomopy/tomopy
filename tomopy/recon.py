@@ -94,42 +94,6 @@ def import_lib(lname):
 libtomopy_recon = import_lib('libtomopy_recon')
 
 
-class ObjectStruct(ctypes.Structure):
-
-    """
-    Data parameter structure.
-    """
-    _fields_ = [("ox", ctypes.c_int),
-                ("oy", ctypes.c_int),
-                ("oz", ctypes.c_int)]
-
-
-class DataStruct(ctypes.Structure):
-
-    """
-    Data parameter structure.
-    """
-    _fields_ = [("dx", ctypes.c_int),
-                ("dy", ctypes.c_int),
-                ("dz", ctypes.c_int),
-                ("center", ctypes.c_float),
-                ("proj_angle", ctypes.POINTER(ctypes.c_float))]
-
-
-class ReconStruct(ctypes.Structure):
-
-    """
-    Reconstruction parameter structure.
-    """
-    _fields_ = [("num_iter", ctypes.c_int),
-                ("reg_par", ctypes.POINTER(ctypes.c_float)),
-                ("rx", ctypes.c_int),
-                ("ry", ctypes.c_int),
-                ("rz", ctypes.c_int),
-                ("ind_block", ctypes.POINTER(ctypes.c_float)),
-                ("num_block", ctypes.c_int)]
-
-
 def simulate(obj, theta, center=None):
     """
     Simulates projection data for a given 3-D object.
@@ -150,104 +114,38 @@ def simulate(obj, theta, center=None):
     data : ndarray
         Simulated 3-D projection data
     """
+    # Estimate data dimensions.
     ox, oy, oz = obj.shape
     dx = theta.size
     dy = ox
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
     if center is None:
-        center = dz / 2.0
-    data = np.zeros((dx, dy, dz), dtype='float32')
+        center = dz / 2.
 
-    # Make sure that inputs datatypes are correct
+    # Make sure that inputs datatypes are correct.
     if not isinstance(obj, np.float32):
         obj = np.array(obj, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
-
-    # Initialize struct for object parameteres
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    opars = ObjectStruct()
-    opars.ox = ox
-    opars.oy = oy
-    opars.oz = oz
-
-    # Initialize struct for data parameteres
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    dpars = DataStruct()
-    dpars.dx = dx
-    dpars.dy = dy
-    dpars.dz = dz
-    dpars.center = center
-    dpars.proj_angle = theta.ctypes.data_as(c_float_p)
+    data = np.zeros((dx, dy, dz), dtype='float32')
 
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.simulate(
-        obj.ctypes.data_as(c_float_p), ctypes.byref(opars),
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars))
+        obj.ctypes.data_as(c_float_p),
+        ctypes.c_int(ox),
+        ctypes.c_int(oy),
+        ctypes.c_int(oz),
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p))
     return data
-
-
-def _init_recon(
-        data, theta, num_iter=1, reg_par=None, center=None,
-        num_gridx=None, num_gridy=None, emission=None,
-        ind_block=None, num_block=1, recon=None):
-    """
-    Initialize reconstruction parameters
-    """
-    dx, dy, dz = data.shape
-    if center is None:
-        center = dz / 2.
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if reg_par is None:
-        reg_par = np.ones(10, dtype="float32")
-    if emission is None:
-        emission = True
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(reg_par, np.float32):
-        reg_par = np.array(reg_par, dtype='float32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
-
-    # Initialize struct for data parameteres
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    dpars = DataStruct()
-    dpars.dx = dx
-    dpars.dy = dy
-    dpars.dz = dz
-    dpars.center = center
-    dpars.proj_angle = theta.ctypes.data_as(c_float_p)
-
-    # Initialize struct for reconstruction parameteres
-    rpars = ReconStruct()
-    rpars.num_iter = num_iter
-    rpars.reg_par = reg_par.ctypes.data_as(c_float_p)
-    rpars.rx = dy
-    rpars.ry = num_gridx
-    rpars.rz = num_gridy
-    rpars.ind_block = ind_block.ctypes.data_as(c_float_p)
-    rpars.num_block = num_block
-
-    return data, dpars, recon, rpars
 
 
 def gridrec(
@@ -257,6 +155,7 @@ def gridrec(
     """
     Regridding algorithm.
     """
+    # Gridrec reconstructs 2 slices minimum.
     flag = False
     if data.shape[1] == 1:
         flag = True
@@ -265,16 +164,23 @@ def gridrec(
     dx, dy, dz = data.shape
     if center is None:
         center = dz / 2.
-
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
-
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    data = np.array(data, dtype='float32')
-    theta = np.array(theta, dtype='float32')
-    center = np.array(center, dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
     filter_name = np.array(filter_name, dtype=(str, 16))
 
     c_char_p = ctypes.POINTER(ctypes.c_char)
@@ -292,138 +198,547 @@ def gridrec(
         ctypes.c_int(num_gridy),
         filter_name.ctypes.data_as(c_char_p))
 
+    # Dump second slice.
     if flag is True:
         recon = recon[0:1]
     return recon
 
 
-def art(*args, **kwargs):
+def art(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Algebraic reconstruction technique.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.art.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.art(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter))
     return recon
 
 
-def bart(*args, **kwargs):
+def bart(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        num_block=1, ind_block=None):
     """
     Block algebraic reconstruction technique.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(num_block, np.int32):
+        num_block = np.array(num_block, dtype='int32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.bart.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.bart(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        ctypes.c_int(num_block),
+        ind_block.ctypes.data_as(c_float_p))
     return recon
 
 
-def fbp(*args, **kwargs):
+def fbp(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None):
     """
     Filtered backprojection.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.fbp(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy))
     return recon
 
 
-def mlem(*args, **kwargs):
+def mlem(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Maximum-likelihood expectation-maximization.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.mlem(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter))
     return recon
 
 
-def osem(*args, **kwargs):
+def osem(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        num_block=1, ind_block=None):
     """
     Ordered-subset expectation-maximization.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(num_block, np.int32):
+        num_block = np.array(num_block, dtype='int32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.osem.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.osem(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        ctypes.c_int(num_block),
+        ind_block.ctypes.data_as(c_float_p))
     return recon
 
 
-def ospml_hybrid(*args, **kwargs):
+def ospml_hybrid(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        reg_par=None, num_block=1, ind_block=None):
     """
     Ordered-subset penalized maximum likelihood with weighted linear
     and quadratic penalties.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if reg_par is None:
+        reg_par = np.ones(10, dtype="float32")
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(reg_par, np.float32):
+        reg_par = np.array(reg_par, dtype='float32')
+    if not isinstance(num_block, np.int32):
+        num_block = np.array(num_block, dtype='int32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.ospml_hybrid(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        reg_par.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_block),
+        ind_block.ctypes.data_as(c_float_p))
     return recon
 
 
-def ospml_quad(*args, **kwargs):
+def ospml_quad(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        reg_par=None, num_block=1, ind_block=None):
     """
     Ordered-subset penalized maximum likelihood with quadratic penalty.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if reg_par is None:
+        reg_par = np.ones(10, dtype="float32")
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(reg_par, np.float32):
+        reg_par = np.array(reg_par, dtype='float32')
+    if not isinstance(num_block, np.int32):
+        num_block = np.array(num_block, dtype='int32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.ospml_quad(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        reg_par.ctypes.data_as(c_float_p),
+        reg_par.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_block),
+        ind_block.ctypes.data_as(c_float_p))
     return recon
 
 
-def pml_hybrid(*args, **kwargs):
+def pml_hybrid(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        reg_par=None):
     """
     Penalized maximum likelihood with weighted linear and quadratic
     penalties.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if reg_par is None:
+        reg_par = np.ones(10, dtype="float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(reg_par, np.float32):
+        reg_par = np.array(reg_par, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.pml_hybrid(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        reg_par.ctypes.data_as(c_float_p))
     return recon
 
 
-def pml_quad(*args, **kwargs):
+def pml_quad(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        reg_par=None):
     """
     Penalized maximum likelihood with quadratic penalty.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if reg_par is None:
+        reg_par = np.ones(10, dtype="float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(reg_par, np.float32):
+        reg_par = np.array(reg_par, dtype='float32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.pml_quad(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        reg_par.ctypes.data_as(c_float_p))
     return recon
 
 
-def sirt(*args, **kwargs):
+def sirt(
+        data, theta, center=None, emission=False,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Simultaneous iterative reconstruction technique.
     """
-    data, dpars, recon, rpars = _init_recon(*args, **kwargs)
+    dx, dy, dz = data.shape
+    if center is None:
+        center = dz / 2.
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.sirt(
-        data.ctypes.data_as(c_float_p), ctypes.byref(dpars),
-        recon.ctypes.data_as(c_float_p), ctypes.byref(rpars))
+        data.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        ctypes.c_float(center),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter))
     return recon

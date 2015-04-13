@@ -46,17 +46,9 @@
 
 void 
 simulate(
-    float *obj, obj_pars *opars, 
-    float *data, data_pars *dpars)
+    float *obj, int ox, int oy, int oz, 
+    float *data, int dx, int dy, int dz, float center, float* theta)
 {
-    int ox, oy, oz, dx, dy, dz;
-
-    ox = opars->ox;
-    oy = opars->oy;
-    oz = opars->oz;
-    dx = dpars->dx;
-    dy = dpars->dy;
-    dz = dpars->dz;
 
     float *gridx = (float *)malloc((oy+1)*sizeof(float));
     float *gridy = (float *)malloc((oz+1)*sizeof(float));
@@ -77,11 +69,11 @@ simulate(
 
     int s, p, d;
     int quadrant;
-    float proj_angle, sin_p, cos_p;
+    float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
 
-    preprocessing(oy, oz, dz, dpars->center, 
+    preprocessing(oy, oz, dz, center, 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
     // For each slice
@@ -93,10 +85,10 @@ simulate(
             // Calculate the sin and cos values 
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            proj_angle = fmod(dpars->proj_angle[p], 2*M_PI);
-            quadrant = calc_quadrant(proj_angle);
-            sin_p = sinf(proj_angle);
-            cos_p = cosf(proj_angle);
+            theta_p = fmod(theta[p], 2*M_PI);
+            quadrant = calc_quadrant(theta_p);
+            sin_p = sinf(theta_p);
+            cos_p = cosf(theta_p);
 
             for (d=0; d<dz; d++) 
             {

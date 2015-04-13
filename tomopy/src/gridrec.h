@@ -122,7 +122,7 @@ set_filter_tables(
 
 void 
 set_trig_tables(
-    int dx, float *proj_angle, 
+    int dx, float *theta, 
     float **SP, float **CP);
 
 void 

@@ -2,7 +2,7 @@
 
 // Copyright 2015. UChicago Argonne, LLC. This software was produced 
 // under U.S. Government contract DE-AC02-06CH11357 for Argonne National 
-// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the 
+// Laboratongridx (ANL), which is operated by UChicago Argonne, LLC for the 
 // U.S. Department of Energy. The U.S. Government has rights to use, 
 // reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR 
 // UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR 
@@ -11,20 +11,20 @@
 // be clearly marked, so as not to confuse it with the version available 
 // from ANL.
 
-// Additionally, redistribution and use in source and binary forms, with 
+// Additionally, redistribution and use in source and binangridx forms, with 
 // or without modification, are permitted provided that the following 
 // conditions are met:
 
 //     * Redistributions of source code must retain the above copyright 
 //       notice, this list of conditions and the following disclaimer. 
 
-//     * Redistributions in binary form must reproduce the above copyright 
+//     * Redistributions in binangridx form must reproduce the above copyright 
 //       notice, this list of conditions and the following disclaimer in 
 //       the documentation and/or other materials provided with the 
 //       distribution. 
 
 //     * Neither the name of UChicago Argonne, LLC, Argonne National 
-//       Laboratory, ANL, the U.S. Government, nor the names of its 
+//       Laboratongridx, ANL, the U.S. Government, nor the names of its 
 //       contributors may be used to endorse or promote products derived 
 //       from this software without specific prior written permission. 
 
@@ -33,10 +33,10 @@
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
 // FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago 
 // Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+// INCIDENTAL, SPECIAL, EXEMPLAngridx, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
 // BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
 // LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+// CAUSED AND ON ANY THEOngridx OF LIABILITY, WHETHER IN CONTRACT, STRICT 
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
@@ -46,29 +46,21 @@
 
 void 
 mlem(
-    float *data, data_pars *dpars, 
-    float *recon, recon_pars *rpars)
+    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *recon, int ngridx, int ngridy, int num_iter)
 {
-    int dx, dy, dz, ry, rz;
-
-    dx = dpars->dx;
-    dy = dpars->dy;
-    dz = dpars->dz;
-    ry = rpars->ry;
-    rz = rpars->rz;
-
-    float *gridx = (float *)malloc((ry+1)*sizeof(float));
-    float *gridy = (float *)malloc((rz+1)*sizeof(float));
-    float *coordx = (float *)malloc((rz+1)*sizeof(float));
-    float *coordy = (float *)malloc((ry+1)*sizeof(float));
-    float *ax = (float *)malloc((ry+rz)*sizeof(float));
-    float *ay = (float *)malloc((ry+rz)*sizeof(float));
-    float *bx = (float *)malloc((ry+rz)*sizeof(float));
-    float *by = (float *)malloc((ry+rz)*sizeof(float));
-    float *coorx = (float *)malloc((ry+rz)*sizeof(float));
-    float *coory = (float *)malloc((ry+rz)*sizeof(float));
-    float *dist = (float *)malloc((ry+rz)*sizeof(float));
-    int *indi = (int *)malloc((ry+rz)*sizeof(int));
+    float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
+    float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordx = (float *)malloc((ngridy+1)*sizeof(float));
+    float *coordy = (float *)malloc((ngridx+1)*sizeof(float));
+    float *ax = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *ay = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *bx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *by = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coorx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
+    int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
@@ -76,7 +68,7 @@ mlem(
 
     int s, p, d, i, m, n;
     int quadrant;
-    float proj_angle, sin_p, cos_p;
+    float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
     float *simdata;
@@ -86,10 +78,10 @@ mlem(
     float sum_dist2;
     float *update;
 
-    preprocessing(ry, rz, dz, dpars->center, 
+    preprocessing(ngridx, ngridy, dz, center, 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-    for (i=0; i<rpars->num_iter; i++) 
+    for (i=0; i<num_iter; i++) 
     {
         printf("MLEM iteration : %i\n", i+1);
 
@@ -98,8 +90,8 @@ mlem(
         // For each slice
         for (s=0; s<dy; s++) 
         {
-            sum_dist = (float *)calloc((ry*rz), sizeof(float));
-            update = (float *)calloc((ry*rz), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
+            update = (float *)calloc((ngridx*ngridy), sizeof(float));
             
             // For each projection angle 
             for (p=0; p<dx; p++) 
@@ -107,10 +99,10 @@ mlem(
                 // Calculate the sin and cos values 
                 // of the projection angle and find
                 // at which quadrant on the cartesian grid.
-                proj_angle = fmod(dpars->proj_angle[p], 2*M_PI);
-                quadrant = calc_quadrant(proj_angle);
-                sin_p = sinf(proj_angle);
-                cos_p = cosf(proj_angle);
+                theta_p = fmod(theta[p], 2*M_PI);
+                quadrant = calc_quadrant(theta_p);
+                sin_p = sinf(theta_p);
+                cos_p = cosf(theta_p);
 
                 // For each detector pixel 
                 for (d=0; d<dz; d++) 
@@ -119,12 +111,12 @@ mlem(
                     xi = -1e6;
                     yi = -(dz-1)/2.0+d+mov;
                     calc_coords(
-                        ry, rz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                         coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(
-                        ry, rz, coordx, coordy, gridx, gridy, 
+                        ngridx, ngridy, coordx, coordy, gridx, gridy, 
                         &asize, ax, ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
@@ -139,11 +131,11 @@ mlem(
                     // intersection points (coorx, coory). Find the 
                     // indices of the pixels on the reconstruction grid.
                     calc_dist(
-                        ry, rz, csize, coorx, coory, 
+                        ngridx, ngridy, csize, coorx, coory, 
                         indi, dist);
 
                     // Calculate simdata 
-                    calc_simdata(p, s, d, ry, rz, dy, dz,
+                    calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
                         csize, indi, dist, recon,
                         simdata); // Output: simdata
 
@@ -170,9 +162,9 @@ mlem(
             }
 
             m = 0;
-            for (n = 0; n < ry*rz; n++) {
+            for (n = 0; n < ngridx*ngridy; n++) {
                 if (sum_dist[n] != 0.0) {
-                    ind_recon = s*ry*rz;
+                    ind_recon = s*ngridx*ngridy;
                     recon[m+ind_recon] *= update[m]/sum_dist[n];
                 }
                 m++;
