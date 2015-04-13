@@ -163,13 +163,13 @@ def remove_stripe(
     data : 3D array (float)
         Tomographic data.
 
-    level : scalar
+    level : scalar (int)
         Number of discrete wavelet transform levels.
 
-    wname : str
-        Type of the wavelet filter.
+    wname : string 
+        Type of the wavelet filter. 'haar', 'db5', sym5', etc.
 
-    sigma : scalar
+    sigma : scalar (float)
         Damping parameter in Fourier space.
 
     pad : bool
