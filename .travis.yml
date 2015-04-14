@@ -16,7 +16,7 @@ before_install:
 
 install:
   - conda build .
-  - conda install python-coveralls
+  - pip install coveralls
 
 script: 
   - nosetests tomopy --with-coverage
