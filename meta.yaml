@@ -25,6 +25,8 @@ test:
   # Python imports
   requires:
     - nose
+    - h5py
+    - numpy
   imports:
     - tomopy
     - tomopy.io
