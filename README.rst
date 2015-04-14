@@ -1,6 +1,9 @@
 About TomoPy
 ############
 
+.. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
+    :target: https://binstar.org/dgursoy/tomopy
+
 .. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
     :target: https://travis-ci.org/dgursoy/tomopy
 

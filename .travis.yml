@@ -16,6 +16,7 @@ install:
   - conda create -q -n testenv python=$TRAVIS_PYTHON_VERSION pip cython numpy h5py pywavelets six python-dateutil pytz pyparsing nose mock matplotlib scipy networkx decorator pillow scikit-image
   - source activate testenv
   - python setup.py install
+  - pip install coveralls
 
 script: 
   - nosetests tomopy --with-coverage
