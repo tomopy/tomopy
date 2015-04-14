@@ -62,72 +62,48 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_baboon():
-    """
-    Test if baboon.tif is loaded.
-    """
     out = baboon()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_barbara():
-    """
-    Test if barbara.tif is loaded correctly.
-    """
     out = barbara()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_cameraman():
-    """
-    Test if cameraman.tif is loaded correctly.
-    """
     out = cameraman()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_checkerboard():
-    """
-    Test if checkerboard.tif is loaded correctly.
-    """
     out = checkerboard()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_lena():
-    """
-    Test if lena.tif is loaded correctly.
-    """
     out = lena()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_peppers():
-    """
-    Test if peppers.tif is loaded correctly.
-    """
     out = peppers()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_shepp2d():
-    """
-    Test if shepp2d.tif is loaded correctly.
-    """
     out = shepp2d()
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_shepp3d():
-    """
-    Test if shepp3d generates a phantom in correct shape.
-    """
     out = shepp3d((6, 8, 10))
     assert_equals(out.dtype, 'float32')
     assert_equals(out.shape, (6, 8, 10))
