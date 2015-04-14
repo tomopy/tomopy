@@ -24,6 +24,7 @@ requirements:
 test:
   requires:
     - nose
+    - python-coveralls
   imports:
     - tomopy
     - tomopy.io
