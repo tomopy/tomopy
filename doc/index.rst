@@ -1,5 +1,8 @@
+.. title:: TomoPy
+
 .. image:: img/tomopy-logo.png
    :width: 320px
+   :alt: TomoPy
 
 | 
 
