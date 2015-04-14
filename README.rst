@@ -16,6 +16,9 @@ About TomoPy
 .. image:: https://binstar.org/dgursoy/tomopy/badges/installer/conda.svg   
     :target: https://conda.binstar.org/dgursoy
 
+.. image:: https://binstar.org/dgursoy/tomopy/badges/build.svg   
+    :target: https://binstar.org/dgursoy/tomopy/builds
+
 TomoPy is an open-sourced Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
 `Advanced Photon Source <http://www.aps.anl.gov>`_.
