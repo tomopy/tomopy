@@ -16,8 +16,7 @@ before_install:
 
 install:
   - conda build . 
-  - conda install nose numpy h5py scikit-image pywavelets tifffile
-  - pip install coveralls
+  - conda install nose numpy h5py scikit-image pywavelets tifffile python-coveralls
 
 script: 
   - nosetests tomopy --with-coverage
