@@ -2,32 +2,19 @@ About TomoPy
 ############
 
 .. image:: https://readthedocs.org/projects/tomopy/badge/?version=latest
-    :target: https://readthedocs.org/projects/tomopy/?badge=latest
-    :alt: Documentation Status
-
-.. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
-    :target: https://binstar.org/dgursoy/tomopy
-    :alt: Download Counts
+    :target: http://tomopy.readthedocs.org/en/latest
 
 .. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
     :target: https://travis-ci.org/dgursoy/tomopy
-    :alt: Build Status
 
 .. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
     :target: https://coveralls.io/r/dgursoy/tomopy?branch=master
-    :alt: Coverage Status
+
+.. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
+    :target: https://binstar.org/dgursoy/tomopy
 
 .. image:: https://binstar.org/dgursoy/tomopy/badges/installer/conda.svg   
     :target: https://conda.binstar.org/dgursoy
-    :alt: Install Direction
-
-.. image:: https://binstar.org/dgursoy/tomopy/badges/license.svg   
-    :target: https://binstar.org/dgursoy/tomopy
-    :alt: Licence
-
-.. image:: https://binstar.org/dgursoy/tomopy/badges/version.svg   
-    :target: https://binstar.org/dgursoy/tomopy
-    :alt: Version
 
 TomoPy is an open-sourced Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
