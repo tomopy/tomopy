@@ -1,11 +1,12 @@
 language: python
 
 python:
-  - 2.7
+  - "2.7"
 
 before_install:
-  - which python; python --version
+  - pip install --upgrade pip
   - pip install numpy==1.9.2
+  - pip install scipy==0.15.1
 
 install: 
   - pip install -r requirements.txt
