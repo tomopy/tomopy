@@ -40,14 +40,13 @@ before_script:
 ## Put your main computations here!  
 script:
   - conda build .
-  - conda install python-coveralls
 ## This will run after the script regardless of the result of script
 ## BINSTAR_BUILD_RESULT=[succcess|failure] 
 # after_script:
 #   - echo "The build was a $BINSTAR_BUILD_RESULT" | tee artifact1.txt
 ## This will be run only after a successfull build
-after_success:
-  - coveralls
+# after_success:
+#   - echo "after_success!"
 ## This will be run only after a build failure
 # after_failure:
 #   - echo "after_failure!"
