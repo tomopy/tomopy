@@ -15,7 +15,8 @@ before_install:
   - conda info -a
 
 install:
-  - conda build .
+  - conda create -q -n testenv tomopy
+  - source activate testenv
   - pip install coveralls
 
 script: 
