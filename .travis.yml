@@ -16,7 +16,8 @@ before_install:
 
 install:
   - conda build . 
-  - pip install nose numpy h5py coveralls
+  - conda install nose numpy h5py 
+  - pip install coveralls
 
 script: 
   - nosetests tomopy --with-coverage
