@@ -16,6 +16,7 @@ before_install:
 
 install:
   - conda build . 
+  - pip install nose
   - pip install coveralls
 
 script: 
