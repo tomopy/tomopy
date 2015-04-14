@@ -2,7 +2,7 @@ About TomoPy
 ############
 
 .. image:: https://readthedocs.org/projects/tomopy/badge/?version=latest
-    :target: http://tomopy.readthedocs.org/en/latest
+    :target: https://readthedocs.org/projects/tomopy/?badge=latest
 
 .. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
     :target: https://travis-ci.org/dgursoy/tomopy
