@@ -11,7 +11,7 @@ before_install:
   - conda install conda-build
   - conda update conda
   - conda config --add channels dgursoy
-  - conda config --set always_yes yes
+  - conda config --set always_yes yes --set changeps1 no
   - conda info -a
 
 install:
