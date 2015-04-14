@@ -12,21 +12,16 @@ requirements:
   build:
     - python
     - setuptools
+
   run:
     - python
     - numpy
-    - scipy
     - h5py
     - scikit-image
     - pywavelets
-    - tifffile
 
 test:
   # Python imports
-  requires:
-    - nose
-    - h5py
-    - numpy
   imports:
     - tomopy
     - tomopy.io
