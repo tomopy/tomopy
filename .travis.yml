@@ -15,8 +15,6 @@ before_install:
   - conda info -a
 
 install:
-  - conda create -q -n testenv tomopy nose
-  - source activate testenv
   - conda build . 
   - pip install coveralls
 
