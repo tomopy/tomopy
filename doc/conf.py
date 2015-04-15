@@ -29,20 +29,13 @@ sys.path.insert(0, os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-try:
-    import sphinxcontrib.bibtex
-    extensions = [
+extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.todo',
     'numpydoc',
+    'sphinxcontrib.napoleon',
     'sphinxcontrib.bibtex']
-except ImportError:
-    extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.todo',
-    'numpydoc']
 
 [extensions]
 todo_include_todos=True
