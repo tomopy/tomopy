@@ -88,7 +88,7 @@ def as_shared_array(arr):
 
     Returns
     -------
-    out : ndarray (float32)
+    out : ndarray
         Output array.
     """
     sarr = mp.Array(ctypes.c_float, arr.size)
@@ -109,7 +109,7 @@ def as_float32(arr):
 
     Returns
     -------
-    out : ndarray (float32)
+    out : ndarray
         Output array.
     """
     if not isinstance(arr, np.float32):
@@ -126,15 +126,15 @@ def as_uint8(arr, dmin=None, dmax=None):
     arr : ndarray
         Input array.
 
-    dmin : scalar (float)
+    dmin : float, optional
         Mininum value to adjust float-to-int conversion range.
 
-    dmax : scalar (float)
+    dmax : float, optional
         Maximum value to adjust float-to-int conversion range.
 
     Returns
     -------
-    out : ndarray (uint8)
+    out : ndarray
         Output array.
     """
     if not isinstance(arr, np.int8):
@@ -163,15 +163,15 @@ def as_uint16(arr, dmin=None, dmax=None):
     arr : ndarray
         Input array.
 
-    dmin : scalar (float)
+    dmin : float, optional
         Mininum value to adjust float-to-int conversion range.
 
-    dmax : scalar (float)
+    dmax : float, optional
         Maximum value to adjust float-to-int conversion range.
 
     Returns
     -------
-    out : ndarray (uint16)
+    out : ndarray
         Output array.
     """
     if not isinstance(arr, np.int16):
@@ -197,15 +197,15 @@ def remove_neg(dat, val=0.):
 
     Parameters
     ----------
-    dat : ndarray (float)
+    dat : ndarray
         Input data.
 
-    val : scalar (float)
+    val : float, optional
         Values to be replaced with negative values in data.
 
     Returns
     -------
-    out : ndarray (float)
+    out : ndarray
        Corrected data.
     """
     dat = as_float32(dat)
@@ -219,15 +219,15 @@ def remove_nan(dat, val=0.):
 
     Parameters
     ----------
-    dat : ndarray (float)
+    dat : ndarray
         Input data.
 
-    val : scalar (float)
+    val : float, optional
         Values to be replaced with NaN values in data.
 
     Returns
     -------
-    out : ndarray (float)
+    out : ndarray
        Corrected data.
     """
     dat = as_float32(dat)
@@ -244,18 +244,18 @@ def _add_index_to_string(string, ind, digit):
 
     Parameters
     ----------
-    string : string
+    string : str
         Given string (typically a file name).
 
-    ind : scalar (int)
+    ind : int
         A value index to be added at the end of string.
 
-    digit : scalar (int)
+    digit : int
         Number of digits in indexing tiff images.
 
     Returns
     -------
-    out : string
+    out : str
         Indexed string.
     """
     # Index for stacking.
@@ -280,12 +280,12 @@ def _suggest_new_fname(fname):
 
     Parameters
     ----------
-    string : string
+    string : str
         Given string.
 
     Returns
     -------
-    out : string
+    out : str
         Indexed new string.
     """
     ext = '.' + fname.split(".")[-1]
@@ -309,10 +309,10 @@ def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
 
     Parameters
     ----------
-    fname : string
+    fname : str, optional
         Path to hdf5 file.
 
-    gname : string
+    gname : str, optional
         Path to the group inside hdf5 file where data is located.
 
     Returns
@@ -336,13 +336,13 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
     data : ndarray mostly
         Input data.
 
-    fname : string
+    fname : str
         Path to hdf5 file without extension.
 
-    gname : string
+    gname : str, optional
         Path to the group inside hdf5 file where data is located.
 
-    overwrite: bool
+    overwrite: bool, optional
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
 
@@ -369,16 +369,16 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to hdf5 file.
 
-    span : list (int)
+    span : list of int
         (start, end) indices of the files to read.
 
-    digit : scalar (int)
+    digit : int
         Number of digits in indexing tiff images.
 
-    ext : string
+    ext : str, optional
         Specifies the extension of tiff files (e.g., tiff or tif).
 
     Returns
@@ -421,26 +421,26 @@ def write_tiff_stack(
     data : 3D data (int or float)
         Input data as 3D array.
 
-    fname : string
+    fname : str
         Path of output file without extension.
 
-    axis : scalar (int)
+    axis : int, optional
         Axis along which saving is performed.
 
-    id : scalar (int)
+    id : int, optional
         First index of file for saving.
 
-    digit : scalar (int)
+    digit : int, optional
         Number of digits in indexing tiff images.
 
-    overwrite: bool
+    overwrite: bool, optional
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
 
-    dtype : string
+    dtype : str, optional
         The desired data-type for saved images.
 
-    dmin, dmax : scalar
+    dmin, dmax : float, optional
         Minimum and maximum values in data for scaling before saving.
     """
     ext = '.tiff'

@@ -77,21 +77,21 @@ def read_als832(fname):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to file name without indices and extension.
 
     Returns
     -------
-    data : 3D array (float32)
-        Data array.
+    data : ndarray
+        3D data array.
 
-    white : 3D array (float32)
-        White field array.
+    white : ndarray
+        3D white field array.
 
-    dark : 3D array (float32)
-        Dark field array.
+    dark : ndarray
+        3D dark field array.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
     """
     fname = os.path.abspath(fname)
@@ -134,25 +134,25 @@ def read_aps2bm(fname, proj=None, sino=None):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to hdf5 file.
 
-    proj : slice object
+    proj : slice, optional
         Specifies the projections to read.
 
-    sino : slice object
+    sino : slice, optional
         Specifies the sinograms to read.
 
     Returns
     -------
-    data : 3D array (float32)
-        Data array.
+    data : ndarray
+        3D data array.
 
-    white : 3D array (float32)
-        White field array.
+    white : ndarray
+        3D white field array.
 
-    dark : 3D array (float32)
-        Dark field array.
+    dark : ndarray
+        3D dark field array.
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
@@ -179,22 +179,22 @@ def read_aps7bm(fname, proj=None, sino=None):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to hdf5 file.
 
-    proj : slice object
+    proj : slice, optional
         Specifies the projections to read.
 
-    sino : slice object
+    sino : slice, optional
         Specifies the sinograms to read.
 
     Returns
     -------
-    data : 3D array (float32)
-        Data array.
+    data : ndarray
+        3D data array.
 
-    theta : 1D array (float32)
-        Projection angles.
+    theta : array
+        Projection angles in radian.
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
@@ -219,19 +219,19 @@ def read_aps13id(fname, proj=None, sino=None):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to hdf5 file.
 
-    proj : slice object
+    proj : slice, optional
         Specifies the projections to read.
 
-    sino : slice object
+    sino : slice, optional
         Specifies the sinograms to read.
 
     Returns
     -------
-    data : 3D array (float32)
-        Data array.
+    data : ndarray
+        3D data array.
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
@@ -256,25 +256,25 @@ def read_aps32id(fname, proj=None, sino=None):
 
     Parameters
     ----------
-    fname : string
+    fname : str
         Path to hdf5 file.
 
-    proj : slice object
+    proj : slice, optional
         Specifies the projections to read.
 
-    sino : slice object
+    sino : slice, optional
         Specifies the sinograms to read.
 
     Returns
     -------
-    data : 3D array (float32)
-        Data array.
+    data : ndarray
+        3D data array.
 
-    white : 3D array (float32)
-        White (flat) field array.
+    white : ndarray
+        3D white field array.
 
-    dark : 3D array (float32)
-        Dark field array.
+    dark : ndarray
+        3D dark field array.
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
