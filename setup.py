@@ -43,6 +43,7 @@ setup(
     version=open('VERSION').read().strip(),
     ext_modules=[prep, recon, misc],
     include_package_data=True,
+    zip_safe=False,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',
     description='X-ray imaging toolbox',
