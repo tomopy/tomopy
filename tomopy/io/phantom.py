@@ -78,13 +78,13 @@ def baboon(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/baboon.tif"
     im = sio.imread(fname)
@@ -99,13 +99,13 @@ def barbara(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/barbara.tif"
     im = sio.imread(fname)
@@ -120,13 +120,13 @@ def cameraman(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/cameraman.tif"
     im = sio.imread(fname)
@@ -141,13 +141,13 @@ def checkerboard(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
     im = sio.imread(fname)
@@ -162,13 +162,13 @@ def lena(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/lena.tif"
     im = sio.imread(fname)
@@ -183,13 +183,13 @@ def peppers(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/peppers.tif"
     im = sio.imread(fname)
@@ -204,13 +204,13 @@ def shepp2d(dtype='float32'):
 
     Parameters
     ----------
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
     im = sio.imread(fname)
@@ -225,16 +225,16 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
 
     Parameters
     ----------
-    shape : list
+    shape : list, optional
         Shape of the 3D data.
 
-    dtype : string
+    dtype : str, optional
         The desired data-type for the array.
 
     Returns
     -------
-    out : 3D array
-        Output test data
+    out : ndarray
+        Output 3D test data
     """
     shepp_params = _array_to_params(_get_shepp_array())
     return phantom(shape, shepp_params, dtype)
@@ -246,14 +246,14 @@ def phantom(shape, params, dtype='float32'):
 
     Parameters
     ----------
-    shape: tuple of ints
+    shape: tuple of int
         Shape of the output cube.
 
-    params: list of dictionaries
+    params: list of dict
         List of dictionaries with the parameters defining the ellipsoids
         to include in the cube.
 
-    dtype: string
+    dtype: str, optional
         Data type of the output ndarray.
 
     Returns
