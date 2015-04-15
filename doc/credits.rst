@@ -2,8 +2,8 @@
 Credits
 =======
 
-We kindly request that you cite :cite:`gursoy14a` and :cite:`decarlo14a` 
-if you use TomoPy:
+We kindly request that you cite the following papers if you use TomoPy:
 
 .. bibliography:: ref.bib
-    :list: enumerated
+    :style: unsrt
+    :all:
