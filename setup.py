@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 
 prep = Extension(
     name='tomopy.lib.libtomopy_prep',
@@ -38,7 +38,7 @@ misc = Extension(
 
 setup(
     name='tomopy',
-    packages=['tomopy'],
+    packages=find_packages(),
     package_data={'tomopy': ['data/*.tif']},
     version=open('VERSION').read().strip(),
     ext_modules=[prep, recon, misc],
