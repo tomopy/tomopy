@@ -54,27 +54,83 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import os
-import logging
+import re
 import h5py
+import tomopy.io.data as iod
+import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['read_aps1id',
+__all__ = ['read_als832',
            'read_aps2bm',
            'read_aps7bm',
            'read_aps13id',
            'read_aps32id']
 
 
-def read_aps1id():
-    pass
+def read_als832(fname):
+    """
+    Read ALS 8.3.2 standard data format.
+
+    Parameters
+    ----------
+    fname : string
+        Path to file name without indices and extension.
+
+    Returns
+    -------
+    data : 3D array (float32)
+        Data array.
+
+    white : 3D array (float32)
+        White field array.
+
+    dark : 3D array (float32)
+        Dark field array.
+
+    theta : 1D array (float)
+        Projection angles in radian.
+    """
+    fname = os.path.abspath(fname)
+    tname = fname + '_0000_'
+    wname = fname + 'bak_'
+    dname = fname + 'drk_'
+    lname = fname + '.sct'
+
+    # Read ALS log file data
+    lfile = open(lname, 'r')
+    for line in lfile:
+        if '-nangles' in line:
+            nang = int(re.findall(r'\d+', line)[0])
+        if '-arange' in line:
+            rang = int(re.findall(r'\d+', line)[0])
+        if '-num_bright_field' in line:
+            nflt = int(re.findall(r'\d+', line)[0])
+        if '-num_dark_fields' in line:
+            ndrk = int(re.findall(r'\d+', line)[0])
+    lfile.close()
+
+    data = iod.read_tiff_stack(tname, span=(0, nang-1), digit=4, ext='tif')
+    white = iod.read_tiff_stack(wname, span=(0, nflt-1), digit=4, ext='tif')
+    dark = iod.read_tiff_stack(dname, span=(0, ndrk-1), digit=4, ext='tif')
+    theta = np.linspace(0, rang*np.pi/180., nang, dtype='float32')
+
+    if not isinstance(data, np.float32):
+        data = np.array(data, dtype='float32')
+    if not isinstance(white, np.float32):
+        white = np.array(white, dtype='float32')
+    if not isinstance(dark, np.float32):
+        dark = np.array(dark, dtype='float32')
+
+    return data, white, dark, theta
 
 
 def read_aps2bm(fname, proj=None, sino=None):
     """
-    Reads APS 2-BM standard data format.
+    Read APS 2-BM standard data format.
 
     Parameters
     ----------
@@ -119,7 +175,7 @@ def read_aps2bm(fname, proj=None, sino=None):
 
 def read_aps7bm(fname, proj=None, sino=None):
     """
-    Reads APS 7-BM standard data format.
+    Read APS 7-BM standard data format.
 
     Parameters
     ----------
@@ -159,7 +215,7 @@ def read_aps7bm(fname, proj=None, sino=None):
 
 def read_aps13id(fname, proj=None, sino=None):
     """
-    Reads APS 13-ID standard data format.
+    Read APS 13-ID standard data format.
 
     Parameters
     ----------
@@ -196,7 +252,7 @@ def read_aps13id(fname, proj=None, sino=None):
 
 def read_aps32id(fname, proj=None, sino=None):
     """
-    Reads APS 32-ID standard data format.
+    Read APS 32-ID standard data format.
 
     Parameters
     ----------
