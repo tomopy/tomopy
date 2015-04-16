@@ -83,7 +83,7 @@ def baboon(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/baboon.tif"
@@ -104,7 +104,7 @@ def barbara(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/barbara.tif"
@@ -125,7 +125,7 @@ def cameraman(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/cameraman.tif"
@@ -146,7 +146,7 @@ def checkerboard(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
@@ -167,7 +167,7 @@ def lena(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/lena.tif"
@@ -188,7 +188,7 @@ def peppers(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/peppers.tif"
@@ -209,7 +209,7 @@ def shepp2d(dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
@@ -233,7 +233,7 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output 3D test image.
     """
     shepp_params = _array_to_params(_get_shepp_array())
@@ -258,19 +258,19 @@ def phantom(shape, params, dtype='float32'):
 
     Returns
     -------
-    cube: ndarray
+    ndarray
         3D object filled with the specified ellipsoids.
     """
     # instantiate ndarray cube
-    cube = np.zeros(shape, dtype=dtype)
+    obj = np.zeros(shape, dtype=dtype)
 
     # define coords
     coords = _define_coords(shape)
 
     # recursively add ellipsoids to cube
     for param in params:
-        _ellipsoid(param, out=cube, coords=coords)
-    return cube
+        _ellipsoid(param, out=obj, coords=coords)
+    return obj
 
 
 def _ellipsoid(params, shape=None, out=None, coords=None):

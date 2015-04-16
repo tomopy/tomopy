@@ -113,7 +113,7 @@ def simulate(obj, theta, center=None):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         Simulated 3D tomographic data.
     """
     # Estimate data dimensions.
@@ -177,7 +177,7 @@ def gridrec(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     # Gridrec reconstructs 2 slices minimum.
@@ -261,7 +261,7 @@ def art(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -345,7 +345,7 @@ def bart(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -427,7 +427,7 @@ def fbp(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -503,7 +503,7 @@ def mlem(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -587,7 +587,7 @@ def osem(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -683,7 +683,7 @@ def ospml_hybrid(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -783,7 +783,7 @@ def ospml_quad(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -884,7 +884,7 @@ def pml_hybrid(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -970,7 +970,7 @@ def pml_quad(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
@@ -1052,7 +1052,7 @@ def sirt(
 
     Returns
     -------
-    recon : ndarray
+    ndarray
         Reconstructed 3D object.
     """
     dx, dy, dz = data.shape

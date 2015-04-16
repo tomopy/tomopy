@@ -120,7 +120,7 @@ def normalize(data, white, dark, cutoff=None, ind=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Normalized 3D tomographic data.
     """
     if type(data) == str and data == 'SHARED':
@@ -180,7 +180,7 @@ def remove_stripe(
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Corrected 3D tomographic data.
 
     References
@@ -277,7 +277,7 @@ def retrieve_phase(
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Approximated 3D tomographic phase data.
 
     References
@@ -342,16 +342,16 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
 
     Returns
     -------
-    H : ndarray
+    ndarray
         2D Paganin filter.
 
-    xshift : int
+    int
         Pad amount in projection axis.
 
-    yshift : int
+    int
         Pad amount in sinogram axis.
 
-    prj : ndarray
+    ndarray
         Padded 2D projection image.
     """
     dx, dy, dz = data.shape
@@ -407,7 +407,7 @@ def circular_roi(data, ratio=1, val=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Masked 3D tomographic data.
     """
     dx, dy, dz = data.shape
@@ -452,7 +452,7 @@ def median_filter(data, size=3, axis=0, ind=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Median filtered 3D array.
     """
     if type(data) == str and data == 'SHARED':
@@ -507,7 +507,7 @@ def remove_zinger(data, dif=1000, size=3, ind=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Corrected 3D tomographic data.
     """
     if type(data) == str and data == 'SHARED':
@@ -546,7 +546,7 @@ def correct_air(data, air=10):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Corrected 3D tomographic data.
     """
     dx, dy, dz = data.shape

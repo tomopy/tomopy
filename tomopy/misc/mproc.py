@@ -87,7 +87,7 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output data.
     """
     # Arrange number of processors.
