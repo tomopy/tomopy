@@ -98,19 +98,19 @@ def apply_pad(arr, npad=None, val=0.):
 
     Parameters
     ----------
-    arr : 3D array (int or float)
+    arr : ndarray
         Arbitrary 3D array.
 
-    npad : scalar (int)
+    npad : int, optional
         New dimensions after padding.
 
-    val : scalar (float)
+    val : float, optional
         Pad value.
 
     Returns
     -------
-    out : 3D array (float32)
-        Padded array.
+    out : ndarray
+        Padded 3D array.
     """
     dx, dy, dz = arr.shape
     if npad is None:
@@ -141,20 +141,20 @@ def focus_region(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D Tomographic data.
 
-    xcoord, ycoord : scalar (float)
+    xcoord, ycoord : float, optional
         x- and y-coordinates of the center location of the circular
         ROI in reconstruction image.
 
-    dia : scalar (float)
+    dia : float, optional
         Diameter of the circular ROI.
 
-    center : scalar (float)
+    center : float, optional
         Rotation axis location of the tomographic data.
 
-    pad : bool
+    pad : bool, optional
         If True, extend the size of the projections by padding with zeros.
 
     corr : bool, optional
@@ -162,10 +162,10 @@ def focus_region(
 
     Returns
     -------
-    roi : 3D array (float)
-        Modified ROI tomographic data.
+    roi : ndarray
+        Modified 3D tomographic data.
 
-    center : scalar (float)
+    center : float
         New rotation axis location.
     """
     dx, dy, dz = data.shape
@@ -219,16 +219,16 @@ def downsample2d(data, level=1):
 
     Parameters
     ----------
-    data : 3D array (float)
-        An arbitrary 3D array.
+    data : ndarray
+        Arbitrary 3D array.
 
-    level : scalar (int)
+    level : int, optional
         Downsampling level in powers of two.
 
     Returns
     -------
-    out : 3D array (float)
-        Downsampled data.
+    out : ndarray
+        Downsampled 3D array.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -257,16 +257,16 @@ def downsample3d(data, level=1):
 
     Parameters
     ----------
-    data : 3D array (float)
-        An arbitrary 3D array.
+    data : ndarray
+        Arbitrary 3D array.
 
-    level : scalar (int)
+    level : int, optional
         Downsampling level in powers of two.
 
     Returns
     -------
-    out : 3D array (float)
-        Downsampled data.
+    out : ndarray
+        Downsampled 3D array.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -295,16 +295,16 @@ def upsample2d(data, level=1):
 
     Parameters
     ----------
-    data : 3D array (float)
-        An arbitrary 3D array.
+    data : ndarray
+        Arbitrary 3D array.
 
-    level : scalar (int)
+    level : int, optional
         Upsampling level in powers of two.
 
     Returns
     -------
-    out : 3D array (float)
-        Upsampled data.
+    out : ndarray
+        Upsampled 3D array.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -332,16 +332,16 @@ def upsample3d(data, level=1):
 
     Parameters
     ----------
-    data : 3D array (float)
-        An arbitrary 3D array.
+    data : ndarray
+        Arbitrary 3D array.
 
-    level : scalar (int)
+    level : int, optional
         Upsampling level in powers of two.
 
     Returns
     -------
-    out : 3D array (float)
-        Upsampled data.
+    out : ndarray
+        Upsampled 3D array.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
@@ -369,16 +369,16 @@ def upsample2df(data, level=1):
 
     Parameters
     ----------
-    data : 3D array (float)
-        An arbitrary 3D array.
+    data : ndarray
+        Arbitrary 3D array.
 
-    level : scalar (int)
+    level : int, optional
         Upsampling level in powers of two.
 
     Returns
     -------
-    out : 3D array (float)
-        Upsampled data.
+    out : ndarray
+        Upsampled 3D array.
     """
     dx, dy, dz = data.shape
     level = np.array(level, dtype='int32')
