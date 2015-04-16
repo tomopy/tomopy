@@ -88,7 +88,7 @@ def as_shared_array(arr):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output array.
     """
     sarr = mp.Array(ctypes.c_float, arr.size)
@@ -109,7 +109,7 @@ def as_float32(arr):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output array.
     """
     if not isinstance(arr, np.float32):
@@ -134,7 +134,7 @@ def as_uint8(arr, dmin=None, dmax=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output array.
     """
     if not isinstance(arr, np.int8):
@@ -171,7 +171,7 @@ def as_uint16(arr, dmin=None, dmax=None):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Output array.
     """
     if not isinstance(arr, np.int16):
@@ -205,7 +205,7 @@ def remove_neg(dat, val=0.):
 
     Returns
     -------
-    out : ndarray
+    ndarray
        Corrected data.
     """
     dat = as_float32(dat)
@@ -227,7 +227,7 @@ def remove_nan(dat, val=0.):
 
     Returns
     -------
-    out : ndarray
+    ndarray
        Corrected data.
     """
     dat = as_float32(dat)
@@ -255,7 +255,7 @@ def _add_index_to_string(string, ind, digit):
 
     Returns
     -------
-    out : str
+    str
         Indexed string.
     """
     # Index for stacking.
@@ -285,7 +285,7 @@ def _suggest_new_fname(fname):
 
     Returns
     -------
-    out : str
+    str
         Indexed new string.
     """
     ext = '.' + fname.split(".")[-1]
@@ -317,7 +317,7 @@ def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Data.
     """
     fname = os.path.abspath(fname)
@@ -378,7 +378,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Data.
     """
     d = ['0' * (digit - x - 1) for x in range(digit)]
@@ -435,8 +435,11 @@ def write_tiff_stack(
     dtype : str, optional
         The desired data-type for saved images.
 
-    dmin, dmax : float, optional
-        Minimum and maximum values in data for scaling before saving.
+    dmin : float, optional
+        Minimum value in data for scaling before saving.
+
+    dmax : float, optional
+        Maximum value in data for scaling before saving.
     """
     ext = '.tiff'
     fname = os.path.abspath(fname)

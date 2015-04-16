@@ -82,16 +82,16 @@ def read_als832(fname):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         3D tomographic data.
 
-    white : ndarray
+    ndarray
         3D white field data.
 
-    dark : ndarray
+    ndarray
         3D dark field data.
 
-    theta : array
+    array
         Projection angles in radian.
     """
     fname = os.path.abspath(fname)
@@ -145,13 +145,13 @@ def read_aps2bm(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         3D tomographic data.
 
-    white : ndarray
+    ndarray
         3D white field data.
 
-    dark : ndarray
+    ndarray
         3D dark field data.
     """
     fname = os.path.abspath(fname)
@@ -190,10 +190,10 @@ def read_aps7bm(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         3D tomographic data.
 
-    theta : array
+    array
         Projection angles in radian.
     """
     fname = os.path.abspath(fname)
@@ -230,7 +230,7 @@ def read_aps13id(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         3D tomographic data.
     """
     fname = os.path.abspath(fname)
@@ -267,13 +267,13 @@ def read_aps32id(fname, proj=None, sino=None):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         3D tomographic data.
 
-    white : ndarray
+    ndarray
         3D white field data.
 
-    dark : ndarray
+    ndarray
         3D dark field data.
     """
     fname = os.path.abspath(fname)
