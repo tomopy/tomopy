@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.todo',
+    'sphinx.ext.autosummary',
     'sphinxcontrib.napoleon',
     'sphinxcontrib.bibtex']
 
