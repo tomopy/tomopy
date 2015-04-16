@@ -77,7 +77,7 @@ __all__ = [
     'sirt']
 
 
-def import_lib(lname):
+def _import_shared_lib(lname):
     """
     Get the path and import the C-shared library.
     """
@@ -93,7 +93,7 @@ def import_lib(lname):
     except OSError as e:
         pass
 
-libtomopy_recon = import_lib('libtomopy_recon')
+libtomopy_recon = _import_shared_lib('libtomopy_recon')
 
 
 def simulate(obj, theta, center=None):
