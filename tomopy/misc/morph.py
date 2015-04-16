@@ -109,7 +109,7 @@ def apply_pad(arr, npad=None, val=0.):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Padded 3D array.
     """
     dx, dy, dz = arr.shape
@@ -162,10 +162,10 @@ def focus_region(
 
     Returns
     -------
-    roi : ndarray
+    ndarray
         Modified 3D tomographic data.
 
-    center : float
+    float
         New rotation axis location.
     """
     dx, dy, dz = data.shape
@@ -227,7 +227,7 @@ def downsample2d(data, level=1):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Downsampled 3D array.
     """
     dx, dy, dz = data.shape
@@ -265,7 +265,7 @@ def downsample3d(data, level=1):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Downsampled 3D array.
     """
     dx, dy, dz = data.shape
@@ -303,7 +303,7 @@ def upsample2d(data, level=1):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Upsampled 3D array.
     """
     dx, dy, dz = data.shape
@@ -340,7 +340,7 @@ def upsample3d(data, level=1):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Upsampled 3D array.
     """
     dx, dy, dz = data.shape
@@ -377,7 +377,7 @@ def upsample2df(data, level=1):
 
     Returns
     -------
-    out : ndarray
+    ndarray
         Upsampled 3D array.
     """
     dx, dy, dz = data.shape
