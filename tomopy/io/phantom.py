@@ -84,7 +84,7 @@ def baboon(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/baboon.tif"
     im = sio.imread(fname)
@@ -105,7 +105,7 @@ def barbara(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/barbara.tif"
     im = sio.imread(fname)
@@ -126,7 +126,7 @@ def cameraman(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/cameraman.tif"
     im = sio.imread(fname)
@@ -147,7 +147,7 @@ def checkerboard(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
     im = sio.imread(fname)
@@ -168,7 +168,7 @@ def lena(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/lena.tif"
     im = sio.imread(fname)
@@ -189,7 +189,7 @@ def peppers(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/peppers.tif"
     im = sio.imread(fname)
@@ -210,7 +210,7 @@ def shepp2d(dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
     im = sio.imread(fname)
@@ -234,7 +234,7 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
     Returns
     -------
     out : ndarray
-        Output 3D test data
+        Output 3D test image.
     """
     shepp_params = _array_to_params(_get_shepp_array())
     return phantom(shape, shepp_params, dtype)
@@ -259,7 +259,7 @@ def phantom(shape, params, dtype='float32'):
     Returns
     -------
     cube: ndarray
-        3D ndarray filled with the specified ellipsoids.
+        3D object filled with the specified ellipsoids.
     """
     # instantiate ndarray cube
     cube = np.zeros(shape, dtype=dtype)
