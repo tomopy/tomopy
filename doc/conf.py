@@ -317,13 +317,9 @@ class Mock(object):
 
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 'ctypes',
-    'matplotlib.pylab', 'scikit-image', 'skimage.io', 'numpydoc', 
+    'matplotlib.pylab', 'scikit-image', 'skimage.io', 
     'scipy.ndimage', 'pywt', 'scipy.optimize', 'skimage',
     'skimage.filter', 'skimage.morphology']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
-
-
-# To turn-off the warnings at object generation.
-numpydoc_show_class_members = False
