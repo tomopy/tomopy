@@ -39,7 +39,7 @@ before_script:
   - conda config --add channels dgursoy
 ## Put your main computations here!  
 script:
-  - conda build .
+  - conda build -q .
 ## This will run after the script regardless of the result of script
 ## BINSTAR_BUILD_RESULT=[succcess|failure] 
 # after_script:
