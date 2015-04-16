@@ -383,7 +383,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
     """
     d = ['0' * (digit - x - 1) for x in range(digit)]
     ind = np.arange(span[0], span[1] + 1)
-    a = True
+    a = 0
     for m in ind:
         for n in range(digit):
             if m < np.power(10, n + 1):
@@ -393,13 +393,13 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
                     warnings.simplefilter("ignore")
                     out = sio.imread(img, plugin='tifffile')
 
-                if a is True:
+                if a == 0:
                     sx = ind.size
                     sy, sz = out.shape
                     data = np.zeros((sx, sy, sz), dtype='float32')
-                    a = False
 
-                data[m] = out
+                data[a] = out
+                a += 1
                 break
     return data
 

@@ -71,7 +71,7 @@ __all__ = ['read_als832',
            'read_aps32id']
 
 
-def read_als832(fname):
+def read_als832(fname, span=None):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -79,6 +79,9 @@ def read_als832(fname):
     ----------
     fname : str
         Path to file name without indices and extension.
+
+    span : list of int, optional
+        (start, end) indices of the projection files to read.
 
     Returns
     -------
@@ -113,10 +116,17 @@ def read_als832(fname):
             ndrk = int(re.findall(r'\d+', line)[0])
     lfile.close()
 
-    data = iod.read_tiff_stack(tname, span=(0, nang-1), digit=4, ext='tif')
-    white = iod.read_tiff_stack(wname, span=(0, nflt-1), digit=4, ext='tif')
-    dark = iod.read_tiff_stack(dname, span=(0, ndrk-1), digit=4, ext='tif')
-    theta = np.linspace(0, rang*np.pi/180., nang, dtype='float32')
+    if span is None:
+        span = (0, nang-1)
+
+    data = iod.read_tiff_stack(tname, span, digit=4, ext='tif')
+    white = iod.read_tiff_stack(wname, (0, nflt-1), digit=4, ext='tif')
+    dark = iod.read_tiff_stack(dname, (0, ndrk-1), digit=4, ext='tif')
+
+    start = np.pi*span[0]/nang
+    end = np.pi*span[1]/nang
+    num = np.diff(span)+1
+    theta = np.linspace(start, end, num, dtype='float32')
 
     if not isinstance(data, np.float32):
         data = np.array(data, dtype='float32')
@@ -138,10 +148,10 @@ def read_aps2bm(fname, proj=None, sino=None):
         Path to hdf5 file.
 
     proj : slice, optional
-        Specifies the projections to read.
+        Specifies the projections to read from a slice object.
 
     sino : slice, optional
-        Specifies the sinograms to read.
+        Specifies the sinograms to read from a slice object.
 
     Returns
     -------
@@ -183,10 +193,10 @@ def read_aps7bm(fname, proj=None, sino=None):
         Path to hdf5 file.
 
     proj : slice, optional
-        Specifies the projections to read.
+        Specifies the projections to read from a slice object.
 
     sino : slice, optional
-        Specifies the sinograms to read.
+        Specifies the sinograms to read from a slice object.
 
     Returns
     -------
@@ -223,10 +233,10 @@ def read_aps13id(fname, proj=None, sino=None):
         Path to hdf5 file.
 
     proj : slice, optional
-        Specifies the projections to read.
+        Specifies the projections to read from a slice object.
 
     sino : slice, optional
-        Specifies the sinograms to read.
+        Specifies the sinograms to read from a slice object.
 
     Returns
     -------
@@ -260,10 +270,10 @@ def read_aps32id(fname, proj=None, sino=None):
         Path to hdf5 file.
 
     proj : slice, optional
-        Specifies the projections to read.
+        Specifies the projections to read from a slice object.
 
     sino : slice, optional
-        Specifies the sinograms to read.
+        Specifies the sinograms to read from a slice object.
 
     Returns
     -------
