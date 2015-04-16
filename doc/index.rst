@@ -19,7 +19,7 @@ maintained on `GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
    about
    install
    devguide
-   api/tomopy
+   api
    faq
    credits
 

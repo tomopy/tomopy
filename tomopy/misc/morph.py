@@ -73,7 +73,7 @@ __all__ = ['apply_pad',
            'upsample2df']
 
 
-def import_shared_lib(lname):
+def _import_shared_lib(lname):
     """
     Import the C-shared library.
     """
@@ -89,7 +89,7 @@ def import_shared_lib(lname):
     except OSError as e:
         pass
 
-libtomopy_misc = import_shared_lib('libtomopy_misc')
+libtomopy_misc = _import_shared_lib('libtomopy_misc')
 
 
 def apply_pad(arr, npad=None, val=0.):

@@ -78,7 +78,7 @@ SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
 
 
-def import_shared_lib(lname):
+def _import_shared_lib(lname):
     """
     Import the C-shared library.
     """
@@ -94,7 +94,7 @@ def import_shared_lib(lname):
     except OSError as e:
         pass
 
-libtomopy_prep = import_shared_lib('libtomopy_prep')
+libtomopy_prep = _import_shared_lib('libtomopy_prep')
 
 
 def normalize(data, white, dark, cutoff=None, ind=None):
