@@ -103,25 +103,25 @@ def normalize(data, white, dark, cutoff=None, ind=None):
 
     Parameters
     ----------
-    data : 3D array (float)
-        Raw tomographic measurements.
+    data : ndarray
+        3D tomographic data.
 
-    white : 3D array (float)
-        White field measurements.
+    white : ndarray
+        3D white field data.
 
-    dark : 3D array (float)
-        Dark field measurements.
+    dark : ndarray
+        3D dark field data.
 
-    cutoff : scalar (float)
+    cutoff : float, optional
         Permitted maximum vaue for the normalized data.
 
-    ind : array (int)
+    ind : array of int, optional
         Projection indices at which the normalization is applied.
 
     Returns
     -------
-    out : 3D array (float)
-        Normalized measurements.
+    out : ndarray
+        Normalized 3D tomographic data.
     """
     if type(data) == str and data == 'SHARED':
         data = mp.shared_data
@@ -160,28 +160,28 @@ def remove_stripe(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    level : scalar (int)
+    level : int, optional
         Number of discrete wavelet transform levels.
 
-    wname : string 
+    wname : str, optional
         Type of the wavelet filter. 'haar', 'db5', sym5', etc.
 
-    sigma : scalar (float)
+    sigma : float, optional
         Damping parameter in Fourier space.
 
-    pad : bool
+    pad : bool, optional
         If True, extend the size of the sinogram by padding with zeros.
 
-    ind : array (int)
+    ind : array of int, optional
         Sinogram indices at which the stripe removal is applied.
 
     Returns
     -------
-    out : 3D array (float)
-        Corrected data.
+    out : ndarray
+        Corrected 3D tomographic data.
 
     References
     ----------
@@ -254,31 +254,31 @@ def retrieve_phase(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    psize : scalar (float)
+    psize : float, optional
         Detector pixel size in cm.
 
-    dist : scalar (float)
+    dist : float, optional
         Propagation distance of the wavefront in cm.
 
-    energy : scalar (float)
+    energy : float, optional
         Energy of incident wave in keV.
 
-    alpha : scalar (float)
+    alpha : float, optional
         Regularization parameter.
 
-    pad : bool
+    pad : bool, optional
         If True, extend the size of the projections by padding with zeros.
 
-    ind : array (int)
+    ind : array of int, optional
         Projection indices at which the phase retrieval is applied.
 
     Returns
     -------
-    out : 3D array (float)
-        Approximated phase data.
+    out : ndarray
+        Approximated 3D tomographic phase data.
 
     References
     ----------
@@ -322,19 +322,19 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    psize : scalar (float)
+    psize : float
         Detector pixel size in cm.
 
-    dist : scalar (float)
+    dist : float
         Propagation distance of the wavefront in cm.
 
-    energy : scalar (float)
+    energy : float
         Energy of incident wave in keV.
 
-    alpha : scalar (float)
+    alpha : float
         Regularization parameter.
 
     pad : bool
@@ -342,17 +342,17 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
 
     Returns
     -------
-    H : 2D array (float)
-        Paganin filter.
+    H : ndarray
+        2D Paganin filter.
 
-    xshift : scalar (int)
+    xshift : int
         Pad amount in projection axis.
 
-    yshift : scalar (int)
+    yshift : int
         Pad amount in sinogram axis.
 
-    prj : 2D array (float)
-        Padded projection.
+    prj : ndarray
+        Padded 2D projection image.
     """
     dx, dy, dz = data.shape
     wavelen = 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
@@ -395,20 +395,20 @@ def circular_roi(data, ratio=1, val=None):
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    ratio : scalar (int)
+    ratio : int, optional
         Ratio of the circular mask's diameter in pixels to
         the number of reconstructed image grid size.
 
-    val : scalar (int)
+    val : int, optional
         Value for the masked region.
 
     Returns
     -------
-    out : 3D array (float)
-        Masked data with shape same as data.
+    out : ndarray
+        Masked 3D tomographic data.
     """
     dx, dy, dz = data.shape
     ind = np.arange(0, dx)
@@ -438,22 +438,22 @@ def median_filter(data, size=3, axis=0, ind=None):
 
     Parameters
     ----------
-    data : 3D array (float)
+    data : ndarray
         Arbitrary 3D array.
 
-    size : scalar (int)
+    size : int, optional
         The size of the filter.
 
-    axis : scalar (int)
+    axis : int, optional
         Axis along which median filtering is performed.
 
-    ind : array (ind)
+    ind : array of int, optional
         Indices at which the filtering is applied.
 
     Returns
     -------
-    out : 3D array
-        Median filtered array.
+    out : ndarray
+        Median filtered 3D array.
     """
     if type(data) == str and data == 'SHARED':
         data = mp.shared_data
@@ -492,23 +492,23 @@ def remove_zinger(data, dif=1000, size=3, ind=None):
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    dif : scalar (float)
+    dif : float, optional
         Expected difference value between outlier measurements and
         the median filtered raw measurements.
 
-    size : scalar (int)
+    size : int, optional
         Size of the median filter.
 
-    ind : array (int)
+    ind : array of int, optional
         Projection indices at which the zinger removal is applied.
 
     Returns
     -------
-    out : 3D array (float)
-        Corrected tomographic data.
+    out : ndarray
+        Corrected 3D tomographic data.
     """
     if type(data) == str and data == 'SHARED':
         data = mp.shared_data
@@ -538,16 +538,16 @@ def correct_air(data, air=10):
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    air : scalar (int)
+    air : int, optional
         Number of pixels at each boundary to calculate the scaling factor.
 
     Returns
     -------
     out : ndarray
-        Corrected data.
+        Corrected 3D tomographic data.
     """
     dx, dy, dz = data.shape
 

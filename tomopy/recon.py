@@ -102,19 +102,19 @@ def simulate(obj, theta, center=None):
 
     Parameters
     ----------
-    obj : 3D array (int or float)
-        Voxelized object.
+    obj : ndarray
+        Voxelized 3D object.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
     Returns
     -------
-    data : 3D array (float)
-        Simulated tomographic data.
+    data : ndarray
+        Simulated 3D tomographic data.
     """
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
@@ -159,26 +159,26 @@ def gridrec(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    filter_name : string
+    filter_name : str, optional
         Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
         or 'none'.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     # Gridrec reconstructs 2 slices minimum.
     flag = False
@@ -238,31 +238,31 @@ def art(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -316,37 +316,37 @@ def bart(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    num_block : scalar (int)
+    num_block : int, optional
         Number of data blocks for intermediate updating the object.
 
-    ind_block : 1D array (int)
+    ind_block : array of int, optional
         Order of projections to be used for updating.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -407,28 +407,28 @@ def fbp(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -480,31 +480,31 @@ def mlem(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -558,37 +558,37 @@ def osem(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    num_block : scalar (int)
+    num_block : int, optional
         Number of data blocks for intermediate updating the object.
 
-    ind_block : 1D array (int)
+    ind_block : array of int, optional
         Order of projections to be used for updating.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -651,40 +651,40 @@ def ospml_hybrid(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    reg_par : array with 2 elements (float)
+    reg_par : list, optional
         Regularization hyperparameters as an array, (beta, delta).
 
-    num_block : scalar (int)
+    num_block : int, optional
         Number of data blocks for intermediate updating the object.
 
-    ind_block : 1D array (int)
+    ind_block : array of int, optional
         Order of projections to be used for updating.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -751,40 +751,40 @@ def ospml_quad(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    reg_par : scalar (float)
+    reg_par : float, optional
         Regularization parameter for smoothing.
 
-    num_block : scalar (int)
+    num_block : int, optional
         Number of data blocks for intermediate updating the object.
 
-    ind_block : 1D array (int)
+    ind_block : array of int, optional
         Order of projections to be used for updating.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -852,40 +852,40 @@ def pml_hybrid(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    reg_par : array with 2 elements (float)
+    reg_par : list, optional
         Regularization hyperparameters as an array, (beta, delta).
 
-    num_block : scalar (int)
+    num_block : int, optional
         Number of data blocks for intermediate updating the object.
 
-    ind_block : 1D array (int)
+    ind_block : array of int, optional
         Order of projections to be used for updating.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -944,34 +944,34 @@ def pml_quad(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
-    reg_par : scalar (float)
+    reg_par : float, optional
         Regularization parameter for smoothing.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
@@ -1029,31 +1029,31 @@ def sirt(
 
     Parameters
     ----------
-    data : 3D array (float)
-        Tomographic data.
+    data : ndarray
+        3D tomographic data.
 
-    theta : 1D array (float)
+    theta : array
         Projection angles in radian.
 
-    center : scalar (float)
+    center : float, optional
         Location of rotation axis.
 
-    emission : bool
+    emission : bool, optional
         Determines whether data is emission or transmission type.
 
-    recon : 3D array (float)
+    recon : ndarray, optional
         Initial values of the reconstruction object.
 
-    num_gridx, num_gridy : scalar (int)
+    num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
-    num_iter : scalar (int)
+    num_iter : int, optional
         Number of algorithm iterations performed.
 
     Returns
     -------
-    recon : 3D array (float32)
-        Reconstructed object.
+    recon : ndarray
+        Reconstructed 3D object.
     """
     dx, dy, dz = data.shape
     if center is None:
