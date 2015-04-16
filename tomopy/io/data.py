@@ -317,8 +317,8 @@ def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
 
     Returns
     -------
-    out : ndarray mostly
-        Returned data.
+    out : ndarray
+        Data.
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
@@ -333,7 +333,7 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
 
     Parameters
     ----------
-    data : ndarray mostly
+    data : ndarray
         Input data.
 
     fname : str
@@ -345,11 +345,6 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
     overwrite: bool, optional
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
-
-    Returns
-    -------
-    out : ndarray mostly
-        Returned data.
     """
     fname += '.h5'
     if not overwrite:
@@ -384,7 +379,7 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
     Returns
     -------
     out : ndarray
-        Returned data.
+        Data.
     """
     d = ['0' * (digit - x - 1) for x in range(digit)]
     ind = np.arange(span[0], span[1] + 1)
