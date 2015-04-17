@@ -6,5 +6,3 @@ pywavelets==0.2.2
 scikit-image==0.11.3
 spefile==1.6
 netcdf4==1.1.6
-edffile==1.6
-tifffile
