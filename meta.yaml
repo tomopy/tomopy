@@ -21,6 +21,8 @@ requirements:
     - pywavelets
     - netcdf4
     - spefile
+    - edffile
+    - tifffile
 
 test:
   # Python imports

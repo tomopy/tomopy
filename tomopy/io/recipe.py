@@ -64,18 +64,20 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['read_als832',
-           'read_aps2bm',
-           'read_aps7bm',
-           'read_aps13bm',
-           'read_aps13id',
-           'read_aps32id',
-           'read_dlsl12',
-           'read_petra3p05',
-           'read_slstomcat']
+__all__ = ['read_als_832',
+           'read_anka_tomotopo',
+           'read_aps_2bm',
+           'read_aps_7bm',
+           'read_aps_13bm',
+           'read_aps_13id',
+           'read_aps_32id',
+           'read_aus_microct',
+           'read_diamond_l12',
+           'read_petra3_p05',
+           'read_sls_tomcat']
 
 
-def read_als832(fname, ind=None):
+def read_als_832(fname, ind=None):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -119,13 +121,52 @@ def read_als832(fname, ind=None):
     if ind is None:
         ind = range(0, nproj)
 
-    tomo = iod.read_stack(tomo_name, ind, digit=4, ext='tif')
-    white = iod.read_stack(flat_name, range(0, nflat), digit=4, ext='tif')
-    dark = iod.read_stack(dark_name, range(0, ndark), digit=4, ext='tif')
+    tomo = iod.read_stack(tomo_name, ind, digit=4, format='tif')
+    white = iod.read_stack(flat_name, range(0, nflat), digit=4, format='tif')
+    dark = iod.read_stack(dark_name, range(0, ndark), digit=4, format='tif')
     return tomo, white, dark
 
 
-def read_aps2bm(fname, proj=None, sino=None):
+def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
+    """
+    Read ANKA TOMO-TOMO standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to data folder name without indices and extension.
+
+    ind_tomo : list of int, optional
+        Indices of the projection files to read.
+
+    ind_flat : list of int, optional
+        Indices of the flat field files to read.
+
+    ind_dark : list of int, optional
+        Indices of the dark field files to read.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    fname = os.path.abspath(fname)
+    tomo_name = fname + '/radios/image_'
+    flat_name = fname + '/flats/image_'
+    dark_name = fname + '/darks/image_'
+    tomo = iod.read_stack(tomo_name, ind_tomo, digit=5, format='tif')
+    flat = iod.read_stack(flat_name, ind_flat, digit=5, format='tif')
+    dark = iod.read_stack(dark_name, ind_dark, digit=5, format='tif')
+    return tomo, flat, dark
+
+
+def read_aps_2bm(fname, proj=None, sino=None):
     """
     Read APS 2-BM standard data format.
 
@@ -158,7 +199,7 @@ def read_aps2bm(fname, proj=None, sino=None):
     return tomo, flat, dark
 
 
-def read_aps7bm(fname, proj=None, sino=None):
+def read_aps_7bm(fname, proj=None, sino=None):
     """
     Read APS 7-BM standard data format.
 
@@ -188,7 +229,7 @@ def read_aps7bm(fname, proj=None, sino=None):
     return tomo, theta
 
 
-def read_aps13bm(fname, format, proj=None, sino=None):
+def read_aps_13bm(fname, format, proj=None, sino=None):
     """
     Read APS 13-BM standard data format.
 
@@ -219,7 +260,7 @@ def read_aps13bm(fname, format, proj=None, sino=None):
     return tomo
 
 
-def read_aps13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
+def read_aps_13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     """
     Read APS 13-ID standard data format.
 
@@ -249,7 +290,7 @@ def read_aps13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     return tomo
 
 
-def read_aps32id(fname, proj=None, sino=None):
+def read_aps_32id(fname, proj=None, sino=None):
     """
     Read APS 32-ID standard data format.
 
@@ -282,7 +323,47 @@ def read_aps32id(fname, proj=None, sino=None):
     return tomo, flat, dark
 
 
-def read_dlsl12(fname, ind):
+def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
+    """
+    Read Australian Synchrotron Micro Computed Tomography standard
+    data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to data folder.
+
+    ind_tomo : list of int, optional
+        Indices of the projection files to read.
+
+    ind_flat : list of int, optional
+        Indices of the flat field files to read.
+
+    ind_dark : list of int, optional
+        Indices of the dark field files to read.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    fname = os.path.abspath(fname)
+    tomo_name = fname + '/SAMPLE_T_'
+    flat_name = fname + '/BG__BEFORE_'
+    dark_name = fname + '/DF__BEFORE_'
+    tomo = iod.read_stack(tomo_name, ind_tomo, digit=4, format='tif')
+    flat = iod.read_stack(flat_name, ind_flat, digit=2, format='tif')
+    dark = iod.read_stack(dark_name, ind_dark, digit=2, format='tif')
+    return tomo, flat, dark
+
+
+def read_diamond_l12(fname, ind):
     """
     Read Diamond Light Source L12 (JEEP) standard data format.
 
@@ -305,19 +386,19 @@ def read_dlsl12(fname, ind):
     fname = os.path.abspath(fname)
     tomo_name = fname + '/im_'
     flat_name = fname + '/flat_'
-    tomo = iod.read_stack(tomo_name, ind, digit=6, ext='tif')
-    flat = iod.read_stack(flat_name, range(0, 1), digit=6, ext='tif')
+    tomo = iod.read_stack(tomo_name, ind, digit=6, format='tif')
+    flat = iod.read_stack(flat_name, range(0, 1), digit=6, format='tif')
     return tomo, flat
 
 
-def read_petra3p05(fname, ind_tomo, ind_flat, ind_dark):
+def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     """
     Read Petra-III P05 standard data format.
 
     Parameters
     ----------
     fname : str
-        Path to data folder name without indices and extension.
+        Path to data folder.
 
     ind_tomo : list of int, optional
         Indices of the projection files to read.
@@ -343,13 +424,13 @@ def read_petra3p05(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = fname + '/scan_0002/ccd/pco01/ccd_'
     flat_name = fname + '/scan_0001/ccd/pco01/ccd_'
     dark_name = fname + '/scan_0003/ccd/pco01/ccd_'
-    tomo = iod.read_stack(tomo_name, ind_tomo, digit=4, ext='tif')
-    flat = iod.read_stack(flat_name, ind_flat, digit=4, ext='tif')
-    dark = iod.read_stack(dark_name, ind_dark, digit=4, ext='tif')
+    tomo = iod.read_stack(tomo_name, ind_tomo, digit=4, format='tif')
+    flat = iod.read_stack(flat_name, ind_flat, digit=4, format='tif')
+    dark = iod.read_stack(dark_name, ind_dark, digit=4, format='tif')
     return tomo, flat, dark
 
 
-def read_slstomcat(fname, ind=None):
+def read_sls_tomcat(fname, ind=None):
     """
     Read SLS TOMCAT standard data format.
 
@@ -394,7 +475,7 @@ def read_slstomcat(fname, ind=None):
     find = range(ndark + 1, ndark + nflat)
     dind = range(1, ndark)
 
-    tomo = iod.read_stack(fname, ind, digit=4, ext='tif')
-    flat = iod.read_stack(fname, find, digit=4, ext='tif')
-    dark = iod.read_stack(fname, dind, digit=4, ext='tif')
+    tomo = iod.read_stack(fname, ind, digit=4, format='tif')
+    flat = iod.read_stack(fname, find, digit=4, format='tif')
+    dark = iod.read_stack(fname, dind, digit=4, format='tif')
     return tomo, flat, dark
