@@ -67,8 +67,10 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['read_als832',
            'read_aps2bm',
            'read_aps7bm',
+           'read_aps13bm',
            'read_aps13id',
-           'read_aps32id']
+           'read_aps32id',
+           'read_slstomcat']
 
 
 def read_als832(fname, span=None):
@@ -89,53 +91,36 @@ def read_als832(fname, span=None):
         3D tomographic data.
 
     ndarray
-        3D white field data.
+        3d flat field data.
 
     ndarray
         3D dark field data.
-
-    array
-        Projection angles in radian.
     """
+    # File definitions.
     fname = os.path.abspath(fname)
-    tname = fname + '_0000_'
-    wname = fname + 'bak_'
-    dname = fname + 'drk_'
-    lname = fname + '.sct'
+    tomo = fname + '_0000_'
+    flat = fname + 'bak_'
+    dark = fname + 'drk_'
+    log_file = fname + '.sct'
 
-    # Read ALS log file data
-    lfile = open(lname, 'r')
-    for line in lfile:
+    # Read metadata from ALS log file.
+    contents = open(log_file, 'r')
+    for line in contents:
         if '-nangles' in line:
-            nang = int(re.findall(r'\d+', line)[0])
-        if '-arange' in line:
-            rang = int(re.findall(r'\d+', line)[0])
+            nproj = int(re.findall(r'\d+', line)[0])
         if '-num_bright_field' in line:
-            nflt = int(re.findall(r'\d+', line)[0])
+            nflat = int(re.findall(r'\d+', line)[0])
         if '-num_dark_fields' in line:
-            ndrk = int(re.findall(r'\d+', line)[0])
-    lfile.close()
+            ndark = int(re.findall(r'\d+', line)[0])
+    contents.close()
 
     if span is None:
-        span = (0, nang-1)
+        span = (0, nproj - 1)
 
-    data = iod.read_tiff_stack(tname, span, digit=4, ext='tif')
-    white = iod.read_tiff_stack(wname, (0, nflt-1), digit=4, ext='tif')
-    dark = iod.read_tiff_stack(dname, (0, ndrk-1), digit=4, ext='tif')
-
-    start = np.pi*span[0]/nang
-    end = np.pi*span[1]/nang
-    num = np.diff(span)+1
-    theta = np.linspace(start, end, num, dtype='float32')
-
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
-    if not isinstance(white, np.float32):
-        white = np.array(white, dtype='float32')
-    if not isinstance(dark, np.float32):
-        dark = np.array(dark, dtype='float32')
-
-    return data, white, dark, theta
+    data = iod.read_tiff_stack(tomo, span, digit=4, ext='tif')
+    white = iod.read_tiff_stack(flat, (0, nflat - 1), digit=4, ext='tif')
+    dark = iod.read_tiff_stack(dark, (0, ndark - 1), digit=4, ext='tif')
+    return data, white, dark
 
 
 def read_aps2bm(fname, proj=None, sino=None):
@@ -159,28 +144,16 @@ def read_aps2bm(fname, proj=None, sino=None):
         3D tomographic data.
 
     ndarray
-        3D white field data.
+        3d flat field data.
 
     ndarray
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    f = h5py.File(fname, "r")
-    data = f['/exchange/data']
-    white = f['/exchange/data_white']
-    dark = f['/exchange/data_dark']
-
-    # Slice projection and sinogram axes.
-    if proj is None:
-        proj = slice(0, data.shape[0])
-    if sino is None:
-        sino = slice(0, data.shape[1])
-    data = data[proj, sino, :].astype('float32')
-    white = white[:, sino, :].astype('float32')
-    dark = dark[:, sino, :].astype('float32')
-    f.close()
-
-    return data, white, dark
+    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
+    flat = iod.read_hdf5(fname, '/exchange/data_white', proj, sino)
+    dark = iod.read_hdf5(fname, '/exchange/data_dark', proj, sino)
+    return tomo, flat, dark
 
 
 def read_aps7bm(fname, proj=None, sino=None):
@@ -208,29 +181,22 @@ def read_aps7bm(fname, proj=None, sino=None):
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
-    data = f['/exchange/data']
-    theta = f['/exchange/theta']
-
-    # Slice projection and sinogram axes.
-    if proj is None:
-        proj = slice(0, data.shape[0])
-    if sino is None:
-        sino = slice(0, data.shape[1])
-    data = data[proj, sino, :].astype('float32')
-    theta = theta[proj].astype('float32')
-    f.close()
-
-    return data, theta
+    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
+    theta = iod.read_hdf5(fname, '/exchange/theta', proj)
+    return tomo, theta
 
 
-def read_aps13id(fname, proj=None, sino=None):
+def read_aps13bm(fname, format, proj=None, sino=None):
     """
-    Read APS 13-ID standard data format.
+    Read APS 13-BM standard data format.
 
     Parameters
     ----------
     fname : str
         Path to hdf5 file.
+
+    format : str
+        Data format. 'spe' or 'netcdf4'
 
     proj : slice, optional
         Specifies the projections to read from a slice object.
@@ -244,20 +210,41 @@ def read_aps13id(fname, proj=None, sino=None):
         3D tomographic data.
     """
     fname = os.path.abspath(fname)
-    f = h5py.File(fname, "r")
-    data = f['/xrfmap/roimap/sum_cor']
+    if format is 'spe':
+        tomo = iod.read_spe(fname, proj, sino)
+    elif format is 'netcdf4':
+        tomo = iod.read_netcdf4(fname, proj, sino)
+    return tomo
 
-    # Slice projection and sinogram axes.
-    if proj is None:
-        proj = slice(0, data.shape[1])
-    if sino is None:
-        sino = slice(0, data.shape[2])
-    data = data[:, proj, sino].astype('float32')
-    data = np.swapaxes(data, 0, 1)
-    data = np.swapaxes(data, 1, 2).copy()
-    f.close()
 
-    return data
+def read_aps13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
+    """
+    Read APS 13-ID standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to hdf5 file.
+
+    gname : str, optional
+        Path to the group inside hdf5 file where data is located.
+
+    proj : slice, optional
+        Specifies the projections to read from a slice object.
+
+    sino : slice, optional
+        Specifies the sinograms to read from a slice object.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+    """
+    fname = os.path.abspath(fname)
+    tomo = iod.read_hdf5(fname, gname, None, proj, sino)
+    tomo = np.swapaxes(tomo, 0, 1)
+    tomo = np.swapaxes(tomo, 1, 2).copy()
+    return tomo
 
 
 def read_aps32id(fname, proj=None, sino=None):
@@ -281,25 +268,64 @@ def read_aps32id(fname, proj=None, sino=None):
         3D tomographic data.
 
     ndarray
-        3D white field data.
+        3d flat field data.
 
     ndarray
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    f = h5py.File(fname, "r")
-    data = f['/exchange/data']
-    white = f['/exchange/data_white']
-    dark = f['/exchange/data_dark']
+    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
+    flat = iod.read_hdf5(fname, '/exchange/data_white', proj, sino)
+    dark = iod.read_hdf5(fname, '/exchange/data_dark', proj, sino)
+    return tomo, flat, dark
 
-    # Slice projection and sinogram axes.
-    if proj is None:
-        proj = slice(0, data.shape[0])
-    if sino is None:
-        sino = slice(0, data.shape[1])
-    data = data[proj, sino, :].astype('float32')
-    white = white[:, sino, :].astype('float32')
-    dark = dark[:, sino, :].astype('float32')
-    f.close()
 
-    return data, white, dark
+def read_slstomcat(fname, span=None):
+    """
+    Read SLS TOMCAT standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to file name without indices and extension.
+
+    span : list of int, optional
+        (start, end) indices of the projection files to read.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    # File definitions.
+    fname = os.path.abspath(fname)
+    log_file = fname + '.log'
+
+    # Read metadata from ALS log file.
+    contents = open(log_file, 'r')
+    for line in contents:
+        ls = line.split()
+        if len(ls) > 1:
+            if (ls[0] == 'Number' and ls[2] == 'projections'):
+                nproj = int(ls[4])
+            elif (ls[0] == 'Number' and ls[2] == 'flats'):
+                nflat = int(ls[4])
+            elif (ls[0] == 'Number' and ls[2] == 'darks'):
+                ndark = int(ls[4])
+    contents.close()
+
+    if span is None:
+        span = (ndark + nflat + 1, ndark + nflat + nproj)
+    wspan = (ndark + 1, ndark + nflat)
+    dspan = (1, ndark)
+
+    tomo = iod.read_tiff_stack(fname, span, digit=4, ext='tif')
+    flat = iod.read_tiff_stack(fname, wspan, digit=4, ext='tif')
+    dark = iod.read_tiff_stack(fname, dspan, digit=4, ext='tif')
+    return tomo, flat, dark

@@ -58,6 +58,8 @@ import multiprocessing as mp
 import ctypes
 import os
 import h5py
+import spefile
+import netCDF4 as nc
 import logging
 import warnings
 
@@ -72,8 +74,10 @@ __all__ = ['as_shared_array',
            'remove_neg',
            'remove_nan',
            'read_hdf5',
-           'write_hdf5',
+           'read_spe',
+           'read_netcdf4',
            'read_tiff_stack',
+           'write_hdf5',
            'write_tiff_stack']
 
 
@@ -280,7 +284,7 @@ def _suggest_new_fname(fname):
 
     Parameters
     ----------
-    string : str
+    fname : str
         Given string.
 
     Returns
@@ -303,17 +307,72 @@ def _suggest_new_fname(fname):
     return fname
 
 
-def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
+def _slice_array(arr, dim1=None, dim2=None, dim3=None, dim4=None):
     """
-    Read data from a hdf5 file from a specific group.
+    Slice array upto four dimensions.
 
     Parameters
     ----------
-    fname : str, optional
+    arr : ndarray
+        Array object.
+
+    dim1, dim2, dim3, dim4 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd, 3rd and 4th dimensions respectively.
+
+    Returns
+    -------
+    ndarray
+        Sliced array.
+    """
+    if len(arr.shape) == 1:
+        if dim1 is None:
+            dim1 = slice(0, arr.shape[0])
+        arr = arr[dim1]
+    elif len(arr.shape) == 2:
+        if dim1 is None:
+            dim1 = slice(0, arr.shape[0])
+        if dim2 is None:
+            dim2 = slice(0, arr.shape[1])
+        arr = arr[dim1, dim2]
+    elif len(arr.shape) == 3:
+        if dim1 is None:
+            dim1 = slice(0, arr.shape[0])
+        if dim2 is None:
+            dim2 = slice(0, arr.shape[1])
+        if dim3 is None:
+            dim3 = slice(0, arr.shape[2])
+        arr = arr[dim1, dim2, dim3]
+    elif len(arr.shape) == 4:
+        if dim1 is None:
+            dim1 = slice(0, arr.shape[0])
+        if dim2 is None:
+            dim2 = slice(0, arr.shape[1])
+        if dim3 is None:
+            dim3 = slice(0, arr.shape[2])
+        if dim4 is None:
+            dim4 = slice(0, arr.shape[3])
+        arr = arr[dim1, dim2, dim3, dim4]
+    else:
+        arr = arr[:]
+    return arr
+
+
+def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None, dim4=None):
+    """
+    Read data from hdf5 file from a specific group.
+
+    Parameters
+    ----------
+    fname : str
         Path to hdf5 file.
 
-    gname : str, optional
+    gname : str
         Path to the group inside hdf5 file where data is located.
+
+    dim1, dim2, dim3, dim4 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd, 3rd and 4th dimensions respectively.
 
     Returns
     -------
@@ -322,40 +381,61 @@ def read_hdf5(fname, gname="/exchange/data", dtype='float32'):
     """
     fname = os.path.abspath(fname)
     f = h5py.File(fname, "r")
-    data = f[gname][:].astype(dtype)
+    data = f[gname]
+    data = _slice_array(data, dim1, dim2, dim3, dim4)
     f.close()
     return data
 
 
-def write_hdf5(data, fname, gname="exchange", overwrite=False):
+def read_spe(fname, dim1=None, dim2=None, dim3=None, dim4=None):
     """
-    Write data to a hdf5 file in a specific group.
+    Read data from a spe file.
 
     Parameters
     ----------
-    data : ndarray
-        Input data.
-
     fname : str
-        Path to hdf5 file without extension.
+        Path to spe file.
 
-    gname : str, optional
-        Path to the group inside hdf5 file where data is located.
+    dim1, dim2, dim3, dim4 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd, 3rd and 4th dimensions respectively.
 
-    overwrite: bool, optional
-        if True, the existing files in the reconstruction folder will be
-        overwritten with the new ones.
+    Returns
+    -------
+    ndarray
+        Data.
     """
-    fname += '.h5'
-    if not overwrite:
-        if os.path.isfile(fname):
-            fname = _suggest_new_fname(fname)
+    fname = os.path.abspath(fname)
+    f = spefile.PrincetonSPEFile(fname)
+    data = f.getData()
+    data = _slice_array(data, dim1, dim2, dim3, dim4)
+    return data
 
-    f = h5py.File(fname, 'w')
-    ds = f.create_dataset('implements', data="exchange")
-    exchangeGrp = f.create_group(gname)
-    ds = exchangeGrp.create_dataset('data', data=data)
+
+def read_netcdf4(fname, dim1=None, dim2=None, dim3=None, dim4=None):
+    """
+    Read data from a netcdf file.
+
+    Parameters
+    ----------
+    fname : str
+        Path to spe file.
+
+    dim1, dim2, dim3, dim4 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd, 3rd and 4th dimensions respectively.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    fname = os.path.abspath(fname)
+    f = nc.Dataset(fname, 'r')
+    data = f.variables['array_data']
+    data = _slice_array(data, dim1, dim2, dim3, dim4)
     f.close()
+    return data
 
 
 def read_tiff_stack(fname, span, digit, ext='tiff'):
@@ -404,6 +484,37 @@ def read_tiff_stack(fname, span, digit, ext='tiff'):
     return data
 
 
+def write_hdf5(data, fname, gname="exchange", overwrite=False):
+    """
+    Write data to a hdf5 file in a specific group.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+
+    fname : str
+        Path to hdf5 file without extension.
+
+    gname : str, optional
+        Path to the group inside hdf5 file where data is located.
+
+    overwrite: bool, optional
+        if True, the existing files in the reconstruction folder will be
+        overwritten with the new ones.
+    """
+    fname += '.h5'
+    if not overwrite:
+        if os.path.isfile(fname):
+            fname = _suggest_new_fname(fname)
+
+    f = h5py.File(fname, 'w')
+    ds = f.create_dataset('implements', data="exchange")
+    exchangeGrp = f.create_group(gname)
+    ds = exchangeGrp.create_dataset('data', data=data)
+    f.close()
+
+
 def write_tiff_stack(
         data, fname, axis=0, id=0,
         digit=5, overwrite=False,
@@ -413,7 +524,7 @@ def write_tiff_stack(
 
     Parameters
     ----------
-    data : 3D data (int or float)
+    data : ndarray
         Input data as 3D array.
 
     fname : str

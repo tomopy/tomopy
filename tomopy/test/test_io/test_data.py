@@ -95,8 +95,7 @@ def test_remove_nan():
 
 
 def test_read_hdf5():
-    out = read_hdf5(fname='tomopy/io/data/lena.h5')
-    assert_equals(out.dtype, 'float32')
+    out = read_hdf5(fname='tomopy/io/data/lena.h5', gname='/exchange/data')
     assert_equals(out.shape, (1, 512, 512))
 
 
