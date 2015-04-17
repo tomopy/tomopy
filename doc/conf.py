@@ -320,7 +320,7 @@ MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 'ctypes',
     'matplotlib.pylab', 'netCDF4', 'spefile', 'scikit-image', 'skimage.io', 
     'scipy.ndimage', 'pywt', 'scipy.optimize', 'skimage',
-    'skimage.filter', 'skimage.morphology']
+    'skimage.filter', 'skimage.morphology', 'tifffile', 'edffile']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()

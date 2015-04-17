@@ -357,6 +357,27 @@ def read_stack(bfname, ind, digit, format, ext=None):
     return arr
 
 
+def read_edf(fname, dim1=None, dim2=None, dim3=None):
+    """
+    Read data from a edf file.
+
+    Parameters
+    ----------
+    fname : str
+        Path to edf file.
+
+    dim1, dim2, dim3 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd and 3rd dimensions respectively.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    return _Format(fname).edf(dim1, dim2, dim3)
+
+
 def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
     """
     Read data from hdf5 file from a specific group.
