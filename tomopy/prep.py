@@ -156,7 +156,7 @@ def remove_stripe(
         sigma=2, pad=True, ind=None):
     """
     Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW)
-    based method.
+    based method :cite:`Munch:09`.
 
     Parameters
     ----------
@@ -182,11 +182,6 @@ def remove_stripe(
     -------
     ndarray
         Corrected 3D tomographic data.
-
-    References
-    ----------
-    - `Optics Express, Vol 17(10), 8567-8591(2009) \
-    <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
     if type(tomo) == str and tomo == 'SHARED':
         tomo = mp.shared_data
@@ -250,7 +245,8 @@ def retrieve_phase(
         tomo, psize=1e-4, dist=50, energy=20,
         alpha=1e-4, pad=True, ind=None):
     """
-    Perform single-step phase retrieval from phase-contrast measurements.
+    Perform single-step phase retrieval from phase-contrast measurements
+    :cite:`Paganin:02`.
 
     Parameters
     ----------
@@ -279,11 +275,6 @@ def retrieve_phase(
     -------
     ndarray
         Approximated 3D tomographic phase data.
-
-    References
-    ----------
-    - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
-    <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
     if type(tomo) == str and tomo == 'SHARED':
         tomo = mp.shared_data
