@@ -53,5 +53,6 @@ from tomopy.io.recipe import *
 from tomopy.io.data import *
 from tomopy.io.phantom import *
 from tomopy.misc.morph import *
+from tomopy.misc.mproc import *
 from tomopy.prep import *
 from tomopy.recon import *
