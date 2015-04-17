@@ -16,6 +16,8 @@
       as_uint16
       as_uint8
       read_hdf5
+      read_spe
+      read_netcdf4
       read_tiff_stack
       remove_nan
       remove_neg
