@@ -61,7 +61,7 @@ import h5py
 import spefile
 try: # make html fails
     import netCDF4 as nc
-except TypeError:
+except TypeError, ImportError:
     pass
 import logging
 import warnings
