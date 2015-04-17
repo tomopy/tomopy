@@ -19,6 +19,8 @@ requirements:
     - h5py
     - scikit-image
     - pywavelets
+    - netcdf4
+    - spefile
 
 test:
   # Python imports
