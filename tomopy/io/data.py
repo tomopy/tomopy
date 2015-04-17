@@ -58,9 +58,9 @@ import multiprocessing as mp
 import ctypes
 import os
 import h5py
-# import EdfFile
 import spefile
 import netCDF4
+import EdfFile
 # import tifffile
 import logging
 import warnings
