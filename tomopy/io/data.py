@@ -58,10 +58,10 @@ import multiprocessing as mp
 import ctypes
 import os
 import h5py
-import EdfFile
+# import EdfFile
 import spefile
 import netCDF4
-import tifffile
+# import tifffile
 import logging
 import warnings
 
@@ -357,25 +357,25 @@ def read_stack(bfname, ind, digit, format, ext=None):
     return arr
 
 
-def read_edf(fname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from a edf file.
+# def read_edf(fname, dim1=None, dim2=None, dim3=None):
+#     """
+#     Read data from a edf file.
 
-    Parameters
-    ----------
-    fname : str
-        Path to edf file.
+#     Parameters
+#     ----------
+#     fname : str
+#         Path to edf file.
 
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
+#     dim1, dim2, dim3 : slice, optional
+#         Slice object representing the set of indices along the
+#         1st, 2nd and 3rd dimensions respectively.
 
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).edf(dim1, dim2, dim3)
+#     Returns
+#     -------
+#     ndarray
+#         Data.
+#     """
+#     return _Format(fname).edf(dim1, dim2, dim3)
 
 
 def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
@@ -621,20 +621,20 @@ class _Format():
             arr = sio.imread(self.fname, plugin='tifffile')
         return arr
 
-    def tiffc(self):
-        """
-        Read 2D compressed tiff image.
+    # def tiffc(self):
+    #     """
+    #     Read 2D compressed tiff image.
 
-        Returns
-        -------
-        ndarray
-            Output 2D image.
-        """
-        print(self.fname)
-        f = tifffile.TiffFile(self.fname)
-        arr = f[0].asarray()
-        f.close()
-        return arr
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Output 2D image.
+    #     """
+    #     print(self.fname)
+    #     f = tifffile.TiffFile(self.fname)
+    #     arr = f[0].asarray()
+    #     f.close()
+    #     return arr
 
     def spe(self, dim1=None, dim2=None, dim3=None):
         """
@@ -680,31 +680,31 @@ class _Format():
         f.close()
         return arr
 
-    def edf(self, dim1=None, dim2=None, dim3=None):
-        """
-        Read data from a edf file.
+    # def edf(self, dim1=None, dim2=None, dim3=None):
+    #     """
+    #     Read data from a edf file.
 
-        Parameters
-        ----------
-        var : str
-            Variable name where data is stored.
+    #     Parameters
+    #     ----------
+    #     var : str
+    #         Variable name where data is stored.
 
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
+    #     dim1, dim2, dim3 : slice, optional
+    #         Slice object representing the set of indices along the
+    #         1st, 2nd and 3rd dimensions respectively.
 
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = EdfFile.EdfFile(self.fname, access='r')
-        d = f.GetStaticHeader(0)
-        arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
-        for (i, ar) in enumerate(arr):
-            arr[i::] = f.GetData(i)
-        arr = self._slice_array(arr, dim1, dim2, dim3)
-        return arr
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Data.
+    #     """
+    #     f = EdfFile.EdfFile(self.fname, access='r')
+    #     d = f.GetStaticHeader(0)
+    #     arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
+    #     for (i, ar) in enumerate(arr):
+    #         arr[i::] = f.GetData(i)
+    #     arr = self._slice_array(arr, dim1, dim2, dim3)
+    #     return arr
 
     def _slice_array(self, arr, dim1=None, dim2=None, dim3=None):
         """
