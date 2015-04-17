@@ -61,7 +61,7 @@ import h5py
 import spefile
 import netCDF4
 import EdfFile
-# import tifffile
+import tifffile
 import logging
 import warnings
 
@@ -76,6 +76,7 @@ __all__ = ['as_shared_array',
            'remove_neg',
            'remove_nan',
            'read_hdf5',
+           'read_edf',
            'read_spe',
            'read_netcdf4',
            'read_stack',
@@ -621,20 +622,20 @@ class _Format():
             arr = sio.imread(self.fname, plugin='tifffile')
         return arr
 
-    # def tiffc(self):
-    #     """
-    #     Read 2D compressed tiff image.
+    def tiffc(self):
+        """
+        Read 2D compressed tiff image.
 
-    #     Returns
-    #     -------
-    #     ndarray
-    #         Output 2D image.
-    #     """
-    #     print(self.fname)
-    #     f = tifffile.TiffFile(self.fname)
-    #     arr = f[0].asarray()
-    #     f.close()
-    #     return arr
+        Returns
+        -------
+        ndarray
+            Output 2D image.
+        """
+        print(self.fname)
+        f = tifffile.TiffFile(self.fname)
+        arr = f[0].asarray()
+        f.close()
+        return arr
 
     def spe(self, dim1=None, dim2=None, dim3=None):
         """
