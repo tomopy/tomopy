@@ -73,7 +73,7 @@ __all__ = ['read_als832',
            'read_slstomcat']
 
 
-def read_als832(fname, span=None):
+def read_als832(fname, ind=None):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -82,8 +82,8 @@ def read_als832(fname, span=None):
     fname : str
         Path to file name without indices and extension.
 
-    span : list of int, optional
-        (start, end) indices of the projection files to read.
+    ind : list of int, optional
+        Indices of the projection files to read.
 
     Returns
     -------
@@ -114,13 +114,13 @@ def read_als832(fname, span=None):
             ndark = int(re.findall(r'\d+', line)[0])
     contents.close()
 
-    if span is None:
-        span = (0, nproj - 1)
+    if ind is None:
+        ind = range(0, nproj)
 
-    data = iod.read_tiff_stack(tomo, span, digit=4, ext='tif')
-    white = iod.read_tiff_stack(flat, (0, nflat - 1), digit=4, ext='tif')
-    dark = iod.read_tiff_stack(dark, (0, ndark - 1), digit=4, ext='tif')
-    return data, white, dark
+    tomo = iod.read_stack(tomo, ind, digit=4, ext='tif')
+    white = iod.read_stack(flat, range(0, nflat), digit=4, ext='tif')
+    dark = iod.read_stack(dark, range(0, ndark), digit=4, ext='tif')
+    return tomo, white, dark
 
 
 def read_aps2bm(fname, proj=None, sino=None):
@@ -213,7 +213,7 @@ def read_aps13bm(fname, format, proj=None, sino=None):
     if format is 'spe':
         tomo = iod.read_spe(fname, proj, sino)
     elif format is 'netcdf4':
-        tomo = iod.read_netcdf4(fname, proj, sino)
+        tomo = iod.read_netcdf4(fname, 'array_data', proj, sino)
     return tomo
 
 
@@ -280,7 +280,7 @@ def read_aps32id(fname, proj=None, sino=None):
     return tomo, flat, dark
 
 
-def read_slstomcat(fname, span=None):
+def read_slstomcat(fname, ind=None):
     """
     Read SLS TOMCAT standard data format.
 
@@ -289,8 +289,8 @@ def read_slstomcat(fname, span=None):
     fname : str
         Path to file name without indices and extension.
 
-    span : list of int, optional
-        (start, end) indices of the projection files to read.
+    ind : list of int, optional
+        Indices of the projection files to read.
 
     Returns
     -------
@@ -320,12 +320,12 @@ def read_slstomcat(fname, span=None):
                 ndark = int(ls[4])
     contents.close()
 
-    if span is None:
-        span = (ndark + nflat + 1, ndark + nflat + nproj)
-    wspan = (ndark + 1, ndark + nflat)
-    dspan = (1, ndark)
+    if ind is None:
+        ind = range(ndark + nflat + 1, ndark + nflat + nproj)
+    wind = range(ndark + 1, ndark + nflat)
+    dind = range(1, ndark)
 
-    tomo = iod.read_tiff_stack(fname, span, digit=4, ext='tif')
-    flat = iod.read_tiff_stack(fname, wspan, digit=4, ext='tif')
-    dark = iod.read_tiff_stack(fname, dspan, digit=4, ext='tif')
+    tomo = iod.read_stack(fname, ind, digit=4, ext='tif')
+    flat = iod.read_stack(fname, wind, digit=4, ext='tif')
+    dark = iod.read_stack(fname, dind, digit=4, ext='tif')
     return tomo, flat, dark
