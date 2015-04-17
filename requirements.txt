@@ -1,8 +1,8 @@
 sphinxcontrib-napoleon==0.3.3
 sphinxcontrib-bibtex==0.3.2
+spefile==1.6
+netcdf4==1.1.6
 numpy==1.9.2
 h5py==2.4.0
 pywavelets==0.2.2
 scikit-image==0.11.3
-spefile==1.6
-netcdf4==1.1.6
