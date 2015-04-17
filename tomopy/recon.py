@@ -131,7 +131,7 @@ def simulate(obj, theta, center=None):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
-    data = np.zeros((dx, dy, dz), dtype='float32')
+    tomo = np.zeros((dx, dy, dz), dtype='float32')
 
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
@@ -141,17 +141,17 @@ def simulate(obj, theta, center=None):
         ctypes.c_int(ox),
         ctypes.c_int(oy),
         ctypes.c_int(oz),
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
         ctypes.c_float(center),
         theta.ctypes.data_as(c_float_p))
-    return data
+    return tomo
 
 
 def gridrec(
-        data, theta, center=None,
+        tomo, theta, center=None,
         num_gridx=None, num_gridy=None,
         filter_name='shepp'):
     """
@@ -159,7 +159,7 @@ def gridrec(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -182,11 +182,11 @@ def gridrec(
     """
     # Gridrec reconstructs 2 slices minimum.
     flag = False
-    if data.shape[1] == 1:
+    if tomo.shape[1] == 1:
         flag = True
-        data = np.append(data, data, 1)
+        tomo = np.append(tomo, tomo, 1)
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -196,8 +196,8 @@ def gridrec(
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -212,7 +212,7 @@ def gridrec(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.gridrec(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -230,7 +230,7 @@ def gridrec(
 
 
 def art(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using algebraic reconstruction
@@ -238,7 +238,7 @@ def art(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -264,7 +264,7 @@ def art(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -275,8 +275,8 @@ def art(
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -293,7 +293,7 @@ def art(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.art.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.art(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -307,7 +307,7 @@ def art(
 
 
 def bart(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
@@ -316,7 +316,7 @@ def bart(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -348,7 +348,7 @@ def bart(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -361,8 +361,8 @@ def bart(
         ind_block = np.arange(0, dx).astype("float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -383,7 +383,7 @@ def bart(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.bart.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.bart(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -399,7 +399,7 @@ def bart(
 
 
 def fbp(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None):
     """
     Reconstruct object from projection data using filtered back
@@ -407,7 +407,7 @@ def fbp(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -430,7 +430,7 @@ def fbp(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -441,8 +441,8 @@ def fbp(
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -459,7 +459,7 @@ def fbp(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.fbp(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -472,7 +472,7 @@ def fbp(
 
 
 def mlem(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using maximum-likelihood
@@ -480,7 +480,7 @@ def mlem(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -506,7 +506,7 @@ def mlem(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -517,8 +517,8 @@ def mlem(
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -535,7 +535,7 @@ def mlem(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.mlem(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -549,7 +549,7 @@ def mlem(
 
 
 def osem(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
@@ -558,7 +558,7 @@ def osem(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -590,7 +590,7 @@ def osem(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -603,8 +603,8 @@ def osem(
         ind_block = np.arange(0, dx).astype("float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -625,7 +625,7 @@ def osem(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.osem.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.osem(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -641,7 +641,7 @@ def osem(
 
 
 def ospml_hybrid(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
@@ -651,7 +651,7 @@ def ospml_hybrid(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -686,7 +686,7 @@ def ospml_hybrid(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -701,8 +701,8 @@ def ospml_hybrid(
         ind_block = np.arange(0, dx).astype("float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -725,7 +725,7 @@ def ospml_hybrid(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.ospml_hybrid(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -742,7 +742,7 @@ def ospml_hybrid(
 
 
 def ospml_quad(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
@@ -751,7 +751,7 @@ def ospml_quad(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -786,7 +786,7 @@ def ospml_quad(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -801,8 +801,8 @@ def ospml_quad(
         ind_block = np.arange(0, dx).astype("float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -825,7 +825,7 @@ def ospml_quad(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.ospml_quad(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -843,7 +843,7 @@ def ospml_quad(
 
 
 def pml_hybrid(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
@@ -852,7 +852,7 @@ def pml_hybrid(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -887,7 +887,7 @@ def pml_hybrid(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -900,8 +900,8 @@ def pml_hybrid(
         reg_par = np.ones(10, dtype="float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -920,7 +920,7 @@ def pml_hybrid(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.pml_hybrid(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -935,7 +935,7 @@ def pml_hybrid(
 
 
 def pml_quad(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
@@ -944,7 +944,7 @@ def pml_quad(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -973,7 +973,7 @@ def pml_quad(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -986,8 +986,8 @@ def pml_quad(
         reg_par = np.ones(10, dtype="float32")
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -1006,7 +1006,7 @@ def pml_quad(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.pml_quad(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
@@ -1021,7 +1021,7 @@ def pml_quad(
 
 
 def sirt(
-        data, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=False,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using simultaneous
@@ -1029,7 +1029,7 @@ def sirt(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     theta : array
@@ -1055,7 +1055,7 @@ def sirt(
     ndarray
         Reconstructed 3D object.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
     if num_gridx is None:
@@ -1066,8 +1066,8 @@ def sirt(
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
@@ -1084,7 +1084,7 @@ def sirt(
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_recon.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_recon.sirt(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),

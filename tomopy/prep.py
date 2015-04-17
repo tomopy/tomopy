@@ -97,17 +97,17 @@ def _import_shared_lib(lname):
 libtomopy_prep = _import_shared_lib('libtomopy_prep')
 
 
-def normalize(data, white, dark, cutoff=None, ind=None):
+def normalize(tomo, flat, dark, cutoff=None, ind=None):
     """
-    Normalize raw projection data using the white and dark field projections.
+    Normalize raw projection data using the flat and dark field projections.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
-    white : ndarray
-        3D white field data.
+    flat : ndarray
+        3D flat field data.
 
     dark : ndarray
         3D dark field data.
@@ -123,36 +123,36 @@ def normalize(data, white, dark, cutoff=None, ind=None):
     ndarray
         Normalized 3D tomographic data.
     """
-    if type(data) == str and data == 'SHARED':
-        data = mp.shared_data
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            data, func=normalize, axis=0,
-            args=(white, dark, cutoff))
+            tomo, func=normalize, axis=0,
+            args=(flat, dark, cutoff))
         return arr
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if ind is None:
         ind = np.arange(0, dx)
 
-    # Calculate average white and dark fields for normalization.
-    white = white.mean(axis=0)
+    # Calculate average flat and dark fields for normalization.
+    flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
     # Avoid zero division in normalization
-    denom = white - dark
+    denom = flat - dark
     denom[denom == 0] = 1e-6
 
     for m in ind:
-        proj = data[m, :, :]
+        proj = tomo[m, :, :]
         proj = np.divide(proj - dark, denom)
         if cutoff is not None:
             proj[proj > cutoff] = cutoff
-        data[m, :, :] = proj
+        tomo[m, :, :] = proj
 
 
 def remove_stripe(
-        data, level=None, wname='db5',
+        tomo, level=None, wname='db5',
         sigma=2, pad=True, ind=None):
     """
     Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW)
@@ -160,7 +160,7 @@ def remove_stripe(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     level : int, optional
@@ -188,19 +188,19 @@ def remove_stripe(
     - `Optics Express, Vol 17(10), 8567-8591(2009) \
     <http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-10-8567>`_
     """
-    if type(data) == str and data == 'SHARED':
-        data = mp.shared_data
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            data, func=stripe_removal, axis=1,
+            tomo, func=stripe_removal, axis=1,
             args=(level, wname, sigma, pad))
         return arr
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if ind is None:
         ind = np.arange(0, dy)
     if level is None:
-        size = np.max(data.shape)
+        size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
     # pad temp image.
@@ -212,7 +212,7 @@ def remove_stripe(
     sli = np.zeros((nx, dz), dtype='float32')
 
     for n in ind:
-        sli[xshift:dx + xshift, :] = data[:, n, :]
+        sli[xshift:dx + xshift, :] = tomo[:, n, :]
 
         # Wavelet decomposition.
         cH = []
@@ -243,18 +243,18 @@ def remove_stripe(
             sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
             sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
 
-        data[:, n, :] = sli[xshift:dx + xshift, 0:dz]
+        tomo[:, n, :] = sli[xshift:dx + xshift, 0:dz]
 
 
 def retrieve_phase(
-        data, psize=1e-4, dist=50, energy=20,
+        tomo, psize=1e-4, dist=50, energy=20,
         alpha=1e-4, pad=True, ind=None):
     """
     Perform single-step phase retrieval from phase-contrast measurements.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     psize : float, optional
@@ -285,24 +285,24 @@ def retrieve_phase(
     - `J. of Microscopy, Vol 206(1), 33-40, 2001 \
     <http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2818.2002.01010.x/abstract>`_
     """
-    if type(data) == str and data == 'SHARED':
-        data = mp.shared_data
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
             data, func=phase_retrieval,
             args=(psize, dist, energy, alpha, pad), axis=0)
         return arr
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if ind is None:
         ind = np.arange(0, dx)
 
     # Compute the filter.
     H, xshift, yshift, prj = _paganin_filter(
-        data, psize, dist, energy, alpha, pad)
+        tomo, psize, dist, energy, alpha, pad)
 
     for m in ind:
-        proj = data[m, :, :]
+        proj = tomo[m, :, :]
         if pad:
             prj[xshift:dy + xshift, yshift:dz + yshift] = proj
             fproj = np.fft.fft2(prj)
@@ -313,16 +313,16 @@ def retrieve_phase(
             fproj = np.fft.fft2(proj)
             filtproj = np.multiply(H, fproj)
             proj = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-        data[m, :, :] = proj
+        tomo[m, :, :] = proj
 
 
-def _paganin_filter(data, psize, dist, energy, alpha, pad):
+def _paganin_filter(tomo, psize, dist, energy, alpha, pad):
     """
     Calculate Paganin-type 2D filter to be used for phase retrieval.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     psize : float
@@ -354,12 +354,12 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
     ndarray
         Padded 2D projection image.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     wavelen = 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
 
     if pad:
         # Find pad values.
-        val = np.mean((data[:, :, 0] + data[:, :, dz - 1]) / 2)
+        val = np.mean((tomo[:, :, 0] + tomo[:, :, dz - 1]) / 2)
 
         # Fourier pad in powers of 2.
         padpix = np.ceil(PI * wavelen * dist / psize ** 2)
@@ -389,13 +389,13 @@ def _paganin_filter(data, psize, dist, energy, alpha, pad):
     return H, xshift, yshift, prj
 
 
-def circular_roi(data, ratio=1, val=None):
+def circular_roi(tomo, ratio=1, val=None):
     """
     Apply circular mask to projection images.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     ratio : int, optional
@@ -410,7 +410,7 @@ def circular_roi(data, ratio=1, val=None):
     ndarray
         Masked 3D tomographic data.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     ind = np.arange(0, dx)
 
     ind1 = dy
@@ -423,22 +423,22 @@ def circular_roi(data, ratio=1, val=None):
         r2 = rad2 * rad2
     y, x = np.ogrid[-rad1:rad1, -rad2:rad2]
     mask = x * x + y * y > ratio * ratio * r2
-    print(mask.shape, data.shape)
+    print(mask.shape, tomo.shape)
     if val is None:
-        val = np.mean(data[:, ~mask])
+        val = np.mean(tomo[:, ~mask])
 
     for m in ind:
-        data[m, mask] = val
-    return data
+        tomo[m, mask] = val
+    return tomo
 
 
-def median_filter(data, size=3, axis=0, ind=None):
+def median_filter(tomo, size=3, axis=0, ind=None):
     """
     Apply median filter to a 3D array along a specified axis.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         Arbitrary 3D array.
 
     size : int, optional
@@ -455,15 +455,15 @@ def median_filter(data, size=3, axis=0, ind=None):
     ndarray
         Median filtered 3D array.
     """
-    if type(data) == str and data == 'SHARED':
-        data = mp.shared_data
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            data, func=median_filter, axis=axis,
+            tomo, func=median_filter, axis=axis,
             args=(size, axis))
         return arr
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
     if ind is None:
         if axis == 0:
             ind = np.arange(0, dx)
@@ -474,25 +474,25 @@ def median_filter(data, size=3, axis=0, ind=None):
 
     if axis == 0:
         for m in ind:
-            data[m, :, :] = filters.median_filter(
-                data[m, :, :], (size, size))
+            tomo[m, :, :] = filters.median_filter(
+                tomo[m, :, :], (size, size))
     elif axis == 1:
         for m in ind:
-            data[:, m, :] = filters.median_filter(
-                data[:, m, :], (size, size))
+            tomo[:, m, :] = filters.median_filter(
+                tomo[:, m, :], (size, size))
     elif axis == 2:
         for m in ind:
-            data[:, :, m] = filters.median_filter(
-                data[:, :, m], (size, size))
+            tomo[:, :, m] = filters.median_filter(
+                tomo[:, :, m], (size, size))
 
 
-def remove_zinger(data, dif=1000, size=3, ind=None):
+def remove_zinger(tomo, dif=1000, size=3, ind=None):
     """
     Remove high intensity bright spots from tomographic data.
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     dif : float, optional
@@ -510,27 +510,27 @@ def remove_zinger(data, dif=1000, size=3, ind=None):
     ndarray
         Corrected 3D tomographic data.
     """
-    if type(data) == str and data == 'SHARED':
-        data = mp.shared_data
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            data, func=zinger_removal, axis=0,
+            tomo, func=zinger_removal, axis=0,
             args=(dif, size))
         return arr
 
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
 
     if ind is None:
         ind = np.arange(0, dx)
 
     mask = np.zeros((1, dy, dz))
     for m in ind:
-        tmp = filters.median_filter(data[m, :, :], (size, size))
-        mask = ((data[m, :, :] - tmp) >= dif).astype(int)
-        data[m, :, :] = tmp * mask + data[m, :, :] * (1 - mask)
+        tmp = filters.median_filter(tomo[m, :, :], (size, size))
+        mask = ((tomo[m, :, :] - tmp) >= dif).astype(int)
+        tomo[m, :, :] = tmp * mask + tomo[m, :, :] * (1 - mask)
 
 
-def correct_air(data, air=10):
+def correct_air(tomo, air=10):
     """
     Weights sinogram such that the left and right image boundaries
     (i.e., typically the air region around the object) are set to one
@@ -538,7 +538,7 @@ def correct_air(data, air=10):
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D tomographic data.
 
     air : int, optional
@@ -549,18 +549,18 @@ def correct_air(data, air=10):
     ndarray
         Corrected 3D tomographic data.
     """
-    dx, dy, dz = data.shape
+    dx, dy, dz = tomo.shape
 
     # Make sure that inputs datatypes are correct
-    if not isinstance(data, np.float32):
-        data = np.array(data, dtype='float32')
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(air, np.int32):
         air = np.array(air, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     libtomopy_prep.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
     libtomopy_prep.correct_air(
-        data.ctypes.data_as(c_float_p),
+        tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(air))
-    return data
+    return tomo
