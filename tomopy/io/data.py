@@ -59,10 +59,7 @@ import ctypes
 import os
 import h5py
 import spefile
-try: # make html fails
-    import netCDF4 as nc
-except TypeError, ImportError:
-    pass
+import netCDF4 as nc
 import logging
 import warnings
 
