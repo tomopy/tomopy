@@ -318,7 +318,7 @@ class Mock(object):
 
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 'ctypes',
-    'matplotlib.pylab', 'netCDF4', 'spefile', 'scikit-image', 'skimage.io', 
+    'matplotlib.pylab', 'EdfFile', 'netCDF4', 'spefile', 'scikit-image', 'skimage.io', 
     'scipy.ndimage', 'pywt', 'scipy.optimize', 'skimage',
     'skimage.filter', 'skimage.morphology']
 
