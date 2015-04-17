@@ -11,12 +11,16 @@
    .. autosummary::
       :nosignatures:
    
-      read_als832
-      read_aps13bm
-      read_aps13id
-      read_aps2bm
-      read_aps32id
-      read_aps7bm
-      read_slstomcat
+      read_als_832
+      read_anka_tomotopo
+      read_aps_13bm
+      read_aps_13id
+      read_aps_2bm
+      read_aps_32id
+      read_aps_7bm
+      read_aus_microct
+      read_diamond_l12
+      read_petra3_p05
+      read_sls_tomcat
 
    .. rubric:: **Functions:**
