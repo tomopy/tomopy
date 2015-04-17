@@ -58,8 +58,10 @@ import multiprocessing as mp
 import ctypes
 import os
 import h5py
+import EdfFile
 import spefile
-import netCDF4 as nc
+import netCDF4
+import tifffile
 import logging
 import warnings
 
@@ -307,7 +309,7 @@ def _suggest_new_fname(fname):
     return fname
 
 
-def read_stack(bfname, ind, digit, ext):
+def read_stack(bfname, ind, digit, format, ext=None):
     """
     Read data from a 2D image stack in a folder.
 
@@ -322,6 +324,9 @@ def read_stack(bfname, ind, digit, ext):
     digit : int
         Number of digits used in indexing images.
 
+    format : str, optional
+        Data format. 'tif', 'tifc'
+
     ext : str, optional
         Extension of the files. 'tif'
 
@@ -330,14 +335,18 @@ def read_stack(bfname, ind, digit, ext):
     ndarray
         Data.
     """
+    if ext is None:
+        ext = format
     d = ['0' * (digit - x - 1) for x in range(digit)]
     a = 0
     for m in ind:
         for n in range(digit):
             if m < np.power(10, n + 1):
                 fname = bfname + d[n] + str(m) + '.' + ext
-                if ext is 'tiff' or ext is 'tif':
+                if format is 'tiff' or format is 'tif':
                     _arr = _Format(fname).tiff()
+                if format is 'tiffc' or format is 'tifc':
+                    _arr = _Format(fname).tiffc()
                 if a == 0:
                     dx = len(ind)
                     dy, dz = _arr.shape
@@ -546,7 +555,7 @@ class _Format():
     Attributes
     ----------
     fname : str
-        File path.
+        String defining the path or file name.
     """
 
     def __init__(self, fname):
@@ -591,6 +600,21 @@ class _Format():
             arr = sio.imread(self.fname, plugin='tifffile')
         return arr
 
+    def tiffc(self):
+        """
+        Read 2D compressed tiff image.
+
+        Returns
+        -------
+        ndarray
+            Output 2D image.
+        """
+        print(self.fname)
+        f = tifffile.TiffFile(self.fname)
+        arr = f[0].asarray()
+        f.close()
+        return arr
+
     def spe(self, dim1=None, dim2=None, dim3=None):
         """
         Read data from a spe file.
@@ -629,10 +653,36 @@ class _Format():
         ndarray
             Data.
         """
-        f = nc.Dataset(self.fname, 'r')
+        f = netCDF4.Dataset(self.fname, 'r')
         arr = f.variables[var]
         arr = self._slice_array(arr, dim1, dim2, dim3)
         f.close()
+        return arr
+
+    def edf(self, dim1=None, dim2=None, dim3=None):
+        """
+        Read data from a edf file.
+
+        Parameters
+        ----------
+        var : str
+            Variable name where data is stored.
+
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = EdfFile.EdfFile(self.fname, access='r')
+        d = f.GetStaticHeader(0)
+        arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
+        for (i, ar) in enumerate(arr):
+            arr[i::] = f.GetData(i)
+        arr = self._slice_array(arr, dim1, dim2, dim3)
         return arr
 
     def _slice_array(self, arr, dim1=None, dim2=None, dim3=None):
@@ -672,9 +722,3 @@ class _Format():
         else:
             arr = arr[:]
         return arr
-
-    def edf(self):
-        pass
-
-    def txrf(self):
-        pass
