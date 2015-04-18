@@ -57,6 +57,7 @@ import numpy as np
 import ctypes
 import os
 import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
@@ -77,23 +78,22 @@ __all__ = [
     'sirt']
 
 
-def _import_shared_lib(lname):
+def _import_shared_lib(lib_name):
     """
     Get the path and import the C-shared library.
     """
     try:
         if os.name == 'nt':
-            lname = 'lib/' + lname + '.pyd'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.pyd')
             return ctypes.CDLL(os.path.abspath(libpath))
         else:
-            lname = 'lib/' + lname + '.so'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.so')
             return ctypes.CDLL(os.path.abspath(libpath))
     except OSError as e:
-        pass
+        logger.warning('OSError: Shared library missing.')
 
-libtomopy_recon = _import_shared_lib('libtomopy_recon')
+
+LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
 def simulate(obj, theta, center=None):
@@ -133,8 +133,8 @@ def simulate(obj, theta, center=None):
 
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.simulate(
+    LIB_TOMOPY.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.simulate(
         obj.ctypes.data_as(c_float_p),
         ctypes.c_int(ox),
         ctypes.c_int(oy),
@@ -153,7 +153,7 @@ def gridrec(
         num_gridx=None, num_gridy=None,
         filter_name='shepp'):
     """
-    Reconstruct object from projection data using gridrec algorithm 
+    Reconstruct object from projection data using gridrec algorithm
     :cite:`Dowd:99`.
 
     Parameters
@@ -206,8 +206,8 @@ def gridrec(
 
     c_char_p = ctypes.POINTER(ctypes.c_char)
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.gridrec(
+    LIB_TOMOPY.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.gridrec(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -281,8 +281,8 @@ def art(
         num_iter = np.array(num_iter, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.art.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.art(
+    LIB_TOMOPY.art.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.art(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -363,8 +363,8 @@ def bart(
         ind_block = np.array(ind_block, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.bart.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.bart(
+    LIB_TOMOPY.bart.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.bart(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -434,8 +434,8 @@ def fbp(
         num_iter = np.array(num_iter, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.fbp(
+    LIB_TOMOPY.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.fbp(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -504,8 +504,8 @@ def mlem(
         num_iter = np.array(num_iter, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.mlem(
+    LIB_TOMOPY.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.mlem(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -586,8 +586,8 @@ def osem(
         ind_block = np.array(ind_block, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.osem.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.osem(
+    LIB_TOMOPY.osem.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.osem(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -677,8 +677,8 @@ def ospml_hybrid(
         ind_block = np.array(ind_block, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.ospml_hybrid(
+    LIB_TOMOPY.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.ospml_hybrid(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -768,8 +768,8 @@ def ospml_quad(
         ind_block = np.array(ind_block, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.ospml_quad(
+    LIB_TOMOPY.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.ospml_quad(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -855,8 +855,8 @@ def pml_hybrid(
         reg_par = np.array(reg_par, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.pml_hybrid(
+    LIB_TOMOPY.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.pml_hybrid(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -935,8 +935,8 @@ def pml_quad(
         reg_par = np.array(reg_par, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.pml_quad(
+    LIB_TOMOPY.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.pml_quad(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
@@ -1007,8 +1007,8 @@ def sirt(
         num_iter = np.array(num_iter, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_recon.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_recon.sirt(
+    LIB_TOMOPY.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.sirt(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),

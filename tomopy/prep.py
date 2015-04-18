@@ -54,11 +54,12 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
-import logging
 import os
 import ctypes
 import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
+import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
@@ -78,23 +79,22 @@ SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
 
 
-def _import_shared_lib(lname):
+def _import_shared_lib(lib_name):
     """
-    Import the C-shared library.
+    Get the path and import the C-shared library.
     """
     try:
         if os.name == 'nt':
-            lname = 'lib/' + lname + '.pyd'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.pyd')
             return ctypes.CDLL(os.path.abspath(libpath))
         else:
-            lname = 'lib/' + lname + '.so'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.so')
             return ctypes.CDLL(os.path.abspath(libpath))
     except OSError as e:
-        pass
+        logger.warning('OSError: Shared library missing.')
 
-libtomopy_prep = _import_shared_lib('libtomopy_prep')
+
+LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
 def normalize(tomo, flat, dark, cutoff=None, ind=None):
@@ -517,8 +517,8 @@ def correct_air(tomo, air=10):
         air = np.array(air, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.correct_air(
+    LIB_TOMOPY.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.correct_air(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(air))

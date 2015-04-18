@@ -2,54 +2,40 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages
 
-prep = Extension(
-    name='tomopy.lib.libtomopy_prep',
+tomoc = Extension(
+    name='lib.libtomopy',
     extra_compile_args=['-std=c99'],
     sources=[
-        'tomopy/src/corr.c'])
-
-
-recon = Extension(
-    name='tomopy.lib.libtomopy_recon',
-    extra_compile_args=['-std=c99'],
-    sources=[
-        'tomopy/src/utils.c',
-        'tomopy/src/simulate.c',
-        'tomopy/src/gridrec.c',
-        'tomopy/src/fft.c',
-        'tomopy/src/art.c',
-        'tomopy/src/bart.c',
-        'tomopy/src/fbp.c',
-        'tomopy/src/mlem.c',
-        'tomopy/src/osem.c',
-        'tomopy/src/ospml_hybrid.c',
-        'tomopy/src/ospml_quad.c',
-        'tomopy/src/pml_hybrid.c',
-        'tomopy/src/pml_quad.c',
-        'tomopy/src/sirt.c'])
-
-
-misc = Extension(
-    name='tomopy.lib.libtomopy_misc',
-    extra_compile_args=['-std=c99'],
-    sources=[
-        'tomopy/src/morph.c'])
-
+        'src/corr.c',
+        'src/utils.c',
+        'src/simulate.c',
+        'src/gridrec.c',
+        'src/fft.c',
+        'src/art.c',
+        'src/bart.c',
+        'src/fbp.c',
+        'src/mlem.c',
+        'src/osem.c',
+        'src/ospml_hybrid.c',
+        'src/ospml_quad.c',
+        'src/pml_hybrid.c',
+        'src/pml_quad.c',
+        'src/sirt.c',
+        'src/morph.c'])
 
 setup(
     name='tomopy',
     packages=find_packages(),
-    package_data={'tomopy': ['data/*.tif']},
     version=open('VERSION').read().strip(),
-    ext_modules=[prep, recon, misc],
     include_package_data=True,
+    ext_modules=[tomoc],
     zip_safe=False,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',
-    description='X-ray imaging toolbox',
+    description='Tomographic Reconstruction in Python.',
     keywords=['tomography', 'reconstruction', 'imaging'],
     url='http://tomopy.readthedocs.org',
-    download_url='http://github.com/tomopy/tomopy.git',
+    download_url='http://github.com/dgursoy/tomopy.git',
     license='BSD',
     platforms='Any',
     classifiers=[
