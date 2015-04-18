@@ -59,7 +59,9 @@ import ctypes
 import os
 import h5py
 import spefile
-import netCDF4 as nc
+import netCDF4
+import EdfFile
+# import tifffile # TODO: rewrite conda recipe 
 import logging
 import warnings
 
@@ -74,9 +76,10 @@ __all__ = ['as_shared_array',
            'remove_neg',
            'remove_nan',
            'read_hdf5',
+           'read_edf',
            'read_spe',
            'read_netcdf4',
-           'read_tiff_stack',
+           'read_stack',
            'write_hdf5',
            'write_tiff_stack']
 
@@ -307,58 +310,76 @@ def _suggest_new_fname(fname):
     return fname
 
 
-def _slice_array(arr, dim1=None, dim2=None, dim3=None, dim4=None):
+def read_stack(bfname, ind, digit, format, ext=None):
     """
-    Slice array upto four dimensions.
+    Read data from a 2D image stack in a folder.
 
     Parameters
     ----------
-    arr : ndarray
-        Array object.
+    fname : str
+        Path to hdf5 file.
 
-    dim1, dim2, dim3, dim4 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd, 3rd and 4th dimensions respectively.
+    ind : list of int
+        Indices of the files to read.
+
+    digit : int
+        Number of digits used in indexing images.
+
+    format : str, optional
+        Data format. 'tif', 'tifc'
+
+    ext : str, optional
+        Extension of the files. 'tif'
 
     Returns
     -------
     ndarray
-        Sliced array.
+        Data.
     """
-    if len(arr.shape) == 1:
-        if dim1 is None:
-            dim1 = slice(0, arr.shape[0])
-        arr = arr[dim1]
-    elif len(arr.shape) == 2:
-        if dim1 is None:
-            dim1 = slice(0, arr.shape[0])
-        if dim2 is None:
-            dim2 = slice(0, arr.shape[1])
-        arr = arr[dim1, dim2]
-    elif len(arr.shape) == 3:
-        if dim1 is None:
-            dim1 = slice(0, arr.shape[0])
-        if dim2 is None:
-            dim2 = slice(0, arr.shape[1])
-        if dim3 is None:
-            dim3 = slice(0, arr.shape[2])
-        arr = arr[dim1, dim2, dim3]
-    elif len(arr.shape) == 4:
-        if dim1 is None:
-            dim1 = slice(0, arr.shape[0])
-        if dim2 is None:
-            dim2 = slice(0, arr.shape[1])
-        if dim3 is None:
-            dim3 = slice(0, arr.shape[2])
-        if dim4 is None:
-            dim4 = slice(0, arr.shape[3])
-        arr = arr[dim1, dim2, dim3, dim4]
-    else:
-        arr = arr[:]
+    if ext is None:
+        ext = format
+    d = ['0' * (digit - x - 1) for x in range(digit)]
+    a = 0
+    for m in ind:
+        for n in range(digit):
+            if m < np.power(10, n + 1):
+                fname = bfname + d[n] + str(m) + '.' + ext
+                if format is 'tiff' or format is 'tif':
+                    _arr = _Format(fname).tiff()
+                if format is 'tiffc' or format is 'tifc':
+                    _arr = _Format(fname).tiffc()
+                if a == 0:
+                    dx = len(ind)
+                    dy, dz = _arr.shape
+                    arr = np.zeros((dx, dy, dz))
+                arr[a] = _arr
+                a += 1
+                break
     return arr
 
 
-def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None, dim4=None):
+def read_edf(fname, dim1=None, dim2=None, dim3=None):
+    """
+    Read data from a edf file.
+
+    Parameters
+    ----------
+    fname : str
+        Path to edf file.
+
+    dim1, dim2, dim3 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd and 3rd dimensions respectively.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    return _Format(fname).edf(dim1, dim2, dim3)
+
+
+def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
     """
     Read data from hdf5 file from a specific group.
 
@@ -370,24 +391,19 @@ def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None, dim4=None):
     gname : str
         Path to the group inside hdf5 file where data is located.
 
-    dim1, dim2, dim3, dim4 : slice, optional
+    dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
-        1st, 2nd, 3rd and 4th dimensions respectively.
+        1st, 2nd and 3rd dimensions respectively.
 
     Returns
     -------
     ndarray
         Data.
     """
-    fname = os.path.abspath(fname)
-    f = h5py.File(fname, "r")
-    data = f[gname]
-    data = _slice_array(data, dim1, dim2, dim3, dim4)
-    f.close()
-    return data
+    return _Format(fname).hdf5(gname, dim1, dim2, dim3)
 
 
-def read_spe(fname, dim1=None, dim2=None, dim3=None, dim4=None):
+def read_spe(fname, dim1=None, dim2=None, dim3=None):
     """
     Read data from a spe file.
 
@@ -396,23 +412,19 @@ def read_spe(fname, dim1=None, dim2=None, dim3=None, dim4=None):
     fname : str
         Path to spe file.
 
-    dim1, dim2, dim3, dim4 : slice, optional
+    dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
-        1st, 2nd, 3rd and 4th dimensions respectively.
+        1st, 2nd and 3rd dimensions respectively.
 
     Returns
     -------
     ndarray
         Data.
     """
-    fname = os.path.abspath(fname)
-    f = spefile.PrincetonSPEFile(fname)
-    data = f.getData()
-    data = _slice_array(data, dim1, dim2, dim3, dim4)
-    return data
+    return _Format(fname).spe(dim1, dim2, dim3)
 
 
-def read_netcdf4(fname, dim1=None, dim2=None, dim3=None, dim4=None):
+def read_netcdf4(fname, dim1=None, dim2=None, dim3=None):
     """
     Read data from a netcdf file.
 
@@ -421,67 +433,16 @@ def read_netcdf4(fname, dim1=None, dim2=None, dim3=None, dim4=None):
     fname : str
         Path to spe file.
 
-    dim1, dim2, dim3, dim4 : slice, optional
+    dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
-        1st, 2nd, 3rd and 4th dimensions respectively.
+        1st, 2nd and 3rd dimensions respectively.
 
     Returns
     -------
     ndarray
         Data.
     """
-    fname = os.path.abspath(fname)
-    f = nc.Dataset(fname, 'r')
-    data = f.variables['array_data']
-    data = _slice_array(data, dim1, dim2, dim3, dim4)
-    f.close()
-    return data
-
-
-def read_tiff_stack(fname, span, digit, ext='tiff'):
-    """
-    Read data from a tiff stack in a folder.
-
-    Parameters
-    ----------
-    fname : str
-        Path to hdf5 file.
-
-    span : list of int
-        (start, end) indices of the files to read.
-
-    digit : int
-        Number of digits in indexing tiff images.
-
-    ext : str, optional
-        Specifies the extension of tiff files (e.g., tiff or tif).
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    d = ['0' * (digit - x - 1) for x in range(digit)]
-    ind = np.arange(span[0], span[1] + 1)
-    a = 0
-    for m in ind:
-        for n in range(digit):
-            if m < np.power(10, n + 1):
-                img = fname + d[n] + str(m) + '.' + ext
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    out = sio.imread(img, plugin='tifffile')
-
-                if a == 0:
-                    sx = ind.size
-                    sy, sz = out.shape
-                    data = np.zeros((sx, sy, sz), dtype='float32')
-
-                data[a] = out
-                a += 1
-                break
-    return data
+    return _Format(fname).netcdf4(dim1, dim2, dim3)
 
 
 def write_hdf5(data, fname, gname="exchange", overwrite=False):
@@ -606,3 +567,180 @@ def write_tiff_stack(
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             sio.imsave(new_fname, arr, plugin='tifffile')
+
+
+class _Format():
+
+    """
+    Helper class for reading data from various data formats.
+
+    Attributes
+    ----------
+    fname : str
+        String defining the path or file name.
+    """
+
+    def __init__(self, fname):
+        fname = os.path.abspath(fname)
+        self.fname = fname
+
+    def hdf5(self, gname, dim1=None, dim2=None, dim3=None):
+        """
+        Read data from hdf5 file from a specific group.
+
+        Parameters
+        ----------
+        gname : str
+            Path to the group inside hdf5 file where data is located.
+
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = h5py.File(self.fname, "r")
+        arr = f[gname]
+        arr = self._slice_array(arr, dim1, dim2, dim3)
+        f.close()
+        return arr
+
+    def tiff(self):
+        """
+        Read 2D tiff image.
+
+        Returns
+        -------
+        ndarray
+            Output 2D image.
+        """
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            arr = sio.imread(self.fname, plugin='tifffile')
+        return arr
+
+#     def tiffc(self):
+#         """
+#         Read 2D compressed tiff image.
+
+#         Returns
+#         -------
+#         ndarray
+#             Output 2D image.
+#         """
+#         print(self.fname)
+#         f = tifffile.TiffFile(self.fname)
+#         arr = f[0].asarray()
+#         f.close()
+#         return arr
+
+    def spe(self, dim1=None, dim2=None, dim3=None):
+        """
+        Read data from a spe file.
+
+        Parameters
+        ----------
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = spefile.PrincetonSPEFile(self.fname)
+        arr = f.getData()
+        arr = self._slice_array(arr, dim1, dim2, dim3)
+        return arr
+
+    def netcdf4(self, var, dim1=None, dim2=None, dim3=None):
+        """
+        Read data from a netcdf4 file.
+
+        Parameters
+        ----------
+        var : str
+            Variable name where data is stored.
+
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = netCDF4.Dataset(self.fname, 'r')
+        arr = f.variables[var]
+        arr = self._slice_array(arr, dim1, dim2, dim3)
+        f.close()
+        return arr
+
+    def edf(self, dim1=None, dim2=None, dim3=None):
+        """
+        Read data from a edf file.
+
+        Parameters
+        ----------
+        var : str
+            Variable name where data is stored.
+
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = EdfFile.EdfFile(self.fname, access='r')
+        d = f.GetStaticHeader(0)
+        arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
+        for (i, ar) in enumerate(arr):
+            arr[i::] = f.GetData(i)
+        arr = self._slice_array(arr, dim1, dim2, dim3)
+        return arr
+
+    def _slice_array(self, arr, dim1=None, dim2=None, dim3=None):
+        """
+        Perform slicing on ndarray.
+
+        Parameters
+        ----------
+
+        dim1, dim2, dim3 : slice, optional
+            Slice object representing the set of indices along the
+            1st, 2nd and 3rd dimensions respectively.
+
+        Returns
+        -------
+        ndarray
+            Sliced array.
+        """
+        if len(arr.shape) == 1:
+            if dim1 is None:
+                dim1 = slice(0, arr.shape[0])
+            arr = arr[dim1]
+        elif len(arr.shape) == 2:
+            if dim1 is None:
+                dim1 = slice(0, arr.shape[0])
+            if dim2 is None:
+                dim2 = slice(0, arr.shape[1])
+            arr = arr[dim1, dim2]
+        elif len(arr.shape) == 3:
+            if dim1 is None:
+                dim1 = slice(0, arr.shape[0])
+            if dim2 is None:
+                dim2 = slice(0, arr.shape[1])
+            if dim3 is None:
+                dim3 = slice(0, arr.shape[2])
+            arr = arr[dim1, dim2, dim3]
+        else:
+            arr = arr[:]
+        return arr

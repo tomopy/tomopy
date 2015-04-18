@@ -15,10 +15,11 @@
       as_shared_array
       as_uint16
       as_uint8
+      read_edf
       read_hdf5
       read_spe
       read_netcdf4
-      read_tiff_stack
+      read_stack
       remove_nan
       remove_neg
       write_hdf5
