@@ -19,7 +19,7 @@ requirements:
     - h5py
     - scikit-image
     - pywavelets
-    - dm3lib
+    # - dm3lib
     - netcdf4
     - spefile
     - edffile
