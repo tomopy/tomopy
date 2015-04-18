@@ -155,7 +155,8 @@ def gridrec(
         num_gridx=None, num_gridy=None,
         filter_name='shepp'):
     """
-    Reconstruct object from projection data using gridrec algorithm.
+    Reconstruct object from projection data using gridrec algorithm 
+    :cite:`Dowd:99`.
 
     Parameters
     ----------
@@ -234,7 +235,7 @@ def art(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using algebraic reconstruction
-    technique (ART).
+    technique (ART) :cite:`Kak:98`.
 
     Parameters
     ----------
@@ -476,7 +477,7 @@ def mlem(
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using maximum-likelihood
-    expectation-maximization algorithm. (ML-EM).
+    expectation-maximization algorithm. (ML-EM) :cite:`Dempster:77`.
 
     Parameters
     ----------
@@ -554,7 +555,7 @@ def osem(
         num_block=1, ind_block=None):
     """
     Reconstruct object from projection data using ordered-subset
-    expectation-maximization (OS-EM).
+    expectation-maximization (OS-EM) :cite:`Hudson:94`.
 
     Parameters
     ----------
@@ -647,7 +648,7 @@ def ospml_hybrid(
     """
     Reconstruct object from projection data using ordered-subset
     penalized maximum likelihood algorithm with weighted linear and
-    quadratic penalties.
+    quadratic penalties :cite:`Gursoy:15`.
 
     Parameters
     ----------
@@ -848,7 +849,8 @@ def pml_hybrid(
         reg_par=None):
     """
     Reconstruct object from projection data using penalized maximum
-    likelihood algorithm with weighted linear and quadratic penalties.
+    likelihood algorithm with weighted linear and quadratic penalties
+    :cite:`Chang:04`.
 
     Parameters
     ----------
