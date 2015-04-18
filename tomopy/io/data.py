@@ -134,10 +134,8 @@ def as_uint8(arr, dmin=None, dmax=None):
     ----------
     arr : ndarray
         Input array.
-
     dmin : float, optional
         Mininum value to adjust float-to-int conversion range.
-
     dmax : float, optional
         Maximum value to adjust float-to-int conversion range.
 
@@ -171,10 +169,8 @@ def as_uint16(arr, dmin=None, dmax=None):
     ----------
     arr : ndarray
         Input array.
-
     dmin : float, optional
         Mininum value to adjust float-to-int conversion range.
-
     dmax : float, optional
         Maximum value to adjust float-to-int conversion range.
 
@@ -208,7 +204,6 @@ def remove_neg(dat, val=0.):
     ----------
     dat : ndarray
         Input data.
-
     val : float, optional
         Values to be replaced with negative values in data.
 
@@ -230,7 +225,6 @@ def remove_nan(dat, val=0.):
     ----------
     dat : ndarray
         Input data.
-
     val : float, optional
         Values to be replaced with NaN values in data.
 
@@ -255,10 +249,8 @@ def _add_index_to_string(string, ind, digit):
     ----------
     string : str
         Given string (typically a file name).
-
     ind : int
         A value index to be added at the end of string.
-
     digit : int
         Number of digits in indexing tiff images.
 
@@ -320,16 +312,12 @@ def read_stack(bfname, ind, digit, format, ext=None):
     ----------
     fname : str
         Path to hdf5 file.
-
     ind : list of int
         Indices of the files to read.
-
     digit : int
         Number of digits used in indexing images.
-
     format : str, optional
         Data format. 'tif', 'tifc'
-
     ext : str, optional
         Extension of the files. 'tif'
 
@@ -368,7 +356,6 @@ def read_edf(fname, dim1=None, dim2=None, dim3=None):
     ----------
     fname : str
         Path to edf file.
-
     dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
         1st, 2nd and 3rd dimensions respectively.
@@ -389,10 +376,8 @@ def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
     ----------
     fname : str
         Path to hdf5 file.
-
     gname : str
         Path to the group inside hdf5 file where data is located.
-
     dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
         1st, 2nd and 3rd dimensions respectively.
@@ -413,7 +398,6 @@ def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
 #     ----------
 #     fname : str
 #         Path to hdf5 file.
-
 #     dim1, dim2, dim3 : slice, optional
 #         Slice object representing the set of indices along the
 #         1st, 2nd and 3rd dimensions respectively.
@@ -434,7 +418,6 @@ def read_spe(fname, dim1=None, dim2=None, dim3=None):
     ----------
     fname : str
         Path to spe file.
-
     dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
         1st, 2nd and 3rd dimensions respectively.
@@ -455,7 +438,6 @@ def read_netcdf4(fname, dim1=None, dim2=None, dim3=None):
     ----------
     fname : str
         Path to spe file.
-
     dim1, dim2, dim3 : slice, optional
         Slice object representing the set of indices along the
         1st, 2nd and 3rd dimensions respectively.
@@ -476,13 +458,10 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
     ----------
     data : ndarray
         Input data.
-
     fname : str
         Path to hdf5 file without extension.
-
     gname : str, optional
         Path to the group inside hdf5 file where data is located.
-
     overwrite: bool, optional
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
@@ -510,29 +489,21 @@ def write_tiff_stack(
     ----------
     data : ndarray
         Input data as 3D array.
-
     fname : str
         Path of output file without extension.
-
     axis : int, optional
         Axis along which saving is performed.
-
     id : int, optional
         First index of file for saving.
-
     digit : int, optional
         Number of digits in indexing tiff images.
-
     overwrite: bool, optional
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
-
     dtype : str, optional
         The desired data-type for saved images.
-
     dmin : float, optional
         Minimum value in data for scaling before saving.
-
     dmax : float, optional
         Maximum value in data for scaling before saving.
     """
@@ -615,7 +586,6 @@ class _Format():
         ----------
         gname : str
             Path to the group inside hdf5 file where data is located.
-
         dim1, dim2, dim3 : slice, optional
             Slice object representing the set of indices along the
             1st, 2nd and 3rd dimensions respectively.
@@ -708,7 +678,6 @@ class _Format():
         ----------
         var : str
             Variable name where data is stored.
-
         dim1, dim2, dim3 : slice, optional
             Slice object representing the set of indices along the
             1st, 2nd and 3rd dimensions respectively.
@@ -732,7 +701,6 @@ class _Format():
         ----------
         var : str
             Variable name where data is stored.
-
         dim1, dim2, dim3 : slice, optional
             Slice object representing the set of indices along the
             1st, 2nd and 3rd dimensions respectively.

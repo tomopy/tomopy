@@ -1,6 +1,6 @@
 .. title:: TomoPy
 
-.. image:: img/tomopy-logo.png
+.. image:: source/img/tomopy-logo.png
    :width: 320px
    :alt: TomoPy
 
@@ -8,18 +8,18 @@
 toolbox to perform tomographic data processing and image reconstruction 
 tasks at the `Advanced Photon Source <http://www.aps.anl.gov>`_.
 
-This guide is created with `Sphinx <http://sphinx-doc.org>`_ and 
-maintained on `GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
+This guide is maintained on 
+`GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
 
 .. toctree::
    :maxdepth: 1
    
-   about
-   install
-   devguide
-   api
-   faq
-   credits
+   source/about
+   source/install
+   source/devguide
+   source/api
+   source/faq
+   source/credits
 
 
 Indices and tables

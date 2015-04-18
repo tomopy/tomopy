@@ -105,7 +105,7 @@ exclude_patterns = ['_build']
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -280,7 +280,7 @@ texinfo_documents = [
   project+u' Documentation',
   Argonne, 
   project, 
-  'TomoPy: X-ray imaging toolbox.',
+  'TomoPy: Tomographic Reconstruction in Python.',
   'Miscellaneous'),
 ]
 

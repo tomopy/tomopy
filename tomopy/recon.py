@@ -104,10 +104,8 @@ def simulate(obj, theta, center=None):
     ----------
     obj : ndarray
         Voxelized 3D object.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
 
@@ -162,13 +160,10 @@ def gridrec(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
@@ -241,22 +236,16 @@ def art(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
 
@@ -319,28 +308,20 @@ def bart(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
-
     ind_block : array of int, optional
         Order of projections to be used for updating.
 
@@ -410,19 +391,14 @@ def fbp(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
 
@@ -483,22 +459,16 @@ def mlem(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
 
@@ -561,28 +531,20 @@ def osem(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
-
     ind_block : array of int, optional
         Order of projections to be used for updating.
 
@@ -654,31 +616,22 @@ def ospml_hybrid(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     reg_par : list, optional
         Regularization hyperparameters as an array, (beta, delta).
-
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
-
     ind_block : array of int, optional
         Order of projections to be used for updating.
 
@@ -754,31 +707,22 @@ def ospml_quad(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     reg_par : float, optional
         Regularization parameter for smoothing.
-
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
-
     ind_block : array of int, optional
         Order of projections to be used for updating.
 
@@ -856,31 +800,22 @@ def pml_hybrid(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     reg_par : list, optional
         Regularization hyperparameters as an array, (beta, delta).
-
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
-
     ind_block : array of int, optional
         Order of projections to be used for updating.
 
@@ -951,22 +886,16 @@ def pml_quad(
 
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
-
     reg_par : float, optional
         Regularization parameter for smoothing.
 
@@ -1033,22 +962,16 @@ def sirt(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     theta : array
         Projection angles in radian.
-
     center : float, optional
         Location of rotation axis.
-
     emission : bool, optional
         Determines whether data is emission or transmission type.
-
     recon : ndarray, optional
         Initial values of the reconstruction object.
-
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     num_iter : int, optional
         Number of algorithm iterations performed.
 
