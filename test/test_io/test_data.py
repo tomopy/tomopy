@@ -95,19 +95,19 @@ def test_remove_nan():
 
 
 def test_read_hdf5():
-    out = read_hdf5(fname='tomopy/io/data/lena.h5', gname='/exchange/data')
+    fname = os.path.join('tomopy', 'data', 'lena.h5')
+    out = read_hdf5(fname, '/exchange/data')
     assert_equals(out.shape, (1, 512, 512))
 
 
 def test_write_hdf5():
-    dest = 'tomopy/test/youcandeleteme/'
-    fname = dest + 'youcandeleteme'
+    dest = os.path.join('test', 'tmp')
+    fname = os.path.join(dest, 'tmp')
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.mkdir(dest)
-
     arr = np.ones((3, 3, 3), dtype='float32')
-    write_hdf5(arr, fname=fname)
+    write_hdf5(arr, fname)
     f = h5py.File(fname + '.h5', "r")
     assert_equals(f['/exchange/data'][:].shape, (3, 3, 3))
     assert_equals(f['/exchange/data'][:].dtype, 'float32')
@@ -126,19 +126,16 @@ def test__suggest_new_fname():
 
 
 def test_write_tiff_stack():
-    dest = 'tomopy/test/youcandeleteme/'
-    fname = dest + 'youcandeleteme'
-
+    dest = os.path.join('test', 'tmp')
+    fname = os.path.join(dest, 'tmp')
     arr = np.ones((1, 2, 3), dtype='float32')
     write_tiff_stack(arr, fname=fname, axis=0, digit=4, dtype='uint8')
     assert_equals(os.path.isfile(fname + '_0000.tiff'), True)
     shutil.rmtree(dest)
-
     write_tiff_stack(arr, fname=fname, axis=1, digit=5, dtype='uint16')
     assert_equals(os.path.isfile(fname + '_00000.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00001.tiff'), True)
     shutil.rmtree(dest)
-
     write_tiff_stack(arr, fname=fname, axis=2, id=6, dtype='float32')
     assert_equals(os.path.isfile(fname + '_00006.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00007.tiff'), True)

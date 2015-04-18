@@ -62,7 +62,7 @@ import spefile
 import netCDF4
 import EdfFile
 # import DM3lib # TODO: build fails
-# import tifffile # TODO: rewrite conda recipe 
+# import tifffile # TODO: rewrite conda recipe
 import logging
 import warnings
 

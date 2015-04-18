@@ -20,7 +20,7 @@ install:
   - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile python-coveralls
 
 script: 
-  - nosetests tomopy --with-coverage
+  - nosetests test --with-coverage
 
 after_success:
   - coveralls
