@@ -11,9 +11,10 @@ many common experimental perturbations can degrade the quality of
 tomographs, unless corrections are applied. Unless automated tools 
 make these corrections, beamline staff can be overwhelmed by data that 
 can be collected far faster than corrections and reconstruction 
-can be performed. 
+can be performed :cite:`Toby:15`. 
 
 To address the needs for image correction and tomographic reconstruction 
-in an instrument independent manner, the TomoPy code was developed, which 
-is a parallelizable high performance reconstruction code. The code is 
-in use or planned to be so at most U.S. synchrotron facilities.
+in an instrument independent manner, the TomoPy code was developed
+:cite:`Gursoy:14a`, which is a parallelizable high performance 
+reconstruction code. The code is in use or planned to be so at most 
+U.S. synchrotron facilities.
