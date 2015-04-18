@@ -61,7 +61,7 @@ import h5py
 import spefile
 import netCDF4
 import EdfFile
-import DM3lib
+# import DM3lib # TODO: build fails
 # import tifffile # TODO: rewrite conda recipe 
 import logging
 import warnings
@@ -78,7 +78,7 @@ __all__ = ['as_shared_array',
            'remove_nan',
            'read_hdf5',
            'read_edf',
-           'read_dm3',
+           # 'read_dm3',
            'read_spe',
            'read_netcdf4',
            'read_stack',
@@ -405,25 +405,25 @@ def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
     return _Format(fname).hdf5(gname, dim1, dim2, dim3)
 
 
-def read_dm3(fname, gname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from GATAN DM3 (DigitalMicrograph) file.
+# def read_dm3(fname, gname, dim1=None, dim2=None, dim3=None):
+#     """
+#     Read data from GATAN DM3 (DigitalMicrograph) file.
 
-    Parameters
-    ----------
-    fname : str
-        Path to hdf5 file.
+#     Parameters
+#     ----------
+#     fname : str
+#         Path to hdf5 file.
 
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
+#     dim1, dim2, dim3 : slice, optional
+#         Slice object representing the set of indices along the
+#         1st, 2nd and 3rd dimensions respectively.
 
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).dm3(dim1, dim2, dim3)
+#     Returns
+#     -------
+#     ndarray
+#         Data.
+#     """
+#     return _Format(fname).dm3(dim1, dim2, dim3)
 
 
 def read_spe(fname, dim1=None, dim2=None, dim3=None):
@@ -680,25 +680,25 @@ class _Format():
         arr = self._slice_array(arr, dim1, dim2, dim3)
         return arr
 
-    def dm3(self, dim1=None, dim2=None, dim3=None):
-        """
-        Read data from a dm3 file.
+    # def dm3(self, dim1=None, dim2=None, dim3=None):
+    #     """
+    #     Read data from a dm3 file.
 
-        Parameters
-        ----------
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
+    #     Parameters
+    #     ----------
+    #     dim1, dim2, dim3 : slice, optional
+    #         Slice object representing the set of indices along the
+    #         1st, 2nd and 3rd dimensions respectively.
 
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = DM3lib.DM3(self.fname, dims=3)
-        arr = f.imagedata
-        arr = self._slice_array(arr, dim1, dim2, dim3)
-        return arr
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Data.
+    #     """
+    #     f = DM3lib.DM3(self.fname, dims=3)
+    #     arr = f.imagedata
+    #     arr = self._slice_array(arr, dim1, dim2, dim3)
+    #     return arr
 
     def netcdf4(self, var, dim1=None, dim2=None, dim3=None):
         """
