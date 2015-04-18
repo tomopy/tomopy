@@ -227,7 +227,6 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
     ----------
     shape : list, optional
         Shape of the 3D data.
-
     dtype : str, optional
         The desired data-type for the array.
 
@@ -248,11 +247,9 @@ def phantom(shape, params, dtype='float32'):
     ----------
     shape: tuple of int
         Shape of the output cube.
-
     params: list of dict
         List of dictionaries with the parameters defining the ellipsoids
         to include in the cube.
-
     dtype: str, optional
         Data type of the output ndarray.
 

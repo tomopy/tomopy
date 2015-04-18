@@ -105,16 +105,12 @@ def normalize(tomo, flat, dark, cutoff=None, ind=None):
     ----------
     tomo : ndarray
         3D tomographic data.
-
     flat : ndarray
         3D flat field data.
-
     dark : ndarray
         3D dark field data.
-
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
-
     ind : array of int, optional
         Projection indices at which the normalization is applied.
 
@@ -162,19 +158,14 @@ def remove_stripe(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     level : int, optional
         Number of discrete wavelet transform levels.
-
     wname : str, optional
         Type of the wavelet filter. 'haar', 'db5', sym5', etc.
-
     sigma : float, optional
         Damping parameter in Fourier space.
-
     pad : bool, optional
         If True, extend the size of the sinogram by padding with zeros.
-
     ind : array of int, optional
         Sinogram indices at which the stripe removal is applied.
 
@@ -252,22 +243,16 @@ def retrieve_phase(
     ----------
     tomo : ndarray
         3D tomographic data.
-
     psize : float, optional
         Detector pixel size in cm.
-
     dist : float, optional
         Propagation distance of the wavefront in cm.
-
     energy : float, optional
         Energy of incident wave in keV.
-
     alpha : float, optional
         Regularization parameter.
-
     pad : bool, optional
         If True, extend the size of the projections by padding with zeros.
-
     ind : array of int, optional
         Projection indices at which the phase retrieval is applied.
 
@@ -315,19 +300,14 @@ def _paganin_filter(tomo, psize, dist, energy, alpha, pad):
     ----------
     tomo : ndarray
         3D tomographic data.
-
     psize : float
         Detector pixel size in cm.
-
     dist : float
         Propagation distance of the wavefront in cm.
-
     energy : float
         Energy of incident wave in keV.
-
     alpha : float
         Regularization parameter.
-
     pad : bool
         If True, extend the size of the projections by padding with zeros.
 
@@ -335,13 +315,10 @@ def _paganin_filter(tomo, psize, dist, energy, alpha, pad):
     -------
     ndarray
         2D Paganin filter.
-
     int
         Pad amount in projection axis.
-
     int
         Pad amount in sinogram axis.
-
     ndarray
         Padded 2D projection image.
     """
@@ -388,11 +365,9 @@ def circular_roi(tomo, ratio=1, val=None):
     ----------
     tomo : ndarray
         3D tomographic data.
-
     ratio : int, optional
         Ratio of the circular mask's diameter in pixels to
         the number of reconstructed image grid size.
-
     val : int, optional
         Value for the masked region.
 
@@ -431,13 +406,10 @@ def median_filter(tomo, size=3, axis=0, ind=None):
     ----------
     tomo : ndarray
         Arbitrary 3D array.
-
     size : int, optional
         The size of the filter.
-
     axis : int, optional
         Axis along which median filtering is performed.
-
     ind : array of int, optional
         Indices at which the filtering is applied.
 
@@ -485,14 +457,11 @@ def remove_zinger(tomo, dif=1000, size=3, ind=None):
     ----------
     tomo : ndarray
         3D tomographic data.
-
     dif : float, optional
         Expected difference value between outlier measurements and
         the median filtered raw measurements.
-
     size : int, optional
         Size of the median filter.
-
     ind : array of int, optional
         Projection indices at which the zinger removal is applied.
 
@@ -531,7 +500,6 @@ def correct_air(tomo, air=10):
     ----------
     tomo : ndarray
         3D tomographic data.
-
     air : int, optional
         Number of pixels at each boundary to calculate the scaling factor.
 
