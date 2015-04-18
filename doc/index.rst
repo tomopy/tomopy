@@ -4,8 +4,6 @@
    :width: 320px
    :alt: TomoPy
 
-| 
-
 TomoPy is an open-sourced Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
 `Advanced Photon Source <http://www.aps.anl.gov>`_.
