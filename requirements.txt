@@ -8,3 +8,4 @@ spefile==1.6
 tifffile
 netcdf4
 edffile
+dm3lib
