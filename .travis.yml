@@ -17,7 +17,7 @@ before_install:
 
 install:
   - conda build -q . 
-  - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile dm3lib python-coveralls
+  - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile python-coveralls
 
 script: 
   - nosetests tomopy --with-coverage
