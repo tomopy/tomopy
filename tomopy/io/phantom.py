@@ -72,6 +72,9 @@ __all__ = ['baboon',
            'phantom']
 
 
+DATA_PATH = os.path.join('tomopy', 'data')
+
+
 def baboon(dtype='float32'):
     """
     Load test baboon image array.
@@ -86,7 +89,7 @@ def baboon(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/baboon.tif"
+    fname = os.path.join(DATA_PATH, 'baboon.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -107,7 +110,7 @@ def barbara(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/barbara.tif"
+    fname = os.path.join(DATA_PATH, 'barbara.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -128,7 +131,7 @@ def cameraman(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/cameraman.tif"
+    fname = os.path.join(DATA_PATH, 'cameraman.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -149,7 +152,7 @@ def checkerboard(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/checkerboard.tif"
+    fname = os.path.join(DATA_PATH, 'checkerboard.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -170,7 +173,7 @@ def lena(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/lena.tif"
+    fname = os.path.join(DATA_PATH, 'lena.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -191,7 +194,7 @@ def peppers(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/peppers.tif"
+    fname = os.path.join(DATA_PATH, 'peppers.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -212,7 +215,7 @@ def shepp2d(dtype='float32'):
     ndarray
         Output 3D test image.
     """
-    fname = os.path.dirname(__file__) + "/data/shepp2d.tif"
+    fname = os.path.join(DATA_PATH, 'shepp2d.tif')
     im = sio.imread(fname)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)

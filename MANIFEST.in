@@ -1,5 +1,4 @@
 include README.rst
 include LICENSE.txt
-include requirements.txt
 include VERSION
-recursive-include tomopy *
+recursive-include tomopy/data *.tif *.h5
