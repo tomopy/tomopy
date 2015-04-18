@@ -100,10 +100,8 @@ def apply_pad(arr, npad=None, val=0.):
     ----------
     arr : ndarray
         Arbitrary 3D array.
-
     npad : int, optional
         New dimensions after padding.
-
     val : float, optional
         Pad value.
 
@@ -143,20 +141,15 @@ def focus_region(
     ----------
     data : ndarray
         3D Tomographic data.
-
     xcoord, ycoord : float, optional
         x- and y-coordinates of the center location of the circular
         ROI in reconstruction image.
-
     dia : float, optional
         Diameter of the circular ROI.
-
     center : float, optional
         Rotation axis location of the tomographic data.
-
     pad : bool, optional
         If True, extend the size of the projections by padding with zeros.
-
     corr : bool, optional
         If True, correct_air is applied after data is trimmed.
 
@@ -164,7 +157,6 @@ def focus_region(
     -------
     ndarray
         Modified 3D tomographic data.
-
     float
         New rotation axis location.
     """
@@ -221,7 +213,6 @@ def downsample2d(data, level=1):
     ----------
     data : ndarray
         Arbitrary 3D array.
-
     level : int, optional
         Downsampling level in powers of two.
 
@@ -259,7 +250,6 @@ def downsample3d(data, level=1):
     ----------
     data : ndarray
         Arbitrary 3D array.
-
     level : int, optional
         Downsampling level in powers of two.
 
@@ -297,7 +287,6 @@ def upsample2d(data, level=1):
     ----------
     data : ndarray
         Arbitrary 3D array.
-
     level : int, optional
         Upsampling level in powers of two.
 
@@ -334,7 +323,6 @@ def upsample3d(data, level=1):
     ----------
     data : ndarray
         Arbitrary 3D array.
-
     level : int, optional
         Upsampling level in powers of two.
 
@@ -371,7 +359,6 @@ def upsample2df(data, level=1):
     ----------
     data : ndarray
         Arbitrary 3D array.
-
     level : int, optional
         Upsampling level in powers of two.
 

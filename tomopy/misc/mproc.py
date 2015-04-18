@@ -72,16 +72,12 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
     ----------
     func : func
         Function to be parallelized.
-
     args : list
         Arguments of the function in a list.
-
     axis : int
         Axis along which parallelization is performed.
-
     ncore : int, optional
         Number of available cores that will be assigned to jobs.
-
     nchunk : int, optional
         Number of data chunk size for each core.
 
