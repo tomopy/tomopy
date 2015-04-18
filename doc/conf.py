@@ -296,7 +296,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #ztexinfo_no_detailmenu = False
 
-# picked from http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules  # noqa
+# picked from http://read-the-docs.readthedocs.org/en/latest/faq.html
 class Mock(object):
 
     __all__ = []
@@ -317,10 +317,10 @@ class Mock(object):
             return Mock()
 
 MOCK_MODULES = [
-    'numpy', 'scipy', 'scipy.misc', 'h5py', 'matplotlib', 'ctypes',
-    'matplotlib.pylab', 'netCDF4', 'spefile', 'scikit-image', 'skimage.io', 
-    'scipy.ndimage', 'pywt', 'scipy.optimize', 'skimage',
-    'skimage.filter', 'skimage.morphology']
+    'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
+    'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',  
+    'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
+    'skimage.io', 'skimage.filter', 'skimage.morphology']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
