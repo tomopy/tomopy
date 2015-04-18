@@ -318,9 +318,9 @@ class Mock(object):
 
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
-    'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',  
+    'matplotlib', 'matplotlib.pylab', 'dm3lib', 'tifffile', 'EdfFile', 'netCDF4',  
     'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
-    'skimage.io', 'skimage.filter', 'skimage.morphology', 'dm3lib']
+    'skimage.io', 'skimage.filter', 'skimage.morphology']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
