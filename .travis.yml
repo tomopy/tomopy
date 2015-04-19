@@ -17,7 +17,8 @@ before_install:
 
 install:
   - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile python-coveralls
-  - python setup.py install
+  - mkdir lib
+  - python setup.py build_ext --inplace
 
 script: 
   - nosetests test --with-coverage
