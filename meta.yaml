@@ -31,8 +31,8 @@ test:
     - tomopy
     - tomopy.io
     - tomopy.io.data
+    - tomopy.io.exchange
     - tomopy.io.phantom
-    - tomopy.io.recipe
     - tomopy.misc.morph
     - tomopy.misc.mproc
     - tomopy.prep
