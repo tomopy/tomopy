@@ -1,7 +1,7 @@
-:mod:`tomopy.io.recipe`
-=======================
+:mod:`tomopy.io.exchange`
+=========================
 
-.. automodule:: tomopy.io.recipe
+.. automodule:: tomopy.io.exchange
    :members:
    :show-inheritance:
    :undoc-members:
