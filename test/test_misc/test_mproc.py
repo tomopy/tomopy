@@ -81,9 +81,9 @@ def synthetic_data():
 
 
 def synthetic_func(a, val, ind):
-	a = mp.shared_data
-	for m in ind:
-		a[m, :, :] = val
+    a = mp.shared_data
+    for m in ind:
+        a[m, :, :] = val
 
 
 def test_distribute_jobs():
