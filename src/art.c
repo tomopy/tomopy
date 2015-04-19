@@ -81,8 +81,6 @@ art(
 
     for (i=0; i<num_iter; i++) 
     {
-        printf("ART iteration : %i\n", i+1);
-
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice

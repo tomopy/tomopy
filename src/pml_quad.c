@@ -85,8 +85,6 @@ pml_quad(
 
     for (i=0; i<num_iter; i++) 
     {
-        printf("PML_QUAD iteration : %i\n", i+1);
-
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice
@@ -328,7 +326,7 @@ pml_quad(
                 G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
             }
 
-            // (bottom-right)           
+            // (bottom-right)
             ind0 = (ngridy-1) + (ngridx-1)*ngridy;
             ind1 = ind0 + s*ngridx*ngridy;
             
@@ -350,9 +348,10 @@ pml_quad(
 
             for (n = 0; n < ngridx; n++) {
                 for (m = 0; m < ngridy; m++) {
-                    q = m + n*ngridy + s*ngridx*ngridy;
+                    q = m + n*ngridy;
+                    ind0 = q + s*ngridx*ngridy;
                     if (F[q] != 0.0) {
-                        recon[q] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
+                        recon[ind0] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
                     }
                 }
             }
