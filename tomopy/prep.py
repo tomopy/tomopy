@@ -178,7 +178,7 @@ def remove_stripe(
         tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            tomo, func=stripe_removal, axis=1,
+            tomo, func=remove_stripe, axis=1,
             args=(level, wname, sigma, pad))
         return arr
 
@@ -265,7 +265,7 @@ def retrieve_phase(
         tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            data, func=phase_retrieval,
+            tomo, func=retrieve_phase,
             args=(psize, dist, energy, alpha, pad), axis=0)
         return arr
 
@@ -474,7 +474,7 @@ def remove_zinger(tomo, dif=1000, size=3, ind=None):
         tomo = mp.shared_data
     else:
         arr = mp.distribute_jobs(
-            tomo, func=zinger_removal, axis=0,
+            tomo, func=remove_zinger, axis=0,
             args=(dif, size))
         return arr
 

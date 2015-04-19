@@ -59,37 +59,35 @@ import os
 import ctypes
 import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
+from tomopy.prep import correct_air
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['apply_pad',
-           'focus_region',
-           'downsample2d',
-           'downsample3d',
-           'upsample2d',
-           'upsample3d',
-           'upsample2df']
+           'focus_region']
 
 
-def _import_shared_lib(lname):
+PI = 3.14159265359
+
+
+def _import_shared_lib(lib_name):
     """
-    Import the C-shared library.
+    Get the path and import the C-shared library.
     """
     try:
         if os.name == 'nt':
-            lname = 'lib/' + lname + '.pyd'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.pyd')
             return ctypes.CDLL(os.path.abspath(libpath))
         else:
-            lname = 'lib/' + lname + '.so'
-            libpath = os.path.join(os.path.dirname(__file__), lname)
+            libpath = os.path.join('lib', lib_name + '.so')
             return ctypes.CDLL(os.path.abspath(libpath))
     except OSError as e:
-        pass
+        logger.warning('OSError: Shared library missing.')
 
-libtomopy_misc = _import_shared_lib('libtomopy_misc')
+
+LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
 def apply_pad(arr, npad=None, val=0.):
@@ -120,8 +118,8 @@ def apply_pad(arr, npad=None, val=0.):
     out = val * np.ones((dx, dy, npad), dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.apply_padding(
+    LIB_TOMOPY.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.apply_padding(
         arr.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(npad),
@@ -130,7 +128,7 @@ def apply_pad(arr, npad=None, val=0.):
 
 
 def focus_region(
-        data, xcoord=0, ycoord=0, dia=256,
+        data, dia, xcoord=0, ycoord=0,
         center=None, pad=False, corr=True):
     """
     Trims sinogram for reconstructing a circular region of interest (ROI).
@@ -203,182 +201,3 @@ def focus_region(
         if not pad:
             center = dz / 2.
     return roi, center
-
-
-def downsample2d(data, level=1):
-    """
-    Downsample 3D data by binning.
-
-    Parameters
-    ----------
-    data : ndarray
-        Arbitrary 3D array.
-    level : int, optional
-        Downsampling level in powers of two.
-
-    Returns
-    -------
-    ndarray
-        Downsampled 3D array.
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    downdat = np.zeros(
-        (dx, dy, dz / binsize),
-        dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.downsample2d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(level),
-        downdat.ctypes.data_as(c_float_p))
-    return downdat
-
-
-def downsample3d(data, level=1):
-    """
-    Downsample 3D data by binning.
-
-    Parameters
-    ----------
-    data : ndarray
-        Arbitrary 3D array.
-    level : int, optional
-        Downsampling level in powers of two.
-
-    Returns
-    -------
-    ndarray
-        Downsampled 3D array.
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    downdat = np.zeros(
-        (dx, dy / binsize, dz / binsize),
-        dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.downsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.downsample3d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(level),
-        downdat.ctypes.data_as(c_float_p))
-    return downdat
-
-
-def upsample2d(data, level=1):
-    """
-    Upsample 3D data.
-
-    Parameters
-    ----------
-    data : ndarray
-        Arbitrary 3D array.
-    level : int, optional
-        Upsampling level in powers of two.
-
-    Returns
-    -------
-    ndarray
-        Upsampled 3D array.
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    updat = np.zeros((dy, dz * binsize, dz * binsize), dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.upsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.upsample2d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        ctypes.c_int(level),
-        updat.ctypes.data_as(c_float_p))
-    return updat
-
-
-def upsample3d(data, level=1):
-    """
-    Upsample 3D data.
-
-    Parameters
-    ----------
-    data : ndarray
-        Arbitrary 3D array.
-    level : int, optional
-        Upsampling level in powers of two.
-
-    Returns
-    -------
-    ndarray
-        Upsampled 3D array.
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    updat = np.zeros((dy, dz * binsize, dz * binsize), dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    libtomopy_prep.upsample3d.restype = ctypes.POINTER(ctypes.c_void_p)
-    libtomopy_prep.upsample3d(
-        data.ctypes.data_as(c_float_p),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        ctypes.c_int(level),
-        updat.ctypes.data_as(c_float_p))
-    return updat
-
-
-def upsample2df(data, level=1):
-    """
-    Upsample 3D data in Fourier domain.
-
-    Parameters
-    ----------
-    data : ndarray
-        Arbitrary 3D array.
-    level : int, optional
-        Upsampling level in powers of two.
-
-    Returns
-    -------
-    ndarray
-        Upsampled 3D array.
-    """
-    dx, dy, dz = data.shape
-    level = np.array(level, dtype='int32')
-
-    if level < 0:
-        return data
-
-    binsize = np.power(2, level)
-    fftw2data = np.zeros((dz * binsize, dz * binsize), dtype='complex')
-    updat = np.zeros((dy, dz * binsize, dz * binsize), dtype='float32')
-
-    ind = slice(dz * (binsize - 1) / 2, dz * (binsize - 1) / 2 + dz, 1)
-    for m in range(dy):
-        fftw2data[ind, ind] = np.fft.fftshift(fftw2(data[m, :, :]))
-        updat[m, :, :] = np.real(ifftw2(np.fft.ifftshift(fftw2data)))
-    return updat

@@ -173,6 +173,36 @@ def test_median_filter():
     assert_array_almost_equal(
         median_filter(data, axis=2), result)
 
+    
+def test_remove_stripe():
+    out = remove_stripe(synthetic_data())
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+    
+def test_retrieve_phase():
+    out = retrieve_phase(synthetic_data())
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+    
+def test_circular_roi():
+    out = circular_roi(synthetic_data())
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+    
+def test_remove_zinger():
+    out = remove_zinger(synthetic_data())
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+    
+def test_correct_air():
+    out = correct_air(synthetic_data())
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
 
 if __name__ == '__main__':
     import nose

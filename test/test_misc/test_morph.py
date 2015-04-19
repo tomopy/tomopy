@@ -48,9 +48,41 @@
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.recon import *
+from tomopy.misc.morph import *
 import numpy as np
 from nose.tools import assert_equals
+
+
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45.],
+          [24., 53., 12., 89.],
+          [14., 52., 25., 52.],
+          [24., 64., 12., 89.]],
+         [[25., 74., 63., 98.],
+          [63., 27., 43., 68.],
+          [24., 64., 12., 99.],
+          [12., 53., 74., 13.]],
+         [[13., 65., 33., 12.],
+          [71., 33., 87., 16.],
+          [42., 97., 77., 11.],
+          [90., 12., 32., 63.]]], dtype='float32')
+    return data
+
+
+def test_apply_pad():
+    out = apply_pad(synthetic_data())
+    assert_equals(out.shape, (3, 4, 6))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_focus_region():
+    out, center = focus_region(synthetic_data(), dia=2)
+    assert_equals(out.shape, (3, 4, 2))
+    assert_equals(np.isnan(out).sum(), 0)
 
 
 __author__ = "Doga Gursoy"
