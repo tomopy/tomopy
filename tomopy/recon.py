@@ -116,9 +116,10 @@ def simulate(obj, theta, center=None):
     """
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
-    dx = theta.size
+    dx = len(theta)
     dy = ox
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
+    tomo = np.zeros((dx, dy, dz), dtype='float32')
     if center is None:
         center = dz / 2.
 
@@ -129,7 +130,6 @@ def simulate(obj, theta, center=None):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
-    tomo = np.zeros((dx, dy, dz), dtype='float32')
 
     # Call C function to reconstruct recon matrix.
     c_float_p = ctypes.POINTER(ctypes.c_float)
@@ -430,8 +430,6 @@ def fbp(
         num_gridx = np.array(num_gridx, dtype='int32')
     if not isinstance(num_gridy, np.int32):
         num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -780,7 +778,6 @@ def ospml_quad(
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p),
         reg_par.ctypes.data_as(c_float_p),
         ctypes.c_int(num_block),
         ind_block.ctypes.data_as(c_float_p))

@@ -87,16 +87,14 @@ ospml_hybrid(
 
     for (i=0; i<num_iter; i++) 
     {
-        printf("OSPML_HYBRID iteration : %i\n", i+1);
-
-        subset_ind1 = dx/num_block;
-        subset_ind2 = subset_ind1;
-
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice
         for (s=0; s<dy; s++) 
         {
+            subset_ind1 = dx/num_block;
+            subset_ind2 = subset_ind1;
+        
             // For each ordered-subset num_subset
             for (os=0; os<num_block+1; os++) 
             {
@@ -385,7 +383,9 @@ ospml_hybrid(
                     for (m = 0; m < ngridy; m++) {
                         q = m + n*ngridy + s*ngridx*ngridy;
                         if (F[q] != 0.0) {
-                            recon[q] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
+                            q = m + n*ngridy;
+                            ind0 = q + s*ngridx*ngridy;
+                            recon[ind0] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
                         }
                     }
                 }

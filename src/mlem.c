@@ -83,8 +83,6 @@ mlem(
 
     for (i=0; i<num_iter; i++) 
     {
-        printf("MLEM iteration : %i\n", i+1);
-
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice
