@@ -54,12 +54,13 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
-import logging
 import os
 import ctypes
 import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
 from tomopy.prep import correct_air
+import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
