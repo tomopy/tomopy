@@ -12,11 +12,6 @@
       :nosignatures:
    
       apply_pad
-      downsample2d
-      downsample3d
       focus_region
-      upsample2d
-      upsample2df
-      upsample3d
 
    .. rubric:: **Functions:**
