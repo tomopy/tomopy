@@ -9,7 +9,7 @@ This section contains the API reference and usage information for TomoPy.
 
    api/tomopy.io.data
    api/tomopy.io.phantom
-   api/tomopy.io.recipe
+   api/tomopy.io.exchange
    api/tomopy.misc.morph
    api/tomopy.misc.mproc
    api/tomopy.prep
