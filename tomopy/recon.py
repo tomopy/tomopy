@@ -608,7 +608,7 @@ def ospml_hybrid(
     """
     Reconstruct object from projection data using ordered-subset
     penalized maximum likelihood algorithm with weighted linear and
-    quadratic penalties :cite:`Gursoy:15`.
+    quadratic penalties.
 
     Parameters
     ----------
