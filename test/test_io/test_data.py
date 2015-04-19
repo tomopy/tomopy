@@ -49,7 +49,9 @@
 from __future__ import absolute_import, division, print_function
 
 from tomopy.io.data import *
-from tomopy.io.data import _add_index_to_string, _suggest_new_fname
+from tomopy.io.data import (
+    _add_index_to_string, _suggest_new_fname,
+    _as_uint8, _as_uint16, _as_float32)
 import numpy as np
 import os
 import shutil
@@ -64,21 +66,21 @@ __docformat__ = 'restructuredtext en'
 
 def test_as_uint8():
     arr = np.arange(5, dtype='float32')
-    out = as_uint8(arr)
+    out = _as_uint8(arr)
     assert_equals(out.dtype, 'uint8')
-    out = as_uint8(arr, dmin=1.)
+    out = _as_uint8(arr, dmin=1.)
     assert_equals((out == [0, 0, 85, 170, 255]).all(), True)
-    out = as_uint8(arr, dmax=3.)
+    out = _as_uint8(arr, dmax=3.)
     assert_equals((out == [0, 85, 170, 255, 255]).all(), True)
 
 
 def test_as_uint16():
     arr = np.arange(5, dtype='float32')
-    out = as_uint16(arr)
+    out = _as_uint16(arr)
     assert_equals(out.dtype, 'uint16')
-    out = as_uint16(arr, dmin=1.)
+    out = _as_uint16(arr, dmin=1.)
     assert_equals((out == [0, 0, 21845, 43690, 65535]).all(), True)
-    out = as_uint16(arr, dmax=3.)
+    out = _as_uint16(arr, dmax=3.)
     assert_equals((out == [0, 21845, 43690, 65535, 65535]).all(), True)
 
 

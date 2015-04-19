@@ -11,10 +11,6 @@
    .. autosummary::
       :nosignatures:
 
-      as_shared_array
-      as_float32
-      as_uint8
-      as_uint16
       read_edf
       read_hdf5
       read_spe

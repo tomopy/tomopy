@@ -70,11 +70,7 @@ import warnings
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_shared_array',
-           'as_float32',
-           'as_uint8',
-           'as_uint16',
-           'remove_neg',
+__all__ = ['remove_neg',
            'remove_nan',
            'read_hdf5',
            'read_edf',
@@ -86,28 +82,7 @@ __all__ = ['as_shared_array',
            'write_tiff_stack']
 
 
-def as_shared_array(arr):
-    """
-    Converts array to a shared memory array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-
-    Returns
-    -------
-    ndarray
-        Output array.
-    """
-    sarr = mp.Array(ctypes.c_float, arr.size)
-    sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
-    sarr = np.reshape(sarr, arr.shape)
-    sarr[:] = arr
-    return sarr
-
-
-def as_float32(arr):
+def _as_float32(arr):
     """
     Convert a numpy array to float32.
 
@@ -126,7 +101,7 @@ def as_float32(arr):
     return arr
 
 
-def as_uint8(arr, dmin=None, dmax=None):
+def _as_uint8(arr, dmin=None, dmax=None):
     """
     Convert a numpy array to uint8.
 
@@ -161,7 +136,7 @@ def as_uint8(arr, dmin=None, dmax=None):
     return arr
 
 
-def as_uint16(arr, dmin=None, dmax=None):
+def _as_uint16(arr, dmin=None, dmax=None):
     """
     Convert a numpy array to uint16.
 
@@ -212,7 +187,7 @@ def remove_neg(dat, val=0.):
     ndarray
        Corrected data.
     """
-    dat = as_float32(dat)
+    dat = _as_float32(dat)
     dat[dat < 0.0] = val
     return dat
 
@@ -233,7 +208,7 @@ def remove_nan(dat, val=0.):
     ndarray
        Corrected data.
     """
-    dat = as_float32(dat)
+    dat = _as_float32(dat)
     dat[np.isnan(dat)] = val
     return dat
 
@@ -551,11 +526,11 @@ def write_tiff_stack(
             arr = data[:, :, m]
 
         if dtype is 'uint8':
-            arr = as_uint8(arr, dmin, dmax)
+            arr = _as_uint8(arr, dmin, dmax)
         elif dtype is 'uint16':
-            arr = as_uint16(arr, dmin, dmax)
+            arr = _as_uint16(arr, dmin, dmax)
         elif dtype is 'float32':
-            arr = as_float32(arr)
+            arr = _as_float32(arr)
 
         # Save as tiff
         with warnings.catch_warnings():
