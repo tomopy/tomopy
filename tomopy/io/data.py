@@ -724,7 +724,8 @@ class _Format():
 
         Parameters
         ----------
-
+        arr : ndarray
+            Input array to be sliced.
         dim1, dim2, dim3 : slice, optional
             Slice object representing the set of indices along the
             1st, 2nd and 3rd dimensions respectively.
