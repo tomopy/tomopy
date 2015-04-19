@@ -85,16 +85,14 @@ osem(
 
     for (i=0; i<num_iter; i++) 
     {
-        printf("OSEM iteration : %i\n", i+1);
-
-        subset_ind1 = dx/num_block;
-        subset_ind2 = subset_ind1;
-
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice
         for (s=0; s<dy; s++) 
         {
+            subset_ind1 = dx/num_block;
+            subset_ind2 = subset_ind1;
+            
             // For each ordered-subset num_subset
             for (os=0; os<num_block+1; os++) 
             {
