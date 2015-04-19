@@ -111,7 +111,6 @@ def test_write_hdf5():
     f = h5py.File(fname + '.h5', "r")
     assert_equals(f['/exchange/data'][:].shape, (3, 3, 3))
     assert_equals(f['/exchange/data'][:].dtype, 'float32')
-
     shutil.rmtree(dest)
 
 
@@ -141,7 +140,6 @@ def test_write_tiff_stack():
     assert_equals(os.path.isfile(fname + '_00007.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00008.tiff'), True)
     shutil.rmtree(dest)
-
     write_tiff_stack(arr, fname=fname, axis=2)
     shutil.rmtree(dest)
 
