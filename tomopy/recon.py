@@ -56,6 +56,8 @@ from tomopy.io.data import _as_uint8, _as_uint16, _as_float32
 from skimage import io as sio
 import warnings
 import numpy as np
+from scipy.optimize import minimize
+from scipy import ndimage
 import ctypes
 import os
 import shutil
@@ -79,6 +81,7 @@ __all__ = [
     'pml_hybrid',
     'pml_quad',
     'sirt',
+    'find_center',
     'write_center']
 
 
@@ -155,7 +158,7 @@ def simulate(obj, theta, center=None):
 
 
 def gridrec(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         num_gridx=None, num_gridy=None, filter_name='shepp'):
     """
     Reconstruct object from projection data using gridrec algorithm
@@ -197,6 +200,8 @@ def gridrec(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
@@ -234,7 +239,7 @@ def gridrec(
 
 
 def art(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using algebraic reconstruction
@@ -271,6 +276,8 @@ def art(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
@@ -307,7 +314,7 @@ def art(
 
 
 def bart(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
@@ -349,6 +356,8 @@ def bart(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if ind_block is None:
@@ -393,7 +402,7 @@ def bart(
 
 
 def fbp(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None):
     """
     Reconstruct object from projection data using filtered back
@@ -428,6 +437,8 @@ def fbp(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
@@ -461,7 +472,7 @@ def fbp(
 
 
 def mlem(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using maximum-likelihood
@@ -498,6 +509,8 @@ def mlem(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
@@ -534,7 +547,7 @@ def mlem(
 
 
 def osem(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         num_block=1, ind_block=None):
     """
@@ -576,6 +589,8 @@ def osem(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if ind_block is None:
@@ -620,7 +635,7 @@ def osem(
 
 
 def ospml_hybrid(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
@@ -665,6 +680,8 @@ def ospml_hybrid(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if reg_par is None:
@@ -714,7 +731,7 @@ def ospml_hybrid(
 
 
 def ospml_quad(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None, num_block=1, ind_block=None):
     """
@@ -758,6 +775,8 @@ def ospml_quad(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if reg_par is None:
@@ -807,7 +826,7 @@ def ospml_quad(
 
 
 def pml_hybrid(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
@@ -852,6 +871,8 @@ def pml_hybrid(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if reg_par is None:
@@ -893,7 +914,7 @@ def pml_hybrid(
 
 
 def pml_quad(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
         reg_par=None):
     """
@@ -934,6 +955,8 @@ def pml_quad(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if reg_par is None:
@@ -975,7 +998,7 @@ def pml_quad(
 
 
 def sirt(
-        tomo, theta, center=None, emission=False,
+        tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1):
     """
     Reconstruct object from projection data using simultaneous
@@ -1012,6 +1035,8 @@ def sirt(
         num_gridx = dz
     if num_gridy is None:
         num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
@@ -1049,7 +1074,7 @@ def sirt(
 
 def write_center(
         tomo, theta, dpath='tmp/center', center=None, ind=None,
-        emission=False, mask=None, ratio=1.,
+        emission=True, mask=True, ratio=1.,
         dtype='float32', dmin=None, dmax=None):
     """
     Save images reconstructed with a range of rotation centers.
@@ -1125,3 +1150,97 @@ def write_center(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 sio.imsave(fname, arr, plugin='tifffile')
+
+
+def find_center(
+        tomo, theta, ind=None, emission=True, init=None,
+        tol=0.5, mask=True, ratio=1.):
+    """
+    Find rotation axis location.
+
+    The function exploits systematic artifacts in reconstructed images
+    due to shifts in the rotation center. It uses image entropy
+    as the error metric and ''Nelder-Mead'' routine (of the scipy
+    optimization module) as the optimizer :cite:`Donath:06`.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    ind : int, optional
+        Index of the slice to be used for reconstruction.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    init : float
+        Initial guess for the center.
+    tol : scalar
+        Desired sub-pixel accuracy.
+    mask : bool, optional
+        If ``True``, apply a circular mask to the reconstructed image to
+        limit the analysis into a circular region.
+    ratio : float, optional
+        The ratio of the radius of the circular mask to the edge of the
+        reconstructed image.
+
+    Returns
+    -------
+    float
+        Rotation axis location.
+    """
+    dx, dy, dz = tomo.shape
+    if ind is None:
+        ind = dy / 2
+    if init is None:
+        init = dz / 2
+
+    # Make an initial reconstruction to adjust histogram limits.
+    rec = gridrec(tomo[:, ind - 1:ind, :], theta, emission=emission)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = tomo.shape[2] / 2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        rec[0, msk] = 0
+
+    # Adjust histogram boundaries according to reconstruction.
+    hmin = np.min(rec)
+    if hmin < 0:
+        hmin = 2 * hmin
+    elif hmin >= 0:
+        hmin = 0.5 * hmin
+    hmax = np.max(rec)
+    if hmax < 0:
+        hmax = 0.5 * hmax
+    elif hmax >= 0:
+        hmax = 2 * hmax
+
+    # Magic is ready to happen...
+    res = minimize(
+        _find_center_cost, init,
+        args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
+        method='Nelder-Mead',
+        tol=tol)
+    return res.x
+
+
+def _find_center_cost(
+        center, tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission):
+    """
+    Cost function used for the ``find_center`` routine.
+    """
+    center = np.array(center, dtype='float32')
+    rec = gridrec(tomo[:, ind - 1:ind, :], theta, center, emission)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = tomo.shape[2] / 2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        rec[0, msk] = 0
+
+    hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
+    hist = hist.astype('float32') / rec.size + 1e-12
+    return -np.dot(hist, np.log2(hist))
