@@ -46,13 +46,104 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for multiprocessing tasks.
+"""
+
 from __future__ import absolute_import, division, print_function
 
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.prep import *
-from tomopy.recon import *
+import numpy as np
+import multiprocessing as mp
+import ctypes
+from contextlib import closing
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['distribute_jobs']
+
+
+def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
+    """
+    Distribute N-dimensional shared-memory data in chunks into cores.
+
+    Parameters
+    ----------
+    func : func
+        Function to be parallelized.
+    args : list
+        Arguments of the function in a list.
+    axis : int
+        Axis along which parallelization is performed.
+    ncore : int, optional
+        Number of available cores that will be assigned to jobs.
+    nchunk : int, optional
+        Number of data chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Output data.
+    """
+    # Arrange number of processors.
+    if ncore is None:
+        ncore = mp.cpu_count()
+    dims = data.shape[axis]
+
+    # Maximum number of available processors for the task.
+    if dims < ncore:
+        ncore = dims
+
+    # Arrange chunk size.
+    if nchunk is None:
+        nchunk = (dims - 1) // ncore + 1
+
+    # Determine pool size.
+    npool = dims // nchunk + 1
+
+    # Populate arguments for workers.
+    arg = []
+    for m in range(npool):
+        ind_start = m * nchunk
+        ind_end = (m + 1) * nchunk
+        if ind_start >= dims:
+            npool -= 1
+            break
+        if ind_end > dims:
+            ind_end = dims
+
+        arr = []
+        arr.append(func)
+        arr.append("SHARED")
+        for a in args:
+            arr.append(a)
+        arr.append(range(ind_start, ind_end))
+        arg.append(arr)
+
+    shared_data = mp.Array(ctypes.c_float, data.size)
+    shared_data = _to_numpy_array(shared_data, data.shape)
+    shared_data[:] = data
+
+    # write to arr from different processes
+    with closing(mp.Pool(
+            initializer=_init_shared, initargs=(shared_data,))) as p:
+        p.map_async(_arg_parser, arg)
+    p.join()
+    p.close()
+    return shared_data
+
+
+def _arg_parser(args):
+    func = args[0]
+    func(*args[1::])
+
+
+def _init_shared(shared_data_):
+    global shared_data
+    shared_data = shared_data_
+
+
+def _to_numpy_array(mp_arr, dshape):
+    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
+    return np.reshape(a, dshape)
