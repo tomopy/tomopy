@@ -137,7 +137,7 @@ def test_write_tiff_stack():
     assert_equals(os.path.isfile(fname + '_00000.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00001.tiff'), True)
     shutil.rmtree(dest)
-    write_tiff_stack(arr, fname=fname, axis=2, id=6, dtype='float32')
+    write_tiff_stack(arr, fname=fname, axis=2, ind=6, dtype='float32')
     assert_equals(os.path.isfile(fname + '_00006.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00007.tiff'), True)
     assert_equals(os.path.isfile(fname + '_00008.tiff'), True)
