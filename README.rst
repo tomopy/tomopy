@@ -25,7 +25,3 @@ processing and image reconstruction tasks at the
 
 Project homepage: 
 `http://tomopy.readthedocs.org <http://tomopy.readthedocs.org>`_
-
-.. Warning:: This is still in beta stage. Returning users can use 
-   `legacy branch <https://github.com/tomopy/tomopy/tree/legacy>`_ 
-   for the previous version.
