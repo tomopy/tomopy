@@ -1,16 +1,27 @@
 About TomoPy
 ############
 
-TomoPy is a Python toolbox to perform tomographic data processing and image reconstruction 
-tasks at the Advanced Photon Source (http://www.aps.anl.gov).
+.. image:: https://readthedocs.org/projects/tomopy/badge/?version=latest
+   :target: https://readthedocs.org/projects/tomopy/?badge=latest
 
-:home: http://tomopy.github.io/tomopy
-:git:  https://github.com/tomopy/tomopy
+.. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
+   :target: https://travis-ci.org/dgursoy/tomopy
 
-=============
-Citing TomoPy
-=============
+.. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
+   :target: https://coveralls.io/r/dgursoy/tomopy?branch=master
 
-We request that you cite the following paper in any published work that use TomoPy.
+.. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
+   :target: https://binstar.org/dgursoy/tomopy
 
-- Gursoy D, De Carlo F, Xiao X and Jacobsen, C. (2014). **J. Synchrotron Rad.** 21, doi:10.1107/S1600577514013939
+.. image:: https://binstar.org/dgursoy/tomopy/badges/installer/conda.svg   
+   :target: https://conda.binstar.org/dgursoy
+
+.. image:: https://binstar.org/dgursoy/tomopy/badges/build.svg   
+   :target: https://binstar.org/dgursoy/tomopy/builds
+
+TomoPy is an open-sourced Python toolbox to perform tomographic data 
+processing and image reconstruction tasks at the 
+`Advanced Photon Source <http://www.aps.anl.gov>`_.
+
+Project homepage: 
+`http://tomopy.readthedocs.org <http://tomopy.readthedocs.org>`_

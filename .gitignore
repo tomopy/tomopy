@@ -45,6 +45,7 @@ __pycache__
 
 # OS generated files #
 ######################
+core
 .DS_Store
 .DS_Store?
 ._*
@@ -60,7 +61,7 @@ Thumbs.db
 *.pyc
 build
 dist
-docs/build
+doc/_build
 *egg-info
 .settings
 pip-log.txt
@@ -74,6 +75,8 @@ pip-log.txt
 
 # Test files #
 ##############
+tmp
+demo.*
 test.py
 main.py
 

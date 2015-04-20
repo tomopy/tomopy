@@ -48,11 +48,51 @@
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.morph import *
 from tomopy.misc.mproc import *
-from tomopy.prep import *
-from tomopy.recon import *
+import tomopy.misc.mproc as mp
+import numpy as np
+from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45., 53.],
+          [24., 53., 12., 89., 12.],
+          [14., 52., 25., 52., 41.],
+          [24., 64., 12., 89., 15.]],
+         [[25., 74., 63., 98., 43.],
+          [63., 27., 43., 68., 15.],
+          [24., 64., 12., 99., 35.],
+          [12., 53., 74., 13., 41.]],
+         [[13., 65., 33., 12., 39.],
+          [71., 33., 87., 16., 78.],
+          [42., 97., 77., 11., 41.],
+          [90., 12., 32., 63., 14.]]], dtype='float32')
+    return data
+
+
+def synthetic_func(a, val, ind):
+    a = mp.shared_data
+    for m in ind:
+        a[m, :, :] = val
+
+
+def test_distribute_jobs():
+    out = distribute_jobs(synthetic_data(), synthetic_func, axis=0, args=[1.])
+    assert_equals(out.shape, (3, 4, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+    assert_array_almost_equal(out, np.ones((3, 4, 5)))
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
