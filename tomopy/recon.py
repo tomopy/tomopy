@@ -106,7 +106,7 @@ def simulate(obj, theta, center=None):
         Voxelized 3D object.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
 
     Returns
@@ -121,7 +121,9 @@ def simulate(obj, theta, center=None):
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
     tomo = np.zeros((dx, dy, dz), dtype='float32')
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
 
     # Make sure that inputs datatypes are correct.
     if not isinstance(obj, np.float32):
@@ -143,7 +145,7 @@ def simulate(obj, theta, center=None):
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p))
     return tomo
 
@@ -162,7 +164,7 @@ def gridrec(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
@@ -184,7 +186,9 @@ def gridrec(
 
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -212,7 +216,7 @@ def gridrec(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -238,7 +242,7 @@ def art(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -256,7 +260,9 @@ def art(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -287,7 +293,7 @@ def art(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -310,7 +316,7 @@ def bart(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -332,7 +338,9 @@ def bart(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -369,7 +377,7 @@ def bart(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -393,7 +401,7 @@ def fbp(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -409,7 +417,9 @@ def fbp(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -438,7 +448,7 @@ def fbp(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -459,7 +469,7 @@ def mlem(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -477,7 +487,9 @@ def mlem(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -508,7 +520,7 @@ def mlem(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -531,7 +543,7 @@ def osem(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -553,7 +565,9 @@ def osem(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -590,7 +604,7 @@ def osem(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -616,7 +630,7 @@ def ospml_hybrid(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -640,7 +654,9 @@ def ospml_hybrid(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -681,7 +697,7 @@ def ospml_hybrid(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -707,7 +723,7 @@ def ospml_quad(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -731,7 +747,9 @@ def ospml_quad(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -772,7 +790,7 @@ def ospml_quad(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -799,7 +817,7 @@ def pml_hybrid(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -823,7 +841,9 @@ def pml_hybrid(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -858,7 +878,7 @@ def pml_hybrid(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -883,7 +903,7 @@ def pml_quad(
 
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -903,7 +923,9 @@ def pml_quad(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -938,7 +960,7 @@ def pml_quad(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
@@ -961,7 +983,7 @@ def sirt(
         3D tomographic data.
     theta : array
         Projection angles in radian.
-    center : float, optional
+    center: array, optional
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
@@ -979,7 +1001,9 @@ def sirt(
     """
     dx, dy, dz = tomo.shape
     if center is None:
-        center = dz / 2.
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
     if num_gridx is None:
         num_gridx = dz
     if num_gridy is None:
@@ -1010,7 +1034,7 @@ def sirt(
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
-        ctypes.c_float(center),
+        center.ctypes.data_as(c_float_p),
         theta.ctypes.data_as(c_float_p),
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),

@@ -47,7 +47,7 @@
 void 
 simulate(
     float *obj, int ox, int oy, int oz, 
-    float *data, int dx, int dy, int dz, float center, float* theta)
+    float *data, int dx, int dy, int dz, float *center, float *theta)
 {
 
     float *gridx = (float *)malloc((oy+1)*sizeof(float));
@@ -73,12 +73,12 @@ simulate(
     float mov, xi, yi;
     int asize, bsize, csize;
 
-    preprocessing(oy, oz, dz, center, 
-        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
     // For each slice
     for (s=0; s<dy; s++) 
     {
+        preprocessing(oy, oz, dz, center[s], 
+            &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+
         // For each projection angle
         for (p=0; p<dx; p++) 
         {

@@ -46,7 +46,7 @@
 
 void 
 art(
-    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *data, int dx, int dy, int dz, float *center, float *theta,
     float *recon, int ngridx, int ngridy, int num_iter)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
@@ -75,10 +75,6 @@ art(
     float upd;
     int ind_data, ind_recon;
 
-
-    preprocessing(ngridx, ngridy, dz, center, 
-        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
     for (i=0; i<num_iter; i++) 
     {
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
@@ -86,6 +82,9 @@ art(
         // For each slice
         for (s=0; s<dy; s++) 
         {
+            preprocessing(ngridx, ngridy, dz, center[s], 
+                &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+
             // For each projection angle 
             for (p=0; p<dx; p++) 
             {
