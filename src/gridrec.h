@@ -78,7 +78,7 @@ void
 gridrec(
     float *data,
     int dx, int dy, int dz,
-    float center,
+    float *center,
     float *theta,
     float *recon,
     int ngridx, int ngridy,

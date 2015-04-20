@@ -46,7 +46,7 @@
 
 void 
 ospml_quad(
-    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *data, int dx, int dy, int dz, float *center, float *theta,
     float *recon, int ngridx, int ngridy, int num_iter, float *reg_pars, 
     int num_block, float *ind_block)
 {
@@ -82,9 +82,6 @@ ospml_quad(
     float totalwg, wg[8], mg[8];
     int subset_ind1, subset_ind2;
 
-    preprocessing(ngridx, ngridy, dz, center, 
-        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
     for (i=0; i<num_iter; i++) 
     {
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
@@ -92,6 +89,9 @@ ospml_quad(
         // For each slice
         for (s=0; s<dy; s++) 
         {
+            preprocessing(ngridx, ngridy, dz, center[s], 
+                &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+            
             subset_ind1 = dx/num_block;
             subset_ind2 = subset_ind1;
 
