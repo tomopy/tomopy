@@ -50,6 +50,8 @@ from __future__ import absolute_import, division, print_function
 
 from tomopy.recon import *
 import numpy as np
+import os
+import shutil
 from nose.tools import assert_equals
 
 
@@ -148,6 +150,16 @@ def test_sirt():
     out = sirt(synthetic_data(), theta=(0., 1.))
     assert_equals(out.shape, (4, 5, 5))
     assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_write_center():
+    dpath = os.path.join('test', 'tmp')
+    write_center(synthetic_data(), [0., 1.], dpath, center=[3, 5, 0.5])
+    assert_equals(os.path.isfile(os.path.join(dpath, '3.00.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '3.50.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '4.00.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '4.50.tiff')), True)
+    shutil.rmtree(dpath)
 
 
 if __name__ == '__main__':

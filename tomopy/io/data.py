@@ -70,7 +70,10 @@ import warnings
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['remove_neg',
+__all__ = ['_as_float32',
+           '_as_uint8',
+           '_as_uint16',
+           'remove_neg',
            'remove_nan',
            'read_hdf5',
            'read_edf',
@@ -109,10 +112,8 @@ def _as_uint8(arr, dmin=None, dmax=None):
     ----------
     arr : ndarray
         Input array.
-    dmin : float, optional
-        Mininum value to adjust float-to-int conversion range.
-    dmax : float, optional
-        Maximum value to adjust float-to-int conversion range.
+    dmin, dmax : float, optional
+        Mininum and maximum values to adjust float-to-int conversion range.
 
     Returns
     -------
@@ -144,10 +145,8 @@ def _as_uint16(arr, dmin=None, dmax=None):
     ----------
     arr : ndarray
         Input array.
-    dmin : float, optional
-        Mininum value to adjust float-to-int conversion range.
-    dmax : float, optional
-        Maximum value to adjust float-to-int conversion range.
+    dmin, dmax : float, optional
+        Mininum and maximum values to adjust float-to-int conversion range.
 
     Returns
     -------
@@ -454,7 +453,7 @@ def write_hdf5(data, fname, gname="exchange", overwrite=False):
 
 
 def write_tiff_stack(
-        data, fname, axis=0, id=0,
+        data, fname, axis=0, ind=0,
         digit=5, overwrite=False,
         dtype='uint8', dmin=None, dmax=None):
     """
@@ -468,7 +467,7 @@ def write_tiff_stack(
         Path of output file without extension.
     axis : int, optional
         Axis along which saving is performed.
-    id : int, optional
+    ind : int, optional
         First index of file for saving.
     digit : int, optional
         Number of digits in indexing tiff images.
@@ -503,14 +502,14 @@ def write_tiff_stack(
     # Select desired x from whole data.
     nx, ny, nz = data.shape
     if axis == 0:
-        end_id = id + nx
+        end_id = ind + nx
     elif axis == 1:
-        end_id = id + ny
+        end_id = ind + ny
     elif axis == 2:
-        end_id = id + nz
+        end_id = ind + nz
 
     # Range of indices for stacking tiffs
-    ind = range(id, end_id)
+    ind = range(ind, end_id)
     for m in range(len(ind)):
         string = _add_index_to_string(fname, ind[m], digit)
         new_fname = string + ext
