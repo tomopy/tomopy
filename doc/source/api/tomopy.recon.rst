@@ -23,5 +23,6 @@
       pml_quad
       simulate
       sirt
+      write_center
 
    .. rubric:: **Functions:**

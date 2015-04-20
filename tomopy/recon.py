@@ -52,10 +52,13 @@ Module for reconstruction tasks.
 
 from __future__ import absolute_import, division, print_function
 
+from tomopy.io.data import _as_uint8, _as_uint16, _as_float32
+from skimage import io as sio
 import warnings
 import numpy as np
 import ctypes
 import os
+import shutil
 import logging
 logger = logging.getLogger(__name__)
 
@@ -75,7 +78,8 @@ __all__ = [
     'ospml_quad',
     'pml_hybrid',
     'pml_quad',
-    'sirt']
+    'sirt',
+    'write_center']
 
 
 def _import_shared_lib(lib_name):
@@ -151,9 +155,8 @@ def simulate(obj, theta, center=None):
 
 
 def gridrec(
-        tomo, theta, center=None,
-        num_gridx=None, num_gridy=None,
-        filter_name='shepp'):
+        tomo, theta, center=None, emission=False,
+        num_gridx=None, num_gridy=None, filter_name='shepp'):
     """
     Reconstruct object from projection data using gridrec algorithm
     :cite:`Dowd:99`.
@@ -166,9 +169,10 @@ def gridrec(
         Projection angles in radian.
     center: array, optional
         Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
-
     filter_name : str, optional
         Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
         or 'none'.
@@ -1041,3 +1045,83 @@ def sirt(
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter))
     return recon
+
+
+def write_center(
+        tomo, theta, dpath='tmp/center', center=None, ind=None,
+        emission=False, mask=None, ratio=1.,
+        dtype='float32', dmin=None, dmax=None):
+    """
+    Save images reconstructed with a range of rotation centers.
+
+    Helps finding the rotation center manually by visual inspection of
+    images reconstructed with a set of different centers.The output
+    images are put into a specified folder and are named by the
+    center position corresponding to the image.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    dpath : str, optional
+        Folder name to save output images.
+    center : list, optional
+        [start, end, step] Range of center values.
+    ind : int, optional
+        Index of the slice to be used for reconstruction.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    mask : bool, optional
+        If ``True``, apply a circular mask to the reconstructed image to
+        limit the analysis into a circular region.
+    ratio : float, optional
+        The ratio of the radius of the circular mask to the edge of the
+        reconstructed image.
+    dtype : bool, optional
+        The desired data-type for saved images.
+    dmin, dmax : float, optional
+        Mininum and maximum values to adjust float-to-int conversion range.
+    """
+    dx, dy, dz = tomo.shape
+    if ind is None:
+        ind = dy / 2
+    if center is None:
+        center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
+    else:
+        center = np.arange(center[0], center[1], center[2] / 2.)
+    stack = np.zeros((dx, len(center), dz))
+    for m in range(len(center)):
+        stack[:, m, :] = tomo[:, ind, :]
+
+    # Reconstruct the same slice with a range of centers.
+    rec = gridrec(stack, theta, center, emission)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = dz / 2.
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        for m in range(center.size):
+            rec[m, msk] = 0
+
+    # Save images to a temporary folder.
+    if os.path.isdir(dpath):
+        shutil.rmtree(dpath)
+    os.makedirs(dpath)
+    for m in range(len(center)):
+        if m % 2 == 0:  # 2 slices same bec of gridrec.
+            fname = os.path.join(dpath, str('%.02f' % center[m]) + '.tiff')
+            arr = rec[m, :, :]
+
+            if dtype is 'uint8':
+                arr = _as_uint8(arr, dmin, dmax)
+            elif dtype is 'uint16':
+                arr = _as_uint16(arr, dmin, dmax)
+            elif dtype is 'float32':
+                arr = _as_float32(arr)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                sio.imsave(fname, arr, plugin='tifffile')
