@@ -46,7 +46,7 @@
 
 void 
 fbp(
-    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *data, int dx, int dy, int dz, float *center, float *theta,
     float *recon, int ngridx, int ngridy)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
@@ -74,15 +74,14 @@ fbp(
     float* simdata;
     int ind_data, ind_recon;
 
-
-    preprocessing(ngridx, ngridy, dz, center, 
-        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
     simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
     // For each slice
     for (s=0; s<dy; s++) 
     {
+        preprocessing(ngridx, ngridy, dz, center[s], 
+            &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+            
         // For each projection angle 
         for (p=0; p<dx; p++) 
         {
