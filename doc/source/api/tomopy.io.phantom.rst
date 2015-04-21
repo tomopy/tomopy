@@ -6,10 +6,9 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       baboon
       barbara
@@ -20,5 +19,3 @@
       phantom
       shepp2d
       shepp3d
-
-   .. rubric:: **Functions:**
