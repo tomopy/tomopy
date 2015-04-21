@@ -73,6 +73,7 @@ __all__ = ['read_als_832',
            'read_aps_32id',
            'read_aus_microct',
            'read_diamond_l12',
+           'read_elettra_syrmep',
            'read_petra3_p05',
            'read_sls_tomcat']
 
@@ -394,6 +395,39 @@ def read_diamond_l12(fname, ind_tomo):
     tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=6)
     flat = dio.Reader(flat_name).tiff(stack=True, ind=range(0, 1), digit=6)
     return tomo, flat
+
+
+def read_elettra_syrmep(fname, ind_tomo):
+    """
+    Read Elettra SYRMEP standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to data folder.
+
+    ind_tomo : list of int
+        Indices of the projection files to read.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    fname = os.path.abspath(fname)
+    tomo_name = os.path.join(fname, 'tomo_')
+    flat_name = os.path.join(fname, 'flat_')
+    dark_name = os.path.join(fname, 'dark_')
+    tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
+    flat = dio.Reader(flat_name).tiff(stack=True, ind=range(1, 11), digit=4)
+    dark = dio.Reader(dark_name).tiff(stack=True, ind=range(1, 11), digit=4)
+    return tomo, flat, dark
 
 
 def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):

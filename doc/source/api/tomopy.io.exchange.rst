@@ -19,5 +19,6 @@
       read_aps_7bm
       read_aus_microct
       read_diamond_l12
+      read_elettra_syrmep
       read_petra3_p05
       read_sls_tomcat
