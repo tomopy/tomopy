@@ -6,10 +6,9 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       circular_roi
       correct_air
@@ -18,5 +17,5 @@
       remove_stripe
       remove_zinger
       retrieve_phase
-
-   .. rubric:: **Functions:**
+      remove_nan
+      remove_neg

@@ -47,8 +47,7 @@
 
 void 
 gridrec(
-    float *data, int dx, int dy, int dz, 
-    float center, float* theta, 
+    float *data, int dx, int dy, int dz, float *center, float *theta, 
     float *recon, int ngridx, int ngridy, char *fname)
 {
     int s, p, iu, iv;
@@ -96,10 +95,7 @@ gridrec(
     work = malloc_vector_f(L+1);
 
     // Set up table of sines and cosines.
-    set_trig_tables(dx, theta, &sine, &cose);
-
-    // Set up table of combined filter-phase factors.
-    set_filter_tables(dx, pdim, center, filter, filphase);           
+    set_trig_tables(dx, theta, &sine, &cose);    
 
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
@@ -107,6 +103,9 @@ gridrec(
     // For each slice.
     for(s=0; s<dy-1; s+=2)
     {
+        // Set up table of combined filter-phase factors.
+        set_filter_tables(dx, pdim, center[s], filter, filphase);
+
         // First clear the array H
         for(iu=0; iu<pdim; iu++) 
         {
@@ -319,8 +318,8 @@ gridrec(
     free(sine);
     free(cose);
     free(sino);
-    free(filphase);
     free(wtbl);
+    free(filphase);
     free(winv);
     free(work);
     free_matrix(H);
@@ -337,7 +336,7 @@ set_filter_tables(
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
     // (*pf)()], multiplying a complex phase factor (derived from the
-    // parameter, center}.  See Phase 1 comments in do_recon(), above.
+    // parameter, center}.  See Phase 1 comments.
 
     int j, pd2 = pd >> 1;
     float x, rtmp1 = 2*PI*center/pd, rtmp2;

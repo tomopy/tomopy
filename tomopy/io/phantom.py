@@ -72,7 +72,8 @@ __all__ = ['baboon',
            'phantom']
 
 
-DATA_PATH = os.path.join('tomopy', 'data')
+DATA_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 
 def baboon(dtype='float32'):

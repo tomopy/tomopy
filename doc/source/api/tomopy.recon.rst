@@ -6,10 +6,9 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       art
       bart
@@ -23,5 +22,5 @@
       pml_quad
       simulate
       sirt
-
-   .. rubric:: **Functions:**
+      find_center
+      write_center

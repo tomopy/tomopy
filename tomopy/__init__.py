@@ -48,6 +48,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+import logging
+logging.basicConfig()
+
 from tomopy.io import *
 from tomopy.io.data import *
 from tomopy.io.exchange import *

@@ -6,19 +6,31 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Reader class:**
 
    .. autosummary::
-      :nosignatures:
 
-      read_edf
-      read_hdf5
-      read_spe
-      read_netcdf4
-      read_stack
-      remove_nan
-      remove_neg
-      write_hdf5
-      write_tiff_stack
+      Reader
 
-   .. rubric:: **Functions:**
+   .. rubric:: *Methods:*
+
+   .. autosummary::
+
+      Reader.edf
+      Reader.hdf5
+      Reader.netcdf4
+      Reader.spe
+      Reader.tiff
+
+   .. rubric:: **Writer class:**
+
+   .. autosummary::
+
+      Writer
+
+   .. rubric:: *Methods:*
+
+   .. autosummary::
+
+      Writer.hdf5
+      Writer.tiff
