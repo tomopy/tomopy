@@ -6,12 +6,9 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       apply_pad
       focus_region
-
-   .. rubric:: **Functions:**

@@ -6,10 +6,9 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       read_als_832
       read_anka_tomotopo
@@ -22,5 +21,3 @@
       read_diamond_l12
       read_petra3_p05
       read_sls_tomcat
-
-   .. rubric:: **Functions:**

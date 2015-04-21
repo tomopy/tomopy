@@ -71,7 +71,9 @@ __all__ = ['normalize',
            'remove_zinger',
            'median_filter',
            'circular_roi',
-           'correct_air']
+           'correct_air',
+           'remove_nan',
+           'remove_neg']
 
 
 BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
@@ -523,3 +525,43 @@ def correct_air(tomo, air=10):
         ctypes.c_int(dx), ctypes.c_int(dy),
         ctypes.c_int(dz), ctypes.c_int(air))
     return tomo
+
+
+def remove_neg(data, val=0.):
+    """
+    Replace negative values in data with a given value.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    val : float, optional
+        Values to be replaced with negative values in data.
+
+    Returns
+    -------
+    ndarray
+       Corrected data.
+    """
+    data[data < 0.0] = val
+    return data
+
+
+def remove_nan(data, val=0.):
+    """
+    Replace NaN values in data with a given value.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    val : float, optional
+        Values to be replaced with NaN values in data.
+
+    Returns
+    -------
+    ndarray
+       Corrected data.
+    """
+    data[np.isnan(data)] = val
+    return data

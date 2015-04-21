@@ -204,6 +204,17 @@ def test_correct_air():
     assert_equals(np.isnan(out).sum(), 0)
 
 
+def test_remove_neg():
+    arr = np.arange(-2, 2, dtype='float32')
+    out = remove_neg(arr)
+    assert_equals(out[out < 0].size, 0)
+
+
+def test_remove_nan():
+    arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
+    out = remove_nan(arr)
+    assert_equals(np.isnan(out).sum(), 0)
+
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)
