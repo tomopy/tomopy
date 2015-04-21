@@ -61,8 +61,6 @@ import h5py
 import spefile
 import netCDF4
 import EdfFile
-# import DM3lib # TODO: build fails
-# import tifffile # TODO: rewrite conda recipe
 import logging
 import warnings
 
@@ -70,615 +68,33 @@ import warnings
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['remove_neg',
-           'remove_nan',
-           'read_hdf5',
-           'read_edf',
-           # 'read_dm3',
-           'read_spe',
-           'read_netcdf4',
-           'read_stack',
-           'write_hdf5',
-           'write_tiff_stack']
+__all__ = ['Reader', 'Writer']
 
 
-def _as_float32(arr):
-    """
-    Convert a numpy array to float32.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-
-    Returns
-    -------
-    ndarray
-        Output array.
-    """
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
-    return arr
-
-
-def _as_uint8(arr, dmin=None, dmax=None):
-    """
-    Convert a numpy array to uint8.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    dmin : float, optional
-        Mininum value to adjust float-to-int conversion range.
-    dmax : float, optional
-        Maximum value to adjust float-to-int conversion range.
-
-    Returns
-    -------
-    ndarray
-        Output array.
-    """
-    if not isinstance(arr, np.int8):
-        arr = arr.copy()
-        if dmax is None:
-            dmax = np.max(arr)
-        if dmin is None:
-            dmin = np.min(arr)
-        if dmax < np.max(arr):
-            arr[arr > dmax] = dmax
-        if dmin > np.min(arr):
-            arr[arr < dmin] = dmin
-        if dmax == dmin:
-            arr = arr.astype('uint8')
-        else:
-            arr = ((arr * 1.0 - dmin) / (dmax - dmin) * 255).astype('uint8')
-    return arr
-
-
-def _as_uint16(arr, dmin=None, dmax=None):
-    """
-    Convert a numpy array to uint16.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    dmin : float, optional
-        Mininum value to adjust float-to-int conversion range.
-    dmax : float, optional
-        Maximum value to adjust float-to-int conversion range.
-
-    Returns
-    -------
-    ndarray
-        Output array.
-    """
-    if not isinstance(arr, np.int16):
-        arr = arr.copy()
-        if dmax is None:
-            dmax = np.max(arr)
-        if dmin is None:
-            dmin = np.min(arr)
-        if dmax < np.max(arr):
-            arr[arr > dmax] = dmax
-        if dmin > np.min(arr):
-            arr[arr < dmin] = dmin
-        if dmax == dmin:
-            arr = arr.astype('uint16')
-        else:
-            arr = ((arr * 1.0 - dmin) / (dmax - dmin) * 65535).astype('uint16')
-    return arr
-
-
-def remove_neg(dat, val=0.):
-    """
-    Replace negative values in data with a given value.
-
-    Parameters
-    ----------
-    dat : ndarray
-        Input data.
-    val : float, optional
-        Values to be replaced with negative values in data.
-
-    Returns
-    -------
-    ndarray
-       Corrected data.
-    """
-    dat = _as_float32(dat)
-    dat[dat < 0.0] = val
-    return dat
-
-
-def remove_nan(dat, val=0.):
-    """
-    Replace NaN values in data with a given value.
-
-    Parameters
-    ----------
-    dat : ndarray
-        Input data.
-    val : float, optional
-        Values to be replaced with NaN values in data.
-
-    Returns
-    -------
-    ndarray
-       Corrected data.
-    """
-    dat = _as_float32(dat)
-    dat[np.isnan(dat)] = val
-    return dat
-
-
-def _add_index_to_string(string, ind, digit):
-    """
-    Add index to a string, usually for image stacking purposes.
-
-    For example if strng is "mydata", ind is 134 and digit is 5,
-    the output string is "mydata-00134".
-
-    Parameters
-    ----------
-    string : str
-        Given string (typically a file name).
-    ind : int
-        A value index to be added at the end of string.
-    digit : int
-        Number of digits in indexing tiff images.
-
-    Returns
-    -------
-    str
-        Indexed string.
-    """
-    # Index for stacking.
-    string_index = ["" for x in range(digit)]
-    for m in range(digit):
-        string_index[m] = '0' * (digit - m - 1)
-
-    # This is to keep the digit size for various numbers.
-    # E.g. 00123 includes 2 zeros and a 3 digit number
-    for n in range(digit):
-        if ind < np.power(10, n + 1):
-            string += '_' + string_index[n] + str(ind)
-            return string
-
-
-def _suggest_new_fname(fname):
-    """
-    Suggest new string with an attached (or increased) value indexing
-    at the end of a given string.
-
-    For example if "myfile.tiff" exist, it will return "myfile-1.tiff".
-
-    Parameters
-    ----------
-    fname : str
-        Given string.
-
-    Returns
-    -------
-    str
-        Indexed new string.
-    """
-    ext = '.' + fname.split(".")[-1]
-    fname = fname.split(".")[-2]
-    indq = 1
-    _flag = False
-    while not _flag:
-        _fname = fname + '-' + str(indq)
-        if not os.path.isfile(_fname + ext):
-            _flag = True
-            fname = _fname
-        else:
-            indq += 1
-    fname += ext
-    return fname
-
-
-def read_stack(bfname, ind, digit, format, ext=None):
-    """
-    Read data from a 2D image stack in a folder.
-
-    Parameters
-    ----------
-    fname : str
-        Path to hdf5 file.
-    ind : list of int
-        Indices of the files to read.
-    digit : int
-        Number of digits used in indexing images.
-    format : str, optional
-        Data format. 'tif', 'tifc'
-    ext : str, optional
-        Extension of the files. 'tif'
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    if ext is None:
-        ext = format
-    d = ['0' * (digit - x - 1) for x in range(digit)]
-    a = 0
-    for m in ind:
-        for n in range(digit):
-            if m < np.power(10, n + 1):
-                fname = bfname + d[n] + str(m) + '.' + ext
-                if format is 'tiff' or format is 'tif':
-                    _arr = _Format(fname).tiff()
-                if format is 'tiffc' or format is 'tifc':
-                    _arr = _Format(fname).tiffc()
-                if a == 0:
-                    dx = len(ind)
-                    dy, dz = _arr.shape
-                    arr = np.zeros((dx, dy, dz))
-                arr[a] = _arr
-                a += 1
-                break
-    return arr
-
-
-def read_edf(fname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from a edf file.
-
-    Parameters
-    ----------
-    fname : str
-        Path to edf file.
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).edf(dim1, dim2, dim3)
-
-
-def read_hdf5(fname, gname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from hdf5 file from a specific group.
-
-    Parameters
-    ----------
-    fname : str
-        Path to hdf5 file.
-    gname : str
-        Path to the group inside hdf5 file where data is located.
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).hdf5(gname, dim1, dim2, dim3)
-
-
-# def read_dm3(fname, gname, dim1=None, dim2=None, dim3=None):
-#     """
-#     Read data from GATAN DM3 (DigitalMicrograph) file.
-
-#     Parameters
-#     ----------
-#     fname : str
-#         Path to hdf5 file.
-#     dim1, dim2, dim3 : slice, optional
-#         Slice object representing the set of indices along the
-#         1st, 2nd and 3rd dimensions respectively.
-
-#     Returns
-#     -------
-#     ndarray
-#         Data.
-#     """
-#     return _Format(fname).dm3(dim1, dim2, dim3)
-
-
-def read_spe(fname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from a spe file.
-
-    Parameters
-    ----------
-    fname : str
-        Path to spe file.
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).spe(dim1, dim2, dim3)
-
-
-def read_netcdf4(fname, dim1=None, dim2=None, dim3=None):
-    """
-    Read data from a netcdf file.
-
-    Parameters
-    ----------
-    fname : str
-        Path to spe file.
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
-
-    Returns
-    -------
-    ndarray
-        Data.
-    """
-    return _Format(fname).netcdf4(dim1, dim2, dim3)
-
-
-def write_hdf5(data, fname, gname="exchange", overwrite=False):
-    """
-    Write data to a hdf5 file in a specific group.
-
-    Parameters
-    ----------
-    data : ndarray
-        Input data.
-    fname : str
-        Path to hdf5 file without extension.
-    gname : str, optional
-        Path to the group inside hdf5 file where data is located.
-    overwrite: bool, optional
-        if True, the existing files in the reconstruction folder will be
-        overwritten with the new ones.
-    """
-    fname += '.h5'
-    if not overwrite:
-        if os.path.isfile(fname):
-            fname = _suggest_new_fname(fname)
-
-    f = h5py.File(fname, 'w')
-    ds = f.create_dataset('implements', data="exchange")
-    exchangeGrp = f.create_group(gname)
-    ds = exchangeGrp.create_dataset('data', data=data)
-    f.close()
-
-
-def write_tiff_stack(
-        data, fname, axis=0, id=0,
-        digit=5, overwrite=False,
-        dtype='uint8', dmin=None, dmax=None):
-    """
-    Write 3D data to a stack of tiff files.
-
-    Parameters
-    ----------
-    data : ndarray
-        Input data as 3D array.
-    fname : str
-        Path of output file without extension.
-    axis : int, optional
-        Axis along which saving is performed.
-    id : int, optional
-        First index of file for saving.
-    digit : int, optional
-        Number of digits in indexing tiff images.
-    overwrite: bool, optional
-        if True, the existing files in the reconstruction folder will be
-        overwritten with the new ones.
-    dtype : str, optional
-        The desired data-type for saved images.
-    dmin : float, optional
-        Minimum value in data for scaling before saving.
-    dmax : float, optional
-        Maximum value in data for scaling before saving.
-    """
-    ext = '.tiff'
-    fname = os.path.abspath(fname)
-    dir_path = os.path.dirname(fname)
-
-    # Find max min of data for scaling before int conversion
-    if dmax is None:
-        dmax = np.max(data)
-    if dmin is None:
-        dmin = np.min(data)
-    if dmax < np.max(data):
-        data[data > dmax] = dmax
-    if dmin > np.min(data):
-        data[data < dmin] = dmin
-
-    # Create new folders.
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    # Select desired x from whole data.
-    nx, ny, nz = data.shape
-    if axis == 0:
-        end_id = id + nx
-    elif axis == 1:
-        end_id = id + ny
-    elif axis == 2:
-        end_id = id + nz
-
-    # Range of indices for stacking tiffs
-    ind = range(id, end_id)
-    for m in range(len(ind)):
-        string = _add_index_to_string(fname, ind[m], digit)
-        new_fname = string + ext
-        if not overwrite:
-            if os.path.isfile(new_fname):
-                new_fname = _suggest_new_fname(new_fname)
-
-        if axis == 0:
-            arr = data[m, :, :]
-        elif axis == 1:
-            arr = data[:, m, :]
-        elif axis == 2:
-            arr = data[:, :, m]
-
-        if dtype is 'uint8':
-            arr = _as_uint8(arr, dmin, dmax)
-        elif dtype is 'uint16':
-            arr = _as_uint16(arr, dmin, dmax)
-        elif dtype is 'float32':
-            arr = _as_float32(arr)
-
-        # Save as tiff
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            sio.imsave(new_fname, arr, plugin='tifffile')
-
-
-class _Format():
+class Reader():
 
     """
-    Helper class for reading data from various data formats.
+    Class for reading data from various data formats.
 
     Attributes
     ----------
     fname : str
         String defining the path or file name.
+    dim1, dim2, dim3 : slice, optional
+        Slice object representing the set of indices along the
+        1st, 2nd and 3rd dimensions respectively.
     """
 
-    def __init__(self, fname):
+    def __init__(self, fname, dim1=None, dim2=None, dim3=None):
         fname = os.path.abspath(fname)
         self.fname = fname
+        self.dim1 = dim1
+        self.dim2 = dim2
+        self.dim3 = dim3
 
-    def hdf5(self, gname, dim1=None, dim2=None, dim3=None):
-        """
-        Read data from hdf5 file from a specific group.
-
-        Parameters
-        ----------
-        gname : str
-            Path to the group inside hdf5 file where data is located.
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
-
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = h5py.File(self.fname, "r")
-        arr = f[gname]
-        arr = self._slice_array(arr, dim1, dim2, dim3)
-        f.close()
-        return arr
-
-    def tiff(self):
-        """
-        Read 2D tiff image.
-
-        Returns
-        -------
-        ndarray
-            Output 2D image.
-        """
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            arr = sio.imread(self.fname, plugin='tifffile')
-        return arr
-
-#     def tiffc(self):
-#         """
-#         Read 2D compressed tiff image.
-
-#         Returns
-#         -------
-#         ndarray
-#             Output 2D image.
-#         """
-#         print(self.fname)
-#         f = tifffile.TiffFile(self.fname)
-#         arr = f[0].asarray()
-#         f.close()
-#         return arr
-
-    def spe(self, dim1=None, dim2=None, dim3=None):
-        """
-        Read data from a spe file.
-
-        Parameters
-        ----------
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
-
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = spefile.PrincetonSPEFile(self.fname)
-        arr = f.getData()
-        arr = self._slice_array(arr, dim1, dim2, dim3)
-        return arr
-
-    # def dm3(self, dim1=None, dim2=None, dim3=None):
-    #     """
-    #     Read data from a dm3 file.
-
-    #     Parameters
-    #     ----------
-    #     dim1, dim2, dim3 : slice, optional
-    #         Slice object representing the set of indices along the
-    #         1st, 2nd and 3rd dimensions respectively.
-
-    #     Returns
-    #     -------
-    #     ndarray
-    #         Data.
-    #     """
-    #     f = DM3lib.DM3(self.fname, dims=3)
-    #     arr = f.imagedata
-    #     arr = self._slice_array(arr, dim1, dim2, dim3)
-    #     return arr
-
-    def netcdf4(self, var, dim1=None, dim2=None, dim3=None):
-        """
-        Read data from a netcdf4 file.
-
-        Parameters
-        ----------
-        var : str
-            Variable name where data is stored.
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
-
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = netCDF4.Dataset(self.fname, 'r')
-        arr = f.variables[var]
-        arr = self._slice_array(arr, dim1, dim2, dim3)
-        f.close()
-        return arr
-
-    def edf(self, dim1=None, dim2=None, dim3=None):
+    def edf(self):
         """
         Read data from a edf file.
-
-        Parameters
-        ----------
-        var : str
-            Variable name where data is stored.
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
 
         Returns
         -------
@@ -690,10 +106,102 @@ class _Format():
         arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
         for (i, ar) in enumerate(arr):
             arr[i::] = f.GetData(i)
-        arr = self._slice_array(arr, dim1, dim2, dim3)
+        arr = self._slice_array(arr)
         return arr
 
-    def _slice_array(self, arr, dim1=None, dim2=None, dim3=None):
+    def hdf5(self, group):
+        """
+        Read data from hdf5 file from a specific group.
+
+        Parameters
+        ----------
+        group : str
+            Path to the group inside hdf5 file where data is located.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = h5py.File(self.fname, "r")
+        arr = f[group]
+        arr = self._slice_array(arr)
+        f.close()
+        return arr
+
+    def netcdf4(self, group):
+        """
+        Read data from netcdf4 file from a specific group.
+
+        Parameters
+        ----------
+        group : str
+            Variable name where data is stored.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = netCDF4.Dataset(self.fname, 'r')
+        arr = f.variables[group]
+        arr = self._slice_array(arr)
+        f.close()
+        return arr
+
+    def spe(self):
+        """
+        Read data from spe file.
+
+        Returns
+        -------
+        ndarray
+            Data.
+        """
+        f = spefile.PrincetonSPEFile(self.fname)
+        arr = f.getData()
+        arr = self._slice_array(arr)
+        return arr
+
+    def tiff(self, stack, ind, digit):
+        """
+        Read data from tiff file.
+
+        Parameters
+        ----------
+        stack : bool
+            If True, write 2D images to a stack of files.
+        ind : list of int
+            Indices of the files to read.
+        digit : int
+            Number of digits in indexing stacked files.
+
+        Returns
+        -------
+        ndarray
+            Output 2D image.
+        """
+        if stack:
+            a = 0
+            for m in ind:
+                fname = self.fname + '{0:0={1}d}'.format(m, digit) + '.tif'
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    _arr = sio.imread(fname, plugin='tifffile')
+                if a == 0:
+                    dx = len(ind)
+                    dy, dz = _arr.shape
+                    arr = np.zeros((dx, dy, dz))
+                arr[a] = _arr
+                a += 1
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                arr = sio.imread(self.fname, plugin='tifffile')
+        arr = self._slice_array(arr)
+        return arr
+
+    def _slice_array(self, arr):
         """
         Perform slicing on ndarray.
 
@@ -701,9 +209,6 @@ class _Format():
         ----------
         arr : ndarray
             Input array to be sliced.
-        dim1, dim2, dim3 : slice, optional
-            Slice object representing the set of indices along the
-            1st, 2nd and 3rd dimensions respectively.
 
         Returns
         -------
@@ -711,23 +216,200 @@ class _Format():
             Sliced array.
         """
         if len(arr.shape) == 1:
-            if dim1 is None:
-                dim1 = slice(0, arr.shape[0])
-            arr = arr[dim1]
+            if self.dim1 is None:
+                self.dim1 = slice(0, arr.shape[0])
+            arr = arr[self.dim1]
         elif len(arr.shape) == 2:
-            if dim1 is None:
-                dim1 = slice(0, arr.shape[0])
-            if dim2 is None:
-                dim2 = slice(0, arr.shape[1])
-            arr = arr[dim1, dim2]
+            if self.dim1 is None:
+                self.dim1 = slice(0, arr.shape[0])
+            if self.dim2 is None:
+                self.dim2 = slice(0, arr.shape[1])
+            arr = arr[self.dim1, self.dim2]
         elif len(arr.shape) == 3:
-            if dim1 is None:
-                dim1 = slice(0, arr.shape[0])
-            if dim2 is None:
-                dim2 = slice(0, arr.shape[1])
-            if dim3 is None:
-                dim3 = slice(0, arr.shape[2])
-            arr = arr[dim1, dim2, dim3]
+            if self.dim1 is None:
+                self.dim1 = slice(0, arr.shape[0])
+            if self.dim2 is None:
+                self.dim2 = slice(0, arr.shape[1])
+            if self.dim3 is None:
+                self.dim3 = slice(0, arr.shape[2])
+            arr = arr[self.dim1, self.dim2, self.dim3]
         else:
             arr = arr[:]
         return arr
+
+
+class Writer():
+
+    """
+    Class for writing data to various data formats.
+
+    Attributes
+    ----------
+    data : ndarray
+        Input data.
+    fname : str
+        Output file name.
+    dtype : str, optional
+        The desired data-type for saved data.
+    dmin, dmax : float, optional
+        Minimum and maximum values in data for scaling before saving.
+    overwrite: bool, optional
+        if True, the existing files in the reconstruction folder will be
+        overwritten with the new ones.
+    """
+
+    def __init__(
+            self, data, fname, dtype='float32',
+            dmin=None, dmax=None, overwrite=False):
+
+        self.fname = os.path.abspath(fname)
+        self.dname = os.path.dirname(fname)
+        self.data = data
+        self.dtype = dtype
+        self.dmax = dmax
+        self.dmin = dmin
+        self.overwrite = overwrite
+
+        self._range(self.dmin, self.dmax)
+        if dtype is 'uint8':
+            self._as_uint8()
+        elif dtype is 'uint16':
+            self._as_uint16()
+        elif dtype is 'float32':
+            self._as_float32()
+
+        if not os.path.exists(self.dname):
+            os.makedirs(self.dname)
+
+        if overwrite is False:
+            if os.path.isfile(self.fname):
+                self._suggest_new_fname(digit=1)
+
+    def hdf5(self, gname="exchange"):
+        """
+        Write data to hdf5 file in a specific group.
+
+        Parameters
+        ----------
+        gname : str, optional
+            Path to the group inside hdf5 file where data will be written.
+        """
+        f = h5py.File(self.fname, 'w')
+        ds = f.create_dataset('implements', data="exchange")
+        exchangeGrp = f.create_group(gname)
+        ds = exchangeGrp.create_dataset('data', data=self.data)
+        f.close()
+
+    def tiff(self, stack=True, axis=0, digit=5, start=0):
+        """
+        Write data to tiff file.
+
+        Parameters
+        ----------
+        stack : bool, optional
+            If True, write 2D images to a stack of files.
+        axis : int, optional
+            Axis along which stacking is performed.
+        start : int, optional
+            First index of file in stack for saving.
+        digit : int, optional
+            Number of digits in indexing stacked files.
+        """
+        if stack:
+            body = self.fname.split(".")[-2]
+            ext = '.' + self.fname.split(".")[-1]
+
+            nx, ny, nz = self.data.shape
+            if axis == 0:
+                end = start + nx
+            elif axis == 1:
+                end = start + ny
+            elif axis == 2:
+                end = start + nz
+
+            for m in range(start, end):
+                self.fname = body + '_' + '{0:0={1}d}'.format(m, digit) + ext
+
+                if self.overwrite is False:
+                    if os.path.isfile(self.fname):
+                        self._suggest_new_fname(digit=1)
+
+                if axis == 0:
+                    arr = self.data[m - start, :, :]
+                elif axis == 1:
+                    arr = self.data[:, m - start, :]
+                elif axis == 2:
+                    arr = self.data[:, :, m - start]
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    sio.imsave(self.fname, arr, plugin='tifffile')
+
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                sio.imsave(self.fname, self.data, plugin='tifffile')
+
+    def _as_float32(self):
+        """
+        Convert array to float32.
+        """
+        if not isinstance(self.data, np.float32):
+            self.data = np.array(self.data, dtype='float32')
+
+    def _as_uint8(self):
+        """
+        Convert array to uint8.
+        """
+        if not isinstance(self.data, np.int8):
+            self.data = np.array(self.data, dtype='float32')
+
+    def _as_uint16(self):
+        """
+        Convert array to uint16.
+        """
+        if not isinstance(self.data, np.int16):
+            self.data = np.array(self.data, dtype='float32')
+
+    def _range(self, dmin=None, dmax=None):
+        """
+        Change dynamic range of values in data.
+
+        Parameters
+        ----------
+        dmin, dmax : float, optional
+            Mininum and maximum values to rescale data.
+        """
+        if dmax is None:
+            dmax = np.max(self.data)
+        if dmin is None:
+            dmin = np.min(self.data)
+        if dmax < np.max(self.data):
+            self.data[self.data > dmax] = dmax
+        if dmin > np.min(self.data):
+            self.data[self.data < dmin] = dmin
+
+    def _suggest_new_fname(self, digit):
+        """
+        Suggest new string with an attached (or increased) value indexing
+        at the end of a given string.
+
+        For example if "myfile.tiff" exist, it will return "myfile-1.tiff".
+
+        Returns
+        -------
+        str
+            Indexed new string.
+        """
+        body = self.fname.split(".")[-2]
+        ext = '.' + self.fname.split(".")[-1]
+        indq = 1
+        _flag = False
+        while not _flag:
+            _body = body + '-' + '{0:0={1}d}'.format(indq, digit)
+            if not os.path.isfile(_body + ext):
+                _flag = True
+                fname = _body
+            else:
+                indq += 1
+        self.fname = fname + ext

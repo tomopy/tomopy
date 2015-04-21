@@ -6,11 +6,8 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Functions summary:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
-      :nosignatures:
    
       distribute_jobs
-
-   .. rubric:: **Functions:**

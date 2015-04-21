@@ -46,7 +46,7 @@
 
 void 
 pml_quad(
-    float *data, int dx, int dy, int dz, float center, float *theta,
+    float *data, int dx, int dy, int dz, float *center, float *theta,
     float *recon, int ngridx, int ngridy, int num_iter, float *reg_pars)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
@@ -80,9 +80,6 @@ pml_quad(
     int ind0, ind1, indg[8];
     float totalwg, wg[8], mg[8];
 
-    preprocessing(ngridx, ngridy, dz, center, 
-        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
     for (i=0; i<num_iter; i++) 
     {
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
@@ -90,6 +87,9 @@ pml_quad(
         // For each slice
         for (s=0; s<dy; s++) 
         {
+            preprocessing(ngridx, ngridy, dz, center[s], 
+                &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+            
             sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             E = (float *)calloc((ngridx*ngridy), sizeof(float));
             F = (float *)calloc((ngridx*ngridy), sizeof(float));
