@@ -52,7 +52,6 @@ Module for reconstruction tasks.
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.io.data import _as_uint8, _as_uint16, _as_float32
 from skimage import io as sio
 import warnings
 import numpy as np
@@ -1074,8 +1073,7 @@ def sirt(
 
 def write_center(
         tomo, theta, dpath='tmp/center', center=None, ind=None,
-        emission=True, mask=True, ratio=1.,
-        dtype='float32', dmin=None, dmax=None):
+        emission=True, mask=True, ratio=1., dmin=None, dmax=None):
     """
     Save images reconstructed with a range of rotation centers.
 
@@ -1104,8 +1102,6 @@ def write_center(
     ratio : float, optional
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
-    dtype : bool, optional
-        The desired data-type for saved images.
     dmin, dmax : float, optional
         Mininum and maximum values to adjust float-to-int conversion range.
     """
@@ -1139,13 +1135,6 @@ def write_center(
         if m % 2 == 0:  # 2 slices same bec of gridrec.
             fname = os.path.join(dpath, str('%.02f' % center[m]) + '.tiff')
             arr = rec[m, :, :]
-
-            if dtype is 'uint8':
-                arr = _as_uint8(arr, dmin, dmax)
-            elif dtype is 'uint16':
-                arr = _as_uint16(arr, dmin, dmax)
-            elif dtype is 'float32':
-                arr = _as_float32(arr)
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")

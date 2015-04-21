@@ -49,9 +49,6 @@
 from __future__ import absolute_import, division, print_function
 
 from tomopy.io.data import *
-from tomopy.io.data import (
-    _add_index_to_string, _suggest_new_fname,
-    _as_uint8, _as_uint16, _as_float32)
 import numpy as np
 import os
 import shutil
@@ -64,85 +61,68 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_as_uint8():
-    arr = np.arange(5, dtype='float32')
-    out = _as_uint8(arr)
-    assert_equals(out.dtype, 'uint8')
-    out = _as_uint8(arr, dmin=1.)
-    assert_equals((out == [0, 0, 85, 170, 255]).all(), True)
-    out = _as_uint8(arr, dmax=3.)
-    assert_equals((out == [0, 85, 170, 255, 255]).all(), True)
-
-
-def test_as_uint16():
-    arr = np.arange(5, dtype='float32')
-    out = _as_uint16(arr)
-    assert_equals(out.dtype, 'uint16')
-    out = _as_uint16(arr, dmin=1.)
-    assert_equals((out == [0, 0, 21845, 43690, 65535]).all(), True)
-    out = _as_uint16(arr, dmax=3.)
-    assert_equals((out == [0, 21845, 43690, 65535, 65535]).all(), True)
-
-
-def test_remove_neg():
-    arr = np.arange(-2, 2, dtype='float32')
-    out = remove_neg(arr)
-    assert_equals(out[out < 0].size, 0)
-
-
-def test_remove_nan():
-    arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
-    out = remove_nan(arr)
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_read_hdf5():
+def test_Reader_hdf5():
     fname = os.path.join('tomopy', 'data', 'lena.h5')
-    out = read_hdf5(fname, '/exchange/data')
-    assert_equals(out.shape, (1, 512, 512))
+    gname = os.path.join('exchange', 'data')
+    assert_equals(
+        Reader(fname).hdf5(gname).shape,
+        (1, 512, 512))
+    assert_equals(
+        Reader(fname, dim2=slice(0, 16)).hdf5(gname).shape,
+        (1, 16, 512))
+    assert_equals(
+        Reader(fname, dim3=slice(0, 16)).hdf5(gname).shape,
+        (1, 512, 16))
 
 
-def test_write_hdf5():
+def test_Writer_hdf5():
     dest = os.path.join('test', 'tmp')
-    fname = os.path.join(dest, 'tmp')
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.mkdir(dest)
+    fname = os.path.join(dest, 'test.h5')
+    gname = os.path.join('exchange', 'data')
     arr = np.ones((3, 3, 3), dtype='float32')
-    write_hdf5(arr, fname)
-    f = h5py.File(fname + '.h5', "r")
-    assert_equals(f['/exchange/data'][:].shape, (3, 3, 3))
-    assert_equals(f['/exchange/data'][:].dtype, 'float32')
+    Writer(arr, os.path.join(dest, 'test.h5')).hdf5()
+    f = h5py.File(os.path.join(dest, 'test.h5'), "r")
+    assert_equals(
+        f[gname][:].shape,
+        (3, 3, 3))
+    assert_equals(
+        f[gname][:].dtype,
+        'float32')
+    f.close()
     shutil.rmtree(dest)
 
 
-def test__add_index_to_string():
-    out = _add_index_to_string(string='test', ind=12, digit=5)
-    assert_equals(out, 'test_00012')
-
-
-def test__suggest_new_fname():
-    out = _suggest_new_fname('lena.tiff')
-    assert_equals(out, 'lena-1.tiff')
-
-
-def test_write_tiff_stack():
+def test_Writer_tiff():
     dest = os.path.join('test', 'tmp')
-    fname = os.path.join(dest, 'tmp')
+    bname = os.path.join(dest, 'test')
+    fname = os.path.join(dest, 'test.tiff')
     arr = np.ones((1, 2, 3), dtype='float32')
-    write_tiff_stack(arr, fname=fname, axis=0, digit=4, dtype='uint8')
-    assert_equals(os.path.isfile(fname + '_0000.tiff'), True)
+    Writer(arr, fname, dtype='uint8').tiff(axis=0, digit=4)
+    assert_equals(
+        os.path.isfile(bname + '_0000.tiff'),
+        True)
     shutil.rmtree(dest)
-    write_tiff_stack(arr, fname=fname, axis=1, digit=5, dtype='uint16')
-    assert_equals(os.path.isfile(fname + '_00000.tiff'), True)
-    assert_equals(os.path.isfile(fname + '_00001.tiff'), True)
+    Writer(arr, fname, dtype='uint16').tiff(axis=1, digit=5)
+    assert_equals(
+        os.path.isfile(bname + '_00000.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00001.tiff'),
+        True)
     shutil.rmtree(dest)
-    write_tiff_stack(arr, fname=fname, axis=2, ind=6, dtype='float32')
-    assert_equals(os.path.isfile(fname + '_00006.tiff'), True)
-    assert_equals(os.path.isfile(fname + '_00007.tiff'), True)
-    assert_equals(os.path.isfile(fname + '_00008.tiff'), True)
-    shutil.rmtree(dest)
-    write_tiff_stack(arr, fname=fname, axis=2)
+    Writer(arr, fname, dtype='float32').tiff(axis=2, start=9)
+    assert_equals(
+        os.path.isfile(bname + '_00009.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00010.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00011.tiff'),
+        True)
     shutil.rmtree(dest)
 
 

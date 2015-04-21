@@ -56,7 +56,7 @@ import numpy as np
 import os
 import re
 import h5py
-import tomopy.io.data as iod
+import tomopy.io.data as dio
 import logging
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ __all__ = ['read_als_832',
            'read_sls_tomcat']
 
 
-def read_als_832(fname, ind=None):
+def read_als_832(fname, ind_tomo=None):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -86,7 +86,7 @@ def read_als_832(fname, ind=None):
     fname : str
         Path to file name without indices and extension.
 
-    ind : list of int, optional
+    ind_tomo : list of int, optional
         Indices of the projection files to read.
 
     Returns
@@ -118,12 +118,14 @@ def read_als_832(fname, ind=None):
             ndark = int(re.findall(r'\d+', line)[0])
     contents.close()
 
-    if ind is None:
-        ind = range(0, nproj)
-
-    tomo = iod.read_stack(tomo_name, ind, digit=4, format='tif')
-    white = iod.read_stack(flat_name, range(0, nflat), digit=4, format='tif')
-    dark = iod.read_stack(dark_name, range(0, ndark), digit=4, format='tif')
+    if ind_tomo is None:
+        ind_tomo = range(0, nproj)
+    tomo = dio.Reader(tomo_name).tiff(
+        stack=True, ind=ind_tomo, digit=4)
+    white = dio.Reader(flat_name).tiff(
+        stack=True, ind=range(0, nflat), digit=4)
+    dark = dio.Reader(dark_name).tiff(
+        stack=True, ind=range(0, ndark), digit=4)
     return tomo, white, dark
 
 
@@ -157,12 +159,12 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = fname + '/radios/image_'
-    flat_name = fname + '/flats/image_'
-    dark_name = fname + '/darks/image_'
-    tomo = iod.read_stack(tomo_name, ind_tomo, digit=5, format='tif')
-    flat = iod.read_stack(flat_name, ind_flat, digit=5, format='tif')
-    dark = iod.read_stack(dark_name, ind_dark, digit=5, format='tif')
+    tomo_name = os.path.join(fname, 'radios', 'image_')
+    flat_name = os.path.join(fname, 'flats', 'image_')
+    dark_name = os.path.join(fname, 'darks', 'image_')
+    tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=5)
+    flat = dio.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=5)
+    dark = dio.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=5)
     return tomo, flat, dark
 
 
@@ -192,10 +194,12 @@ def read_aps_2bm(fname, proj=None, sino=None):
     ndarray
         3D dark field data.
     """
-    fname = os.path.abspath(fname)
-    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
-    flat = iod.read_hdf5(fname, '/exchange/data_white', proj, sino)
-    dark = iod.read_hdf5(fname, '/exchange/data_dark', proj, sino)
+    tomo_grp = os.path.join('exchange', 'data')
+    flat_grp = os.path.join('exchange', 'data_white')
+    dark_grp = os.path.join('exchange', 'data_dark')
+    tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
+    flat = dio.Reader(fname, proj, sino).hdf5(flat_grp)
+    dark = dio.Reader(fname, proj, sino).hdf5(dark_grp)
     return tomo, flat, dark
 
 
@@ -222,10 +226,10 @@ def read_aps_7bm(fname, proj=None, sino=None):
     array
         Projection angles in radian.
     """
-    fname = os.path.abspath(fname)
-    f = h5py.File(fname, "r")
-    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
-    theta = iod.read_hdf5(fname, '/exchange/theta', proj)
+    tomo_grp = os.path.join('exchange', 'data')
+    theta_grp = os.path.join('exchange', 'theta')
+    tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
+    theta = dio.Reader(fname, proj).hdf5(theta_grp)
     return tomo, theta
 
 
@@ -252,15 +256,15 @@ def read_aps_13bm(fname, format, proj=None, sino=None):
     ndarray
         3D tomographic data.
     """
-    fname = os.path.abspath(fname)
     if format is 'spe':
-        tomo = iod.read_spe(fname, proj, sino)
+        tomo = dio.Reader(fname, sino).spe()
     elif format is 'netcdf4':
-        tomo = iod.read_netcdf4(fname, 'array_data', proj, sino)
+        tomo = dio.Reader(fname, proj, sino).netcdf4('array_data')
     return tomo
 
 
-def read_aps_13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
+def read_aps_13id(
+        fname, group='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     """
     Read APS 13-ID standard data format.
 
@@ -269,7 +273,7 @@ def read_aps_13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     fname : str
         Path to hdf5 file.
 
-    gname : str, optional
+    group : str, optional
         Path to the group inside hdf5 file where data is located.
 
     proj : slice, optional
@@ -283,8 +287,7 @@ def read_aps_13id(fname, gname='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     ndarray
         3D tomographic data.
     """
-    fname = os.path.abspath(fname)
-    tomo = iod.read_hdf5(fname, gname, None, proj, sino)
+    tomo = dio.Reader(fname, None, proj, sino).hdf5(group)
     tomo = np.swapaxes(tomo, 0, 1)
     tomo = np.swapaxes(tomo, 1, 2).copy()
     return tomo
@@ -316,10 +319,12 @@ def read_aps_32id(fname, proj=None, sino=None):
     ndarray
         3D dark field data.
     """
-    fname = os.path.abspath(fname)
-    tomo = iod.read_hdf5(fname, '/exchange/data', proj, sino)
-    flat = iod.read_hdf5(fname, '/exchange/data_white', proj, sino)
-    dark = iod.read_hdf5(fname, '/exchange/data_dark', proj, sino)
+    tomo_grp = os.path.join('exchange', 'data')
+    flat_grp = os.path.join('exchange', 'data_white')
+    dark_grp = os.path.join('exchange', 'data_dark')
+    tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
+    flat = dio.Reader(fname, proj, sino).hdf5(flat_grp)
+    dark = dio.Reader(fname, proj, sino).hdf5(dark_grp)
     return tomo, flat, dark
 
 
@@ -333,13 +338,13 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     fname : str
         Path to data folder.
 
-    ind_tomo : list of int, optional
+    ind_tomo : list of int
         Indices of the projection files to read.
 
-    ind_flat : list of int, optional
+    ind_flat : list of int
         Indices of the flat field files to read.
 
-    ind_dark : list of int, optional
+    ind_dark : list of int
         Indices of the dark field files to read.
 
     Returns
@@ -354,16 +359,16 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = fname + '/SAMPLE_T_'
-    flat_name = fname + '/BG__BEFORE_'
-    dark_name = fname + '/DF__BEFORE_'
-    tomo = iod.read_stack(tomo_name, ind_tomo, digit=4, format='tif')
-    flat = iod.read_stack(flat_name, ind_flat, digit=2, format='tif')
-    dark = iod.read_stack(dark_name, ind_dark, digit=2, format='tif')
+    tomo_name = os.path.join(fname, 'SAMPLE_T_')
+    flat_name = os.path.join(fname, 'BG__BEFORE_')
+    dark_name = os.path.join(fname, 'DF__BEFORE_')
+    tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
+    flat = dio.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=2)
+    dark = dio.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=2)
     return tomo, flat, dark
 
 
-def read_diamond_l12(fname, ind):
+def read_diamond_l12(fname, ind_tomo):
     """
     Read Diamond Light Source L12 (JEEP) standard data format.
 
@@ -372,7 +377,7 @@ def read_diamond_l12(fname, ind):
     fname : str
         Path to data folder.
 
-    ind : list of int, optional
+    ind_tomo : list of int
         Indices of the projection files to read.
 
     Returns
@@ -384,10 +389,10 @@ def read_diamond_l12(fname, ind):
         3d flat field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = fname + '/im_'
-    flat_name = fname + '/flat_'
-    tomo = iod.read_stack(tomo_name, ind, digit=6, format='tif')
-    flat = iod.read_stack(flat_name, range(0, 1), digit=6, format='tif')
+    tomo_name = os.path.join(fname, 'im_')
+    flat_name = os.path.join(fname, 'flat_')
+    tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=6)
+    flat = dio.Reader(flat_name).tiff(stack=True, ind=range(0, 1), digit=6)
     return tomo, flat
 
 
@@ -400,13 +405,13 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     fname : str
         Path to data folder.
 
-    ind_tomo : list of int, optional
+    ind_tomo : list of int
         Indices of the projection files to read.
 
-    ind_flat : list of int, optional
+    ind_flat : list of int
         Indices of the flat field files to read.
 
-    ind_dark : list of int, optional
+    ind_dark : list of int
         Indices of the dark field files to read.
 
     Returns
@@ -421,16 +426,16 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = fname + '/scan_0002/ccd/pco01/ccd_'
-    flat_name = fname + '/scan_0001/ccd/pco01/ccd_'
-    dark_name = fname + '/scan_0003/ccd/pco01/ccd_'
-    tomo = iod.read_stack(tomo_name, ind_tomo, digit=4, format='tif')
-    flat = iod.read_stack(flat_name, ind_flat, digit=4, format='tif')
-    dark = iod.read_stack(dark_name, ind_dark, digit=4, format='tif')
+    tomo_name = os.path.join(fname, 'scan_0002', 'ccd', 'pco01', 'ccd_')
+    flat_name = os.path.join(fname, 'scan_0001', 'ccd', 'pco01', 'ccd_')
+    dark_name = os.path.join(fname, 'scan_0003', 'ccd', 'pco01', 'ccd_')
+    tomo = dio.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
+    flat = dio.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=4)
+    dark = dio.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
-def read_sls_tomcat(fname, ind=None):
+def read_sls_tomcat(fname, ind_tomo=None):
     """
     Read SLS TOMCAT standard data format.
 
@@ -439,7 +444,7 @@ def read_sls_tomcat(fname, ind=None):
     fname : str
         Path to file name without indices and extension.
 
-    ind : list of int, optional
+    ind_tomo : list of int, optional
         Indices of the projection files to read.
 
     Returns
@@ -470,12 +475,12 @@ def read_sls_tomcat(fname, ind=None):
                 ndark = int(ls[4])
     contents.close()
 
-    if ind is None:
-        ind = range(ndark + nflat + 1, ndark + nflat + nproj)
-    find = range(ndark + 1, ndark + nflat)
-    dind = range(1, ndark)
+    if ind_tomo is None:
+        ind_tomo = range(ndark + nflat + 1, ndark + nflat + nproj)
+    ind_flat = range(ndark + 1, ndark + nflat)
+    ind_dark = range(1, ndark)
 
-    tomo = iod.read_stack(fname, ind, digit=4, format='tif')
-    flat = iod.read_stack(fname, find, digit=4, format='tif')
-    dark = iod.read_stack(fname, dind, digit=4, format='tif')
+    tomo = dio.Reader(fname).tiff(stack=True, ind=ind_tomo, digit=4)
+    flat = dio.Reader(fname).tiff(stack=True, ind=ind_flat, digit=4)
+    dark = dio.Reader(fname).tiff(stack=True, ind=ind_dark, digit=4)
     return tomo, flat, dark
