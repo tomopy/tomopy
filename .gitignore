@@ -79,6 +79,7 @@ tmp
 demo.*
 test.py
 main.py
+trunk
 
 # Installer logs
 ##############
