@@ -90,11 +90,17 @@ def _import_shared_lib(lib_name):
     """
     try:
         if os.name == 'nt':
-            libpath = os.path.join('lib', lib_name + '.pyd')
-            return ctypes.CDLL(os.path.abspath(libpath))
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__), 
+                    '..', 'lib', lib_name + '.pyd'))
+            return ctypes.CDLL(libpath)
         else:
-            libpath = os.path.join('lib', lib_name + '.so')
-            return ctypes.CDLL(os.path.abspath(libpath))
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__), 
+                    '..', 'lib', lib_name + '.so'))
+            return ctypes.CDLL(libpath)
     except OSError as e:
         logger.warning('OSError: Shared library missing.')
 
