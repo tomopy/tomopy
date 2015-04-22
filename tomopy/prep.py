@@ -89,13 +89,13 @@ def _import_shared_lib(lib_name):
         if os.name == 'nt':
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
+                    os.path.dirname(__file__),
                     '..', 'lib', lib_name + '.pyd'))
             return ctypes.CDLL(libpath)
         else:
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
+                    os.path.dirname(__file__),
                     '..', 'lib', lib_name + '.so'))
             return ctypes.CDLL(libpath)
     except OSError as e:
@@ -104,6 +104,7 @@ def _import_shared_lib(lib_name):
 
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 logger.info('test')
+
 
 def normalize(tomo, flat, dark, cutoff=None, ind=None):
     """
