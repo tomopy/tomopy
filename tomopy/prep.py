@@ -70,6 +70,7 @@ __all__ = ['circular_roi',
            'focus_region',
            'normalize',
            'remove_stripe',
+           'remove_stripe2',
            'remove_zinger',
            'retrieve_phase']
 
@@ -383,9 +384,152 @@ def remove_stripe(
         tomo[:, n, :] = sli[xshift:dx + xshift, 0:dz]
 
 
+def remove_stripe2(tomo, nblock=0, alpha=1.5, ind=None):
+    """
+    Remove horizontal stripes from sinogram using Titarenko's
+    approach :cite:`Miqueles:14`.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    nblock : int, optional
+        Number of blocks.
+    alpha : int, optional
+        Damping factor.
+    ind : array of int, optional
+        Sinogram indices at which the stripe removal is applied.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    if type(tomo) == str and tomo == 'SHARED':
+        tomo = mp.shared_arr
+    else:
+        arr = mp.distribute_jobs(
+            tomo, func=remove_stripe2, axis=1,
+            args=(nblock, alpha))
+        return arr
+
+    dx, dy, dz = tomo.shape
+    if ind is None:
+        ind = np.arange(0, dy)
+
+    for n in ind:
+        sino = tomo[:, n, :]
+        if (nblock == 0):
+            d1 = _ring(sino, 1, 1)
+            d2 = _ring(sino, 2, 1)
+            p = d1 * d2
+            d = np.sqrt(p + alpha * np.abs(p.min()))
+        else:
+            size = int(sino.shape[0] / nblock)
+            d1 = _ringb(sino, 1, 1, size)
+            d2 = _ringb(sino, 2, 1, size)
+            p = d1 * d2
+            d = np.sqrt(p + alpha * np.fabs(p.min()))
+        tomo[:, n, :] = d
+
+
+def _kernel(m, n):
+    v = [[np.array([1, -1]), 
+          np.array([-3 / 2, 2, -1 / 2]),
+          np.array([-11 / 6, 3, -3 / 2, 1 / 3])],
+         [np.array([-1, 2, -1]), 
+          np.array([2, -5, 4, -1])],
+         [np.array([-1, 3, -3, 1])]]
+    return v[m - 1][n - 1]
+
+
+def _ringMatXvec(h, x):
+    s = np.convolve(x, np.flipud(h))
+    u = s[np.size(h) - 1:np.size(x)]
+    y = np.convolve(u, h)
+    return y
+
+
+def _ringCGM(h, alpha, f):
+    x0 = np.zeros(np.size(f))
+    r = f - (_ringMatXvec(h, x0) + alpha * x0)
+    w = -r
+    z = _ringMatXvec(h, w) + alpha * w
+    a = np.dot(r, w) / np.dot(w, z)
+    x = x0 + np.dot(a, w)
+    B = 0
+    for i in range(1000000):
+        r = r - np.dot(a, z)
+        if (np.linalg.norm(r) < 0.0000001):
+            break
+        B = np.dot(r, z) / np.dot(w, z)
+        w = -r + np.dot(B, w)
+        z = _ringMatXvec(h, w) + alpha * w
+        a = np.dot(r, w) / np.dot(w, z)
+        x = x + np.dot(a, w)
+    return x
+
+
+def _ring(sino, m, n):
+    mysino = np.transpose(sino)
+    R = np.size(mysino, 0)
+    N = np.size(mysino, 1)
+
+    # Remove NaN.
+    pos = np.where(np.isnan(mysino) is True)
+    mysino[pos] = 0
+
+    # Parameter.
+    alpha = 1 / (2 * (mysino.sum(0).max() - mysino.sum(0).min()))
+
+    # Mathematical correction.
+    pp = mysino.mean(1)
+    h = _kernel(m, n)
+    f = -_ringMatXvec(h, pp)
+    q = _ringCGM(h, alpha, f)
+
+    # Update sinogram.
+    q.shape = (R, 1)
+    K = np.kron(q, np.ones((1, N)))
+    new = np.add(mysino, K)
+    newsino = new.astype(np.float32)
+    return np.transpose(newsino)
+
+
+def _ringb(sino, m, n, step):
+    mysino = np.transpose(sino)
+    R = np.size(mysino, 0)
+    N = np.size(mysino, 1)
+
+    # Remove NaN.
+    pos = np.where(np.isnan(mysino) is True)
+    mysino[pos] = 0
+
+    # Kernel & regularization parameter.
+    h = _kernel(m, n)
+
+    # Mathematical correction by blocks.
+    nblock = int(N / step)
+    new = np.ones((R, N))
+    for k in range(0, nblock):
+        sino_block = mysino[:, k * step:(k + 1) * step]
+        alpha = 1 / (2 * (sino_block.sum(0).max() - sino_block.sum(0).min()))
+        pp = sino_block.mean(1)
+
+        f = -_ringMatXvec(h, pp)
+        q = _ringCGM(h, alpha, f)
+
+        # Update sinogram.
+        q.shape = (R, 1)
+        K = np.kron(q, np.ones((1, step)))
+        new[:, k * step:(k + 1) * step] = np.add(sino_block, K)
+    newsino = new.astype(np.float32)
+    return np.transpose(newsino)
+
+
 def remove_zinger(tomo, dif=1000, size=3, ind=None):
     """
-    Remove high intensity bright spots from tomographic data.
+    Remove high intensity bright spots from 3D tomographic data.
 
     Parameters
     ----------
