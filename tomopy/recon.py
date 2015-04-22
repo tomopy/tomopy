@@ -67,21 +67,20 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = [
-    'simulate',
-    'gridrec',
-    'art',
-    'bart',
-    'fbp',
-    'mlem',
-    'osem',
-    'ospml_hybrid',
-    'ospml_quad',
-    'pml_hybrid',
-    'pml_quad',
-    'sirt',
-    'find_center',
-    'write_center']
+__all__ = ['simulate',
+           'gridrec',
+           'art',
+           'bart',
+           'fbp',
+           'mlem',
+           'osem',
+           'ospml_hybrid',
+           'ospml_quad',
+           'pml_hybrid',
+           'pml_quad',
+           'sirt',
+           'find_center',
+           'write_center']
 
 
 def _import_shared_lib(lib_name):
@@ -92,13 +91,13 @@ def _import_shared_lib(lib_name):
         if os.name == 'nt':
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
+                    os.path.dirname(__file__),
                     '..', 'lib', lib_name + '.pyd'))
             return ctypes.CDLL(libpath)
         else:
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
+                    os.path.dirname(__file__),
                     '..', 'lib', lib_name + '.so'))
             return ctypes.CDLL(libpath)
     except OSError as e:

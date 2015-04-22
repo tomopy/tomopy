@@ -71,28 +71,69 @@ apply_padding(
 DLL void 
 downsample2d(
     float* data, int dx, int dy, int dz,
-    int level, float* out) 
+    int level, int axis, float* out) 
 {
-    int m, n, k, i, p, iproj, ind;
+    int m, n, k, i, j, p, ind;
     int binsize;
     
     binsize = pow(2, level);
     
-    dz /= binsize;
-
-    for (m = 0, ind = 0; m < dx; m++) 
+    if (axis == 0)
     {
-        iproj = m * (dz * dy);
-            
-        for (n = 0; n < dy; n++) 
+        dx /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
         {
-            i = iproj + n * dz;
-            for (k = 0; k < dz; k++) 
+            i = m * (dy * dz);
+            for (p = 0; p < binsize; p++) 
             {
+                for (n = 0; n < dy; n++) 
+                {
+                    j = n * dz;
+                    for (k = 0; k < dz; k++)
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
+                }
+            }
+        }
+    }
+    else if (axis == 1)
+    {
+        dy /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
+        {
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j = n * dz;
                 for (p = 0; p < binsize; p++) 
                 {
-                    out[i+k] += data[ind]/binsize;
-                    ind++;
+                    for (k = 0; k < dz; k++)
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
+                }
+            }
+        }
+    }
+    else if (axis == 2)
+    {
+        dz /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
+        {
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j = n * dz;
+                for (k = 0; k < dz; k++) 
+                {
+                    for (p = 0; p < binsize; p++) 
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
                 }
             }
         }
