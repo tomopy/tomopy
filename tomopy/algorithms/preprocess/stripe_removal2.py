@@ -92,7 +92,7 @@ def stripe_removal2(args):
 
     sino = numpy.zeros((dx, dy), dtype='float32')
     for n in ind:
-        sino[:, :] = -numpy.log(data[:, n, :])
+        sino = data[:, n, :]
         if (nblocks == 0):
             d1 = _ring(sino, 1, 1)
             d2 = _ring(sino, 2, 1)
@@ -106,7 +106,7 @@ def stripe_removal2(args):
             p = d1 * d2
             d = numpy.sqrt(p + alpha * numpy.fabs(p.min()))
 
-        data[:, n, :] = numpy.exp(-d[:, :])
+        data[:, n, :] = d
 
 
 def _kernel(m, n):
@@ -242,6 +242,6 @@ def _ringb(data, m, n, step):
 
         new[:, k * step:(k + 1) * step] = numpy.add(sino_block, K)
 
-        newsino = new.astype(numpy.float32)
+   newsino = new.astype(numpy.float32)
 
-        return numpy.transpose(newsino)
+   return numpy.transpose(newsino)
