@@ -99,9 +99,9 @@ def _import_shared_lib(lib_name):
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
-def apply_pad(arr, npad=None, val=0.):
+def apply_pad(arr, npad=None, axis=2, val=0.):
     """
-    Extend size of a 3D array by padding with specified values.
+    Extend size of 3D array along specified axis.
 
     Parameters
     ----------
@@ -109,6 +109,8 @@ def apply_pad(arr, npad=None, val=0.):
         3D input array.
     npad : int, optional
         New dimensions after padding.
+    axis : int, optional
+        Axis along which padding will be performed.
     val : float, optional
         Pad value.
 
@@ -118,22 +120,35 @@ def apply_pad(arr, npad=None, val=0.):
         Padded 3D array.
     """
     dx, dy, dz = arr.shape
-    if npad is None:
-        npad = int(np.ceil(dz * np.sqrt(2)))
-    elif npad < dz:
-        npad = dz
-    out = val * np.ones((dx, dy, npad), dtype='float32')
+    if axis == 0:
+        if npad is None:
+            npad = int(np.ceil(dx * np.sqrt(2)))
+        elif npad < dx:
+            npad = dx
+        out = val * np.ones((npad, dy, dz), dtype='float32')
+    if axis == 1:
+        if npad is None:
+            npad = int(np.ceil(dy * np.sqrt(2)))
+        elif npad < dy:
+            npad = dy
+        out = val * np.ones((dx, npad, dz), dtype='float32')
+    if axis == 2:
+        if npad is None:
+            npad = int(np.ceil(dz * np.sqrt(2)))
+        elif npad < dz:
+            npad = dz
+        out = val * np.ones((dx, dy, npad), dtype='float32')
 
     # Make sure that input datatype is correct.
     if not isinstance(arr, np.float32):
         arr = np.array(arr, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.apply_padding(
+    LIB_TOMOPY.apply_pad.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.apply_pad(
         arr.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(npad),
+        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
+        ctypes.c_int(axis), ctypes.c_int(npad),
         out.ctypes.data_as(c_float_p))
     return out
 
@@ -146,9 +161,9 @@ def downsample(arr, level=1, axis=2):
     ----------
     arr : ndarray
         3D input array.
-    level : int
+    level : int, optional
         Downsampling level in powers of two.
-    axis : int
+    axis : int, optional
         Axis along which downsampling will be performed.
 
     Returns
@@ -186,9 +201,9 @@ def upsample(arr, level=1, axis=2):
     ----------
     arr : ndarray
         3D input array.
-    level : int
+    level : int, optional
         Downsampling level in powers of two.
-    axis : int
+    axis : int, optional
         Axis along which upsampling will be performed.
 
     Returns
