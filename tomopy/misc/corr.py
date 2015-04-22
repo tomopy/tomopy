@@ -46,121 +46,139 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for data correction functions.
+"""
+
 from __future__ import absolute_import, division, print_function
 
-from tomopy.prep import *
 import numpy as np
-from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
+import ctypes
+import os
+import tomopy.misc.mproc as mp
+from scipy.ndimage import filters
+import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+__all__ = ['median_filter',
+           'remove_nan',
+           'remove_neg']
 
 
-def synthetic_data():
+def _import_shared_lib(lib_name):
     """
-    Generate a synthetic data.
+    Get the path and import the C-shared library.
     """
-    data = np.array(
-        [[[29., 85., 39., 45., 53.],
-          [24., 53., 12., 89., 12.],
-          [14., 52., 25., 52., 41.],
-          [24., 64., 12., 89., 15.]],
-         [[25., 74., 63., 98., 43.],
-          [63., 27., 43., 68., 15.],
-          [24., 64., 12., 99., 35.],
-          [12., 53., 74., 13., 41.]],
-         [[13., 65., 33., 12., 39.],
-          [71., 33., 87., 16., 78.],
-          [42., 97., 77., 11., 41.],
-          [90., 12., 32., 63., 14.]]], dtype='float32')
-    return data
+    try:
+        if os.name == 'nt':
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', '..', 'lib', lib_name + '.pyd'))
+            return ctypes.CDLL(libpath)
+        else:
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', '..', 'lib', lib_name + '.so'))
+            return ctypes.CDLL(libpath)
+    except OSError as e:
+        logger.warning('OSError: Shared library missing.')
 
 
-def test_normalize():
-    data = synthetic_data()
-
-    # Synthetic white field data
-    white = np.array(
-        [[[52., 53., 51., 56., 55.],
-          [51., 53., 50., 51., 51.],
-          [52., 50., 55., 51., 50.],
-          [51., 52., 50., 49., 51.]],
-         [[51., 52., 49., 50., 49.],
-          [50., 48., 52., 53., 54.],
-          [52., 51., 50., 51., 51.],
-          [51., 53., 49., 53., 50.]]], dtype='float32')
-
-    # Synthetic dark field data
-    dark = np.array(
-        [[[1., 3., 0., 4., 2.],
-          [1., 0., 5., 0., 3.],
-          [0., 0., 0., 0., 1.],
-          [0., 2., 1., 0., 0.]]], dtype='float32')
-
-    # Expected result
-    result = np.array(
-        [[[0.5545, 1.6566, 0.78,   0.8367, 1.02],
-          [0.4646, 1.0495, 0.1522, 1.7115, 0.1818],
-          [0.2692, 1.0297, 0.4762, 1.0196, 0.8081],
-          [0.4706, 1.2277, 0.2268, 1.7451, 0.297]],
-         [[0.4752, 1.4343, 1.26,   1.9184, 0.82],
-          [1.2525, 0.5347, 0.8261, 1.3077, 0.2424],
-          [0.4615, 1.2673, 0.2286, 1.9412, 0.6869],
-          [0.2353, 1.0099, 1.5052, 0.2549, 0.8119]],
-         [[0.2376, 1.2525, 0.66,   0.1633, 0.74],
-          [1.4141, 0.6535, 1.7826, 0.3077, 1.5152],
-          [0.8077, 1.9208, 1.4667, 0.2157, 0.8081],
-          [1.7647, 0.198,  0.6392, 1.2353, 0.2772]]], dtype='float32')
-    assert_array_almost_equal(
-        normalize(data, white, dark),
-        result, decimal=4)
+LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
-def test_remove_stripe():
-    out = remove_stripe(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
+def median_filter(arr, size=3, axis=0, ind=None):
+    """
+    Apply median filter to a 3D array along a specified axis.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Arbitrary 3D array.
+    size : int, optional
+        The size of the filter.
+    axis : int, optional
+        Axis along which median filtering is performed.
+    ind : array of int, optional
+        Indices at which the filtering is applied.
+
+    Returns
+    -------
+    ndarray
+        Median filtered 3D array.
+    """
+    if type(arr) == str and arr == 'SHARED':
+        arr = mp.shared_arr
+    else:
+        arr = mp.distribute_jobs(
+            arr, func=median_filter, axis=axis,
+            args=(size, axis))
+        return arr
+
+    dx, dy, dz = arr.shape
+    if ind is None:
+        if axis == 0:
+            ind = np.arange(0, dx)
+        elif axis == 1:
+            ind = np.arange(0, dy)
+        elif axis == 2:
+            ind = np.arange(0, dz)
+
+    if axis == 0:
+        for m in ind:
+            arr[m, :, :] = filters.median_filter(
+                arr[m, :, :], (size, size))
+    elif axis == 1:
+        for m in ind:
+            arr[:, m, :] = filters.median_filter(
+                arr[:, m, :], (size, size))
+    elif axis == 2:
+        for m in ind:
+            arr[:, :, m] = filters.median_filter(
+                arr[:, :, m], (size, size))
 
 
-def test_retrieve_phase():
-    out = retrieve_phase(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
+def remove_nan(arr, val=0.):
+    """
+    Replace NaN values in array with a given value.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input data.
+    val : float, optional
+        Values to be replaced with NaN values in array.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr[np.isnan(arr)] = val
+    return arr
 
 
-def test_circular_roi():
-    out = circular_roi(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-    out = circular_roi(np.ones((10, 14, 12)))
-    assert_equals(out.shape, (10, 14, 12))
-    assert_equals(np.isnan(out).sum(), 0)
+def remove_neg(arr, val=0.):
+    """
+    Replace negative values in array with a given value.
 
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    val : float, optional
+        Values to be replaced with negative values in array.
 
-def test_remove_zinger():
-    out = remove_zinger(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_correct_air():
-    out = correct_air(np.ones((10, 12, 14)), air=1)
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_focus_region():
-    assert_equals(
-        focus_region(np.ones((10, 12, 14)), dia=5)[0].shape,
-        (10, 12, 5))
-    assert_equals(
-        np.isnan(focus_region(np.ones((10, 12, 14)), dia=5)[0]).sum(),
-        0)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr[arr < 0.0] = val
+    return arr
