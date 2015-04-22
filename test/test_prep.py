@@ -175,32 +175,35 @@ def test_median_filter():
 
 
 def test_remove_stripe():
-    out = remove_stripe(synthetic_data())
-    assert_equals(out.shape, (3, 4, 5))
+    out = remove_stripe(np.ones((10, 12, 14)))
+    assert_equals(out.shape, (10, 12, 14))
     assert_equals(np.isnan(out).sum(), 0)
 
 
 def test_retrieve_phase():
-    out = retrieve_phase(synthetic_data())
-    assert_equals(out.shape, (3, 4, 5))
+    out = retrieve_phase(np.ones((10, 12, 14)))
+    assert_equals(out.shape, (10, 12, 14))
     assert_equals(np.isnan(out).sum(), 0)
 
 
 def test_circular_roi():
-    out = circular_roi(synthetic_data())
-    assert_equals(out.shape, (3, 4, 5))
+    out = circular_roi(np.ones((10, 12, 14)))
+    assert_equals(out.shape, (10, 12, 14))
+    assert_equals(np.isnan(out).sum(), 0)
+    out = circular_roi(np.ones((10, 14, 12)))
+    assert_equals(out.shape, (10, 14, 12))
     assert_equals(np.isnan(out).sum(), 0)
 
 
 def test_remove_zinger():
-    out = remove_zinger(synthetic_data())
-    assert_equals(out.shape, (3, 4, 5))
+    out = remove_zinger(np.ones((10, 12, 14)))
+    assert_equals(out.shape, (10, 12, 14))
     assert_equals(np.isnan(out).sum(), 0)
 
 
 def test_correct_air():
-    out = correct_air(synthetic_data())
-    assert_equals(out.shape, (3, 4, 5))
+    out = correct_air(np.ones((10, 12, 14)), air=1)
+    assert_equals(out.shape, (10, 12, 14))
     assert_equals(np.isnan(out).sum(), 0)
 
 
