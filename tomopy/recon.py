@@ -1190,7 +1190,7 @@ def find_center(
         init = dz / 2
 
     # Make an initial reconstruction to adjust histogram limits.
-    rec = gridrec(tomo[:, ind - 1:ind, :], theta, emission=emission)
+    rec = gridrec(tomo[:, ind:ind+1, :], theta, emission=emission)
 
     # Apply circular mask.
     if mask is True:
@@ -1225,8 +1225,9 @@ def _find_center_cost(
     """
     Cost function used for the ``find_center`` routine.
     """
+    print('Trying center: ' ,center)
     center = np.array(center, dtype='float32')
-    rec = gridrec(tomo[:, ind - 1:ind, :], theta, center, emission)
+    rec = gridrec(tomo[:, ind:ind+1, :], theta, center, emission)
 
     # Apply circular mask.
     if mask is True:
