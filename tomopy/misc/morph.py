@@ -53,12 +53,9 @@ Module for data size morphing functions.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import pywt
 import os
 import ctypes
 import tomopy.misc.mproc as mp
-from scipy.ndimage import filters
-from tomopy.prep import correct_air
 import logging
 logger = logging.getLogger(__name__)
 
@@ -68,11 +65,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['apply_pad',
            'downsample',
-           'focus_region',
            'upsample']
-
-
-PI = 3.14159265359
 
 
 def _import_shared_lib(lib_name):
@@ -231,72 +224,3 @@ def upsample(arr, level=1, axis=2):
         ctypes.c_int(level), ctypes.c_int(axis),
         out.ctypes.data_as(c_float_p))
     return out
-
-
-def focus_region(
-        tomo, dia, xcoord=0, ycoord=0,
-        center=None, pad=False, corr=True):
-    """
-    Trims sinogram for reconstructing a circular region of interest (ROI).
-
-    Note: Only valid for 0-180 degree span data.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D Tomographic data.
-    xcoord, ycoord : float, optional
-        x- and y-coordinates of the center location of the circular
-        ROI in reconstruction image.
-    dia : float, optional
-        Diameter of the circular ROI.
-    center : float, optional
-        Rotation axis location of the tomographic data.
-    pad : bool, optional
-        If True, extend the size of the projections by padding with zeros.
-    corr : bool, optional
-        If True, correct_air is applied after data is trimmed.
-
-    Returns
-    -------
-    ndarray
-        Modified 3D tomographic tomo.
-    float
-        New rotation axis location.
-    """
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = dz / 2.
-    roi = np.ones((dx, dy, dia), dtype='float32')
-    if pad:
-        roi = np.ones((dx, dy, dz), dtype='float32')
-    rad = np.sqrt(xcoord * xcoord + ycoord * ycoord)
-    alpha = np.arctan2(xcoord, ycoord)
-    l1 = center - dia / 2
-    l2 = center - dia / 2 + rad
-    delphi = PI / dx
-    for m in np.arange(0, dx):
-        ind1 = np.ceil(np.cos(alpha - m * delphi) * (l2 - l1) + l1)
-        ind2 = np.floor(np.cos(alpha - m * delphi) * (l2 - l1) + l1 + dia)
-        if ind1 < 0:
-            ind1 = 0
-        if ind2 < 0:
-            ind2 = 0
-        if ind1 > dz:
-            ind1 = dz
-        if ind2 > dz:
-            ind2 = dz
-        arr = np.expand_dims(tomo[m, :, ind1:ind2], axis=0)
-        if pad:
-            if corr:
-                roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=5)
-            else:
-                roi[m, :, ind1:ind2] = arr
-        else:
-            if corr:
-                roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=5)
-            else:
-                roi[m, :, 0:(ind2 - ind1)] = arr
-        if not pad:
-            center = dz / 2.
-    return roi, center

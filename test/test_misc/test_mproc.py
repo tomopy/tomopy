@@ -81,7 +81,7 @@ def synthetic_data():
 
 
 def synthetic_func(a, val, ind):
-    a = mp.shared_data
+    a = mp.shared_arr
     for m in ind:
         a[m, :, :] = val
 
