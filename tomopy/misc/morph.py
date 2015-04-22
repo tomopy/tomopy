@@ -67,8 +67,9 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['apply_pad',
-           'downsample2d',
-           'focus_region']
+           'downsample',
+           'focus_region',
+           'upsample']
 
 
 PI = 3.14159265359
@@ -137,9 +138,9 @@ def apply_pad(arr, npad=None, val=0.):
     return out
 
 
-def downsample2d(arr, level=1, axis=2):
+def downsample(arr, level=1, axis=2):
     """
-    Downsample along specified axis of a 3D array by binning.
+    Downsample along specified axis of a 3D array.
 
     Parameters
     ----------
@@ -168,8 +169,48 @@ def downsample2d(arr, level=1, axis=2):
         arr = np.array(arr, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.downsample2d(
+    LIB_TOMOPY.downsample.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.downsample(
+        arr.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
+        ctypes.c_int(level), ctypes.c_int(axis),
+        out.ctypes.data_as(c_float_p))
+    return out
+
+
+def upsample(arr, level=1, axis=2):
+    """
+    Upsample along specified axis of a 3D array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        3D input array.
+    level : int
+        Downsampling level in powers of two.
+    axis : int
+        Axis along which upsampling will be performed.
+
+    Returns
+    -------
+    ndarray
+        Upsampled 3D array.
+    """
+    dx, dy, dz = arr.shape
+    if axis == 0:
+        out = np.zeros((dx * np.power(2, level), dy, dz), dtype='float32')
+    if axis == 1:
+        out = np.zeros((dx, dy * np.power(2, level), dz), dtype='float32')
+    if axis == 2:
+        out = np.zeros((dx, dy, dz * np.power(2, level)), dtype='float32')
+
+    # Make sure that input datatype is correct.
+    if not isinstance(arr, np.float32):
+        arr = np.array(arr, dtype='float32')
+
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    LIB_TOMOPY.upsample.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.upsample(
         arr.ctypes.data_as(c_float_p),
         ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
         ctypes.c_int(level), ctypes.c_int(axis),

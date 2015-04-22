@@ -64,27 +64,15 @@ apply_padding(
     int npad, float* out);
 
 DLL void 
-downsample2d(
+downsample(
     float* data, 
     int dx, int dy, int dz,
     int level, int axis, float* out);
 
 DLL void 
-downsample3d(
+upsample(
     float* data, 
     int dx, int dy, int dz,
-    int level, float* out);
-
-DLL void 
-upsample2d(
-    float* data, 
-    int dy, int dz,
-    int level, float* out);
-
-DLL void 
-upsample3d(
-    float* data, 
-    int dy, int dz,
-    int level, float* out);
+    int level, int axis, float* out);
 
 #endif
