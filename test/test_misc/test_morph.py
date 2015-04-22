@@ -51,12 +51,22 @@ from __future__ import absolute_import, division, print_function
 from tomopy.misc.morph import *
 import numpy as np
 from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
 
 
 def test_apply_pad():
     out = apply_pad(np.ones((10, 12, 14)))
     assert_equals(out.shape, (10, 12, 20))
     assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_focus_downsample2d():
+    out = downsample2d(np.ones((8, 8, 8)), level=1, axis=0)
+    assert_array_almost_equal(out, np.ones((4, 8, 8)))
+    out = downsample2d(np.ones((8, 8, 8)), level=2, axis=1)
+    assert_array_almost_equal(out, np.ones((8, 2, 8)))
+    out = downsample2d(np.ones((8, 8, 8)), level=3, axis=2)
+    assert_array_almost_equal(out, np.ones((8, 8, 1)))
 
 
 def test_focus_region():

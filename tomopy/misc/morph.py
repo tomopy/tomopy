@@ -67,6 +67,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['apply_pad',
+           'downsample2d',
            'focus_region']
 
 
@@ -81,14 +82,14 @@ def _import_shared_lib(lib_name):
         if os.name == 'nt':
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
-                    '..', '..','lib', lib_name + '.pyd'))
+                    os.path.dirname(__file__),
+                    '..', '..', 'lib', lib_name + '.pyd'))
             return ctypes.CDLL(libpath)
         else:
             libpath = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
-                    '..', '..','lib', lib_name + '.so'))
+                    os.path.dirname(__file__),
+                    '..', '..', 'lib', lib_name + '.so'))
             return ctypes.CDLL(libpath)
     except OSError as e:
         logger.warning('OSError: Shared library missing.')
@@ -104,7 +105,7 @@ def apply_pad(arr, npad=None, val=0.):
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        3D input array.
     npad : int, optional
         New dimensions after padding.
     val : float, optional
@@ -117,12 +118,14 @@ def apply_pad(arr, npad=None, val=0.):
     """
     dx, dy, dz = arr.shape
     if npad is None:
-        npad = np.ceil(dz * np.sqrt(2))
+        npad = int(np.ceil(dz * np.sqrt(2)))
     elif npad < dz:
         npad = dz
-
-    npad = np.array(npad, dtype='int32')
     out = val * np.ones((dx, dy, npad), dtype='float32')
+
+    # Make sure that input datatype is correct.
+    if not isinstance(arr, np.float32):
+        arr = np.array(arr, dtype='float32')
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.apply_padding.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -134,8 +137,48 @@ def apply_pad(arr, npad=None, val=0.):
     return out
 
 
+def downsample2d(arr, level=1, axis=2):
+    """
+    Downsample along specified axis of a 3D array by binning.
+
+    Parameters
+    ----------
+    arr : ndarray
+        3D input array.
+    level : int
+        Downsampling level in powers of two.
+    axis : int
+        Axis along which downsampling will be performed.
+
+    Returns
+    -------
+    ndarray
+        Downsampled 3D array.
+    """
+    dx, dy, dz = arr.shape
+    if axis == 0:
+        out = np.zeros((dx / np.power(2, level), dy, dz), dtype='float32')
+    if axis == 1:
+        out = np.zeros((dx, dy / np.power(2, level), dz), dtype='float32')
+    if axis == 2:
+        out = np.zeros((dx, dy, dz / np.power(2, level)), dtype='float32')
+
+    # Make sure that input datatype is correct.
+    if not isinstance(arr, np.float32):
+        arr = np.array(arr, dtype='float32')
+
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    LIB_TOMOPY.downsample2d.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.downsample2d(
+        arr.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
+        ctypes.c_int(level), ctypes.c_int(axis),
+        out.ctypes.data_as(c_float_p))
+    return out
+
+
 def focus_region(
-        data, dia, xcoord=0, ycoord=0,
+        tomo, dia, xcoord=0, ycoord=0,
         center=None, pad=False, corr=True):
     """
     Trims sinogram for reconstructing a circular region of interest (ROI).
@@ -144,7 +187,7 @@ def focus_region(
 
     Parameters
     ----------
-    data : ndarray
+    tomo : ndarray
         3D Tomographic data.
     xcoord, ycoord : float, optional
         x- and y-coordinates of the center location of the circular
@@ -161,30 +204,24 @@ def focus_region(
     Returns
     -------
     ndarray
-        Modified 3D tomographic data.
+        Modified 3D tomographic tomo.
     float
         New rotation axis location.
     """
-    dx, dy, dz = data.shape
-    ind = np.arange(0, dx)
-
+    dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
-
+    roi = np.ones((dx, dy, dia), dtype='float32')
+    if pad:
+        roi = np.ones((dx, dy, dz), dtype='float32')
     rad = np.sqrt(xcoord * xcoord + ycoord * ycoord)
     alpha = np.arctan2(xcoord, ycoord)
     l1 = center - dia / 2
     l2 = center - dia / 2 + rad
-
-    roi = np.ones((dx, dy, dia), dtype='float32')
-    if pad:
-        roi = np.ones((dx, dy, dz), dtype='float32')
-
     delphi = PI / dx
-    for m in ind:
+    for m in np.arange(0, dx):
         ind1 = np.ceil(np.cos(alpha - m * delphi) * (l2 - l1) + l1)
         ind2 = np.floor(np.cos(alpha - m * delphi) * (l2 - l1) + l1 + dia)
-
         if ind1 < 0:
             ind1 = 0
         if ind2 < 0:
@@ -193,8 +230,7 @@ def focus_region(
             ind1 = dz
         if ind2 > dz:
             ind2 = dz
-
-        arr = np.expand_dims(data[m, :, ind1:ind2], axis=0)
+        arr = np.expand_dims(tomo[m, :, ind1:ind2], axis=0)
         if pad:
             if corr:
                 roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=5)
