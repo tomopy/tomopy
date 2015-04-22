@@ -87,10 +87,17 @@ def synthetic_func(a, val, ind):
 
 
 def test_distribute_jobs():
-    out = distribute_jobs(synthetic_data(), synthetic_func, axis=0, args=[1.])
-    assert_equals(out.shape, (3, 4, 5))
-    assert_equals(np.isnan(out).sum(), 0)
-    assert_array_almost_equal(out, np.ones((3, 4, 5)))
+    dat = synthetic_data()
+    assert_equals(
+        distribute_jobs(
+            dat, synthetic_func, axis=0, args=[1.]).shape,
+        (3, 4, 5))
+    assert_equals(np.isnan(
+        distribute_jobs(dat, synthetic_func, axis=0, args=[1.])).sum(),
+        0)
+    assert_array_almost_equal(
+        distribute_jobs(dat, synthetic_func, axis=0, args=[1.]),
+        np.ones((3, 4, 5)))
 
 
 if __name__ == '__main__':
