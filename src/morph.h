@@ -67,7 +67,7 @@ DLL void
 downsample2d(
     float* data, 
     int dx, int dy, int dz,
-    int level, float* out);
+    int level, int axis, float* out);
 
 DLL void 
 downsample3d(
