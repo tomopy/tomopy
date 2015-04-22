@@ -90,15 +90,6 @@ def test_focus_downsample():
         np.ones((4, 8, 2)))
 
 
-def test_focus_region():
-    assert_equals(
-        focus_region(np.ones((10, 12, 14)), dia=5)[0].shape,
-        (10, 12, 5))
-    assert_equals(
-        np.isnan(focus_region(np.ones((10, 12, 14)), dia=5)[0]).sum(),
-        0)
-
-
 def test_focus_upsample():
     assert_array_almost_equal(
         upsample(np.ones((4, 8, 16)), level=3, axis=0),
