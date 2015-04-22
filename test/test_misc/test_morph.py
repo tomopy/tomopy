@@ -55,24 +55,45 @@ from numpy.testing import assert_array_almost_equal
 
 
 def test_apply_pad():
-    out = apply_pad(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 20))
-    assert_equals(np.isnan(out).sum(), 0)
+    assert_equals(
+        apply_pad(np.ones((10, 12, 14))).shape, 
+        (10, 12, 20))
+    assert_equals(
+        np.isnan(apply_pad(np.ones((10, 12, 14)))).sum(), 
+        0)
 
 
-def test_focus_downsample2d():
-    out = downsample2d(np.ones((8, 8, 8)), level=1, axis=0)
-    assert_array_almost_equal(out, np.ones((4, 8, 8)))
-    out = downsample2d(np.ones((8, 8, 8)), level=2, axis=1)
-    assert_array_almost_equal(out, np.ones((8, 2, 8)))
-    out = downsample2d(np.ones((8, 8, 8)), level=3, axis=2)
-    assert_array_almost_equal(out, np.ones((8, 8, 1)))
+def test_focus_downsample():
+    assert_array_almost_equal(
+        downsample(np.ones((8, 8, 8)), level=1, axis=0), 
+        np.ones((4, 8, 8)))
+    assert_array_almost_equal(
+        downsample(np.ones((8, 8, 8)), level=2, axis=1), 
+        np.ones((8, 2, 8)))
+    assert_array_almost_equal(
+        downsample(np.ones((8, 8, 8)), level=3, axis=2), 
+        np.ones((8, 8, 1)))
+
+
+def test_focus_upsample():
+    assert_array_almost_equal(
+        upsample(np.ones((8, 8, 8)), level=1, axis=0), 
+        np.ones((16, 8, 8)))
+    assert_array_almost_equal(
+        upsample(np.ones((8, 8, 8)), level=2, axis=1), 
+        np.ones((8, 32, 8)))
+    assert_array_almost_equal(
+        upsample(np.ones((8, 8, 8)), level=3, axis=2), 
+        np.ones((8, 8, 64)))
 
 
 def test_focus_region():
-    out, center = focus_region(np.ones((10, 12, 14)), dia=5)
-    assert_equals(out.shape, (10, 12, 5))
-    assert_equals(np.isnan(out).sum(), 0)
+    assert_equals(
+        focus_region(np.ones((10, 12, 14)), dia=5)[0].shape, 
+        (10, 12, 5))
+    assert_equals(
+        np.isnan(focus_region(np.ones((10, 12, 14)), dia=5)[0]).sum(), 
+        0)
 
 
 __author__ = "Doga Gursoy"
