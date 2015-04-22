@@ -58,10 +58,10 @@
 
 
 DLL void 
-apply_padding(
+apply_pad(
     float* data, 
     int dx, int dy, int dz, 
-    int npad, float* out);
+    int axis, int npad, float* out);
 
 DLL void 
 downsample(
