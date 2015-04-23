@@ -259,7 +259,7 @@ class Writer():
     """
 
     def __init__(
-            self, data, fname, dtype='float32',
+            self, data, fname='tmp/data.tiff', dtype='float32',
             dmin=None, dmax=None, overwrite=False):
 
         self.fname = os.path.abspath(fname)
