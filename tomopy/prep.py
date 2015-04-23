@@ -245,12 +245,12 @@ def focus_region(
         arr = np.expand_dims(tomo[m, :, ind1:ind2], axis=0)
         if pad:
             if corr:
-                roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=5)
+                roi[m, :, ind1:ind2] = correct_air(arr.copy(), air=1)
             else:
                 roi[m, :, ind1:ind2] = arr
         else:
             if corr:
-                roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=5)
+                roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=1)
             else:
                 roi[m, :, 0:(ind2 - ind1)] = arr
     return roi
