@@ -78,7 +78,7 @@ def test_apply_pad():
         np.ones((4, 8, 23)))
 
 
-def test_focus_downsample():
+def test_downsample():
     assert_array_almost_equal(
         downsample(np.ones((4, 8, 16)), level=1, axis=0),
         np.ones((2, 8, 16)))
@@ -90,7 +90,7 @@ def test_focus_downsample():
         np.ones((4, 8, 2)))
 
 
-def test_focus_upsample():
+def test_upsample():
     assert_array_almost_equal(
         upsample(np.ones((4, 8, 16)), level=3, axis=0),
         np.ones((32, 8, 16)))
