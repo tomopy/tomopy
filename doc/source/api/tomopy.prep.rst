@@ -13,7 +13,8 @@
       circular_roi
       correct_air
       normalize
-      remove_stripe
+      remove_stripe1
+      remove_stripe2
       remove_zinger
       retrieve_phase
       focus_region
