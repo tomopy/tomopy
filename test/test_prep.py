@@ -99,10 +99,10 @@ def test_correct_air():
 
 def test_focus_region():
     assert_equals(
-        focus_region(np.ones((4, 6, 8)), dia=5).shape,
-        (4, 6, 5))
+        focus_region(np.ones((4, 6, 8)), dia=2, corr=False).shape,
+        (4, 6, 2))
     assert_equals(
-        np.isnan(focus_region(np.ones((4, 6, 8)), dia=5)).sum(),
+        np.isnan(focus_region(np.ones((4, 6, 8)), dia=2, corr=False)).sum(),
         0)
 
 
