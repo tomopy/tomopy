@@ -562,6 +562,7 @@ def gridrec(
         num_gridy = dz
     if emission is False:
         tomo = -np.log(tomo)
+    print (dy, num_gridx, num_gridy)
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
