@@ -11,10 +11,6 @@ tasks at the `Advanced Photon Source <http://www.aps.anl.gov>`_.
 This guide is maintained on 
 `GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
 
-.. warning:: This is still in beta stage. Returning users can use 
-   `legacy branch <https://github.com/tomopy/tomopy/tree/legacy>`_ 
-   for the previous version.
-
 .. toctree::
    :maxdepth: 1
    
