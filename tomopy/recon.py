@@ -262,7 +262,6 @@ def bart(
     if num_gridy is None:
         num_gridy = dz
     if emission is False:
-        print(0)
         tomo = -np.log(tomo)
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
@@ -562,7 +561,6 @@ def gridrec(
         num_gridy = dz
     if emission is False:
         tomo = -np.log(tomo)
-    print (dy, num_gridx, num_gridy)
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
     # Make sure that inputs datatypes are correct
