@@ -48,15 +48,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.prep import *
+from tomopy.misc.corr import *
 import numpy as np
 from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
-
-
-__author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
 
 
 def synthetic_data():
@@ -79,108 +74,72 @@ def synthetic_data():
     return data
 
 
-def test_circular_roi():
-    assert_equals(
-        circular_roi(np.ones((10, 12, 14))).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(circular_roi(np.ones((10, 12, 14)))).sum(),
-        0)
-
-
-def test_correct_air():
-    assert_equals(
-        correct_air(np.ones((10, 12, 14)), air=1).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(correct_air(np.ones((10, 12, 14)), air=1)).sum(),
-        0)
-
-
-def test_focus_region():
-    assert_equals(
-        focus_region(np.ones((4, 6, 8)), dia=2, corr=False).shape,
-        (4, 6, 2))
-    assert_equals(
-        np.isnan(focus_region(np.ones((4, 6, 8)), dia=2, corr=False)).sum(),
-        0)
-
-
-def test_normalize():
-    # Synthetic white field data
-    white = np.array(
-        [[[52., 53., 51., 56., 55.],
-          [51., 53., 50., 51., 51.],
-          [52., 50., 55., 51., 50.],
-          [51., 52., 50., 49., 51.]],
-         [[51., 52., 49., 50., 49.],
-          [50., 48., 52., 53., 54.],
-          [52., 51., 50., 51., 51.],
-          [51., 53., 49., 53., 50.]]], dtype='float32')
-
-    # Synthetic dark field data
-    dark = np.array(
-        [[[1., 3., 0., 4., 2.],
-          [1., 0., 5., 0., 3.],
-          [0., 0., 0., 0., 1.],
-          [0., 2., 1., 0., 0.]]], dtype='float32')
-
-    # Expected result
-    result = np.array(
-        [[[0.5545, 1.0000, 0.7800, 0.8367, 1.0000],
-          [0.4646, 1.0000, 0.1522, 1.0000, 0.1818],
-          [0.2692, 1.0000, 0.4762, 1.0000, 0.8081],
-          [0.4706, 1.0000, 0.2268, 1.0000, 0.2970]],
-         [[0.4752, 1.0000, 1.0000, 1.0000, 0.8200],
-          [1.0000, 0.5347, 0.8261, 1.0000, 0.2424],
-          [0.4615, 1.0000, 0.2286, 1.0000, 0.6869],
-          [0.2353, 1.0000, 1.0000, 0.2549, 0.8119]],
-         [[0.2376, 1.0000, 0.6600, 0.1633, 0.7400],
-          [1.0000, 0.6535, 1.0000, 0.3077, 1.0000],
-          [0.8077, 1.0000, 1.0000, 0.2157, 0.8081],
-          [1.0000, 0.1980, 0.6392, 1.0000, 0.2772]]], dtype='float32')
+def test_median_filter():
+    data = synthetic_data()
     assert_array_almost_equal(
-        normalize(synthetic_data(), white, dark, cutoff=1.),
-        result, decimal=4)
+        median_filter(data, axis=0),
+        np.array(
+            [[[29., 39., 45., 45., 53.],
+              [29., 29., 52., 41., 45.],
+              [24., 24., 52., 25., 41.],
+              [24., 24., 52., 25., 41.]],
+             [[27., 63., 68., 63., 43.],
+              [27., 43., 64., 43., 43.],
+              [27., 43., 53., 41., 35.],
+              [24., 53., 53., 41., 41.]],
+             [[33., 33., 33., 33., 39.],
+              [42., 65., 33., 39., 39.],
+              [71., 71., 33., 41., 41.],
+              [90., 42., 32., 32., 14.]]], dtype='float32'))
+
+    assert_array_almost_equal(
+        median_filter(data, axis=1),
+        np.array(
+            [[[29., 39., 63., 45., 53.],
+              [27., 27., 53., 15., 15.],
+              [24., 25., 52., 41., 41.],
+              [24., 24., 64., 15., 15.]],
+             [[29., 39., 63., 43., 43.],
+              [53., 43., 43., 43., 16.],
+              [42., 42., 52., 41., 41.],
+              [24., 32., 53., 32., 15.]],
+             [[25., 33., 63., 39., 39.],
+              [63., 63., 33., 68., 68.],
+              [42., 64., 77., 41., 41.],
+              [53., 32., 32., 32., 14.]]], dtype='float32'))
+
+    assert_array_almost_equal(
+        median_filter(data, axis=2),
+        np.array(
+            [[[29., 74., 39., 68., 43.],
+              [24., 53., 25., 68., 41.],
+              [24., 53., 12., 89., 15.],
+              [24., 64., 12., 89., 35.]],
+             [[25., 65., 39., 45., 43.],
+              [25., 64., 39., 52., 41.],
+              [24., 53., 32., 63., 35.],
+              [24., 53., 32., 63., 35.]],
+             [[25., 65., 43., 16., 39.],
+              [42., 65., 63., 16., 41.],
+              [63., 33., 74., 16., 41.],
+              [42., 53., 32., 63., 35.]]], dtype='float32'))
 
 
-def test_remove_stripe1():
-    assert_equals(
-        remove_stripe1(np.ones((10, 12, 14))).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(remove_stripe1(np.ones((10, 12, 14)))).sum(),
-        0)
+def test_remove_neg():
+    arr = np.arange(-2, 2, dtype='float32')
+    out = remove_neg(arr)
+    assert_equals(out[out < 0].size, 0)
 
 
-def test_remove_stripe2():
-    assert_equals(
-        remove_stripe1(np.ones((10, 12, 14))).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(remove_stripe1(np.ones((10, 12, 14)))).sum(),
-        0)
+def test_remove_nan():
+    arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
+    out = remove_nan(arr)
+    assert_equals(np.isnan(out).sum(), 0)
 
 
-def test_remove_zinger():
-    assert_equals(
-        remove_zinger(np.ones((10, 12, 14)), dif=10).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(remove_zinger(np.ones((10, 12, 14)), dif=10)).sum(),
-        0)
-
-
-def test_retrieve_phase():
-    assert_equals(
-        retrieve_phase(np.ones((10, 12, 14)), pad=True).shape,
-        (10, 12, 14))
-    assert_equals(
-        np.isnan(retrieve_phase(np.ones((10, 12, 14)), pad=True)).sum(),
-        0)
-    assert_equals(
-        np.isnan(retrieve_phase(np.ones((10, 12, 14)), pad=False)).sum(),
-        0)
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
 
 
 if __name__ == '__main__':

@@ -82,7 +82,9 @@ gridrec(
     float *theta,
     float *recon,
     int ngridx, int ngridy,
-    char name[16]);
+    char name[16],
+    int istart,
+    int iend);
 
 float*** 
 convert(float *arr, int dim0, int dim1, int dim2);

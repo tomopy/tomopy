@@ -80,17 +80,35 @@ def synthetic_data():
     return data
 
 
-def synthetic_func(a, val, ind):
-    a = mp.shared_data
-    for m in ind:
+def _synthetic_func(val, istart, iend):
+    a = mp.SHARED_ARRAY
+    for m in range(istart, iend):
         a[m, :, :] = val
 
 
 def test_distribute_jobs():
-    out = distribute_jobs(synthetic_data(), synthetic_func, axis=0, args=[1.])
-    assert_equals(out.shape, (3, 4, 5))
-    assert_equals(np.isnan(out).sum(), 0)
-    assert_array_almost_equal(out, np.ones((3, 4, 5)))
+    dat = synthetic_data()
+    assert_array_almost_equal(
+        distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0),
+        np.ones((3, 4, 5)))
+    assert_equals(
+        distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0).shape,
+        (3, 4, 5))
+    assert_equals(
+        np.isnan(distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0)).sum(),
+        0)
 
 
 if __name__ == '__main__':
