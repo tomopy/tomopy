@@ -45,23 +45,60 @@
 
 
 DLL void 
-apply_padding(
+apply_pad(
     float* data, int dx, int dy, int dz, 
-    int npad, float* out) 
+    int axis, int npad, float* out) 
 {
-    int n, m, i, j, k, iproj, ipproj;
-    int pad_width = (int)(npad-dz)/2;
-    
-    for (m = 0; m < dx; m++) {
-        iproj = m * (dz * dy);
-        ipproj = pad_width + m * (npad * dy);
+    int n, m, i1, i2, j1, j2, k;
 
-        for (n = 0; n < dy; n++) {
-            i = iproj + n * dz;
-            j = ipproj + n * npad;
-
-            for (k = 0; k < dz; k++) {
-                out[j+k] = data[i+k];
+    if (axis == 0)
+    {
+        for (m = 0; m < dx; m++) 
+        {
+            i1 = m * (dy * dz);
+            i2 = ((int)(npad-dx)/2 + m) * (dy * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j1 = n * dz;
+                j2 = n * dz;
+                for (k = 0; k < dz; k++) 
+                {
+                    out[i2+j2+k] = data[i1+j1+k];
+                }
+            }
+        }
+    }
+    else if (axis == 1)
+    {
+        for (m = 0; m < dx; m++) 
+        {
+            i1 = m * (dy * dz);
+            i2 = m * (npad * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j1 = n * dz;
+                j2 = ((int)(npad-dy)/2 + n) * dz;
+                for (k = 0; k < dz; k++) 
+                {
+                    out[i2+j2+k] = data[i1+j1+k];
+                }
+            }
+        }
+    }
+    else if (axis == 2)
+    {
+        for (m = 0; m < dx; m++) 
+        {
+            i1 = m * (dy * dz);
+            i2 = (int)(npad-dz)/2 + m * (npad * dy);
+            for (n = 0; n < dy; n++) 
+            {
+                j1 = n * dz;
+                j2 = n * npad;
+                for (k = 0; k < dz; k++) 
+                {
+                    out[i2+j2+k] = data[i1+j1+k];
+                }
             }
         }
     }
@@ -69,30 +106,71 @@ apply_padding(
 
 
 DLL void 
-downsample2d(
+downsample(
     float* data, int dx, int dy, int dz,
-    int level, float* out) 
+    int level, int axis, float* out) 
 {
-    int m, n, k, i, p, iproj, ind;
+    int m, n, k, i, j, p, ind;
     int binsize;
     
     binsize = pow(2, level);
     
-    dz /= binsize;
-
-    for (m = 0, ind = 0; m < dx; m++) 
+    if (axis == 0)
     {
-        iproj = m * (dz * dy);
-            
-        for (n = 0; n < dy; n++) 
+        dx /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
         {
-            i = iproj + n * dz;
-            for (k = 0; k < dz; k++) 
+            i = m * (dy * dz);
+            for (p = 0; p < binsize; p++) 
             {
+                for (n = 0; n < dy; n++) 
+                {
+                    j = n * dz;
+                    for (k = 0; k < dz; k++)
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
+                }
+            }
+        }
+    }
+    else if (axis == 1)
+    {
+        dy /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
+        {
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j = n * dz;
                 for (p = 0; p < binsize; p++) 
                 {
-                    out[i+k] += data[ind]/binsize;
-                    ind++;
+                    for (k = 0; k < dz; k++)
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
+                }
+            }
+        }
+    }
+    else if (axis == 2)
+    {
+        dz /= binsize;
+        for (m = 0, ind = 0; m < dx; m++) 
+        {
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
+            {
+                j = n * dz;
+                for (k = 0; k < dz; k++) 
+                {
+                    for (p = 0; p < binsize; p++) 
+                    {
+                        out[i+j+k] += data[ind]/binsize;
+                        ind++;
+                    }
                 }
             }
         }
@@ -101,100 +179,67 @@ downsample2d(
 
 
 DLL void 
-downsample3d(
+upsample(
     float* data, int dx, int dy, int dz,
-    int level, float* out) 
-{
-    int m, n, k, i, p, q, iproj, ind;
-    int binsize, binsize2;
+    int level, int axis, float* out) {
+
+    int m, n, k, i, j, p, ind;
+    int binsize;
     
     binsize = pow(2, level);
-    binsize2 = binsize * binsize;
     
-    dy /= binsize;
-    dz /= binsize;
-
-    for (m = 0, ind = 0; m < dx; m++) 
+    if (axis == 0)
     {
-        iproj = m * (dz * dy);
-        for (n = 0; n < dy; n++) 
+        for (m = 0, ind = 0; m < dx; m++) 
         {
-            i = iproj + n * dz;
-            for (q = 0; q < binsize; q++) 
+            i = m * (dy * dz);
+            for (p = 0; p < binsize; p++) 
             {
-                for (k = 0; k < dz; k++) 
-                { 
-                    for (p = 0; p < binsize; p++) 
+                for (n = 0; n < dy; n++) 
+                {
+                    j = n * dz;
+                    for (k = 0; k < dz; k++)
                     {
-                        out[i+k] += data[ind]/binsize2;
+                        out[ind] = data[i+j+k];
                         ind++;
                     }
                 }
             }
         }
     }
-}
-
-
-DLL void 
-upsample2d(
-    float* data, int dy, int dz,
-    int level, float* out) {
-
-    long m, n, k, i, p, q, iproj, ind;
-    int binsize;
-    
-    binsize = pow(2, level);
-    
-    for (m = 0, ind = 0; m < dy; m++) 
+    else if (axis == 1)
     {
-        iproj = m * (dz * dz);
-        for (n = 0; n < dz; n++) 
+        for (m = 0, ind = 0; m < dx; m++) 
         {
-            i = iproj + n * dz;
-            for (q = 0; q < binsize; q++) 
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
             {
-                for (k = 0; k < dz; k++) 
+                j = n * dz;
+                for (p = 0; p < binsize; p++) 
                 {
-                    for (p = 0; p < binsize; p++) 
+                    for (k = 0; k < dz; k++)
                     {
-                        out[ind] = data[i+k];
+                        out[ind] = data[i+j+k];
                         ind++;
                     }
                 }
             }
         }
     }
-}
-
-
-DLL void 
-upsample3d(
-    float* data, int dy, int dz,
-    int level, float* out) {
-
-    int m, n, k, i, p, q, j, iproj, ind;
-    int binsize;
-
-    binsize = pow(2, level);
-
-    for (m = 0, ind = 0; m < dy; m++) 
+    else if (axis == 2)
     {
-        iproj = m * (dz * dz);
-        for (j = 0; j < binsize; j++) 
+        for (m = 0, ind = 0; m < dx; m++) 
         {
-            for (n = 0; n < dz; n++) 
+            i = m * (dy * dz);
+            for (n = 0; n < dy; n++) 
             {
-                i = iproj + n * dz;
-                for (q = 0; q < binsize; q++) 
+                j = n * dz;
+                for (k = 0; k < dz; k++) 
                 {
-                    for (k = 0; k < dz; k++) 
+                    for (p = 0; p < binsize; p++) 
                     {
-                        for (p = 0; p < binsize; p++) 
-                        {
-                            out[ind] = data[i+k];
-                            ind++;
-                        }
+                        out[ind] = data[i+j+k];
+                        ind++;
                     }
                 }
             }

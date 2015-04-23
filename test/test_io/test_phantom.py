@@ -62,51 +62,43 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_baboon():
-    out = baboon()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(baboon().dtype, 'float32')
+    assert_equals(baboon().shape, (1, 512, 512))
 
 
 def test_barbara():
-    out = barbara()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(barbara().dtype, 'float32')
+    assert_equals(barbara().shape, (1, 512, 512))
 
 
 def test_cameraman():
-    out = cameraman()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(cameraman().dtype, 'float32')
+    assert_equals(cameraman().shape, (1, 512, 512))
 
 
 def test_checkerboard():
-    out = checkerboard()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(checkerboard().dtype, 'float32')
+    assert_equals(checkerboard().shape, (1, 512, 512))
 
 
 def test_lena():
-    out = lena()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(lena().dtype, 'float32')
+    assert_equals(lena().shape, (1, 512, 512))
 
 
 def test_peppers():
-    out = peppers()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(peppers().dtype, 'float32')
+    assert_equals(peppers().shape, (1, 512, 512))
 
 
 def test_shepp2d():
-    out = shepp2d()
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (1, 512, 512))
+    assert_equals(shepp2d().dtype, 'float32')
+    assert_equals(shepp2d().shape, (1, 512, 512))
 
 
 def test_shepp3d():
-    out = shepp3d((6, 8, 10))
-    assert_equals(out.dtype, 'float32')
-    assert_equals(out.shape, (6, 8, 10))
+    assert_equals(shepp3d((6, 8, 10)).dtype, 'float32')
+    assert_equals(shepp3d((6, 8, 10)).shape, (6, 8, 10))
 
 
 if __name__ == '__main__':

@@ -11,4 +11,5 @@
    .. autosummary::
    
       apply_pad
-      focus_region
+      downsample
+      upsample

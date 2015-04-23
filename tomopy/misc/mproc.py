@@ -64,9 +64,9 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['distribute_jobs']
 
 
-def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
+def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
     """
-    Distribute N-dimensional shared-memory data in chunks into cores.
+    Distribute N-dimensional shared-memory array in chunks into cores.
 
     Parameters
     ----------
@@ -77,21 +77,21 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
     axis : int
         Axis along which parallelization is performed.
     ncore : int, optional
-        Number of available cores that will be assigned to jobs.
+        Number of cores that will be assigned to jobs.
     nchunk : int, optional
-        Number of data chunk size for each core.
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
-        Output data.
+        Output array.
     """
     # Arrange number of processors.
     if ncore is None:
         ncore = mp.cpu_count()
-    dims = data.shape[axis]
+    dims = arr.shape[axis]
 
-    # Maximum number of available processors for the task.
+    # Maximum number of processors for the task.
     if dims < ncore:
         ncore = dims
 
@@ -105,33 +105,33 @@ def distribute_jobs(data, func, args, axis, ncore=None, nchunk=None):
     # Populate arguments for workers.
     arg = []
     for m in range(npool):
-        ind_start = m * nchunk
-        ind_end = (m + 1) * nchunk
-        if ind_start >= dims:
+        istart = m * nchunk
+        iend = (m + 1) * nchunk
+        if istart >= dims:
             npool -= 1
             break
-        if ind_end > dims:
-            ind_end = dims
+        if iend > dims:
+            iend = dims
 
-        arr = []
-        arr.append(func)
-        arr.append("SHARED")
+        _arg = []
+        _arg.append(func)
         for a in args:
-            arr.append(a)
-        arr.append(range(ind_start, ind_end))
-        arg.append(arr)
+            _arg.append(a)
+        _arg.append(istart)
+        _arg.append(iend)
+        arg.append(_arg)
 
-    shared_data = mp.Array(ctypes.c_float, data.size)
-    shared_data = _to_numpy_array(shared_data, data.shape)
-    shared_data[:] = data
+    shared_arr = mp.Array(ctypes.c_float, arr.size)
+    shared_arr = _to_numpy_array(shared_arr, arr.shape)
+    shared_arr[:] = arr
 
     # write to arr from different processes
     with closing(mp.Pool(
-            initializer=_init_shared, initargs=(shared_data,))) as p:
+            initializer=_init_shared, initargs=(shared_arr,))) as p:
         p.map_async(_arg_parser, arg)
     p.join()
     p.close()
-    return shared_data
+    return shared_arr
 
 
 def _arg_parser(args):
@@ -139,9 +139,9 @@ def _arg_parser(args):
     func(*args[1::])
 
 
-def _init_shared(shared_data_):
-    global shared_data
-    shared_data = shared_data_
+def _init_shared(shared_arr_):
+    global SHARED_ARRAY
+    SHARED_ARRAY = shared_arr_
 
 
 def _to_numpy_array(mp_arr, dshape):

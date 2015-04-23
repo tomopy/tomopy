@@ -47,7 +47,8 @@
 void 
 simulate(
     float *obj, int ox, int oy, int oz, 
-    float *data, int dx, int dy, int dz, float *center, float *theta)
+    float *data, int dx, int dy, int dz, float *center, float *theta,
+    int istart, int iend)
 {
 
     float *gridx = (float *)malloc((oy+1)*sizeof(float));
@@ -80,7 +81,7 @@ simulate(
             &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
         // For each projection angle
-        for (p=0; p<dx; p++) 
+        for (p=istart; p<iend; p++) 
         {
             // Calculate the sin and cos values 
             // of the projection angle and find

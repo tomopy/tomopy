@@ -47,15 +47,16 @@
 # #########################################################################
 
 """
-Module for data size morphing functions.
+Module for data correction functions.
 """
 
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import os
 import ctypes
+import os
 import tomopy.misc.mproc as mp
+from scipy.ndimage import filters
 import logging
 logger = logging.getLogger(__name__)
 
@@ -63,9 +64,9 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['apply_pad',
-           'downsample',
-           'upsample']
+__all__ = ['median_filter',
+           'remove_nan',
+           'remove_neg']
 
 
 def _import_shared_lib(lib_name):
@@ -92,135 +93,87 @@ def _import_shared_lib(lib_name):
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
-def apply_pad(arr, npad=None, axis=2, val=0.):
+def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     """
-    Extend size of 3D array along specified axis.
+    Apply median filter to a 3D array along a specified axis.
 
     Parameters
     ----------
     arr : ndarray
-        3D input array.
-    npad : int, optional
-        New dimensions after padding.
+        Arbitrary 3D array.
+    size : int, optional
+        The size of the filter.
     axis : int, optional
-        Axis along which padding will be performed.
+        Axis along which median filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Median filtered 3D array.
+    """
+    arr = mp.distribute_jobs(
+        arr,
+        func=_median_filter,
+        args=(size, axis),
+        axis=axis,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _median_filter(size, axis, istart, iend):
+    arr = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        if axis == 0:
+            arr[m, :, :] = filters.median_filter(
+                arr[m, :, :], (size, size))
+        elif axis == 1:
+            arr[:, m, :] = filters.median_filter(
+                arr[:, m, :], (size, size))
+        elif axis == 2:
+            arr[:, :, m] = filters.median_filter(
+                arr[:, :, m], (size, size))
+
+
+def remove_nan(arr, val=0.):
+    """
+    Replace NaN values in array with a given value.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input data.
     val : float, optional
-        Pad value.
+        Values to be replaced with NaN values in array.
 
     Returns
     -------
     ndarray
-        Padded 3D array.
+       Corrected array.
     """
-    dx, dy, dz = arr.shape
-    if axis == 0:
-        if npad is None:
-            npad = int(np.ceil(dx * np.sqrt(2)))
-        elif npad < dx:
-            npad = dx
-        out = val * np.ones((npad, dy, dz), dtype='float32')
-    if axis == 1:
-        if npad is None:
-            npad = int(np.ceil(dy * np.sqrt(2)))
-        elif npad < dy:
-            npad = dy
-        out = val * np.ones((dx, npad, dz), dtype='float32')
-    if axis == 2:
-        if npad is None:
-            npad = int(np.ceil(dz * np.sqrt(2)))
-        elif npad < dz:
-            npad = dz
-        out = val * np.ones((dx, dy, npad), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.apply_pad.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.apply_pad(
-        arr.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
-        ctypes.c_int(axis), ctypes.c_int(npad),
-        out.ctypes.data_as(c_float_p))
-    return out
+    arr[np.isnan(arr)] = val
+    return arr
 
 
-def downsample(arr, level=1, axis=2):
+def remove_neg(arr, val=0.):
     """
-    Downsample along specified axis of a 3D array.
+    Replace negative values in array with a given value.
 
     Parameters
     ----------
     arr : ndarray
-        3D input array.
-    level : int, optional
-        Downsampling level in powers of two.
-    axis : int, optional
-        Axis along which downsampling will be performed.
+        Input array.
+    val : float, optional
+        Values to be replaced with negative values in array.
 
     Returns
     -------
     ndarray
-        Downsampled 3D array.
+       Corrected array.
     """
-    dx, dy, dz = arr.shape
-    if axis == 0:
-        out = np.zeros((dx / np.power(2, level), dy, dz), dtype='float32')
-    if axis == 1:
-        out = np.zeros((dx, dy / np.power(2, level), dz), dtype='float32')
-    if axis == 2:
-        out = np.zeros((dx, dy, dz / np.power(2, level)), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.downsample.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.downsample(
-        arr.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
-        ctypes.c_int(level), ctypes.c_int(axis),
-        out.ctypes.data_as(c_float_p))
-    return out
-
-
-def upsample(arr, level=1, axis=2):
-    """
-    Upsample along specified axis of a 3D array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        3D input array.
-    level : int, optional
-        Downsampling level in powers of two.
-    axis : int, optional
-        Axis along which upsampling will be performed.
-
-    Returns
-    -------
-    ndarray
-        Upsampled 3D array.
-    """
-    dx, dy, dz = arr.shape
-    if axis == 0:
-        out = np.zeros((dx * np.power(2, level), dy, dz), dtype='float32')
-    if axis == 1:
-        out = np.zeros((dx, dy * np.power(2, level), dz), dtype='float32')
-    if axis == 2:
-        out = np.zeros((dx, dy, dz * np.power(2, level)), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.upsample.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.upsample(
-        arr.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
-        ctypes.c_int(level), ctypes.c_int(axis),
-        out.ctypes.data_as(c_float_p))
-    return out
+    arr[arr < 0.0] = val
+    return arr
