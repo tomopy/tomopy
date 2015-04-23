@@ -284,22 +284,23 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
-    # Avoid zero division in normalization
-    denom = flat - dark
-    denom[denom == 0] = 1e-6
-
     arr = mp.distribute_jobs(
         tomo,
         func=_normalize,
-        args=(denom, dark, cutoff),
+        args=(flat, dark, cutoff),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _normalize(denom, dark, cutoff, istart, iend):
+def _normalize(flat, dark, cutoff, istart, iend):
     tomo = mp.SHARED_ARRAY
+
+    # Avoid zero division in normalization
+    denom = flat - dark
+    denom[denom == 0] = 1e-6
+
     for m in range(istart, iend):
         proj = np.divide(tomo[m, :, :] - dark, denom)
         if cutoff is not None:
