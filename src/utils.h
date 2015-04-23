@@ -78,7 +78,9 @@ simulate(
     int dy, 
     int dz,
     float *center,
-    float *theta);
+    float *theta,
+    int istart, 
+    int iend);
 
 // Reconstruction algorithms
 
@@ -93,7 +95,9 @@ art(
     float *recon,
     int ngridx,
     int ngridy,
-    int num_iter);
+    int num_iter,
+    int istart, 
+    int iend);
 
 void 
 bart(
@@ -108,7 +112,9 @@ bart(
     int ngridy,
     int num_iter,
     int num_block,
-    float *ind_block);
+    float *ind_block,
+    int istart, 
+    int iend);
 
 void 
 fbp(
@@ -120,7 +126,9 @@ fbp(
     float *theta,
     float *recon,
     int ngridx,
-    int ngridy);
+    int ngridy,
+    int istart, 
+    int iend);
 
 void 
 mlem(
@@ -133,7 +141,9 @@ mlem(
     float *recon,
     int ngridx,
     int ngridy,
-    int num_iter);
+    int num_iter,
+    int istart, 
+    int iend);
 
 void 
 osem(
@@ -148,7 +158,9 @@ osem(
     int ngridy,
     int num_iter,
     int num_block,
-    float *ind_block);
+    float *ind_block,
+    int istart, 
+    int iend);
 
 void 
 ospml_hybrid(
@@ -164,7 +176,9 @@ ospml_hybrid(
     int num_iter,
     float *reg_pars,
     int num_block,
-    float *ind_block);
+    float *ind_block,
+    int istart, 
+    int iend);
 
 void 
 ospml_quad(
@@ -180,7 +194,9 @@ ospml_quad(
     int num_iter,
     float *reg_pars,
     int num_block,
-    float *ind_block);
+    float *ind_block,
+    int istart, 
+    int iend);
 
 void 
 pml_hybrid(
@@ -194,7 +210,9 @@ pml_hybrid(
     int ngridx,
     int ngridy,
     int num_iter,
-    float *reg_pars);
+    float *reg_pars,
+    int istart, 
+    int iend);
 
 void 
 pml_quad(
@@ -208,7 +226,9 @@ pml_quad(
     int ngridx,
     int ngridy,
     int num_iter,
-    float *reg_pars);
+    float *reg_pars,
+    int istart, 
+    int iend);
 
 void 
 sirt(
@@ -221,7 +241,9 @@ sirt(
     float *recon,
     int ngridx,
     int ngridy,
-    int num_iter);
+    int num_iter,
+    int istart, 
+    int iend);
 
 // Utility functions for data simultation
 

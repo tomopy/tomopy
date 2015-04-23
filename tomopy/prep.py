@@ -69,7 +69,7 @@ __all__ = ['circular_roi',
            'correct_air',
            'focus_region',
            'normalize',
-           'remove_stripe',
+           'remove_stripe1',
            'remove_stripe2',
            'remove_zinger',
            'retrieve_phase']
@@ -78,6 +78,7 @@ __all__ = ['circular_roi',
 BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
 SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
+PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 
 def _import_shared_lib(lib_name):
@@ -124,8 +125,6 @@ def circular_roi(tomo, ratio=1, val=None):
         Masked 3D tomographic data.
     """
     dx, dy, dz = tomo.shape
-    ind = np.arange(0, dx)
-
     ind1 = dy
     ind2 = dz
     rad1 = ind1 / 2
@@ -136,16 +135,14 @@ def circular_roi(tomo, ratio=1, val=None):
         r2 = rad2 * rad2
     y, x = np.ogrid[-rad1:rad1, -rad2:rad2]
     mask = x * x + y * y > ratio * ratio * r2
-    print(mask.shape, tomo.shape)
     if val is None:
         val = np.mean(tomo[:, ~mask])
-
-    for m in ind:
+    for m in np.arange(0, dx):
         tomo[m, mask] = val
     return tomo
 
 
-def correct_air(tomo, air=10):
+def correct_air(tomo, air=10, ncore=None, nchunk=None):
     """
     Weights sinogram such that the left and right image boundaries
     (i.e., typically the air region around the object) are set to one
@@ -157,32 +154,45 @@ def correct_air(tomo, air=10):
         3D tomographic data.
     air : int, optional
         Number of pixels at each boundary to calculate the scaling factor.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Corrected 3D tomographic data.
     """
-    dx, dy, dz = tomo.shape
-
     # Make sure that inputs datatypes are correct
     if not isinstance(tomo, np.float32):
         tomo = np.array(tomo, dtype='float32')
     if not isinstance(air, np.int32):
         air = np.array(air, dtype='int32')
 
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_correct_air,
+        args=(air,),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _correct_air(air, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.correct_air(
         tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy),
-        ctypes.c_int(dz), ctypes.c_int(air))
-    return tomo
+        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
+        ctypes.c_int(istart), ctypes.c_int(iend), ctypes.c_int(air))
 
 
 def focus_region(
-        tomo, dia, xcoord=0, ycoord=0,
-        center=None, pad=False, corr=True):
+        tomo, dia, xcoord=0, ycoord=0, center=None, pad=False, corr=True):
     """
     Trims sinogram for reconstructing a circular region of interest (ROI).
 
@@ -208,15 +218,14 @@ def focus_region(
     -------
     ndarray
         Modified 3D tomographic tomo.
-    float
-        New rotation axis location.
     """
     dx, dy, dz = tomo.shape
     if center is None:
         center = dz / 2.
-    roi = np.ones((dx, dy, dia), dtype='float32')
     if pad:
         roi = np.ones((dx, dy, dz), dtype='float32')
+    else:
+        roi = np.ones((dx, dy, dia), dtype='float32')
     rad = np.sqrt(xcoord * xcoord + ycoord * ycoord)
     alpha = np.arctan2(xcoord, ycoord)
     l1 = center - dia / 2
@@ -244,12 +253,10 @@ def focus_region(
                 roi[m, :, 0:(ind2 - ind1)] = correct_air(arr, air=5)
             else:
                 roi[m, :, 0:(ind2 - ind1)] = arr
-        if not pad:
-            center = dz / 2.
-    return roi, center
+    return roi
 
 
-def normalize(tomo, flat, dark, cutoff=None, ind=None):
+def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     """
     Normalize raw projection data using the flat and dark field projections.
 
@@ -263,26 +270,16 @@ def normalize(tomo, flat, dark, cutoff=None, ind=None):
         3D dark field data.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
-    ind : array of int, optional
-        Projection indices at which the normalization is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Normalized 3D tomographic data.
     """
-    if type(tomo) == str and tomo == 'SHARED':
-        tomo = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            tomo, func=normalize, axis=0,
-            args=(flat, dark, cutoff))
-        return arr
-
-    dx, dy, dz = tomo.shape
-    if ind is None:
-        ind = np.arange(0, dx)
-
     # Calculate average flat and dark fields for normalization.
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
@@ -291,17 +288,28 @@ def normalize(tomo, flat, dark, cutoff=None, ind=None):
     denom = flat - dark
     denom[denom == 0] = 1e-6
 
-    for m in ind:
-        proj = tomo[m, :, :]
-        proj = np.divide(proj - dark, denom)
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_normalize,
+        args=(denom, dark, cutoff),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _normalize(denom, dark, cutoff, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        proj = np.divide(tomo[m, :, :] - dark, denom)
         if cutoff is not None:
             proj[proj > cutoff] = cutoff
         tomo[m, :, :] = proj
 
 
-def remove_stripe(
-        tomo, level=None, wname='db5',
-        sigma=2, pad=True, ind=None):
+def remove_stripe1(
+        tomo, level=None, wname='db5', sigma=2,
+        pad=True, ncore=None, nchunk=None):
     """
     Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW)
     based method :cite:`Munch:09`.
@@ -318,54 +326,56 @@ def remove_stripe(
         Damping parameter in Fourier space.
     pad : bool, optional
         If True, extend the size of the sinogram by padding with zeros.
-    ind : array of int, optional
-        Sinogram indices at which the stripe removal is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Corrected 3D tomographic data.
     """
-    if type(tomo) == str and tomo == 'SHARED':
-        tomo = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            tomo, func=remove_stripe, axis=1,
-            args=(level, wname, sigma, pad))
-        return arr
-
-    dx, dy, dz = tomo.shape
-    if ind is None:
-        ind = np.arange(0, dy)
     if level is None:
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
-    # pad temp image.
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_remove_stripe1,
+        args=(level, wname, sigma, pad),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _remove_stripe1(level, wname, sigma, pad, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     nx = dx
     if pad:
         nx = dx + dx / 8
-
     xshift = int((nx - dx) / 2.)
     sli = np.zeros((nx, dz), dtype='float32')
 
-    for n in ind:
-        sli[xshift:dx + xshift, :] = tomo[:, n, :]
+    for m in range(istart, iend):
+        sli[xshift:dx + xshift, :] = tomo[:, m, :]
 
         # Wavelet decomposition.
         cH = []
         cV = []
         cD = []
-        for m in range(level):
+        for n in range(level):
             sli, (cHt, cVt, cDt) = pywt.dwt2(sli, wname)
             cH.append(cHt)
             cV.append(cVt)
             cD.append(cDt)
 
         # FFT transform of horizontal frequency bands.
-        for m in range(level):
+        for n in range(level):
             # FFT
-            fcV = np.fft.fftshift(np.fft.fft(cV[m], axis=0))
+            fcV = np.fft.fftshift(np.fft.fft(cV[n], axis=0))
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
@@ -374,17 +384,17 @@ def remove_stripe(
             fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
 
             # Inverse FFT.
-            cV[m] = np.real(np.fft.ifft(np.fft.ifftshift(fcV), axis=0))
+            cV[n] = np.real(np.fft.ifft(np.fft.ifftshift(fcV), axis=0))
 
         # Wavelet reconstruction.
-        for m in range(level)[::-1]:
-            sli = sli[0:cH[m].shape[0], 0:cH[m].shape[1]]
-            sli = pywt.idwt2((sli, (cH[m], cV[m], cD[m])), wname)
+        for n in range(level)[::-1]:
+            sli = sli[0:cH[n].shape[0], 0:cH[n].shape[1]]
+            sli = pywt.idwt2((sli, (cH[n], cV[n], cD[n])), wname)
 
-        tomo[:, n, :] = sli[xshift:dx + xshift, 0:dz]
+        tomo[:, m, :] = sli[xshift:dx + xshift, 0:dz]
 
 
-def remove_stripe2(tomo, nblock=0, alpha=1.5, ind=None):
+def remove_stripe2(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     """
     Remove horizontal stripes from sinogram using Titarenko's
     approach :cite:`Miqueles:14`.
@@ -397,28 +407,30 @@ def remove_stripe2(tomo, nblock=0, alpha=1.5, ind=None):
         Number of blocks.
     alpha : int, optional
         Damping factor.
-    ind : array of int, optional
-        Sinogram indices at which the stripe removal is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Corrected 3D tomographic data.
     """
-    if type(tomo) == str and tomo == 'SHARED':
-        tomo = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            tomo, func=remove_stripe2, axis=1,
-            args=(nblock, alpha))
-        return arr
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_remove_stripe2,
+        args=(nblock, alpha),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
 
-    dx, dy, dz = tomo.shape
-    if ind is None:
-        ind = np.arange(0, dy)
 
-    for n in ind:
-        sino = tomo[:, n, :]
+def _remove_stripe2(nblock, alpha, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        sino = tomo[:, m, :]
         if (nblock == 0):
             d1 = _ring(sino, 1, 1)
             d2 = _ring(sino, 2, 1)
@@ -430,14 +442,14 @@ def remove_stripe2(tomo, nblock=0, alpha=1.5, ind=None):
             d2 = _ringb(sino, 2, 1, size)
             p = d1 * d2
             d = np.sqrt(p + alpha * np.fabs(p.min()))
-        tomo[:, n, :] = d
+        tomo[:, m, :] = d
 
 
 def _kernel(m, n):
-    v = [[np.array([1, -1]), 
+    v = [[np.array([1, -1]),
           np.array([-3 / 2, 2, -1 / 2]),
           np.array([-11 / 6, 3, -3 / 2, 1 / 3])],
-         [np.array([-1, 2, -1]), 
+         [np.array([-1, 2, -1]),
           np.array([2, -5, 4, -1])],
          [np.array([-1, 3, -3, 1])]]
     return v[m - 1][n - 1]
@@ -527,7 +539,7 @@ def _ringb(sino, m, n, step):
     return np.transpose(newsino)
 
 
-def remove_zinger(tomo, dif=1000, size=3, ind=None):
+def remove_zinger(tomo, dif, size=3, ncore=None, nchunk=None):
     """
     Remove high intensity bright spots from 3D tomographic data.
 
@@ -535,34 +547,36 @@ def remove_zinger(tomo, dif=1000, size=3, ind=None):
     ----------
     tomo : ndarray
         3D tomographic data.
-    dif : float, optional
-        Expected difference value between outlier measurements and
-        the median filtered raw measurements.
+    dif : float
+        Expected difference value between outlier measurement and
+        the median filtered raw measurement.
     size : int, optional
         Size of the median filter.
-    ind : array of int, optional
-        Projection indices at which the zinger removal is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Corrected 3D tomographic data.
     """
-    if type(tomo) == str and tomo == 'SHARED':
-        tomo = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            tomo, func=remove_zinger, axis=0,
-            args=(dif, size))
-        return arr
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_remove_zinger,
+        args=(dif, size),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
 
+
+def _remove_zinger(dif, size, istart, iend):
+    tomo = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-
-    if ind is None:
-        ind = np.arange(0, dx)
-
     mask = np.zeros((1, dy, dz))
-    for m in ind:
+    for m in range(istart, iend):
         tmp = filters.median_filter(tomo[m, :, :], (size, size))
         mask = ((tomo[m, :, :] - tmp) >= dif).astype(int)
         tomo[m, :, :] = tmp * mask + tomo[m, :, :] * (1 - mask)
@@ -570,7 +584,7 @@ def remove_zinger(tomo, dif=1000, size=3, ind=None):
 
 def retrieve_phase(
         tomo, psize=1e-4, dist=50, energy=20,
-        alpha=1e-4, pad=True, ind=None):
+        alpha=1e-3, pad=True, ncore=None, nchunk=None):
     """
     Perform single-step phase retrieval from phase-contrast measurements
     :cite:`Paganin:02`.
@@ -589,31 +603,34 @@ def retrieve_phase(
         Regularization parameter.
     pad : bool, optional
         If True, extend the size of the projections by padding with zeros.
-    ind : array of int, optional
-        Projection indices at which the phase retrieval is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Approximated 3D tomographic phase data.
     """
-    if type(tomo) == str and tomo == 'SHARED':
-        tomo = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            tomo, func=retrieve_phase,
-            args=(psize, dist, energy, alpha, pad), axis=0)
-        return arr
-
-    dx, dy, dz = tomo.shape
-    if ind is None:
-        ind = np.arange(0, dx)
-
     # Compute the filter.
     H, xshift, yshift, prj = _paganin_filter(
         tomo, psize, dist, energy, alpha, pad)
 
-    for m in ind:
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_retrieve_phase,
+        args=(H, xshift, yshift, prj, pad),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _retrieve_phase(H, xshift, yshift, prj, pad, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
+    for m in range(istart, iend):
         proj = tomo[m, :, :]
         if pad:
             prj[xshift:dy + xshift, yshift:dz + yshift] = proj
