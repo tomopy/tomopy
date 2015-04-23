@@ -60,6 +60,8 @@ from scipy import ndimage
 import ctypes
 import os
 import shutil
+import tomopy.misc.mproc as mp
+import multiprocessing
 import logging
 logger = logging.getLogger(__name__)
 
@@ -67,20 +69,29 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['simulate',
-           'gridrec',
+__all__ = ['find_center',
            'art',
            'bart',
            'fbp',
+           'gridrec',
            'mlem',
            'osem',
            'ospml_hybrid',
            'ospml_quad',
            'pml_hybrid',
            'pml_quad',
+           'simulate',
            'sirt',
-           'find_center',
            'write_center']
+
+
+def _init_shared(arr):
+    global SHARED_TOMO
+    sarr = multiprocessing.Array(ctypes.c_float, arr.size)
+    sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
+    sarr = np.reshape(sarr, arr.shape)
+    sarr[:] = arr
+    SHARED_TOMO = sarr
 
 
 def _import_shared_lib(lib_name):
@@ -107,63 +118,404 @@ def _import_shared_lib(lib_name):
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
-def simulate(obj, theta, center=None):
+def art(tomo, theta, center=None, emission=True,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        ncore=None, nchunk=None):
     """
-    Simulate parallel projections of a given 3D object.
+    Reconstruct object from projection data using algebraic reconstruction
+    technique (ART) :cite:`Kak:98`.
 
     Parameters
     ----------
-    obj : ndarray
-        Voxelized 3D object.
+    tomo : ndarray
+        3D tomographic data.
     theta : array
         Projection angles in radian.
     center: array, optional
         Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    recon : ndarray, optional
+        Initial values of the reconstruction object.
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    num_iter : int, optional
+        Number of algorithm iterations performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
-        Simulated 3D tomographic data.
+        Reconstructed 3D object.
     """
-    # Estimate data dimensions.
-    ox, oy, oz = obj.shape
-    dx = len(theta)
-    dy = ox
-    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
-    tomo = np.zeros((dx, dy, dz), dtype='float32')
+    dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
     elif np.array(center).size == 1:
         center = np.ones(dy, dtype='float32') * center
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    # Make sure that inputs datatypes are correct.
-    if not isinstance(obj, np.float32):
-        obj = np.array(obj, dtype='float32')
+    # Make sure that inputs datatypes are correct
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
     if not isinstance(theta, np.float32):
         theta = np.array(theta, dtype='float32')
     if not isinstance(center, np.float32):
         center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
 
-    # Call C function to reconstruct recon matrix.
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_art,
+        args=(theta, center, num_gridx, num_gridy, num_iter),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _art(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.simulate(
-        obj.ctypes.data_as(c_float_p),
-        ctypes.c_int(ox),
-        ctypes.c_int(oy),
-        ctypes.c_int(oz),
+    LIB_TOMOPY.art.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.art(
         tomo.ctypes.data_as(c_float_p),
         ctypes.c_int(dx),
         ctypes.c_int(dy),
         ctypes.c_int(dz),
         center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p))
-    return tomo
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
+
+
+def bart(
+        tomo, theta, center=None, emission=True,
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        num_block=1, ind_block=None,
+        ncore=None, nchunk=None):
+    """
+    Reconstruct object from projection data using block algebraic
+    reconstruction technique (BART).
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    center: array, optional
+        Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    recon : ndarray, optional
+        Initial values of the reconstruction object.
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    num_iter : int, optional
+        Number of algorithm iterations performed.
+    num_block : int, optional
+        Number of data blocks for intermediate updating the object.
+    ind_block : array of int, optional
+        Order of projections to be used for updating.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Reconstructed 3D object.
+    """
+    dx, dy, dz = tomo.shape
+    if center is None:
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if emission is False:
+        print(0)
+        tomo = -np.log(tomo)
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    if ind_block is None:
+        ind_block = np.arange(0, dx).astype("float32")
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+    if not isinstance(num_iter, np.int32):
+        num_iter = np.array(num_iter, dtype='int32')
+    if not isinstance(num_block, np.int32):
+        num_block = np.array(num_block, dtype='int32')
+    if not isinstance(ind_block, np.float32):
+        ind_block = np.array(ind_block, dtype='float32')
+
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_bart,
+        args=(theta, center, num_gridx, num_gridy,
+              num_iter, num_block, ind_block),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _bart(
+        theta, center, num_gridx, num_gridy,
+        num_iter, num_block, ind_block, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    LIB_TOMOPY.bart.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.bart(
+        tomo.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        center.ctypes.data_as(c_float_p),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(num_iter),
+        ctypes.c_int(num_block),
+        ind_block.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
+
+
+def fbp(
+        tomo, theta, center=None, emission=True,
+        recon=None, num_gridx=None, num_gridy=None,
+        ncore=None, nchunk=None):
+    """
+    Reconstruct object from projection data using filtered back
+    projection (FBP).
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    center: array, optional
+        Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    recon : ndarray, optional
+        Initial values of the reconstruction object.
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Reconstructed 3D object.
+    """
+    dx, dy, dz = tomo.shape
+    if center is None:
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
+    if num_gridx is None:
+        num_gridx = dz
+    if num_gridy is None:
+        num_gridy = dz
+    if emission is False:
+        tomo = -np.log(tomo)
+    if recon is None:
+        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+
+    # Make sure that inputs datatypes are correct
+    if not isinstance(tomo, np.float32):
+        tomo = np.array(tomo, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+    if not isinstance(recon, np.float32):
+        recon = np.array(recon, dtype='float32')
+    if not isinstance(num_gridx, np.int32):
+        num_gridx = np.array(num_gridx, dtype='int32')
+    if not isinstance(num_gridy, np.int32):
+        num_gridy = np.array(num_gridy, dtype='int32')
+
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_fbp,
+        args=(theta, center, num_gridx, num_gridy),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _fbp(theta, center, num_gridx, num_gridy, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    LIB_TOMOPY.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.fbp(
+        tomo.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        center.ctypes.data_as(c_float_p),
+        theta.ctypes.data_as(c_float_p),
+        recon.ctypes.data_as(c_float_p),
+        ctypes.c_int(num_gridx),
+        ctypes.c_int(num_gridy),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
+
+
+def find_center(
+        tomo, theta, ind=None, emission=True, init=None,
+        tol=0.5, mask=True, ratio=1.):
+    """
+    Find rotation axis location.
+
+    The function exploits systematic artifacts in reconstructed images
+    due to shifts in the rotation center. It uses image entropy
+    as the error metric and ''Nelder-Mead'' routine (of the scipy
+    optimization module) as the optimizer :cite:`Donath:06`.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    ind : int, optional
+        Index of the slice to be used for reconstruction.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    init : float
+        Initial guess for the center.
+    tol : scalar
+        Desired sub-pixel accuracy.
+    mask : bool, optional
+        If ``True``, apply a circular mask to the reconstructed image to
+        limit the analysis into a circular region.
+    ratio : float, optional
+        The ratio of the radius of the circular mask to the edge of the
+        reconstructed image.
+
+    Returns
+    -------
+    float
+        Rotation axis location.
+    """
+    dx, dy, dz = tomo.shape
+    if ind is None:
+        ind = dy / 2
+    if init is None:
+        init = dz / 2
+
+    # Make an initial reconstruction to adjust histogram limits.
+    rec = gridrec(tomo[:, ind:ind + 1, :], theta, emission=emission)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = tomo.shape[2] / 2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        rec[0, msk] = 0
+
+    # Adjust histogram boundaries according to reconstruction.
+    hmin = np.min(rec)
+    if hmin < 0:
+        hmin = 2 * hmin
+    elif hmin >= 0:
+        hmin = 0.5 * hmin
+    hmax = np.max(rec)
+    if hmax < 0:
+        hmax = 0.5 * hmax
+    elif hmax >= 0:
+        hmax = 2 * hmax
+
+    # Magic is ready to happen...
+    res = minimize(
+        _find_center_cost, init,
+        args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
+        method='Nelder-Mead',
+        tol=tol)
+    return res.x
+
+
+def _find_center_cost(
+        center, tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission):
+    """
+    Cost function used for the ``find_center`` routine.
+    """
+    print('Trying center: ', center)
+    center = np.array(center, dtype='float32')
+    rec = gridrec(tomo[:, ind:ind + 1, :], theta, center, emission)
+
+    # Apply circular mask.
+    if mask is True:
+        rad = tomo.shape[2] / 2
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        rec[0, msk] = 0
+
+    hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
+    hist = hist.astype('float32') / rec.size + 1e-12
+    return -np.dot(hist, np.log2(hist))
 
 
 def gridrec(
         tomo, theta, center=None, emission=True,
-        num_gridx=None, num_gridy=None, filter_name='shepp'):
+        num_gridx=None, num_gridy=None, filter_name='shepp',
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using gridrec algorithm
     :cite:`Dowd:99`.
@@ -183,6 +535,10 @@ def gridrec(
     filter_name : str, optional
         Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
         or 'none'.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -221,6 +577,21 @@ def gridrec(
         num_gridy = np.array(num_gridy, dtype='int32')
     filter_name = np.array(filter_name, dtype=(str, 16))
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_gridrec,
+        args=(theta, center, num_gridx, num_gridy, filter_name),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _gridrec(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_char_p = ctypes.POINTER(ctypes.c_char)
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -234,7 +605,9 @@ def gridrec(
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
-        filter_name.ctypes.data_as(c_char_p))
+        filter_name.ctypes.data_as(c_char_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
     # Dump second slice.
     if flag is True:
@@ -242,242 +615,10 @@ def gridrec(
     return recon
 
 
-def art(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
-    """
-    Reconstruct object from projection data using algebraic reconstruction
-    technique (ART) :cite:`Kak:98`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.art.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.art(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter))
-    return recon
-
-
-def bart(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        num_block=1, ind_block=None):
-    """
-    Reconstruct object from projection data using block algebraic
-    reconstruction technique (BART).
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(num_block, np.int32):
-        num_block = np.array(num_block, dtype='int32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.bart.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.bart(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p))
-    return recon
-
-
-def fbp(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None):
-    """
-    Reconstruct object from projection data using filtered back
-    projection (FBP).
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.fbp(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy))
-    return recon
-
-
 def mlem(
         tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using maximum-likelihood
     expectation-maximization algorithm. (ML-EM) :cite:`Dempster:77`.
@@ -498,6 +639,10 @@ def mlem(
         Number of pixels along x- and y-axes in the reconstruction grid.
     num_iter : int, optional
         Number of algorithm iterations performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -534,6 +679,21 @@ def mlem(
     if not isinstance(num_iter, np.int32):
         num_iter = np.array(num_iter, dtype='int32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_mlem,
+        args=(theta, center, num_gridx, num_gridy, num_iter),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _mlem(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.mlem(
@@ -546,14 +706,16 @@ def mlem(
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter))
-    return recon
+        ctypes.c_int(num_iter),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def osem(
         tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        num_block=1, ind_block=None):
+        num_block=1, ind_block=None,
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using ordered-subset
     expectation-maximization (OS-EM) :cite:`Hudson:94`.
@@ -578,6 +740,10 @@ def osem(
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
         Order of projections to be used for updating.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -620,6 +786,24 @@ def osem(
     if not isinstance(ind_block, np.float32):
         ind_block = np.array(ind_block, dtype='float32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_osem,
+        args=(theta, center, num_gridx, num_gridy,
+              num_iter, num_block, ind_block),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _osem(
+        theta, center, num_gridx, num_gridy, num_iter,
+        num_block, ind_block, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.osem.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.osem(
@@ -634,14 +818,16 @@ def osem(
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter),
         ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p))
-    return recon
+        ind_block.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def ospml_hybrid(
         tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, num_block=1, ind_block=None):
+        reg_par=None, num_block=1, ind_block=None,
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using ordered-subset
     penalized maximum likelihood algorithm with weighted linear and
@@ -669,6 +855,10 @@ def ospml_hybrid(
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
         Order of projections to be used for updating.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -715,6 +905,24 @@ def ospml_hybrid(
     if not isinstance(ind_block, np.float32):
         ind_block = np.array(ind_block, dtype='float32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_ospml_hybrid,
+        args=(theta, center, num_gridx, num_gridy,
+              num_iter, reg_par, num_block, ind_block),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _ospml_hybrid(
+        theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, num_block, ind_block, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.ospml_hybrid(
@@ -730,14 +938,16 @@ def ospml_hybrid(
         ctypes.c_int(num_iter),
         reg_par.ctypes.data_as(c_float_p),
         ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p))
-    return recon
+        ind_block.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def ospml_quad(
         tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, num_block=1, ind_block=None):
+        reg_par=None, num_block=1, ind_block=None,
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using ordered-subset
     penalized maximum likelihood algorithm with quadratic penalty.
@@ -764,6 +974,10 @@ def ospml_quad(
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
         Order of projections to be used for updating.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -810,6 +1024,24 @@ def ospml_quad(
     if not isinstance(ind_block, np.float32):
         ind_block = np.array(ind_block, dtype='float32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_ospml_quad,
+        args=(theta, center, num_gridx, num_gridy,
+              num_iter, reg_par, num_block, ind_block),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _ospml_quad(
+        theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, num_block, ind_block, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.ospml_quad(
@@ -825,14 +1057,15 @@ def ospml_quad(
         ctypes.c_int(num_iter),
         reg_par.ctypes.data_as(c_float_p),
         ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p))
-    return recon
+        ind_block.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def pml_hybrid(
         tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None):
+        reg_par=None, ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using penalized maximum
     likelihood algorithm with weighted linear and quadratic penalties
@@ -860,6 +1093,10 @@ def pml_hybrid(
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
         Order of projections to be used for updating.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -900,6 +1137,22 @@ def pml_hybrid(
     if not isinstance(reg_par, np.float32):
         reg_par = np.array(reg_par, dtype='float32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_pml_hybrid,
+        args=(theta, center, num_gridx, num_gridy, num_iter, reg_par),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _pml_hybrid(
+        theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.pml_hybrid(
@@ -913,14 +1166,15 @@ def pml_hybrid(
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p))
-    return recon
+        reg_par.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def pml_quad(
         tomo, theta, center=None, emission=True,
         recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None):
+        reg_par=None, ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using penalized maximum
     likelihood algorithm with quadratic penalty.
@@ -944,6 +1198,10 @@ def pml_quad(
         Number of algorithm iterations performed.
     reg_par : float, optional
         Regularization parameter for smoothing.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -984,6 +1242,22 @@ def pml_quad(
     if not isinstance(reg_par, np.float32):
         reg_par = np.array(reg_par, dtype='float32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_pml_quad,
+        args=(theta, center, num_gridx, num_gridy, num_iter, reg_par),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _pml_quad(
+        theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.pml_quad(
@@ -997,13 +1271,89 @@ def pml_quad(
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p))
-    return recon
+        reg_par.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
+
+
+def simulate(obj, theta, center=None, ncore=None, nchunk=None):
+    """
+    Simulate parallel projections of a given 3D object.
+
+    Parameters
+    ----------
+    obj : ndarray
+        Voxelized 3D object.
+    theta : array
+        Projection angles in radian.
+    center: array, optional
+        Location of rotation axis.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Simulated 3D tomographic data.
+    """
+    # Estimate data dimensions.
+    ox, oy, oz = obj.shape
+    dx = len(theta)
+    dy = ox
+    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
+    tomo = np.zeros((dx, dy, dz), dtype='float32')
+    if center is None:
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
+
+    # Make sure that inputs datatypes are correct.
+    if not isinstance(obj, np.float32):
+        obj = np.array(obj, dtype='float32')
+    if not isinstance(theta, np.float32):
+        theta = np.array(theta, dtype='float32')
+    if not isinstance(center, np.float32):
+        center = np.array(center, dtype='float32')
+
+    _init_shared(obj)
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_simulate,
+        args=(theta, center),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _simulate(theta, center, istart, iend):
+    obj = SHARED_TOMO
+    tomo = mp.SHARED_ARRAY
+    ox, oy, oz = obj.shape
+    dx, dy, dz = tomo.shape
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    LIB_TOMOPY.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.simulate(
+        obj.ctypes.data_as(c_float_p),
+        ctypes.c_int(ox),
+        ctypes.c_int(oy),
+        ctypes.c_int(oz),
+        tomo.ctypes.data_as(c_float_p),
+        ctypes.c_int(dx),
+        ctypes.c_int(dy),
+        ctypes.c_int(dz),
+        center.ctypes.data_as(c_float_p),
+        theta.ctypes.data_as(c_float_p),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def sirt(
         tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1):
+        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
+        ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using simultaneous
     iterative reconstruction technique (SIRT).
@@ -1024,6 +1374,10 @@ def sirt(
         Number of pixels along x- and y-axes in the reconstruction grid.
     num_iter : int, optional
         Number of algorithm iterations performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
@@ -1060,6 +1414,22 @@ def sirt(
     if not isinstance(num_iter, np.int32):
         num_iter = np.array(num_iter, dtype='int32')
 
+    _init_shared(tomo)
+    arr = mp.distribute_jobs(
+        recon,
+        func=_sirt,
+        args=(theta, center, num_gridx, num_gridy, num_iter),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _sirt(
+        theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+    tomo = SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
     LIB_TOMOPY.sirt(
@@ -1072,8 +1442,9 @@ def sirt(
         recon.ctypes.data_as(c_float_p),
         ctypes.c_int(num_gridx),
         ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter))
-    return recon
+        ctypes.c_int(num_iter),
+        ctypes.c_int(istart),
+        ctypes.c_int(iend))
 
 
 def write_center(
@@ -1144,98 +1515,3 @@ def write_center(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 sio.imsave(fname, arr, plugin='tifffile')
-
-
-def find_center(
-        tomo, theta, ind=None, emission=True, init=None,
-        tol=0.5, mask=True, ratio=1.):
-    """
-    Find rotation axis location.
-
-    The function exploits systematic artifacts in reconstructed images
-    due to shifts in the rotation center. It uses image entropy
-    as the error metric and ''Nelder-Mead'' routine (of the scipy
-    optimization module) as the optimizer :cite:`Donath:06`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    ind : int, optional
-        Index of the slice to be used for reconstruction.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    init : float
-        Initial guess for the center.
-    tol : scalar
-        Desired sub-pixel accuracy.
-    mask : bool, optional
-        If ``True``, apply a circular mask to the reconstructed image to
-        limit the analysis into a circular region.
-    ratio : float, optional
-        The ratio of the radius of the circular mask to the edge of the
-        reconstructed image.
-
-    Returns
-    -------
-    float
-        Rotation axis location.
-    """
-    dx, dy, dz = tomo.shape
-    if ind is None:
-        ind = dy / 2
-    if init is None:
-        init = dz / 2
-
-    # Make an initial reconstruction to adjust histogram limits.
-    rec = gridrec(tomo[:, ind:ind+1, :], theta, emission=emission)
-
-    # Apply circular mask.
-    if mask is True:
-        rad = tomo.shape[2] / 2
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        rec[0, msk] = 0
-
-    # Adjust histogram boundaries according to reconstruction.
-    hmin = np.min(rec)
-    if hmin < 0:
-        hmin = 2 * hmin
-    elif hmin >= 0:
-        hmin = 0.5 * hmin
-    hmax = np.max(rec)
-    if hmax < 0:
-        hmax = 0.5 * hmax
-    elif hmax >= 0:
-        hmax = 2 * hmax
-
-    # Magic is ready to happen...
-    res = minimize(
-        _find_center_cost, init,
-        args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
-        method='Nelder-Mead',
-        tol=tol)
-    return res.x
-
-
-def _find_center_cost(
-        center, tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission):
-    """
-    Cost function used for the ``find_center`` routine.
-    """
-    print('Trying center: ' ,center)
-    center = np.array(center, dtype='float32')
-    rec = gridrec(tomo[:, ind:ind+1, :], theta, center, emission)
-
-    # Apply circular mask.
-    if mask is True:
-        rad = tomo.shape[2] / 2
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        rec[0, msk] = 0
-
-    hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
-    hist = hist.astype('float32') / rec.size + 1e-12
-    return -np.dot(hist, np.log2(hist))

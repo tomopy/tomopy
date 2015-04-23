@@ -93,7 +93,7 @@ def _import_shared_lib(lib_name):
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
-def median_filter(arr, size=3, axis=0, ind=None):
+def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     """
     Apply median filter to a 3D array along a specified axis.
 
@@ -105,41 +105,36 @@ def median_filter(arr, size=3, axis=0, ind=None):
         The size of the filter.
     axis : int, optional
         Axis along which median filtering is performed.
-    ind : array of int, optional
-        Indices at which the filtering is applied.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Median filtered 3D array.
     """
-    if type(arr) == str and arr == 'SHARED':
-        arr = mp.shared_arr
-    else:
-        arr = mp.distribute_jobs(
-            arr, func=median_filter, axis=axis,
-            args=(size, axis))
-        return arr
+    arr = mp.distribute_jobs(
+        arr,
+        func=_median_filter,
+        args=(size, axis),
+        axis=axis,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
 
-    dx, dy, dz = arr.shape
-    if ind is None:
+
+def _median_filter(size, axis, istart, iend):
+    arr = mp.SHARED_ARRAY
+    for m in range(istart, iend):
         if axis == 0:
-            ind = np.arange(0, dx)
-        elif axis == 1:
-            ind = np.arange(0, dy)
-        elif axis == 2:
-            ind = np.arange(0, dz)
-
-    if axis == 0:
-        for m in ind:
             arr[m, :, :] = filters.median_filter(
                 arr[m, :, :], (size, size))
-    elif axis == 1:
-        for m in ind:
+        elif axis == 1:
             arr[:, m, :] = filters.median_filter(
                 arr[:, m, :], (size, size))
-    elif axis == 2:
-        for m in ind:
+        elif axis == 2:
             arr[:, :, m] = filters.median_filter(
                 arr[:, :, m], (size, size))
 

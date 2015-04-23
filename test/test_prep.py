@@ -79,9 +79,34 @@ def synthetic_data():
     return data
 
 
-def test_normalize():
-    data = synthetic_data()
+def test_circular_roi():
+    assert_equals(
+        circular_roi(np.ones((10, 12, 14))).shape,
+        (10, 12, 14))
+    assert_equals(
+        np.isnan(circular_roi(np.ones((10, 12, 14)))).sum(),
+        0)
 
+
+def test_correct_air():
+    assert_equals(
+        correct_air(np.ones((10, 12, 14)), air=1).shape,
+        (10, 12, 14))
+    assert_equals(
+        np.isnan(correct_air(np.ones((10, 12, 14)), air=1)).sum(),
+        0)
+
+
+def test_focus_region():
+    assert_equals(
+        focus_region(np.ones((4, 6, 8)), dia=5).shape,
+        (4, 6, 5))
+    assert_equals(
+        np.isnan(focus_region(np.ones((4, 6, 8)), dia=5)).sum(),
+        0)
+
+
+def test_normalize():
     # Synthetic white field data
     white = np.array(
         [[[52., 53., 51., 56., 55.],
@@ -102,62 +127,59 @@ def test_normalize():
 
     # Expected result
     result = np.array(
-        [[[0.5545, 1.6566, 0.78,   0.8367, 1.02],
-          [0.4646, 1.0495, 0.1522, 1.7115, 0.1818],
-          [0.2692, 1.0297, 0.4762, 1.0196, 0.8081],
-          [0.4706, 1.2277, 0.2268, 1.7451, 0.297]],
-         [[0.4752, 1.4343, 1.26,   1.9184, 0.82],
-          [1.2525, 0.5347, 0.8261, 1.3077, 0.2424],
-          [0.4615, 1.2673, 0.2286, 1.9412, 0.6869],
-          [0.2353, 1.0099, 1.5052, 0.2549, 0.8119]],
-         [[0.2376, 1.2525, 0.66,   0.1633, 0.74],
-          [1.4141, 0.6535, 1.7826, 0.3077, 1.5152],
-          [0.8077, 1.9208, 1.4667, 0.2157, 0.8081],
-          [1.7647, 0.198,  0.6392, 1.2353, 0.2772]]], dtype='float32')
+        [[[0.5545, 1.0000, 0.7800, 0.8367, 1.0000],
+          [0.4646, 1.0000, 0.1522, 1.0000, 0.1818],
+          [0.2692, 1.0000, 0.4762, 1.0000, 0.8081],
+          [0.4706, 1.0000, 0.2268, 1.0000, 0.2970]],
+         [[0.4752, 1.0000, 1.0000, 1.0000, 0.8200],
+          [1.0000, 0.5347, 0.8261, 1.0000, 0.2424],
+          [0.4615, 1.0000, 0.2286, 1.0000, 0.6869],
+          [0.2353, 1.0000, 1.0000, 0.2549, 0.8119]],
+         [[0.2376, 1.0000, 0.6600, 0.1633, 0.7400],
+          [1.0000, 0.6535, 1.0000, 0.3077, 1.0000],
+          [0.8077, 1.0000, 1.0000, 0.2157, 0.8081],
+          [1.0000, 0.1980, 0.6392, 1.0000, 0.2772]]], dtype='float32')
     assert_array_almost_equal(
-        normalize(data, white, dark),
+        normalize(synthetic_data(), white, dark, cutoff=1.),
         result, decimal=4)
 
 
-def test_remove_stripe():
-    out = remove_stripe(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
+def test_remove_stripe1():
+    assert_equals(
+        remove_stripe1(np.ones((10, 12, 14))).shape,
+        (10, 12, 14))
+    assert_equals(
+        np.isnan(remove_stripe1(np.ones((10, 12, 14)))).sum(),
+        0)
 
 
-def test_retrieve_phase():
-    out = retrieve_phase(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_circular_roi():
-    out = circular_roi(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-    out = circular_roi(np.ones((10, 14, 12)))
-    assert_equals(out.shape, (10, 14, 12))
-    assert_equals(np.isnan(out).sum(), 0)
+def test_remove_stripe2():
+    assert_equals(
+        remove_stripe1(np.ones((10, 12, 14))).shape,
+        (10, 12, 14))
+    assert_equals(
+        np.isnan(remove_stripe1(np.ones((10, 12, 14)))).sum(),
+        0)
 
 
 def test_remove_zinger():
-    out = remove_zinger(np.ones((10, 12, 14)))
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_correct_air():
-    out = correct_air(np.ones((10, 12, 14)), air=1)
-    assert_equals(out.shape, (10, 12, 14))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
-def test_focus_region():
     assert_equals(
-        focus_region(np.ones((10, 12, 14)), dia=5)[0].shape,
-        (10, 12, 5))
+        remove_zinger(np.ones((10, 12, 14)), dif=10).shape,
+        (10, 12, 14))
     assert_equals(
-        np.isnan(focus_region(np.ones((10, 12, 14)), dia=5)[0]).sum(),
+        np.isnan(remove_zinger(np.ones((10, 12, 14)), dif=10)).sum(),
+        0)
+
+
+def test_retrieve_phase():
+    assert_equals(
+        retrieve_phase(np.ones((10, 12, 14)), pad=True).shape,
+        (10, 12, 14))
+    assert_equals(
+        np.isnan(retrieve_phase(np.ones((10, 12, 14)), pad=True)).sum(),
+        0)
+    assert_equals(
+        np.isnan(retrieve_phase(np.ones((10, 12, 14)), pad=False)).sum(),
         0)
 
 

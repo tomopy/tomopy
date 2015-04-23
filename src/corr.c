@@ -46,12 +46,12 @@
 
 DLL void 
 correct_air(
-    float* data, int dx, int dy, int dz, int nair) 
+    float* data, int dx, int dy, int dz, int istart, int iend, int nair) 
 {
     int n, m, i, j, iproj;
     double air_left, air_right, air_slope, air;
 
-    for (m = 0; m < dx; m++) 
+    for (m = istart; m < iend; m++) 
     {
         iproj = m * (dz * dy);
             
