@@ -48,7 +48,8 @@
 void 
 gridrec(
     float *data, int dx, int dy, int dz, float *center, float *theta, 
-    float *recon, int ngridx, int ngridy, char *fname)
+    float *recon, int ngridx, int ngridy, char *fname, 
+    int istart, int iend)
 {
     int s, p, iu, iv;
     float (*filter)(float);
@@ -101,7 +102,7 @@ gridrec(
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
     // For each slice.
-    for(s=0; s<dy-1; s+=2)
+    for (s=istart; s<iend; s+=2)
     {
         // Set up table of combined filter-phase factors.
         set_filter_tables(dx, pdim, center[s], filter, filphase);

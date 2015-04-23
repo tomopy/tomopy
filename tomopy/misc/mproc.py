@@ -77,7 +77,7 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
     axis : int
         Axis along which parallelization is performed.
     ncore : int, optional
-        Number of available cores that will be assigned to jobs.
+        Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
 
@@ -91,7 +91,7 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
         ncore = mp.cpu_count()
     dims = arr.shape[axis]
 
-    # Maximum number of available processors for the task.
+    # Maximum number of processors for the task.
     if dims < ncore:
         ncore = dims
 
@@ -105,20 +105,20 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
     # Populate arguments for workers.
     arg = []
     for m in range(npool):
-        ind_start = m * nchunk
-        ind_end = (m + 1) * nchunk
-        if ind_start >= dims:
+        istart = m * nchunk
+        iend = (m + 1) * nchunk
+        if istart >= dims:
             npool -= 1
             break
-        if ind_end > dims:
-            ind_end = dims
+        if iend > dims:
+            iend = dims
 
         _arg = []
         _arg.append(func)
-        _arg.append("SHARED")
         for a in args:
             _arg.append(a)
-        _arg.append(range(ind_start, ind_end))
+        _arg.append(istart)
+        _arg.append(iend)
         arg.append(_arg)
 
     shared_arr = mp.Array(ctypes.c_float, arr.size)
@@ -140,8 +140,8 @@ def _arg_parser(args):
 
 
 def _init_shared(shared_arr_):
-    global shared_arr
-    shared_arr = shared_arr_
+    global SHARED_ARRAY
+    SHARED_ARRAY = shared_arr_
 
 
 def _to_numpy_array(mp_arr, dshape):
