@@ -47,105 +47,96 @@
 # #########################################################################
 
 """
-Module for multiprocessing tasks.
+Module for deprecated function warnings.
 """
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-import multiprocessing as mp
-import ctypes
-from contextlib import closing
+import logging
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['distribute_jobs']
+__all__ = ['adaptive_segment',
+           'apply_mask',
+           'apply_padding',
+           'correct_drift',
+           'diagnose_center',
+           'downsample2d',
+           'downsample3d',
+           'optimize_center',
+           'phase_retrieval',
+           'region_segment',
+           'remove_background',
+           'stripe_removal',
+           'threshold_segment',
+           'upsample2d',
+           'upsample2df',
+           'zinger_removal']
 
 
-def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
-    """
-    Distribute N-dimensional shared-memory array in chunks into cores.
-
-    Parameters
-    ----------
-    func : func
-        Function to be parallelized.
-    args : list
-        Arguments of the function in a list.
-    axis : int
-        Axis along which parallelization is performed.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Output array.
-    """
-    # Arrange number of processors.
-    if ncore is None:
-        ncore = mp.cpu_count()
-    dims = arr.shape[axis]
-
-    # Maximum number of processors for the task.
-    if dims < ncore:
-        ncore = dims
-
-    # Arrange chunk size.
-    if nchunk is None:
-        nchunk = (dims - 1) // ncore + 1
-
-    # Determine pool size.
-    npool = dims // nchunk + 1
-
-    # Populate arguments for workers.
-    arg = []
-    for m in range(npool):
-        istart = m * nchunk
-        iend = (m + 1) * nchunk
-        if istart >= dims:
-            npool -= 1
-            break
-        if iend > dims:
-            iend = dims
-
-        _arg = []
-        _arg.append(func)
-        for a in args:
-            _arg.append(a)
-        _arg.append(istart)
-        _arg.append(iend)
-        arg.append(_arg)
-
-    shared_arr = mp.Array(ctypes.c_float, arr.size)
-    shared_arr = _to_numpy_array(shared_arr, arr.shape)
-    shared_arr[:] = arr
-
-    # Start processes.
-    with closing(
-        mp.Pool(processes=npool,
-                initializer=_init_shared,
-                initargs=(shared_arr,))) as p:
-        p.map_async(_arg_parser, arg)
-    p.join()
-    p.close()
-    return shared_arr
+def adaptive_segment(*args, **kwargs):
+    logger.warning('Deprecated function.')
 
 
-def _arg_parser(args):
-    func = args[0]
-    func(*args[1::])
+def apply_mask(*args, **kwargs):
+    logger.warning('Deprecated function.')
 
 
-def _init_shared(shared_arr_):
-    global SHARED_ARRAY
-    SHARED_ARRAY = shared_arr_
+def apply_padding(*args, **kwargs):
+    logger.warning('Deprecated function. Use apply_pad instead.')
 
 
-def _to_numpy_array(mp_arr, dshape):
-    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
-    return np.reshape(a, dshape)
+def correct_drift(*args, **kwargs):
+    logger.warning('Deprecated function. Use correct_air instead.')
+
+
+def diagnose_center(*args, **kwargs):
+    logger.warning('Deprecated function. Use write_center instead.')
+
+
+def downsample2d(*args, **kwargs):
+    logger.warning('Deprecated function. Use downsample instead.')
+
+
+def downsample3d(*args, **kwargs):
+    logger.warning('Deprecated function. Use downsample instead.')
+
+
+def optimize_center(*args, **kwargs):
+    logger.warning('Deprecated function. Use find_center instead.')
+
+
+def phase_retrieval(*args, **kwargs):
+    logger.warning('Deprecated function. Use retrieve_phase instead.')
+
+
+def region_segment(*args, **kwargs):
+    logger.warning('Deprecated function.')
+
+
+def remove_background(*args, **kwargs):
+    logger.warning('Deprecated function.')
+
+
+def stripe_removal(*args, **kwargs):
+    logger.warning(
+        'Deprecated function. Use remove_stripe1 or remove_stripe2 instead.')
+
+
+def threshold_segment(*args, **kwargs):
+    logger.warning('Deprecated function.')
+
+
+def upsample2d(*args, **kwargs):
+    logger.warning('Deprecated function. Use upsample instead.')
+
+
+def upsample2df(*args, **kwargs):
+    logger.warning('Deprecated function. Use upsample instead.')
+
+
+def zinger_removal(*args, **kwargs):
+    logger.warning('Deprecated function. Use remove_zinger instead.')
