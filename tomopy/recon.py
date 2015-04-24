@@ -549,14 +549,14 @@ def gridrec(
         Reconstructed 3D object.
     """
     dx, dy, dz = tomo.shape
+
     # Gridrec accepts even number of slices.
     is_odd = False
     if tomo.shape[1] % 2 != 0:
         is_odd = True
         lasttomo = np.expand_dims(tomo[:,-1,:], 1)
-        tomo = np.append(tomo, lasttomo, 1).copy()
+        tomo = np.append(tomo, lasttomo, 1)
         dy += 1
-    print(tomo.shape)
 
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
