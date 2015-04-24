@@ -554,7 +554,7 @@ def gridrec(
     is_odd = False
     if tomo.shape[1] % 2 != 0:
         is_odd = True
-        lasttomo = np.expand_dims(tomo[:,-1,:], 1)
+        lasttomo = np.expand_dims(tomo[:, -1, :], 1)
         tomo = np.append(tomo, lasttomo, 1)
         dy += 1
 
@@ -604,7 +604,7 @@ def gridrec(
 
     # Dump last slice if original number of sice was even.
     if is_odd:
-        arr = arr[0:-1,:,:]
+        arr = arr[0:-1, :, :]
     return arr
 
 
