@@ -49,7 +49,7 @@ correct_air(
     float* data, int dx, int dy, int dz, int istart, int iend, int nair) 
 {
     int n, m, i, j, iproj;
-    double air_left, air_right, air_slope, air;
+    float air_left, air_right, air_slope, air;
 
     for (m = istart; m < iend; m++) 
     {
