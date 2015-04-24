@@ -128,7 +128,7 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
     # Start processes.
     with closing(
         mp.Pool(processes=npool,
-                initializer=_init_shared, 
+                initializer=_init_shared,
                 initargs=(shared_arr,))) as p:
         p.map_async(_arg_parser, arg)
     p.join()
