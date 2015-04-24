@@ -199,8 +199,8 @@ def read_aps_2bm(fname, proj=None, sino=None):
     flat_grp = os.path.join('exchange', 'data_white')
     dark_grp = os.path.join('exchange', 'data_dark')
     tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
-    flat = dio.Reader(fname, proj, sino).hdf5(flat_grp)
-    dark = dio.Reader(fname, proj, sino).hdf5(dark_grp)
+    flat = dio.Reader(fname, dim2=sino).hdf5(flat_grp)
+    dark = dio.Reader(fname, dim2=sino).hdf5(dark_grp)
     return tomo, flat, dark
 
 
@@ -324,8 +324,8 @@ def read_aps_32id(fname, proj=None, sino=None):
     flat_grp = os.path.join('exchange', 'data_white')
     dark_grp = os.path.join('exchange', 'data_dark')
     tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
-    flat = dio.Reader(fname, proj, sino).hdf5(flat_grp)
-    dark = dio.Reader(fname, proj, sino).hdf5(dark_grp)
+    flat = dio.Reader(fname, dim2=sino).hdf5(flat_grp)
+    dark = dio.Reader(fname, dim2=sino).hdf5(dark_grp)
     return tomo, flat, dark
 
 
