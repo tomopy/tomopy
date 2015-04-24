@@ -333,6 +333,10 @@ def fbp(
     Reconstruct object from projection data using filtered back
     projection (FBP).
 
+    Warning
+    -------
+    Filter not implemented yet.
+
     Parameters
     ----------
     tomo : ndarray
@@ -544,13 +548,16 @@ def gridrec(
     ndarray
         Reconstructed 3D object.
     """
-    # Gridrec reconstructs 2 slices minimum.
-    flag = False
-    if tomo.shape[1] == 1:
-        flag = True
-        tomo = np.append(tomo, tomo, 1)
-
     dx, dy, dz = tomo.shape
+    # Gridrec accepts even number of slices.
+    is_odd = False
+    if tomo.shape[1] % 2 != 0:
+        is_odd = True
+        lasttomo = np.expand_dims(tomo[:,-1,:], 1)
+        tomo = np.append(tomo, lasttomo, 1).copy()
+        dy += 1
+    print(tomo.shape)
+
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
     elif np.array(center).size == 1:
@@ -576,6 +583,16 @@ def gridrec(
         num_gridy = np.array(num_gridy, dtype='int32')
     filter_name = np.array(filter_name, dtype=(str, 16))
 
+    # Chunk size can't be smaller than two for gridrec.
+    if ncore is None:
+        ncore = multiprocessing.cpu_count()
+    if dx < ncore:
+        ncore = dx
+    if nchunk is None:
+        nchunk = (dy - 1) // ncore + 1
+    if nchunk < 2:
+        nchunk = 2
+
     _init_shared(tomo)
     arr = mp.distribute_jobs(
         recon,
@@ -584,6 +601,10 @@ def gridrec(
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
+
+    # Dump last slice if original number of sice was even.
+    if is_odd:
+        arr = arr[0:-1,:,:]
     return arr
 
 
@@ -607,11 +628,6 @@ def _gridrec(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
         filter_name.ctypes.data_as(c_char_p),
         ctypes.c_int(istart),
         ctypes.c_int(iend))
-
-    # Dump second slice.
-    if flag is True:
-        recon = recon[0:1]
-    return recon
 
 
 def mlem(
