@@ -10,6 +10,7 @@
 
    .. autosummary::
    
+      gaussian_filter
       median_filter
       remove_nan
       remove_neg
