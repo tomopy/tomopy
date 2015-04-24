@@ -53,7 +53,7 @@ logging.basicConfig()
 
 from tomopy.io import *
 from tomopy.io.data import *
-from tomopy.io.decap import *
+from tomopy.io.deprec import *
 from tomopy.io.exchange import *
 from tomopy.io.phantom import *
 from tomopy.misc.corr import *
