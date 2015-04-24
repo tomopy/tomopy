@@ -64,7 +64,8 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['median_filter',
+__all__ = ['gaussian_filter',
+           'median_filter',
            'remove_nan',
            'remove_neg']
 
@@ -93,9 +94,64 @@ def _import_shared_lib(lib_name):
 LIB_TOMOPY = _import_shared_lib('libtomopy')
 
 
+def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
+    """
+    Apply Gaussian filter to 3D array along specified axis.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Arbitrary 3D array.
+    sigma : scalar or sequence of scalars
+        Standard deviation for Gaussian kernel. The standard deviations 
+        of the Gaussian filter are given for each axis as a sequence, or
+        as a single number, in which case it is equal for all axes.
+    order : {0, 1, 2, 3} or sequence from same set, optional
+        Order of the filter along each axis is given as a sequence 
+        of integers, or as a single number. An order of 0 corresponds 
+        to convolution with a Gaussian kernel. An order of 1, 2, or 3 
+        corresponds to convolution with the first, second or third 
+        derivatives of a Gaussian. Higher order derivatives are not 
+        implemented
+    axis : int, optional
+        Axis along which median filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        3D array of same shape as input.
+    """
+    arr = mp.distribute_jobs(
+        arr,
+        func=_gaussian_filter,
+        args=(sigma, order, axis),
+        axis=axis,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _gaussian_filter(sigma, order, axis, istart, iend):
+    arr = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        if axis == 0:
+            arr[m, :, :] = filters.gaussian_filter(
+                arr[m, :, :], sigma, order)
+        elif axis == 1:
+            arr[:, m, :] = filters.gaussian_filter(
+                arr[:, m, :], sigma, order)
+        elif axis == 2:
+            arr[:, :, m] = filters.gaussian_filter(
+                arr[:, :, m], sigma, order)
+
+
 def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     """
-    Apply median filter to a 3D array along a specified axis.
+    Apply median filter to 3D array along specified axis.
 
     Parameters
     ----------
