@@ -125,9 +125,11 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
     shared_arr = _to_numpy_array(shared_arr, arr.shape)
     shared_arr[:] = arr
 
-    # write to arr from different processes
-    with closing(mp.Pool(
-            initializer=_init_shared, initargs=(shared_arr,))) as p:
+    # Start processes.
+    with closing(
+        mp.Pool(processes=npool,
+                initializer=_init_shared, 
+                initargs=(shared_arr,))) as p:
         p.map_async(_arg_parser, arg)
     p.join()
     p.close()
