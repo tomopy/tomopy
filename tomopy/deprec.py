@@ -77,66 +77,66 @@ __all__ = ['adaptive_segment',
            'zinger_removal']
 
 
-def adaptive_segment():
+def adaptive_segment(*args, **kwargs):
     logger.warning('Deprecated function.')
 
 
-def apply_mask():
+def apply_mask(*args, **kwargs):
     logger.warning('Deprecated function.')
 
 
-def apply_padding():
+def apply_padding(*args, **kwargs):
     logger.warning('Deprecated function. Use apply_pad instead.')
 
 
-def correct_drift():
+def correct_drift(*args, **kwargs):
     logger.warning('Deprecated function. Use correct_air instead.')
 
 
-def diagnose_center():
+def diagnose_center(*args, **kwargs):
     logger.warning('Deprecated function. Use write_center instead.')
 
 
-def downsample2d():
+def downsample2d(*args, **kwargs):
     logger.warning('Deprecated function. Use downsample instead.')
 
 
-def downsample3d():
+def downsample3d(*args, **kwargs):
     logger.warning('Deprecated function. Use downsample instead.')
 
 
-def optimize_center():
+def optimize_center(*args, **kwargs):
     logger.warning('Deprecated function. Use find_center instead.')
 
 
-def phase_retrieval():
+def phase_retrieval(*args, **kwargs):
     logger.warning('Deprecated function. Use retrieve_phase instead.')
 
 
-def region_segment():
+def region_segment(*args, **kwargs):
     logger.warning('Deprecated function.')
 
 
-def remove_background():
+def remove_background(*args, **kwargs):
     logger.warning('Deprecated function.')
 
 
-def stripe_removal():
+def stripe_removal(*args, **kwargs):
     logger.warning(
         'Deprecated function. Use remove_stripe1 or remove_stripe2 instead.')
 
 
-def threshold_segment():
+def threshold_segment(*args, **kwargs):
     logger.warning('Deprecated function.')
 
 
-def upsample2d():
+def upsample2d(*args, **kwargs):
     logger.warning('Deprecated function. Use upsample instead.')
 
 
-def upsample2df():
+def upsample2df(*args, **kwargs):
     logger.warning('Deprecated function. Use upsample instead.')
 
 
-def zinger_removal():
+def zinger_removal(*args, **kwargs):
     logger.warning('Deprecated function. Use remove_zinger instead.')
