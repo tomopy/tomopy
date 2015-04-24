@@ -46,18 +46,97 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for deprecated function warnings.
+"""
+
 from __future__ import absolute_import, division, print_function
 
 import logging
-logging.basicConfig()
+logger = logging.getLogger(__name__)
 
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.decap import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.prep import *
-from tomopy.recon import *
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['adaptive_segment',
+           'apply_mask',
+           'apply_padding',
+           'correct_drift',
+           'diagnose_center',
+           'downsample2d',
+           'downsample3d',
+           'optimize_center',
+           'phase_retrieval',
+           'region_segment',
+           'remove_background',
+           'stripe_removal',
+           'threshold_segment',
+           'upsample2d',
+           'upsample2df',
+           'zinger_removal']
+
+
+def adaptive_segment():
+    logger.warning('Deprecated function.')
+
+
+def apply_mask():
+    logger.warning('Deprecated function.')
+
+
+def apply_padding():
+    logger.warning('Deprecated function. Use apply_pad instead.')
+
+
+def correct_drift():
+    logger.warning('Deprecated function. Use correct_air instead.')
+
+
+def diagnose_center():
+    logger.warning('Deprecated function. Use write_center instead.')
+
+
+def downsample2d():
+    logger.warning('Deprecated function. Use downsample instead.')
+
+
+def downsample3d():
+    logger.warning('Deprecated function. Use downsample instead.')
+
+
+def optimize_center():
+    logger.warning('Deprecated function. Use find_center instead.')
+
+
+def phase_retrieval():
+    logger.warning('Deprecated function. Use retrieve_phase instead.')
+
+
+def region_segment():
+    logger.warning('Deprecated function.')
+
+
+def remove_background():
+    logger.warning('Deprecated function.')
+
+
+def stripe_removal():
+    logger.warning(
+        'Deprecated function. Use remove_stripe1 or remove_stripe2 instead.')
+
+
+def threshold_segment():
+    logger.warning('Deprecated function.')
+
+
+def upsample2d():
+    logger.warning('Deprecated function. Use upsample instead.')
+
+
+def upsample2df():
+    logger.warning('Deprecated function. Use upsample instead.')
+
+
+def zinger_removal():
+    logger.warning('Deprecated function. Use remove_zinger instead.')
