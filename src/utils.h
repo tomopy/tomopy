@@ -68,7 +68,7 @@
 // Data simulation
 
 void 
-simulate(
+project(
     float *obj,
     int ox, 
     int oy, 
