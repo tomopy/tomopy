@@ -16,7 +16,7 @@ The project is maintained on GitHub, which is a version control and a
 collaboration platform for software developers. To start first register 
 on `GitHub <https://github.com>`_ and fork the TomoPy repository by 
 clicking the **Fork** button in the header of the 
-`TomoPy repository <https://github.com/dgursoy/tomopy>`__: 
+`TomoPy repository <https://github.com/tomopy/tomopy>`__: 
 
 .. image:: img/fork-repo.png
 

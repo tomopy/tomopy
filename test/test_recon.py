@@ -80,12 +80,6 @@ def synthetic_data():
     return data
 
 
-def test_simulate():
-    out = simulate(synthetic_data(), theta=(0., 1.))
-    assert_equals(out.shape, (2, 3, 7))
-    assert_equals(np.isnan(out).sum(), 0)
-
-
 def test_gridrec():
     out = gridrec(synthetic_data(), theta=(0., 1.))
     assert_equals(out.shape, (4, 5, 5))

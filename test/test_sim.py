@@ -46,101 +46,46 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-"""
-Module for deprecated function warnings.
-"""
-
 from __future__ import absolute_import, division, print_function
 
-import logging
-logger = logging.getLogger(__name__)
+from tomopy.sim import *
+import numpy as np
+import os
+import shutil
+from nose.tools import assert_equals
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['adaptive_segment',
-           'apply_mask',
-           'apply_padding',
-           'correct_drift',
-           'diagnose_center',
-           'downsample2d',
-           'downsample3d',
-           'optimize_center',
-           'phase_retrieval',
-           'region_segment',
-           'remove_background',
-           'stripe_removal',
-           'threshold_segment',
-           'upsample2d',
-           'upsample2df',
-           'zinger_removal']
 
 
-def adaptive_segment(*args, **kwargs):
-    logger.warning('Deprecated function.')
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45., 53.],
+          [24., 53., 12., 89., 12.],
+          [14., 52., 25., 52., 41.],
+          [24., 64., 12., 89., 15.]],
+         [[25., 74., 63., 98., 43.],
+          [63., 27., 43., 68., 15.],
+          [24., 64., 12., 99., 35.],
+          [12., 53., 74., 13., 41.]],
+         [[13., 65., 33., 12., 39.],
+          [71., 33., 87., 16., 78.],
+          [42., 97., 77., 11., 41.],
+          [90., 12., 32., 63., 14.]]], dtype='float32')
+    return data
 
 
-def apply_mask(*args, **kwargs):
-    logger.warning('Deprecated function.')
+def test_project():
+    out = project(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (2, 3, 7))
+    assert_equals(np.isnan(out).sum(), 0)
 
 
-def apply_padding(*args, **kwargs):
-    logger.warning('Deprecated function. Use apply_pad instead.')
-
-
-def correct_drift(*args, **kwargs):
-    logger.warning('Deprecated function. Use correct_air instead.')
-
-
-def diagnose_center(*args, **kwargs):
-    logger.warning('Deprecated function. Use write_center instead.')
-
-
-def downsample2d(*args, **kwargs):
-    logger.warning('Deprecated function. Use downsample instead.')
-
-
-def downsample3d(*args, **kwargs):
-    logger.warning('Deprecated function. Use downsample instead.')
-
-
-def optimize_center(*args, **kwargs):
-    logger.warning('Deprecated function. Use find_center instead.')
-
-
-def phase_retrieval(*args, **kwargs):
-    logger.warning('Deprecated function. Use retrieve_phase instead.')
-
-
-def region_segment(*args, **kwargs):
-    logger.warning('Deprecated function.')
-
-
-def remove_background(*args, **kwargs):
-    logger.warning('Deprecated function.')
-
-
-def simulate(*args, **kwargs):
-    logger.warning('Deprecated function. Use project instead.')
-
-
-def stripe_removal(*args, **kwargs):
-    logger.warning(
-        'Deprecated function. Use remove_stripe1 or remove_stripe2 instead.')
-
-
-def threshold_segment(*args, **kwargs):
-    logger.warning('Deprecated function.')
-
-
-def upsample2d(*args, **kwargs):
-    logger.warning('Deprecated function. Use upsample instead.')
-
-
-def upsample2df(*args, **kwargs):
-    logger.warning('Deprecated function. Use upsample instead.')
-
-
-def zinger_removal(*args, **kwargs):
-    logger.warning('Deprecated function. Use remove_zinger instead.')
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

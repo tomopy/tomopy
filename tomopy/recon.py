@@ -80,7 +80,6 @@ __all__ = ['find_center',
            'ospml_quad',
            'pml_hybrid',
            'pml_quad',
-           'simulate',
            'sirt',
            'write_center']
 
@@ -537,7 +536,7 @@ def gridrec(
         Number of pixels along x- and y-axes in the reconstruction grid.
     filter_name : str, optional
         Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-        or 'none'.
+        'cosine' or 'none'.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -1287,80 +1286,6 @@ def _pml_quad(
         ctypes.c_int(num_gridy),
         ctypes.c_int(num_iter),
         reg_par.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
-
-
-def simulate(obj, theta, center=None, ncore=None, nchunk=None):
-    """
-    Simulate parallel projections of a given 3D object.
-
-    Parameters
-    ----------
-    obj : ndarray
-        Voxelized 3D object.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Simulated 3D tomographic data.
-    """
-    # Estimate data dimensions.
-    ox, oy, oz = obj.shape
-    dx = len(theta)
-    dy = ox
-    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
-    tomo = np.zeros((dx, dy, dz), dtype='float32')
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-
-    # Make sure that inputs datatypes are correct.
-    if not isinstance(obj, np.float32):
-        obj = np.array(obj, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-
-    _init_shared(obj)
-    arr = mp.distribute_jobs(
-        tomo,
-        func=_simulate,
-        args=(theta, center),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _simulate(theta, center, istart, iend):
-    obj = SHARED_TOMO
-    tomo = mp.SHARED_ARRAY
-    ox, oy, oz = obj.shape
-    dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.simulate(
-        obj.ctypes.data_as(c_float_p),
-        ctypes.c_int(ox),
-        ctypes.c_int(oy),
-        ctypes.c_int(oz),
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
         ctypes.c_int(istart),
         ctypes.c_int(iend))
 

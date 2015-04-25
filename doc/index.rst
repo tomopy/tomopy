@@ -4,12 +4,12 @@
    :width: 320px
    :alt: TomoPy
 
-`TomoPy <https://github.com/dgursoy/tomopy.git>`_ is an open-sourced Python
+`TomoPy <https://github.com/tomopy/tomopy.git>`_ is an open-sourced Python
 toolbox to perform tomographic data processing and image reconstruction 
 tasks at the `Advanced Photon Source <http://www.aps.anl.gov>`_.
 
 This guide is maintained on 
-`GitHub <https://github.com/dgursoy/tomopy/tree/master/doc>`_.
+`GitHub <https://github.com/tomopy/tomopy/tree/master/doc>`_.
 
 .. toctree::
    :maxdepth: 1
