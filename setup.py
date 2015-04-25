@@ -8,7 +8,7 @@ tomoc = Extension(
     sources=[
         'src/corr.c',
         'src/utils.c',
-        'src/simulate.c',
+        'src/project.c',
         'src/gridrec.c',
         'src/fft.c',
         'src/art.c',
