@@ -537,7 +537,7 @@ def gridrec(
         Number of pixels along x- and y-axes in the reconstruction grid.
     filter_name : str, optional
         Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-        or 'none'.
+        'cosine' or 'none'.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
