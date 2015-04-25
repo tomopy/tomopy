@@ -103,15 +103,15 @@ def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
     arr : ndarray
         Arbitrary 3D array.
     sigma : scalar or sequence of scalars
-        Standard deviation for Gaussian kernel. The standard deviations 
+        Standard deviation for Gaussian kernel. The standard deviations
         of the Gaussian filter are given for each axis as a sequence, or
         as a single number, in which case it is equal for all axes.
     order : {0, 1, 2, 3} or sequence from same set, optional
-        Order of the filter along each axis is given as a sequence 
-        of integers, or as a single number. An order of 0 corresponds 
-        to convolution with a Gaussian kernel. An order of 1, 2, or 3 
-        corresponds to convolution with the first, second or third 
-        derivatives of a Gaussian. Higher order derivatives are not 
+        Order of the filter along each axis is given as a sequence
+        of integers, or as a single number. An order of 0 corresponds
+        to convolution with a Gaussian kernel. An order of 1, 2, or 3
+        corresponds to convolution with the first, second or third
+        derivatives of a Gaussian. Higher order derivatives are not
         implemented
     axis : int, optional
         Axis along which median filtering is performed.
