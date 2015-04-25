@@ -19,4 +19,4 @@ This section contains the API reference and usage information for TomoPy.
 .. automodule:: tomopy
    :members:
    :undoc-members:
-   :show-inheritance:
+   :show-inheritance: 
