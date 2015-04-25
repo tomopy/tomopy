@@ -15,8 +15,9 @@ This section contains the API reference and usage information for TomoPy.
    api/tomopy.misc.mproc
    api/tomopy.prep
    api/tomopy.recon
+   api/tomopy.sim
 
 .. automodule:: tomopy
    :members:
    :undoc-members:
-   :show-inheritance:
+   :show-inheritance: 

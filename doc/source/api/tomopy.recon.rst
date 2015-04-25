@@ -20,7 +20,6 @@
       ospml_quad
       pml_hybrid
       pml_quad
-      simulate
       sirt
       find_center
       write_center
