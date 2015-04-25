@@ -45,7 +45,7 @@
 
 
 void 
-simulate(
+project(
     float *obj, int ox, int oy, int oz, 
     float *data, int dx, int dy, int dz, float *center, float *theta,
     int istart, int iend)

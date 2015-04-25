@@ -521,6 +521,14 @@ filter_shepp(float x)
 }
 
 
+// Cosine filter 
+float 
+filter_cosine(float x)
+{
+    return abs(x)*(cos(PI*x));
+}
+
+
 // Hann filter 
 float 
 filter_hann(float x)
@@ -553,11 +561,12 @@ float (*get_filter(char *name))(float)
     } fltbl[] = {
         {"none", filter_none},
         {"shepp", filter_shepp}, // Default
+        {"cosine", filter_cosine},
         {"hann", filter_hann},
         {"hamming", filter_hamming},
         {"ramlak", filter_ramlak}};
 
-    for(int i=0; i<5; i++)
+    for(int i=0; i<6; i++)
     {
         if(!strcmp(name, fltbl[i].name))
         {
