@@ -144,7 +144,7 @@ def circular_roi(tomo, ratio=1, val=None):
 
 def correct_air(tomo, air=10, ncore=None, nchunk=None):
     """
-    Weights sinogram such that the left and right image boundaries
+    Weight sinogram such that the left and right image boundaries
     (i.e., typically the air region around the object) are set to one
     and all intermediate values are scaled linearly.
 
@@ -194,7 +194,7 @@ def _correct_air(air, istart, iend):
 def focus_region(
         tomo, dia, xcoord=0, ycoord=0, center=None, pad=False, corr=True):
     """
-    Trims sinogram for reconstructing a circular region of interest (ROI).
+    Trim sinogram for reconstructing a circular region of interest (ROI).
 
     Note: Only valid for 0-180 degree span data.
 
