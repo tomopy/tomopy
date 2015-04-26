@@ -164,21 +164,13 @@ def art(tomo, theta, center=None, emission=True,
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -195,21 +187,21 @@ def _art(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.art.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.art.restype = _c_void_p()
     LIB_TOMOPY.art(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def bart(
@@ -267,25 +259,15 @@ def bart(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(num_block, np.int32):
-        num_block = np.array(num_block, dtype='int32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    num_block = _as_int32(num_block)
+    ind_block = _as_float32(ind_block)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -305,28 +287,28 @@ def _bart(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.bart.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.bart.restype = _c_void_p()
     LIB_TOMOPY.bart(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_int(num_block),
+        _c_float(ind_block),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def fbp(
         tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None,
+        num_gridx=None, num_gridy=None, filter_name='shepp',
         ncore=None, nchunk=None):
     """
     Reconstruct object from projection data using filtered back
@@ -346,10 +328,10 @@ def fbp(
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
+    filter_name : str, optional
+        Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -371,52 +353,45 @@ def fbp(
         num_gridy = dz
     if emission is False:
         tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+    filter_name = np.array(filter_name, dtype=(str, 16))
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_fbp,
-        args=(theta, center, num_gridx, num_gridy),
+        args=(theta, center, num_gridx, num_gridy, filter_name),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _fbp(theta, center, num_gridx, num_gridy, istart, iend):
+def _fbp(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.fbp.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.fbp.restype = _c_void_p()
     LIB_TOMOPY.fbp(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_char_p(filter_name),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def find_center(
@@ -568,19 +543,13 @@ def gridrec(
     if emission is False:
         tomo = -np.log(tomo)
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
     filter_name = np.array(filter_name, dtype=(str, 16))
+
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
 
     # Chunk size can't be smaller than two for gridrec.
     if ncore is None:
@@ -611,22 +580,21 @@ def _gridrec(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.gridrec.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.gridrec.restype = _c_void_p()
     LIB_TOMOPY.gridrec(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        filter_name.ctypes.data_as(c_char_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_char_p(filter_name),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def mlem(
@@ -677,21 +645,13 @@ def mlem(
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -708,21 +668,21 @@ def _mlem(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.mlem.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.mlem.restype = _c_void_p()
     LIB_TOMOPY.mlem(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def osem(
@@ -780,25 +740,15 @@ def osem(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(num_block, np.int32):
-        num_block = np.array(num_block, dtype='int32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    num_block = _as_int32(num_block)
+    ind_block = _as_float32(ind_block)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -818,23 +768,23 @@ def _osem(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.osem.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.osem.restype = _c_void_p()
     LIB_TOMOPY.osem(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_int(num_block),
+        _c_float(ind_block),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def ospml_hybrid(
@@ -897,27 +847,16 @@ def ospml_hybrid(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(reg_par, np.float32):
-        reg_par = np.array(reg_par, dtype='float32')
-    if not isinstance(num_block, np.int32):
-        num_block = np.array(num_block, dtype='int32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    reg_par = _as_float32(reg_par)
+    num_block = _as_int32(num_block)
+    ind_block = _as_float32(ind_block)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -937,24 +876,24 @@ def _ospml_hybrid(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.ospml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.ospml_hybrid.restype = _c_void_p()
     LIB_TOMOPY.ospml_hybrid(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_float(reg_par),
+        _c_int(num_block),
+        _c_float(ind_block),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def ospml_quad(
@@ -1016,27 +955,16 @@ def ospml_quad(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(reg_par, np.float32):
-        reg_par = np.array(reg_par, dtype='float32')
-    if not isinstance(num_block, np.int32):
-        num_block = np.array(num_block, dtype='int32')
-    if not isinstance(ind_block, np.float32):
-        ind_block = np.array(ind_block, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    reg_par = _as_float32(reg_par)
+    num_block = _as_int32(num_block)
+    ind_block = _as_float32(ind_block)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -1056,24 +984,24 @@ def _ospml_quad(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.ospml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.ospml_quad.restype = _c_void_p()
     LIB_TOMOPY.ospml_quad(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_block),
-        ind_block.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_float(reg_par),
+        _c_int(num_block),
+        _c_float(ind_block),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def pml_hybrid(
@@ -1133,23 +1061,14 @@ def pml_hybrid(
     if reg_par is None:
         reg_par = np.ones(10, dtype="float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(reg_par, np.float32):
-        reg_par = np.array(reg_par, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    reg_par = _as_float32(reg_par)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -1167,22 +1086,22 @@ def _pml_hybrid(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.pml_hybrid.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.pml_hybrid.restype = _c_void_p()
     LIB_TOMOPY.pml_hybrid(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_float(reg_par),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def pml_quad(
@@ -1238,23 +1157,14 @@ def pml_quad(
     if reg_par is None:
         reg_par = np.ones(10, dtype="float32")
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
-    if not isinstance(reg_par, np.float32):
-        reg_par = np.array(reg_par, dtype='float32')
+    tomo = _as_float32(tomo)
+    theta = _as_float32(theta)
+    center = _as_float32(center)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
+    reg_par = _as_float32(reg_par)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -1272,22 +1182,22 @@ def _pml_quad(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.pml_quad.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.pml_quad.restype = _c_void_p()
     LIB_TOMOPY.pml_quad(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        reg_par.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_float(reg_par),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def sirt(
@@ -1338,21 +1248,13 @@ def sirt(
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
-    if not isinstance(recon, np.float32):
-        recon = np.array(recon, dtype='float32')
-    if not isinstance(num_gridx, np.int32):
-        num_gridx = np.array(num_gridx, dtype='int32')
-    if not isinstance(num_gridy, np.int32):
-        num_gridy = np.array(num_gridy, dtype='int32')
-    if not isinstance(num_iter, np.int32):
-        num_iter = np.array(num_iter, dtype='int32')
+    tomo = _as_float32(tomo)
+    center = _as_float32(center)
+    theta = _as_float32(theta)
+    recon = _as_float32(recon)
+    num_gridx = _as_int32(num_gridx)
+    num_gridy = _as_int32(num_gridy)
+    num_iter = _as_int32(num_iter)
 
     _init_shared(tomo)
     arr = mp.distribute_jobs(
@@ -1370,21 +1272,21 @@ def _sirt(
     tomo = SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.sirt.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.sirt.restype = _c_void_p()
     LIB_TOMOPY.sirt(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        recon.ctypes.data_as(c_float_p),
-        ctypes.c_int(num_gridx),
-        ctypes.c_int(num_gridy),
-        ctypes.c_int(num_iter),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        _c_float_p(tomo),
+        _c_int(dx),
+        _c_int(dy),
+        _c_int(dz),
+        _c_float_p(center),
+        _c_float_p(theta),
+        _c_float_p(recon),
+        _c_int(num_gridx),
+        _c_int(num_gridy),
+        _c_int(num_iter),
+        _c_int(istart),
+        _c_int(iend))
 
 
 def write_center(
@@ -1455,3 +1357,37 @@ def write_center(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 sio.imsave(fname, arr, plugin='tifffile')
+
+
+def _as_float32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='float32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='float32')
+    return arr
+
+
+def _as_int32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='int32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='int32')
+    return arr
+
+
+def _c_float_p(arr):
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    return arr.ctypes.data_as(c_float_p)
+
+
+def _c_int(arr):
+    return ctypes.c_int(arr)
+
+
+def _c_char_p(arr):
+    c_char_p = ctypes.POINTER(ctypes.c_char)
+    return arr.ctypes.data_as(c_char_p)
+
+
+def _c_void_p():
+    return ctypes.POINTER(ctypes.c_void_p)
