@@ -186,8 +186,8 @@ def _project(theta, center, istart, iend):
     ox, oy, oz = obj.shape
     dx, dy, dz = tomo.shape
     c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.simulate.restype = ctypes.POINTER(ctypes.c_void_p)
-    LIB_TOMOPY.simulate(
+    LIB_TOMOPY.project.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.project(
         obj.ctypes.data_as(c_float_p),
         ctypes.c_int(ox),
         ctypes.c_int(oy),
