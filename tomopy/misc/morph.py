@@ -112,29 +112,10 @@ def apply_pad(arr, npad=None, axis=2, val=0.):
     ndarray
         Padded 3D array.
     """
+    arr = _as_float32(arr)
     dx, dy, dz = arr.shape
-    if axis == 0:
-        if npad is None:
-            npad = int(np.ceil(dx * np.sqrt(2)))
-        elif npad < dx:
-            npad = dx
-        out = val * np.ones((npad, dy, dz), dtype='float32')
-    if axis == 1:
-        if npad is None:
-            npad = int(np.ceil(dy * np.sqrt(2)))
-        elif npad < dy:
-            npad = dy
-        out = val * np.ones((dx, npad, dz), dtype='float32')
-    if axis == 2:
-        if npad is None:
-            npad = int(np.ceil(dz * np.sqrt(2)))
-        elif npad < dz:
-            npad = dz
-        out = val * np.ones((dx, dy, npad), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
+    npad = _get_npad(arr.shape[axis], npad)
+    out = _init_out(arr, axis, npad, val)
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.apply_pad.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -144,6 +125,14 @@ def apply_pad(arr, npad=None, axis=2, val=0.):
         ctypes.c_int(axis), ctypes.c_int(npad),
         out.ctypes.data_as(c_float_p))
     return out
+
+
+def _get_npad(dim, npad):
+    if npad is None:
+        npad = int(np.ceil(dim * np.sqrt(2)))
+    elif npad < dim:
+        npad = dim
+    return npad
 
 
 def downsample(arr, level=1, axis=2):
@@ -164,17 +153,9 @@ def downsample(arr, level=1, axis=2):
     ndarray
         Downsampled 3D array.
     """
+    arr = _as_float32(arr)
     dx, dy, dz = arr.shape
-    if axis == 0:
-        out = np.zeros((dx / np.power(2, level), dy, dz), dtype='float32')
-    if axis == 1:
-        out = np.zeros((dx, dy / np.power(2, level), dz), dtype='float32')
-    if axis == 2:
-        out = np.zeros((dx, dy, dz / np.power(2, level)), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
+    out = _init_out(arr, axis, arr.shape[axis] / np.power(2, level))
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.downsample.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -204,17 +185,9 @@ def upsample(arr, level=1, axis=2):
     ndarray
         Upsampled 3D array.
     """
+    arr = _as_float32(arr)
     dx, dy, dz = arr.shape
-    if axis == 0:
-        out = np.zeros((dx * np.power(2, level), dy, dz), dtype='float32')
-    if axis == 1:
-        out = np.zeros((dx, dy * np.power(2, level), dz), dtype='float32')
-    if axis == 2:
-        out = np.zeros((dx, dy, dz * np.power(2, level)), dtype='float32')
-
-    # Make sure that input datatype is correct.
-    if not isinstance(arr, np.float32):
-        arr = np.array(arr, dtype='float32')
+    out = _init_out(arr, axis, arr.shape[axis] * np.power(2, level))
 
     c_float_p = ctypes.POINTER(ctypes.c_float)
     LIB_TOMOPY.upsample.restype = ctypes.POINTER(ctypes.c_void_p)
@@ -224,3 +197,18 @@ def upsample(arr, level=1, axis=2):
         ctypes.c_int(level), ctypes.c_int(axis),
         out.ctypes.data_as(c_float_p))
     return out
+
+
+def _init_out(arr, axis, dim, val=0.):
+    if axis > 3:
+        logger.warning('Maximum allowable dimension is three.')
+    dx, dy, dz = arr.shape
+    shape = [dx, dy, dz]
+    shape[axis] = dim
+    return val * np.ones(shape, dtype='float32')
+
+
+def _as_float32(arr):
+    if not isinstance(arr, np.float32):
+        arr = np.array(arr, dtype='float32')
+    return arr
