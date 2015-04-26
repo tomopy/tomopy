@@ -61,3 +61,4 @@ from tomopy.misc.mproc import *
 from tomopy.deprec import *
 from tomopy.prep import *
 from tomopy.recon import *
+from tomopy.sim import *
