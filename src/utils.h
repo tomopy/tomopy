@@ -127,6 +127,7 @@ fbp(
     float *recon,
     int ngridx,
     int ngridy,
+    char name[16],
     int istart, 
     int iend);
 
