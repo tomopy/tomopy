@@ -47,7 +47,7 @@
 void 
 fbp(
     float *data, int dx, int dy, int dz, float *center, float *theta,
-    float *recon, int ngridx, int ngridy, 
+    float *recon, int ngridx, int ngridy, char *fname, 
     int istart, int iend)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
