@@ -57,6 +57,7 @@ import ctypes
 import os
 import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
+from tomopy.util import *
 import logging
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
     ndarray
         3D array of same shape as input.
     """
+    arr = as_float32(arr)
     arr = mp.distribute_jobs(
         arr,
         func=_gaussian_filter,
@@ -147,6 +149,7 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     ndarray
         Median filtered 3D array.
     """
+    arr = as_float32(arr)
     arr = mp.distribute_jobs(
         arr,
         func=_median_filter,

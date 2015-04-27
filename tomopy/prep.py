@@ -259,6 +259,10 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     ndarray
         Normalized 3D tomographic data.
     """
+    tomo = as_float32(tomo)
+    flat = as_float32(flat)
+    dark = as_float32(dark)
+
     # Calculate average flat and dark fields for normalization.
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
