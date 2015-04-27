@@ -130,6 +130,9 @@ def art(tomo, theta, center=None, emission=True,
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -144,8 +147,6 @@ def art(tomo, theta, center=None, emission=True,
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -223,6 +224,9 @@ def bart(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -239,8 +243,6 @@ def bart(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -322,6 +324,9 @@ def fbp(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -336,8 +341,6 @@ def fbp(
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     filter_name = np.array(filter_name, dtype=(str, 16))
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     num_gridx = as_int32(num_gridx)
     num_gridy = as_int32(num_gridy)
@@ -411,6 +414,9 @@ def find_center(
     float
         Rotation axis location.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if ind is None:
         ind = dy / 2
@@ -446,10 +452,10 @@ def find_center(
 
 
 def _circ_mask(rad, rec, ratio):
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        rec[0, msk] = 0.
-        return rec
+    y, x = np.ogrid[-rad:rad, -rad:rad]
+    msk = x * x + y * y > ratio * ratio * rad * rad
+    rec[0, msk] = 0.
+    return rec
 
 
 def _find_center_cost(
@@ -503,6 +509,9 @@ def gridrec(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
 
     # Gridrec accepts even number of slices.
@@ -526,8 +535,6 @@ def gridrec(
     recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     filter_name = np.array(filter_name, dtype=(str, 16))
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     num_gridx = as_int32(num_gridx)
     num_gridy = as_int32(num_gridy)
@@ -612,6 +619,9 @@ def mlem(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -626,8 +636,6 @@ def mlem(
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -705,6 +713,9 @@ def osem(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -721,8 +732,6 @@ def osem(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -810,6 +819,9 @@ def ospml_hybrid(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -828,8 +840,6 @@ def ospml_hybrid(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -918,6 +928,9 @@ def ospml_quad(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -936,8 +949,6 @@ def ospml_quad(
     if ind_block is None:
         ind_block = np.arange(0, dx).astype("float32")
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -1026,6 +1037,9 @@ def pml_hybrid(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -1042,8 +1056,6 @@ def pml_hybrid(
     if reg_par is None:
         reg_par = np.ones(10, dtype="float32")
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -1122,6 +1134,9 @@ def pml_quad(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -1136,10 +1151,8 @@ def pml_quad(
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
     if reg_par is None:
-        reg_par = np.ones(10, dtype="float32")
+        reg_par = np.ones(10, dtype='float32')
 
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
     center = as_float32(center)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -1215,6 +1228,9 @@ def sirt(
     ndarray
         Reconstructed 3D object.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if center is None:
         center = np.ones(dy, dtype='float32') * dz / 2.
@@ -1229,8 +1245,6 @@ def sirt(
     if recon is None:
         recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
 
-    tomo = as_float32(tomo)
-    center = as_float32(center)
     theta = as_float32(theta)
     recon = as_float32(recon)
     num_gridx = as_int32(num_gridx)
@@ -1304,6 +1318,9 @@ def write_center(
     dmin, dmax : float, optional
         Mininum and maximum values to adjust float-to-int conversion range.
     """
+    tomo = as_float32(tomo)
+    theta = as_float32(theta)
+
     dx, dy, dz = tomo.shape
     if ind is None:
         ind = dy / 2
