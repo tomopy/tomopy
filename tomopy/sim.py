@@ -67,7 +67,8 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['project',
+__all__ = ['angles',
+           'project',
            'propagate',
            'fan_to_para',
            'para_to_fan',
@@ -108,6 +109,29 @@ def add_poisson(tomo):
     logger.warning('Not implemented.')
 
 
+def angles(nang, ang1=0., ang2=180.):
+    """
+    Return uniformly distributed projection angles in radian.
+
+    Parameters
+    ----------
+    nang : int, optional
+        Number of projections.
+
+    ang1 : float, optional
+        First projection angle in degrees.
+
+    ang2 : float, optional
+        Last projection angle in degrees.
+
+    Returns
+    -------
+    array
+        Projection angles
+    """
+    return np.linspace(ang1 * np.pi / 180., ang2 * np.pi / 180., nang)
+
+
 def project(obj, theta, center=None, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
@@ -130,6 +154,8 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     ndarray
         3D tomographic data.
     """
+    obj = as_float32(obj)
+
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
     dx = len(theta)
@@ -141,7 +167,6 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     elif np.array(center).size == 1:
         center = np.ones(dy, dtype='float32') * center
 
-    obj = as_float32(obj)
     theta = as_float32(theta)
     center = as_float32(center)
 

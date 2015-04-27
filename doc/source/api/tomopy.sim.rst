@@ -9,7 +9,8 @@
    .. rubric:: **Functions:**
 
    .. autosummary::
-   
+      
+      angles
       project
 		propagate
 		fan_to_para
