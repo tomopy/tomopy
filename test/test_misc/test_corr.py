@@ -48,16 +48,100 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
 from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
+import numpy as np
+from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
+
+
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45., 53.],
+          [24., 53., 12., 89., 12.],
+          [14., 52., 25., 52., 41.],
+          [24., 64., 12., 89., 15.]],
+         [[25., 74., 63., 98., 43.],
+          [63., 27., 43., 68., 15.],
+          [24., 64., 12., 99., 35.],
+          [12., 53., 74., 13., 41.]],
+         [[13., 65., 33., 12., 39.],
+          [71., 33., 87., 16., 78.],
+          [42., 97., 77., 11., 41.],
+          [90., 12., 32., 63., 14.]]], dtype='float32')
+    return data
+
+
+def test_median_filter():
+    data = synthetic_data()
+    assert_array_almost_equal(
+        median_filter(data, axis=0),
+        np.array(
+            [[[29., 39., 45., 45., 53.],
+              [29., 29., 52., 41., 45.],
+              [24., 24., 52., 25., 41.],
+              [24., 24., 52., 25., 41.]],
+             [[27., 63., 68., 63., 43.],
+              [27., 43., 64., 43., 43.],
+              [27., 43., 53., 41., 35.],
+              [24., 53., 53., 41., 41.]],
+             [[33., 33., 33., 33., 39.],
+              [42., 65., 33., 39., 39.],
+              [71., 71., 33., 41., 41.],
+              [90., 42., 32., 32., 14.]]], dtype='float32'))
+
+    assert_array_almost_equal(
+        median_filter(data, axis=1),
+        np.array(
+            [[[29., 39., 63., 45., 53.],
+              [27., 27., 53., 15., 15.],
+              [24., 25., 52., 41., 41.],
+              [24., 24., 64., 15., 15.]],
+             [[29., 39., 63., 43., 43.],
+              [53., 43., 43., 43., 16.],
+              [42., 42., 52., 41., 41.],
+              [24., 32., 53., 32., 15.]],
+             [[25., 33., 63., 39., 39.],
+              [63., 63., 33., 68., 68.],
+              [42., 64., 77., 41., 41.],
+              [53., 32., 32., 32., 14.]]], dtype='float32'))
+
+    assert_array_almost_equal(
+        median_filter(data, axis=2),
+        np.array(
+            [[[29., 74., 39., 68., 43.],
+              [24., 53., 25., 68., 41.],
+              [24., 53., 12., 89., 15.],
+              [24., 64., 12., 89., 35.]],
+             [[25., 65., 39., 45., 43.],
+              [25., 64., 39., 52., 41.],
+              [24., 53., 32., 63., 35.],
+              [24., 53., 32., 63., 35.]],
+             [[25., 65., 43., 16., 39.],
+              [42., 65., 63., 16., 41.],
+              [63., 33., 74., 16., 41.],
+              [42., 53., 32., 63., 35.]]], dtype='float32'))
+
+
+def test_remove_neg():
+    arr = np.arange(-2, 2, dtype='float32')
+    out = remove_neg(arr)
+    assert_equals(out[out < 0].size, 0)
+
+
+def test_remove_nan():
+    arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
+    out = remove_nan(arr)
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

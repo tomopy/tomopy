@@ -48,16 +48,59 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
 from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
+import numpy as np
+import os
+import shutil
+import h5py
+from nose.tools import assert_equals
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+def test_baboon():
+    assert_equals(baboon().dtype, 'float32')
+    assert_equals(baboon().shape, (1, 512, 512))
+
+
+def test_barbara():
+    assert_equals(barbara().dtype, 'float32')
+    assert_equals(barbara().shape, (1, 512, 512))
+
+
+def test_cameraman():
+    assert_equals(cameraman().dtype, 'float32')
+    assert_equals(cameraman().shape, (1, 512, 512))
+
+
+def test_checkerboard():
+    assert_equals(checkerboard().dtype, 'float32')
+    assert_equals(checkerboard().shape, (1, 512, 512))
+
+
+def test_lena():
+    assert_equals(lena().dtype, 'float32')
+    assert_equals(lena().shape, (1, 512, 512))
+
+
+def test_peppers():
+    assert_equals(peppers().dtype, 'float32')
+    assert_equals(peppers().shape, (1, 512, 512))
+
+
+def test_shepp2d():
+    assert_equals(shepp2d().dtype, 'float32')
+    assert_equals(shepp2d().shape, (1, 512, 512))
+
+
+def test_shepp3d():
+    assert_equals(shepp3d((6, 8, 10)).dtype, 'float32')
+    assert_equals(shepp3d((6, 8, 10)).shape, (6, 8, 10))
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
