@@ -53,6 +53,7 @@ import numpy as np
 import os
 import shutil
 from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
@@ -60,30 +61,34 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def synthetic_data():
+def synthetic_object():
     """
-    Generate a synthetic data.
+    Generate a synthetic object.
     """
-    data = np.array(
-        [[[29., 85., 39., 45., 53.],
-          [24., 53., 12., 89., 12.],
-          [14., 52., 25., 52., 41.],
-          [24., 64., 12., 89., 15.]],
-         [[25., 74., 63., 98., 43.],
-          [63., 27., 43., 68., 15.],
-          [24., 64., 12., 99., 35.],
-          [12., 53., 74., 13., 41.]],
-         [[13., 65., 33., 12., 39.],
-          [71., 33., 87., 16., 78.],
-          [42., 97., 77., 11., 41.],
-          [90., 12., 32., 63., 14.]]], dtype='float32')
-    return data
+    obj = [[[1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.]],
+           [[1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.]]]
+    return obj
 
 
 def test_project():
-    out = project(synthetic_data(), theta=(0., 1.))
-    assert_equals(out.shape, (2, 3, 7))
-    assert_equals(np.isnan(out).sum(), 0)
+    ang = [0.0000, 0.2618, 0.5236, 0.7854]
+    assert_array_almost_equal(
+        project(synthetic_object(), ang),
+        [[[0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000],
+          [0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000]],
+         [[0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000],
+          [0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000]],
+         [[0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039],
+          [0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039]],
+         [[0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955],
+          [0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955]]],
+        decimal=4)
 
 
 if __name__ == '__main__':
