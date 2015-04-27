@@ -47,14 +47,15 @@
 # #########################################################################
 
 """
-Module for data size morphing functions.
+Module for internal utility functions.
 """
 
 from __future__ import absolute_import, division, print_function
 
+import os
+import ctypes
 import numpy as np
-import tomopy.misc.mproc as mp
-from tomopy.util import *
+import multiprocessing
 import logging
 logger = logging.getLogger(__name__)
 
@@ -62,131 +63,65 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['apply_pad',
-           'downsample',
-           'upsample']
+__all__ = ['import_shared_lib',
+           'as_float32',
+           'as_int32',
+           'as_c_float_p',
+           'as_c_int',
+           'as_c_char_p',
+           'as_c_void_p']
 
 
-LIB_TOMOPY = import_shared_lib('libtomopy')
-
-
-def apply_pad(arr, npad=None, axis=2, val=0.):
+def import_shared_lib(lib_name):
     """
-    Extend size of 3D array along specified axis.
-
-    Parameters
-    ----------
-    arr : ndarray
-        3D input array.
-    npad : int, optional
-        New dimensions after padding.
-    axis : int, optional
-        Axis along which padding will be performed.
-    val : float, optional
-        Pad value.
-
-    Returns
-    -------
-    ndarray
-        Padded 3D array.
+    Get the path and import the C-shared library.
     """
-    arr = as_float32(arr)
-    dx, dy, dz = arr.shape
-    npad = _get_npad(arr.shape[axis], npad)
-    out = _init_out(arr, axis, npad, val)
-
-    LIB_TOMOPY.apply_pad.restype = as_c_void_p()
-    LIB_TOMOPY.apply_pad(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(axis),
-        as_c_int(npad),
-        as_c_float_p(out))
-    return out
-
-
-def _get_npad(dim, npad):
-    if npad is None:
-        npad = int(np.ceil(dim * np.sqrt(2)))
-    elif npad < dim:
-        npad = dim
-    return npad
+    try:
+        if os.name == 'nt':
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', 'lib', lib_name + '.pyd'))
+            return ctypes.CDLL(libpath)
+        else:
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', 'lib', lib_name + '.so'))
+            return ctypes.CDLL(libpath)
+    except OSError as e:
+        logger.warning('OSError: Shared library missing.')
 
 
-def downsample(arr, level=1, axis=2):
-    """
-    Downsample along specified axis of a 3D array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        3D input array.
-    level : int, optional
-        Downsampling level in powers of two.
-    axis : int, optional
-        Axis along which downsampling will be performed.
-
-    Returns
-    -------
-    ndarray
-        Downsampled 3D array.
-    """
-    arr = as_float32(arr)
-    dx, dy, dz = arr.shape
-    out = _init_out(arr, axis, arr.shape[axis] / np.power(2, level))
-
-    LIB_TOMOPY.downsample.restype = as_c_void_p()
-    LIB_TOMOPY.downsample(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(level),
-        as_c_int(axis),
-        as_c_float_p(out))
-    return out
+def as_float32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='float32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='float32')
+    return arr
 
 
-def upsample(arr, level=1, axis=2):
-    """
-    Upsample along specified axis of a 3D array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        3D input array.
-    level : int, optional
-        Downsampling level in powers of two.
-    axis : int, optional
-        Axis along which upsampling will be performed.
-
-    Returns
-    -------
-    ndarray
-        Upsampled 3D array.
-    """
-    arr = as_float32(arr)
-    dx, dy, dz = arr.shape
-    out = _init_out(arr, axis, arr.shape[axis] * np.power(2, level))
-
-    LIB_TOMOPY.upsample.restype = as_c_void_p()
-    LIB_TOMOPY.upsample(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(level),
-        as_c_int(axis),
-        as_c_float_p(out))
-    return out
+def as_int32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='int32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='int32')
+    return arr
 
 
-def _init_out(arr, axis, dim, val=0.):
-    if axis > 3:
-        logger.warning('Maximum allowable dimension is three.')
-    dx, dy, dz = arr.shape
-    shape = [dx, dy, dz]
-    shape[axis] = dim
-    return val * np.ones(shape, dtype='float32')
+def as_c_float_p(arr):
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    return arr.ctypes.data_as(c_float_p)
+
+
+def as_c_int(arr):
+    return ctypes.c_int(arr)
+
+
+def as_c_char_p(arr):
+    c_char_p = ctypes.POINTER(ctypes.c_char)
+    return arr.ctypes.data_as(c_char_p)
+
+
+def as_c_void_p():
+    return ctypes.POINTER(ctypes.c_void_p)

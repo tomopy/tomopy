@@ -57,6 +57,7 @@ import numpy as np
 import ctypes
 import os
 import shutil
+from tomopy.util import *
 import tomopy.misc.mproc as mp
 import multiprocessing
 import logging
@@ -83,28 +84,7 @@ def _init_shared(arr):
     SHARED_TOMO = sarr
 
 
-def _import_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    try:
-        if os.name == 'nt':
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', 'lib', lib_name + '.pyd'))
-            return ctypes.CDLL(libpath)
-        else:
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', 'lib', lib_name + '.so'))
-            return ctypes.CDLL(libpath)
-    except OSError as e:
-        logger.warning('OSError: Shared library missing.')
-
-
-LIB_TOMOPY = _import_shared_lib('libtomopy')
+LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
 def add_poisson(tomo):
@@ -161,13 +141,9 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     elif np.array(center).size == 1:
         center = np.ones(dy, dtype='float32') * center
 
-    # Make sure that inputs datatypes are correct.
-    if not isinstance(obj, np.float32):
-        obj = np.array(obj, dtype='float32')
-    if not isinstance(theta, np.float32):
-        theta = np.array(theta, dtype='float32')
-    if not isinstance(center, np.float32):
-        center = np.array(center, dtype='float32')
+    obj = as_float32(obj)
+    theta = as_float32(theta)
+    center = as_float32(center)
 
     _init_shared(obj)
     arr = mp.distribute_jobs(
@@ -185,21 +161,20 @@ def _project(theta, center, istart, iend):
     tomo = mp.SHARED_ARRAY
     ox, oy, oz = obj.shape
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.project.restype = ctypes.POINTER(ctypes.c_void_p)
+    LIB_TOMOPY.project.restype = as_c_void_p()
     LIB_TOMOPY.project(
-        obj.ctypes.data_as(c_float_p),
-        ctypes.c_int(ox),
-        ctypes.c_int(oy),
-        ctypes.c_int(oz),
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx),
-        ctypes.c_int(dy),
-        ctypes.c_int(dz),
-        center.ctypes.data_as(c_float_p),
-        theta.ctypes.data_as(c_float_p),
-        ctypes.c_int(istart),
-        ctypes.c_int(iend))
+        as_c_float_p(obj),
+        as_c_int(ox),
+        as_c_int(oy),
+        as_c_int(oz),
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_int(istart),
+        as_c_int(iend))
 
 
 def fan_to_para(tomo, dist, geom):
