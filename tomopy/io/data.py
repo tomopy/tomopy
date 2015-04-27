@@ -354,22 +354,28 @@ class Writer():
         """
         Convert array to float32.
         """
-        if not isinstance(self.data, np.float32):
+        if not isinstance(self.data, np.ndarray):
+            self.data = np.array(self.data, dtype='float32')
+        elif not self.data.dtype == np.float32:
             self.data = np.array(self.data, dtype='float32')
 
     def _as_uint8(self):
         """
         Convert array to uint8.
         """
-        if not isinstance(self.data, np.int8):
-            self.data = np.array(self.data, dtype='float32')
+        if not isinstance(self.data, np.ndarray):
+            self.data = np.array(self.data, dtype='uint8')
+        elif not self.data.dtype == np.uint8:
+            self.data = np.array(self.data, dtype='uint8')
 
     def _as_uint16(self):
         """
         Convert array to uint16.
         """
-        if not isinstance(self.data, np.int16):
-            self.data = np.array(self.data, dtype='float32')
+        if not isinstance(self.data, np.ndarray):
+            self.data = np.array(self.data, dtype='uint16')
+        elif not self.data.dtype == np.uint16:
+            self.data = np.array(self.data, dtype='uint16')
 
     def _range(self, dmin=None, dmax=None):
         """

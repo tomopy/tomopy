@@ -54,9 +54,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
-import os
-import ctypes
 import tomopy.misc.mproc as mp
+from tomopy.util import *
 from scipy.ndimage import filters
 import logging
 logger = logging.getLogger(__name__)
@@ -81,28 +80,7 @@ PI = 3.14159265359
 PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 
-def _import_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    try:
-        if os.name == 'nt':
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', 'lib', lib_name + '.pyd'))
-            return ctypes.CDLL(libpath)
-        else:
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', 'lib', lib_name + '.so'))
-            return ctypes.CDLL(libpath)
-    except OSError as e:
-        logger.warning('OSError: Shared library missing.')
-
-
-LIB_TOMOPY = _import_shared_lib('libtomopy')
+LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
 def circular_roi(tomo, ratio=1, val=None):
@@ -164,11 +142,8 @@ def correct_air(tomo, air=10, ncore=None, nchunk=None):
     ndarray
         Corrected 3D tomographic data.
     """
-    # Make sure that inputs datatypes are correct
-    if not isinstance(tomo, np.float32):
-        tomo = np.array(tomo, dtype='float32')
-    if not isinstance(air, np.int32):
-        air = np.array(air, dtype='int32')
+    tomo = as_float32(tomo)
+    air = as_int32(air)
 
     arr = mp.distribute_jobs(
         tomo,
@@ -183,12 +158,16 @@ def correct_air(tomo, air=10, ncore=None, nchunk=None):
 def _correct_air(air, istart, iend):
     tomo = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    LIB_TOMOPY.correct_air.restype = ctypes.POINTER(ctypes.c_void_p)
+
+    LIB_TOMOPY.correct_air.restype = as_c_void_p()
     LIB_TOMOPY.correct_air(
-        tomo.ctypes.data_as(c_float_p),
-        ctypes.c_int(dx), ctypes.c_int(dy), ctypes.c_int(dz),
-        ctypes.c_int(istart), ctypes.c_int(iend), ctypes.c_int(air))
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_int(istart),
+        as_c_int(iend),
+        as_c_int(air))
 
 
 def focus_region(

@@ -70,30 +70,6 @@ __all__ = ['gaussian_filter',
            'remove_neg']
 
 
-def _import_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    try:
-        if os.name == 'nt':
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', '..', 'lib', lib_name + '.pyd'))
-            return ctypes.CDLL(libpath)
-        else:
-            libpath = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..', '..', 'lib', lib_name + '.so'))
-            return ctypes.CDLL(libpath)
-    except OSError as e:
-        logger.warning('OSError: Shared library missing.')
-
-
-LIB_TOMOPY = _import_shared_lib('libtomopy')
-
-
 def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
     """
     Apply Gaussian filter to 3D array along specified axis.
