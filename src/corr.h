@@ -60,7 +60,7 @@ DLL void
 correct_air(
     float* data, 
     int dx, int dy, int dz,
-    int istart, int iend,
-    int nair);
+    int nair,
+    int istart, int iend);
 
 #endif
