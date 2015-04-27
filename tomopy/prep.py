@@ -165,9 +165,9 @@ def _correct_air(air, istart, iend):
         as_c_int(dx),
         as_c_int(dy),
         as_c_int(dz),
+        as_c_int(air),
         as_c_int(istart),
-        as_c_int(iend),
-        as_c_int(air))
+        as_c_int(iend))
 
 
 def focus_region(

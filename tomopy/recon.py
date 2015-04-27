@@ -422,10 +422,7 @@ def find_center(
 
     # Apply circular mask.
     if mask is True:
-        rad = tomo.shape[2] / 2
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        rec[0, msk] = 0
+        rec = _circ_mask(dz / 2, rec, ratio)
 
     # Adjust histogram boundaries according to reconstruction.
     hmin = np.min(rec)
@@ -448,6 +445,13 @@ def find_center(
     return res.x
 
 
+def _circ_mask(rad, rec, ratio):
+        y, x = np.ogrid[-rad:rad, -rad:rad]
+        msk = x * x + y * y > ratio * ratio * rad * rad
+        rec[0, msk] = 0.
+        return rec
+
+
 def _find_center_cost(
         center, tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission):
     """
@@ -459,10 +463,7 @@ def _find_center_cost(
 
     # Apply circular mask.
     if mask is True:
-        rad = tomo.shape[2] / 2
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        rec[0, msk] = 0
+        rec = _circ_mask(dz / 2, rec, ratio)
 
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
