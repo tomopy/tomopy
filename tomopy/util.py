@@ -63,8 +63,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['init_shared',
-           'import_shared_lib',
+__all__ = ['import_shared_lib',
            'as_float32',
            'as_int32',
            'as_c_float_p',
