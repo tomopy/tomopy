@@ -141,10 +141,10 @@ art(
                     }
 
                     // Update
-                    ind_recon = s*ngridx*ngridy;
-                    ind_data = d+s*dz+p*dy*dz;
                     if (sum_dist2 != 0.0) 
                     {
+                        ind_data = d+s*dz+p*dy*dz;
+                        ind_recon = s*ngridx*ngridy;
                         upd = (data[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++) 
                         {

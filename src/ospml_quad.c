@@ -75,7 +75,7 @@ ospml_quad(
     int asize, bsize, csize;
     float *simdata;
     float upd;
-    int ind_data;
+    int ind_data, ind_recon;
     float *sum_dist;
     float sum_dist2;
     float *E, *F, *G;
@@ -170,10 +170,11 @@ ospml_quad(
                         if (sum_dist2 != 0.0) 
                         {
                             ind_data = d+s*dz+p*dy*dz;
+                            ind_recon = s*ngridx*ngridy;
                             upd = data[ind_data]/simdata[ind_data];
                             for (n=0; n<csize-1; n++) 
                             {
-                                E[indi[n]] -= recon[indi[n]]*upd*dist[n];
+                                E[indi[n]] -= recon[indi[n]+ind_recon]*upd*dist[n];
                             }
                         }
                     }
@@ -364,9 +365,8 @@ ospml_quad(
 
                 for (n = 0; n < ngridx; n++) {
                     for (m = 0; m < ngridy; m++) {
-                        q = m + n*ngridy + s*ngridx*ngridy;
+                        q = m + n*ngridy;
                         if (F[q] != 0.0) {
-                            q = m + n*ngridy;
                             ind0 = q + s*ngridx*ngridy;
                             recon[ind0] = (-G[q]+sqrt(G[q]*G[q]-8*E[q]*F[q]))/(4*F[q]);
                         }
