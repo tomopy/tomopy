@@ -48,16 +48,114 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
 from tomopy.recon import *
+import numpy as np
+import os
+import shutil
+from nose.tools import assert_equals
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45., 53.],
+          [24., 53., 12., 89., 12.],
+          [14., 52., 25., 52., 41.],
+          [24., 64., 12., 89., 15.]],
+         [[25., 74., 63., 98., 43.],
+          [63., 27., 43., 68., 15.],
+          [24., 64., 12., 99., 35.],
+          [12., 53., 74., 13., 41.]],
+         [[13., 65., 33., 12., 39.],
+          [71., 33., 87., 16., 78.],
+          [42., 97., 77., 11., 41.],
+          [90., 12., 32., 63., 14.]]], dtype='float32')
+    return data
+
+
+def test_gridrec():
+    out = gridrec(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_art():
+    out = art(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_bart():
+    out = bart(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_fbp():
+    out = fbp(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_mlem():
+    out = mlem(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_osem():
+    out = osem(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_ospml_hybrid():
+    out = ospml_hybrid(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_ospml_quad():
+    out = ospml_quad(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_pml_hybrid():
+    out = pml_hybrid(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_pml_quad():
+    out = pml_quad(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_sirt():
+    out = sirt(synthetic_data(), theta=(0., 1.))
+    assert_equals(out.shape, (4, 5, 5))
+    assert_equals(np.isnan(out).sum(), 0)
+
+
+def test_write_center():
+    dpath = os.path.join('test', 'tmp')
+    write_center(synthetic_data(), [0., 1.], dpath, center=[3, 5, 0.5])
+    assert_equals(os.path.isfile(os.path.join(dpath, '3.00.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '3.50.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '4.00.tiff')), True)
+    assert_equals(os.path.isfile(os.path.join(dpath, '4.50.tiff')), True)
+    shutil.rmtree(dpath)
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

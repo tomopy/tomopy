@@ -48,16 +48,69 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
 from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
+import tomopy.misc.mproc as mp
+import numpy as np
+from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+def synthetic_data():
+    """
+    Generate a synthetic data.
+    """
+    data = np.array(
+        [[[29., 85., 39., 45., 53.],
+          [24., 53., 12., 89., 12.],
+          [14., 52., 25., 52., 41.],
+          [24., 64., 12., 89., 15.]],
+         [[25., 74., 63., 98., 43.],
+          [63., 27., 43., 68., 15.],
+          [24., 64., 12., 99., 35.],
+          [12., 53., 74., 13., 41.]],
+         [[13., 65., 33., 12., 39.],
+          [71., 33., 87., 16., 78.],
+          [42., 97., 77., 11., 41.],
+          [90., 12., 32., 63., 14.]]], dtype='float32')
+    return data
+
+
+def _synthetic_func(val, istart, iend):
+    a = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        a[m, :, :] = val
+
+
+def test_distribute_jobs():
+    dat = synthetic_data()
+    assert_array_almost_equal(
+        distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0),
+        np.ones((3, 4, 5)))
+    assert_equals(
+        distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0).shape,
+        (3, 4, 5))
+    assert_equals(
+        np.isnan(distribute_jobs(
+            dat,
+            func=_synthetic_func,
+            args=(1.,),
+            axis=0)).sum(),
+        0)
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
