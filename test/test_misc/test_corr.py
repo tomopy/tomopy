@@ -54,6 +54,11 @@ from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
 def synthetic_data():
     """
     Generate a synthetic data.
@@ -131,11 +136,6 @@ def test_remove_nan():
     arr = np.array([np.nan, 1.5, 2., np.nan, 1.], dtype='float')
     out = remove_nan(arr)
     assert_equals(np.isnan(out).sum(), 0)
-
-
-__author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
 
 
 if __name__ == '__main__':
