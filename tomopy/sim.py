@@ -76,15 +76,6 @@ __all__ = ['angles',
            'add_focal_spot_blur', ]
 
 
-def _init_shared(arr):
-    global SHARED_TOMO
-    sarr = multiprocessing.Array(ctypes.c_float, arr.size)
-    sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
-    sarr = np.reshape(sarr, arr.shape)
-    sarr[:] = arr
-    SHARED_TOMO = sarr
-
-
 LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
@@ -170,7 +161,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     theta = as_float32(theta)
     center = as_float32(center)
 
-    _init_shared(obj)
+    mp.init_obj(obj)
     arr = mp.distribute_jobs(
         tomo,
         func=_project,
@@ -182,7 +173,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
 
 
 def _project(theta, center, istart, iend):
-    obj = SHARED_TOMO
+    obj = mp.SHARED_OBJ
     tomo = mp.SHARED_ARRAY
     ox, oy, oz = obj.shape
     dx, dy, dz = tomo.shape
