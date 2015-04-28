@@ -70,7 +70,8 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['find_center',
+__all__ = ['Recon',
+           'find_center',
            'art',
            'bart',
            'fbp',
@@ -86,6 +87,97 @@ __all__ = ['find_center',
 
 
 LIB_TOMOPY = import_shared_lib('libtomopy')
+
+
+class Recon():
+
+    """
+    Class for reconstruction methods.
+
+    Attributes
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    center: array, optional
+        Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+    """
+
+    def __init__(
+            self, tomo, theta, center=None, emission=True,
+            num_gridx=None, num_gridy=None, ncore=None, nchunk=None):
+        """
+        Initialize reconstruction parameters.
+        """
+        self.tomo = as_float32(tomo)
+        self.dx, self.dy, self.dz = self.tomo.shape
+        self.theta = as_float32(theta)
+        self.center = as_float32(center)
+        self.emission = emission
+        self.ncore = ncore
+        self.nchunk = nchunk
+
+        if center is None:
+            self.center = np.ones(self.dy, dtype='float32') * self.dz / 2.
+        elif np.array(center).size == 1:
+            self.center *= np.ones(self.dy, dtype='float32')
+        if num_gridx is None:
+            self.num_gridx = as_int32(self.dz)
+        if num_gridy is None:
+            self.num_gridy = as_int32(self.dz)
+        if not emission:
+            self.tomo = -np.log(self.tomo)
+
+    def _init_recon(self, recon):
+        """
+        Create reconstruction grid.
+        """
+        if recon is None:
+            self.recon = 1e-6 * np.ones(
+                (self.dy, self.num_gridx, self.num_gridy),
+                dtype='float32')
+        else:
+            self.recon = as_float32(recon)
+
+    def art(self, num_iter=1, recon=None):
+        """
+        Reconstruct object from projection data using algebraic reconstruction
+        technique (ART) :cite:`Kak:98`.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_art,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
 
 
 def art(tomo, theta, center=None, emission=True,
@@ -148,17 +240,18 @@ def art(tomo, theta, center=None, emission=True,
     arr = mp.distribute_jobs(
         recon,
         func=_art,
-        args=(theta, center, num_gridx, num_gridy, num_iter),
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _art(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+def _art(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        num_iter, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.art.restype = as_c_void_p()
     LIB_TOMOPY.art(
@@ -246,7 +339,7 @@ def bart(
     arr = mp.distribute_jobs(
         recon,
         func=_bart,
-        args=(theta, center, num_gridx, num_gridy,
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
               num_iter, num_block, ind_block),
         axis=0,
         ncore=ncore,
@@ -255,11 +348,10 @@ def bart(
 
 
 def _bart(
-        theta, center, num_gridx, num_gridy,
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
         num_iter, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.bart.restype = as_c_void_p()
     LIB_TOMOPY.bart(
@@ -340,17 +432,18 @@ def fbp(
     arr = mp.distribute_jobs(
         recon,
         func=_fbp,
-        args=(theta, center, num_gridx, num_gridy, filter_name),
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, filter_name),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _fbp(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
+def _fbp(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        filter_name, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.fbp.restype = as_c_void_p()
     LIB_TOMOPY.fbp(
@@ -544,7 +637,7 @@ def gridrec(
     arr = mp.distribute_jobs(
         recon,
         func=_gridrec,
-        args=(theta, center, num_gridx, num_gridy, filter_name),
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, filter_name),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -555,10 +648,11 @@ def gridrec(
     return arr
 
 
-def _gridrec(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
+def _gridrec(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        filter_name, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.gridrec.restype = as_c_void_p()
     LIB_TOMOPY.gridrec(
@@ -637,17 +731,18 @@ def mlem(
     arr = mp.distribute_jobs(
         recon,
         func=_mlem,
-        args=(theta, center, num_gridx, num_gridy, num_iter),
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _mlem(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+def _mlem(
+        dx, dy, dz, theta, center, num_gridx,
+        num_gridy, num_iter, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.mlem.restype = as_c_void_p()
     LIB_TOMOPY.mlem(
@@ -735,7 +830,7 @@ def osem(
     arr = mp.distribute_jobs(
         recon,
         func=_osem,
-        args=(theta, center, num_gridx, num_gridy,
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
               num_iter, num_block, ind_block),
         axis=0,
         ncore=ncore,
@@ -744,11 +839,10 @@ def osem(
 
 
 def _osem(
-        theta, center, num_gridx, num_gridy, num_iter,
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.osem.restype = as_c_void_p()
     LIB_TOMOPY.osem(
@@ -844,7 +938,7 @@ def ospml_hybrid(
     arr = mp.distribute_jobs(
         recon,
         func=_ospml_hybrid,
-        args=(theta, center, num_gridx, num_gridy,
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
               num_iter, reg_par, num_block, ind_block),
         axis=0,
         ncore=ncore,
@@ -853,11 +947,10 @@ def ospml_hybrid(
 
 
 def _ospml_hybrid(
-        theta, center, num_gridx, num_gridy, num_iter,
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.ospml_hybrid.restype = as_c_void_p()
     LIB_TOMOPY.ospml_hybrid(
@@ -953,7 +1046,7 @@ def ospml_quad(
     arr = mp.distribute_jobs(
         recon,
         func=_ospml_quad,
-        args=(theta, center, num_gridx, num_gridy,
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
               num_iter, reg_par, num_block, ind_block),
         axis=0,
         ncore=ncore,
@@ -962,11 +1055,10 @@ def ospml_quad(
 
 
 def _ospml_quad(
-        theta, center, num_gridx, num_gridy, num_iter,
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.ospml_quad.restype = as_c_void_p()
     LIB_TOMOPY.ospml_quad(
@@ -1058,7 +1150,8 @@ def pml_hybrid(
     arr = mp.distribute_jobs(
         recon,
         func=_pml_hybrid,
-        args=(theta, center, num_gridx, num_gridy, num_iter, reg_par),
+        args=(dx, dy, dz, theta, center, num_gridx,
+              num_gridy, num_iter, reg_par),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -1066,10 +1159,10 @@ def pml_hybrid(
 
 
 def _pml_hybrid(
-        theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        num_iter, reg_par, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.pml_hybrid.restype = as_c_void_p()
     LIB_TOMOPY.pml_hybrid(
@@ -1155,7 +1248,8 @@ def pml_quad(
     arr = mp.distribute_jobs(
         recon,
         func=_pml_quad,
-        args=(theta, center, num_gridx, num_gridy, num_iter, reg_par),
+        args=(dx, dy, dz, theta, center, num_gridx,
+              num_gridy, num_iter, reg_par),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -1163,10 +1257,10 @@ def pml_quad(
 
 
 def _pml_quad(
-        theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.pml_quad.restype = as_c_void_p()
     LIB_TOMOPY.pml_quad(
@@ -1246,7 +1340,7 @@ def sirt(
     arr = mp.distribute_jobs(
         recon,
         func=_sirt,
-        args=(theta, center, num_gridx, num_gridy, num_iter),
+        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -1254,10 +1348,10 @@ def sirt(
 
 
 def _sirt(
-        theta, center, num_gridx, num_gridy, num_iter, istart, iend):
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        num_iter, istart, iend):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
 
     LIB_TOMOPY.sirt.restype = as_c_void_p()
     LIB_TOMOPY.sirt(
