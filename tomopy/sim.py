@@ -186,6 +186,7 @@ def _project(theta, center, istart, iend):
     tomo = mp.SHARED_ARRAY
     ox, oy, oz = obj.shape
     dx, dy, dz = tomo.shape
+
     LIB_TOMOPY.project.restype = as_c_void_p()
     LIB_TOMOPY.project(
         as_c_float_p(obj),
