@@ -61,7 +61,9 @@ from contextlib import closing
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['distribute_jobs']
+__all__ = ['distribute_jobs',
+           'init_tomo',
+           'init_obj']
 
 
 def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
@@ -121,14 +123,12 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
         _arg.append(iend)
         arg.append(_arg)
 
-    shared_arr = mp.Array(ctypes.c_float, arr.size)
-    shared_arr = _to_numpy_array(shared_arr, arr.shape)
-    shared_arr[:] = arr
+    shared_arr = get_shared(arr)
 
     # Start processes.
     with closing(
         mp.Pool(processes=npool,
-                initializer=_init_shared,
+                initializer=init_shared,
                 initargs=(shared_arr,))) as p:
         p.map_async(_arg_parser, arg)
     p.join()
@@ -141,11 +141,28 @@ def _arg_parser(args):
     func(*args[1::])
 
 
-def _init_shared(shared_arr_):
-    global SHARED_ARRAY
-    SHARED_ARRAY = shared_arr_
+def get_shared(arr):
+    shared_arr = mp.Array(ctypes.c_float, arr.size)
+    shared_arr = _to_numpy_array(shared_arr, arr.shape)
+    shared_arr[:] = arr
+    return shared_arr
 
 
 def _to_numpy_array(mp_arr, dshape):
     a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
     return np.reshape(a, dshape)
+
+
+def init_shared(shared_arr):
+    global SHARED_ARRAY
+    SHARED_ARRAY = shared_arr
+
+
+def init_tomo(arr):
+    global SHARED_TOMO
+    SHARED_TOMO = get_shared(arr)
+
+
+def init_obj(arr):
+    global SHARED_OBJ
+    SHARED_OBJ = get_shared(arr)

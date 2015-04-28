@@ -85,15 +85,6 @@ __all__ = ['find_center',
            'write_center']
 
 
-def _init_shared(arr):
-    global SHARED_TOMO
-    sarr = multiprocessing.Array(ctypes.c_float, arr.size)
-    sarr = np.frombuffer(sarr.get_obj(), dtype='float32')
-    sarr = np.reshape(sarr, arr.shape)
-    sarr[:] = arr
-    SHARED_TOMO = sarr
-
-
 LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
@@ -153,7 +144,7 @@ def art(tomo, theta, center=None, emission=True,
     num_gridy = as_int32(num_gridy)
     num_iter = as_int32(num_iter)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_art,
@@ -165,7 +156,7 @@ def art(tomo, theta, center=None, emission=True,
 
 
 def _art(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -251,7 +242,7 @@ def bart(
     num_block = as_int32(num_block)
     ind_block = as_float32(ind_block)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_bart,
@@ -266,7 +257,7 @@ def bart(
 def _bart(
         theta, center, num_gridx, num_gridy,
         num_iter, num_block, ind_block, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -345,7 +336,7 @@ def fbp(
     num_gridx = as_int32(num_gridx)
     num_gridy = as_int32(num_gridy)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_fbp,
@@ -357,7 +348,7 @@ def fbp(
 
 
 def _fbp(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -549,7 +540,7 @@ def gridrec(
     if nchunk < 2:
         nchunk = 2
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_gridrec,
@@ -565,7 +556,7 @@ def gridrec(
 
 
 def _gridrec(theta, center, num_gridx, num_gridy, filter_name, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -642,7 +633,7 @@ def mlem(
     num_gridy = as_int32(num_gridy)
     num_iter = as_int32(num_iter)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_mlem,
@@ -654,7 +645,7 @@ def mlem(
 
 
 def _mlem(theta, center, num_gridx, num_gridy, num_iter, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -740,7 +731,7 @@ def osem(
     num_block = as_int32(num_block)
     ind_block = as_float32(ind_block)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_osem,
@@ -755,7 +746,7 @@ def osem(
 def _osem(
         theta, center, num_gridx, num_gridy, num_iter,
         num_block, ind_block, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -849,7 +840,7 @@ def ospml_hybrid(
     num_block = as_int32(num_block)
     ind_block = as_float32(ind_block)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_ospml_hybrid,
@@ -864,7 +855,7 @@ def ospml_hybrid(
 def _ospml_hybrid(
         theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -958,7 +949,7 @@ def ospml_quad(
     num_block = as_int32(num_block)
     ind_block = as_float32(ind_block)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_ospml_quad,
@@ -973,7 +964,7 @@ def ospml_quad(
 def _ospml_quad(
         theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -1063,7 +1054,7 @@ def pml_hybrid(
     num_iter = as_int32(num_iter)
     reg_par = as_float32(reg_par)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_pml_hybrid,
@@ -1076,7 +1067,7 @@ def pml_hybrid(
 
 def _pml_hybrid(
         theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -1160,7 +1151,7 @@ def pml_quad(
     num_iter = as_int32(num_iter)
     reg_par = as_float32(reg_par)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_pml_quad,
@@ -1173,7 +1164,7 @@ def pml_quad(
 
 def _pml_quad(
         theta, center, num_gridx, num_gridy, num_iter, reg_par, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
@@ -1251,7 +1242,7 @@ def sirt(
     num_gridy = as_int32(num_gridy)
     num_iter = as_int32(num_iter)
 
-    _init_shared(tomo)
+    mp.init_tomo(tomo)
     arr = mp.distribute_jobs(
         recon,
         func=_sirt,
@@ -1264,7 +1255,7 @@ def sirt(
 
 def _sirt(
         theta, center, num_gridx, num_gridy, num_iter, istart, iend):
-    tomo = SHARED_TOMO
+    tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
 
