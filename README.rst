@@ -4,11 +4,11 @@ About TomoPy
 .. image:: https://readthedocs.org/projects/tomopy/badge/?version=latest
    :target: https://readthedocs.org/projects/tomopy/?badge=latest
 
-.. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
-   :target: https://travis-ci.org/dgursoy/tomopy
+.. image:: https://travis-ci.org/tomopy/tomopy.svg
+   :target: https://travis-ci.org/tomopy/tomopy
 
-.. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
-   :target: https://coveralls.io/r/dgursoy/tomopy?branch=master
+.. image:: https://coveralls.io/repos/tomopy/tomopy/badge.svg
+  :target: https://coveralls.io/r/tomopy/tomopy
 
 .. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
    :target: https://binstar.org/dgursoy/tomopy
