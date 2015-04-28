@@ -54,6 +54,11 @@ from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
 
 
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
 def test_apply_pad():
     assert_equals(
         apply_pad(np.ones((4, 8, 16)), npad=20, axis=0, val=1.).shape,
@@ -100,11 +105,6 @@ def test_upsample():
     assert_array_almost_equal(
         upsample(np.ones((4, 8, 16)), level=1, axis=2),
         np.ones((4, 8, 32)))
-
-
-__author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
 
 
 if __name__ == '__main__':
