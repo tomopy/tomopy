@@ -96,26 +96,20 @@ def is_numpy(arr, dtype):
     return arr
 
 
-def is_int32(arr):
-    if not arr.dtype == np.int32:
-        arr = np.array(arr, dtype=np.int32)
-    return arr
-
-
-def is_float32(arr):
-    if not arr.dtype == np.float32:
-        arr = np.array(arr, dtype=np.float32)
+def is_dtype(arr, dtype):
+    if not arr.dtype == dtype:
+        arr = np.array(arr, dtype=dtype)
     return arr
 
 
 def as_float32(arr):
     arr = is_numpy(arr, np.float32)
-    return is_float32(arr)
+    return is_dtype(arr, np.float32)
 
 
 def as_int32(arr):
     arr = is_numpy(arr, np.int32)
-    return is_int32(arr)
+    return is_dtype(arr, np.int32)
 
 
 def as_c_float_p(arr):
