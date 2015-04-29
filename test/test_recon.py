@@ -87,7 +87,7 @@ def synthetic_tomo():
 def test_art():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        art(tomo, theta, num_iter=4),
+        Recon(tomo, theta).art(num_iter=4),
         [[[0.2617, 0.6431, 0.5990, 0.4459, 0.4092, 0.0604],
           [0.1397, 0.7947, 0.6867, 0.5436, 0.5093, -0.1896],
           [0.0234, 0.8696, 0.6586, 0.7138, 0.7703, -0.2372],
@@ -106,7 +106,7 @@ def test_art():
 def test_bart():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        bart(tomo, theta, num_iter=4),
+        Recon(tomo, theta).bart(num_iter=4),
         [[[0.4168, 0.7387, 0.6132, 0.5395, 0.2556, -0.3265],
           [0.2361, 0.7709, 0.6897, 0.5733, 0.5526, -0.1612],
           [0.0657, 0.7390, 0.6953, 0.7003, 0.6447, -0.1046],
@@ -125,7 +125,7 @@ def test_bart():
 def test_gridrec():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        gridrec(tomo, theta),
+        Recon(tomo, theta).gridrec(),
         [[[0.7080, 3.6484, 2.5953, 3.3888, 0.1789, -46.9959],
           [-0.1904, 1.2394, 1.0513, 1.6344, 1.6720, -14.3921],
           [-0.3596, 0.5610, 0.5913, 1.0264, 1.8171, -5.2543],
@@ -144,7 +144,7 @@ def test_gridrec():
 def test_mlem():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        mlem(tomo, theta, num_iter=4),
+        Recon(tomo, theta).mlem(num_iter=4),
         [[[0.2037, 0.7597, 0.6294, 0.5189, 0.1222, 0.0000],
           [0.0888, 0.8133, 0.6948, 0.5972, 0.5054, 0.0020],
           [0.0298, 0.8011, 0.7010, 0.6993, 0.7008, 0.0066],
@@ -163,7 +163,7 @@ def test_mlem():
 def test_osem():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        osem(tomo, theta, num_iter=4),
+        Recon(tomo, theta).osem(num_iter=4),
         [[[0.2037, 0.7597, 0.6294, 0.5189, 0.1222, 0.0000],
           [0.0888, 0.8133, 0.6948, 0.5972, 0.5054, 0.0020],
           [0.0298, 0.8011, 0.7010, 0.6993, 0.7008, 0.0066],
@@ -182,7 +182,7 @@ def test_osem():
 def test_ospml_hybrid():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        ospml_hybrid(tomo, theta, num_iter=4),
+        Recon(tomo, theta).ospml_hybrid(num_iter=4),
         [[[0.4601, 0.5979, 0.6191, 0.5004, 0.2396, 0.0840],
           [0.3756, 0.5970, 0.6404, 0.5526, 0.3562, 0.1122],
           [0.2750, 0.5612, 0.6476, 0.6245, 0.4771, 0.1795],
@@ -201,7 +201,7 @@ def test_ospml_hybrid():
 def test_ospml_quad():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        ospml_quad(tomo, theta, num_iter=4),
+        Recon(tomo, theta).ospml_quad(num_iter=4),
         [[[0.4712, 0.5889, 0.6148, 0.4916, 0.2473, 0.0926],
           [0.3921, 0.5801, 0.6347, 0.5416, 0.3438, 0.1265],
           [0.2964, 0.5342, 0.6399, 0.6132, 0.4504, 0.1983],
@@ -220,7 +220,7 @@ def test_ospml_quad():
 def test_pml_hybrid():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        pml_hybrid(tomo, theta, num_iter=4),
+        Recon(tomo, theta).pml_hybrid(num_iter=4),
         [[[0.3031, 0.6773, 0.6339, 0.5229, 0.1637, 0.0000],
           [0.1547, 0.6909, 0.6765, 0.5914, 0.4646, 0.0031],
           [0.0552, 0.6862, 0.6656, 0.6791, 0.6247, 0.0104],
@@ -239,7 +239,7 @@ def test_pml_hybrid():
 def test_pml_quad():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        pml_quad(tomo, theta, num_iter=4),
+        Recon(tomo, theta).pml_quad(num_iter=4),
         [[[0.3175, 0.6655, 0.6336, 0.5204, 0.1711, -0.0000],
           [0.1691, 0.6753, 0.6756, 0.5876, 0.4500, 0.0035],
           [0.0636, 0.6636, 0.6654, 0.6766, 0.6017, 0.0120],
@@ -258,7 +258,7 @@ def test_pml_quad():
 def test_sirt():
     tomo, theta = synthetic_tomo()
     assert_array_almost_equal(
-        sirt(tomo, theta, num_iter=4),
+        Recon(tomo, theta).sirt(num_iter=4),
         [[[0.4168, 0.7387, 0.6132, 0.5395, 0.2556, -0.3265],
           [0.2361, 0.7709, 0.6897, 0.5733, 0.5526, -0.1612],
           [0.0657, 0.7390, 0.6953, 0.7003, 0.6447, -0.1046],

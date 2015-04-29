@@ -72,17 +72,6 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['Recon',
            'find_center',
-           'art',
-           'bart',
-           'fbp',
-           'gridrec',
-           'mlem',
-           'osem',
-           'ospml_hybrid',
-           'ospml_quad',
-           'pml_hybrid',
-           'pml_quad',
-           'sirt',
            'write_center']
 
 
@@ -137,7 +126,7 @@ class Recon():
         if not emission:
             self.tomo = -np.log(self.tomo)
 
-    def _init_recon(self, recon):
+    def _init_recon(self, recon=None):
         """
         Create reconstruction grid.
         """
@@ -179,73 +168,415 @@ class Recon():
             nchunk=self.nchunk)
         return arr
 
+    def bart(self, num_iter=1, recon=None, num_block=1, ind_block=None):
+        """
+        Reconstruct object from projection data using block algebraic
+        reconstruction technique (BART).
 
-def art(tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using algebraic reconstruction
-    technique (ART) :cite:`Kak:98`.
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
 
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_block = as_int32(num_block)
+        if ind_block is None:
+            self.ind_block = np.arange(0, self.dx).astype('float32')
+        else:
+            self.ind_block = as_float32(ind_block)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_bart,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter,
+                self.num_block, self.ind_block),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
 
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
+    def fbp(self, filter_name='shepp'):
+        """
+        Reconstruct object from projection data using filtered back
+        projection (FBP).
 
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
+        Warning
+        -------
+        Filter not implemented yet.
 
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
+        Parameters
+        ----------
+        filter_name : str, optional
+            Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
+            'cosine' or 'none'.
 
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_art,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.filter_name = np.array(filter_name, dtype=(str, 16))
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_fbp,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.filter_name),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
 
+    def gridrec(self, filter_name='shepp'):
+        """
+        Reconstruct object from projection data using gridrec algorithm
+        :cite:`Dowd:99`.
+
+        Parameters
+        ----------
+        filter_name : str, optional
+            Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
+            'cosine' or 'none'.
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        # Gridrec accepts even number of slices.
+        is_odd = False
+        if self.dy % 2 != 0:
+            is_odd = True
+            lasttomo = np.expand_dims(self.tomo[:, -1, :], 1)
+            self.tomo = np.append(self.tomo, lasttomo, 1)
+            self.dy += 1
+        
+        # Chunk size can't be smaller than two for gridrec.
+        if self.ncore is None:
+            self.ncore = multiprocessing.cpu_count()
+        if self.dx < self.ncore:
+            self.ncore = self.dx
+        if self.nchunk is None:
+            self.nchunk = (self.dy - 1) // self.ncore + 1
+        if self.nchunk < 2:
+            self.nchunk = 2
+
+        self.filter_name = np.array(filter_name, dtype=(str, 16))
+
+        self._init_recon()
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_gridrec,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.filter_name),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+
+        # Dump last slice if original number of sice was even.
+        if is_odd:
+            arr = arr[0:-1, :, :]
+        return arr
+
+
+    def mlem(self, num_iter=1, recon=None):
+        """
+        Reconstruct object from projection data using maximum-likelihood
+        expectation-maximization algorithm. (ML-EM) :cite:`Dempster:77`.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_mlem,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def osem(self, num_iter=1, recon=None, num_block=1, ind_block=None):
+        """
+        Reconstruct object from projection data using ordered-subset
+        expectation-maximization (OS-EM) :cite:`Hudson:94`.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_block = as_int32(num_block)
+        if ind_block is None:
+            self.ind_block = np.arange(0, self.dx).astype('float32')
+        else:
+            self.ind_block = as_float32(ind_block)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_osem,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter,
+                self.num_block, self.ind_block),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def ospml_hybrid(
+            self, num_iter=1, recon=None, reg_par=None, 
+            num_block=1, ind_block=None):
+        """
+        Reconstruct object from projection data using ordered-subset
+        penalized maximum likelihood algorithm with weighted linear and
+        quadratic penalties.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        reg_par : list, optional
+            Regularization hyperparameters as an array, (beta, delta).
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_block = as_int32(num_block)
+        if reg_par is None:
+            self.reg_par = np.ones(10, dtype='float32')
+        else:
+            self.reg_par = as_float32(reg_par)
+        if ind_block is None:
+            self.ind_block = np.arange(0, self.dx).astype('float32')
+        else:
+            self.ind_block = as_float32(ind_block)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_ospml_hybrid,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter,
+                self.reg_par, self.num_block, self.ind_block),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def ospml_quad(
+            self, num_iter=1, recon=None, reg_par=None, 
+            num_block=1, ind_block=None):
+        """
+        Reconstruct object from projection data using ordered-subset
+        penalized maximum likelihood algorithm with quadratic penalty.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        reg_par : list, optional
+            Regularization hyperparameters as an array, (beta, delta).
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_block = as_int32(num_block)
+        if reg_par is None:
+            self.reg_par = np.ones(10, dtype='float32')
+        else:
+            self.reg_par = as_float32(reg_par)
+        if ind_block is None:
+            self.ind_block = np.arange(0, self.dx).astype('float32')
+        else:
+            self.ind_block = as_float32(ind_block)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_ospml_quad,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter,
+                self.reg_par, self.num_block, self.ind_block),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def pml_hybrid(
+            self, num_iter=1, recon=None, reg_par=None):
+        """
+        Reconstruct object from projection data using penalized maximum
+        likelihood algorithm with weighted linear and quadratic penalties
+        :cite:`Chang:04`.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        reg_par : list, optional
+            Regularization hyperparameters as an array, (beta, delta).
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        if reg_par is None:
+            self.reg_par = np.ones(10, dtype='float32')
+        else:
+            self.reg_par = as_float32(reg_par)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_pml_hybrid,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def pml_quad(
+            self, num_iter=1, recon=None, reg_par=None):
+        """
+        Reconstruct object from projection data using penalized maximum
+        likelihood algorithm with quadratic penalty.
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+        reg_par : list, optional
+            Regularization hyperparameters as an array, (beta, delta).
+        num_block : int, optional
+            Number of data blocks for intermediate updating the object.
+        ind_block : array of int, optional
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        if reg_par is None:
+            self.reg_par = np.ones(10, dtype='float32')
+        else:
+            self.reg_par = as_float32(reg_par)
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_pml_quad,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
+
+    def sirt(self, num_iter=1, recon=None):
+        """
+        Reconstruct object from projection data using simultaneous
+        iterative reconstruction technique (SIRT).
+
+        Parameters
+        ----------
+        num_iter : int, optional
+            Number of algorithm iterations performed.
+        recon : ndarray, optional
+            Initial values of the reconstruction object.
+
+        Returns
+        -------
+        ndarray
+            Reconstructed 3D object.
+        """
+        self.num_iter = as_int32(num_iter)
+        self._init_recon(recon)
+        mp.init_tomo(self.tomo)
+        arr = mp.distribute_jobs(
+            self.recon,
+            func=_sirt,
+            args=(
+                self.dx, self.dy, self.dz, self.theta, self.center,
+                self.num_gridx, self.num_gridy, self.num_iter),
+            axis=0,
+            ncore=self.ncore,
+            nchunk=self.nchunk)
+        return arr
 
 def _art(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
@@ -267,84 +598,6 @@ def _art(
         as_c_int(num_iter),
         as_c_int(istart),
         as_c_int(iend))
-
-
-def bart(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        num_block=1, ind_block=None,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using block algebraic
-    reconstruction technique (BART).
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    num_block = as_int32(num_block)
-    ind_block = as_float32(ind_block)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_bart,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
-              num_iter, num_block, ind_block),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
 
 
 def _bart(
@@ -371,74 +624,6 @@ def _bart(
         as_c_int(iend))
 
 
-def fbp(
-        tomo, theta, center=None, emission=True,
-        num_gridx=None, num_gridy=None, filter_name='shepp',
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using filtered back
-    projection (FBP).
-
-    Warning
-    -------
-    Filter not implemented yet.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    filter_name : str, optional
-        Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    filter_name = np.array(filter_name, dtype=(str, 16))
-
-    center = as_float32(center)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_fbp,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, filter_name),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
 def _fbp(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         filter_name, istart, iend):
@@ -457,6 +642,192 @@ def _fbp(
         as_c_int(num_gridx),
         as_c_int(num_gridy),
         as_c_char_p(filter_name),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _gridrec(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        filter_name, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.gridrec.restype = as_c_void_p()
+    LIB_TOMOPY.gridrec(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_char_p(filter_name),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _mlem(
+        dx, dy, dz, theta, center, num_gridx,
+        num_gridy, num_iter, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.mlem.restype = as_c_void_p()
+    LIB_TOMOPY.mlem(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _osem(
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
+        num_block, ind_block, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.osem.restype = as_c_void_p()
+    LIB_TOMOPY.osem(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_int(num_block),
+        as_c_float_p(ind_block),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _ospml_hybrid(
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, num_block, ind_block, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.ospml_hybrid.restype = as_c_void_p()
+    LIB_TOMOPY.ospml_hybrid(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_float_p(reg_par),
+        as_c_int(num_block),
+        as_c_float_p(ind_block),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _ospml_quad(
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, num_block, ind_block, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.ospml_quad.restype = as_c_void_p()
+    LIB_TOMOPY.ospml_quad(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_float_p(reg_par),
+        as_c_int(num_block),
+        as_c_float_p(ind_block),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _pml_hybrid(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        num_iter, reg_par, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.pml_hybrid.restype = as_c_void_p()
+    LIB_TOMOPY.pml_hybrid(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_float_p(reg_par),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _pml_quad(
+        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
+        reg_par, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.pml_quad.restype = as_c_void_p()
+    LIB_TOMOPY.pml_quad(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
+        as_c_float_p(reg_par),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def _sirt(
+        dx, dy, dz, theta, center, num_gridx, num_gridy,
+        num_iter, istart, iend):
+    tomo = mp.SHARED_TOMO
+    recon = mp.SHARED_ARRAY
+
+    LIB_TOMOPY.sirt.restype = as_c_void_p()
+    LIB_TOMOPY.sirt(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_float_p(center),
+        as_c_float_p(theta),
+        as_c_float_p(recon),
+        as_c_int(num_gridx),
+        as_c_int(num_gridy),
+        as_c_int(num_iter),
         as_c_int(istart),
         as_c_int(iend))
 
@@ -560,815 +931,6 @@ def _find_center_cost(
     return -np.dot(hist, np.log2(hist))
 
 
-def gridrec(
-        tomo, theta, center=None, emission=True,
-        num_gridx=None, num_gridy=None, filter_name='shepp',
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using gridrec algorithm
-    :cite:`Dowd:99`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    filter_name : str, optional
-        Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-        'cosine' or 'none'.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-
-    # Gridrec accepts even number of slices.
-    is_odd = False
-    if tomo.shape[1] % 2 != 0:
-        is_odd = True
-        lasttomo = np.expand_dims(tomo[:, -1, :], 1)
-        tomo = np.append(tomo, lasttomo, 1)
-        dy += 1
-
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    filter_name = np.array(filter_name, dtype=(str, 16))
-
-    center = as_float32(center)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-
-    # Chunk size can't be smaller than two for gridrec.
-    if ncore is None:
-        ncore = multiprocessing.cpu_count()
-    if dx < ncore:
-        ncore = dx
-    if nchunk is None:
-        nchunk = (dy - 1) // ncore + 1
-    if nchunk < 2:
-        nchunk = 2
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_gridrec,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, filter_name),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-
-    # Dump last slice if original number of sice was even.
-    if is_odd:
-        arr = arr[0:-1, :, :]
-    return arr
-
-
-def _gridrec(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        filter_name, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.gridrec.restype = as_c_void_p()
-    LIB_TOMOPY.gridrec(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_char_p(filter_name),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def mlem(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using maximum-likelihood
-    expectation-maximization algorithm. (ML-EM) :cite:`Dempster:77`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_mlem,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _mlem(
-        dx, dy, dz, theta, center, num_gridx,
-        num_gridy, num_iter, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.mlem.restype = as_c_void_p()
-    LIB_TOMOPY.mlem(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def osem(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        num_block=1, ind_block=None,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using ordered-subset
-    expectation-maximization (OS-EM) :cite:`Hudson:94`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    num_block = as_int32(num_block)
-    ind_block = as_float32(ind_block)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_osem,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
-              num_iter, num_block, ind_block),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _osem(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        num_block, ind_block, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.osem.restype = as_c_void_p()
-    LIB_TOMOPY.osem(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def ospml_hybrid(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, num_block=1, ind_block=None,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using ordered-subset
-    penalized maximum likelihood algorithm with weighted linear and
-    quadratic penalties.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    reg_par : list, optional
-        Regularization hyperparameters as an array, (beta, delta).
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if reg_par is None:
-        reg_par = np.ones(10, dtype="float32")
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    reg_par = as_float32(reg_par)
-    num_block = as_int32(num_block)
-    ind_block = as_float32(ind_block)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_ospml_hybrid,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
-              num_iter, reg_par, num_block, ind_block),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _ospml_hybrid(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, num_block, ind_block, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.ospml_hybrid.restype = as_c_void_p()
-    LIB_TOMOPY.ospml_hybrid(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def ospml_quad(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, num_block=1, ind_block=None,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using ordered-subset
-    penalized maximum likelihood algorithm with quadratic penalty.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    reg_par : float, optional
-        Regularization parameter for smoothing.
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if reg_par is None:
-        reg_par = np.ones(10, dtype="float32")
-    if ind_block is None:
-        ind_block = np.arange(0, dx).astype("float32")
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    reg_par = as_float32(reg_par)
-    num_block = as_int32(num_block)
-    ind_block = as_float32(ind_block)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_ospml_quad,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy,
-              num_iter, reg_par, num_block, ind_block),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _ospml_quad(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, num_block, ind_block, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.ospml_quad.restype = as_c_void_p()
-    LIB_TOMOPY.ospml_quad(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def pml_hybrid(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using penalized maximum
-    likelihood algorithm with weighted linear and quadratic penalties
-    :cite:`Chang:04`.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    reg_par : list, optional
-        Regularization hyperparameters as an array, (beta, delta).
-    num_block : int, optional
-        Number of data blocks for intermediate updating the object.
-    ind_block : array of int, optional
-        Order of projections to be used for updating.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if reg_par is None:
-        reg_par = np.ones(10, dtype="float32")
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    reg_par = as_float32(reg_par)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_pml_hybrid,
-        args=(dx, dy, dz, theta, center, num_gridx,
-              num_gridy, num_iter, reg_par),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _pml_hybrid(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, reg_par, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.pml_hybrid.restype = as_c_void_p()
-    LIB_TOMOPY.pml_hybrid(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def pml_quad(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        reg_par=None, ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using penalized maximum
-    likelihood algorithm with quadratic penalty.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    reg_par : float, optional
-        Regularization parameter for smoothing.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-    if reg_par is None:
-        reg_par = np.ones(10, dtype='float32')
-
-    center = as_float32(center)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-    reg_par = as_float32(reg_par)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_pml_quad,
-        args=(dx, dy, dz, theta, center, num_gridx,
-              num_gridy, num_iter, reg_par),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _pml_quad(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.pml_quad.restype = as_c_void_p()
-    LIB_TOMOPY.pml_quad(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
-def sirt(
-        tomo, theta, center=None, emission=True,
-        recon=None, num_gridx=None, num_gridy=None, num_iter=1,
-        ncore=None, nchunk=None):
-    """
-    Reconstruct object from projection data using simultaneous
-    iterative reconstruction technique (SIRT).
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    recon : ndarray, optional
-        Initial values of the reconstruction object.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Reconstructed 3D object.
-    """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
-
-    dx, dy, dz = tomo.shape
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
-    if num_gridx is None:
-        num_gridx = dz
-    if num_gridy is None:
-        num_gridy = dz
-    if emission is False:
-        tomo = -np.log(tomo)
-    if recon is None:
-        recon = 1e-6 * np.ones((dy, num_gridx, num_gridy), dtype='float32')
-
-    theta = as_float32(theta)
-    recon = as_float32(recon)
-    num_gridx = as_int32(num_gridx)
-    num_gridy = as_int32(num_gridy)
-    num_iter = as_int32(num_iter)
-
-    mp.init_tomo(tomo)
-    arr = mp.distribute_jobs(
-        recon,
-        func=_sirt,
-        args=(dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _sirt(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, istart, iend):
-    tomo = mp.SHARED_TOMO
-    recon = mp.SHARED_ARRAY
-
-    LIB_TOMOPY.sirt.restype = as_c_void_p()
-    LIB_TOMOPY.sirt(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(istart),
-        as_c_int(iend))
-
-
 def write_center(
         tomo, theta, dpath='tmp/center', center=None, ind=None,
         emission=True, mask=True, ratio=1., dmin=None, dmax=None):
@@ -1418,7 +980,7 @@ def write_center(
         stack[:, m, :] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
-    rec = gridrec(stack, theta, center, emission)
+    rec = Recon(stack, theta, center, emission).gridrec()
 
     # Apply circular mask.
     if mask is True:
