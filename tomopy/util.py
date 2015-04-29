@@ -90,20 +90,32 @@ def import_shared_lib(lib_name):
         logger.warning('OSError: Shared library missing.')
 
 
-def as_float32(arr):
+def is_numpy(arr, dtype):
     if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype='float32')
-    elif not arr.dtype == np.float32:
-        arr = np.array(arr, dtype='float32')
+        arr = np.array(arr, dtype=dtype)
     return arr
+
+
+def is_int32(arr):
+    if not arr.dtype == np.int32:
+        arr = np.array(arr, dtype=np.int32)
+    return arr
+
+
+def is_float32(arr):
+    if not arr.dtype == np.float32:
+        arr = np.array(arr, dtype=np.float32)
+    return arr
+
+
+def as_float32(arr):
+    arr = is_numpy(arr, np.float32)
+    return is_float32(arr)
 
 
 def as_int32(arr):
-    if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype='int32')
-    elif not arr.dtype == np.int32:
-        arr = np.array(arr, dtype='int32')
-    return arr
+    arr = is_numpy(arr, np.int32)
+    return is_int32(arr)
 
 
 def as_c_float_p(arr):
