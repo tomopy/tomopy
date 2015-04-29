@@ -11,10 +11,10 @@
    .. autosummary::
    
       circular_roi
-      correct_air
       normalize
-      remove_stripe1
-      remove_stripe2
+      normalize_bg
+      remove_stripe_fw
+      remove_stripe_ti
       remove_zinger
       retrieve_phase
       focus_region

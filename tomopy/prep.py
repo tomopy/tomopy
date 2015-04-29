@@ -65,11 +65,11 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['circular_roi',
-           'correct_air',
            'focus_region',
            'normalize',
-           'remove_stripe1',
-           'remove_stripe2',
+           'normalize_bg',
+           'remove_stripe_fw',
+           'remove_stripe_ti',
            'remove_zinger',
            'retrieve_phase']
 
@@ -118,56 +118,6 @@ def circular_roi(tomo, ratio=1, val=None):
     for m in np.arange(0, dx):
         tomo[m, mask] = val
     return tomo
-
-
-def correct_air(tomo, air=10, ncore=None, nchunk=None):
-    """
-    Weight sinogram such that the left and right image boundaries
-    (i.e., typically the air region around the object) are set to one
-    and all intermediate values are scaled linearly.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    air : int, optional
-        Number of pixels at each boundary to calculate the scaling factor.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-
-    Returns
-    -------
-    ndarray
-        Corrected 3D tomographic data.
-    """
-    tomo = as_float32(tomo)
-    air = as_int32(air)
-
-    arr = mp.distribute_jobs(
-        tomo,
-        func=_correct_air,
-        args=(air,),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _correct_air(air, istart, iend):
-    tomo = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
-
-    LIB_TOMOPY.correct_air.restype = as_c_void_p()
-    LIB_TOMOPY.correct_air(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(air),
-        as_c_int(istart),
-        as_c_int(iend))
 
 
 def focus_region(
@@ -291,7 +241,59 @@ def _normalize(flat, dark, cutoff, istart, iend):
         tomo[m, :, :] = proj
 
 
-def remove_stripe1(
+def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
+    """
+    Normalize 3D tomgraphy data based on background intensity.
+
+    Weight sinogram such that the left and right image boundaries
+    (i.e., typically the air region around the object) are set to one
+    and all intermediate values are scaled linearly.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    air : int, optional
+        Number of pixels at each boundary to calculate the scaling factor.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    tomo = as_float32(tomo)
+    air = as_int32(air)
+
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_normalize_bg,
+        args=(air,),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _normalize_bg(air, istart, iend):
+    tomo = mp.SHARED_ARRAY
+    dx, dy, dz = tomo.shape
+
+    LIB_TOMOPY.correct_air.restype = as_c_void_p()
+    LIB_TOMOPY.correct_air(
+        as_c_float_p(tomo),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_int(air),
+        as_c_int(istart),
+        as_c_int(iend))
+
+
+def remove_stripe_fw(
         tomo, level=None, wname='db5', sigma=2,
         pad=True, ncore=None, nchunk=None):
     """
@@ -326,7 +328,7 @@ def remove_stripe1(
 
     arr = mp.distribute_jobs(
         tomo,
-        func=_remove_stripe1,
+        func=_remove_stripe_fw,
         args=(level, wname, sigma, pad),
         axis=1,
         ncore=ncore,
@@ -334,7 +336,7 @@ def remove_stripe1(
     return arr
 
 
-def _remove_stripe1(level, wname, sigma, pad, istart, iend):
+def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
     tomo = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
     nx = dx
@@ -378,7 +380,7 @@ def _remove_stripe1(level, wname, sigma, pad, istart, iend):
         tomo[:, m, :] = sli[xshift:dx + xshift, 0:dz]
 
 
-def remove_stripe2(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
+def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     """
     Remove horizontal stripes from sinogram using Titarenko's
     approach :cite:`Miqueles:14`.
@@ -403,7 +405,7 @@ def remove_stripe2(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     """
     arr = mp.distribute_jobs(
         tomo,
-        func=_remove_stripe2,
+        func=_remove_stripe_ti,
         args=(nblock, alpha),
         axis=1,
         ncore=ncore,
@@ -411,7 +413,7 @@ def remove_stripe2(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     return arr
 
 
-def _remove_stripe2(nblock, alpha, istart, iend):
+def _remove_stripe_ti(nblock, alpha, istart, iend):
     tomo = mp.SHARED_ARRAY
     for m in range(istart, iend):
         sino = tomo[:, m, :]
