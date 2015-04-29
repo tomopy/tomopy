@@ -71,7 +71,7 @@ __all__ = ['gaussian_filter',
            'remove_neg']
 
 
-def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
+def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     """
     Apply Gaussian filter to 3D array along specified axis.
 
@@ -190,6 +190,7 @@ def remove_nan(arr, val=0.):
     ndarray
        Corrected array.
     """
+    arr = as_float32(arr)
     arr[np.isnan(arr)] = val
     return arr
 
@@ -210,5 +211,6 @@ def remove_neg(arr, val=0.):
     ndarray
        Corrected array.
     """
+    arr = as_float32(arr)
     arr[arr < 0.0] = val
     return arr

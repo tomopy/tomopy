@@ -62,7 +62,7 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_Reader_hdf5():
-    fname = os.path.join('tomopy', 'data', 'lena.h5')
+    fname = os.path.join('test', 'data', 'lena.h5')
     gname = os.path.join('exchange', 'data')
     assert_equals(
         Reader(fname).hdf5(gname).shape,
