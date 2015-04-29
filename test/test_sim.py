@@ -48,6 +48,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from test.util import read_file
 from tomopy.sim import *
 import numpy as np
 import os
@@ -61,34 +62,10 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def synthetic_object():
-    """
-    Generate a synthetic object.
-    """
-    obj = [[[1., 1., 1., 1.],
-            [1., 1., 1., 1.],
-            [1., 1., 1., 1.],
-            [1., 1., 1., 1.]],
-           [[1., 1., 1., 1.],
-            [1., 1., 1., 1.],
-            [1., 1., 1., 1.],
-            [1., 1., 1., 1.]]]
-    return obj
-
-
 def test_project():
-    ang = [0.0000, 0.2618, 0.5236, 0.7854]
     assert_array_almost_equal(
-        project(synthetic_object(), ang),
-        [[[0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000],
-          [0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000]],
-         [[0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000],
-          [0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000]],
-         [[0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039],
-          [0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039]],
-         [[0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955],
-          [0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955]]],
-        decimal=4)
+        project(read_file('obj.npy'), read_file('angle.npy')),
+        read_file('proj.npy'))
 
 
 if __name__ == '__main__':

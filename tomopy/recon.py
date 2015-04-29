@@ -229,7 +229,7 @@ class Recon():
             Reconstructed 3D object.
         """
         self.filter_name = np.array(filter_name, dtype=(str, 16))
-        self._init_recon(recon)
+        self._init_recon()
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
@@ -265,7 +265,7 @@ class Recon():
             lasttomo = np.expand_dims(self.tomo[:, -1, :], 1)
             self.tomo = np.append(self.tomo, lasttomo, 1)
             self.dy += 1
-        
+
         # Chunk size can't be smaller than two for gridrec.
         if self.ncore is None:
             self.ncore = multiprocessing.cpu_count()
@@ -294,7 +294,6 @@ class Recon():
         if is_odd:
             arr = arr[0:-1, :, :]
         return arr
-
 
     def mlem(self, num_iter=1, recon=None):
         """
@@ -368,7 +367,7 @@ class Recon():
         return arr
 
     def ospml_hybrid(
-            self, num_iter=1, recon=None, reg_par=None, 
+            self, num_iter=1, recon=None, reg_par=None,
             num_block=1, ind_block=None):
         """
         Reconstruct object from projection data using ordered-subset
@@ -417,7 +416,7 @@ class Recon():
         return arr
 
     def ospml_quad(
-            self, num_iter=1, recon=None, reg_par=None, 
+            self, num_iter=1, recon=None, reg_par=None,
             num_block=1, ind_block=None):
         """
         Reconstruct object from projection data using ordered-subset
@@ -577,6 +576,7 @@ class Recon():
             ncore=self.ncore,
             nchunk=self.nchunk)
         return arr
+
 
 def _art(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
@@ -932,7 +932,7 @@ def _find_center_cost(
 
 
 def write_center(
-        tomo, theta, dpath='tmp/center', center=None, ind=None,
+        tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
         emission=True, mask=True, ratio=1., dmin=None, dmax=None):
     """
     Save images reconstructed with a range of rotation centers.
@@ -950,7 +950,7 @@ def write_center(
         Projection angles in radian.
     dpath : str, optional
         Folder name to save output images.
-    center : list, optional
+    cen_range : list, optional
         [start, end, step] Range of center values.
     ind : int, optional
         Index of the slice to be used for reconstruction.
@@ -971,12 +971,12 @@ def write_center(
     dx, dy, dz = tomo.shape
     if ind is None:
         ind = dy / 2
-    if center is None:
+    if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
     else:
-        center = np.arange(center[0], center[1], center[2] / 2.)
+        center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
     stack = np.zeros((dx, len(center), dz))
-    for m in range(len(center)):
+    for m in range(center.size):
         stack[:, m, :] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
@@ -994,9 +994,10 @@ def write_center(
     if os.path.isdir(dpath):
         shutil.rmtree(dpath)
     os.makedirs(dpath)
-    for m in range(len(center)):
+    for m in range(center.size):
         if m % 2 == 0:  # 2 slices same bec of gridrec.
-            fname = os.path.join(dpath, str('%.02f' % center[m]) + '.tiff')
+            fname = os.path.join(
+                dpath, str('{:.2f}'.format(center[m]) + 'tiff'))
             arr = rec[m, :, :]
 
             with warnings.catch_warnings():
