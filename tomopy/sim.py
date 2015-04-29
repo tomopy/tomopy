@@ -57,6 +57,7 @@ import numpy as np
 import ctypes
 import os
 import shutil
+import tomopy.extern as ext
 from tomopy.util import *
 import tomopy.misc.mproc as mp
 import multiprocessing
@@ -74,9 +75,6 @@ __all__ = ['angles',
            'para_to_fan',
            'add_poisson',
            'add_focal_spot_blur', ]
-
-
-LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
 def add_poisson(tomo):
@@ -164,33 +162,12 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     mp.init_obj(obj)
     arr = mp.distribute_jobs(
         tomo,
-        func=_project,
-        args=(theta, center),
+        func=ext.c_project,
+        args=(ox, oy, oz, theta, center, dx, dy, dz),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
-
-
-def _project(theta, center, istart, iend):
-    obj = mp.SHARED_OBJ
-    tomo = mp.SHARED_ARRAY
-    ox, oy, oz = obj.shape
-    dx, dy, dz = tomo.shape
-    LIB_TOMOPY.project.restype = as_c_void_p()
-    LIB_TOMOPY.project(
-        as_c_float_p(obj),
-        as_c_int(ox),
-        as_c_int(oy),
-        as_c_int(oz),
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
-        as_c_int(istart),
-        as_c_int(iend))
 
 
 def fan_to_para(tomo, dist, geom):

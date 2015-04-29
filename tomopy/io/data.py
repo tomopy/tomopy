@@ -52,6 +52,7 @@ Module for data I/O.
 
 from __future__ import absolute_import, division, print_function
 
+from tomopy.util import *
 from skimage import io as sio
 import numpy as np
 import multiprocessing as mp
@@ -272,11 +273,11 @@ class Writer():
 
         self._range(self.dmin, self.dmax)
         if dtype is 'uint8':
-            self._as_uint8()
+            data = as_uint8(data)
         elif dtype is 'uint16':
-            self._as_uint16()
+            data = as_uint16(data)
         elif dtype is 'float32':
-            self._as_float32()
+            data = as_float32(data)
 
         if not os.path.exists(self.dname):
             os.makedirs(self.dname)
@@ -349,33 +350,6 @@ class Writer():
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 sio.imsave(self.fname, self.data, plugin='tifffile')
-
-    def _as_float32(self):
-        """
-        Convert array to float32.
-        """
-        if not isinstance(self.data, np.ndarray):
-            self.data = np.array(self.data, dtype='float32')
-        elif not self.data.dtype == np.float32:
-            self.data = np.array(self.data, dtype='float32')
-
-    def _as_uint8(self):
-        """
-        Convert array to uint8.
-        """
-        if not isinstance(self.data, np.ndarray):
-            self.data = np.array(self.data, dtype='uint8')
-        elif not self.data.dtype == np.uint8:
-            self.data = np.array(self.data, dtype='uint8')
-
-    def _as_uint16(self):
-        """
-        Convert array to uint16.
-        """
-        if not isinstance(self.data, np.ndarray):
-            self.data = np.array(self.data, dtype='uint16')
-        elif not self.data.dtype == np.uint16:
-            self.data = np.array(self.data, dtype='uint16')
 
     def _range(self, dmin=None, dmax=None):
         """

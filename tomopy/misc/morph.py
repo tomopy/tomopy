@@ -54,6 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import tomopy.misc.mproc as mp
+import tomopy.extern as ext
 from tomopy.util import *
 import logging
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ __all__ = ['apply_pad',
            'upsample']
 
 
-LIB_TOMOPY = import_shared_lib('libtomopy')
+LIB_TOMOPY = ext.import_shared_lib('libtomopy')
 
 
 def apply_pad(arr, npad=None, axis=2, val=0.):

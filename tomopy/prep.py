@@ -55,6 +55,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import pywt
 import tomopy.misc.mproc as mp
+import tomopy.extern as ext
 from tomopy.util import *
 from scipy.ndimage import filters
 import logging
@@ -78,9 +79,6 @@ BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
 SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
 PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
-
-
-LIB_TOMOPY = import_shared_lib('libtomopy')
 
 
 def circular_roi(tomo, ratio=1, val=None):
@@ -267,30 +265,16 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     """
     tomo = as_float32(tomo)
     air = as_int32(air)
+    dx, dy, dz = tomo.shape
 
     arr = mp.distribute_jobs(
         tomo,
-        func=_normalize_bg,
-        args=(air,),
+        func=ext.c_normalize_bg,
+        args=(dx, dy, dz, air),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
-
-
-def _normalize_bg(air, istart, iend):
-    tomo = mp.SHARED_ARRAY
-    dx, dy, dz = tomo.shape
-
-    LIB_TOMOPY.correct_air.restype = as_c_void_p()
-    LIB_TOMOPY.correct_air(
-        as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(air),
-        as_c_int(istart),
-        as_c_int(iend))
 
 
 def remove_stripe_fw(
