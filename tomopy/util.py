@@ -101,7 +101,7 @@ def as_float32(arr):
 def as_int32(arr):
     if not isinstance(arr, np.ndarray):
         arr = np.array(arr, dtype='int32')
-    elif not arr.dtype == np.float32:
+    elif not arr.dtype == np.int32:
         arr = np.array(arr, dtype='int32')
     return arr
 
