@@ -63,31 +63,14 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['import_shared_lib',
-           'as_float32',
+__all__ = ['as_float32',
            'as_int32',
+           'as_uint8',
+           'as_uint16',
            'as_c_float_p',
            'as_c_int',
            'as_c_char_p',
            'as_c_void_p']
-
-
-def import_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    try:
-        if os.name == 'nt':
-            ext = '.pyd'
-        else:
-            ext = '.so'
-        libpath = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..', 'lib', lib_name + ext))
-        return ctypes.CDLL(libpath)
-    except OSError as e:
-        logger.warning('OSError: Shared library missing.')
 
 
 def is_numpy(arr, dtype):
@@ -110,6 +93,16 @@ def as_float32(arr):
 def as_int32(arr):
     arr = is_numpy(arr, np.int32)
     return is_dtype(arr, np.int32)
+
+
+def as_uint16(arr):
+    arr = is_numpy(arr, np.uint16)
+    return is_dtype(arr, np.int32)
+
+
+def as_uint8(arr):
+    arr = is_numpy(arr, np.uint8)
+    return is_dtype(arr, np.uint8)
 
 
 def as_c_float_p(arr):
