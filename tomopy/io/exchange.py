@@ -195,13 +195,7 @@ def read_aps_2bm(fname, proj=None, sino=None):
     ndarray
         3D dark field data.
     """
-    tomo_grp = os.path.join('exchange', 'data')
-    flat_grp = os.path.join('exchange', 'data_white')
-    dark_grp = os.path.join('exchange', 'data_dark')
-    tomo = dio.Reader(fname, proj, sino).hdf5(tomo_grp)
-    flat = dio.Reader(fname, dim2=sino).hdf5(flat_grp)
-    dark = dio.Reader(fname, dim2=sino).hdf5(dark_grp)
-    return tomo, flat, dark
+    return read_aps_32id(fname, proj=proj, sino=sino)
 
 
 def read_aps_7bm(fname, proj=None, sino=None):
