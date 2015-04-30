@@ -46,19 +46,82 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for internal utility functions.
+"""
+
 from __future__ import absolute_import, division, print_function
 
+import os
+import ctypes
+import numpy as np
+import multiprocessing
 import logging
-logging.basicConfig()
+logger = logging.getLogger(__name__)
 
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
-from tomopy.sim import *
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['import_shared_lib',
+           'as_float32',
+           'as_int32',
+           'as_c_float_p',
+           'as_c_int',
+           'as_c_char_p',
+           'as_c_void_p']
+
+
+def import_shared_lib(lib_name):
+    """
+    Get the path and import the C-shared library.
+    """
+    try:
+        if os.name == 'nt':
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', 'lib', lib_name + '.pyd'))
+            return ctypes.CDLL(libpath)
+        else:
+            libpath = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '..', 'lib', lib_name + '.so'))
+            return ctypes.CDLL(libpath)
+    except OSError as e:
+        logger.warning('OSError: Shared library missing.')
+
+
+def as_float32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='float32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='float32')
+    return arr
+
+
+def as_int32(arr):
+    if not isinstance(arr, np.ndarray):
+        arr = np.array(arr, dtype='int32')
+    elif not arr.dtype == np.float32:
+        arr = np.array(arr, dtype='int32')
+    return arr
+
+
+def as_c_float_p(arr):
+    c_float_p = ctypes.POINTER(ctypes.c_float)
+    return arr.ctypes.data_as(c_float_p)
+
+
+def as_c_int(arr):
+    return ctypes.c_int(arr)
+
+
+def as_c_char_p(arr):
+    c_char_p = ctypes.POINTER(ctypes.c_char)
+    return arr.ctypes.data_as(c_char_p)
+
+
+def as_c_void_p():
+    return ctypes.POINTER(ctypes.c_void_p)

@@ -48,17 +48,49 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
 from tomopy.sim import *
+import numpy as np
+import os
+import shutil
+from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
+
+def synthetic_object():
+    """
+    Generate a synthetic object.
+    """
+    obj = [[[1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.]],
+           [[1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.],
+            [1., 1., 1., 1.]]]
+    return obj
+
+
+def test_project():
+    ang = [0.0000, 0.2618, 0.5236, 0.7854]
+    assert_array_almost_equal(
+        project(synthetic_object(), ang),
+        [[[0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000],
+          [0.0000, 4.0000, 4.0000, 4.0000, 4.0000, 0.0000]],
+         [[0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000],
+          [0.0000, 3.8811, 4.1387, 4.1430, 3.7564, 0.0000]],
+         [[0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039],
+          [0.5039, 2.8152, 4.6209, 4.6211, 2.8841, 0.5039]],
+         [[0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955],
+          [0.6187, 2.5633, 4.5078, 4.6846, 2.7400, 0.7955]]],
+        decimal=4)
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

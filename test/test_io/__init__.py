@@ -47,18 +47,3 @@
 # #########################################################################
 
 from __future__ import absolute_import, division, print_function
-
-import logging
-logging.basicConfig()
-
-from tomopy.io import *
-from tomopy.io.data import *
-from tomopy.io.exchange import *
-from tomopy.io.phantom import *
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.mproc import *
-from tomopy.deprec import *
-from tomopy.prep import *
-from tomopy.recon import *
-from tomopy.sim import *
