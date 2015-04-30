@@ -1,5 +1,0 @@
-numpy
-scipy
-h5py
-pywavelets
-scikit-image
