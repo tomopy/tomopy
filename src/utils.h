@@ -50,7 +50,6 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <assert.h>
-#include <pthread.h>
 #include "string.h"
 
 
