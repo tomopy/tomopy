@@ -125,16 +125,8 @@ def find_center(
         rec = circ_mask(rec, axis=0)
 
     # Adjust histogram boundaries according to reconstruction.
-    hmin = np.min(rec)
-    if hmin < 0:
-        hmin = 2 * hmin
-    elif hmin >= 0:
-        hmin = 0.5 * hmin
-    hmax = np.max(rec)
-    if hmax < 0:
-        hmax = 0.5 * hmax
-    elif hmax >= 0:
-        hmax = 2 * hmax
+    hmin = _adjust_hist(rec.min()) 
+    hmax = _adjust_hist(rec.max()) 
 
     # Magic is ready to happen...
     res = minimize(
@@ -142,6 +134,14 @@ def find_center(
         args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
         method='Nelder-Mead',
         tol=tol)
+
+
+def _adjust_hist(val):
+    if val < 0:
+        val = 2 * val
+    elif val >= 0:
+        val = 0.5 * val
+    return val
 
 
 def _find_center_cost(
