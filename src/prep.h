@@ -57,7 +57,7 @@
 
 
 DLL void 
-correct_air(
+normalize_bg(
     float* data, 
     int dx, int dy, int dz,
     int nair,

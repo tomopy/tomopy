@@ -6,7 +6,6 @@ tomoc = Extension(
     name='lib.libtomopy',
     extra_compile_args=['-std=c99'],
     sources=[
-        'src/corr.c',
         'src/utils.c',
         'src/project.c',
         'src/gridrec.c',
@@ -20,6 +19,7 @@ tomoc = Extension(
         'src/ospml_quad.c',
         'src/pml_hybrid.c',
         'src/pml_quad.c',
+        'src/prep.c',
         'src/sirt.c',
         'src/morph.c'])
 
