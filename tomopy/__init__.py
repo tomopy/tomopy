@@ -59,6 +59,8 @@ from tomopy.misc.corr import *
 from tomopy.misc.mask import *
 from tomopy.misc.morph import *
 from tomopy.misc.mproc import *
-from tomopy.prep import *
+from tomopy.prep.normalize import *
+from tomopy.prep.phase import *
+from tomopy.prep.stripe import *
 from tomopy.recon import *
 from tomopy.sim import *

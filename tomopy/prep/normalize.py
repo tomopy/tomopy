@@ -46,62 +46,115 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for data normalization.
+"""
+
 from __future__ import absolute_import, division, print_function
 
-from test.util import read_file
-from tomopy.prep import *
 import numpy as np
-import os.path
-from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
+import tomopy.misc.mproc as mp
+import tomopy.extern as ext
+from tomopy.util import *
+import logging
 
+logger = logging.getLogger(__name__)
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+__all__ = ['normalize',
+           'normalize_bg']
 
 
-def test_normalize():
-    assert_array_almost_equal(
-        normalize(
-            read_file('tomo.npy'),
-            read_file('flat.npy'),
-            read_file('dark.npy')),
-        read_file('normalize.npy'))
+def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
+    """
+    Normalize raw projection data using the flat and dark field projections.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    flat : ndarray
+        3D flat field data.
+    dark : ndarray
+        3D dark field data.
+    cutoff : float, optional
+        Permitted maximum vaue for the normalized data.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Normalized 3D tomographic data.
+    """
+    tomo = as_float32(tomo)
+    flat = as_float32(flat)
+    dark = as_float32(dark)
+
+    flat = flat.mean(axis=0)
+    dark = dark.mean(axis=0)
+
+    arr = mp.distribute_jobs(
+        tomo,
+        func=_normalize,
+        args=(flat, dark, cutoff),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
 
 
-def test_normalize_bg():
-    assert_array_almost_equal(
-        normalize_bg(read_file('tomo.npy')),
-        read_file('normalize_bg.npy'))
+def _normalize(flat, dark, cutoff, istart, iend):
+    tomo = mp.SHARED_ARRAY
+
+    # Avoid zero division in normalization
+    denom = flat - dark
+    denom[denom == 0] = 1e-6
+
+    for m in range(istart, iend):
+        proj = np.true_divide(tomo[m, :, :] - dark, denom)
+        if cutoff is not None:
+            proj[proj > cutoff] = cutoff
+        tomo[m, :, :] = proj
 
 
-def test_remove_stripe_fw():
-    assert_array_almost_equal(
-        remove_stripe_fw(read_file('proj.npy')),
-        read_file('remove_stripe_fw.npy'))
+def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
+    """
+    Normalize 3D tomgraphy data based on background intensity.
 
+    Weight sinogram such that the left and right image boundaries
+    (i.e., typically the air region around the object) are set to one
+    and all intermediate values are scaled linearly.
 
-def test_remove_stripe_ti():
-    assert_array_almost_equal(
-        remove_stripe_ti(read_file('proj.npy')),
-        read_file('remove_stripe_ti.npy'))
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    air : int, optional
+        Number of pixels at each boundary to calculate the scaling factor.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    tomo = as_float32(tomo)
+    air = as_int32(air)
+    dx, dy, dz = tomo.shape
 
-def test_remove_zinger():
-    proj = read_file('proj.npy')
-    proj[8][4][6] = 20
-    assert_array_almost_equal(
-        remove_zinger(proj, dif=10),
-        read_file('remove_zinger.npy'))
-
-
-def test_retrieve_phase():
-    assert_array_almost_equal(
-        retrieve_phase(read_file('proj.npy')),
-        read_file('retrieve_phase.npy'))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    arr = mp.distribute_jobs(
+        tomo,
+        func=ext.c_normalize_bg,
+        args=(dx, dy, dz, air),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr

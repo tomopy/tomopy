@@ -68,7 +68,8 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['gaussian_filter',
            'median_filter',
            'remove_nan',
-           'remove_neg']
+           'remove_neg',
+           'remove_outlier']
 
 
 def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
@@ -104,27 +105,19 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     """
     arr = as_float32(arr)
     arr = mp.distribute_jobs(
-        arr,
+        arr.swapaxes(0, axis),
         func=_gaussian_filter,
         args=(sigma, order, axis),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    return arr.swapaxes(0, axis)
 
 
 def _gaussian_filter(sigma, order, axis, istart, iend):
     arr = mp.SHARED_ARRAY
     for m in range(istart, iend):
-        if axis == 0:
-            arr[m, :, :] = filters.gaussian_filter(
-                arr[m, :, :], sigma, order)
-        elif axis == 1:
-            arr[:, m, :] = filters.gaussian_filter(
-                arr[:, m, :], sigma, order)
-        elif axis == 2:
-            arr[:, :, m] = filters.gaussian_filter(
-                arr[:, :, m], sigma, order)
+        arr[m] = filters.gaussian_filter(arr[m], sigma, order)
 
 
 def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
@@ -151,27 +144,19 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     """
     arr = as_float32(arr)
     arr = mp.distribute_jobs(
-        arr,
+        arr.swapaxes(0, axis),
         func=_median_filter,
         args=(size, axis),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    return arr.swapaxes(0, axis)
 
 
 def _median_filter(size, axis, istart, iend):
     arr = mp.SHARED_ARRAY
     for m in range(istart, iend):
-        if axis == 0:
-            arr[m, :, :] = filters.median_filter(
-                arr[m, :, :], (size, size))
-        elif axis == 1:
-            arr[:, m, :] = filters.median_filter(
-                arr[:, m, :], (size, size))
-        elif axis == 2:
-            arr[:, :, m] = filters.median_filter(
-                arr[:, :, m], (size, size))
+        arr[m] = filters.median_filter(arr[m], (size, size))
 
 
 def remove_nan(arr, val=0.):
@@ -214,3 +199,72 @@ def remove_neg(arr, val=0.):
     arr = as_float32(arr)
     arr[arr < 0.0] = val
     return arr
+
+
+def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
+    """
+    Remove high intensity bright spots from a 3D array along specified
+    dimension.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which median filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr = as_float32(arr)
+    arr = mp.distribute_jobs(
+        arr.swapaxes(0, axis),
+        func=_remove_outlier,
+        args=(dif, size),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr.swapaxes(0, axis)
+
+
+def _remove_outlier(dif, size, istart, iend):
+    arr = mp.SHARED_ARRAY
+    for m in range(istart, iend):
+        arr[m] = _remove_outlier_from_img(arr[m], dif, size)
+
+
+def _remove_outlier_from_img(img, dif, size):
+    """
+    Remove high intensity bright spots from an image.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    img = as_float32(img)
+    mask = np.zeros(img.shape)
+    tmp = filters.median_filter(img, (size, size))
+    mask = ((img - tmp) >= dif).astype(int)
+    return tmp * mask + img * (1 - mask)
