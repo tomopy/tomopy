@@ -64,6 +64,7 @@ import netCDF4
 import EdfFile
 import logging
 import warnings
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
@@ -272,12 +273,12 @@ class Writer():
         self.overwrite = overwrite
 
         self._range(self.dmin, self.dmax)
-        if dtype is 'uint8':
-            data = as_uint8(data)
-        elif dtype is 'uint16':
-            data = as_uint16(data)
-        elif dtype is 'float32':
-            data = as_float32(data)
+        if self.dtype is 'uint8':
+            self.data = as_uint8(data)
+        elif self.dtype is 'uint16':
+            self.data = as_uint16(data)
+        elif self.dtype is 'float32':
+            self.data = as_float32(data)
 
         if not os.path.exists(self.dname):
             os.makedirs(self.dname)

@@ -58,6 +58,8 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy import ndimage
 import shutil
+from tomopy.io.data import Writer
+from tomopy.misc.mask import circ_mask
 import tomopy.misc.mproc as mp
 import tomopy.extern as ext
 from tomopy.util import *
@@ -119,7 +121,7 @@ class Recon():
         if center is None:
             self.center = np.ones(self.dy, dtype='float32') * self.dz / 2.
         elif np.array(center).size == 1:
-            self.center *= np.ones(self.dy, dtype='float32')
+            self.center = np.ones(self.dy, dtype='float32') * self.center
         if num_gridx is None:
             self.num_gridx = as_int32(self.dz)
         if num_gridy is None:
@@ -630,7 +632,7 @@ def find_center(
 
     # Apply circular mask.
     if mask is True:
-        rec = _circ_mask(dz / 2, rec, ratio)
+        rec = circ_mask(rec, axis=0)
 
     # Adjust histogram boundaries according to reconstruction.
     hmin = np.min(rec)
@@ -650,14 +652,6 @@ def find_center(
         args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
         method='Nelder-Mead',
         tol=tol)
-    return res.x
-
-
-def _circ_mask(rad, rec, ratio):
-    y, x = np.ogrid[-rad:rad, -rad:rad]
-    msk = x * x + y * y > ratio * ratio * rad * rad
-    rec[0, msk] = 0.
-    return rec
 
 
 def _find_center_cost(
@@ -669,9 +663,8 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = gridrec(tomo[:, ind:ind + 1, :], theta, center, emission)
 
-    # Apply circular mask.
     if mask is True:
-        rec = _circ_mask(dz / 2, rec, ratio)
+        rec = circ_mask(rec, axis=0)
 
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
@@ -680,7 +673,7 @@ def _find_center_cost(
 
 def write_center(
         tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
-        emission=True, mask=True, ratio=1., dmin=None, dmax=None):
+        emission=True, mask=False, ratio=1.):
     """
     Save images reconstructed with a range of rotation centers.
 
@@ -709,8 +702,6 @@ def write_center(
     ratio : float, optional
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
-    dmin, dmax : float, optional
-        Mininum and maximum values to adjust float-to-int conversion range.
     """
     tomo = as_float32(tomo)
     theta = as_float32(theta)
@@ -722,31 +713,21 @@ def write_center(
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
     else:
         center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
+
     stack = np.zeros((dx, len(center), dz))
     for m in range(center.size):
         stack[:, m, :] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
-    rec = Recon(stack, theta, center, emission).gridrec()
+    rec = Recon(stack, theta, center=center, emission=emission).gridrec()
 
     # Apply circular mask.
     if mask is True:
-        rad = dz / 2.
-        y, x = np.ogrid[-rad:rad, -rad:rad]
-        msk = x * x + y * y > ratio * ratio * rad * rad
-        for m in range(center.size):
-            rec[m, msk] = 0
+        rec = circ_mask(rec, axis=0)
 
     # Save images to a temporary folder.
-    if os.path.isdir(dpath):
-        shutil.rmtree(dpath)
-    os.makedirs(dpath)
-    for m in range(center.size):
+    for m in range(len(center)):
         if m % 2 == 0:  # 2 slices same bec of gridrec.
             fname = os.path.join(
                 dpath, str('{:.2f}'.format(center[m]) + 'tiff'))
-            arr = rec[m, :, :]
-
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                sio.imsave(fname, arr, plugin='tifffile')
+            Writer(rec[m:m + 1], fname=fname, overwrite=True).tiff(stack=False)

@@ -47,15 +47,13 @@
 # #########################################################################
 
 """
-Module for internal utility functions.
+Module for masking of arrays.
 """
 
 from __future__ import absolute_import, division, print_function
 
-import os
-import ctypes
+from tomopy.util import as_ndarray
 import numpy as np
-import multiprocessing
 import logging
 logger = logging.getLogger(__name__)
 
@@ -63,63 +61,62 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_ndarray',
-           'as_dtype',
-           'as_float32',
-           'as_int32',
-           'as_uint8',
-           'as_uint16',
-           'as_c_float_p',
-           'as_c_int',
-           'as_c_char_p',
-           'as_c_void_p']
+__all__ = ['circ_mask']
 
 
-def as_ndarray(arr, dtype=None):
-    if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype)
-    return arr
+def circ_mask(arr, axis, ratio=1, val=0.):
+    """
+    Apply circular mask to a 3D array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Arbitrary 3D array.
+    axis : int
+        Axis along which mask will be performed.
+    ratio : int, optional
+        Ratio of the mask's diameter in pixels to
+        the smallest edge size along given axis.
+    val : int, optional
+        Value for the masked region.
+
+    Returns
+    -------
+    ndarray
+        Masked array.
+    """
+    arr = as_ndarray(arr)
+    _arr = arr.swapaxes(0, axis)
+    dx, dy, dz = _arr.shape
+    mask = _get_mask(dy, dz, ratio)
+    for m in range(dx):
+        _arr[m, ~mask] = val
+    return _arr.swapaxes(0, axis)
 
 
-def as_dtype(arr, dtype):
-    if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype)
-    return arr
+def _get_mask(dx, dy, ratio):
+    """
+    Calculate 2D boolean circular mask.
 
+    Parameters
+    ----------
+    dx, dy : int
+        Dimensions of the 2D mask.
 
-def as_float32(arr):
-    arr = as_ndarray(arr, np.float32)
-    return as_dtype(arr, np.float32)
+    ratio : int
+        Ratio of the circle's diameter in pixels to
+        the smallest mask dimension.
 
-
-def as_int32(arr):
-    arr = as_ndarray(arr, np.int32)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint16(arr):
-    arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint8(arr):
-    arr = as_ndarray(arr, np.uint8)
-    return as_dtype(arr, np.uint8)
-
-
-def as_c_float_p(arr):
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    return arr.ctypes.data_as(c_float_p)
-
-
-def as_c_int(arr):
-    return ctypes.c_int(arr)
-
-
-def as_c_char_p(arr):
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    return arr.ctypes.data_as(c_char_p)
-
-
-def as_c_void_p():
-    return ctypes.POINTER(ctypes.c_void_p)
+    Returns
+    -------
+    ndarray
+        2D boolean array.
+    """
+    rad1 = dx / 2.
+    rad2 = dy / 2.
+    if dx < dy:
+        r2 = rad1 * rad1
+    else:
+        r2 = rad2 * rad2
+    y, x = np.ogrid[0.5 - rad1:0.5 + rad1, 0.5 - rad2:0.5 + rad2]
+    return x * x + y * y < ratio * ratio * r2

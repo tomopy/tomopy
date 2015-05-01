@@ -65,8 +65,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['circular_roi',
-           'focus_region',
+__all__ = ['focus_region',
            'normalize',
            'normalize_bg',
            'remove_stripe_fw',
@@ -79,43 +78,6 @@ BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
 SPEED_OF_LIGHT = 299792458e+2  # [cm/s]
 PI = 3.14159265359
 PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
-
-
-def circular_roi(tomo, ratio=1, val=None):
-    """
-    Apply circular mask to projection images.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    ratio : int, optional
-        Ratio of the circular mask's diameter in pixels to
-        the number of reconstructed image grid size.
-    val : int, optional
-        Value for the masked region.
-
-    Returns
-    -------
-    ndarray
-        Masked 3D tomographic data.
-    """
-    dx, dy, dz = tomo.shape
-    ind1 = dy
-    ind2 = dz
-    rad1 = ind1 / 2
-    rad2 = ind2 / 2
-    if dy < dz:
-        r2 = rad1 * rad1
-    else:
-        r2 = rad2 * rad2
-    y, x = np.ogrid[-rad1:rad1, -rad2:rad2]
-    mask = x * x + y * y > ratio * ratio * r2
-    if val is None:
-        val = np.mean(tomo[:, ~mask])
-    for m in np.arange(0, dx):
-        tomo[m, mask] = val
-    return tomo
 
 
 def focus_region(
@@ -211,7 +173,6 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     flat = as_float32(flat)
     dark = as_float32(dark)
 
-    # Calculate average flat and dark fields for normalization.
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
@@ -233,7 +194,7 @@ def _normalize(flat, dark, cutoff, istart, iend):
     denom[denom == 0] = 1e-6
 
     for m in range(istart, iend):
-        proj = np.divide(tomo[m, :, :] - dark, denom)
+        proj = np.true_divide(tomo[m, :, :] - dark, denom)
         if cutoff is not None:
             proj[proj > cutoff] = cutoff
         tomo[m, :, :] = proj
