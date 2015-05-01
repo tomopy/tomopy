@@ -60,8 +60,8 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_apply_pad():
-    loop_dim(apply_pad, read_file('obj.npy'))
+def test_pad():
+    loop_dim(pad, read_file('obj.npy'))
 
 
 def test_downsample():

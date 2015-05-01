@@ -78,9 +78,6 @@ __all__ = ['Recon',
            'write_center']
 
 
-LIB_TOMOPY = ext.import_shared_lib('libtomopy')
-
-
 class Recon():
 
     """
@@ -162,7 +159,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._art,
+            func=ext.c_art,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter),
@@ -201,7 +198,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._bart,
+            func=ext.c_bart,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter,
@@ -236,7 +233,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._fbp,
+            func=ext.c_fbp,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.filter_name),
@@ -285,7 +282,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._gridrec,
+            func=ext.c_gridrec,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.filter_name),
@@ -320,7 +317,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._mlem,
+            func=ext.c_mlem,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter),
@@ -359,7 +356,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._osem,
+            func=ext.c_osem,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter,
@@ -408,7 +405,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._ospml_hybrid,
+            func=ext.c_ospml_hybrid,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter,
@@ -456,7 +453,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._ospml_quad,
+            func=ext.c_ospml_quad,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter,
@@ -499,7 +496,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._pml_hybrid,
+            func=ext.c_pml_hybrid,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
@@ -540,7 +537,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._pml_quad,
+            func=ext.c_pml_quad,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
@@ -571,7 +568,7 @@ class Recon():
         mp.init_tomo(self.tomo)
         arr = mp.distribute_jobs(
             self.recon,
-            func=ext._sirt,
+            func=ext.c_sirt,
             args=(
                 self.dx, self.dy, self.dz, self.theta, self.center,
                 self.num_gridx, self.num_gridy, self.num_iter),

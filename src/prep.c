@@ -41,11 +41,11 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "corr.h"
+#include "prep.h"
 
 
 DLL void 
-correct_air(
+normalize_bg(
     float* data, int dx, int dy, int dz, int nair, int istart, int iend) 
 {
     int n, m, i, j, iproj;
