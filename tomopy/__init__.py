@@ -52,9 +52,10 @@ import logging
 logging.basicConfig()
 
 from tomopy.io import *
-from tomopy.io.data import *
 from tomopy.io.exchange import *
 from tomopy.io.phantom import *
+from tomopy.io.reader import *
+from tomopy.io.writer import *
 from tomopy.misc.corr import *
 from tomopy.misc.mask import *
 from tomopy.misc.morph import *
@@ -62,5 +63,7 @@ from tomopy.misc.mproc import *
 from tomopy.prep.normalize import *
 from tomopy.prep.phase import *
 from tomopy.prep.stripe import *
-from tomopy.recon import *
-from tomopy.sim import *
+from tomopy.recon.algorithm import *
+from tomopy.recon.rotation import *
+from tomopy.sim.project import *
+from tomopy.sim.propagate import *

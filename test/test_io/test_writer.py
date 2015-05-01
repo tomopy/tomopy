@@ -48,13 +48,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from test.util import read_file
-from tomopy.recon import *
+from tomopy.io.writer import *
 import numpy as np
+import h5py
 import os
 import shutil
 from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
@@ -62,83 +61,55 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-class TestRecon:
-
-    def __init__(self):
-        self.r = Recon(
-            read_file('proj.npy'),
-            read_file('angle.npy'))
-
-    def test_art(self):
-        assert_array_almost_equal(
-            self.r.art(num_iter=4),
-            read_file('art.npy'))
-
-    def test_bart(self):
-        assert_array_almost_equal(
-            self.r.bart(num_iter=4),
-            read_file('bart.npy'))
-
-    def test_fbp(self):
-        assert_array_almost_equal(
-            self.r.fbp(),
-            read_file('fbp.npy'))
-
-    def test_gridrec(self):
-        assert_array_almost_equal(
-            self.r.gridrec(),
-            read_file('gridrec.npy'))
-
-    def test_mlem(self):
-        assert_array_almost_equal(
-            self.r.mlem(num_iter=4),
-            read_file('mlem.npy'))
-
-    def test_osem(self):
-        assert_array_almost_equal(
-            self.r.osem(num_iter=4),
-            read_file('osem.npy'))
-
-    def test_ospml_hybrid(self):
-        assert_array_almost_equal(
-            self.r.ospml_hybrid(num_iter=4),
-            read_file('ospml_hybrid.npy'))
-
-    def test_ospml_quad(self):
-        assert_array_almost_equal(
-            self.r.ospml_quad(num_iter=4),
-            read_file('ospml_quad.npy'))
-
-    def test_pml_hybrid(self):
-        assert_array_almost_equal(
-            self.r.pml_hybrid(num_iter=4),
-            read_file('pml_hybrid.npy'))
-
-    def test_pml_quad(self):
-        assert_array_almost_equal(
-            self.r.pml_quad(num_iter=4),
-            read_file('pml_quad.npy'))
-
-    def test_sirt(self):
-        assert_array_almost_equal(
-            self.r.sirt(num_iter=4),
-            read_file('sirt.npy'))
+def test_Writer_hdf5():
+    dest = os.path.join('test', 'tmp')
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    os.mkdir(dest)
+    fname = os.path.join(dest, 'test.h5')
+    gname = os.path.join('exchange', 'data')
+    arr = np.ones((3, 3, 3), dtype='float32')
+    Writer(arr, os.path.join(dest, 'test.h5')).hdf5()
+    f = h5py.File(os.path.join(dest, 'test.h5'), "r")
+    assert_equals(
+        f[gname][:].shape,
+        (3, 3, 3))
+    assert_equals(
+        f[gname][:].dtype,
+        'float32')
+    f.close()
+    shutil.rmtree(dest)
 
 
-def test_write_center():
-    dpath = os.path.join('test', 'tmp')
-    cen_range = (5, 7, 0.5)
-    cen = np.arange(cen_range[0], cen_range[1], cen_range[2])
-    write_center(
-        read_file('proj.npy'),
-        read_file('angle.npy'),
-        dpath, cen_range=cen_range)
-    for m in range(4):
-        assert_equals(
-            os.path.isfile(
-                os.path.join(
-                    dpath, str('{:.2f}'.format(cen[m]) + 'tiff'))), True)
-    shutil.rmtree(dpath)
+def test_Writer_tiff():
+    dest = os.path.join('test', 'tmp')
+    bname = os.path.join(dest, 'test')
+    fname = os.path.join(dest, 'test.tiff')
+    arr = np.ones((1, 2, 3), dtype='float32')
+    Writer(arr, fname, dtype='uint8').tiff(axis=0, digit=4)
+    assert_equals(
+        os.path.isfile(bname + '_0000.tiff'),
+        True)
+    shutil.rmtree(dest)
+    Writer(arr, fname, dtype='uint16').tiff(axis=1, digit=5)
+    assert_equals(
+        os.path.isfile(bname + '_00000.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00001.tiff'),
+        True)
+    shutil.rmtree(dest)
+    Writer(arr, fname, dtype='float32').tiff(axis=2, start=9)
+    assert_equals(
+        os.path.isfile(bname + '_00009.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00010.tiff'),
+        True)
+    assert_equals(
+        os.path.isfile(bname + '_00011.tiff'),
+        True)
+    shutil.rmtree(dest)
 
 
 if __name__ == '__main__':

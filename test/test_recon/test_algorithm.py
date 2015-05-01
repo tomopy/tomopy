@@ -46,81 +46,83 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-"""
-Module for internal utility functions.
-"""
-
 from __future__ import absolute_import, division, print_function
 
-import os
-import ctypes
+from test.util import read_file
+from tomopy.recon.algorithm import *
 import numpy as np
-import multiprocessing
-import logging
-
-logger = logging.getLogger(__name__)
+from nose.tools import assert_equals
+from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_ndarray',
-           'as_dtype',
-           'as_float32',
-           'as_int32',
-           'as_uint8',
-           'as_uint16',
-           'as_c_float_p',
-           'as_c_int',
-           'as_c_char_p',
-           'as_c_void_p']
 
 
-def as_ndarray(arr, dtype=None):
-    if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype)
-    return arr
+class TestRecon:
+
+    def __init__(self):
+        self.r = Recon(
+            read_file('proj.npy'),
+            read_file('angle.npy'))
+
+    def test_art(self):
+        assert_array_almost_equal(
+            self.r.art(num_iter=4),
+            read_file('art.npy'))
+
+    def test_bart(self):
+        assert_array_almost_equal(
+            self.r.bart(num_iter=4),
+            read_file('bart.npy'))
+
+    def test_fbp(self):
+        assert_array_almost_equal(
+            self.r.fbp(),
+            read_file('fbp.npy'))
+
+    def test_gridrec(self):
+        assert_array_almost_equal(
+            self.r.gridrec(),
+            read_file('gridrec.npy'))
+
+    def test_mlem(self):
+        assert_array_almost_equal(
+            self.r.mlem(num_iter=4),
+            read_file('mlem.npy'))
+
+    def test_osem(self):
+        assert_array_almost_equal(
+            self.r.osem(num_iter=4),
+            read_file('osem.npy'))
+
+    def test_ospml_hybrid(self):
+        assert_array_almost_equal(
+            self.r.ospml_hybrid(num_iter=4),
+            read_file('ospml_hybrid.npy'))
+
+    def test_ospml_quad(self):
+        assert_array_almost_equal(
+            self.r.ospml_quad(num_iter=4),
+            read_file('ospml_quad.npy'))
+
+    def test_pml_hybrid(self):
+        assert_array_almost_equal(
+            self.r.pml_hybrid(num_iter=4),
+            read_file('pml_hybrid.npy'))
+
+    def test_pml_quad(self):
+        assert_array_almost_equal(
+            self.r.pml_quad(num_iter=4),
+            read_file('pml_quad.npy'))
+
+    def test_sirt(self):
+        assert_array_almost_equal(
+            self.r.sirt(num_iter=4),
+            read_file('sirt.npy'))
 
 
-def as_dtype(arr, dtype):
-    if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype)
-    return arr
-
-
-def as_float32(arr):
-    arr = as_ndarray(arr, np.float32)
-    return as_dtype(arr, np.float32)
-
-
-def as_int32(arr):
-    arr = as_ndarray(arr, np.int32)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint16(arr):
-    arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint8(arr):
-    arr = as_ndarray(arr, np.uint8)
-    return as_dtype(arr, np.uint8)
-
-
-def as_c_float_p(arr):
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    return arr.ctypes.data_as(c_float_p)
-
-
-def as_c_int(arr):
-    return ctypes.c_int(arr)
-
-
-def as_c_char_p(arr):
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    return arr.ctypes.data_as(c_char_p)
-
-
-def as_c_void_p():
-    return ctypes.POINTER(ctypes.c_void_p)
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)

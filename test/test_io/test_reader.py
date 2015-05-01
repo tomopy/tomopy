@@ -48,13 +48,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from test.util import read_file
-from tomopy.sim import *
+from tomopy.io.reader import *
 import numpy as np
-import os
-import shutil
+import os.path
 from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
@@ -62,10 +59,18 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_project():
-    assert_array_almost_equal(
-        project(read_file('obj.npy'), read_file('angle.npy')),
-        read_file('proj.npy'))
+def test_Reader_hdf5():
+    fname = os.path.join('test', 'data', 'lena.h5')
+    gname = os.path.join('exchange', 'data')
+    assert_equals(
+        Reader(fname).hdf5(gname).shape,
+        (1, 512, 512))
+    assert_equals(
+        Reader(fname, dim2=slice(0, 16)).hdf5(gname).shape,
+        (1, 16, 512))
+    assert_equals(
+        Reader(fname, dim3=slice(0, 16)).hdf5(gname).shape,
+        (1, 512, 16))
 
 
 if __name__ == '__main__':
