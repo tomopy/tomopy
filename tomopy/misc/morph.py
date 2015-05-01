@@ -63,24 +63,24 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['apply_pad',
+__all__ = ['pad',
            'downsample',
            'upsample']
 
 
-LIB_TOMOPY = ext.import_shared_lib('libtomopy')
+LIB_TOMOPY = ext.c_shared_lib('libtomopy')
 
 
-def apply_pad(arr, npad=None, axis=2, val=0.):
+def pad(arr, axis, npad=None, val=0):
     """
-    Extend size of 3D array along specified axis.
+    Pad an array along specified axis.
 
     Parameters
     ----------
     arr : ndarray
-        3D input array.
+        Input array.
     npad : int, optional
-        New dimensions after padding.
+        New dimension after padding.
     axis : int, optional
         Axis along which padding will be performed.
     val : float, optional
@@ -91,29 +91,25 @@ def apply_pad(arr, npad=None, axis=2, val=0.):
     ndarray
         Padded 3D array.
     """
-    arr = as_float32(arr)
-    dx, dy, dz = arr.shape
-    npad = _get_npad(arr.shape[axis], npad)
-    out = _init_out(arr, axis, npad, val)
-
-    LIB_TOMOPY.apply_pad.restype = as_c_void_p()
-    LIB_TOMOPY.apply_pad(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(axis),
-        as_c_int(npad),
-        as_c_float_p(out))
-    return out
-
-
-def _get_npad(dim, npad):
     if npad is None:
-        npad = int(np.ceil(dim * np.sqrt(2)))
-    elif npad < dim:
-        npad = dim
-    return npad
+        npad = _get_npad(arr.shape[axis])
+    pad_width = _get_pad_sequence(arr.shape, axis, npad)
+    cval = _get_pad_sequence(arr.shape, axis, npad)
+    return np.pad(arr, pad_width, 'constant', constant_values=cval)
+
+
+def _get_npad(dim):
+    return int(np.ceil(dim * np.sqrt(2)))-dim
+
+
+def _get_pad_sequence(shape, axis, npad):
+    pad_seq = []
+    for m in range(len(shape)):
+        if m == axis:
+            pad_seq.append((npad, npad))
+        else:
+            pad_seq.append((0, 0))
+    return pad_seq
 
 
 def downsample(arr, level=1, axis=2):
@@ -134,20 +130,7 @@ def downsample(arr, level=1, axis=2):
     ndarray
         Downsampled 3D array.
     """
-    arr = as_float32(arr)
-    dx, dy, dz = arr.shape
-    out = _init_out(arr, axis, arr.shape[axis] / np.power(2, level))
-
-    LIB_TOMOPY.downsample.restype = as_c_void_p()
-    LIB_TOMOPY.downsample(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(level),
-        as_c_int(axis),
-        as_c_float_p(out))
-    return out
+    return _sample(arr, level, axis, mode=0)
 
 
 def upsample(arr, level=1, axis=2):
@@ -168,20 +151,20 @@ def upsample(arr, level=1, axis=2):
     ndarray
         Upsampled 3D array.
     """
+    return _sample(arr, level, axis, mode=1)
+
+
+def _sample(arr, level, axis, mode):
     arr = as_float32(arr)
     dx, dy, dz = arr.shape
-    out = _init_out(arr, axis, arr.shape[axis] * np.power(2, level))
 
-    LIB_TOMOPY.upsample.restype = as_c_void_p()
-    LIB_TOMOPY.upsample(
-        as_c_float_p(arr),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_int(level),
-        as_c_int(axis),
-        as_c_float_p(out))
-    return out
+    if mode == 0:
+        dim = arr.shape[axis] / np.power(2, level)
+    if mode == 1:
+        dim = arr.shape[axis] * np.power(2, level)
+
+    out = _init_out(arr, axis, dim)
+    return ext.c_sample(mode, arr, dx, dy, dz, level, axis, out)
 
 
 def _init_out(arr, axis, dim, val=0.):

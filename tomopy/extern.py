@@ -64,12 +64,24 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['import_shared_lib',
+__all__ = ['c_shared_lib',
            'c_project',
-           'c_normalize_bg']
+           'c_normalize_bg',
+           'c_sample',
+           'c_art',
+           'c_bart',
+           'c_fbp',
+           'c_gridrec',
+           'c_mlem',
+           'c_osem',
+           'c_ospml_hybrid',
+           'c_ospml_quad',
+           'c_pml_hybrid',
+           'c_pml_quad',
+           'c_sirt']
 
 
-def import_shared_lib(lib_name):
+def c_shared_lib(lib_name):
     """
     Get the path and import the C-shared library.
     """
@@ -87,14 +99,14 @@ def import_shared_lib(lib_name):
         logger.warning('OSError: Shared library missing.')
 
 
-LIB_TOMOPY = import_shared_lib('libtomopy')
+LIB_TOMOPY = c_shared_lib('libtomopy')
 
 
 def c_normalize_bg(dx, dy, dz, air, istart, iend):
     tomo = mp.SHARED_ARRAY
 
-    LIB_TOMOPY.correct_air.restype = as_c_void_p()
-    LIB_TOMOPY.correct_air(
+    LIB_TOMOPY.normalize_bg.restype = as_c_void_p()
+    LIB_TOMOPY.normalize_bg(
         as_c_float_p(tomo),
         as_c_int(dx),
         as_c_int(dy),
@@ -124,7 +136,21 @@ def c_project(ox, oy, oz, theta, center, dx, dy, dz, istart, iend):
         as_c_int(iend))
 
 
-def _art(
+def c_sample(mode, arr, dx, dy, dz, level, axis, out):
+    LIB_TOMOPY.sample.restype = as_c_void_p()
+    LIB_TOMOPY.sample(
+        as_c_int(mode),
+        as_c_float_p(arr),
+        as_c_int(dx),
+        as_c_int(dy),
+        as_c_int(dz),
+        as_c_int(level),
+        as_c_int(axis),
+        as_c_float_p(out))
+    return out
+
+
+def c_art(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         num_iter, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -146,7 +172,7 @@ def _art(
         as_c_int(iend))
 
 
-def _bart(
+def c_bart(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         num_iter, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -170,7 +196,7 @@ def _bart(
         as_c_int(iend))
 
 
-def _fbp(
+def c_fbp(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         filter_name, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -192,7 +218,7 @@ def _fbp(
         as_c_int(iend))
 
 
-def _gridrec(
+def c_gridrec(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         filter_name, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -214,7 +240,7 @@ def _gridrec(
         as_c_int(iend))
 
 
-def _mlem(
+def c_mlem(
         dx, dy, dz, theta, center, num_gridx,
         num_gridy, num_iter, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -236,7 +262,7 @@ def _mlem(
         as_c_int(iend))
 
 
-def _osem(
+def c_osem(
         dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -260,7 +286,7 @@ def _osem(
         as_c_int(iend))
 
 
-def _ospml_hybrid(
+def c_ospml_hybrid(
         dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -285,7 +311,7 @@ def _ospml_hybrid(
         as_c_int(iend))
 
 
-def _ospml_quad(
+def c_ospml_quad(
         dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         reg_par, num_block, ind_block, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -310,7 +336,7 @@ def _ospml_quad(
         as_c_int(iend))
 
 
-def _pml_hybrid(
+def c_pml_hybrid(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         num_iter, reg_par, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -333,7 +359,7 @@ def _pml_hybrid(
         as_c_int(iend))
 
 
-def _pml_quad(
+def c_pml_quad(
         dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
         reg_par, istart, iend):
     tomo = mp.SHARED_TOMO
@@ -356,7 +382,7 @@ def _pml_quad(
         as_c_int(iend))
 
 
-def _sirt(
+def c_sirt(
         dx, dy, dz, theta, center, num_gridx, num_gridy,
         num_iter, istart, iend):
     tomo = mp.SHARED_TOMO

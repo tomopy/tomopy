@@ -10,7 +10,6 @@
 
    .. autosummary::
    
-      circular_roi
       normalize
       normalize_bg
       remove_stripe_fw
