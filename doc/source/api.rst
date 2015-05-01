@@ -14,7 +14,9 @@ This section contains the API reference and usage information for TomoPy.
    api/tomopy.misc.mask
    api/tomopy.misc.morph
    api/tomopy.misc.mproc
-   api/tomopy.prep
+   api/tomopy.prep.normalize
+   api/tomopy.prep.phase
+   api/tomopy.prep.stripe
    api/tomopy.recon
    api/tomopy.sim
 

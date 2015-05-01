@@ -48,9 +48,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from test.util import read_file, loop_dim
-from tomopy.misc.corr import *
-import numpy as np
+from tomopy.prep.stripe import *
+from test.util import read_file
 from numpy.testing import assert_array_almost_equal
 
 
@@ -59,32 +58,16 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_gaussian_filter():
-    loop_dim(gaussian_filter, read_file('cube.npy'))
-
-
-def test_median_filter():
-    loop_dim(median_filter, read_file('cube.npy'))
-
-
-def test_remove_neg():
+def test_remove_stripe_fw():
     assert_array_almost_equal(
-        remove_neg([-2, -1, 0, 1, 2]),
-        [0, 0, 0, 1, 2])
+        remove_stripe_fw(read_file('proj.npy')),
+        read_file('remove_stripe_fw.npy'))
 
 
-def test_remove_nan():
+def test_remove_stripe_ti():
     assert_array_almost_equal(
-        remove_nan([np.nan, 1.5, 2, np.nan, 1]),
-        [0, 1.5, 2, 0, 1])
-
-
-def test_remove_outlier():
-    proj = read_file('proj.npy')
-    proj[8][4][6] = 20
-    assert_array_almost_equal(
-        remove_outlier(proj, dif=10),
-        read_file('remove_zinger.npy'))
+        remove_stripe_ti(read_file('proj.npy')),
+        read_file('remove_stripe_ti.npy'))
 
 
 if __name__ == '__main__':

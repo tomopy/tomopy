@@ -14,3 +14,4 @@
       median_filter
       remove_nan
       remove_neg
+      remove_outlier
