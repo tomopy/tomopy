@@ -46,80 +46,23 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-"""
-Module for internal utility functions.
-"""
-
 from __future__ import absolute_import, division, print_function
 
-import os
-import ctypes
+from test.util import read_file, loop_dim
+from tomopy.misc.mask import *
 import numpy as np
-import multiprocessing
-import logging
-logger = logging.getLogger(__name__)
+from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_ndarray',
-           'as_dtype',
-           'as_float32',
-           'as_int32',
-           'as_uint8',
-           'as_uint16',
-           'as_c_float_p',
-           'as_c_int',
-           'as_c_char_p',
-           'as_c_void_p']
 
 
-def as_ndarray(arr, dtype=None):
-    if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype)
-    return arr
+def test_circ_mask():
+    loop_dim(circ_mask, read_file('obj.npy'))
 
 
-def as_dtype(arr, dtype):
-    if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype)
-    return arr
-
-
-def as_float32(arr):
-    arr = as_ndarray(arr, np.float32)
-    return as_dtype(arr, np.float32)
-
-
-def as_int32(arr):
-    arr = as_ndarray(arr, np.int32)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint16(arr):
-    arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.int32)
-
-
-def as_uint8(arr):
-    arr = as_ndarray(arr, np.uint8)
-    return as_dtype(arr, np.uint8)
-
-
-def as_c_float_p(arr):
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    return arr.ctypes.data_as(c_float_p)
-
-
-def as_c_int(arr):
-    return ctypes.c_int(arr)
-
-
-def as_c_char_p(arr):
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    return arr.ctypes.data_as(c_char_p)
-
-
-def as_c_void_p():
-    return ctypes.POINTER(ctypes.c_void_p)
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(exit=False)
