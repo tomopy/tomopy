@@ -7,7 +7,8 @@ This section contains the API reference and usage information for TomoPy.
 
 .. toctree::
 
-   api/tomopy.io.data
+   api/tomopy.io.reader
+   api/tomopy.io.writer
    api/tomopy.io.phantom
    api/tomopy.io.exchange
    api/tomopy.misc.corr
@@ -17,8 +18,11 @@ This section contains the API reference and usage information for TomoPy.
    api/tomopy.prep.normalize
    api/tomopy.prep.phase
    api/tomopy.prep.stripe
-   api/tomopy.recon
-   api/tomopy.sim
+   api/tomopy.recon.algorithm
+   api/tomopy.recon.rotation
+   api/tomopy.sim.project
+   api/tomopy.sim.propagate
+
 
 .. automodule:: tomopy
    :members:

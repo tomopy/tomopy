@@ -1,7 +1,7 @@
-:mod:`tomopy.recon`
-===================
+:mod:`tomopy.recon.algorithm`
+=============================
 
-.. automodule:: tomopy.recon
+.. automodule:: tomopy.recon.algorithm
    :members:
    :show-inheritance:
    :undoc-members:
@@ -27,10 +27,3 @@
       Recon.pml_hybrid
       Recon.pml_quad
       Recon.sirt
-
-   .. rubric:: **Functions:**
-
-   .. autosummary::
-
-      find_center
-      write_center

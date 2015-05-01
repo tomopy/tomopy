@@ -56,6 +56,9 @@ import numpy as np
 import multiprocessing as mp
 import ctypes
 from contextlib import closing
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
