@@ -52,9 +52,10 @@ Module for masking of arrays.
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.util import as_ndarray
 import numpy as np
+from tomopy.util import as_ndarray
 import logging
+
 logger = logging.getLogger(__name__)
 
 

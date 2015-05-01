@@ -52,16 +52,13 @@ Module for simulation of x-rays.
 
 from __future__ import absolute_import, division, print_function
 
-import warnings
 import numpy as np
-import ctypes
-import os
 import shutil
 import tomopy.extern as ext
 from tomopy.util import *
 import tomopy.misc.mproc as mp
-import multiprocessing
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,11 +67,10 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['angles',
            'project',
-           'propagate',
            'fan_to_para',
            'para_to_fan',
            'add_poisson',
-           'add_focal_spot_blur', ]
+           'add_focal_spot_blur']
 
 
 def add_poisson(tomo):
@@ -283,33 +279,5 @@ def _get_otf(dx, dy, px, py, spotsize):
     -------
     array
         2D OTF function.
-    """
-    logger.warning('Not implemented.')
-
-
-def propagate(tomo, psize, dist, energy):
-    """
-    Propagate emitting x-ray wave based on the Fresnel diffraction
-    formula for the near field.
-
-    Warning
-    -------
-    Not implemented yet.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    psize : float, optional
-        Detector pixel size in cm.
-    dist : float, optional
-        Propagation distance of the wavefront in cm.
-    energy : float, optional
-        Energy of incident wave in keV.
-
-    Returns
-    -------
-    ndarray
-        3D propagated tomographic data.
     """
     logger.warning('Not implemented.')

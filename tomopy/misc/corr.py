@@ -53,12 +53,11 @@ Module for data correction functions.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import ctypes
-import os
-import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
+import tomopy.misc.mproc as mp
 from tomopy.util import *
 import logging
+
 logger = logging.getLogger(__name__)
 
 
