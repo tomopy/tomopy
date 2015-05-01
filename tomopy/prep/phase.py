@@ -71,8 +71,12 @@ PI = 3.14159265359
 PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 
+def _wavelength(energy):
+    return 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
+
+
 def retrieve_phase(
-        tomo, psize=1e-4, dist=50, energy=20,
+        tomo, pixel_size=1e-4, dist=50, energy=20,
         alpha=1e-3, pad=True, ncore=None, nchunk=None):
     """
     Perform single-step phase retrieval from phase-contrast measurements
@@ -82,7 +86,7 @@ def retrieve_phase(
     ----------
     tomo : ndarray
         3D tomographic data.
-    psize : float, optional
+    pixel_size : float, optional
         Detector pixel size in cm.
     dist : float, optional
         Propagation distance of the wavefront in cm.
@@ -102,98 +106,129 @@ def retrieve_phase(
     ndarray
         Approximated 3D tomographic phase data.
     """
-    # Compute the filter.
-    H, xshift, yshift, prj = _paganin_filter(
-        tomo, psize, dist, energy, alpha, pad)
+    # New dimensions and pad value after padding.
+    py, pz, val = _calc_pad(tomo, pixel_size, dist, energy, pad)
 
+    # Compute the reciprocal grid.
+    dx, dy, dz = tomo.shape
+    w2 = _reciprocal_grid(pixel_size, dy + 2 * py, dz + 2 * pz)
+
+    # Filter in Fourier space.
+    phase_filter = np.fft.fftshift(
+        _paganin_filter_factor(energy, dist, alpha, w2))
+
+    prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
     arr = mp.distribute_jobs(
         tomo,
         func=_retrieve_phase,
-        args=(H, xshift, yshift, prj, pad),
+        args=(phase_filter, py, pz, prj, pad),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _retrieve_phase(H, xshift, yshift, prj, pad, istart, iend):
+def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
     tomo = mp.SHARED_ARRAY
     dx, dy, dz = tomo.shape
     for m in range(istart, iend):
-        proj = tomo[m, :, :]
+        prj[px:dy + px, py:dz + py] = tomo[m]
+        fproj = np.fft.fft2(prj)
+        filtproj = np.multiply(phase_filter, fproj)
+        proj = np.real(np.fft.ifft2(filtproj)) / phase_filter.max()
         if pad:
-            prj[xshift:dy + xshift, yshift:dz + yshift] = proj
-            fproj = np.fft.fft2(prj)
-            filtproj = np.multiply(H, fproj)
-            tmp = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-            proj = tmp[xshift:dy + xshift, yshift:dz + yshift]
-        elif not pad:
-            fproj = np.fft.fft2(proj)
-            filtproj = np.multiply(H, fproj)
-            proj = np.real(np.fft.ifft2(filtproj)) / np.max(H)
-        tomo[m, :, :] = proj
+            proj = proj[px:dy + px, py:dz + py]
+        tomo[m] = proj
 
 
-def _paganin_filter(tomo, psize, dist, energy, alpha, pad):
+def _calc_pad(tomo, pixel_size, dist, energy, pad):
     """
-    Calculate Paganin-type 2D filter to be used for phase retrieval.
+    Calculate new dimensions and pad value after padding.
 
     Parameters
     ----------
     tomo : ndarray
         3D tomographic data.
-    psize : float
+    pixel_size : float
         Detector pixel size in cm.
     dist : float
         Propagation distance of the wavefront in cm.
     energy : float
         Energy of incident wave in keV.
-    alpha : float
-        Regularization parameter.
     pad : bool
         If True, extend the size of the projections by padding with zeros.
 
     Returns
     -------
-    ndarray
-        2D Paganin filter.
     int
         Pad amount in projection axis.
     int
         Pad amount in sinogram axis.
-    ndarray
-        Padded 2D projection image.
+    float
+        Pad value.
     """
     dx, dy, dz = tomo.shape
-    wavelen = 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
-
+    wavelength = _wavelength(energy)
+    py, pz, val = 0, 0, 0
     if pad:
-        # Find pad values.
-        val = np.mean((tomo[:, :, 0] + tomo[:, :, dz - 1]) / 2)
+        val = _calc_pad_val(tomo)
+        py = _calc_pad_width(dy, pixel_size, wavelength, dist)
+        pz = _calc_pad_width(dz, pixel_size, wavelength, dist)
+    return py, pz, val
 
-        # Fourier pad in powers of 2.
-        padpix = np.ceil(PI * wavelen * dist / psize ** 2)
 
-        nx = pow(2, np.ceil(np.log2(dy + padpix)))
-        ny = pow(2, np.ceil(np.log2(dz + padpix)))
-        xshift = int((nx - dy) / 2.)
-        yshift = int((ny - dz) / 2.)
+def _paganin_filter_factor(energy, dist, alpha, w2):
+    return 1 / (_wavelength(energy) * dist * w2 / (4 * PI) + alpha)
 
-        # Template pad image.
-        prj = val * np.ones((nx, ny), dtype='float32')
 
-    elif not pad:
-        nx, ny = dy, dz
-        xshift, yshift, prj = None, None, None
-        prj = np.ones((dy, dz), dtype='float32')
+def _calc_pad_width(dim, pixel_size, wavelength, dist):
+    pad_pix = np.ceil(PI * wavelength * dist / pixel_size ** 2)
+    return int((pow(2, np.ceil(np.log2(dim + pad_pix))) - dim) * 0.5)
 
+
+def _calc_pad_val(tomo):
+    return np.mean((tomo[..., 0] + tomo[..., -1]) * 0.5)
+
+
+def _reciprocal_grid(pixel_size, nx, ny):
+    """
+    Calculate reciprocal grid.
+
+    Parameters
+    ----------
+    pixel_size : float
+        Detector pixel size in cm.
+    nx, ny : int
+        Size of the reciprocal grid along x and y axes.
+
+    Returns
+    -------
+    ndarray
+        Grid coordinates.
+    """
     # Sampling in reciprocal space.
-    indx = (1 / ((nx - 1) * psize)) * np.arange(-(nx - 1) * 0.5, nx * 0.5)
-    indy = (1 / ((ny - 1) * psize)) * np.arange(-(ny - 1) * 0.5, ny * 0.5)
+    indx = _reciprocal_coord(pixel_size, nx)
+    indy = _reciprocal_coord(pixel_size, ny)
     du, dv = np.meshgrid(indy, indx)
-    w2 = np.square(du) + np.square(dv)
+    return np.square(du) + np.square(dv)
 
-    # Filter in Fourier space.
-    H = 1 / (wavelen * dist * w2 / (4 * PI) + alpha)
-    H = np.fft.fftshift(H)
-    return H, xshift, yshift, prj
+
+def _reciprocal_coord(pixel_size, num_grid):
+    """
+    Calculate reciprocal grid coordinates for a given pixel size
+    and discretization.
+
+    Parameters
+    ----------
+    pixel_size : float
+        Detector pixel size in cm.
+    num_grid : int
+        Size of the reciprocal grid.
+
+    Returns
+    -------
+    ndarray
+        Grid coordinates.
+    """
+    return (1 / ((num_grid - 1) * pixel_size)) * \
+        np.arange(-(num_grid - 1) * 0.5, num_grid * 0.5)
