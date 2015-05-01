@@ -242,6 +242,10 @@ def _ringCGM(h, alpha, f):
     return x
 
 
+def _get_parameter(x):
+    return 1 / (2 * (x.sum(0).max() - x.sum(0).min()))
+
+
 def _ring(sino, m, n):
     mysino = np.transpose(sino)
     R = np.size(mysino, 0)
@@ -252,7 +256,7 @@ def _ring(sino, m, n):
     mysino[pos] = 0
 
     # Parameter.
-    alpha = 1 / (2 * (mysino.sum(0).max() - mysino.sum(0).min()))
+    alpha = _get_parameter(mysino)
 
     # Mathematical correction.
     pp = mysino.mean(1)
@@ -285,7 +289,7 @@ def _ringb(sino, m, n, step):
     new = np.ones((R, N))
     for k in range(0, nblock):
         sino_block = mysino[:, k * step:(k + 1) * step]
-        alpha = 1 / (2 * (sino_block.sum(0).max() - sino_block.sum(0).min()))
+        alpha = _get_parameter(sino_block)
         pp = sino_block.mean(1)
 
         f = -_ringMatXvec(h, pp)
