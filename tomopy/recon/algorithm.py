@@ -154,7 +154,6 @@ def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
         num_gridx = shape[2]
     if num_gridy is None:
         num_gridy = shape[2]
-    print(center)
     return (dx, dy, dz, center, theta, num_gridx, num_gridy)
 
 
