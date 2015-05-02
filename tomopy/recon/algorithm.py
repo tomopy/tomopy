@@ -55,7 +55,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import tomopy.misc.mproc as mp
 import tomopy.extern as ext
-from tomopy.sim.project import angles
+from tomopy.sim.project import angles, get_center
 from tomopy.util import *
 import multiprocessing
 import logging
@@ -157,10 +157,7 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs):
 def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
     dx, dy, dz = shape
     theta = as_float32(theta)
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
+    center = get_center(shape, center)
     if num_gridx is None:
         num_gridx = shape[2]
     if num_gridy is None:
