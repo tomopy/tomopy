@@ -33,13 +33,16 @@ test:
     - tomopy.io.writer
     - tomopy.io.exchange
     - tomopy.io.phantom
+    - tomopy.misc
     - tomopy.misc.corr
     - tomopy.misc.mask
     - tomopy.misc.morph
     - tomopy.misc.mproc
+    - tomopy.prep
     - tomopy.prep.normalize
     - tomopy.prep.phase
     - tomopy.prep.stripe
+    - tomopy.recon
     - tomopy.recon.algorithm
     - tomopy.recon.rotation
 
