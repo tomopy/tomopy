@@ -1,7 +1,7 @@
-:mod:`tomopy.io.data`
-=====================
+:mod:`tomopy.io.reader`
+=======================
 
-.. automodule:: tomopy.io.data
+.. automodule:: tomopy.io.reader
    :members:
    :show-inheritance:
    :undoc-members:
@@ -21,16 +21,3 @@
       Reader.netcdf4
       Reader.spe
       Reader.tiff
-
-   .. rubric:: **Writer class:**
-
-   .. autosummary::
-
-      Writer
-
-   .. rubric:: *Methods:*
-
-   .. autosummary::
-
-      Writer.hdf5
-      Writer.tiff

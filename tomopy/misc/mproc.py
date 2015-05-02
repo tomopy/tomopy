@@ -69,7 +69,8 @@ __all__ = ['distribute_jobs',
            'init_obj']
 
 
-def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
+def distribute_jobs(
+        arr, func, axis, args=None, kwargs=None, ncore=None, nchunk=None):
     """
     Distribute N-dimensional shared-memory array in chunks into cores.
 
@@ -79,6 +80,8 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
         Function to be parallelized.
     args : list
         Arguments of the function in a list.
+    kwargs : list
+        Keyword arguments of the function in a dictionary.
     axis : int
         Axis along which parallelization is performed.
     ncore : int, optional
@@ -120,10 +123,19 @@ def distribute_jobs(arr, func, args, axis, ncore=None, nchunk=None):
 
         _arg = []
         _arg.append(func)
-        for a in args:
-            _arg.append(a)
+
+        if args is not None:
+            for a in args:
+                _arg.append(a)
+
+        _kwarg = []
+        if kwargs is not None:
+            for kw, a in kwargs.iteritems():
+                _arg.append({kw: a})
+
         _arg.append(istart)
         _arg.append(iend)
+
         arg.append(_arg)
 
     shared_arr = get_shared(arr)

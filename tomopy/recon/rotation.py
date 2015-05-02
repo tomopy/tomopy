@@ -56,7 +56,7 @@ import numpy as np
 from scipy.optimize import minimize
 from tomopy.io.writer import Writer
 from tomopy.misc.mask import circ_mask
-from tomopy.recon.algorithm import Recon
+from tomopy.recon.algorithm import recon
 from tomopy.util import *
 import os.path
 import logging
@@ -125,8 +125,8 @@ def find_center(
         rec = circ_mask(rec, axis=0)
 
     # Adjust histogram boundaries according to reconstruction.
-    hmin = _adjust_hist(rec.min()) 
-    hmax = _adjust_hist(rec.max()) 
+    hmin = _adjust_hist(rec.min())
+    hmax = _adjust_hist(rec.max())
 
     # Magic is ready to happen...
     res = minimize(
@@ -209,7 +209,8 @@ def write_center(
         stack[:, m, :] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
-    rec = Recon(stack, theta, center=center, emission=emission).gridrec()
+    rec = recon(
+        stack, theta, center=center, emission=emission, algorithm='gridrec')
 
     # Apply circular mask.
     if mask is True:
