@@ -147,13 +147,9 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     dy = ox
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
     tomo = np.zeros((dx, dy, dz), dtype='float32')
-    if center is None:
-        center = np.ones(dy, dtype='float32') * dz / 2.
-    elif np.array(center).size == 1:
-        center = np.ones(dy, dtype='float32') * center
 
     theta = as_float32(theta)
-    center = as_float32(center)
+    center = get_center(shape, center)
 
     mp.init_obj(obj)
     arr = mp.distribute_jobs(
@@ -164,6 +160,14 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
         ncore=ncore,
         nchunk=nchunk)
     return arr
+
+
+def get_center(shape, center):
+    if center is None:
+        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(shape[1], dtype='float32') * center
+    center = as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):
