@@ -105,44 +105,32 @@ def recon(
                          (list(allowed_kwargs.keys()),))
 
     recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
+    return _call_c_func(tomo, recon, algorithm, args, kwargs)
 
+
+def _call_c_func(tomo, recon, algorithm, args, kwargs):
     if algorithm == 'art':
         func = ext.c_art
-
     elif algorithm == 'bart':
         func = ext.c_bart
-
     elif algorithm == 'fbp':
         func = ext.c_fbp
-
     elif algorithm == 'gridrec':
         func = ext.c_gridrec
-
     elif algorithm == 'mlem':
         func = ext.c_mlem
-
     elif algorithm == 'osem':
         func = ext.c_osem
-
     elif algorithm == 'ospml_hybrid':
         func = ext.c_ospml_hybrid
-
     elif algorithm == 'ospml_quad':
         func = ext.c_ospml_quad
-
     elif algorithm == 'pml_hybrid':
         func = ext.c_pml_hybrid
-
     elif algorithm == 'pml_quad':
         func = ext.c_pml_quad
-
     elif algorithm == 'sirt':
         func = ext.c_sirt
-
-    return _call_c_func(tomo, recon, func, args, kwargs)
-
-
-def _call_c_func(tomo, recon, func, args, kwargs):
     return _dist_recon(tomo, recon, func, args, kwargs)
 
 
