@@ -107,39 +107,43 @@ def recon(
     recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
 
     if algorithm == 'art':
-        arr = _dist_recon(tomo, recon, ext.c_art, args, kwargs)
+        func = ext.c_art
 
     elif algorithm == 'bart':
-        arr = _dist_recon(tomo, recon, ext.c_bart, args, kwargs)
+        func = ext.c_bart
 
     elif algorithm == 'fbp':
-        arr = _dist_recon(tomo, recon, ext.c_fbp, args, kwargs)
+        func = ext.c_fbp
 
     elif algorithm == 'gridrec':
-        arr = _dist_recon(tomo, recon, ext.c_gridrec, args, kwargs)
+        func = ext.c_gridrec
 
     elif algorithm == 'mlem':
-        arr = _dist_recon(tomo, recon, ext.c_mlem, args, kwargs)
+        func = ext.c_mlem
 
     elif algorithm == 'osem':
-        arr = _dist_recon(tomo, recon, ext.c_osem, args, kwargs)
+        func = ext.c_osem
 
     elif algorithm == 'ospml_hybrid':
-        arr = _dist_recon(tomo, recon, ext.c_ospml_hybrid, args, kwargs)
+        func = ext.c_ospml_hybrid
 
     elif algorithm == 'ospml_quad':
-        arr = _dist_recon(tomo, recon, ext.c_ospml_quad, args, kwargs)
+        func = ext.c_ospml_quad
 
     elif algorithm == 'pml_hybrid':
-        arr = _dist_recon(tomo, recon, ext.c_pml_hybrid, args, kwargs)
+        func = ext.c_pml_hybrid
 
     elif algorithm == 'pml_quad':
-        arr = _dist_recon(tomo, recon, ext.c_pml_quad, args, kwargs)
+        func = ext.c_pml_quad
 
     elif algorithm == 'sirt':
-        arr = _dist_recon(tomo, recon, ext.c_sirt, args, kwargs)
+        func = ext.c_sirt
 
-    return arr
+    return _call_c_func(tomo, recon, func, args, kwargs)
+
+
+def _call_c_func(tomo, recon, func, args, kwargs):
+    return _dist_recon(tomo, recon, func, args, kwargs)
 
 
 def _dist_recon(tomo, recon, algorithm, args, kwargs):
