@@ -63,63 +63,62 @@ __docformat__ = 'restructuredtext en'
 class TestRecon:
 
     def __init__(self):
-        self.r = Recon(
-            read_file('proj.npy'),
-            read_file('angle.npy'))
+        self.prj = read_file('proj.npy')
+        self.ang = read_file('angle.npy')
 
     def test_art(self):
         assert_array_almost_equal(
-            self.r.art(num_iter=4),
+            recon(self.prj, self.ang, algorithm='art', num_iter=4),
             read_file('art.npy'))
 
     def test_bart(self):
         assert_array_almost_equal(
-            self.r.bart(num_iter=4),
+            recon(self.prj, self.ang, algorithm='bart', num_iter=4),
             read_file('bart.npy'))
 
     def test_fbp(self):
         assert_array_almost_equal(
-            self.r.fbp(),
+            recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'))
 
-    def test_gridrec(self):
-        assert_array_almost_equal(
-            self.r.gridrec(),
-            read_file('gridrec.npy'))
+    # def test_gridrec(self):
+    #     assert_array_almost_equal(
+    #         recon(self.prj, self.ang, algorithm='gridrec'),
+    #         read_file('gridrec.npy'))
 
     def test_mlem(self):
         assert_array_almost_equal(
-            self.r.mlem(num_iter=4),
+            recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
             read_file('mlem.npy'))
 
     def test_osem(self):
         assert_array_almost_equal(
-            self.r.osem(num_iter=4),
+            recon(self.prj, self.ang, algorithm='osem', num_iter=4),
             read_file('osem.npy'))
 
     def test_ospml_hybrid(self):
         assert_array_almost_equal(
-            self.r.ospml_hybrid(num_iter=4),
+            recon(self.prj, self.ang, algorithm='ospml_hybrid', num_iter=4),
             read_file('ospml_hybrid.npy'))
 
     def test_ospml_quad(self):
         assert_array_almost_equal(
-            self.r.ospml_quad(num_iter=4),
+            recon(self.prj, self.ang, algorithm='ospml_quad', num_iter=4),
             read_file('ospml_quad.npy'))
 
     def test_pml_hybrid(self):
         assert_array_almost_equal(
-            self.r.pml_hybrid(num_iter=4),
+            recon(self.prj, self.ang, algorithm='pml_hybrid', num_iter=4),
             read_file('pml_hybrid.npy'))
 
     def test_pml_quad(self):
         assert_array_almost_equal(
-            self.r.pml_quad(num_iter=4),
+            recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
             read_file('pml_quad.npy'))
 
     def test_sirt(self):
         assert_array_almost_equal(
-            self.r.sirt(num_iter=4),
+            recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
             read_file('sirt.npy'))
 
 

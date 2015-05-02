@@ -55,6 +55,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import tomopy.misc.mproc as mp
 import tomopy.extern as ext
+from tomopy.sim.project import angles
 from tomopy.util import *
 import multiprocessing
 import logging
@@ -65,504 +66,113 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['Recon']
+__all__ = ['recon']
 
 
-class Recon():
+def recon(
+        tomo, theta, center=None, emission=False,
+        num_gridx=None, num_gridy=None, algorithm=None, **kwargs):
 
-    """
-    Class for reconstruction methods.
+    allowed_kwargs = {
+        'art': ['num_iter'],
+        'bart': ['num_iter', 'num_block', 'ind_block'],
+        'fbp': ['filter_name'],
+        'gridrec': ['filter_name'],
+        'mlem': ['num_iter'],
+        'osem': ['num_iter', 'num_block', 'ind_block'],
+        'ospml_hybrid': ['num_iter', 'reg_par', 'num_block', 'ind_block'],
+        'ospml_quad': ['num_iter', 'reg_par', 'num_block', 'ind_block'],
+        'pml_hybrid': ['num_iter', 'reg_par'],
+        'pml_quad': ['num_iter', 'reg_par'],
+        'sirt': ['num_iter'],
+    }
 
-    Attributes
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    theta : array
-        Projection angles in radian.
-    center: array, optional
-        Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
-    """
+    args = _get_algorithm_args(
+        tomo.shape, theta, center, emission, num_gridx, num_gridy)
+    kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
 
-    def __init__(
-            self, tomo, theta, center=None, emission=True,
-            num_gridx=None, num_gridy=None, ncore=None, nchunk=None):
-        """
-        Initialize reconstruction parameters.
-        """
-        self.tomo = as_float32(tomo)
-        self.dx, self.dy, self.dz = self.tomo.shape
-        self.theta = as_float32(theta)
-        self.center = as_float32(center)
-        self.emission = emission
-        self.ncore = ncore
-        self.nchunk = nchunk
+    if isinstance(algorithm, str):
+        # Make sure have allowed kwargs appropriate for algorithm
+        for key in kwargs:
+            if key not in allowed_kwargs[algorithm]:
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                 (key, allowed_kwargs[algorithm]))
+        # Set kwarg defaults
+        for kw in allowed_kwargs[algorithm]:
+            kwargs.setdefault(kw, kwargs_defaults[kw])
+    elif algorithm is None:
+        raise ValueError('Keyword "algorithm" must be one of %s.' %
+                         (list(allowed_kwargs.keys()),))
 
-        if center is None:
-            self.center = np.ones(self.dy, dtype='float32') * self.dz / 2.
-        elif np.array(center).size == 1:
-            self.center = np.ones(self.dy, dtype='float32') * self.center
-        if num_gridx is None:
-            self.num_gridx = as_int32(self.dz)
-        if num_gridy is None:
-            self.num_gridy = as_int32(self.dz)
-        if not emission:
-            self.tomo = -np.log(self.tomo)
+    recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
 
-    def _init_recon(self, recon=None):
-        """
-        Create reconstruction grid.
-        """
-        if recon is None:
-            self.recon = 1e-6 * np.ones(
-                (self.dy, self.num_gridx, self.num_gridy),
-                dtype='float32')
-        else:
-            self.recon = as_float32(recon)
+    if algorithm == 'art':
+        arr = _dist_recon(tomo, recon, ext.c_art, args, kwargs)
 
-    def art(self, num_iter=1, recon=None):
-        """
-        Reconstruct object from projection data using algebraic reconstruction
-        technique (ART) :cite:`Kak:98`.
+    elif algorithm == 'bart':
+        arr = _dist_recon(tomo, recon, ext.c_bart, args, kwargs)
 
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
+    elif algorithm == 'fbp':
+        arr = _dist_recon(tomo, recon, ext.c_fbp, args, kwargs)
 
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_art,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
+    elif algorithm == 'gridrec':
+        arr = _dist_recon(tomo, recon, ext.c_gridrec, args, kwargs)
 
-    def bart(self, num_iter=1, recon=None, num_block=1, ind_block=None):
-        """
-        Reconstruct object from projection data using block algebraic
-        reconstruction technique (BART).
+    elif algorithm == 'mlem':
+        arr = _dist_recon(tomo, recon, ext.c_mlem, args, kwargs)
 
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
+    elif algorithm == 'osem':
+        arr = _dist_recon(tomo, recon, ext.c_osem, args, kwargs)
 
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_block = as_int32(num_block)
-        if ind_block is None:
-            self.ind_block = np.arange(0, self.dx).astype('float32')
-        else:
-            self.ind_block = as_float32(ind_block)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_bart,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter,
-                self.num_block, self.ind_block),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
+    elif algorithm == 'ospml_hybrid':
+        arr = _dist_recon(tomo, recon, ext.c_ospml_hybrid, args, kwargs)
 
-    def fbp(self, filter_name='shepp'):
-        """
-        Reconstruct object from projection data using filtered back
-        projection (FBP).
+    elif algorithm == 'ospml_quad':
+        arr = _dist_recon(tomo, recon, ext.c_ospml_quad, args, kwargs)
 
-        Warning
-        -------
-        Filter not implemented yet.
+    elif algorithm == 'pml_hybrid':
+        arr = _dist_recon(tomo, recon, ext.c_pml_hybrid, args, kwargs)
 
-        Parameters
-        ----------
-        filter_name : str, optional
-            Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-            'cosine' or 'none'.
+    elif algorithm == 'pml_quad':
+        arr = _dist_recon(tomo, recon, ext.c_pml_quad, args, kwargs)
 
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.filter_name = np.array(filter_name, dtype=(str, 16))
-        self._init_recon()
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_fbp,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.filter_name),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
+    elif algorithm == 'sirt':
+        arr = _dist_recon(tomo, recon, ext.c_sirt, args, kwargs)
 
-    def gridrec(self, filter_name='shepp'):
-        """
-        Reconstruct object from projection data using gridrec algorithm
-        :cite:`Dowd:99`.
+    return arr
 
-        Parameters
-        ----------
-        filter_name : str, optional
-            Filter name for weighting. 'shepp', 'hann', 'hamming', 'ramlak',
-            'cosine' or 'none'.
 
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        # Gridrec accepts even number of slices.
-        is_odd = False
-        if self.dy % 2 != 0:
-            is_odd = True
-            lasttomo = np.expand_dims(self.tomo[:, -1, :], 1)
-            self.tomo = np.append(self.tomo, lasttomo, 1)
-            self.dy += 1
+def _dist_recon(tomo, recon, algorithm, args, kwargs):
+    mp.init_tomo(tomo)
+    return mp.distribute_jobs(
+        recon,
+        func=algorithm,
+        args=args,
+        kwargs=kwargs,
+        axis=0,
+        ncore=None,
+        nchunk=None)
 
-        # Chunk size can't be smaller than two for gridrec.
-        if self.ncore is None:
-            self.ncore = multiprocessing.cpu_count()
-        if self.dx < self.ncore:
-            self.ncore = self.dx
-        if self.nchunk is None:
-            self.nchunk = (self.dy - 1) // self.ncore + 1
-        if self.nchunk < 2:
-            self.nchunk = 2
 
-        self.filter_name = np.array(filter_name, dtype=(str, 16))
+def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
+    dx, dy, dz = shape
+    theta = as_float32(theta)
+    if center is None:
+        center = np.ones(dy, dtype='float32') * dz / 2.
+    elif np.array(center).size == 1:
+        center = np.ones(dy, dtype='float32') * center
+    if num_gridx is None:
+        num_gridx = shape[2]
+    if num_gridy is None:
+        num_gridy = shape[2]
+    return (dx, dy, dz, center, theta, num_gridx, num_gridy)
 
-        self._init_recon()
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_gridrec,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.filter_name),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
 
-        # Dump last slice if original number of sice was even.
-        if is_odd:
-            arr = arr[0:-1, :, :]
-        return arr
-
-    def mlem(self, num_iter=1, recon=None):
-        """
-        Reconstruct object from projection data using maximum-likelihood
-        expectation-maximization algorithm. (ML-EM) :cite:`Dempster:77`.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_mlem,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def osem(self, num_iter=1, recon=None, num_block=1, ind_block=None):
-        """
-        Reconstruct object from projection data using ordered-subset
-        expectation-maximization (OS-EM) :cite:`Hudson:94`.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_block = as_int32(num_block)
-        if ind_block is None:
-            self.ind_block = np.arange(0, self.dx).astype('float32')
-        else:
-            self.ind_block = as_float32(ind_block)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_osem,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter,
-                self.num_block, self.ind_block),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def ospml_hybrid(
-            self, num_iter=1, recon=None, reg_par=None,
-            num_block=1, ind_block=None):
-        """
-        Reconstruct object from projection data using ordered-subset
-        penalized maximum likelihood algorithm with weighted linear and
-        quadratic penalties.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        reg_par : list, optional
-            Regularization hyperparameters as an array, (beta, delta).
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_block = as_int32(num_block)
-        if reg_par is None:
-            self.reg_par = np.ones(10, dtype='float32')
-        else:
-            self.reg_par = as_float32(reg_par)
-        if ind_block is None:
-            self.ind_block = np.arange(0, self.dx).astype('float32')
-        else:
-            self.ind_block = as_float32(ind_block)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_ospml_hybrid,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter,
-                self.reg_par, self.num_block, self.ind_block),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def ospml_quad(
-            self, num_iter=1, recon=None, reg_par=None,
-            num_block=1, ind_block=None):
-        """
-        Reconstruct object from projection data using ordered-subset
-        penalized maximum likelihood algorithm with quadratic penalty.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        reg_par : list, optional
-            Regularization hyperparameters as an array, (beta, delta).
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_block = as_int32(num_block)
-        if reg_par is None:
-            self.reg_par = np.ones(10, dtype='float32')
-        else:
-            self.reg_par = as_float32(reg_par)
-        if ind_block is None:
-            self.ind_block = np.arange(0, self.dx).astype('float32')
-        else:
-            self.ind_block = as_float32(ind_block)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_ospml_quad,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter,
-                self.reg_par, self.num_block, self.ind_block),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def pml_hybrid(
-            self, num_iter=1, recon=None, reg_par=None):
-        """
-        Reconstruct object from projection data using penalized maximum
-        likelihood algorithm with weighted linear and quadratic penalties
-        :cite:`Chang:04`.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        reg_par : list, optional
-            Regularization hyperparameters as an array, (beta, delta).
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        if reg_par is None:
-            self.reg_par = np.ones(10, dtype='float32')
-        else:
-            self.reg_par = as_float32(reg_par)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_pml_hybrid,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def pml_quad(
-            self, num_iter=1, recon=None, reg_par=None):
-        """
-        Reconstruct object from projection data using penalized maximum
-        likelihood algorithm with quadratic penalty.
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-        reg_par : list, optional
-            Regularization hyperparameters as an array, (beta, delta).
-        num_block : int, optional
-            Number of data blocks for intermediate updating the object.
-        ind_block : array of int, optional
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        if reg_par is None:
-            self.reg_par = np.ones(10, dtype='float32')
-        else:
-            self.reg_par = as_float32(reg_par)
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_pml_quad,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter, self.reg_par),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
-
-    def sirt(self, num_iter=1, recon=None):
-        """
-        Reconstruct object from projection data using simultaneous
-        iterative reconstruction technique (SIRT).
-
-        Parameters
-        ----------
-        num_iter : int, optional
-            Number of algorithm iterations performed.
-        recon : ndarray, optional
-            Initial values of the reconstruction object.
-
-        Returns
-        -------
-        ndarray
-            Reconstructed 3D object.
-        """
-        self.num_iter = as_int32(num_iter)
-        self._init_recon(recon)
-        mp.init_tomo(self.tomo)
-        arr = mp.distribute_jobs(
-            self.recon,
-            func=ext.c_sirt,
-            args=(
-                self.dx, self.dy, self.dz, self.theta, self.center,
-                self.num_gridx, self.num_gridy, self.num_iter),
-            axis=0,
-            ncore=self.ncore,
-            nchunk=self.nchunk)
-        return arr
+def _get_algorithm_kwargs(shape):
+    return {
+        'filter_name': np.array('shepp', dtype=(str, 16)),
+        'num_iter': as_int32(1),
+        'reg_par': np.ones(10, dtype='float32'),
+        'num_block': as_int32(1),
+        'ind_block': np.arange(0, shape[0], dtype='float32'),
+    }

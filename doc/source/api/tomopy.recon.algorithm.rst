@@ -6,24 +6,8 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Reconstruction class:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
 
-      Recon
-
-   .. rubric:: *Methods:*
-
-   .. autosummary::
-   
-      Recon.art
-      Recon.bart
-      Recon.fbp
-      Recon.gridrec
-      Recon.mlem
-      Recon.osem
-      Recon.ospml_hybrid
-      Recon.ospml_quad
-      Recon.pml_hybrid
-      Recon.pml_quad
-      Recon.sirt
+      recon
