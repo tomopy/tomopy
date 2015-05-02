@@ -29,14 +29,19 @@ test:
   imports:
     - tomopy
     - tomopy.io
-    - tomopy.io.data
+    - tomopy.io.reader
+    - tomopy.io.writer
     - tomopy.io.exchange
     - tomopy.io.phantom
     - tomopy.misc.corr
+    - tomopy.misc.mask
     - tomopy.misc.morph
     - tomopy.misc.mproc
-    - tomopy.prep
-    - tomopy.recon
+    - tomopy.prep.normalize
+    - tomopy.prep.phase
+    - tomopy.prep.stripe
+    - tomopy.recon.algorithm
+    - tomopy.recon.rotation
 
 about:
   home: http://tomopy.readthedocs.org
