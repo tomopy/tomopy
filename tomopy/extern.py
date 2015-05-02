@@ -151,255 +151,234 @@ def c_sample(mode, arr, dx, dy, dz, level, axis, out):
     return out
 
 
-def c_art(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, istart, iend):
+def c_art(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.art.restype = as_c_void_p()
     LIB_TOMOPY.art(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[7]['num_iter']),
+        as_c_int(args[8]),  # istart
+        as_c_int(args[9]))  # iend
 
 
-def c_bart(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, num_block, ind_block, istart, iend):
+def c_bart(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.bart.restype = as_c_void_p()
     LIB_TOMOPY.bart(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[8]['num_iter']),
+        as_c_int(args[9]['num_block']),
+        as_c_float_p(args[7]['ind_block']),
+        as_c_int(args[10]),  # istart
+        as_c_int(args[11]))  # iend
 
 
-def c_fbp(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        filter_name, istart, iend):
+def c_fbp(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.fbp.restype = as_c_void_p()
     LIB_TOMOPY.fbp(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_char_p(filter_name),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_char_p(args[7]['filter_name']),
+        as_c_int(args[8]),  # istart
+        as_c_int(args[9]))  # iend
 
 
-def c_gridrec(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        filter_name, istart, iend):
+def c_gridrec(*args):
+    print(args)
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.gridrec.restype = as_c_void_p()
     LIB_TOMOPY.gridrec(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_char_p(filter_name),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_char_p(args[7]['filter_name']),
+        as_c_int(args[8]),  # istart
+        as_c_int(args[9]))  # iend
 
 
-def c_mlem(
-        dx, dy, dz, theta, center, num_gridx,
-        num_gridy, num_iter, istart, iend):
+def c_mlem(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.mlem.restype = as_c_void_p()
     LIB_TOMOPY.mlem(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[7]['num_iter']),
+        as_c_int(args[8]),  # istart
+        as_c_int(args[9]))  # iend
 
 
-def c_osem(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        num_block, ind_block, istart, iend):
+def c_osem(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.osem.restype = as_c_void_p()
     LIB_TOMOPY.osem(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[8]['num_iter']),
+        as_c_int(args[9]['num_block']),
+        as_c_float_p(args[7]['ind_block']),
+        as_c_int(args[10]),  # istart
+        as_c_int(args[11]))  # iend
 
 
-def c_ospml_hybrid(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, num_block, ind_block, istart, iend):
+def c_ospml_hybrid(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.ospml_hybrid.restype = as_c_void_p()
     LIB_TOMOPY.ospml_hybrid(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[9]['num_iter']),
+        as_c_float_p(args[7]['reg_par']),
+        as_c_int(args[10]['num_block']),
+        as_c_float_p(args[8]['ind_block']),
+        as_c_int(args[11]),  # istart
+        as_c_int(args[12]))  # iend
 
 
-def c_ospml_quad(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, num_block, ind_block, istart, iend):
+def c_ospml_quad(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.ospml_quad.restype = as_c_void_p()
     LIB_TOMOPY.ospml_quad(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(num_block),
-        as_c_float_p(ind_block),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[9]['num_iter']),
+        as_c_float_p(args[7]['reg_par']),
+        as_c_int(args[10]['num_block']),
+        as_c_float_p(args[8]['ind_block']),
+        as_c_int(args[11]),  # istart
+        as_c_int(args[12]))  # iend
 
 
-def c_pml_hybrid(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, reg_par, istart, iend):
+def c_pml_hybrid(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.pml_hybrid.restype = as_c_void_p()
     LIB_TOMOPY.pml_hybrid(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[8]['num_iter']),
+        as_c_float_p(args[7]['reg_par']),
+        as_c_int(args[9]),  # istart
+        as_c_int(args[10]))  # iend
 
 
-def c_pml_quad(
-        dx, dy, dz, theta, center, num_gridx, num_gridy, num_iter,
-        reg_par, istart, iend):
+def c_pml_quad(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.pml_quad.restype = as_c_void_p()
     LIB_TOMOPY.pml_quad(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_float_p(reg_par),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[8]['num_iter']),
+        as_c_float_p(args[7]['reg_par']),
+        as_c_int(args[9]),  # istart
+        as_c_int(args[10]))  # iend
 
 
-def c_sirt(
-        dx, dy, dz, theta, center, num_gridx, num_gridy,
-        num_iter, istart, iend):
+def c_sirt(*args):
     tomo = mp.SHARED_TOMO
     recon = mp.SHARED_ARRAY
 
     LIB_TOMOPY.sirt.restype = as_c_void_p()
     LIB_TOMOPY.sirt(
         as_c_float_p(tomo),
-        as_c_int(dx),
-        as_c_int(dy),
-        as_c_int(dz),
-        as_c_float_p(center),
-        as_c_float_p(theta),
+        as_c_int(args[0]),  # dx
+        as_c_int(args[1]),  # dy
+        as_c_int(args[2]),  # dz
+        as_c_float_p(args[3]),  # center
+        as_c_float_p(args[4]),  # theta
         as_c_float_p(recon),
-        as_c_int(num_gridx),
-        as_c_int(num_gridy),
-        as_c_int(num_iter),
-        as_c_int(istart),
-        as_c_int(iend))
+        as_c_int(args[5]),  # num_gridx
+        as_c_int(args[6]),  # num_gridy
+        as_c_int(args[7]['num_iter']),
+        as_c_int(args[8]),  # istart
+        as_c_int(args[9]))  # iend
