@@ -146,7 +146,8 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     dx = len(theta)
     dy = ox
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
-    tomo = np.zeros((dx, dy, dz), dtype='float32')
+    shape = dx, dy, dz
+    tomo = np.zeros(shape, dtype='float32')
 
     theta = as_float32(theta)
     center = get_center(shape, center)
@@ -167,7 +168,7 @@ def get_center(shape, center):
         center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
     elif np.array(center).size == 1:
         center = np.ones(shape[1], dtype='float32') * center
-    center = as_float32(center)
+    return as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):
