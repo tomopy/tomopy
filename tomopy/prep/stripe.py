@@ -192,7 +192,7 @@ def _remove_stripe_ti(nblock, alpha, istart, iend):
     tomo = mp.SHARED_ARRAY
     for m in range(istart, iend):
         sino = tomo[:, m, :]
-        if (nblock == 0):
+        if nblock == 0:
             d1 = _ring(sino, 1, 1)
             d2 = _ring(sino, 2, 1)
             p = d1 * d2
@@ -233,7 +233,7 @@ def _ringCGM(h, alpha, f):
     B = 0
     for i in range(1000000):
         r = r - np.dot(a, z)
-        if (np.linalg.norm(r) < 0.0000001):
+        if np.linalg.norm(r) < 0.0000001:
             break
         B = np.dot(r, z) / np.dot(w, z)
         w = -r + np.dot(B, w)

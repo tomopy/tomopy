@@ -496,11 +496,11 @@ def read_sls_tomcat(fname, ind_tomo=None):
     for line in contents:
         ls = line.split()
         if len(ls) > 1:
-            if (ls[0] == 'Number' and ls[2] == 'projections'):
+            if ls[0] == 'Number' and ls[2] == 'projections':
                 nproj = int(ls[4])
-            elif (ls[0] == 'Number' and ls[2] == 'flats'):
+            elif ls[0] == 'Number' and ls[2] == 'flats':
                 nflat = int(ls[4])
-            elif (ls[0] == 'Number' and ls[2] == 'darks'):
+            elif ls[0] == 'Number' and ls[2] == 'darks':
                 ndark = int(ls[4])
     contents.close()
 
