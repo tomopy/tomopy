@@ -178,9 +178,11 @@ def write_tiff_stack(
     """
     fname = os.path.abspath(fname)
     body = _get_body(fname)
+    ext = _get_extension(fname)
+    _init_dirs(fname)
     _data = np.swapaxes(data, 0, axis)
     for m in range(start, start + data.shape[axis]):
-        _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + ext
+        _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + '.' + ext
         if not overwrite:
             if os.path.isfile(fname):
                 _fname = _suggest_new_fname(digit=1)
