@@ -6,18 +6,13 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Reader class:**
+   .. rubric:: **Functions:**
 
    .. autosummary::
 
-      Reader
-
-   .. rubric:: *Methods:*
-
-   .. autosummary::
-
-      Reader.edf
-      Reader.hdf5
-      Reader.netcdf4
-      Reader.spe
-      Reader.tiff
+      read_edf
+      read_hdf5
+      read_netcdf4
+      read_spe
+      read_tiff
+      read_tiff_stack

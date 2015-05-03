@@ -66,7 +66,9 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['Writer']
+__all__ = ['write_hdf5',
+           'write_tiff',
+           'write_tiff_stack']
 
 
 class Writer():
@@ -223,3 +225,96 @@ class Writer():
             else:
                 indq += 1
         self.fname = fname + ext
+
+
+def write_hdf5(
+        data, fname='tmp/data.tiff', gname='exchange', dtype='float32',
+        dmin=None, dmax=None, overwrite=False):
+    """
+    Write data to hdf5 file in a specific group.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    fname : str
+        Output file name.
+    gname : str, optional
+        Path to the group inside hdf5 file where data will be written.
+    dtype : str, optional
+        The desired data-type for saved data.
+    dmin, dmax : float, optional
+        Minimum and maximum values in data for scaling before saving.
+    overwrite: bool, optional
+        if True, the existing files in the reconstruction folder will be
+        overwritten with the new ones.
+    """
+    Writer(fname, dtype, dmin, dmax, overwrite).hdf5(gname)
+
+
+def write_tiff(
+        data, fname='tmp/data.tiff', dtype='float32',
+        dmin=None, dmax=None, overwrite=False,
+        axis=0, digit=5, start=0):
+    """
+    Write data to tiff file.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    fname : str
+        Output file name.
+    dtype : str, optional
+        The desired data-type for saved data.
+    dmin, dmax : float, optional
+        Minimum and maximum values in data for scaling before saving.
+    overwrite: bool, optional
+        if True, the existing files in the reconstruction folder will be
+        overwritten with the new ones.
+    stack : bool, optional
+        If True, write 2D images to a stack of files.
+    axis : int, optional
+        Axis along which stacking is performed.
+    start : int, optional
+        First index of file in stack for saving.
+    digit : int, optional
+        Number of digits in indexing stacked files.
+    """
+    Writer(
+        fname, dtype, dmin, dmax, overwrite).tiff(
+        axis, digit, start, stack=False)
+
+
+def write_tiff_stack(
+        data, fname='tmp/data.tiff', dtype='float32',
+        dmin=None, dmax=None, overwrite=False,
+        axis=0, digit=5, start=0):
+    """
+    Write data to tiff file.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    fname : str
+        Output file name.
+    dtype : str, optional
+        The desired data-type for saved data.
+    dmin, dmax : float, optional
+        Minimum and maximum values in data for scaling before saving.
+    overwrite: bool, optional
+        if True, the existing files in the reconstruction folder will be
+        overwritten with the new ones.
+    stack : bool, optional
+        If True, write 2D images to a stack of files.
+    axis : int, optional
+        Axis along which stacking is performed.
+    start : int, optional
+        First index of file in stack for saving.
+    digit : int, optional
+        Number of digits in indexing stacked files.
+    """
+    Writer(
+        fname, dtype, dmin, dmax, overwrite).tiff(
+        axis, digit, start, stack=True)

@@ -6,15 +6,10 @@
    :show-inheritance:
    :undoc-members:
 
-   .. rubric:: **Writer class:**
+   .. rubric:: *Functions:*
 
    .. autosummary::
 
-      Writer
-
-   .. rubric:: *Methods:*
-
-   .. autosummary::
-
-      Writer.hdf5
-      Writer.tiff
+      write_hdf5
+      write_tiff
+      write_tiff_stack

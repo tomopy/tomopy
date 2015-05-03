@@ -59,20 +59,6 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_Reader_hdf5():
-    fname = os.path.join('test', 'data', 'lena.h5')
-    gname = os.path.join('exchange', 'data')
-    assert_equals(
-        Reader(fname).hdf5(gname).shape,
-        (1, 512, 512))
-    assert_equals(
-        Reader(fname, dim2=slice(0, 16)).hdf5(gname).shape,
-        (1, 16, 512))
-    assert_equals(
-        Reader(fname, dim3=slice(0, 16)).hdf5(gname).shape,
-        (1, 512, 16))
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)
