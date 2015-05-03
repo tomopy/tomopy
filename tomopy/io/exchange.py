@@ -124,9 +124,9 @@ def read_als_832(fname, ind_tomo=None):
         ind_tomo = range(0, nproj)
     ind_flat = range(0, nflat)
     ind_dark = range(0, ndark)
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
@@ -163,9 +163,9 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'rareaders', 'image_')
     flat_name = os.path.join(fname, 'flats', 'image_')
     dark_name = os.path.join(fname, 'darks', 'image_')
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=5)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=5)
-    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=5)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5)
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5)
     return tomo, flat, dark
 
 
@@ -357,9 +357,9 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'SAMPLE_T_')
     flat_name = os.path.join(fname, 'BG__BEFORE_')
     dark_name = os.path.join(fname, 'DF__BEFORE_')
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=2)
-    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=2)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=2)
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=2)
     return tomo, flat, dark
 
 
@@ -387,8 +387,8 @@ def read_diamond_l12(fname, ind_tomo):
     tomo_name = os.path.join(fname, 'im_')
     flat_name = os.path.join(fname, 'flat_')
     ind_flat = range(0, 1)
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=6)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=6)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=6)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=6)
     return tomo, flat
 
 
@@ -421,9 +421,9 @@ def read_elettra_syrmep(fname, ind_tomo):
     dark_name = os.path.join(fname, 'dark_')
     ind_flat = range(1, 11)
     ind_dark = range(1, 11)
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
@@ -460,9 +460,9 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'scan_0002', 'ccd', 'pco01', 'ccd_')
     flat_name = os.path.join(fname, 'scan_0001', 'ccd', 'pco01', 'ccd_')
     dark_name = os.path.join(fname, 'scan_0003', 'ccd', 'pco01', 'ccd_')
-    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
@@ -510,7 +510,7 @@ def read_sls_tomcat(fname, ind_tomo=None):
         ind_tomo = range(ndark + nflat + 1, ndark + nflat + nproj)
     ind_flat = range(ndark + 1, ndark + nflat)
     ind_dark = range(1, ndark)
-    tomo = tio.read_tiff_stack(fname, stack=True, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(fname, stack=True, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(fname, stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(fname, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(fname, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(fname, ind=ind_dark, digit=4)
     return tomo, flat, dark
