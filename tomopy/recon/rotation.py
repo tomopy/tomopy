@@ -54,7 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.optimize import minimize
-from tomopy.io.writer import Writer
+from tomopy.io.writer import write_tiff_stack
 from tomopy.misc.mask import circ_mask
 from tomopy.recon.algorithm import recon
 from tomopy.util import *
@@ -221,4 +221,4 @@ def write_center(
         if m % 2 == 0:  # 2 slices same bec of gridrec.
             fname = os.path.join(
                 dpath, str('{:.2f}'.format(center[m]) + 'tiff'))
-            Writer(rec[m:m + 1], fname=fname, overwrite=True).tiff(stack=False)
+            write_tiff_stack(rec[m:m + 1], fname=fname, overwrite=True)

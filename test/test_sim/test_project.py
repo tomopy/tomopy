@@ -50,7 +50,7 @@ from __future__ import absolute_import, division, print_function
 
 from test.util import read_file
 from tomopy.sim.project import *
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -59,7 +59,7 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_project():
-    assert_array_almost_equal(
+    assert_allclose(
         project(read_file('obj.npy'), read_file('angle.npy')),
         read_file('proj.npy'))
 
