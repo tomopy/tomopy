@@ -72,6 +72,72 @@ __all__ = ['recon']
 def recon(
         tomo, theta, center=None, emission=False,
         num_gridx=None, num_gridy=None, algorithm=None, **kwargs):
+    """
+    Reconstruct object from projection data.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    theta : array
+        Projection angles in radian.
+    center: array, optional
+        Location of rotation axis.
+    emission : bool, optional
+        Determines whether data is emission or transmission type.
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    num_iter : int, optional
+        Number of algorithm iterations performed.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'bart'
+            Block algebraic reconstruction technique.
+        'fbp' 
+            Filtered back-projection algorithm.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'osem'
+            Ordered-subset expectation maximization algorithm
+            :cite:`Hudson:94`.
+        'ospml_hybrid'
+            Ordered-subset penalized maximum likelihood algorithm with 
+            weighted linear and quadratic penalties.
+        'ospml_quad'
+            Ordered-subset penalized maximum likelihood algorithm with 
+            quadratic penalties.
+        'pml_hybrid'
+            Penalized maximum likelihood algorithm with weighted linear 
+            and quadratic penalties :cite:`Chang:04`.
+        'pml_quad'
+            Penalized maximum likelihood algorithm with quadratic penalty.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+
+    num_block : int, optional
+        Number of data blocks for intermediate updating the object.
+    ind_block : array of int, optional
+        Order of projections to be used for updating.
+    num_iter : int, optional
+        Number of algorithm iterations performed.
+    reg_par : float, optional
+        Regularization parameter for smoothing.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Reconstructed 3D object.
+    """
 
     allowed_kwargs = {
         'art': ['num_iter'],
