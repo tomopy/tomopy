@@ -53,9 +53,8 @@ Module for data size morphing functions.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import tomopy.misc.mproc as mp
-import tomopy.extern as ext
-from tomopy.util import *
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -69,7 +68,7 @@ __all__ = ['pad',
            'upsample']
 
 
-LIB_TOMOPY = ext.c_shared_lib('libtomopy')
+LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
 def pad(arr, axis, npad=None, val=0):
@@ -156,7 +155,7 @@ def upsample(arr, level=1, axis=2):
 
 
 def _sample(arr, level, axis, mode):
-    arr = as_float32(arr)
+    arr = dtype.as_float32(arr)
     dx, dy, dz = arr.shape
 
     if mode == 0:
@@ -165,7 +164,7 @@ def _sample(arr, level, axis, mode):
         dim = arr.shape[axis] * np.power(2, level)
 
     out = _init_out(arr, axis, dim)
-    return ext.c_sample(mode, arr, dx, dy, dz, level, axis, out)
+    return extern.c_sample(mode, arr, dx, dy, dz, level, axis, out)
 
 
 def _init_out(arr, axis, dim, val=0.):

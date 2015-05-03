@@ -54,8 +54,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.ndimage import filters
-import tomopy.misc.mproc as mp
-from tomopy.util import *
+import tomopy.util.mproc as mproc
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -131,8 +131,8 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     ndarray
         3D array of same shape as input.
     """
-    arr = as_float32(arr)
-    arr = mp.distribute_jobs(
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
         arr.swapaxes(0, axis),
         func=_gaussian_filter,
         args=(sigma, order, axis),
@@ -143,7 +143,7 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
 
 
 def _gaussian_filter(sigma, order, axis, istart, iend):
-    arr = mp.SHARED_ARRAY
+    arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         arr[m] = filters.gaussian_filter(arr[m], sigma, order)
 
@@ -170,8 +170,8 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     ndarray
         Median filtered 3D array.
     """
-    arr = as_float32(arr)
-    arr = mp.distribute_jobs(
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
         arr.swapaxes(0, axis),
         func=_median_filter,
         args=(size, axis),
@@ -182,7 +182,7 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
 
 
 def _median_filter(size, axis, istart, iend):
-    arr = mp.SHARED_ARRAY
+    arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         arr[m] = filters.median_filter(arr[m], (size, size))
 
@@ -203,7 +203,7 @@ def remove_nan(arr, val=0.):
     ndarray
        Corrected array.
     """
-    arr = as_float32(arr)
+    arr = dtype.as_float32(arr)
     arr[np.isnan(arr)] = val
     return arr
 
@@ -224,7 +224,7 @@ def remove_neg(arr, val=0.):
     ndarray
        Corrected array.
     """
-    arr = as_float32(arr)
+    arr = dtype.as_float32(arr)
     arr[arr < 0.0] = val
     return arr
 
@@ -255,8 +255,8 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
     ndarray
        Corrected array.
     """
-    arr = as_float32(arr)
-    arr = mp.distribute_jobs(
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
         arr.swapaxes(0, axis),
         func=_remove_outlier,
         args=(dif, size),
@@ -267,7 +267,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
 
 
 def _remove_outlier(dif, size, istart, iend):
-    arr = mp.SHARED_ARRAY
+    arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         arr[m] = _remove_outlier_from_img(arr[m], dif, size)
 

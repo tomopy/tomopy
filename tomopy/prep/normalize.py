@@ -53,9 +53,9 @@ Module for data normalization.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import tomopy.misc.mproc as mp
-import tomopy.extern as ext
-from tomopy.util import *
+import tomopy.util.mproc as mproc
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -92,14 +92,14 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     ndarray
         Normalized 3D tomographic data.
     """
-    tomo = as_float32(tomo)
-    flat = as_float32(flat)
-    dark = as_float32(dark)
+    tomo = dtype.as_float32(tomo)
+    flat = dtype.as_float32(flat)
+    dark = dtype.as_float32(dark)
 
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
-    arr = mp.distribute_jobs(
+    arr = mproc.distribute_jobs(
         tomo,
         func=_normalize,
         args=(flat, dark, cutoff),
@@ -110,7 +110,7 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
 
 
 def _normalize(flat, dark, cutoff, istart, iend):
-    tomo = mp.SHARED_ARRAY
+    tomo = mproc.SHARED_ARRAY
 
     # Avoid zero division in normalization
     denom = flat - dark
@@ -147,13 +147,13 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     ndarray
         Corrected 3D tomographic data.
     """
-    tomo = as_float32(tomo)
-    air = as_int32(air)
+    tomo = dtype.as_float32(tomo)
+    air = dtype.as_int32(air)
     dx, dy, dz = tomo.shape
 
-    arr = mp.distribute_jobs(
+    arr = mproc.distribute_jobs(
         tomo,
-        func=ext.c_normalize_bg,
+        func=extern.c_normalize_bg,
         args=(dx, dy, dz, air),
         axis=0,
         ncore=ncore,

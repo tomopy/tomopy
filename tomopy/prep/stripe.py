@@ -54,8 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
-from tomopy.util import *
-import tomopy.misc.mproc as mp
+import tomopy.util.mproc as mproc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -101,7 +100,7 @@ def remove_stripe_fw(
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
-    arr = mp.distribute_jobs(
+    arr = mproc.distribute_jobs(
         tomo,
         func=_remove_stripe_fw,
         args=(level, wname, sigma, pad),
@@ -112,7 +111,7 @@ def remove_stripe_fw(
 
 
 def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
-    tomo = mp.SHARED_ARRAY
+    tomo = mproc.SHARED_ARRAY
     dx, dy, dz = tomo.shape
     nx = dx
     if pad:
@@ -178,7 +177,7 @@ def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mp.distribute_jobs(
+    arr = mproc.distribute_jobs(
         tomo,
         func=_remove_stripe_ti,
         args=(nblock, alpha),
@@ -189,7 +188,7 @@ def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
 
 
 def _remove_stripe_ti(nblock, alpha, istart, iend):
-    tomo = mp.SHARED_ARRAY
+    tomo = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         sino = tomo[:, m, :]
         if nblock == 0:
