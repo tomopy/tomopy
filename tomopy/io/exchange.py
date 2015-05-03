@@ -56,7 +56,7 @@ import numpy as np
 import os.path
 import re
 import h5py
-import tomopy.io.reader as reader
+import tomopy.io.reader as tio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -122,13 +122,12 @@ def read_als_832(fname, ind_tomo=None):
 
     if ind_tomo is None:
         ind_tomo = range(0, nproj)
-    tomo = reader.Reader(tomo_name).tiff(
-        stack=True, ind=ind_tomo, digit=4)
-    white = reader.Reader(flat_name).tiff(
-        stack=True, ind=range(0, nflat), digit=4)
-    dark = reader.Reader(dark_name).tiff(
-        stack=True, ind=range(0, ndark), digit=4)
-    return tomo, white, dark
+    ind_flat = range(0, nflat)
+    ind_dark = range(0, ndark)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
+    return tomo, flat, dark
 
 
 def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
@@ -164,9 +163,9 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'rareaders', 'image_')
     flat_name = os.path.join(fname, 'flats', 'image_')
     dark_name = os.path.join(fname, 'darks', 'image_')
-    tomo = reader.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=5)
-    flat = reader.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=5)
-    dark = reader.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=5)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=5)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=5)
+    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=5)
     return tomo, flat, dark
 
 
@@ -179,11 +178,11 @@ def read_aps_2bm(fname, proj=None, sino=None):
     fname : str
         Path to hdf5 file.
 
-    proj : slice, optional
-        Specifies the projections to read from a slice object.
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
 
-    sino : slice, optional
-        Specifies the sinograms to read from a slice object.
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -196,7 +195,7 @@ def read_aps_2bm(fname, proj=None, sino=None):
     ndarray
         3D dark field data.
     """
-    return read_aps_32id(fname, proj=proj, sino=sino)
+    return read_aps_32id(fname, slc=(proj, sino))
 
 
 def read_aps_7bm(fname, proj=None, sino=None):
@@ -208,11 +207,11 @@ def read_aps_7bm(fname, proj=None, sino=None):
     fname : str
         Path to hdf5 file.
 
-    proj : slice, optional
-        Specifies the projections to read from a slice object.
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
 
-    sino : slice, optional
-        Specifies the sinograms to read from a slice object.
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -224,8 +223,8 @@ def read_aps_7bm(fname, proj=None, sino=None):
     """
     tomo_grp = os.path.join('exchange', 'data')
     theta_grp = os.path.join('exchange', 'theta')
-    tomo = reader.Reader(fname, proj, sino).hdf5(tomo_grp)
-    theta = reader.Reader(fname, proj).hdf5(theta_grp)
+    tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
+    theta = tio.read_hdf5(fname, theta_grp, slc=(proj, ))
     return tomo, theta
 
 
@@ -241,11 +240,11 @@ def read_aps_13bm(fname, format, proj=None, sino=None):
     format : str
         Data format. 'spe' or 'netcdf4'
 
-    proj : slice, optional
-        Specifies the projections to read from a slice object.
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
 
-    sino : slice, optional
-        Specifies the sinograms to read from a slice object.
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -253,9 +252,9 @@ def read_aps_13bm(fname, format, proj=None, sino=None):
         3D tomographic data.
     """
     if format is 'spe':
-        tomo = reader.Reader(fname, sino).spe()
+        tomo = tio.read_spe(fname, slc=sino)
     elif format is 'netcdf4':
-        tomo = reader.Reader(fname, proj, sino).netcdf4('array_data')
+        tomo = tio.read_netcdf4(fname, 'array_data', slc=(proj, sino))
     return tomo
 
 
@@ -272,18 +271,18 @@ def read_aps_13id(
     group : str, optional
         Path to the group inside hdf5 file where data is located.
 
-    proj : slice, optional
-        Specifies the projections to read from a slice object.
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
 
-    sino : slice, optional
-        Specifies the sinograms to read from a slice object.
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
     ndarray
         3D tomographic data.
     """
-    tomo = reader.Reader(fname, None, proj, sino).hdf5(group)
+    tomo = tio.read_hdf5(fname, group, slc=(proj, sino))
     tomo = np.swapaxes(tomo, 0, 1)
     tomo = np.swapaxes(tomo, 1, 2).copy()
     return tomo
@@ -298,11 +297,11 @@ def read_aps_32id(fname, proj=None, sino=None):
     fname : str
         Path to hdf5 file.
 
-    proj : slice, optional
-        Specifies the projections to read from a slice object.
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
 
-    sino : slice, optional
-        Specifies the sinograms to read from a slice object.
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -318,9 +317,9 @@ def read_aps_32id(fname, proj=None, sino=None):
     tomo_grp = os.path.join('exchange', 'data')
     flat_grp = os.path.join('exchange', 'data_white')
     dark_grp = os.path.join('exchange', 'data_dark')
-    tomo = reader.Reader(fname, proj, sino).hdf5(tomo_grp)
-    flat = reader.Reader(fname, dim2=sino).hdf5(flat_grp)
-    dark = reader.Reader(fname, dim2=sino).hdf5(dark_grp)
+    tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
+    flat = tio.read_hdf5(fname, flat_grp, slc=sino)
+    dark = tio.read_hdf5(fname, dark_grp, slc=sino)
     return tomo, flat, dark
 
 
@@ -358,9 +357,9 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'SAMPLE_T_')
     flat_name = os.path.join(fname, 'BG__BEFORE_')
     dark_name = os.path.join(fname, 'DF__BEFORE_')
-    tomo = reader.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
-    flat = reader.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=2)
-    dark = reader.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=2)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=2)
+    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=2)
     return tomo, flat, dark
 
 
@@ -387,8 +386,9 @@ def read_diamond_l12(fname, ind_tomo):
     fname = os.path.abspath(fname)
     tomo_name = os.path.join(fname, 'im_')
     flat_name = os.path.join(fname, 'flat_')
-    tomo = reader.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=6)
-    flat = reader.Reader(flat_name).tiff(stack=True, ind=range(0, 1), digit=6)
+    ind_flat = range(0, 1)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=6)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=6)
     return tomo, flat
 
 
@@ -419,9 +419,11 @@ def read_elettra_syrmep(fname, ind_tomo):
     tomo_name = os.path.join(fname, 'tomo_')
     flat_name = os.path.join(fname, 'flat_')
     dark_name = os.path.join(fname, 'dark_')
-    tomo = reader.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
-    flat = reader.Reader(flat_name).tiff(stack=True, ind=range(1, 11), digit=4)
-    dark = reader.Reader(dark_name).tiff(stack=True, ind=range(1, 11), digit=4)
+    ind_flat = range(1, 11)
+    ind_dark = range(1, 11)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
@@ -458,9 +460,9 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'scan_0002', 'ccd', 'pco01', 'ccd_')
     flat_name = os.path.join(fname, 'scan_0001', 'ccd', 'pco01', 'ccd_')
     dark_name = os.path.join(fname, 'scan_0003', 'ccd', 'pco01', 'ccd_')
-    tomo = reader.Reader(tomo_name).tiff(stack=True, ind=ind_tomo, digit=4)
-    flat = reader.Reader(flat_name).tiff(stack=True, ind=ind_flat, digit=4)
-    dark = reader.Reader(dark_name).tiff(stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(tomo_name, stack=True, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(flat_name, stack=True, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(dark_name, stack=True, ind=ind_dark, digit=4)
     return tomo, flat, dark
 
 
@@ -508,8 +510,7 @@ def read_sls_tomcat(fname, ind_tomo=None):
         ind_tomo = range(ndark + nflat + 1, ndark + nflat + nproj)
     ind_flat = range(ndark + 1, ndark + nflat)
     ind_dark = range(1, ndark)
-
-    tomo = reader.Reader(fname).tiff(stack=True, ind=ind_tomo, digit=4)
-    flat = reader.Reader(fname).tiff(stack=True, ind=ind_flat, digit=4)
-    dark = reader.Reader(fname).tiff(stack=True, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(fname, stack=True, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(fname, stack=True, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(fname, stack=True, ind=ind_dark, digit=4)
     return tomo, flat, dark

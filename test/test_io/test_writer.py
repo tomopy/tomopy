@@ -61,57 +61,6 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_Writer_hdf5():
-    dest = os.path.join('test', 'tmp')
-    if os.path.exists(dest):
-        shutil.rmtree(dest)
-    os.mkdir(dest)
-    fname = os.path.join(dest, 'test.h5')
-    gname = os.path.join('exchange', 'data')
-    arr = np.ones((3, 3, 3), dtype='float32')
-    Writer(arr, os.path.join(dest, 'test.h5')).hdf5()
-    f = h5py.File(os.path.join(dest, 'test.h5'), "r")
-    assert_equals(
-        f[gname][:].shape,
-        (3, 3, 3))
-    assert_equals(
-        f[gname][:].dtype,
-        'float32')
-    f.close()
-    shutil.rmtree(dest)
-
-
-def test_Writer_tiff():
-    dest = os.path.join('test', 'tmp')
-    bname = os.path.join(dest, 'test')
-    fname = os.path.join(dest, 'test.tiff')
-    arr = np.ones((1, 2, 3), dtype='float32')
-    Writer(arr, fname, dtype='uint8').tiff(axis=0, digit=4)
-    assert_equals(
-        os.path.isfile(bname + '_0000.tiff'),
-        True)
-    shutil.rmtree(dest)
-    Writer(arr, fname, dtype='uint16').tiff(axis=1, digit=5)
-    assert_equals(
-        os.path.isfile(bname + '_00000.tiff'),
-        True)
-    assert_equals(
-        os.path.isfile(bname + '_00001.tiff'),
-        True)
-    shutil.rmtree(dest)
-    Writer(arr, fname, dtype='float32').tiff(axis=2, start=9)
-    assert_equals(
-        os.path.isfile(bname + '_00009.tiff'),
-        True)
-    assert_equals(
-        os.path.isfile(bname + '_00010.tiff'),
-        True)
-    assert_equals(
-        os.path.isfile(bname + '_00011.tiff'),
-        True)
-    shutil.rmtree(dest)
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)
