@@ -50,7 +50,7 @@ from __future__ import absolute_import, division, print_function
 
 from tomopy.prep.stripe import *
 from test.util import read_file
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -59,15 +59,15 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_remove_stripe_fw():
-    assert_array_almost_equal(
+    assert_allclose(
         remove_stripe_fw(read_file('proj.npy')),
-        read_file('remove_stripe_fw.npy'))
+        read_file('remove_stripe_fw.npy'), rtol=1e-3)
 
 
 def test_remove_stripe_ti():
-    assert_array_almost_equal(
+    assert_allclose(
         remove_stripe_ti(read_file('proj.npy')),
-        read_file('remove_stripe_ti.npy'))
+        read_file('remove_stripe_ti.npy'), rtol=1e-3)
 
 
 if __name__ == '__main__':
