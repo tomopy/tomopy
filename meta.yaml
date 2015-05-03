@@ -37,7 +37,6 @@ test:
     - tomopy.misc.corr
     - tomopy.misc.mask
     - tomopy.misc.morph
-    - tomopy.misc.mproc
     - tomopy.prep
     - tomopy.prep.normalize
     - tomopy.prep.phase
@@ -45,6 +44,10 @@ test:
     - tomopy.recon
     - tomopy.recon.algorithm
     - tomopy.recon.rotation
+    - tomopy.util
+    - tomopy.util.dtype
+    - tomopy.util.extern
+    - tomopy.util.mproc
 
 about:
   home: http://tomopy.readthedocs.org
