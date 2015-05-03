@@ -52,7 +52,6 @@ Module for data I/O.
 
 from __future__ import absolute_import, division, print_function
 
-from tomopy.util import *
 from tomopy.misc.corr import adjust_range
 from skimage import io as sio
 import warnings

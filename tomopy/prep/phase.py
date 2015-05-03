@@ -53,8 +53,7 @@ Module for phase retrieval.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from tomopy.util import *
-import tomopy.misc.mproc as mp
+import tomopy.util.mproc as mproc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -119,7 +118,7 @@ def retrieve_phase(
         _paganin_filter_factor(energy, dist, alpha, w2))
 
     prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
-    arr = mp.distribute_jobs(
+    arr = mproc.distribute_jobs(
         tomo,
         func=_retrieve_phase,
         args=(phase_filter, py, pz, prj, pad),
@@ -130,7 +129,7 @@ def retrieve_phase(
 
 
 def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
-    tomo = mp.SHARED_ARRAY
+    tomo = mproc.SHARED_ARRAY
     dx, dy, dz = tomo.shape
     for m in range(istart, iend):
         prj[px:dy + px, py:dz + py] = tomo[m]

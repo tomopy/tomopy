@@ -57,7 +57,7 @@ from scipy.optimize import minimize
 from tomopy.io.writer import write_tiff_stack
 from tomopy.misc.mask import circ_mask
 from tomopy.recon.algorithm import recon
-from tomopy.util import *
+import tomopy.util.dtype as dtype
 import os.path
 import logging
 
@@ -108,14 +108,13 @@ def find_center(
     float
         Rotation axis location.
     """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
+    tomo = dtype.as_float32(tomo)
+    theta = dtype.as_float32(theta)
 
-    dx, dy, dz = tomo.shape
     if ind is None:
-        ind = dy / 2
+        ind = tomo.shape[1] / 2
     if init is None:
-        init = dz / 2
+        init = tomo.shape[2] / 2
 
     # Make an initial reconstruction to adjust histogram limits.
     rec = gridrec(tomo[:, ind:ind + 1, :], theta, emission=emission)
@@ -193,8 +192,8 @@ def write_center(
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
     """
-    tomo = as_float32(tomo)
-    theta = as_float32(theta)
+    tomo = dtype.as_float32(tomo)
+    theta = dtype.as_float32(theta)
 
     dx, dy, dz = tomo.shape
     if ind is None:

@@ -53,10 +53,10 @@ Module for reconstruction algorithms.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import tomopy.misc.mproc as mp
-import tomopy.extern as ext
+import tomopy.util.mproc as mproc
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
 from tomopy.sim.project import angles, get_center
-from tomopy.util import *
 import multiprocessing
 import logging
 
@@ -176,33 +176,33 @@ def recon(
 
 def _call_c_func(tomo, recon, algorithm, args, kwargs):
     if algorithm == 'art':
-        func = ext.c_art
+        func = extern.c_art
     elif algorithm == 'bart':
-        func = ext.c_bart
+        func = extern.c_bart
     elif algorithm == 'fbp':
-        func = ext.c_fbp
+        func = extern.c_fbp
     elif algorithm == 'gridrec':
-        func = ext.c_gridrec
+        func = extern.c_gridrec
     elif algorithm == 'mlem':
-        func = ext.c_mlem
+        func = extern.c_mlem
     elif algorithm == 'osem':
-        func = ext.c_osem
+        func = extern.c_osem
     elif algorithm == 'ospml_hybrid':
-        func = ext.c_ospml_hybrid
+        func = extern.c_ospml_hybrid
     elif algorithm == 'ospml_quad':
-        func = ext.c_ospml_quad
+        func = extern.c_ospml_quad
     elif algorithm == 'pml_hybrid':
-        func = ext.c_pml_hybrid
+        func = extern.c_pml_hybrid
     elif algorithm == 'pml_quad':
-        func = ext.c_pml_quad
+        func = extern.c_pml_quad
     elif algorithm == 'sirt':
-        func = ext.c_sirt
+        func = extern.c_sirt
     return _dist_recon(tomo, recon, func, args, kwargs)
 
 
 def _dist_recon(tomo, recon, algorithm, args, kwargs):
-    mp.init_tomo(tomo)
-    return mp.distribute_jobs(
+    mproc.init_tomo(tomo)
+    return mproc.distribute_jobs(
         recon,
         func=algorithm,
         args=args,
@@ -214,7 +214,7 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs):
 
 def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
     dx, dy, dz = shape
-    theta = as_float32(theta)
+    theta = dtype.as_float32(theta)
     center = get_center(shape, center)
     if num_gridx is None:
         num_gridx = shape[2]
@@ -226,8 +226,8 @@ def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
 def _get_algorithm_kwargs(shape):
     return {
         'filter_name': np.array('shepp', dtype=(str, 16)),
-        'num_iter': as_int32(1),
+        'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
-        'num_block': as_int32(1),
+        'num_block': dtype.as_int32(1),
         'ind_block': np.arange(0, shape[0], dtype='float32'),
     }

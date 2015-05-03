@@ -54,9 +54,9 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import shutil
-import tomopy.extern as ext
-from tomopy.util import *
-import tomopy.misc.mproc as mp
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
+import tomopy.util.mproc as mproc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     ndarray
         3D tomographic data.
     """
-    obj = as_float32(obj)
+    obj = dtype.as_float32(obj)
 
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
@@ -149,13 +149,13 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     shape = dx, dy, dz
     tomo = np.zeros(shape, dtype='float32')
 
-    theta = as_float32(theta)
+    theta = dtype.as_float32(theta)
     center = get_center(shape, center)
 
-    mp.init_obj(obj)
-    arr = mp.distribute_jobs(
+    mproc.init_obj(obj)
+    arr = mproc.distribute_jobs(
         tomo,
-        func=ext.c_project,
+        func=extern.c_project,
         args=(ox, oy, oz, theta, center, dx, dy, dz),
         axis=0,
         ncore=ncore,
@@ -168,7 +168,7 @@ def get_center(shape, center):
         center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
     elif np.array(center).size == 1:
         center = np.ones(shape[1], dtype='float32') * center
-    return as_float32(center)
+    return dtype.as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):
