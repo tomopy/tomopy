@@ -153,8 +153,11 @@ def read_edf(fname, slc=None):
         Data.
     """
     fname = os.path.abspath(fname)
-    f = spefile.PrincetonSPEFile(fname)
-    arr = f.getData()
+    f = EdfFile.EdfFile(self.fname, access='r')
+    d = f.GetStaticHeader(0)
+    arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
+    for i, ar in enumerate(arr):
+        arr[i::] = f.GetData(i)
     arr = _slice_array(arr, slc)
     # TODO: file probably needs to be closed.
     return arr
