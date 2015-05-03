@@ -49,8 +49,7 @@
 from __future__ import absolute_import, division, print_function
 
 from test.util import read_file
-from tomopy.misc.mproc import *
-import tomopy.misc.mproc as mp
+from tomopy.util.mproc import mproc
 import numpy as np
 from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
@@ -62,16 +61,15 @@ __docformat__ = 'restructuredtext en'
 
 
 def _synthetic_func(val, istart, iend):
-    a = mp.SHARED_ARRAY
+    a = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         a[m, :, :] = val
 
 
 def test_distribute_jobs():
-    proj = read_file('proj.npy')
     assert_array_almost_equal(
-        distribute_jobs(
-            proj,
+        mproc.distribute_jobs(
+            read_file('proj.npy'),
             func=_synthetic_func,
             args=(1.,),
             axis=0),

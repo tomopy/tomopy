@@ -53,7 +53,7 @@ Module for masking of arrays.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from tomopy.util import as_ndarray
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ def circ_mask(arr, axis, ratio=1, val=0.):
     ndarray
         Masked array.
     """
-    arr = as_ndarray(arr)
+    arr = dtype.as_ndarray(arr)
     _arr = arr.swapaxes(0, axis)
     dx, dy, dz = _arr.shape
     mask = _get_mask(dy, dz, ratio)
