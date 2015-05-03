@@ -195,7 +195,7 @@ def read_aps_2bm(fname, proj=None, sino=None):
     ndarray
         3D dark field data.
     """
-    return read_aps_32id(fname, slc=(proj, sino))
+    return read_aps_32id(fname, proj=proj, sino=sino)
 
 
 def read_aps_7bm(fname, proj=None, sino=None):
