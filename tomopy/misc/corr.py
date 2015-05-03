@@ -64,11 +64,40 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['gaussian_filter',
+__all__ = ['adjust_range',
+           'gaussian_filter',
            'median_filter',
            'remove_nan',
            'remove_neg',
            'remove_outlier']
+
+
+def adjust_range(arr, dmin=None, dmax=None):
+    """
+    Change dynamic range of values in an array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+
+    dmin, dmax : float, optional
+        Mininum and maximum values to rescale data.
+
+    Returns
+    -------
+    ndarray
+        Output array.
+    """
+    if dmax is None:
+        dmax = np.max(arr)
+    if dmin is None:
+        dmin = np.min(arr)
+    if dmax < np.max(arr):
+        arr[arr > dmax] = dmax
+    if dmin > np.min(arr):
+        arr[arr < dmin] = dmin
+    return arr
 
 
 def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
@@ -78,7 +107,7 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        Input array.
     sigma : scalar or sequence of scalars
         Standard deviation for Gaussian kernel. The standard deviations
         of the Gaussian filter are given for each axis as a sequence, or
@@ -126,7 +155,7 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        Input array.
     size : int, optional
         The size of the filter.
     axis : int, optional
@@ -165,7 +194,7 @@ def remove_nan(arr, val=0.):
     Parameters
     ----------
     arr : ndarray
-        Input data.
+        Input array.
     val : float, optional
         Values to be replaced with NaN values in array.
 
