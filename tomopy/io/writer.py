@@ -249,7 +249,7 @@ def write_hdf5(
         if True, the existing files in the reconstruction folder will be
         overwritten with the new ones.
     """
-    Writer(fname, dtype, dmin, dmax, overwrite).hdf5(gname)
+    Writer(data, fname, dtype, dmin, dmax, overwrite).hdf5(gname)
 
 
 def write_tiff(
@@ -282,8 +282,8 @@ def write_tiff(
         Number of digits in indexing stacked files.
     """
     Writer(
-        fname, dtype, dmin, dmax, overwrite).tiff(
-        axis, digit, start, stack=False)
+        data, fname, dtype, dmin, dmax, overwrite).tiff(
+        stack=False, axis=axis, digit=digit, start=start)
 
 
 def write_tiff_stack(
@@ -316,5 +316,5 @@ def write_tiff_stack(
         Number of digits in indexing stacked files.
     """
     Writer(
-        fname, dtype, dmin, dmax, overwrite).tiff(
-        axis, digit, start, stack=True)
+        data, fname, dtype, dmin, dmax, overwrite).tiff(
+        stack=True, axis=axis, digit=digit, start=start)
