@@ -213,7 +213,6 @@ def c_fbp(*args):
 
 
 def c_gridrec(*args):
-    print(args)
     tomo = mproc.SHARED_TOMO
     recon = mproc.SHARED_ARRAY
 
