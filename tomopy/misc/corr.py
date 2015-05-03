@@ -291,7 +291,7 @@ def _remove_outlier_from_img(img, dif, size):
     ndarray
        Corrected array.
     """
-    img = as_float32(img)
+    img = dtype.as_float32(img)
     mask = np.zeros(img.shape)
     tmp = filters.median_filter(img, (size, size))
     mask = ((img - tmp) >= dif).astype(int)
