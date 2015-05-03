@@ -49,7 +49,7 @@
 from __future__ import absolute_import, division, print_function
 
 from test.util import read_file
-from tomopy.util.mproc import mproc
+import tomopy.util.mproc as mproc
 import numpy as np
 from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
