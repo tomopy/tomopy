@@ -69,171 +69,226 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['Reader']
+__all__ = ['read_tiff',
+           'read_tiff_stack',
+           'read_edf',
+           'read_hdf5',
+           'read_netcdf4',
+           'read_spe']
 
 
-class Reader():
-
+def read_tiff(fname, slc=None):
     """
-    Class for reading data from various data formats.
+    Read data from tiff file.
 
-    Attributes
+    Parameters
     ----------
     fname : str
         String defining the path or file name.
-    dim1, dim2, dim3 : slice, optional
-        Slice object representing the set of indices along the
-        1st, 2nd and 3rd dimensions respectively.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Output 2D image.
     """
+    fname = os.path.abspath(fname)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        arr = sio.imread(fname, plugin='tifffile')
+    arr = _slice_array(arr, slc)
+    return arr
 
-    def __init__(self, fname, dim1=None, dim2=None, dim3=None):
-        fname = os.path.abspath(fname)
-        self.fname = fname
-        self.dim1 = dim1
-        self.dim2 = dim2
-        self.dim3 = dim3
 
-    def edf(self):
-        """
-        Read data from a edf file.
+def read_tiff_stack(fname, ind, digit, slc=None):
+    """
+    Read data from stack of tiff files in a folder.
 
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = EdfFile.EdfFile(self.fname, access='r')
-        d = f.GetStaticHeader(0)
-        arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
-        for (i, ar) in enumerate(arr):
-            arr[i::] = f.GetData(i)
-        arr = self._slice_array(arr)
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    ind : list of int
+        Indices of the files to read.
+    digit : int
+        Number of digits in indexing stacked files.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+    """
+    fname = os.path.abspath(fname)
+    list_fname = _list_file_stack(fname, ind, digit)
+    for m, image in enumerate(list_fname):
+        _arr = np.load(image)
+        if m == 0:
+            dx = len(ind)
+            dy, dz = _arr.shape
+            arr = np.zeros((dx, dy, dz))
+            m += 1
+        arr[m] = _arr
+    arr = _slice_array(arr, slc)
+    return arr
+
+
+def read_edf(fname, slc=None):
+    """
+    Read data from a edf file.
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    fname = os.path.abspath(fname)
+    f = spefile.PrincetonSPEFile(fname)
+    arr = f.getData()
+    arr = _slice_array(arr, slc)
+    # TODO: file probably needs to be closed.
+    return arr
+
+
+def read_hdf5(fname, group, slc=None):
+    """
+    Read data from hdf5 file from a specific group.
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    group : str
+        Path to the group inside hdf5 file where data is located.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    fname = os.path.abspath(fname)
+    f = h5py.File(fname, "r")
+    arr = f[group]
+    arr = _slice_array(arr, slc)
+    f.close()
+    return arr
+
+
+def read_netcdf4(fname, group, slc=None):
+    """
+    Read data from netcdf4 file from a specific group.
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    group : str
+        Variable name where data is stored.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    fname = os.path.abspath(fname)
+    f = netCDF4.Dataset(fname, 'r')
+    arr = f.variables[group]
+    arr = _slice_array(arr, slc)
+    f.close()
+    return arr
+
+
+def read_spe(fname, slc=None):
+    """
+    Read data from spe file.
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    fname = os.path.abspath(fname)
+    f = spefile.PrincetonSPEFile(fname)
+    arr = f.getData()
+    arr = _slice_array(arr, slc)
+    return arr
+
+
+def _slice_array(arr, slc):
+    """
+    Perform slicing on ndarray.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array to be sliced.
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        defines slicing parameters for each axis of the data matrix.
+
+    Returns
+    -------
+    ndarray
+        Sliced array.
+    """
+    if slc is None:
         return arr
+    if not isinstance(slc[0], (list, tuple)):
+        slc = (slc, )
+    for m, s in enumerate(slc):
+        if len(s) < 3:
+            s += (1, )
+        axis_slice = slice(s[0], s[1], s[2])
+        arr = np.swapaxes(arr, 0, m)[axis_slice]
+        arr = np.swapaxes(arr, 0, m)
+    return arr
 
-    def hdf5(self, group):
-        """
-        Read data from hdf5 file from a specific group.
 
-        Parameters
-        ----------
-        group : str
-            Path to the group inside hdf5 file where data is located.
+def _list_file_stack(fname, ind, digit):
+    """
+    Return a stack of file names in a folder as a list.
 
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = h5py.File(self.fname, "r")
-        arr = f[group]
-        arr = self._slice_array(arr)
-        f.close()
-        return arr
-
-    def netcdf4(self, group):
-        """
-        Read data from netcdf4 file from a specific group.
-
-        Parameters
-        ----------
-        group : str
-            Variable name where data is stored.
-
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = netCDF4.Dataset(self.fname, 'r')
-        arr = f.variables[group]
-        arr = self._slice_array(arr)
-        f.close()
-        return arr
-
-    def spe(self):
-        """
-        Read data from spe file.
-
-        Returns
-        -------
-        ndarray
-            Data.
-        """
-        f = spefile.PrincetonSPEFile(self.fname)
-        arr = f.getData()
-        arr = self._slice_array(arr)
-        return arr
-
-    def tiff(self, stack, ind, digit):
-        """
-        Read data from tiff file.
-
-        Parameters
-        ----------
-        stack : bool
-            If True, write 2D images to a stack of files.
-        ind : list of int
-            Indices of the files to read.
-        digit : int
-            Number of digits in indexing stacked files.
-
-        Returns
-        -------
-        ndarray
-            Output 2D image.
-        """
-        if stack:
-            a = 0
-            for m in ind:
-                fname = self.fname + '{0:0={1}d}'.format(m, digit) + '.tif'
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    _arr = sio.imread(fname, plugin='tifffile')
-                if a == 0:
-                    dx = len(ind)
-                    dy, dz = _arr.shape
-                    arr = np.zeros((dx, dy, dz))
-                arr[a] = _arr
-                a += 1
-        else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                arr = sio.imread(self.fname, plugin='tifffile')
-        arr = self._slice_array(arr)
-        return arr
-
-    def _slice_array(self, arr):
-        """
-        Perform slicing on ndarray.
-
-        Parameters
-        ----------
-        arr : ndarray
-            Input array to be sliced.
-
-        Returns
-        -------
-        ndarray
-            Sliced array.
-        """
-        if len(arr.shape) == 1:
-            if self.dim1 is None:
-                self.dim1 = slice(0, arr.shape[0])
-            arr = arr[self.dim1]
-        elif len(arr.shape) == 2:
-            if self.dim1 is None:
-                self.dim1 = slice(0, arr.shape[0])
-            if self.dim2 is None:
-                self.dim2 = slice(0, arr.shape[1])
-            arr = arr[self.dim1, self.dim2]
-        elif len(arr.shape) == 3:
-            if self.dim1 is None:
-                self.dim1 = slice(0, arr.shape[0])
-            if self.dim2 is None:
-                self.dim2 = slice(0, arr.shape[1])
-            if self.dim3 is None:
-                self.dim3 = slice(0, arr.shape[2])
-            arr = arr[self.dim1, self.dim2, self.dim3]
-        else:
-            arr = arr[:]
-        return arr
+    Parameters
+    ----------
+    fname : str
+        String defining the path or file name.
+    ind : list of int
+        Indices of the files to read.
+    digit : int
+        Number of digits in indexing stacked files.
+    """
+    fname = os.path.abspath(fname)
+    ext = '.' + fname.split(".")[-1]
+    body = ''.join(fname[:-digit - len(ext)])
+    list_fname = []
+    for m in ind:
+        list_fname.append(body + '{0:0={1}d}'.format(m, digit) + ext)
+    return list_fname
