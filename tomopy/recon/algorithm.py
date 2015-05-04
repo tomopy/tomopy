@@ -71,7 +71,8 @@ __all__ = ['recon']
 
 def recon(
         tomo, theta, center=None, emission=False,
-        num_gridx=None, num_gridy=None, algorithm=None, **kwargs):
+        num_gridx=None, num_gridy=None, algorithm=None, 
+        ncore=None, nchunk=None, **kwargs):
     """
     Reconstruct object from projection data.
 
@@ -171,10 +172,10 @@ def recon(
                          (list(allowed_kwargs.keys()),))
 
     recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
-    return _call_c_func(tomo, recon, algorithm, args, kwargs)
+    return _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk)
 
 
-def _call_c_func(tomo, recon, algorithm, args, kwargs):
+def _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
     if algorithm == 'art':
         func = extern.c_art
     elif algorithm == 'bart':
@@ -197,10 +198,10 @@ def _call_c_func(tomo, recon, algorithm, args, kwargs):
         func = extern.c_pml_quad
     elif algorithm == 'sirt':
         func = extern.c_sirt
-    return _dist_recon(tomo, recon, func, args, kwargs)
+    return _dist_recon(tomo, recon, func, args, kwargs, ncore, nchunk)
 
 
-def _dist_recon(tomo, recon, algorithm, args, kwargs):
+def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
     mproc.init_tomo(tomo)
     return mproc.distribute_jobs(
         recon,
@@ -208,8 +209,8 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs):
         args=args,
         kwargs=kwargs,
         axis=0,
-        ncore=None,
-        nchunk=None)
+        ncore=ncore,
+        nchunk=nchunk)
 
 
 def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
