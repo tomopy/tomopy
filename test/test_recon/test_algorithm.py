@@ -68,57 +68,57 @@ class TestRecon:
     def test_art(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='art', num_iter=4),
-            read_file('art.npy'), rtol=1e-2)
+            read_file('art.npy'))
 
     def test_bart(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='bart', num_iter=4),
-            read_file('bart.npy'), rtol=1e-2)
+            read_file('bart.npy'))
 
     def test_fbp(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='fbp'),
-            read_file('fbp.npy'), rtol=1e-2)
+            read_file('fbp.npy'))
 
     # def test_gridrec(self):
     #     assert_allclose(
     #         recon(self.prj, self.ang, algorithm='gridrec'),
-    #         read_file('gridrec.npy'), rtol=1e-2)
+    #         read_file('gridrec.npy'))
 
     def test_mlem(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
-            read_file('mlem.npy'), rtol=1e-2)
+            read_file('mlem.npy'))
 
     def test_osem(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='osem', num_iter=4),
-            read_file('osem.npy'), rtol=1e-2)
+            read_file('osem.npy'))
 
     def test_ospml_hybrid(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='ospml_hybrid', num_iter=4),
-            read_file('ospml_hybrid.npy'), rtol=1e-2)
+            read_file('ospml_hybrid.npy'))
 
     def test_ospml_quad(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='ospml_quad', num_iter=4),
-            read_file('ospml_quad.npy'), rtol=1e-2)
+            read_file('ospml_quad.npy'))
 
     def test_pml_hybrid(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='pml_hybrid', num_iter=4),
-            read_file('pml_hybrid.npy'), rtol=1e-2)
+            read_file('pml_hybrid.npy'))
 
     def test_pml_quad(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
-            read_file('pml_quad.npy'), rtol=1e-2)
+            read_file('pml_quad.npy'))
 
     def test_sirt(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
-            read_file('sirt.npy'), rtol=1e-2)
+            read_file('sirt.npy'))
 
 
 if __name__ == '__main__':

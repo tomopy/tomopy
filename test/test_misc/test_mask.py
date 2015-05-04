@@ -50,8 +50,6 @@ from __future__ import absolute_import, division, print_function
 
 from test.util import read_file, loop_dim
 from tomopy.misc.mask import *
-import numpy as np
-from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
