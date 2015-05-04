@@ -109,7 +109,7 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     Parameters
     ----------
     fname : str
-        String defining the path or file name.
+        One of the file names in the tiff stack.
     ind : list of int
         Indices of the files to read.
     digit : int
@@ -121,13 +121,13 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     """
     fname = os.path.abspath(fname)
     list_fname = _list_file_stack(fname, ind, digit)
+
     for m, image in enumerate(list_fname):
-        _arr = np.load(image)
+        _arr = sio.imread(fname, plugin='tifffile')
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
             arr = np.zeros((dx, dy, dz))
-            m += 1
         arr[m] = _arr
     arr = _slice_array(arr, slc)
     return arr
@@ -262,7 +262,7 @@ def _slice_array(arr, slc):
         Sliced array.
     """
     if slc is None:
-        return arr
+        return arr[:]
     if not isinstance(slc[0], (list, tuple)):
         slc = (slc, )
     for m, s in enumerate(slc):
@@ -292,5 +292,5 @@ def _list_file_stack(fname, ind, digit):
     body = ''.join(fname[:-digit - len(ext)])
     list_fname = []
     for m in ind:
-        list_fname.append(body + '{0:0={1}d}'.format(m, digit) + ext)
+        list_fname.append(str(body + '{0:0={1}d}'.format(m, digit) + ext))
     return list_fname

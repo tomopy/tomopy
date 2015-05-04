@@ -62,20 +62,20 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-# def test_write_center():
-#     dpath = os.path.join('test', 'tmp')
-#     cen_range = (5, 7, 0.5)
-#     cen = np.arange(cen_range[0], cen_range[1], cen_range[2])
-#     write_center(
-#         read_file('proj.npy'),
-#         read_file('angle.npy'),
-#         dpath, cen_range=cen_range)
-#     for m in range(4):
-#         assert_equals(
-#             os.path.isfile(
-#                 os.path.join(
-#                     dpath, str('{:.2f}'.format(cen[m]) + 'tiff'))), True)
-#     shutil.rmtree(dpath)
+def test_write_center():
+    dpath = os.path.join('test', 'tmp')
+    cen_range = (5, 7, 0.5)
+    cen = np.arange(cen_range[0], cen_range[1], cen_range[2])
+    write_center(
+        read_file('proj.npy'),
+        read_file('angle.npy'),
+        dpath, cen_range=cen_range)
+    for m in range(0):
+        assert_equals(
+            os.path.isfile(
+                os.path.join(
+                    'tmp/center', str('{:.2f}'.format(cen[m]) + '.tiff'))), True)
+    shutil.rmtree(dpath)
 
 
 if __name__ == '__main__':

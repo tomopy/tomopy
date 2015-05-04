@@ -171,6 +171,7 @@ def recon(
         raise ValueError('Keyword "algorithm" must be one of %s.' %
                          (list(allowed_kwargs.keys()),))
 
+    tomo = dtype.as_float32(tomo)
     recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
     return _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk)
 

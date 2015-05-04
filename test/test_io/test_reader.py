@@ -51,12 +51,30 @@ from __future__ import absolute_import, division, print_function
 from tomopy.io.reader import *
 import numpy as np
 import os.path
-from nose.tools import assert_equals
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+
+
+def test_read_tiff():
+    fname = os.path.join('test', 'data', 'reader_00000.tiff')
+    assert_allclose(read_tiff(fname), np.ones((8, 16)))
+
+
+def test_read_tiff_stack():
+    fname = os.path.join('test', 'data', 'reader_00000.tiff')
+    assert_allclose(
+        read_tiff_stack(fname, ind=range(0, 4), digit=5), 
+        np.ones((4, 8, 16)))
+
+
+def read_hdf5():
+    fname = os.path.join('test', 'data', 'reader.h5')
+    gname = os.path.join('exchange', 'data')
+    assert_allclose(read_hdf5(fname, gname), np.ones((4, 8, 16)))
 
 
 if __name__ == '__main__':
