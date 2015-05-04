@@ -86,7 +86,7 @@ def circ_mask(arr, axis, ratio=1, val=0.):
     ndarray
         Masked array.
     """
-    arr = dtype.as_ndarray(arr)
+    arr = dtype.as_float32(arr)
     _arr = arr.swapaxes(0, axis)
     dx, dy, dz = _arr.shape
     mask = _get_mask(dy, dz, ratio)
