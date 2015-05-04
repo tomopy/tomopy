@@ -73,7 +73,7 @@ def test_distribute_jobs():
             func=_synthetic_func,
             args=(1.,),
             axis=0),
-        np.ones((16, 8, 12)))
+        np.ones((16, 8, 46)))
 
 
 if __name__ == '__main__':
