@@ -48,11 +48,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from test.util import read_file
 import tomopy.util.mproc as mproc
 import numpy as np
-from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -67,13 +65,13 @@ def _synthetic_func(val, istart, iend):
 
 
 def test_distribute_jobs():
-    assert_array_almost_equal(
+    assert_allclose(
         mproc.distribute_jobs(
-            read_file('proj.npy'),
+            np.zeros((8, 8, 8)),
             func=_synthetic_func,
             args=(1.,),
             axis=0),
-        np.ones((16, 8, 46)))
+        np.ones((8, 8, 8)))
 
 
 if __name__ == '__main__':
