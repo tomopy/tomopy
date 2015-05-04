@@ -69,19 +69,19 @@ preprocessing(
 }
 
 
-bool 
+int 
 calc_quadrant(
     float theta_p) 
 {
-    bool quadrant;
+    int quadrant;
     if ((theta_p >= 0 && theta_p < M_PI/2) ||
             (theta_p >= M_PI && theta_p < 3*M_PI/2)) 
     {
-        quadrant = true;
+        quadrant = 1;
     } 
     else 
     {
-        quadrant = false;
+        quadrant = 0;
     }
     return quadrant;
 }

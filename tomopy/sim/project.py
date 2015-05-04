@@ -140,16 +140,15 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
         3D tomographic data.
     """
     obj = dtype.as_float32(obj)
+    theta = dtype.as_float32(theta)
 
     # Estimate data dimensions.
     ox, oy, oz = obj.shape
-    dx = len(theta)
+    dx = theta.size
     dy = ox
     dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
     shape = dx, dy, dz
     tomo = np.zeros(shape, dtype='float32')
-
-    theta = dtype.as_float32(theta)
     center = get_center(shape, center)
 
     mproc.init_obj(obj)

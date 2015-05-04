@@ -50,7 +50,7 @@ from __future__ import absolute_import, division, print_function
 
 from tomopy.prep.phase import *
 from test.util import read_file
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -59,7 +59,7 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_retrieve_phase():
-    assert_array_almost_equal(
+    assert_allclose(
         retrieve_phase(read_file('proj.npy')),
         read_file('retrieve_phase.npy'))
 

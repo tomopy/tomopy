@@ -50,7 +50,7 @@ from __future__ import absolute_import, division, print_function
 
 from tomopy.prep.normalize import *
 from test.util import read_file
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -59,7 +59,7 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_normalize():
-    assert_array_almost_equal(
+    assert_allclose(
         normalize(
             read_file('tomo.npy'),
             read_file('flat.npy'),
@@ -68,7 +68,7 @@ def test_normalize():
 
 
 def test_normalize_bg():
-    assert_array_almost_equal(
+    assert_allclose(
         normalize_bg(read_file('tomo.npy')),
         read_file('normalize_bg.npy'))
 
