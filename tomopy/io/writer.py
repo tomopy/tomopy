@@ -67,6 +67,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['write_hdf5',
+           'write_tiff',
            'write_tiff_stack']
 
 
@@ -155,11 +156,40 @@ def write_hdf5(
     f.close()
 
 
+def write_tiff(
+        data, fname='tmp/data.tiff', overwrite=False):
+    """
+    Write data to tiff file.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input data.
+    fname : str
+        Output file name.
+    axis : int, optional
+        Axis along which stacking is performed.
+    start : int, optional
+        First index of file in stack for saving.
+    digit : int, optional
+        Number of digits in indexing stacked files.
+    overwrite: bool, optional
+        if True, overwrites the existing file if the file exists.
+    """
+    fname = os.path.abspath(fname)
+    _init_dirs(fname)
+    if not overwrite:
+        if os.path.isfile(fname):
+            fname = _suggest_new_fname(fname, digit=1)
+    print (fname)
+    sio.imsave(os.path.abspath(fname), data, plugin='tifffile')
+
+
 def write_tiff_stack(
         data, fname='tmp/data.tiff', axis=0, digit=5,
         start=0, overwrite=False):
     """
-    Write data to tiff file.
+    Write data to stack of tiff file.
 
     Parameters
     ----------
@@ -184,8 +214,8 @@ def write_tiff_stack(
     for m in range(start, start + data.shape[axis]):
         _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + '.' + ext
         if not overwrite:
-            if os.path.isfile(fname):
-                _fname = _suggest_new_fname(digit=1)
+            if os.path.isfile(_fname):
+                _fname = _suggest_new_fname(_fname, digit=1)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             sio.imsave(_fname, _data[m - start], plugin='tifffile')
