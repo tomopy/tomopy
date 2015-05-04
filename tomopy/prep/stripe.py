@@ -117,10 +117,10 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
     if pad:
         nx = dx + dx / 8
     xshift = int((nx - dx) / 2.)
-    sli = np.zeros((nx, dz), dtype='float32')
 
     for m in range(istart, iend):
-        sli[xshift:dx + xshift, :] = tomo[:, m, :]
+        sli = np.zeros((nx, dz), dtype='float32')
+        sli[xshift:dx + xshift] = tomo[:, m, :]
 
         # Wavelet decomposition.
         cH = []
@@ -139,7 +139,7 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
-            y_hat = (np.arange(-my, my, 2, dtype='float') + 1) / 2
+            y_hat = (np.arange(-my, my, 2, dtype='float32') + 1) / 2
             damp = 1 - np.exp(-np.power(y_hat, 2) / (2 * np.power(sigma, 2)))
             fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
 
@@ -150,8 +150,8 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
         for n in range(level)[::-1]:
             sli = sli[0:cH[n].shape[0], 0:cH[n].shape[1]]
             sli = pywt.idwt2((sli, (cH[n], cV[n], cD[n])), wname)
-
         tomo[:, m, :] = sli[xshift:dx + xshift, 0:dz]
+
 
 
 def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
