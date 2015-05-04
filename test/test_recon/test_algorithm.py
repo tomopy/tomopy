@@ -80,10 +80,10 @@ class TestRecon:
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
-    # def test_gridrec(self):
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec'),
-    #         read_file('gridrec.npy'), rtol=1e-2)
+    def test_gridrec(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec'),
+            read_file('gridrec.npy'), rtol=1e-2)
 
     def test_mlem(self):
         assert_allclose(
