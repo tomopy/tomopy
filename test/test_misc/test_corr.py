@@ -51,7 +51,7 @@ from __future__ import absolute_import, division, print_function
 from test.util import read_file, loop_dim
 from tomopy.misc.corr import *
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -68,13 +68,13 @@ def test_median_filter():
 
 
 def test_remove_neg():
-    assert_array_almost_equal(
+    assert_allclose(
         remove_neg([-2, -1, 0, 1, 2]),
         [0, 0, 0, 1, 2])
 
 
 def test_remove_nan():
-    assert_array_almost_equal(
+    assert_allclose(
         remove_nan([np.nan, 1.5, 2, np.nan, 1]),
         [0, 1.5, 2, 0, 1])
 
@@ -82,7 +82,7 @@ def test_remove_nan():
 def test_remove_outlier():
     proj = read_file('proj.npy')
     proj[8][4][6] = 20
-    assert_array_almost_equal(
+    assert_allclose(
         remove_outlier(proj, dif=10),
         read_file('remove_zinger.npy'))
 

@@ -126,8 +126,8 @@ ospml_hybrid(
                     for (d=0; d<dz; d++) 
                     {
                         // Calculate coordinates
-                        xi = -1e6;
-                        yi = -(dz-1)/2.0+d+mov;
+                        xi = -ngridx-ngridy;
+                        yi = (1-dz)/2.0+d+mov;
                         calc_coords(
                             ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                             coordx, coordy);
