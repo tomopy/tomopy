@@ -61,7 +61,7 @@ __docformat__ = 'restructuredtext en'
 def test_project():
     assert_allclose(
         project(read_file('obj.npy'), read_file('angle.npy')),
-        read_file('proj.npy'), rtol=1e-3)
+        read_file('proj.npy'), rtol=1e-2)
 
 
 if __name__ == '__main__':
