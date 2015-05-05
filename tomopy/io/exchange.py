@@ -104,9 +104,9 @@ def read_als_832(fname, ind_tomo=None):
     """
     # File definitions.
     fname = os.path.abspath(fname)
-    tomo_name = fname + '_0000_'
-    flat_name = fname + 'bak_'
-    dark_name = fname + 'drk_'
+    tomo_name = fname + '_0000_0000.tif'
+    flat_name = fname + 'bak_0000.tif'
+    dark_name = fname + 'drk_0000.tif'
     log_file = fname + '.sct'
 
     # Read metadata from ALS log file.
@@ -160,9 +160,9 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = os.path.join(fname, 'rareaders', 'image_')
-    flat_name = os.path.join(fname, 'flats', 'image_')
-    dark_name = os.path.join(fname, 'darks', 'image_')
+    tomo_name = os.path.join(fname, 'radios', 'image_00000.tif')
+    flat_name = os.path.join(fname, 'flats', 'image_00000.tif')
+    dark_name = os.path.join(fname, 'darks', 'image_00000.tif')
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5)
     dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5)
@@ -252,7 +252,7 @@ def read_aps_13bm(fname, format, proj=None, sino=None):
         3D tomographic data.
     """
     if format is 'spe':
-        tomo = tio.read_spe(fname, slc=sino)
+        tomo = tio.read_spe(fname, slc=(None, sino))
     elif format is 'netcdf4':
         tomo = tio.read_netcdf4(fname, 'array_data', slc=(proj, sino))
     return tomo
@@ -282,7 +282,7 @@ def read_aps_13id(
     ndarray
         3D tomographic data.
     """
-    tomo = tio.read_hdf5(fname, group, slc=(proj, sino))
+    tomo = tio.read_hdf5(fname, group, slc=(None, proj, sino))
     tomo = np.swapaxes(tomo, 0, 1)
     tomo = np.swapaxes(tomo, 1, 2).copy()
     return tomo
@@ -318,8 +318,8 @@ def read_aps_32id(fname, proj=None, sino=None):
     flat_grp = os.path.join('exchange', 'data_white')
     dark_grp = os.path.join('exchange', 'data_dark')
     tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
-    flat = tio.read_hdf5(fname, flat_grp, slc=sino)
-    dark = tio.read_hdf5(fname, dark_grp, slc=sino)
+    flat = tio.read_hdf5(fname, flat_grp, slc=(None, sino))
+    dark = tio.read_hdf5(fname, dark_grp, slc=(None, sino))
     return tomo, flat, dark
 
 
@@ -354,9 +354,9 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = os.path.join(fname, 'SAMPLE_T_')
-    flat_name = os.path.join(fname, 'BG__BEFORE_')
-    dark_name = os.path.join(fname, 'DF__BEFORE_')
+    tomo_name = os.path.join(fname, 'SAMPLE_T_0000.tif')
+    flat_name = os.path.join(fname, 'BG__BEFORE_00.tif')
+    dark_name = os.path.join(fname, 'DF__BEFORE_00.tif')
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=2)
     dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=2)
@@ -384,8 +384,8 @@ def read_diamond_l12(fname, ind_tomo):
         3d flat field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = os.path.join(fname, 'im_')
-    flat_name = os.path.join(fname, 'flat_')
+    tomo_name = os.path.join(fname, 'im_001000.tif')
+    flat_name = os.path.join(fname, 'flat_000000.tif')
     ind_flat = range(0, 1)
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=6)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=6)
@@ -416,9 +416,9 @@ def read_elettra_syrmep(fname, ind_tomo):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = os.path.join(fname, 'tomo_')
-    flat_name = os.path.join(fname, 'flat_')
-    dark_name = os.path.join(fname, 'dark_')
+    tomo_name = os.path.join(fname, 'tomo_0001.tif')
+    flat_name = os.path.join(fname, 'flat_0001.tif')
+    dark_name = os.path.join(fname, 'dark_0001.tif')
     ind_flat = range(1, 11)
     ind_dark = range(1, 11)
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
@@ -457,9 +457,12 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
         3D dark field data.
     """
     fname = os.path.abspath(fname)
-    tomo_name = os.path.join(fname, 'scan_0002', 'ccd', 'pco01', 'ccd_')
-    flat_name = os.path.join(fname, 'scan_0001', 'ccd', 'pco01', 'ccd_')
-    dark_name = os.path.join(fname, 'scan_0003', 'ccd', 'pco01', 'ccd_')
+    tomo_name = os.path.join(
+        fname, 'scan_0002', 'ccd', 'pco01', 'ccd_0000.tif')
+    flat_name = os.path.join(
+        fname, 'scan_0001', 'ccd', 'pco01', 'ccd_0000.tif')
+    dark_name = os.path.join(
+        fname, 'scan_0003', 'ccd', 'pco01', 'ccd_0000.tif')
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
     dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
@@ -491,6 +494,7 @@ def read_sls_tomcat(fname, ind_tomo=None):
     """
     # File definitions.
     fname = os.path.abspath(fname)
+    _fname = fname + '0001.tif'
     log_file = fname + '.log'
 
     # Read metadata from ALS log file.
@@ -510,7 +514,7 @@ def read_sls_tomcat(fname, ind_tomo=None):
         ind_tomo = range(ndark + nflat + 1, ndark + nflat + nproj)
     ind_flat = range(ndark + 1, ndark + nflat)
     ind_dark = range(1, ndark)
-    tomo = tio.read_tiff_stack(fname, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(fname, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(fname, ind=ind_dark, digit=4)
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4)
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4)
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4)
     return tomo, flat, dark
