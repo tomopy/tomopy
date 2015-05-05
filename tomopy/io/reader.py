@@ -123,7 +123,9 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     list_fname = _list_file_stack(fname, ind, digit)
 
     for m, image in enumerate(list_fname):
-        _arr = sio.imread(fname, plugin='tifffile')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _arr = sio.imread(fname, plugin='tifffile')
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
@@ -261,16 +263,19 @@ def _slice_array(arr, slc):
     ndarray
         Sliced array.
     """
-    if slc is None:
-        return arr[:]
-    if not isinstance(slc[0], (list, tuple)):
+    if not isinstance(slc, (list, tuple)):
         slc = (slc, )
+    if all(v is None for v in slc):
+        return arr[:]
     for m, s in enumerate(slc):
-        if len(s) < 3:
-            s += (1, )
-        axis_slice = slice(s[0], s[1], s[2])
-        arr = np.swapaxes(arr, 0, m)[axis_slice]
-        arr = np.swapaxes(arr, 0, m)
+        if s is not None:
+            if len(s) < 2:
+                s += (arr.shape[m], )
+            if len(s) < 3:
+                s += (1, )
+            axis_slice = slice(s[0], s[1], s[2])
+            arr = np.swapaxes(arr, 0, m)[axis_slice]
+            arr = np.swapaxes(arr, 0, m)
     return arr
 
 
