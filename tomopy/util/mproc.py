@@ -97,55 +97,59 @@ def distribute_jobs(
     # Arrange number of processors.
     if ncore is None:
         ncore = mp.cpu_count()
-    dims = arr.shape[axis]
+    ndim = arr.shape[axis]
 
     # Maximum number of processors for the task.
-    if dims < ncore:
-        ncore = dims
+    if ndim < ncore:
+        ncore = ndim
 
     # Arrange chunk size.
     if nchunk is None:
-        nchunk = (dims - 1) // ncore + 1
+        nchunk = (ndim - 1) // ncore + 1
 
     # Determine pool size.
-    npool = dims // nchunk + 1
+    npool = ndim // nchunk + 1
 
-    # Populate arguments for workers.
-    arg = []
+    # Zip arguments.
+    _args = []
     for m in range(npool):
         istart = m * nchunk
         iend = (m + 1) * nchunk
-        if istart >= dims:
+
+        # Adjustments for last chunk.
+        if istart >= ndim:
             npool -= 1
             break
-        if iend > dims:
-            iend = dims
-
-        _arg = []
-        _arg.append(func)
-
-        if args is not None:
-            for a in args:
-                _arg.append(a)
-
-        _kwarg = []
-        if kwargs is not None:
-            for kw, a in kwargs.iteritems():
-                _arg.append({kw: a})
-
-        _arg.append(istart)
-        _arg.append(iend)
-
-        arg.append(_arg)
-
-    shared_arr = get_shared(arr)
-
+        if iend > ndim:
+            iend = ndim
+        
+        # Generate sorted args.
+        _args.append(_prepare_args(func, args, kwargs, istart, iend))
+        
     # Start processes.
+    return _start_proc(arr, _args, npool)
+
+
+def _prepare_args(func, args, kwargs, istart, iend):
+    _arg = []
+    _arg.append(func)
+    if args is not None:
+        for a in args:
+            _arg.append(a)
+    if kwargs is not None:
+        _arg.append(kwargs)
+    _arg.append(istart)
+    _arg.append(iend)
+    return _arg
+
+
+def _start_proc(arr, args, npool):
+    shared_arr = get_shared(arr)
     with closing(
-        mp.Pool(processes=npool,
+        mp.Pool(processes=len(args),
                 initializer=init_shared,
                 initargs=(shared_arr,))) as p:
-        p.map_async(_arg_parser, arg)
+        p.map_async(_arg_parser, args)
     p.join()
     p.close()
     return shared_arr

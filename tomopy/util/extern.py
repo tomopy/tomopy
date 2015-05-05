@@ -163,11 +163,11 @@ def c_art(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[7]['num_iter']),
-        dtype.as_c_int(args[8]),  # istart
-        dtype.as_c_int(args[9]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_bart(*args):
@@ -183,13 +183,13 @@ def c_bart(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[8]['num_iter']),
-        dtype.as_c_int(args[9]['num_block']),
-        dtype.as_c_float_p(args[7]['ind_block']),
-        dtype.as_c_int(args[10]),  # istart
-        dtype.as_c_int(args[11]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_int(args[5]['num_block']),
+        dtype.as_c_float_p(args[5]['ind_block']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_fbp(*args):
@@ -205,11 +205,11 @@ def c_fbp(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_char_p(args[7]['filter_name']),
-        dtype.as_c_int(args[8]),  # istart
-        dtype.as_c_int(args[9]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_gridrec(*args):
@@ -225,11 +225,11 @@ def c_gridrec(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_char_p(args[7]['filter_name']),
-        dtype.as_c_int(args[8]),  # istart
-        dtype.as_c_int(args[9]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_mlem(*args):
@@ -245,11 +245,11 @@ def c_mlem(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[7]['num_iter']),
-        dtype.as_c_int(args[8]),  # istart
-        dtype.as_c_int(args[9]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_osem(*args):
@@ -265,13 +265,13 @@ def c_osem(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[8]['num_iter']),
-        dtype.as_c_int(args[9]['num_block']),
-        dtype.as_c_float_p(args[7]['ind_block']),
-        dtype.as_c_int(args[10]),  # istart
-        dtype.as_c_int(args[11]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_int(args[5]['num_block']),
+        dtype.as_c_float_p(args[5]['ind_block']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_ospml_hybrid(*args):
@@ -287,14 +287,14 @@ def c_ospml_hybrid(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[9]['num_iter']),
-        dtype.as_c_float_p(args[7]['reg_par']),
-        dtype.as_c_int(args[10]['num_block']),
-        dtype.as_c_float_p(args[8]['ind_block']),
-        dtype.as_c_int(args[11]),  # istart
-        dtype.as_c_int(args[12]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_float_p(args[5]['reg_par']),
+        dtype.as_c_int(args[5]['num_block']),
+        dtype.as_c_float_p(args[5]['ind_block']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_ospml_quad(*args):
@@ -310,14 +310,14 @@ def c_ospml_quad(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[9]['num_iter']),
-        dtype.as_c_float_p(args[7]['reg_par']),
-        dtype.as_c_int(args[10]['num_block']),
-        dtype.as_c_float_p(args[8]['ind_block']),
-        dtype.as_c_int(args[11]),  # istart
-        dtype.as_c_int(args[12]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_float_p(args[5]['reg_par']),
+        dtype.as_c_int(args[5]['num_block']),
+        dtype.as_c_float_p(args[5]['ind_block']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_pml_hybrid(*args):
@@ -333,12 +333,12 @@ def c_pml_hybrid(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[8]['num_iter']),
-        dtype.as_c_float_p(args[7]['reg_par']),
-        dtype.as_c_int(args[9]),  # istart
-        dtype.as_c_int(args[10]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_float_p(args[5]['reg_par']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_pml_quad(*args):
@@ -354,12 +354,12 @@ def c_pml_quad(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[8]['num_iter']),
-        dtype.as_c_float_p(args[7]['reg_par']),
-        dtype.as_c_int(args[9]),  # istart
-        dtype.as_c_int(args[10]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_float_p(args[5]['reg_par']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
 
 
 def c_sirt(*args):
@@ -375,8 +375,8 @@ def c_sirt(*args):
         dtype.as_c_float_p(args[3]),  # center
         dtype.as_c_float_p(args[4]),  # theta
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]),  # num_gridx
-        dtype.as_c_int(args[6]),  # num_gridy
-        dtype.as_c_int(args[7]['num_iter']),
-        dtype.as_c_int(args[8]),  # istart
-        dtype.as_c_int(args[9]))  # iend
+        dtype.as_c_int(args[5]['num_gridx']),
+        dtype.as_c_int(args[5]['num_gridy']),
+        dtype.as_c_int(args[5]['num_iter']),
+        dtype.as_c_int(args[6]),  # istart
+        dtype.as_c_int(args[7]))  # iend
