@@ -153,7 +153,6 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
         tomo[:, m, :] = sli[xshift:dx + xshift, 0:dz]
 
 
-
 def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     """
     Remove horizontal stripes from sinogram using Titarenko's
