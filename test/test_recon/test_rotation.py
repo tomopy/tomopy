@@ -54,7 +54,6 @@ import numpy as np
 import os.path
 import shutil
 from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
 
 
 __author__ = "Doga Gursoy"
@@ -74,7 +73,8 @@ def test_write_center():
         assert_equals(
             os.path.isfile(
                 os.path.join(
-                    'tmp/center', str('{:.2f}'.format(cen[m]) + '.tiff'))), True)
+                    os.path.join('tmp', 'center'),
+                    str('{:.2f}'.format(cen[m]) + '.tiff'))), True)
     shutil.rmtree(dpath)
 
 
