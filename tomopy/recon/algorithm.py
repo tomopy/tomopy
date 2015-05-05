@@ -70,8 +70,7 @@ __all__ = ['recon']
 
 
 def recon(
-        tomo, theta, center=None, emission=False,
-        num_gridx=None, num_gridy=None, algorithm=None, 
+        tomo, theta, center=None, emission=False, algorithm=None,
         ncore=None, nchunk=None, **kwargs):
     """
     Reconstruct object from projection data.
@@ -86,10 +85,6 @@ def recon(
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
-    num_gridx, num_gridy : int, optional
-        Number of pixels along x- and y-axes in the reconstruction grid.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
     algorithm : {str, function}
         One of the following string values.
 
@@ -121,6 +116,10 @@ def recon(
         'sirt'
             Simultaneous algebraic reconstruction technique.
 
+    num_gridx, num_gridy : int, optional
+        Number of pixels along x- and y-axes in the reconstruction grid.
+    num_iter : int, optional
+        Number of algorithm iterations performed.
     num_block : int, optional
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
@@ -141,21 +140,21 @@ def recon(
     """
 
     allowed_kwargs = {
-        'art': ['num_iter'],
-        'bart': ['num_iter', 'num_block', 'ind_block'],
-        'fbp': ['filter_name'],
-        'gridrec': ['filter_name'],
-        'mlem': ['num_iter'],
-        'osem': ['num_iter', 'num_block', 'ind_block'],
-        'ospml_hybrid': ['num_iter', 'reg_par', 'num_block', 'ind_block'],
-        'ospml_quad': ['num_iter', 'reg_par', 'num_block', 'ind_block'],
-        'pml_hybrid': ['num_iter', 'reg_par'],
-        'pml_quad': ['num_iter', 'reg_par'],
-        'sirt': ['num_iter'],
+        'art': ['num_gridx', 'num_gridy', 'num_iter'],
+        'bart': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
+        'fbp': ['num_gridx', 'num_gridy', 'filter_name'],
+        'gridrec': ['num_gridx', 'num_gridy', 'filter_name'],
+        'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
+        'osem': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
+        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block', 'ind_block'],
+        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block', 'ind_block'],
+        'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+        'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+        'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
     }
 
     args = _get_algorithm_args(
-        tomo.shape, theta, center, emission, num_gridx, num_gridy)
+        tomo.shape, theta, center, emission)
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
 
     if isinstance(algorithm, str):
@@ -172,7 +171,9 @@ def recon(
                          (list(allowed_kwargs.keys()),))
 
     tomo = dtype.as_float32(tomo)
-    recon = 1e-6 * np.ones((tomo.shape[1], args[5], args[6]), dtype='float32')
+    recon = 1e-6 * np.ones(
+        (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
+        dtype='float32')
     return _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk)
 
 
@@ -214,22 +215,21 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
         nchunk=nchunk)
 
 
-def _get_algorithm_args(shape, theta, center, emission, num_gridx, num_gridy):
+def _get_algorithm_args(shape, theta, center, emission):
     dx, dy, dz = shape
     theta = dtype.as_float32(theta)
     center = get_center(shape, center)
-    if num_gridx is None:
-        num_gridx = shape[2]
-    if num_gridy is None:
-        num_gridy = shape[2]
-    return (dx, dy, dz, center, theta, num_gridx, num_gridy)
+    return (dx, dy, dz, center, theta)
 
 
 def _get_algorithm_kwargs(shape):
+    dx, dy, dz = shape
     return {
+        'num_gridx': dz,
+        'num_gridy': dz,
         'filter_name': np.array('shepp', dtype=(str, 16)),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, shape[0], dtype='float32'),
+        'ind_block': np.arange(0, dx, dtype='float32'),
     }
