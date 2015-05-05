@@ -86,7 +86,7 @@ def read_tiff(fname, slc=None):
         String defining the path or file name.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns
@@ -116,7 +116,7 @@ def read_tiff_stack(fname, ind, digit, slc=None):
         Number of digits in indexing stacked files.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
     """
     fname = os.path.abspath(fname)
@@ -143,7 +143,7 @@ def read_edf(fname, slc=None):
         String defining the path or file name.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns
@@ -174,7 +174,7 @@ def read_hdf5(fname, group, slc=None):
         Path to the group inside hdf5 file where data is located.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns
@@ -202,7 +202,7 @@ def read_netcdf4(fname, group, slc=None):
         Variable name where data is stored.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns
@@ -228,7 +228,7 @@ def read_spe(fname, slc=None):
         String defining the path or file name.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns
@@ -253,7 +253,7 @@ def _slice_array(arr, slc):
         Input array to be sliced.
     slc : {sequence, int}
         Range of values for slicing data.
-        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N)) 
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
 
     Returns

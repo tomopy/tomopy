@@ -122,10 +122,10 @@ def distribute_jobs(
             break
         if iend > ndim:
             iend = ndim
-        
+
         # Generate sorted args.
         _args.append(_prepare_args(func, args, kwargs, istart, iend))
-        
+
     # Start processes.
     return _start_proc(arr, _args, npool)
 

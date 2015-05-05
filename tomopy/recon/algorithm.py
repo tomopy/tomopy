@@ -92,7 +92,7 @@ def recon(
             Algebraic reconstruction technique :cite:`Kak:98`.
         'bart'
             Block algebraic reconstruction technique.
-        'fbp' 
+        'fbp'
             Filtered back-projection algorithm.
         'gridrec'
             Fourier grid reconstruction algorithm :cite:`Dowd:99`.
@@ -103,13 +103,13 @@ def recon(
             Ordered-subset expectation maximization algorithm
             :cite:`Hudson:94`.
         'ospml_hybrid'
-            Ordered-subset penalized maximum likelihood algorithm with 
+            Ordered-subset penalized maximum likelihood algorithm with
             weighted linear and quadratic penalties.
         'ospml_quad'
-            Ordered-subset penalized maximum likelihood algorithm with 
+            Ordered-subset penalized maximum likelihood algorithm with
             quadratic penalties.
         'pml_hybrid'
-            Penalized maximum likelihood algorithm with weighted linear 
+            Penalized maximum likelihood algorithm with weighted linear
             and quadratic penalties :cite:`Chang:04`.
         'pml_quad'
             Penalized maximum likelihood algorithm with quadratic penalty.
@@ -141,13 +141,17 @@ def recon(
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
-        'bart': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
+        'bart': ['num_gridx', 'num_gridy', 'num_iter',
+                 'num_block', 'ind_block'],
         'fbp': ['num_gridx', 'num_gridy', 'filter_name'],
         'gridrec': ['num_gridx', 'num_gridy', 'filter_name'],
         'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
-        'osem': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
-        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block', 'ind_block'],
-        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block', 'ind_block'],
+        'osem': ['num_gridx', 'num_gridy', 'num_iter',
+                 'num_block', 'ind_block'],
+        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
+                         'reg_par', 'num_block', 'ind_block'],
+        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
+                       'reg_par', 'num_block', 'ind_block'],
         'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
         'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
         'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -174,7 +178,8 @@ def recon(
     recon = 1e-6 * np.ones(
         (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
         dtype='float32')
-    return _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk)
+    return _call_c_func(
+        tomo, recon, algorithm, args, kwargs, ncore, nchunk)
 
 
 def _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk):

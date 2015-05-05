@@ -67,7 +67,7 @@ def test_read_tiff():
 def test_read_tiff_stack():
     fname = os.path.join('test', 'data', 'reader_00000.tiff')
     assert_allclose(
-        read_tiff_stack(fname, ind=range(0, 4), digit=5), 
+        read_tiff_stack(fname, ind=range(0, 4), digit=5),
         np.ones((4, 8, 16)))
 
 
