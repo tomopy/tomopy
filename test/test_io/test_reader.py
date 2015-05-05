@@ -71,7 +71,7 @@ def test_read_tiff_stack():
         np.ones((4, 8, 16)))
 
 
-def read_hdf5():
+def test_read_hdf5():
     fname = os.path.join('test', 'data', 'reader.h5')
     gname = os.path.join('exchange', 'data')
     assert_allclose(read_hdf5(fname, gname), np.ones((4, 8, 16)))
