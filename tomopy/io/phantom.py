@@ -54,8 +54,10 @@ from __future__ import absolute_import, division, print_function
 
 from skimage import io as sio
 import numpy as np
-import os
+import os.path
 import logging
+
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
