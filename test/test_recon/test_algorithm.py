@@ -59,7 +59,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-class TestRecon:
+class TestRecon(object):
 
     def __init__(self):
         self.prj = read_file('proj.npy')
