@@ -43,6 +43,11 @@
 
 #include "utils.h"
 
+//for windows build
+void initlibtomopy()
+{
+
+}
 
 void 
 preprocessing(
