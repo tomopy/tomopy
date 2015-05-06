@@ -58,7 +58,8 @@
 
 
 DLL void 
-apply_pad(
+sample(
+    int mode, 
     float* data, 
     int dx, int dy, int dz, 
     int axis, int npad, float* out);

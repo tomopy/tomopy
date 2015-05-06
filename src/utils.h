@@ -254,7 +254,7 @@ preprocessing(
     float center, float *mov, 
     float *gridx, float *gridy);
 
-bool 
+int 
 calc_quadrant(
     float theta_p); 
 

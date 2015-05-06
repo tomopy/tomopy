@@ -49,10 +49,6 @@
 from __future__ import absolute_import, division, print_function
 
 from tomopy.io.phantom import *
-import numpy as np
-import os
-import shutil
-import h5py
 from nose.tools import assert_equals
 
 

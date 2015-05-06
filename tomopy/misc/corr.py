@@ -53,32 +53,61 @@ Module for data correction functions.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import ctypes
-import os
-import tomopy.misc.mproc as mp
 from scipy.ndimage import filters
-from tomopy.util import *
+import tomopy.util.mproc as mproc
+import tomopy.util.dtype as dtype
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['gaussian_filter',
+__all__ = ['adjust_range',
+           'gaussian_filter',
            'median_filter',
            'remove_nan',
-           'remove_neg']
+           'remove_neg',
+           'remove_outlier']
 
 
-def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
+def adjust_range(arr, dmin=None, dmax=None):
+    """
+    Change dynamic range of values in an array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+
+    dmin, dmax : float, optional
+        Mininum and maximum values to rescale data.
+
+    Returns
+    -------
+    ndarray
+        Output array.
+    """
+    if dmax is None:
+        dmax = np.max(arr)
+    if dmin is None:
+        dmin = np.min(arr)
+    if dmax < np.max(arr):
+        arr[arr > dmax] = dmax
+    if dmin > np.min(arr):
+        arr[arr < dmin] = dmin
+    return arr
+
+
+def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     """
     Apply Gaussian filter to 3D array along specified axis.
 
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        Input array.
     sigma : scalar or sequence of scalars
         Standard deviation for Gaussian kernel. The standard deviations
         of the Gaussian filter are given for each axis as a sequence, or
@@ -102,29 +131,21 @@ def gaussian_filter(arr, sigma, order=0, axis=0, ncore=None, nchunk=None):
     ndarray
         3D array of same shape as input.
     """
-    arr = as_float32(arr)
-    arr = mp.distribute_jobs(
-        arr,
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
+        arr.swapaxes(0, axis),
         func=_gaussian_filter,
         args=(sigma, order, axis),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    return arr.swapaxes(0, axis)
 
 
 def _gaussian_filter(sigma, order, axis, istart, iend):
-    arr = mp.SHARED_ARRAY
+    arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
-        if axis == 0:
-            arr[m, :, :] = filters.gaussian_filter(
-                arr[m, :, :], sigma, order)
-        elif axis == 1:
-            arr[:, m, :] = filters.gaussian_filter(
-                arr[:, m, :], sigma, order)
-        elif axis == 2:
-            arr[:, :, m] = filters.gaussian_filter(
-                arr[:, :, m], sigma, order)
+        arr[m] = filters.gaussian_filter(arr[m], sigma, order)
 
 
 def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
@@ -134,7 +155,7 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        Input array.
     size : int, optional
         The size of the filter.
     axis : int, optional
@@ -149,29 +170,21 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     ndarray
         Median filtered 3D array.
     """
-    arr = as_float32(arr)
-    arr = mp.distribute_jobs(
-        arr,
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
+        arr.swapaxes(0, axis),
         func=_median_filter,
         args=(size, axis),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    return arr.swapaxes(0, axis)
 
 
 def _median_filter(size, axis, istart, iend):
-    arr = mp.SHARED_ARRAY
+    arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
-        if axis == 0:
-            arr[m, :, :] = filters.median_filter(
-                arr[m, :, :], (size, size))
-        elif axis == 1:
-            arr[:, m, :] = filters.median_filter(
-                arr[:, m, :], (size, size))
-        elif axis == 2:
-            arr[:, :, m] = filters.median_filter(
-                arr[:, :, m], (size, size))
+        arr[m] = filters.median_filter(arr[m], (size, size))
 
 
 def remove_nan(arr, val=0.):
@@ -181,7 +194,7 @@ def remove_nan(arr, val=0.):
     Parameters
     ----------
     arr : ndarray
-        Input data.
+        Input array.
     val : float, optional
         Values to be replaced with NaN values in array.
 
@@ -190,6 +203,7 @@ def remove_nan(arr, val=0.):
     ndarray
        Corrected array.
     """
+    arr = dtype.as_float32(arr)
     arr[np.isnan(arr)] = val
     return arr
 
@@ -210,5 +224,75 @@ def remove_neg(arr, val=0.):
     ndarray
        Corrected array.
     """
+    arr = dtype.as_float32(arr)
     arr[arr < 0.0] = val
     return arr
+
+
+def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
+    """
+    Remove high intensity bright spots from a 3D array along specified
+    dimension.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which median filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
+        arr.swapaxes(0, axis),
+        func=_remove_outlier,
+        args=(dif, size),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr.swapaxes(0, axis)
+
+
+def _remove_outlier(dif, size, istart, iend):
+    arr = mproc.SHARED_ARRAY
+    for m in range(istart, iend):
+        arr[m] = _remove_outlier_from_img(arr[m], dif, size)
+
+
+def _remove_outlier_from_img(img, dif, size):
+    """
+    Remove high intensity bright spots from an image.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    img = dtype.as_float32(img)
+    mask = np.zeros(img.shape)
+    tmp = filters.median_filter(img, (size, size))
+    mask = ((img - tmp) >= dif).astype(int)
+    return tmp * mask + img * (1 - mask)

@@ -1,6 +1,6 @@
 package:
   name: tomopy
-  version: '0.1.5'
+  version: '0.1.6'
 
 source:
   git_url: https://github.com/dgursoy/tomopy.git
@@ -29,14 +29,25 @@ test:
   imports:
     - tomopy
     - tomopy.io
-    - tomopy.io.data
+    - tomopy.io.reader
+    - tomopy.io.writer
     - tomopy.io.exchange
     - tomopy.io.phantom
+    - tomopy.misc
     - tomopy.misc.corr
+    - tomopy.misc.mask
     - tomopy.misc.morph
-    - tomopy.misc.mproc
     - tomopy.prep
+    - tomopy.prep.normalize
+    - tomopy.prep.phase
+    - tomopy.prep.stripe
     - tomopy.recon
+    - tomopy.recon.algorithm
+    - tomopy.recon.rotation
+    - tomopy.util
+    - tomopy.util.dtype
+    - tomopy.util.extern
+    - tomopy.util.mproc
 
 about:
   home: http://tomopy.readthedocs.org

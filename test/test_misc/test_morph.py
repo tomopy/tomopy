@@ -48,63 +48,28 @@
 
 from __future__ import absolute_import, division, print_function
 
+from test.util import read_file, loop_dim
 from tomopy.misc.morph import *
 import numpy as np
 from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
 
 
-def test_apply_pad():
-    assert_equals(
-        apply_pad(np.ones((4, 8, 16)), npad=20, axis=0, val=1.).shape,
-        (20, 8, 16))
-    assert_equals(
-        apply_pad(np.ones((4, 8, 16)), npad=20, axis=1, val=1.).shape,
-        (4, 20, 16))
-    assert_equals(
-        apply_pad(np.ones((4, 8, 16)), npad=20, axis=2, val=1.).shape,
-        (4, 8, 20))
-    assert_equals(
-        np.isnan(apply_pad(np.ones((4, 8, 16)))).sum(),
-        0)
-    assert_array_almost_equal(
-        apply_pad(np.ones((4, 8, 16)), axis=0, val=1.),
-        np.ones((6, 8, 16)))
-    assert_array_almost_equal(
-        apply_pad(np.ones((4, 8, 16)), axis=1, val=1.),
-        np.ones((4, 12, 16)))
-    assert_array_almost_equal(
-        apply_pad(np.ones((4, 8, 16)), axis=2, val=1.),
-        np.ones((4, 8, 23)))
-
-
-def test_downsample():
-    assert_array_almost_equal(
-        downsample(np.ones((4, 8, 16)), level=1, axis=0),
-        np.ones((2, 8, 16)))
-    assert_array_almost_equal(
-        downsample(np.ones((4, 8, 16)), level=2, axis=1),
-        np.ones((4, 2, 16)))
-    assert_array_almost_equal(
-        downsample(np.ones((4, 8, 16)), level=3, axis=2),
-        np.ones((4, 8, 2)))
-
-
-def test_upsample():
-    assert_array_almost_equal(
-        upsample(np.ones((4, 8, 16)), level=3, axis=0),
-        np.ones((32, 8, 16)))
-    assert_array_almost_equal(
-        upsample(np.ones((4, 8, 16)), level=2, axis=1),
-        np.ones((4, 32, 16)))
-    assert_array_almost_equal(
-        upsample(np.ones((4, 8, 16)), level=1, axis=2),
-        np.ones((4, 8, 32)))
-
-
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+
+
+def test_pad():
+    loop_dim(pad, read_file('obj.npy'))
+
+
+def test_downsample():
+    loop_dim(downsample, read_file('obj.npy'))
+
+
+def test_upsample():
+    loop_dim(upsample, read_file('obj.npy'))
 
 
 if __name__ == '__main__':
