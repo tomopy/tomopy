@@ -263,20 +263,20 @@ def _slice_array(arr, slc):
     ndarray
         Sliced array.
     """
-    if not isinstance(slc, (list, tuple)):
+    if not isinstance(slc, (tuple)):
         slc = (slc, )
     if all(v is None for v in slc):
         return arr[:]
+    axis_slice = ()
     for m, s in enumerate(slc):
-        if s is not None:
-            if len(s) < 2:
-                s += (arr.shape[m], )
-            if len(s) < 3:
-                s += (1, )
-            axis_slice = slice(s[0], s[1], s[2])
-            arr = np.swapaxes(arr, 0, m)[axis_slice]
-            arr = np.swapaxes(arr, 0, m)
-    return arr
+        if s is None:
+            s = (0, )
+        if len(s) < 2:
+            s += (arr.shape[m], )
+        if len(s) < 3:
+            s += (1, )
+        axis_slice = axis_slice + (slice(s[0], s[1], s[2]), )
+    return arr[axis_slice]
 
 
 def _list_file_stack(fname, ind, digit):
