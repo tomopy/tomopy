@@ -5,16 +5,16 @@ TomoPy
    :target: https://readthedocs.org/projects/tomopy/?badge=latest
    :alt: Read the Docs
 
-.. image:: https://travis-ci.org/dgursoy/tomopy.svg?branch=master
-   :target: https://travis-ci.org/dgursoy/tomopy
+.. image:: https://travis-ci.org/tomopy/tomopy.svg?branch=master
+   :target: https://travis-ci.org/tomopy/tomopy
    :alt: Travis CI
 
 .. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
-   :target: https://coveralls.io/r/dgursoy/tomopy?branch=master
+   :target: https://coveralls.io/r/tomopy/tomopy?branch=master
    :alt: Coveralls
    
-.. image:: https://codeclimate.com/github/dgursoy/tomopy/badges/gpa.svg
-   :target: https://codeclimate.com/github/dgursoy/tomopy
+.. image:: https://codeclimate.com/github/tomopy/tomopy/badges/gpa.svg
+   :target: https://codeclimate.com/github/tomopy/tomopy
    :alt: Code Climate
 
 .. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
