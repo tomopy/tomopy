@@ -70,8 +70,8 @@ __all__ = ['recon']
 
 
 def recon(
-        tomo, theta, center=None, emission=False, algorithm=None,
-        ncore=None, nchunk=None, **kwargs):
+        tomo, theta, center=None, emission=True, algorithm=None,
+        init_recon=None, ncore=None, nchunk=None, **kwargs):
     """
     Reconstruct object from projection data.
 
@@ -128,6 +128,8 @@ def recon(
         Number of algorithm iterations performed.
     reg_par : float, optional
         Regularization parameter for smoothing.
+    init_recon : ndarray, optional
+        Initial guess of the reconstruction.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -137,6 +139,19 @@ def recon(
     -------
     ndarray
         Reconstructed 3D object.
+
+    Example
+    -------
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>> rec = tomopy.recon(sim, ang, algorithm='art') # Reconstruct object.
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
     """
 
     allowed_kwargs = {
@@ -157,32 +172,49 @@ def recon(
         'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
     }
 
-    args = _get_algorithm_args(
-        tomo.shape, theta, center, emission)
+    # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
-
     if isinstance(algorithm, str):
-        # Make sure have allowed kwargs appropriate for algorithm
+        # Make sure have allowed kwargs appropriate for algorithm.
         for key in kwargs:
             if key not in allowed_kwargs[algorithm]:
                 raise ValueError('%s keyword not in allowed keywords %s' %
                                  (key, allowed_kwargs[algorithm]))
-        # Set kwarg defaults
+        # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
     elif algorithm is None:
         raise ValueError('Keyword "algorithm" must be one of %s.' %
                          (list(allowed_kwargs.keys()),))
 
-    tomo = dtype.as_float32(tomo)
-    recon = 1e-6 * np.ones(
+    # Generate args for the algorithm.
+    args = _get_algorithm_args(tomo.shape, theta, center)
+
+    # Initialize tomography data and initial reconstruction.
+    tomo = _init_tomo(tomo, emission)
+    recon = _init_recon(
         (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
-        dtype='float32')
-    return _call_c_func(
-        tomo, recon, algorithm, args, kwargs, ncore, nchunk)
+        init_recon)
+    return _dist_recon(
+        tomo, recon, _get_c_func(algorithm), args, kwargs, ncore, nchunk)
 
 
-def _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
+def _init_tomo(tomo, emission):
+    tomo = dtype.as_float32(tomo)
+    if not emission:
+        tomo = -np.log(tomo)
+    return tomo
+
+
+def _init_recon(shape, init_recon, val=1e-6):
+    if init_recon is None:
+        recon = val * np.ones(shape, dtype='float32')
+    else:
+        recon = dtype.as_float32(recon)
+    return recon
+
+
+def _get_c_func(algorithm):
     if algorithm == 'art':
         func = extern.c_art
     elif algorithm == 'bart':
@@ -205,7 +237,7 @@ def _call_c_func(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
         func = extern.c_pml_quad
     elif algorithm == 'sirt':
         func = extern.c_sirt
-    return _dist_recon(tomo, recon, func, args, kwargs, ncore, nchunk)
+    return func
 
 
 def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
@@ -220,7 +252,7 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
         nchunk=nchunk)
 
 
-def _get_algorithm_args(shape, theta, center, emission):
+def _get_algorithm_args(shape, theta, center):
     dx, dy, dz = shape
     theta = dtype.as_float32(theta)
     center = get_center(shape, center)
