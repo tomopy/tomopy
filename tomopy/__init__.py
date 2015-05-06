@@ -66,3 +66,9 @@ from tomopy.recon.algorithm import *
 from tomopy.recon.rotation import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
+
+try:
+    import pkg_resources
+    __version__ = pkg_resources.require("tomopy")[0].version
+except:
+    pass
