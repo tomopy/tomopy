@@ -174,7 +174,13 @@ gridrec(
             while(j<dz)  
             {     
                 sino[j].r = data3d[p][s][j];
-                sino[j].i = data3d[p][s+1][j];
+                if (!(dy == 1 || iend-istart == 1))
+                {
+                    sino[j].i = data3d[p][s+1][j];
+                } else {
+                    sino[j].i = 0.0;
+                }
+                    
                 j++;
             }
 
@@ -299,7 +305,10 @@ gridrec(
                     {
                         corrn = corrn_u*winv[k+padx]; 
                         recon3d[s][ngridx-1-k][j] = corrn*H[iu][iv].r;
-                        recon3d[s+1][ngridx-1-k][j] = corrn*H[iu][iv].i;
+                        if (!(dy == 1 || iend-istart == 1))
+                        {
+                            recon3d[s+1][ngridx-1-k][j] = corrn*H[iu][iv].i;
+                        }
                     }
                     if(k<ngridx)
                     {
