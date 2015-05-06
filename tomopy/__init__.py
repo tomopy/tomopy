@@ -69,6 +69,6 @@ from tomopy.sim.propagate import *
 
 try:
     import pkg_resources
-    __version__ = pkg_resources.require("tomopy")[0].version
+    __version__ = pkg_resources.working_set.require("tomopy")[0].version
 except:
     pass
