@@ -181,7 +181,6 @@ def write_tiff(
     if not overwrite:
         if os.path.isfile(fname):
             fname = _suggest_new_fname(fname, digit=1)
-    print (fname)
     sio.imsave(os.path.abspath(fname), data, plugin='tifffile')
 
 
