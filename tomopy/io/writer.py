@@ -53,6 +53,7 @@ Module for data I/O.
 from __future__ import absolute_import, division, print_function
 
 from tomopy.misc.corr import adjust_range
+import tomopy.util.dtype as dt
 from skimage import io as sio
 import warnings
 import numpy as np
@@ -67,6 +68,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['write_hdf5',
+           'write_npy',
            'write_tiff',
            'write_tiff_stack']
 
@@ -75,19 +77,19 @@ def _get_body(fname):
     """
     Get file name after extension removed.
     """
-    return fname.split(".")[-2]
+    return os.path.splitext(fname)[0]
 
 
 def _get_extension(fname):
     """
     Get file extension.
     """
-    return fname.split(".")[-1]
+    return '.' + fname.split(".")[-1]
 
 
 def _init_dirs(fname):
     """
-    Initializes directories for saving output files.
+    Initialize directories for saving output files.
 
     Parameters
     ----------
@@ -118,18 +120,33 @@ def _suggest_new_fname(fname, digit):
     str
         Indexed new string.
     """
-    body = _get_body(fname)
-    ext = '.' + _get_extension(fname)
-    indq = 1
-    file_exist = False
-    while not file_exist:
-        _body = body + '-' + '{0:0={1}d}'.format(indq, digit)
-        if not os.path.isfile(_body + ext):
-            file_exist = True
-            fname = _body
-        else:
-            indq += 1
-    return fname + ext
+    if os.path.isfile(fname):
+        body = _get_body(fname)
+        ext = _get_extension(fname)
+        indq = 1
+        file_exist = False
+        while not file_exist:
+            fname = body + '-' + '{0:0={1}d}'.format(indq, digit) + ext
+            if not os.path.isfile(fname):
+                file_exist = True
+            else:
+                indq += 1
+    return fname
+
+
+def _init_write(arr, fname, ext, dtype, overwrite):
+    if not isinstance(fname, basestring):
+        fname = 'tmp/data' + ext
+    else:
+        if not fname.endswith(ext):
+            fname = fname + ext
+    fname = os.path.abspath(fname)
+    if not overwrite:
+        fname = _suggest_new_fname(fname, digit=1)
+    _init_dirs(fname)
+    if dtype is not None:
+        arr = dt.as_dtype(arr, dtype)
+    return fname, arr
 
 
 def write_hdf5(
@@ -141,9 +158,10 @@ def write_hdf5(
     Parameters
     ----------
     data : ndarray
-        Input data.
+        Array data to be saved.
     fname : str
-        Output file name.
+        File name to which the data is saved. ``.h5`` extension
+        will be appended if it does not already have one.
     gname : str, optional
         Path to the group inside hdf5 file where data will be written.
     dtype : data-type, optional
@@ -151,39 +169,52 @@ def write_hdf5(
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
-    if dtype is not None:
-        data = as_dtype(data, dtype)
-    f = h5py.File(os.path.abspath(fname), 'w')
+    fname, data = _init_write(data, fname, '.h5', dtype, overwrite)
+    f = h5py.File(fname, 'w')
     ds = f.create_dataset('implements', data="exchange")
     exchangeGrp = f.create_group(gname)
     ds = exchangeGrp.create_dataset('data', data=data)
     f.close()
 
 
-def write_tiff(
-        data, fname='tmp/data.tiff', dtype=None, overwrite=False):
+def write_npy(
+        data, fname='tmp/data.npy', dtype=None, overwrite=False):
     """
-    Write data to tiff file.
+    Write data to a binary file in NumPy ``.npy`` format.
 
     Parameters
     ----------
     data : ndarray
-        Input data.
+        Array data to be saved.
     fname : str
-        Output file name.
+        File name to which the data is saved. ``.npy`` extension
+        will be appended if it does not already have one.
+    """
+    fname, data = _init_write(data, fname, '.npy', dtype, overwrite)
+    np.save(fname, data)
+
+
+def write_tiff(
+        data, fname='tmp/data.tiff', dtype=None, overwrite=False):
+    """
+    Write image data to a tiff file.
+
+    Parameters
+    ----------
+    data : ndarray
+        Array data to be saved.
+    fname : str
+        File name to which the data is saved. ``.tiff`` extension
+        will be appended if it does not already have one.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
-    if dtype is not None:
-        data = as_dtype(data, dtype)
-    fname = os.path.abspath(fname)
-    _init_dirs(fname)
-    if not overwrite:
-        if os.path.isfile(fname):
-            fname = _suggest_new_fname(fname, digit=1)
-    sio.imsave(os.path.abspath(fname), data, plugin='tifffile')
+    fname, data = _init_write(data, fname, '.tiff', dtype, overwrite)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        sio.imsave(fname, data, plugin='tifffile')
 
 
 def write_tiff_stack(
@@ -195,9 +226,10 @@ def write_tiff_stack(
     Parameters
     ----------
     data : ndarray
-        Input data.
+        Array data to be saved.
     fname : str
-        Output file name.
+        Base file name to which the data is saved. ``.tiff`` extension
+        will be appended if it does not already have one.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     axis : int, optional
@@ -209,18 +241,12 @@ def write_tiff_stack(
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
-    if dtype is not None:
-        data = as_dtype(data, dtype)
-    fname = os.path.abspath(fname)
+    fname, data = _init_write(data, fname, '.tiff', dtype, True)
     body = _get_body(fname)
     ext = _get_extension(fname)
-    _init_dirs(fname)
     _data = np.swapaxes(data, 0, axis)
     for m in range(start, start + data.shape[axis]):
-        _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + '.' + ext
+        _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + ext
         if not overwrite:
-            if os.path.isfile(_fname):
-                _fname = _suggest_new_fname(_fname, digit=1)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            sio.imsave(_fname, _data[m - start], plugin='tifffile')
+            _fname = _suggest_new_fname(_fname, digit=1)
+        write_tiff(_data[m - start], _fname)
