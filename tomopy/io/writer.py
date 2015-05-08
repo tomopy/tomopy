@@ -134,7 +134,7 @@ def _suggest_new_fname(fname, digit):
 
 def write_hdf5(
         data, fname='tmp/data.tiff', gname='exchange',
-        overwrite=False):
+        dtype=None, overwrite=False):
     """
     Write data to hdf5 file in a specific group.
 
@@ -146,9 +146,13 @@ def write_hdf5(
         Output file name.
     gname : str, optional
         Path to the group inside hdf5 file where data will be written.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
+    if dtype is not None:
+        data = as_dtype(data, dtype)
     f = h5py.File(os.path.abspath(fname), 'w')
     ds = f.create_dataset('implements', data="exchange")
     exchangeGrp = f.create_group(gname)
@@ -157,7 +161,7 @@ def write_hdf5(
 
 
 def write_tiff(
-        data, fname='tmp/data.tiff', overwrite=False):
+        data, fname='tmp/data.tiff', dtype=None, overwrite=False):
     """
     Write data to tiff file.
 
@@ -167,15 +171,13 @@ def write_tiff(
         Input data.
     fname : str
         Output file name.
-    axis : int, optional
-        Axis along which stacking is performed.
-    start : int, optional
-        First index of file in stack for saving.
-    digit : int, optional
-        Number of digits in indexing stacked files.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
+    if dtype is not None:
+        data = as_dtype(data, dtype)
     fname = os.path.abspath(fname)
     _init_dirs(fname)
     if not overwrite:
@@ -185,7 +187,7 @@ def write_tiff(
 
 
 def write_tiff_stack(
-        data, fname='tmp/data.tiff', axis=0, digit=5,
+        data, fname='tmp/data.tiff', dtype=None, axis=0, digit=5,
         start=0, overwrite=False):
     """
     Write data to stack of tiff file.
@@ -196,6 +198,8 @@ def write_tiff_stack(
         Input data.
     fname : str
         Output file name.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
     axis : int, optional
         Axis along which stacking is performed.
     start : int, optional
@@ -205,6 +209,8 @@ def write_tiff_stack(
     overwrite: bool, optional
         if True, overwrites the existing file if the file exists.
     """
+    if dtype is not None:
+        data = as_dtype(data, dtype)
     fname = os.path.abspath(fname)
     body = _get_body(fname)
     ext = _get_extension(fname)
