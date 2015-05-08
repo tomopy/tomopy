@@ -80,65 +80,66 @@ art(
     {
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
-        // For each slice
-        for (s=istart; s<iend; s++)
+        preprocessing(ngridx, ngridy, dz, center[0], 
+            &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+
+        // For each projection angle 
+        for (p=0; p<dx; p++) 
         {
-            preprocessing(ngridx, ngridy, dz, center[s], 
-                &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+            // Calculate the sin and cos values 
+            // of the projection angle and find
+            // at which quadrant on the cartesian grid.
+            theta_p = fmod(theta[p], 2*M_PI);
+            quadrant = calc_quadrant(theta_p);
+            sin_p = sinf(theta_p);
+            cos_p = cosf(theta_p);
 
-            // For each projection angle 
-            for (p=0; p<dx; p++) 
+            // For each detector pixel 
+            for (d=0; d<dz; d++) 
             {
-                // Calculate the sin and cos values 
-                // of the projection angle and find
-                // at which quadrant on the cartesian grid.
-                theta_p = fmod(theta[p], 2*M_PI);
-                quadrant = calc_quadrant(theta_p);
-                sin_p = sinf(theta_p);
-                cos_p = cosf(theta_p);
+                // Calculate coordinates
+                xi = -ngridx-ngridy;
+                yi = (1-dz)/2.0+d+mov;
+                calc_coords(
+                    ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
+                    coordx, coordy);
 
-                // For each detector pixel 
-                for (d=0; d<dz; d++) 
+                // Merge the (coordx, gridy) and (gridx, coordy)
+                trim_coords(
+                    ngridx, ngridy, coordx, coordy, gridx, gridy, 
+                    &asize, ax, ay, &bsize, bx, by);
+
+                // Sort the array of intersection points (ax, ay) and
+                // (bx, by). The new sorted intersection points are 
+                // stored in (coorx, coory). Total number of points 
+                // are csize.
+                sort_intersections(
+                    quadrant, asize, ax, ay, bsize, bx, by, 
+                    &csize, coorx, coory);
+
+                // Calculate the distances (dist) between the 
+                // intersection points (coorx, coory). Find the 
+                // indices of the pixels on the reconstruction grid.
+                calc_dist(
+                    ngridx, ngridy, csize, coorx, coory, 
+                    indi, dist);
+
+
+                // Calculate dist*dist
+                float sum_dist2 = 0.0;
+                for (n=0; n<csize-1; n++) 
                 {
-                    // Calculate coordinates
-                    xi = -ngridx-ngridy;
-                    yi = (1-dz)/2.0+d+mov;
-                    calc_coords(
-                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
-                        coordx, coordy);
+                    sum_dist2 += dist[n]*dist[n];
+                }
 
-                    // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(
-                        ngridx, ngridy, coordx, coordy, gridx, gridy, 
-                        &asize, ax, ay, &bsize, bx, by);
-
-                    // Sort the array of intersection points (ax, ay) and
-                    // (bx, by). The new sorted intersection points are 
-                    // stored in (coorx, coory). Total number of points 
-                    // are csize.
-                    sort_intersections(
-                        quadrant, asize, ax, ay, bsize, bx, by, 
-                        &csize, coorx, coory);
-
-                    // Calculate the distances (dist) between the 
-                    // intersection points (coorx, coory). Find the 
-                    // indices of the pixels on the reconstruction grid.
-                    calc_dist(
-                        ngridx, ngridy, csize, coorx, coory, 
-                        indi, dist);
+                // For each slice
+                for (s=istart; s<iend; s++)
+                {
 
                     // Calculate simdata 
                     calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
                         csize, indi, dist, recon,
                         simdata); // Output: simdata
-
-
-                    // Calculate dist*dist
-                    float sum_dist2 = 0.0;
-                    for (n=0; n<csize-1; n++) 
-                    {
-                        sum_dist2 += dist[n]*dist[n];
-                    }
 
                     // Update
                     if (sum_dist2 != 0.0) 
