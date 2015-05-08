@@ -73,14 +73,17 @@ __all__ = ['write_hdf5',
            'write_tiff_stack']
 
 
-def _get_body(fname):
+def get_body(fname, digit=None):
     """
     Get file name after extension removed.
     """
-    return os.path.splitext(fname)[0]
+    body = os.path.splitext(fname)[0]
+    if digit is not None:
+        body = ''.join(body[:-digit])
+    return body
 
 
-def _get_extension(fname):
+def get_extension(fname):
     """
     Get file extension.
     """
@@ -121,8 +124,8 @@ def _suggest_new_fname(fname, digit):
         Indexed new string.
     """
     if os.path.isfile(fname):
-        body = _get_body(fname)
-        ext = _get_extension(fname)
+        body = get_body(fname)
+        ext = get_extension(fname)
         indq = 1
         file_exist = False
         while not file_exist:
@@ -242,11 +245,12 @@ def write_tiff_stack(
         if True, overwrites the existing file if the file exists.
     """
     fname, data = _init_write(data, fname, '.tiff', dtype, True)
-    body = _get_body(fname)
-    ext = _get_extension(fname)
+    body = get_body(fname)
+    ext = get_extension(fname)
     _data = np.swapaxes(data, 0, axis)
     for m in range(start, start + data.shape[axis]):
         _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + ext
         if not overwrite:
             _fname = _suggest_new_fname(_fname, digit=1)
+        print (_fname)
         write_tiff(_data[m - start], _fname)
