@@ -53,16 +53,12 @@ gridrec(
 {
     int s, p, iu, iv;
     float (*filter)(float);
-    float ***data3d, ***recon3d;
     float *sine, *cose, *wtbl, *work, *winv;
     float C, nt, lambda;
     float L;
     int ltbl = 512;
     int itmp, pdim, M02;
     complex *sino, *filphase, **H;
-
-    data3d = convert(data, dx, dy, dz);
-    recon3d = convert(recon, dy, ngridx, ngridy);
 
     filter = get_filter(fname);
 
@@ -173,10 +169,10 @@ gridrec(
             j = 0;
             while(j<dz)  
             {     
-                sino[j].r = data3d[p][s][j];
+                sino[j].r = data[j+s*dz+p*dy*dz];
                 if (!(dy == 1 || iend-istart == 1))
                 {
-                    sino[j].i = data3d[p][s+1][j];
+                    sino[j].i = data[j+(s+1)*dz+p*dy*dz];
                 } else {
                     sino[j].i = 0.0;
                 }
@@ -287,6 +283,10 @@ gridrec(
         int pady = (pdim-ngridy)/2;
         int offsetx = M02+1-padx;
         int offsety = M02+1-pady;
+        int islc1, islc2;
+
+        islc1 = s*ngridx*ngridy;
+        islc2 = (s+1)*ngridx*ngridy;
 
         ustart = pdim-offsety;
         ufin = pdim;
@@ -303,11 +303,12 @@ gridrec(
                 {
                     for(iv=vstart; iv<vfin; k++, iv++)
                     {
-                        corrn = corrn_u*winv[k+padx]; 
-                        recon3d[s][ngridx-1-k][j] = corrn*H[iu][iv].r;
+                        corrn = corrn_u*winv[k+padx];
+                        
+                        recon[islc1+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].r;
                         if (!(dy == 1 || iend-istart == 1))
                         {
-                            recon3d[s+1][ngridx-1-k][j] = corrn*H[iu][iv].i;
+                            recon[islc2+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].i;
                         }
                     }
                     if(k<ngridx)
@@ -450,29 +451,6 @@ legendre(int n, float *coefs, float x)
         last = new;
     }
     return y;
-}
-
-
-float*** 
-convert(float *arr, int dim0, int dim1, int dim2)
-{
-    // Converts a 1-D array to 3-D array given dimensions.
-    float ***r3;
-    r3 = (float ***) malloc(dim0 * sizeof(float**));
-
-    for(int i=0; i<dim0; i++)
-    {
-        r3[i] = (float **) malloc(dim1 * sizeof(float*));
-    }
-        
-    for(int i=0; i<dim0; i++) 
-    {
-        for(int j=0; j<dim1; j++) 
-        {
-            r3[i][j] = arr + i*dim1*dim2 + j*dim2;
-        }
-    }
-    return r3;
 }
 
 

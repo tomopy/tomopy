@@ -86,9 +86,6 @@ gridrec(
     int istart,
     int iend);
 
-float*** 
-convert(float *arr, int dim0, int dim1, int dim2);
-
 float* 
 malloc_vector_f(long n);
 

@@ -74,52 +74,52 @@ project(
     float mov, xi, yi;
     int asize, bsize, csize;
 
-    // For each slice
-    for (s=0; s<dy; s++) 
+    preprocessing(oy, oz, dz, center[0], 
+        &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+
+    // For each projection angle
+    for (p=istart; p<iend; p++) 
     {
-        preprocessing(oy, oz, dz, center[s], 
-            &mov, gridx, gridy); // Outputs: mov, gridx, gridy
+        // Calculate the sin and cos values 
+        // of the projection angle and find
+        // at which quadrant on the cartesian grid.
+        theta_p = fmod(theta[p], 2*M_PI);
+        quadrant = calc_quadrant(theta_p);
+        sin_p = sinf(theta_p);
+        cos_p = cosf(theta_p);
 
-        // For each projection angle
-        for (p=istart; p<iend; p++) 
+        for (d=0; d<dz; d++) 
         {
-            // Calculate the sin and cos values 
-            // of the projection angle and find
-            // at which quadrant on the cartesian grid.
-            theta_p = fmod(theta[p], 2*M_PI);
-            quadrant = calc_quadrant(theta_p);
-            sin_p = sinf(theta_p);
-            cos_p = cosf(theta_p);
+            // Calculate coordinates
+            xi = -oy-oz;
+            yi = (1-dz)/2.0+d+mov;
+            calc_coords(
+                oy, oz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                coordx, coordy);
 
-            for (d=0; d<dz; d++) 
+            // Merge the (coordx, gridy) and (gridx, coordy)
+            trim_coords(
+                oy, oz, coordx, coordy, gridx, gridy, 
+                &asize, ax, ay, &bsize, bx, by);
+
+            // Sort the array of intersection points (ax, ay) and
+            // (bx, by). The new sorted intersection points are 
+            // stored in (coorx, coory). Total number of points 
+            // are csize.
+            sort_intersections(
+                quadrant, asize, ax, ay, bsize, bx, by, 
+                &csize, coorx, coory);
+
+            // Calculate the distances (dist) between the 
+            // intersection points (coorx, coory). Find the 
+            // indices of the pixels on the object grid.
+            calc_dist(
+                oy, oz, csize, coorx, coory, 
+                indi, dist);
+
+            // For each slice
+            for (s=0; s<dy; s++) 
             {
-                // Calculate coordinates
-                xi = -oy-oz;
-                yi = (1-dz)/2.0+d+mov;
-                calc_coords(
-                    oy, oz, xi, yi, sin_p, cos_p, gridx, gridy, 
-                    coordx, coordy);
-
-                // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(
-                    oy, oz, coordx, coordy, gridx, gridy, 
-                    &asize, ax, ay, &bsize, bx, by);
-
-                // Sort the array of intersection points (ax, ay) and
-                // (bx, by). The new sorted intersection points are 
-                // stored in (coorx, coory). Total number of points 
-                // are csize.
-                sort_intersections(
-                    quadrant, asize, ax, ay, bsize, bx, by, 
-                    &csize, coorx, coory);
-
-                // Calculate the distances (dist) between the 
-                // intersection points (coorx, coory). Find the 
-                // indices of the pixels on the object grid.
-                calc_dist(
-                    oy, oz, csize, coorx, coory, 
-                    indi, dist);
-
                 // Calculate simdata 
                 calc_simdata(p, s, d, oy, oz, dy, dz,
                     csize, indi, dist, obj,
