@@ -64,6 +64,19 @@ parameters::
         """
         return a+b
 
+Package versioning
+==================
+
+We follow the X.Y.Z (Major.Minor.Patch) semantic for package versioning.
+The version should be updated before each pull request accordingly. The
+patch number is incremented for minor changes and bug fixes which do not
+change the software's API. The minor version is incremented for releases
+which add new, but backward-compatible, API features, and the major version
+is incremented for API changes which are not backward-compatible. For
+example, software which relies on version 2.1.5 of an API is compatible
+with version 2.2.3, but not necessarily with 3.2.4.
+
+
 Commiting changes
 =================
 
@@ -105,4 +118,4 @@ this Pull Request in the first place.
 When you’re ready typing out your heartfelt argument, click on **Send 
 pull request**. You’re done!
 
-.. This text is partially adopted from GitHub guides.
+.. This text is partially adopted from GitHub guides and Wikipedia.
