@@ -74,6 +74,10 @@ def distribute_jobs(
     """
     Distribute N-dimensional shared-memory array in chunks into cores.
 
+    One can either specify the number of cores (ncore) or the size of data
+    chunking (nchunk). If both arguments are provided simultaneously as
+    input, ncore will be overwritten according to the given nchunk.
+
     Parameters
     ----------
     func : func
@@ -94,8 +98,11 @@ def distribute_jobs(
     ndarray
         Output array.
     """
+    if ncore is not None and nchunk is not None:
+        logger.warning('ncore will be overwritten according to nchunk')
+
     # Arrange number of processors.
-    if ncore is None:
+    if ncore is None or ncore > mp.cpu_count():
         ncore = mp.cpu_count()
     ndim = arr.shape[axis]
 
@@ -127,7 +134,7 @@ def distribute_jobs(
         _args.append(_prepare_args(func, args, kwargs, istart, iend))
 
     # Start processes.
-    return _start_proc(arr, _args, npool)
+    return _start_proc(arr, _args)
 
 
 def _prepare_args(func, args, kwargs, istart, iend):
@@ -143,7 +150,7 @@ def _prepare_args(func, args, kwargs, istart, iend):
     return _arg
 
 
-def _start_proc(arr, args, npool):
+def _start_proc(arr, args):
     shared_arr = get_shared(arr)
     with closing(
         mp.Pool(processes=len(args),

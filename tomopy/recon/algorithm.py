@@ -140,6 +140,10 @@ def recon(
     ndarray
         Reconstructed 3D object.
 
+    Warning
+    -------
+    Filtering is not implemented for fbp.
+
     Example
     -------
     >>> import tomopy

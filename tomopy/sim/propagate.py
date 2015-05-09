@@ -62,32 +62,34 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['propagate']
+__all__ = ['propagate_tie']
 
 
-def propagate(tomo, pixel_size, dist, energy):
+def propagate_tie(mu, delta, pixel_size, dist):
     """
-    Propagate emitting x-ray wave based on the Fresnel diffraction
-    formula for the near field.
-
-    Warning
-    -------
-    Not implemented yet.
+    Propagate emitting x-ray wave based on Transport of Intensity.
 
     Parameters
     ----------
-    tomo : ndarray
-        3D tomographic data.
-    pixel_size : float, optional
+    mu : ndarray, optional
+        3D tomographic data for attenuation.
+    delta : ndarray
+        3D tomographic data for refractive index.
+    pixel_size : float
         Detector pixel size in cm.
-    dist : float, optional
+    dist : float
         Propagation distance of the wavefront in cm.
-    energy : float, optional
-        Energy of incident wave in keV.
 
     Returns
     -------
     ndarray
-        3D propagated tomographic data.
+        3D propagated tomographic intensity.
     """
-    logger.warning('Not implemented.')
+    i1 = np.exp(-mu)
+    i2 = np.zeros(delta.shape)
+    for m in range(delta.shape[0]):
+        dx, dy = np.gradient(delta[m], pixel_size)
+        d2x, _ = np.gradient(i1[m] * dx, pixel_size)
+        _, d2y = np.gradient(i1[m] * dy, pixel_size)
+        i2[m] = i1[m] + dist * (d2x + d2y)
+    return i2

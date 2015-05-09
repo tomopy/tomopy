@@ -10,4 +10,4 @@
 
    .. autosummary::
 
-      propagate
+      propagate_tie
