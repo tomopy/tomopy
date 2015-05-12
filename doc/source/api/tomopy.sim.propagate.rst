@@ -11,3 +11,4 @@
    .. autosummary::
 
       propagate_tie
+      source
