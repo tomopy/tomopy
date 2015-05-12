@@ -63,6 +63,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['propagate_tie',
+           'scan_source',
            'source']
 
 
@@ -120,3 +121,40 @@ def source(fwhm, nx, ny, center=None):
         x0, y0 = np.array(center)
     x, y = np.mgrid[0:nx, 0:ny]
     return np.exp(-4*np.log(2) * ((x-x0+0.5)**2 + (y-y0+0.5)**2) / fwhm**2)
+
+
+def _scan_coords(nx, ny, sx, sy):
+    """
+    Calculate upper-left scan coordinates of a rectangular kernel given
+    a projection image.
+
+    Parameters
+    ----------
+    nx, ny : int
+        Grid size of the projection image along x and y axes.
+    sx, sy : int
+        Sampling distace along x and y axes.
+
+    Returns
+    -------
+    array
+        x coordinates
+    array
+        y coordinates
+    """
+    x = np.arange(0, nx, sx)
+    y = np.arange(0, ny, sy)
+    return x, y
+
+
+def scan_source(src, prj, sx=None, sy=None):
+    nx, ny = prj.shape
+    if sx is None:
+        sx = src.shape[0]
+    if sy is None:
+        sy = src.shape[1]
+    x, y = _scan_coords(nx, ny, sx, sy)
+    for i in x:
+        for j in y:
+            prj[i:i+sx, j:j+sy] *= src
+    return prj
