@@ -95,7 +95,8 @@ def recon(
         'fbp'
             Filtered back-projection algorithm.
         'gridrec'
-            Fourier grid reconstruction algorithm :cite:`Dowd:99`.
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
         'mlem'
             Maximum-likelihood expectation maximization algorithm
             :cite:`Dempster:77`.
