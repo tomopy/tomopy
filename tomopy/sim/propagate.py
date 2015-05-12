@@ -119,5 +119,4 @@ def source(fwhm, nx, ny, center=None):
     else:
         x0, y0 = np.array(center)
     x, y = np.mgrid[0:nx, 0:ny]
-    g = np.exp(-4*np.log(2) * ((x-x0+0.5)**2 + (y-y0+0.5)**2) / fwhm**2)
-    return g / g.sum()
+    return np.exp(-4*np.log(2) * ((x-x0+0.5)**2 + (y-y0+0.5)**2) / fwhm**2)
