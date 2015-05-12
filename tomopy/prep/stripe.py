@@ -300,3 +300,25 @@ def _ringb(sino, m, n, step):
         new[:, k * step:(k + 1) * step] = np.add(sino_block, K)
     newsino = new.astype(np.float32)
     return np.transpose(newsino)
+
+
+def remove_stripe_vo(tomo):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:`Vo:14`.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+
+    Warning
+    -------
+    Not implemented yet.
+    """
+    pass
