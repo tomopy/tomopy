@@ -63,6 +63,7 @@ logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
+__credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
