@@ -62,9 +62,9 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['propagate_tie',
-           'scan_source',
-           'source']
+__all__ = ['calc_intensity',
+           'propagate_tie',
+           'probe_gauss']
 
 
 def propagate_tie(mu, delta, pixel_size, dist):
@@ -97,64 +97,125 @@ def propagate_tie(mu, delta, pixel_size, dist):
     return i2
 
 
-def source(fwhm, nx, ny, center=None):
+def probe_gauss(nx, ny, fwhm=None, center=None, max_int=1):
     """
-    Simulate x-ray beam as a square Gaussian kernel.
+    Simulate incident x-ray beam (probe) as a square Gaussian kernel.
 
     Parameters
     ----------
-    fwhm : float
-        Effective radius of the source.
     nx, ny : int
         Grid size along x and y axes.
-    center : array_like, 
+    fwhm : float, optional
+        Effective radius of the source.
+    center : array_like, optional
         x and y coordinates of the center of the gaussian function.
+    max_int : int
+        Maximum x-ray intensity.
 
     Returns
     -------
     ndarray
         2D source intensity distribution.
     """
+    if fwhm is None:
+        fwhm = max(nx, ny) // 2
     if center is None:
         x0, y0 = nx // 2, ny // 2
     else:
         x0, y0 = np.array(center)
     x, y = np.mgrid[0:nx, 0:ny]
-    return np.exp(-4*np.log(2) * ((x-x0+0.5)**2 + (y-y0+0.5)**2) / fwhm**2)
+    return max_int * np.exp(-4 * np.log(2) * (
+        (x - x0 + 0.5) ** 2 +
+        (y - y0 + 0.5) ** 2) / fwhm ** 2)
 
 
-def _scan_coords(nx, ny, sx, sy):
+def _rect_scan_coords(probe_grid, proj_grid, shift_x, shift_y):
     """
     Calculate upper-left scan coordinates of a rectangular kernel given
     a projection image.
 
     Parameters
     ----------
-    nx, ny : int
+    proj_grid : (int, int)
         Grid size of the projection image along x and y axes.
-    sx, sy : int
-        Sampling distace along x and y axes.
+    shift_x, shift_y : int
+        Relative shift distace of the source along x and y axes.
 
     Returns
     -------
     array
-        x coordinates
+        x coordinates of upper-left scan coordinates
     array
-        y coordinates
+        y coordinates of upper-left scan coordinates
     """
-    x = np.arange(0, nx, sx)
-    y = np.arange(0, ny, sy)
+    x = np.arange(0, proj_grid[0], shift_x)
+    y = np.arange(0, proj_grid[1], shift_y)
+    while x.size * shift_x > proj_grid[0] - probe_grid[0] + shift_x:
+        x = x[:-1]
+    while y.size * shift_y > proj_grid[1] - probe_grid[1] + shift_y:
+        y = y[:-1]
     return x, y
 
 
-def scan_source(src, prj, sx=None, sy=None):
-    nx, ny = prj.shape
-    if sx is None:
-        sx = src.shape[0]
-    if sy is None:
-        sy = src.shape[1]
-    x, y = _scan_coords(nx, ny, sx, sy)
-    for i in x:
-        for j in y:
-            prj[i:i+sx, j:j+sy] *= src
-    return prj
+def _rect_scan_probe(probe, proj, shift_x=None, shift_y=None):
+    """
+    Calculate individual raster scanned images for a given rectangular
+    x-ray probe and an object plane intensity.
+
+    Parameters
+    ----------
+    probe : ndarray
+        Rectangular x-ray source kernel.
+    proj : ndarray
+        Object plane intensity image.
+    shift_x, shift_y : int, optional
+        Shift amount of probe along x and y axes.
+
+    Returns
+    -------
+    ndarray
+        Individual raster scanned images as 3D array.
+    """
+    sx, sy = probe.shape
+    px, py = proj.shape
+
+    # Assume half overlap.
+    if shift_x is None:
+        shift_x = sx // 2
+    if shift_y is None:
+        shift_y = sy // 2
+
+    # Calculate upper-left scan coordinates along x and y axes.
+    x, y = _rect_scan_coords(probe.shape, proj.shape, shift_x, shift_y)
+
+    # Convert to image stack.
+    arr = [probe * proj[i:i + sx, j:j + sy] for i in x for j in y]
+    return np.array(arr)
+
+
+def calc_intensity(probe, proj, shift_x=None, shift_y=None, mode='near'):
+    """
+    Calculate far field intensity.
+
+    Parameters
+    ----------
+    probe : ndarray
+        Rectangular x-ray source kernel.
+    proj : ndarray
+        Object plane intensity image.
+    shift_x, shift_y : int, optional
+        Shift amount of probe along x and y axes.
+    mode : str, optional
+        Specify the regime. 'near' or 'far' 
+
+    Returns
+    -------
+    ndarray
+        Individual raster scanned far field images as 3D array.
+    """
+    psi = _rect_scan_probe(probe, proj, shift_x, shift_y)
+    if mode == 'near':
+        intensity = abs(psi) ** 2
+    elif mode == 'far':
+        intensity = abs(np.fft.fftshift(np.fft.fft2(psi))) ** 2
+    return intensity
