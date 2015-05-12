@@ -62,7 +62,8 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['propagate_tie']
+__all__ = ['propagate_tie',
+           'source']
 
 
 def propagate_tie(mu, delta, pixel_size, dist):
@@ -93,3 +94,30 @@ def propagate_tie(mu, delta, pixel_size, dist):
         _, d2y = np.gradient(i1[m] * dy, pixel_size)
         i2[m] = i1[m] + dist * (d2x + d2y)
     return i2
+
+
+def source(fwhm, nx, ny, center=None):
+    """
+    Simulate x-ray beam as a square Gaussian kernel.
+
+    Parameters
+    ----------
+    fwhm : float
+        Effective radius of the source.
+    nx, ny : int
+        Grid size along x and y axes.
+    center : array_like, 
+        x and y coordinates of the center of the gaussian function.
+
+    Returns
+    -------
+    ndarray
+        2D source intensity distribution.
+    """
+    if center is None:
+        x0, y0 = nx // 2, ny // 2
+    else:
+        x0, y0 = np.array(center)
+    x, y = np.mgrid[0:nx, 0:ny]
+    g = np.exp(-4*np.log(2) * ((x-x0+0.5)**2 + (y-y0+0.5)**2) / fwhm**2)
+    return g / g.sum()
