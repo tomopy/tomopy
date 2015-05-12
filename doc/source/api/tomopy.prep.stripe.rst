@@ -12,4 +12,3 @@
    
       remove_stripe_fw
       remove_stripe_ti
-      remove_stripe_vo
