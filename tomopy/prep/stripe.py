@@ -60,7 +60,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, Eduardo X. Miqueles"
+__credits__ = "Juan V. Bermudez, Hugo H. Slepicka"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['remove_stripe_fw',
