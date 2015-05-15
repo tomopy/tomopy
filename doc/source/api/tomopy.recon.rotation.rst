@@ -11,4 +11,5 @@
    .. autosummary::
 
       find_center
+      find_center_vo
       write_center

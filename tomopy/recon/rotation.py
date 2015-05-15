@@ -68,6 +68,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['find_center',
+           'find_center_vo',
            'write_center']
 
 
@@ -117,7 +118,8 @@ def find_center(
         init = tomo.shape[2] / 2
 
     # Make an initial reconstruction to adjust histogram limits.
-    rec = gridrec(tomo[:, ind:ind + 1, :], theta, emission=emission)
+    rec = recon(
+        tomo[:, ind:ind + 1, :], theta, emission=emission, algorithm='gridrec')
 
     # Apply circular mask.
     if mask is True:
@@ -158,6 +160,27 @@ def _find_center_cost(
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
     return -np.dot(hist, np.log2(hist))
+
+
+def find_center_vo(tomo):
+    """
+    Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+
+    Returns
+    -------
+    float
+        Rotation axis location.
+
+    Warning
+    -------
+    Not implemented yet.
+    """
+    pass
 
 
 def write_center(
