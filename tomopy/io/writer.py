@@ -65,6 +65,7 @@ logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
+__credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['write_hdf5',
@@ -252,5 +253,4 @@ def write_tiff_stack(
         _fname = body + '_' + '{0:0={1}d}'.format(m, digit) + ext
         if not overwrite:
             _fname = _suggest_new_fname(_fname, digit=1)
-        print (_fname)
-        write_tiff(_data[m - start], _fname)
+        write_tiff(_data[m - start], _fname, overwrite=overwrite)
