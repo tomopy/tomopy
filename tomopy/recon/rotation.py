@@ -54,6 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy import ndimage
 from tomopy.io.writer import write_tiff
 from tomopy.misc.mask import circ_mask
 from tomopy.recon.algorithm import recon
@@ -113,10 +114,22 @@ def find_center(
     theta = dtype.as_float32(theta)
 
     if ind is None:
-        ind = tomo.shape[1] / 2
+        ind = tomo.shape[1] // 2
     if init is None:
-        init = tomo.shape[2] / 2
+        init = tomo.shape[2] // 2
 
+    hmin, hmax = _adjust_hist_limits(tomo, theta, ind, mask, emission)
+
+    # Magic is ready to happen...
+    res = minimize(
+        _find_center_cost, init,
+        args=(tomo, theta, ind, hmin, hmax, mask, ratio, emission),
+        method='Nelder-Mead',
+        tol=tol)
+    return res.x
+
+
+def _adjust_hist_limits(tomo, theta, ind, mask, emission):
     # Make an initial reconstruction to adjust histogram limits.
     rec = recon(
         tomo[:, ind:ind + 1, :], theta, emission=emission, algorithm='gridrec')
@@ -126,18 +139,10 @@ def find_center(
         rec = circ_mask(rec, axis=0)
 
     # Adjust histogram boundaries according to reconstruction.
-    hmin = _adjust_hist(rec.min())
-    hmax = _adjust_hist(rec.max())
-
-    # Magic is ready to happen...
-    res = minimize(
-        _find_center_cost, init,
-        args=(tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission),
-        method='Nelder-Mead',
-        tol=tol)
+    return _adjust_hist_min(rec.min()), _adjust_hist_max(rec.max())
 
 
-def _adjust_hist(val):
+def _adjust_hist_min(val):
     if val < 0:
         val = 2 * val
     elif val >= 0:
@@ -145,15 +150,23 @@ def _adjust_hist(val):
     return val
 
 
+def _adjust_hist_max(val):
+    if val < 0:
+        val = 0.5 * val
+    elif val >= 0:
+        val = 2 * val
+    return val
+
+
 def _find_center_cost(
-        center, tomo, rec, theta, ind, hmin, hmax, mask, ratio, emission):
+        center, tomo, theta, ind, hmin, hmax, mask, ratio, emission):
     """
     Cost function used for the ``find_center`` routine.
     """
-    print('Trying center: ', center)
+    logger.info('trying center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
-        tomo[:, ind:ind + 1, :], theta, emission=emission, algorithm='gridrec')
+        tomo[:, ind:ind + 1, :], theta, center, emission=emission, algorithm='gridrec')
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
