@@ -5,14 +5,14 @@ Credits
 We kindly request that you cite the following article 
 :cite:`Gursoy:14a` if you use TomoPy.
 
-.. bibliography:: cite.bib
+.. bibliography:: bibtex/cite.bib
    :style: plain
    :labelprefix: A
 
 Applications
 ============
 
-.. bibliography:: app.bib
+.. bibliography:: bibtex/app.bib
    :style: plain
    :labelprefix: B
    :all:
@@ -20,7 +20,7 @@ Applications
 References
 ==========
 
-.. bibliography:: ref.bib
+.. bibliography:: bibtex/ref.bib
    :style: plain
    :labelprefix: C
    :all: 
