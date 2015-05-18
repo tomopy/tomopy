@@ -54,7 +54,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.optimize import minimize
-from scipy import ndimage
 from tomopy.io.writer import write_tiff
 from tomopy.misc.mask import circ_mask
 from tomopy.recon.algorithm import recon
