@@ -116,8 +116,10 @@ def find_center(
         ind = tomo.shape[1] // 2
     if init is None:
         init = tomo.shape[2] // 2
+    print (ind, tomo.shape)
 
-    hmin, hmax = _adjust_hist_limits(tomo, theta, ind, mask, emission)
+    hmin, hmax = _adjust_hist_limits(
+        tomo[:, ind:ind + 1, :], theta, ind, mask, emission)
 
     # Magic is ready to happen...
     res = minimize(
@@ -130,8 +132,7 @@ def find_center(
 
 def _adjust_hist_limits(tomo, theta, ind, mask, emission):
     # Make an initial reconstruction to adjust histogram limits.
-    rec = recon(
-        tomo[:, ind:ind + 1, :], theta, emission=emission, algorithm='gridrec')
+    rec = recon(tomo, theta, emission=emission, algorithm='gridrec')
 
     # Apply circular mask.
     if mask is True:
