@@ -152,7 +152,8 @@ def _find_center_cost(
     """
     print('Trying center: ', center)
     center = np.array(center, dtype='float32')
-    rec = gridrec(tomo[:, ind:ind + 1, :], theta, center, emission)
+    rec = recon(
+        tomo[:, ind:ind + 1, :], theta, emission=emission, algorithm='gridrec')
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
