@@ -54,6 +54,7 @@ import numpy as np
 import os.path
 import shutil
 from nose.tools import assert_equals
+from numpy.testing import assert_allclose
 
 
 __author__ = "Doga Gursoy"
@@ -76,6 +77,14 @@ def test_write_center():
                     os.path.join('tmp', 'center'),
                     str('{:.2f}'.format(cen[m]) + '.tiff'))), True)
     shutil.rmtree(dpath)
+
+
+def test_find_center():
+    fname = os.path.join('test', 'data', 'sinogram.npy')
+    sim = np.load(fname)
+    ang = np.linspace(0, np.pi, sim.shape[0])
+    cen = find_center(sim, ang)
+    assert_allclose(cen, 45.28, rtol=1e-2)
 
 
 if __name__ == '__main__':
