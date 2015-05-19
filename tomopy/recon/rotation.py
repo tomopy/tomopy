@@ -116,7 +116,6 @@ def find_center(
         ind = tomo.shape[1] // 2
     if init is None:
         init = tomo.shape[2] // 2
-    print (ind, tomo.shape)
 
     hmin, hmax = _adjust_hist_limits(
         tomo[:, ind:ind + 1, :], theta, ind, mask, emission)
