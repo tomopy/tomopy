@@ -242,7 +242,7 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
         Output 3D test image.
     """
     shepp_params = _array_to_params(_get_shepp_array())
-    return phantom(shape, shepp_params, dtype)
+    return phantom(shape, shepp_params, dtype).clip(0, np.inf)
 
 
 def phantom(shape, params, dtype='float32'):
