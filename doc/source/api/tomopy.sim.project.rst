@@ -14,5 +14,7 @@
       project
       fan_to_para
       para_to_fan
+      add_gaussian
       add_poisson
+      add_salt_pepper
       add_focal_spot_blur
