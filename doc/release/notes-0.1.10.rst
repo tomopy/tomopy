@@ -1,0 +1,3 @@
+Improvements
+------------
+- Sobel filter added
