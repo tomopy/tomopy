@@ -119,6 +119,8 @@ def recon(
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
+    filter_name : str, optional
+        Name of the filter for analytic reconstruction.
     num_iter : int, optional
         Number of algorithm iterations performed.
     num_block : int, optional
@@ -159,6 +161,9 @@ def recon(
     >>> pylab.show()
     """
 
+    # Initialize tomography data.
+    tomo = _init_tomo(tomo, emission)
+
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
         'bart': ['num_gridx', 'num_gridy', 'num_iter',
@@ -188,6 +193,12 @@ def recon(
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
+            if kw == 'filter_name':
+                kwargs[kw] = np.array(kwargs[kw], dtype=(str, 16))
+            if kw == 'reg_par':
+                kwargs[kw] = np.array(kwargs[kw], dtype='float32')
+            if kw == 'ind_block':
+                kwargs[kw] = np.array(kwargs[kw], dtype='float32')
     elif algorithm is None:
         raise ValueError('Keyword "algorithm" must be one of %s.' %
                          (list(allowed_kwargs.keys()),))
@@ -195,8 +206,7 @@ def recon(
     # Generate args for the algorithm.
     args = _get_algorithm_args(tomo.shape, theta, center)
 
-    # Initialize tomography data and initial reconstruction.
-    tomo = _init_tomo(tomo, emission)
+    # Initialize reconstruction.
     recon = _init_recon(
         (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
         init_recon)
@@ -269,9 +279,9 @@ def _get_algorithm_kwargs(shape):
     return {
         'num_gridx': dz,
         'num_gridy': dz,
-        'filter_name': np.array('shepp', dtype=(str, 16)),
-        'num_iter': dtype.as_int32(1),
-        'reg_par': np.ones(10, dtype='float32'),
-        'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dx, dtype='float32'),
+        'filter_name': 'shepp',
+        'num_iter': 1,
+        'reg_par': np.ones(10),
+        'num_block': 1,
+        'ind_block': np.arange(0, dx),
     }
