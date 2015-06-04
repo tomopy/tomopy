@@ -165,7 +165,7 @@ def read_edf(fname, slc=None):
         Data.
     """
     fname = _check_read(fname)
-    f = EdfFile.EdfFile(self.fname, access='r')
+    f = EdfFile.EdfFile(fname, access='r')
     d = f.GetStaticHeader(0)
     arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
     for i, ar in enumerate(arr):
