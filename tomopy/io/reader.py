@@ -58,13 +58,20 @@ import warnings
 import numpy as np
 import os
 import h5py
-import spefile
-import netCDF4
-import EdfFile
 import logging
 
 logger = logging.getLogger(__name__)
 
+def _check_import(modname):
+    try:
+        return __import__(modname)
+    except ImportError:
+        logger.warn(modname + ' module not found')
+        return None
+
+spefile = _check_import('spefile')
+netCDF4 = _check_import('netCDF4')
+EdfFile = _check_import('EdfFile')
 
 __author__ = "Doga Gursoy"
 __credits__ = "Francesco De Carlo"
