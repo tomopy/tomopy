@@ -147,25 +147,25 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
     # Read image data from tiff stack.
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
     if doNorm:
-    """ Adheres to 8.3.2 flat/dark naming conventions: 
-        ----Flats----
-        root_namebak_xxxx_yyyy
-        For datasets that take flat at the start and end of its scan,
-        xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
-        For datasets that take flat while they scan (when the beam fluctuates during scans),
-        xxxx is always 0000, and yyyy is in intervals given by log file. """
+        """ Adheres to 8.3.2 flat/dark naming conventions: 
+            ----Flats----
+            root_namebak_xxxx_yyyy
+            For datasets that take flat at the start and end of its scan,
+            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
+            For datasets that take flat while they scan (when the beam fluctuates during scans),
+            xxxx is always 0000, and yyyy is in intervals given by log file. """
  
         if inter_bright == 0:
             list_flat = tio._list_file_stack(flat_name, ind_flat, digit=4)
             for x in ind_flat:
-	        body = os.path.splitext(list_flat[x])[0]
-	        ext = os.path.splitext(list_flat[x])[1]
-            body += '_'
-            a = [0,nproj-1]
-	        for y,z in enumerate(a):
-                y = body + '{0:0={1}d}'.format(z, 4) + ext
-                if z == 0: list_flat[x] = y
-		        if z == nproj-1: list_flat.append(y)
+	            body = os.path.splitext(list_flat[x])[0]
+	            ext = os.path.splitext(list_flat[x])[1]
+                body += '_'
+                a = [0,nproj-1]
+	            for y,z in enumerate(a):
+                    y = body + '{0:0={1}d}'.format(z, 4) + ext
+                    if z == 0: list_flat[x] = y
+		            if z == nproj-1: list_flat.append(y)
 	        list_flat = sorted(list_flat)
             for m, image in enumerate(list_flat):
                 _arr = tio.read_tiff(image)
@@ -178,12 +178,13 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
         else:
             flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
 
-    """ Adheres to 8.3.2 flat/dark naming conventions: 
-        ----Darks----
-        root_namedrk_xxxx_yyyy
-        All datasets thus far that take darks at the start and end of its scan, so
-        xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
-        list_dark = tio._list_file_stack(dark_name, ind_dark, digit=4) """
+        """ Adheres to 8.3.2 flat/dark naming conventions: 
+            ----Darks----
+            root_namedrk_xxxx_yyyy
+            All datasets thus far that take darks at the start and end of its scan, so
+            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection."""
+        
+		list_dark = tio._list_file_stack(dark_name, ind_dark, digit=4)
         for x in ind_dark:
 	        body = os.path.splitext(list_dark[x])[0]
 	        ext = os.path.splitext(list_dark[x])[1]
