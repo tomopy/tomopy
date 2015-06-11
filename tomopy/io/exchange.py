@@ -160,12 +160,12 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
             for x in ind_flat:
 	            body = os.path.splitext(list_flat[x])[0]
 	            ext = os.path.splitext(list_flat[x])[1]
-                body += '_'
-                a = [0,nproj-1]
+                    body += '_'
+                    a = [0,nproj-1]
 	            for y,z in enumerate(a):
                     y = body + '{0:0={1}d}'.format(z, 4) + ext
                     if z == 0: list_flat[x] = y
-		            if z == nproj-1: list_flat.append(y)
+		            elif z == nproj-1: list_flat.append(y)
 	        list_flat = sorted(list_flat)
             for m, image in enumerate(list_flat):
                 _arr = tio.read_tiff(image)
