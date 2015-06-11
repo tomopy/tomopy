@@ -79,7 +79,7 @@ __all__ = ['read_als_832',
            'read_petra3_p05',
            'read_sls_tomcat']
 
-def read_als_832(fname, ind_tomo=None, doNorm=False):
+def read_als_832(fname, ind_tomo=None, normalized=False):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -91,7 +91,7 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
     ind_tomo : list of int, optional
         Indices of the projection files to read.
 
-    doNorm : boolean
+    normalized : boolean
 	If False, darks and flats will not be read. This should
         only be used for cases where tomo is already normalized. 
         8.3.2 has a plugin that normalization is preferred to be 
@@ -112,7 +112,8 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
     # File definitions.
     fname = os.path.abspath(fname)
 
-    if doNorm:
+    if not normalized:
+        fname = fname.split('output')[0]+fname.split('/')[len(fname.split('/'))-1]
         tomo_name = fname + '_0000_0000.tif'
         flat_name = fname + 'bak_0000.tif'
         dark_name = fname + 'drk_0000.tif'
@@ -138,7 +139,7 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
     contents.close()
     if ind_tomo is None:
         ind_tomo = range(0, nproj)
-    if doNorm:
+    if not normalized:
         ind_flat = range(0, nflat)
         if inter_bright > 0:
             ind_flat = range(0, nproj, inter_bright)
@@ -146,14 +147,16 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
         ind_dark = range(0, ndark)
     # Read image data from tiff stack.
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
-    if doNorm:
+    if not normalized:
         """ Adheres to 8.3.2 flat/dark naming conventions: 
             ----Flats----
             root_namebak_xxxx_yyyy
             For datasets that take flat at the start and end of its scan,
             xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
             For datasets that take flat while they scan (when the beam fluctuates during scans),
-            xxxx is always 0000, and yyyy is in intervals given by log file. """
+            xxxx is always 0000, and yyyy is in intervals given by log file. 
+        """
+            
         if inter_bright == 0:
             a = [0,nproj-1]
             list_flat = tio._list_file_stack(flat_name, ind_flat, digit=4)
@@ -180,7 +183,8 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
             ----Darks----
             root_namedrk_xxxx_yyyy
             All datasets thus far that take darks at the start and end of its scan, so
-            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection."""
+            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
+        """
         list_dark = tio._list_file_stack(dark_name, ind_dark, digit=4)
         for x in ind_dark:
             body = os.path.splitext(list_dark[x])[0] + '_'
