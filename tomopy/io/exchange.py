@@ -197,8 +197,8 @@ def read_als_832(fname, ind_tomo=None, doNorm=False):
             dark[m] = _arr
         dark = tio._slice_array(dark, None)
     else:
-	    flat = np.ones(1)
-	    dark = np.zeros(1)
+        flat = np.ones(1)
+        dark = np.zeros(1)
     return tomo, flat, dark
 
 
