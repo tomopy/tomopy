@@ -157,6 +157,29 @@ def recon(
     >>> import pylab
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
+
+    Example using the ASTRA toolbox for recontruction
+    -------
+    For more information, see http://sourceforge.net/p/astra-toolbox/wiki/Home/
+    and https://github.com/astra-toolbox/astra-toolbox. To install the ASTRA
+    toolbox with conda, use:
+
+    conda install -c https://conda.binstar.org/astra-toolbox astra-toolbox
+
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>>
+    >>> # Reconstruct object:
+    >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.astra,
+    >>>       options={'method':'SART', 'num_iter':10*180, 'proj_type':'linear',
+    >>>       'extra_options':{'MinConstraint':0}})
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
     """
 
     allowed_kwargs = {

@@ -152,13 +152,17 @@ def _prepare_args(func, args, kwargs, istart, iend):
 
 def _start_proc(arr, args):
     shared_arr = get_shared(arr)
-    with closing(
-        mp.Pool(processes=len(args),
-                initializer=init_shared,
-                initargs=(shared_arr,))) as p:
-        p.map_async(_arg_parser, args)
-    p.join()
-    p.close()
+    if len(args)==1:
+        init_shared(shared_arr)
+        _arg_parser(args[0])
+    else:
+        with closing(
+            mp.Pool(processes=len(args),
+                    initializer=init_shared,
+                    initargs=(shared_arr,))) as p:
+            p.map_async(_arg_parser, args)
+        p.join()
+        p.close()
     return shared_arr
 
 
