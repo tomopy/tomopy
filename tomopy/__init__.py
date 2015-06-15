@@ -62,6 +62,7 @@ from tomopy.misc.morph import *
 from tomopy.prep.normalize import *
 from tomopy.prep.phase import *
 from tomopy.prep.stripe import *
+from tomopy.recon.wrappers import *
 from tomopy.recon.algorithm import *
 from tomopy.recon.rotation import *
 from tomopy.sim.project import *
