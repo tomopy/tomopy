@@ -79,8 +79,7 @@ __all__ = ['read_als_832',
            'read_petra3_p05',
            'read_sls_tomcat']
 
-
-def read_als_832(fname, ind_tomo=None):
+def read_als_832(fname, ind_tomo=None, normalized=False):
     """
     Read ALS 8.3.2 standard data format.
 
@@ -91,6 +90,12 @@ def read_als_832(fname, ind_tomo=None):
 
     ind_tomo : list of int, optional
         Indices of the projection files to read.
+
+    normalized : boolean
+	If False, darks and flats will not be read. This should
+        only be used for cases where tomo is already normalized. 
+        8.3.2 has a plugin that normalization is preferred to be 
+        done with prior to tomopy reconstruction.
 
     Returns
     -------
@@ -103,12 +108,22 @@ def read_als_832(fname, ind_tomo=None):
     ndarray
         3D dark field data.
     """
+
     # File definitions.
     fname = os.path.abspath(fname)
-    tomo_name = fname + '_0000_0000.tif'
-    flat_name = fname + 'bak_0000.tif'
-    dark_name = fname + 'drk_0000.tif'
-    log_file = fname + '.sct'
+
+    if not normalized:
+        fname = fname.split('output')[0]+fname.split('/')[len(fname.split('/'))-1]
+        tomo_name = fname + '_0000_0000.tif'
+        flat_name = fname + 'bak_0000.tif'
+        dark_name = fname + 'drk_0000.tif'
+        log_file = fname + '.sct'
+    else:
+        if "output" not in fname:
+            raise Exception('Please provide the normalized output directory as input') 
+        tomo_name = fname + '_0.tif'
+        fname = fname.split('output')[0]+fname.split('/')[len(fname.split('/'))-1]
+        log_file = fname + '.sct'
 
     # Read metadata from ALS log file.
     contents = open(log_file, 'r')
@@ -117,17 +132,77 @@ def read_als_832(fname, ind_tomo=None):
             nproj = int(re.findall(r'\d+', line)[0])
         if '-num_bright_field' in line:
             nflat = int(re.findall(r'\d+', line)[0])
+        if '-i0cycle' in line:
+            inter_bright = int(re.findall(r'\d+', line)[1])
         if '-num_dark_fields' in line:
             ndark = int(re.findall(r'\d+', line)[0])
     contents.close()
-
     if ind_tomo is None:
         ind_tomo = range(0, nproj)
-    ind_flat = range(0, nflat)
-    ind_dark = range(0, ndark)
+    if not normalized:
+        ind_flat = range(0, nflat)
+        if inter_bright > 0:
+            ind_flat = range(0, nproj, inter_bright)
+            flat_name = fname + 'bak_0000_0000.tif'
+        ind_dark = range(0, ndark)
+    # Read image data from tiff stack.
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
+    if not normalized:
+        """ Adheres to 8.3.2 flat/dark naming conventions: 
+            ----Flats----
+            root_namebak_xxxx_yyyy
+            For datasets that take flat at the start and end of its scan,
+            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
+            For datasets that take flat while they scan (when the beam fluctuates during scans),
+            xxxx is always 0000, and yyyy is in intervals given by log file. 
+        """
+            
+        if inter_bright == 0:
+            a = [0,nproj-1]
+            list_flat = tio._list_file_stack(flat_name, ind_flat, digit=4)
+            for x in ind_flat:
+                body = os.path.splitext(list_flat[x])[0] + "_"
+                ext = os.path.splitext(list_flat[x])[1]
+                for y,z in enumerate(a):
+                    y = body + '{0:0={1}d}'.format(z, 4) + ext
+                    if z == 0: list_flat[x] = y
+                    else: list_flat.append(y)
+            list_flat = sorted(list_flat)
+            for m, image in enumerate(list_flat):
+                _arr = tio.read_tiff(image)
+                if m == 0:
+                    dx = len(ind_flat*2)
+                    dy, dz = _arr.shape
+                    flat = np.zeros((dx, dy, dz))
+                flat[m] = _arr
+            flat = tio._slice_array(flat, None)
+        else:
+            flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
+
+        """ Adheres to 8.3.2 flat/dark naming conventions: 
+            ----Darks----
+            root_namedrk_xxxx_yyyy
+            All datasets thus far that take darks at the start and end of its scan, so
+            xxxx is in incrementals of one, and yyyy is either 0000 or the last projection.
+        """
+        list_dark = tio._list_file_stack(dark_name, ind_dark, digit=4)
+        for x in ind_dark:
+            body = os.path.splitext(list_dark[x])[0] + '_'
+            ext = os.path.splitext(list_dark[x])[1]
+            body = body + '{0:0={1}d}'.format(nproj-1, 4) + ext
+            list_dark[x] = body
+        list_dark = sorted(list_dark)
+        for m, image in enumerate(list_dark):
+            _arr = tio.read_tiff(image)
+            if m == 0:
+                dx = len(ind_dark)
+                dy, dz = _arr.shape
+                dark = np.zeros((dx, dy, dz))
+            dark[m] = _arr
+        dark = tio._slice_array(dark, None)
+    else:
+        flat = np.ones(1)
+        dark = np.zeros(1)
     return tomo, flat, dark
 
 
