@@ -151,7 +151,7 @@ def astra(*args):
     # Create ASTRA config
     cfg = astra_mod.astra_dict(opts['method'])
 
-    if not 'CUDA' in opts['method']:
+    if opts['proj_type']!='cuda':
         pi = astra_mod.create_projector(opts['proj_type'], proj_geom, vol_geom)
         sid = astra_mod.data2d.link('-sino', proj_geom, sino)
         cfg['ProjectorId'] = pi
@@ -173,6 +173,8 @@ def astra(*args):
             proj_geom['option'] = {'ExtraDetectorOffset': (centers[i]-ndet/2.)*np.ones(nang)}
             sid = astra_mod.data2d.link('-sino', proj_geom, sino)
             cfg['ProjectionDataId'] = sid
+            pi = astra_mod.create_projector(opts['proj_type'], proj_geom, vol_geom)
+            cfg['ProjectorId'] = pi
         else:
             # Temporary workaround, will be fixed in later ASTRA version
             shft = int(np.round(ndet/2.-centers[i]))
@@ -191,6 +193,7 @@ def astra(*args):
         astra_mod.algorithm.delete(alg_id)
         astra_mod.data2d.delete(vid)
         if use_cuda:
+            astra_mod.projector.delete(pi)
             astra_mod.data2d.delete(sid)
 
     # Clean up
