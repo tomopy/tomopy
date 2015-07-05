@@ -68,6 +68,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['adjust_range',
            'gaussian_filter',
            'median_filter',
+           'sobel_filter',
            'remove_nan',
            'remove_neg',
            'remove_outlier']
@@ -136,14 +137,14 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     arr = mproc.distribute_jobs(
         arr.swapaxes(0, axis),
         func=_gaussian_filter,
-        args=(sigma, order, axis),
+        args=(sigma, order),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
     return arr.swapaxes(0, axis)
 
 
-def _gaussian_filter(sigma, order, axis, istart, iend):
+def _gaussian_filter(sigma, order, istart, iend):
     arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         arr[m] = filters.gaussian_filter(arr[m], sigma, order)
@@ -175,17 +176,53 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     arr = mproc.distribute_jobs(
         arr.swapaxes(0, axis),
         func=_median_filter,
-        args=(size, axis),
+        args=(size,),
         axis=axis,
         ncore=ncore,
         nchunk=nchunk)
     return arr.swapaxes(0, axis)
 
 
-def _median_filter(size, axis, istart, iend):
+def _median_filter(size, istart, iend):
     arr = mproc.SHARED_ARRAY
     for m in range(istart, iend):
         arr[m] = filters.median_filter(arr[m], (size, size))
+
+
+def sobel_filter(arr, axis=0, ncore=None, nchunk=None):
+    """
+    Apply Sobel filter to 3D array along specified axis.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    axis : int, optional
+        Axis along which sobel filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        3D array of same shape as input.
+    """
+    arr = dtype.as_float32(arr)
+    arr = mproc.distribute_jobs(
+        arr.swapaxes(0, axis),
+        func=_sobel_filter,
+        axis=axis,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr.swapaxes(0, axis)
+
+
+def _sobel_filter(istart, iend):
+    arr = mproc.SHARED_ARRAY
+    for m in range(istart, iend):
+        arr[m] = filters.sobel(arr[m])
 
 
 def remove_nan(arr, val=0.):
