@@ -95,6 +95,7 @@ def test_shepp2d():
 def test_shepp3d():
     assert_equals(shepp3d((6, 8, 10)).dtype, 'float32')
     assert_equals(shepp3d((6, 8, 10)).shape, (6, 8, 10))
+    assert_equals(shepp3d((6, 8, 10)).min(), 0)
 
 
 if __name__ == '__main__':
