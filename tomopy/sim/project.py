@@ -69,17 +69,41 @@ __all__ = ['angles',
            'project',
            'fan_to_para',
            'para_to_fan',
+           'add_gaussian',
            'add_poisson',
+           'add_salt_pepper',
            'add_focal_spot_blur']
+
+
+def add_gaussian(tomo, mean=0, std=None):
+    """
+    Add Gaussian noise.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    mean : float, optional
+        Mean of the Gaussian distribution.
+    std : float, optional
+        Standard deviation of the Gaussian distribution.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data after Gaussian noise added.
+    """
+    tomo = dtype.as_ndarray(tomo)
+    if std is None:
+        std = tomo.max() * 0.05
+    dx, dy, dz = tomo.shape
+    tomo += std * np.random.randn(dx, dy, dz) + mean
+    return tomo
 
 
 def add_poisson(tomo):
     """
     Add Poisson noise.
-
-    Warning
-    -------
-    Not implementd yet.
 
     Parameters
     ----------
@@ -91,7 +115,35 @@ def add_poisson(tomo):
     ndarray
         3D tomographic data after Poisson noise added.
     """
-    logger.warning('Not implemented.')
+    return np.random.poisson(tomo)
+
+
+def add_salt_pepper(tomo, prob=0.01, val=None):
+    """
+    Add salt and pepper noise.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    prob : float, optional
+        Independent probability that each element of a pixel might be 
+        corrupted by the salt and pepper type noise.
+    val : float, optional
+        Value to be assigned to the corrupted pixels.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data after salt and pepper noise added.
+    """
+    tomo = dtype.as_ndarray(tomo)
+    dx, dy, dz = tomo.shape
+    ind = np.random.rand(dx, dy, dz) < prob
+    if val is None:
+        val = tomo.max()
+    tomo[ind] = val
+    return tomo
 
 
 def angles(nang, ang1=0., ang2=180.):

@@ -119,6 +119,8 @@ def recon(
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
+    filter_name : str, optional
+        Name of the filter for analytic reconstruction.
     num_iter : int, optional
         Number of algorithm iterations performed.
     num_block : int, optional
@@ -182,6 +184,9 @@ def recon(
     >>> pylab.show()
     """
 
+    # Initialize tomography data.
+    tomo = _init_tomo(tomo, emission)
+
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
         'bart': ['num_gridx', 'num_gridy', 'num_iter',
@@ -228,8 +233,7 @@ def recon(
     # Generate args for the algorithm.
     args = _get_algorithm_args(tomo.shape, theta, center)
 
-    # Initialize tomography data and initial reconstruction.
-    tomo = _init_tomo(tomo, emission)
+    # Initialize reconstruction.
     recon = _init_recon(
         (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
         init_recon)
