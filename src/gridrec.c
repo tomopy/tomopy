@@ -520,7 +520,8 @@ filter_cosine(float x)
 float 
 filter_hann(float x)
 {
-    return abs(x)*0.5*(1.+cos(2*PI*x));
+    float cutoff = 0.5;
+    return abs(x)*0.5*(1.+cos(PI*x/cutoff));
 }
 
 
@@ -528,7 +529,8 @@ filter_hann(float x)
 float 
 filter_hamming(float x)
 {
-    return abs(x)*(0.54+0.46*cos(2*PI*x));
+    float cutoff = 0.5;
+    return abs(x)*(0.54+0.46*cos(PI*x/cutoff));
 }
 
 // Ramlak filter
@@ -536,6 +538,23 @@ float
 filter_ramlak(float x)
 {
     return abs(x);
+}
+
+// Parzen filter
+float 
+filter_parzen(float x)
+{
+    float cutoff = 0.5;
+    return abs(x)*pow(1-abs(x)/cutoff, 3);
+}
+
+// Butterworth filter
+float 
+filter_butterworth(float x)
+{
+    float cutoff = 0.4;
+    float order = 8;
+    return abs(x)/(1+pow(x/cutoff, 2*order));
 }
 
 
@@ -547,18 +566,20 @@ float (*get_filter(char *name))(float)
         float (*fp)(float);
     } fltbl[] = {
         {"none", filter_none},
-        {"shepp", filter_shepp}, // Default
+        {"shepp", filter_shepp},
         {"cosine", filter_cosine},
         {"hann", filter_hann},
         {"hamming", filter_hamming},
-        {"ramlak", filter_ramlak}};
+        {"ramlak", filter_ramlak}, // Default
+        {"parzen", filter_parzen},
+        {"butterworth", filter_butterworth}};
 
-    for(int i=0; i<6; i++)
+    for(int i=0; i<8; i++)
     {
         if(!strcmp(name, fltbl[i].name))
         {
             return fltbl[i].fp;
         }
     }
-    return fltbl[1].fp;   
+    return fltbl[5].fp;   
 }
