@@ -159,6 +159,29 @@ def recon(
     >>> import pylab
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
+
+    Example using the ASTRA toolbox for recontruction
+    -------
+    For more information, see http://sourceforge.net/p/astra-toolbox/wiki/Home/
+    and https://github.com/astra-toolbox/astra-toolbox. To install the ASTRA
+    toolbox with conda, use:
+
+    conda install -c https://conda.binstar.org/astra-toolbox astra-toolbox
+
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>>
+    >>> # Reconstruct object:
+    >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.astra,
+    >>>       options={'method':'SART', 'num_iter':10*180, 'proj_type':'linear',
+    >>>       'extra_options':{'MinConstraint':0}})
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
     """
 
     # Initialize tomography data.
@@ -182,9 +205,15 @@ def recon(
         'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
     }
 
+    generic_kwargs = ['num_gridx', 'num_gridy', 'options']
+
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
     if isinstance(algorithm, str):
+        # Check whether we have an allowed method
+        if not algorithm in allowed_kwargs:
+            raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
+                             (list(allowed_kwargs.keys()),))
         # Make sure have allowed kwargs appropriate for algorithm.
         for key in kwargs:
             if key not in allowed_kwargs[algorithm]:
@@ -193,14 +222,12 @@ def recon(
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
-            if kw == 'filter_name':
-                kwargs[kw] = np.array(kwargs[kw], dtype=(str, 16))
-            if kw == 'reg_par':
-                kwargs[kw] = np.array(kwargs[kw], dtype='float32')
-            if kw == 'ind_block':
-                kwargs[kw] = np.array(kwargs[kw], dtype='float32')
-    elif algorithm is None:
-        raise ValueError('Keyword "algorithm" must be one of %s.' %
+    elif hasattr(algorithm, '__call__'):
+        # Set kwarg defaults.
+        for kw in generic_kwargs:
+            kwargs.setdefault(kw, kwargs_defaults[kw])
+    else:
+        raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
                          (list(allowed_kwargs.keys()),))
 
     # Generate args for the algorithm.
@@ -211,7 +238,7 @@ def recon(
         (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
         init_recon)
     return _dist_recon(
-        tomo, recon, _get_c_func(algorithm), args, kwargs, ncore, nchunk)
+        tomo, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
 
 
 def _init_tomo(tomo, emission):
@@ -229,7 +256,7 @@ def _init_recon(shape, init_recon, val=1e-6):
     return recon
 
 
-def _get_c_func(algorithm):
+def _get_func(algorithm):
     if algorithm == 'art':
         func = extern.c_art
     elif algorithm == 'bart':
@@ -252,6 +279,8 @@ def _get_c_func(algorithm):
         func = extern.c_pml_quad
     elif algorithm == 'sirt':
         func = extern.c_sirt
+    else:
+        func = algorithm
     return func
 
 
@@ -279,9 +308,10 @@ def _get_algorithm_kwargs(shape):
     return {
         'num_gridx': dz,
         'num_gridy': dz,
-        'filter_name': 'shepp',
-        'num_iter': 1,
-        'reg_par': np.ones(10),
-        'num_block': 1,
-        'ind_block': np.arange(0, dx),
+        'filter_name': np.array('shepp', dtype=(str, 16)),
+        'num_iter': dtype.as_int32(1),
+        'reg_par': np.ones(10, dtype='float32'),
+        'num_block': dtype.as_int32(1),
+        'ind_block': np.arange(0, dx, dtype='float32'),
+        'options': {},
     }

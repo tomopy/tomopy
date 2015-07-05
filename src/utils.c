@@ -213,7 +213,8 @@ calc_dist(
     int csize, float *coorx, float *coory, 
     int *indi, float *dist)
 {
-    int n, x1, x2, i1, i2;
+    int n, i1, i2;
+    float x1, x2;
     float diffx, diffy, midx, midy;
     int indx, indy;
 
