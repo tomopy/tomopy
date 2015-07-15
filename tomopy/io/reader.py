@@ -202,11 +202,15 @@ def read_hdf5(fname, group, slc=None):
     ndarray
         Data.
     """
-    fname = _check_read(fname)
-    f = h5py.File(fname, "r")
-    arr = f[group]
-    arr = _slice_array(arr, slc)
-    f.close()
+    try:
+        fname = _check_read(fname)
+        f = h5py.File(fname, "r")
+        arr = f[group]
+        arr = _slice_array(arr, slc)
+        f.close()
+    except KeyError:
+        arr = None
+
     return arr
 
 
