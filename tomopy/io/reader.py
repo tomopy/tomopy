@@ -143,7 +143,7 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     list_fname = _list_file_stack(fname, ind, digit)
 
     for m, image in enumerate(list_fname):
-        _arr = read_tiff(fname)
+        _arr = read_tiff(list_fname[m])
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
