@@ -245,6 +245,63 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     return tomo, flat, dark
 
 
+def read_aps_1id(fname, ind_tomo=None):
+    """
+    Read APS 1-ID standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to file name without indices and extension.
+
+    ind_tomo : list of int, optional
+        Indices of the projection files to read.
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    # File definitions.
+    fname = os.path.abspath(fname)
+    _fname = fname + '000001.tif'
+    log_file = os.path.dirname(fname) + os.path.sep + 'TomoStillScan.dat'
+
+    #Read APS 1-ID log file data
+    contents = open(log_file, 'r')
+    for line in contents:
+        ls = line.split()
+        if len(ls)>1:
+            if (ls[0]=="Tomography" and ls[1]=="scan"):
+                prj_start = int(ls[6])
+            elif (ls[0]=="Number" and ls[2]=="scan"):
+                nprj = int(ls[4])
+            elif (ls[0]=="Dark" and ls[1]=="field"):
+                dark_start = int(ls[6])
+            elif (ls[0]=="Number" and ls[2]=="dark"):
+                ndark = int(ls[5])
+            elif (ls[0]=="White" and ls[1]=="field"):
+                flat_start = int(ls[6])
+            elif (ls[0]=="Number" and ls[2]=="white"):
+                nflat = int(ls[5])
+    contents.close()
+
+    if ind_tomo is None:
+        ind_tomo = range(prj_start, prj_start + nprj)
+    ind_flat = range(flat_start, flat_start + nflat)
+    ind_dark = range(dark_start, dark_start + ndark)
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6)
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6)
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6)
+    return tomo, flat, dark
+
+
 def read_aps_2bm(fname, proj=None, sino=None):
     """
     Read APS 2-BM standard data format.
