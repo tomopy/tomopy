@@ -68,6 +68,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
            'read_anka_tomotopo',
+           'read_aps_1id',
            'read_aps_2bm',
            'read_aps_7bm',
            'read_aps_13bm',
@@ -273,7 +274,7 @@ def read_aps_1id(fname, ind_tomo=None):
     _fname = fname + '000001.tif'
     log_file = os.path.dirname(fname) + os.path.sep + 'TomoStillScan.dat'
 
-    #Read APS 1-ID log file data
+    # Read APS 1-ID log file data
     contents = open(log_file, 'r')
     for line in contents:
         ls = line.split()
