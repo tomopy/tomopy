@@ -117,7 +117,7 @@ def read_tiff(fname, slc=None):
     fname = _check_read(fname)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        arr = sio.imread(fname, plugin='tifffile')
+        arr = sio.imread(fname, plugin='tifffile', memmap=True)
     arr = _slice_array(arr, slc)
     return arr
 
