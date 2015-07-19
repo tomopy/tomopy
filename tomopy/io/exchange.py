@@ -245,8 +245,7 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5)
     return tomo, flat, dark
 
-
-def read_aps_1id(fname, ind_tomo=None):
+def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     """
     Read APS 1-ID standard data format.
 
@@ -297,9 +296,9 @@ def read_aps_1id(fname, ind_tomo=None):
         ind_tomo = range(prj_start, prj_start + nprj)
     ind_flat = range(flat_start, flat_start + nflat)
     ind_dark = range(dark_start, dark_start + ndark)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6)
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6)
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6)
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(proj, sino))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(None, sino))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(None, sino))
     return tomo, flat, dark
 
 
