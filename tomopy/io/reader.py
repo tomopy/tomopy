@@ -117,7 +117,7 @@ def read_tiff(fname, slc=None):
     fname = _check_read(fname)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        arr = sio.imread(fname, plugin='tifffile')
+        arr = sio.imread(fname, plugin='tifffile', memmap=True)
     arr = _slice_array(arr, slc)
     return arr
 
@@ -143,7 +143,7 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     list_fname = _list_file_stack(fname, ind, digit)
 
     for m, image in enumerate(list_fname):
-        _arr = read_tiff(fname)
+        _arr = read_tiff(list_fname[m])
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
@@ -202,11 +202,15 @@ def read_hdf5(fname, group, slc=None):
     ndarray
         Data.
     """
-    fname = _check_read(fname)
-    f = h5py.File(fname, "r")
-    arr = f[group]
-    arr = _slice_array(arr, slc)
-    f.close()
+    try:
+        fname = _check_read(fname)
+        f = h5py.File(fname, "r")
+        arr = f[group]
+        arr = _slice_array(arr, slc)
+        f.close()
+    except KeyError:
+        arr = None
+
     return arr
 
 
