@@ -13,3 +13,4 @@
       pad
       downsample
       upsample
+      sino_360_t0_180
