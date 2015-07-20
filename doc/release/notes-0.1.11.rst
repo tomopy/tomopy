@@ -1,0 +1,3 @@
+New features
+------------
+- 0-360 to 0-180 sinogram conversion
