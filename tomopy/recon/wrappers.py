@@ -162,11 +162,14 @@ def astra(*args):
 
     if 'extra_options' in opts:
         cfg['option'] = opts['extra_options']
-
+    else:
+        cfg['option'] = {}
 
     # Perform reconstruction
     for i in xrange(istart, iend):
         sino[:] = tomo[:,i,:]
+
+        cfg['option']['z_id']=i
 
         # Fix center of rotation
         if use_cuda:
