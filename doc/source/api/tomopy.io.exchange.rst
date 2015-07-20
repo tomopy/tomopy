@@ -12,6 +12,7 @@
    
       read_als_832
       read_anka_tomotopo
+      read_aps_1id
       read_aps_13bm
       read_aps_13id
       read_aps_2bm
