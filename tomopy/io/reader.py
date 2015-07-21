@@ -77,13 +77,13 @@ __author__ = "Doga Gursoy"
 __credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['read_tiff',
-           'read_tiff_stack',
-           'read_edf',
+__all__ = ['read_edf',
            'read_hdf5',
            'read_netcdf4',
            'read_npy',
-           'read_spe']
+           'read_spe',
+           'read_tiff',
+           'read_tiff_stack']
 
 
 def _check_read(fname):
