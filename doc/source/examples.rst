@@ -8,7 +8,7 @@ This section contains code example for various tomoPy tasks.
 
 .. toctree::
 
-   demo/tomopy.demo.examples
+   examples/tomopy.examples.reconstructions
 
 .. automodule:: tomopy.examples
    :members:
