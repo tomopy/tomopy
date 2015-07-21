@@ -80,6 +80,7 @@ demo.*
 test.py
 main.py
 trunk
+rec
 
 # Installer logs
 ##############
