@@ -10,6 +10,7 @@
 
    .. autosummary::
    
+      adjust_range
       gaussian_filter
       median_filter
       sobel_filter
