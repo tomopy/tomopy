@@ -18,7 +18,7 @@ This guide is maintained on
    source/install
    source/devguide
    source/api
-   source/examples
+   source/demo
    source/faq
    source/credits
 
