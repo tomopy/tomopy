@@ -76,10 +76,10 @@ pip-log.txt
 # Test files #
 ##############
 tmp
-demo.*
 test.py
 main.py
 trunk
+rec
 
 # Installer logs
 ##############
