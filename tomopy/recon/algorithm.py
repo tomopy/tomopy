@@ -161,7 +161,7 @@ def recon(
     >>> pylab.show()
 
     Example using the ASTRA toolbox for recontruction
-    -------
+
     For more information, see http://sourceforge.net/p/astra-toolbox/wiki/Home/
     and https://github.com/astra-toolbox/astra-toolbox. To install the ASTRA
     toolbox with conda, use:
