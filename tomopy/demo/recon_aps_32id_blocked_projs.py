@@ -47,41 +47,17 @@
 # #########################################################################
 
 """
-Module for tomographic reconstruction examples using tomoPy.
+TomoPy example to reconstruct a micro-CT data set containing a series 
+of dark projections becuase of the presence of an environment cell blocking
+some of the sample views.
 """
  
-# tomoPy: https://github.com/tomopy/tomopy
 import tomopy 
-
-__author__ = "Francesco De Carlo"
-__credits__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-__all__ = ['recon_aps_32id_blocked_projs']
  
 
-def recon_aps_32id_blocked_projs(fname, oname, sstart, send):
+def recon_aps_32id_blocked_projs():
     """
-    Reconstruct APS 32-ID and APS 2-BM tomographic data containing a series of dark
-    projections. This function is for reconstructing data set from samples contained 
-    in an enviroment cell blocking a series of projections.
     
-    Parameters
-    ----------
-    fname : str
-        Path to the hdf5 file containing the raw data.
-
-    oname : str
-        Path where to save the reconstructed images.
-
-    sstart, send : int, optional
-        Specify the start and end sinogram to read.
-
-    Returns
-    -------
-    none
-        Saves reconstructed images as tiff in tomopy/data/rec.
-
     Warning
     -------
     Not implemented yet.
@@ -91,13 +67,8 @@ def recon_aps_32id_blocked_projs(fname, oname, sstart, send):
 
 def _main():
 
-    file_name = 'tomopy/data/tooth.h5'
-    output_name = 'tomopy/data/rec/tooth'    
+    recon_aps_32id_blocked_projs()    
 
-    sino_start = 0    
-    sino_end = 2    
-
-    recon_aps_32id_blocked_projs(fname=file_name, oname=output_name, sstart=sino_start, send=sino_end)    
 if __name__ == "__main__":
     _main()
 

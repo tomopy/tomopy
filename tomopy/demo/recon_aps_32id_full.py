@@ -47,41 +47,30 @@
 # #########################################################################
 
 """
-Module for tomographic reconstruction examples using tomoPy.
+TomoPy example to reconstruct a micro-CT data set.
 """
- 
-# tomoPy: https://github.com/tomopy/tomopy
+
+import os.path
 import tomopy 
 
-__author__ = "Francesco De Carlo"
-__credits__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-__all__ = ['recon_aps_32id']
 
-
-def recon_aps_32id(fname, oname, sstart, send):
+def recon_aps_32id_full():
     """
-    Reconstruct APS 32-ID and APS 2-BM tomographic data.
 
-    Parameters
-    ----------
-    fname : str
-        Path to the hdf5 file containing the raw data.
-
-    oname : str
-        Path where to save the reconstructed images.
-
-    sstart, send : int, optional
-        Specify the start and end sinogram to read.
-
-    Returns
-    -------
-    none :
-        Saves reconstructed images as tiff in tomopy/data/rec.
     """
+
+    # set the path to the example file tooth.h5
+    DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    fname = os.path.join(DATA_PATH, 'tooth.h5')
+    print fname
+
+    # set the path to the micro-CT data set
+    #fname = 'data_dir/sample.h5'
+
     # Read the APS 32-ID or 2-BM raw data
-    prj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(sstart, send))
+    start = 0    
+    end = 2    
+    prj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(start, end))
 
     # Set the data collection angles as equally spaced between 0-180 degrees
     theta  = tomopy.angles(prj.shape[0], ang1=0, ang2=180)
@@ -97,28 +86,25 @@ def recon_aps_32id(fname, oname, sstart, send):
     # Auto centering
     calc_center = tomopy.find_center(prj, theta, emission=False, ind=0, init=start_center, tol=0.3)
     print "Calculated Center:", calc_center
-    
+
     # recon using gridrec
     rec = tomopy.recon(prj, theta, center=calc_center, algorithm='gridrec', emission=False)
 
     # Mask each reconstructed slice with a circle
     rec = tomopy.circ_mask(rec, axis=0, ratio=0.8)
-    
-    # Write data as stack of TIFs.
-    tomopy.io.writer.write_tiff_stack(rec, fname=oname)
-    print "Done!  reconions at: ", oname
 
+    # to save the reconstructed images uncomment and customize the following line:
+    rec_name = 'rec/tooth'
+
+    # Write data as stack of TIFs.
+    tomopy.io.writer.write_tiff_stack(rec, fname=rec_name)
+    print "Done!  reconstructions at: ", rec_name
 
 def _main():
 
-    file_name = 'tomopy/data/tooth.h5'
-    output_name = 'tomopy/data/rec/tooth'    
-
-    sino_start = 0    
-    sino_end = 2    
-
-    recon_aps_32id(fname=file_name, oname=output_name, sstart=sino_start, send=sino_end)
+    recon_aps_32id_full()
 
 if __name__ == "__main__":
     _main()
+
 
