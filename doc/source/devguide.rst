@@ -102,7 +102,7 @@ button to compare, review and create a pull request.
 
 .. image:: img/create-revision.png
 
-After clicking on theis button, you are presented with a review page 
+After clicking on this button, you are presented with a review page 
 where you can get a high-level overview of what exactly has changed
 between your forked branch and the original TomoPy repository. 
 When you're ready to submit your pull request, click 
