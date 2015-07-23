@@ -1,14 +1,7 @@
-:mod:`tomopy.demo.recon_aps_32id_chunk`
+Reconstruction with a limited memory pc
 =======================================
 
 .. automodule:: tomopy.demo.recon_aps_32id_chunk
    :members:
    :show-inheritance:
-   :undoc-members:
-
-   .. rubric:: **Functions:**
-
-   .. autosummary::
-   
-      recon_aps_32id_chunk
 
