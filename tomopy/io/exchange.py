@@ -257,6 +257,12 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     ind_tomo : list of int, optional
         Indices of the projection files to read.
 
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
     Returns
     -------
     ndarray
@@ -612,7 +618,7 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     return tomo, flat, dark
 
 
-def read_sls_tomcat(fname, ind_tomo=None):
+def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
     """
     Read SLS TOMCAT standard data format.
 
@@ -623,6 +629,12 @@ def read_sls_tomcat(fname, ind_tomo=None):
 
     ind_tomo : list of int, optional
         Indices of the projection files to read.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -640,7 +652,7 @@ def read_sls_tomcat(fname, ind_tomo=None):
     _fname = fname + '0001.tif'
     log_file = fname + '.log'
 
-    # Read metadata from ALS log file.
+    # Read metadata from SLS log file.
     contents = open(log_file, 'r')
     for line in contents:
         ls = line.split()
@@ -653,11 +665,19 @@ def read_sls_tomcat(fname, ind_tomo=None):
                 ndark = int(ls[4])
     contents.close()
 
+    dark_start = 1
+    dark_end = ndark + 1
+    flat_start = dark_end
+    flat_end = flat_start + nflat
+    proj_start = flat_end
+    proj_end = proj_start + nproj
+
     if ind_tomo is None:
-        ind_tomo = range(ndark + nflat + 1, ndark + nflat + nproj)
-    ind_flat = range(ndark + 1, ndark + nflat)
-    ind_dark = range(1, ndark)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4)
+        ind_tomo = range(proj_start, proj_end)
+    ind_flat = range(flat_start, flat_end)
+    ind_dark = range(dark_start, dark_end)
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(proj, sino))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(None, sino))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(None, sino))
+
     return tomo, flat, dark
