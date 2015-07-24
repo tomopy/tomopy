@@ -32,7 +32,7 @@ for m in range(chunks):
     proj, flat, dark = tomopy.read_aps_32id(fname, sino=(sino_start, sino_end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
-    theta  = tomopy.angles(prj.shape[0], 0, 180)
+    theta  = tomopy.angles(proj.shape[0], 0, 180)
 
     # Remove the missing angles from data.
     proj = np.concatenate((proj[0:miss_projs[0], :, :], proj[miss_projs[1] + 1:-1, :, :]), axis=0)
