@@ -10,8 +10,8 @@ import tomopy
 fname = 'data_dir/sample_name_prefix'
 
 # Select the sinogram range to reconstruct.
-start = 800
-end = 804
+start = 0
+end = 16
 
 # Read the APS 1-ID raw data.
 proj, flat, dark = tomopy.io.exchange.read_sls_tomcat(fname, sino=(start, end))
@@ -23,7 +23,7 @@ theta  = tomopy.angles(proj.shape[0], 0, 180)
 proj = tomopy.normalize(proj, flat, dark)
 
 # Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, init=best_center, ind=0, tol=0.3)
+rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
 print "Center of rotation:", rot_center
 
 # Reconstruct object using Gridrec algorithm.
