@@ -32,12 +32,3 @@ for line in contents:
         elif (ls[0]=="Angular" and ls[1]=="step"):
             angle_step = float(ls[4])
 contents.close()
-
-dark_start = 1
-dark_end = ndark + 1
-flat_start = dark_end
-flat_end = flat_start + nflat
-proj_start = flat_end
-proj_end = proj_start + nproj
-
-
