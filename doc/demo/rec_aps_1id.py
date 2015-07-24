@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
-TomoPy example script to reconstruct micro-CT data set.
+TomoPy example script to reconstruct the APS 1-ID tomography data as original tiff
 """
 
-import tomopy 
+import tomopy
 
 # Set path to the micro-CT data to reconstruct.
-fname = 'data_dir/sample.h5'
+fname = 'data_dir/sample_name_prefix'
 
-# Select sinogram range to reconstruct.
+# Select the sinogram range to reconstruct.
 start = 0
 end = 16
 
-# Read APS 32-ID or 2-BM raw data.
-proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(start, end))
+# Read the APS 1-ID raw data.
+proj, flat, dark = tomopy.io.exchange.read_aps_1id(fname, sino=(start, end))
 
 # Set data collection angles as equally spaced between 0-180 degrees.
 theta  = tomopy.angles(proj.shape[0], 0, 180)
@@ -24,12 +23,12 @@ theta  = tomopy.angles(proj.shape[0], 0, 180)
 proj = tomopy.normalize(proj, flat, dark)
 
 # Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
-print "Calculated rotation center: ", rot_center
+rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
+print "Center of rotation:", rot_center
 
 # Reconstruct object using Gridrec algorithm.
 rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
-
+    
 # Mask each reconstructed slice with a circle.
 rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
