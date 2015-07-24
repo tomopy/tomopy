@@ -33,8 +33,5 @@ rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission
 # Mask each reconstructed slice with a circle.
 rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
-# Set reconstructed images name.
-rec_name = 'recon_dir/recon'
-
 # Write data as stack of TIFs.
-tomopy.io.writer.write_tiff_stack(rec, fname=rec_name)
+tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon')
