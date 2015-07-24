@@ -12,7 +12,7 @@ fname = 'data_dir/sample.h5'
 
 # Select sinogram range to reconstruct.
 start = 0
-end = 2
+end = 16
 
 # Read APS 32-ID or 2-BM raw data.
 proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(start, end))
@@ -24,7 +24,7 @@ theta  = tomopy.angles(proj.shape[0], 0, 180)
 prj = tomopy.normalize(proj, flat, dark)
 
 # Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=295, tol=0.5)
+rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
 print "Calculated rotation center: ", rot_center
 
 # Reconstruct object using Gridrec algorithm.
@@ -33,7 +33,7 @@ rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission
 # Mask each reconstructed slice with a circle.
 rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
-# Set reconstructed images name
+# Set reconstructed images name.
 rec_name = 'recon_dir/recon'
 
 # Write data as stack of TIFs.
