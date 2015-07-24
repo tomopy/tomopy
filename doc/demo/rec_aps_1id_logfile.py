@@ -1,18 +1,21 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 Read the APS 1-ID tomography log file
 """
+
 import tomopy
 import os.path
 
-# set the path to the micro-CT data set to reconstruct
+# Set path to the micro-CT data to reconstruct.
 fname = 'data_dir/sample_name_prefix'
 
 fname = os.path.abspath(fname)
-log_file = os.path.dirname(fname) + os.path.sep + 'TomoStillScan.dat'
+log_fname = os.path.dirname(fname) + os.path.sep + 'TomoStillScan.dat'
 
 # Read APS 1-ID log file.
-contents = open(log_file, 'r')
+contents = open(log_fname, 'r')
 for line in contents:
     ls = line.split()
     if len(ls)>1:

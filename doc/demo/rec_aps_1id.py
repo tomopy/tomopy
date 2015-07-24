@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 TomoPy example script to reconstruct the APS 1-ID tomography data as original tiff
 """
+
 import tomopy
 
 # Set path to the micro-CT data to reconstruct.
@@ -12,16 +15,13 @@ start = 1000
 end = 1004
 
 # Read the APS 1-ID raw data.
-prj, flat, dark = tomopy.io.exchange.read_aps_1id(fname, sino=(start, end))
+proj, flat, dark = tomopy.io.exchange.read_aps_1id(fname, sino=(start, end))
 
 # Set data collection angles as equally spaced between 0-180 degrees.
-theta  = tomopy.angles(prj.shape[0], 0, 180)
+theta  = tomopy.angles(proj.shape[0], 0, 180)
 
 # Flat-field correction of raw data.
-prj = tomopy.normalize(prj, flat, dark)
-
-# Find rotation center.
-best_center = 1026; 
+proj = tomopy.normalize(proj, flat, dark)
 
 # Find rotation center.
 rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
