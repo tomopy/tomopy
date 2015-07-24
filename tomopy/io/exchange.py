@@ -302,9 +302,9 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
         ind_tomo = range(prj_start, prj_start + nprj)
     ind_flat = range(flat_start, flat_start + nflat)
     ind_dark = range(dark_start, dark_start + ndark)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(proj, sino))
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(None, sino))
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(None, sino))
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(sino, proj))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(sino, None))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(sino, None))
     return tomo, flat, dark
 
 
@@ -676,8 +676,8 @@ def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
         ind_tomo = range(proj_start, proj_end)
     ind_flat = range(flat_start, flat_end)
     ind_dark = range(dark_start, dark_end)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(proj, sino))
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(None, sino))
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(None, sino))
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(sino, proj))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(sino, None))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(sino, None))
 
     return tomo, flat, dark
