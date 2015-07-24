@@ -14,7 +14,7 @@ import numpy as np
 fname = 'data_dir/sample.h5'
 
 # Set the [start, end] index of the blocked projections.
-miss_angles = [128, 256]
+miss_projs = [128, 256]
 
 # Select sinogram range to reconstruct.
 start = 512
@@ -35,8 +35,8 @@ for m in range(chunks):
     theta  = tomopy.angles(prj.shape[0], 0, 180)
 
     # Remove the missing angles from data.
-    proj = np.concatenate((proj[0:miss_angles[0], :, :], proj[miss_angles[1]+1:-1, :, :]), axis=0)
-    theta = np.concatenate((theta[0:miss_angles[0]], theta[miss_angles[1] + 1:-1]))
+    proj = np.concatenate((proj[0:miss_projs[0], :, :], proj[miss_projs[1] + 1:-1, :, :]), axis=0)
+    theta = np.concatenate((theta[0:miss_projs[0]], theta[miss_projs[1] + 1:-1]))
 
     # Flat-field correction of raw data.
     proj = tomopy.normalize(proj, flat, dark)
