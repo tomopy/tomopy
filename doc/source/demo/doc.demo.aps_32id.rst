@@ -1,7 +1,7 @@
-APS 32-ID 
-=========
+APS 2-BM & 32-ID 
+================
 
-This section contains TomoPy scripts to reconstruct the APS 2-BM and 32-ID tomography data sets. To run them just copy/paste the code in your preferred editor and execute.
+This section contains TomoPy scripts to reconstruct the APS 2-BM and 32-ID tomography data sets.
 
 .. rubric:: **TomoPy Examples:**
 
