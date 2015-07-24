@@ -21,7 +21,7 @@ proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(start, end))
 theta  = tomopy.angles(proj.shape[0], 0, 180)
 
 # Flat-field correction of raw data.
-prj = tomopy.normalize(proj, flat, dark)
+proj = tomopy.normalize(proj, flat, dark)
 
 # Find rotation center.
 rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
