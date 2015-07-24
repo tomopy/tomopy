@@ -143,13 +143,12 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     list_fname = _list_file_stack(fname, ind, digit)
 
     for m, image in enumerate(list_fname):
-        _arr = read_tiff(list_fname[m])
+        _arr = read_tiff(list_fname[m], slc)
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
             arr = np.zeros((dx, dy, dz))
         arr[m] = _arr
-    arr = _slice_array(arr, slc)
     return arr
 
 
