@@ -9,7 +9,6 @@ environment cell blocking some of the sample views.
  
 import tomopy
 import numpy as np
-import matplotlib.pylab as pl
 
 # Set path to the micro-CT data set to reconstruct.
 fname = 'data_dir/sample.h5'
