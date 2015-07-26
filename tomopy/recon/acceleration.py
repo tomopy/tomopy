@@ -59,6 +59,7 @@ import tomopy.util.dtype as dtype
 from tomopy.sim.project import angles, get_center
 import multiprocessing
 import logging
+import imp
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +69,14 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['recon']
 
+known_implementations = {
+    'tomoperi' : 'tomopy_peri'
+}
+
 
 def recon_accelerated(
         tomo, theta, center=None, emission=True, algorithm=None, hardware=None,
-        init_recon=None, **kwargs):
+        implementaion=None, acc_option=None, init_recon=None, **kwargs):
     """
     Reconstruct object from projection data using hardware acceleration. 
 
@@ -86,26 +91,22 @@ def recon_accelerated(
     emission : bool, optional
         Determines whether data is emission or transmission type.
     algorithm : {str, function}
-        One of the following string values.
+        One of the algorithms defined in recon functions.
 
-        'tomoperi.ospml_hybrid'
-            Ordered-subset penalized maximum likelihood algorithm with
-            weighted linear and quadratic penalties.
-        'tomoperi.ospml_quad'
-            Ordered-subset penalized maximum likelihood algorithm with
-            quadratic penalties.
-        'tomoperi.pml_hybrid'
-            Penalized maximum likelihood algorithm with weighted linear
-            and quadratic penalties :cite:`Chang:04`.
-        'tomoperi.pml_quad'
-            Penalized maximum likelihood algorithm with quadratic penalty.
     hardware : str, optional
-        One of the following supporting platforms.
+        One of the following supporting hardware platforms.
 
         'Xeon_Phi'
             Intel Xeon Phi acceleration hardware platform.
-        'nVidia_CUDA'
-            nVidia CUDA GPGPU hardware platform.
+        'nVidia_GPU'
+            nVidia GPU hardware platform.
+    implementation : str, optional
+        One of the following supporting packages, or a function providing accelerated recon.
+
+        'tomo_peri'
+            Tomopy_peri opensource packages, https://github.com/PeriLLC/tomopy_peri_0.1.x
+    implementation : str, optional
+        Options for hardware accelerated algorithms.
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
     filter_name : str, optional
@@ -135,10 +136,11 @@ def recon_accelerated(
     Example
     -------
     >>> import tomopy
+    >>> import tomoperi
     >>> obj = tomopy.shepp3d() # Generate an object.
     >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
     >>> sim = tomopy.project(obj, ang) # Calculate projections.
-    >>> rec = tomopy.recon_accelerated(sim, ang, algorithm='tomoperi.ospml_hybrid', hardware='Xeon_Phi') # Reconstruct object.
+    >>> rec = tomopy.recon_accelerated(sim, ang, algorithm='ospml_hybrid', hardware='Xeon_Phi', implementation='tomoperi') # Reconstruct object.
     >>>
     >>> # Show 64th slice of the reconstructed object.
     >>> import pylab
@@ -146,111 +148,48 @@ def recon_accelerated(
     >>> pylab.show()
    """
 
-    # Initialize tomography data.
-    tomo = _init_tomo(tomo, emission)
-
-    allowed_kwargs = {
-        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
-                         'reg_par', 'num_block', 'ind_block'],
-        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
-                       'reg_par', 'num_block', 'ind_block'],
-        'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-    }
-
-    generic_kwargs = ['num_gridx', 'num_gridy', 'options']
-
-    # Generate kwargs for the algorithm.
-    kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
-    if isinstance(algorithm, str):
-        # Check whether we have an allowed method
-        if not algorithm in allowed_kwargs:
-            raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
-                             (list(allowed_kwargs.keys()),))
-        # Make sure have allowed kwargs appropriate for algorithm.
-        for key in kwargs:
-            if key not in allowed_kwargs[algorithm]:
-                raise ValueError('%s keyword not in allowed keywords %s' %
-                                 (key, allowed_kwargs[algorithm]))
-        # Set kwarg defaults.
-        for kw in allowed_kwargs[algorithm]:
-            kwargs.setdefault(kw, kwargs_defaults[kw])
-    elif hasattr(algorithm, '__call__'):
-        # Set kwarg defaults.
-        for kw in generic_kwargs:
-            kwargs.setdefault(kw, kwargs_defaults[kw])
+    if implementation is None:
+        implementation = _search_implementation()
     else:
-        raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
-                         (list(allowed_kwargs.keys()),))
 
-    # Generate args for the algorithm.
-    args = _get_algorithm_args(tomo.shape, theta, center)
+        if isinstance(implementaion, str):
+            # Check whether we have a known implementation
+            if not implementaion in known_implementations:
+                raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
+                             (list(known_implementations.keys()),))
 
-    # Initialize reconstruction.
-    recon = _init_recon(
-        (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
-        init_recon)
-    return _dist_recon(
-        tomo, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
+        elif hasattr(implementaion, '__call__'):
 
+        else:
+            raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
+                         (list(known_implementations),))
 
-def _init_tomo(tomo, emission):
-    tomo = dtype.as_float32(tomo)
-    if not emission:
-        tomo = -np.log(tomo)
-    return tomo
+    _impl_recon = _get_func(implementation)
 
+    return _impl_recon(tomo, theta, center, emission, algorithm, hardware, acc_option, init_recon, **kwargs)
+   
 
-def _init_recon(shape, init_recon, val=1e-6):
-    if init_recon is None:
-        recon = val * np.ones(shape, dtype='float32')
+def _search_implementation()
+    for key in known_implementations
+        try:
+            imp.find_module(known_implementations[key])
+            found = True
+        except ImportError:
+            found = False
+        if found :
+            return key
+
+    raise ValueError('No known hardware accelerated package reconstruction implementation found!')
+
+def _get_func(implementation)
+    if implementation == 'tomoperi':
+        try:
+            import tomopy_peri
+            func = tomopy_peri.recon
     else:
-        recon = dtype.as_float32(recon)
-    return recon
-
-
-def _get_func(algorithm):
-    if algorithm == 'ospml_hybrid':
-        func = extern.c_ospml_hybrid
-    elif algorithm == 'ospml_quad':
-        func = extern.c_ospml_quad
-    elif algorithm == 'pml_hybrid':
-        func = extern.c_pml_hybrid
-    elif algorithm == 'pml_quad':
-        func = extern.c_pml_quad
-    else:
-        func = algorithm
+        func = implementation
     return func
 
 
-def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
-    mproc.init_tomo(tomo)
-    return mproc.distribute_jobs(
-        recon,
-        func=algorithm,
-        args=args,
-        kwargs=kwargs,
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
 
 
-def _get_algorithm_args(shape, theta, center):
-    dx, dy, dz = shape
-    theta = dtype.as_float32(theta)
-    center = get_center(shape, center)
-    return (dx, dy, dz, center, theta)
-
-
-def _get_algorithm_kwargs(shape):
-    dx, dy, dz = shape
-    return {
-        'num_gridx': dz,
-        'num_gridy': dz,
-        'filter_name': np.array('shepp', dtype=(str, 16)),
-        'num_iter': dtype.as_int32(1),
-        'reg_par': np.ones(10, dtype='float32'),
-        'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dx, dtype='float32'),
-        'options': {},
-    }
