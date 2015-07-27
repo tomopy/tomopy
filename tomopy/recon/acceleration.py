@@ -47,7 +47,7 @@
 # #########################################################################
 
 """
-Module for reconstruction algorithms.
+Module for hardware accelerated reconstruction algorithms.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -91,13 +91,13 @@ def recon_accelerated(
     emission : bool, optional
         Determines whether data is emission or transmission type.
     algorithm : {str, function}
-        One of the algorithms defined in recon functions.
+        One of the algorithms defined in non-accelerated recon function.
 
     hardware : str, optional
         One of the following supporting hardware platforms.
 
         'Xeon_Phi'
-            Intel Xeon Phi acceleration hardware platform.
+            Intel Xeon Phi hardware platform.
         'nVidia_GPU'
             nVidia GPU hardware platform.
     implementation : str, optional
@@ -166,11 +166,11 @@ def recon_accelerated(
 
     _impl_recon = _get_func(implementation)
 
-    return _impl_recon(tomo, theta, center, emission, algorithm, hardware, acc_option, init_recon, **kwargs)
+    return _impl_recon(tomo, theta, center, emission, algorithm, hardware, acc_option, init_recon, kwargs)
    
 
-def _search_implementation()
-    for key in known_implementations
+def _search_implementation():
+    for key in known_implementations:
         try:
             imp.find_module(known_implementations[key])
             found = True
@@ -179,13 +179,15 @@ def _search_implementation()
         if found :
             return key
 
-    raise ValueError('No known hardware accelerated package reconstruction implementation found!')
+    raise ValueError('No known hardware accelerated reconstruction implementation found!')
 
-def _get_func(implementation)
+def _get_func(implementation):
     if implementation == 'tomoperi':
         try:
-            import tomopy_peri
-            func = tomopy_peri.recon
+            import tomopy_peri.algorithm
+            func = algorithm.recon
+        except ImportError:
+            raise ValueError('Tomoperi hardware accelerated reconstruction implementation not found!')
     else:
         func = implementation
     return func
