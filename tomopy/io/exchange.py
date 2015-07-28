@@ -207,7 +207,7 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
     return tomo, flat, dark
 
 
-def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
+def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read ANKA TOMO-TOMO standard data format.
 
@@ -240,9 +240,9 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'radios', 'image_00000.tif')
     flat_name = os.path.join(fname, 'flats', 'image_00000.tif')
     dark_name = os.path.join(fname, 'darks', 'image_00000.tif')
-    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5, slc=(sino, proj))
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5, slc=(sino, None))
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5, slc=(sino, None))
     return tomo, flat, dark
 
 def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
