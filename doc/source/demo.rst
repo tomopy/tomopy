@@ -5,6 +5,7 @@ This section contains code example for various tomoPy tasks.
 
 .. toctree::
 
+   demo/doc.demo.anka
    demo/doc.demo.aps_32id
    demo/doc.demo.aps_1id
    demo/doc.demo.tomcat
