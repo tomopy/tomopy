@@ -53,11 +53,11 @@ Module for hardware accelerated reconstruction algorithms.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import tomopy.util.mproc as mproc
-import tomopy.util.extern as extern
-import tomopy.util.dtype as dtype
-from tomopy.sim.project import angles, get_center
-import multiprocessing
+#import tomopy.util.mproc as mproc
+#import tomopy.util.extern as extern
+#import tomopy.util.dtype as dtype
+#from tomopy.sim.project import angles, get_center
+#import multiprocessing
 import logging
 import imp
 
@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Dake Feng"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['recon']
+__all__ = ['recon_accelerated']
 
 known_implementations = {
     'tomoperi' : 'tomopy_peri'
@@ -136,7 +136,7 @@ def recon_accelerated(
     Example
     -------
     >>> import tomopy
-    >>> import tomoperi
+    >>> import tomopy_peri
     >>> obj = tomopy.shepp3d() # Generate an object.
     >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
     >>> sim = tomopy.project(obj, ang) # Calculate projections.
@@ -158,9 +158,7 @@ def recon_accelerated(
                 raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
                              (list(known_implementations.keys()),))
 
-        elif hasattr(implementaion, '__call__'):
-
-        else:
+        elif not hasattr(implementaion, '__call__'):
             raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
                          (list(known_implementations),))
 
