@@ -76,7 +76,7 @@ known_implementations = {
 
 def recon_accelerated(
         tomo, theta, center=None, emission=True, algorithm=None, hardware=None,
-        implementaion=None, acc_option=None, init_recon=None, **kwargs):
+        implementation=None, acc_option=None, init_recon=None, **kwargs):
     """
     Reconstruct object from projection data using hardware acceleration. 
 
@@ -152,13 +152,13 @@ def recon_accelerated(
         implementation = _search_implementation()
     else:
 
-        if isinstance(implementaion, str):
+        if isinstance(implementation, str):
             # Check whether we have a known implementation
-            if not implementaion in known_implementations:
+            if not implementation in known_implementations:
                 raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
                              (list(known_implementations.keys()),))
 
-        elif not hasattr(implementaion, '__call__'):
+        elif not hasattr(implementation, '__call__'):
             raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
                          (list(known_implementations),))
 
