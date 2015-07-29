@@ -541,7 +541,7 @@ def read_diamond_l12(fname, ind_tomo):
     return tomo, flat
 
 
-def read_elettra_syrmep(fname, ind_tomo):
+def read_elettra_syrmep(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read Elettra SYRMEP standard data format.
 
@@ -566,13 +566,11 @@ def read_elettra_syrmep(fname, ind_tomo):
     """
     fname = os.path.abspath(fname)
     tomo_name = os.path.join(fname, 'tomo_0001.tif')
-    flat_name = os.path.join(fname, 'flat_0001.tif')
-    dark_name = os.path.join(fname, 'dark_0001.tif')
-    ind_flat = range(1, 11)
-    ind_dark = range(1, 11)
-    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
+    flat_name = os.path.join(fname, 'flat_1.tif')
+    dark_name = os.path.join(fname, 'dark_1.tif')
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4, slc=(sino, proj))
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=1, slc=(sino, None))
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=1, slc=(sino, None))
     return tomo, flat, dark
 
 
