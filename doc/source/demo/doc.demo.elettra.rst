@@ -1,4 +1,4 @@
-Elettra syrmep 
+Elettra Syrmep 
 ==============
 
 This section contains TomoPy scripts to reconstruct the Elettra syrmep tomography data sets.
