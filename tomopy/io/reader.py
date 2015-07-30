@@ -87,7 +87,7 @@ __all__ = ['read_edf',
 
 
 def _check_read(fname):
-    known_extensions = ['.tiff', '.tif', '.h5', '.hdf', '.npy']
+    known_extensions = ['.edf', '.tiff', '.tif', '.h5', '.hdf', '.npy']
     if not isinstance(fname, basestring):
         logger.error('file name must be a string')
     else:
@@ -143,13 +143,12 @@ def read_tiff_stack(fname, ind, digit, slc=None):
     list_fname = _list_file_stack(fname, ind, digit)
 
     for m, image in enumerate(list_fname):
-        _arr = read_tiff(list_fname[m])
+        _arr = read_tiff(list_fname[m], slc)
         if m == 0:
             dx = len(ind)
             dy, dz = _arr.shape
             arr = np.zeros((dx, dy, dz))
         arr[m] = _arr
-    arr = _slice_array(arr, slc)
     return arr
 
 
@@ -171,14 +170,17 @@ def read_edf(fname, slc=None):
     ndarray
         Data.
     """
-    fname = _check_read(fname)
-    f = EdfFile.EdfFile(fname, access='r')
-    d = f.GetStaticHeader(0)
-    arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
-    for i, ar in enumerate(arr):
-        arr[i::] = f.GetData(i)
-    arr = _slice_array(arr, slc)
-    # TODO: file probably needs to be closed.
+    try:
+        fname = _check_read(fname)
+        f = EdfFile.EdfFile(fname, access='r')
+        d = f.GetStaticHeader(0)
+        arr = np.empty((f.NumImages, int(d['Dim_2']), int(d['Dim_1'])))
+        for (i, ar) in enumerate(arr):
+            arr[i::] = f.GetData(i)
+        arr = _slice_array(arr, slc)
+    except KeyError:
+        arr = None
+
     return arr
 
 
