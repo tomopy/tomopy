@@ -77,6 +77,7 @@ __all__ = ['read_als_832',
            'read_aus_microct',
            'read_diamond_l12',
            'read_elettra_syrmep',
+           'read_esrf_id19',
            'read_petra3_p05',
            'read_sls_tomcat']
 
@@ -207,7 +208,7 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
     return tomo, flat, dark
 
 
-def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
+def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read ANKA TOMO-TOMO standard data format.
 
@@ -240,9 +241,9 @@ def read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark):
     tomo_name = os.path.join(fname, 'radios', 'image_00000.tif')
     flat_name = os.path.join(fname, 'flats', 'image_00000.tif')
     dark_name = os.path.join(fname, 'darks', 'image_00000.tif')
-    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5)
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=5, slc=(sino, proj))
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=5, slc=(sino, None))
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=5, slc=(sino, None))
     return tomo, flat, dark
 
 def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
@@ -302,9 +303,9 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
         ind_tomo = range(prj_start, prj_start + nprj)
     ind_flat = range(flat_start, flat_start + nflat)
     ind_dark = range(dark_start, dark_start + ndark)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(proj, sino))
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(None, sino))
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(None, sino))
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(sino, proj))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(sino, None))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(sino, None))
     return tomo, flat, dark
 
 
@@ -512,6 +513,43 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     return tomo, flat, dark
 
 
+def read_esrf_id19(fname, proj=None, sino=None):
+    """
+    Read ESRF ID-19 standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to edf file.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """    
+
+    fname = os.path.abspath(fname)
+    tomo_name = os.path.join(fname, 'tomo.edf')
+    flat_name = os.path.join(fname, 'flat.edf')
+    dark_name = os.path.join(fname, 'dark.edf')
+    tomo = tio.read_edf(tomo_name, slc=(proj, sino))
+    flat = tio.read_edf(flat_name, slc=(None, sino))
+    dark = tio.read_edf(dark_name, slc=(None, sino))
+    return tomo, flat, dark
+
+
 def read_diamond_l12(fname, ind_tomo):
     """
     Read Diamond Light Source L12 (JEEP) standard data format.
@@ -541,7 +579,7 @@ def read_diamond_l12(fname, ind_tomo):
     return tomo, flat
 
 
-def read_elettra_syrmep(fname, ind_tomo):
+def read_elettra_syrmep(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read Elettra SYRMEP standard data format.
 
@@ -566,13 +604,11 @@ def read_elettra_syrmep(fname, ind_tomo):
     """
     fname = os.path.abspath(fname)
     tomo_name = os.path.join(fname, 'tomo_0001.tif')
-    flat_name = os.path.join(fname, 'flat_0001.tif')
-    dark_name = os.path.join(fname, 'dark_0001.tif')
-    ind_flat = range(1, 11)
-    ind_dark = range(1, 11)
-    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
+    flat_name = os.path.join(fname, 'flat_1.tif')
+    dark_name = os.path.join(fname, 'dark_1.tif')
+    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4, slc=(sino, proj))
+    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=1, slc=(sino, None))
+    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=1, slc=(sino, None))
     return tomo, flat, dark
 
 
@@ -676,8 +712,8 @@ def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
         ind_tomo = range(proj_start, proj_end)
     ind_flat = range(flat_start, flat_end)
     ind_dark = range(dark_start, dark_end)
-    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(proj, sino))
-    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(None, sino))
-    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(None, sino))
+    tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(sino, proj))
+    flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(sino, None))
+    dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(sino, None))
 
     return tomo, flat, dark
