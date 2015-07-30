@@ -1,5 +1,5 @@
-Tomcat 
-======
+SLS Tomcat 
+==========
 
 This section contains TomoPy scripts to reconstruct the Swiss Light Source tomcat tomography data sets. 
 
