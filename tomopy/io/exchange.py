@@ -77,6 +77,7 @@ __all__ = ['read_als_832',
            'read_aus_microct',
            'read_diamond_l12',
            'read_elettra_syrmep',
+           'read_esrf_id19',
            'read_petra3_p05',
            'read_sls_tomcat']
 
@@ -509,6 +510,43 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=2)
     dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=2)
+    return tomo, flat, dark
+
+
+def read_esrf_id19(fname, proj=None, sino=None):
+    """
+    Read ESRF ID-19 standard data format.
+
+    Parameters
+    ----------
+    fname : str
+        Path to edf file.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """    
+
+    fname = os.path.abspath(fname)
+    tomo_name = os.path.join(fname, 'tomo.edf')
+    flat_name = os.path.join(fname, 'flat.edf')
+    dark_name = os.path.join(fname, 'dark.edf')
+    tomo = tio.read_edf(tomo_name, slc=(proj, sino))
+    flat = tio.read_edf(flat_name, slc=(None, sino))
+    dark = tio.read_edf(dark_name, slc=(None, sino))
     return tomo, flat, dark
 
 
