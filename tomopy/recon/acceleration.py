@@ -53,11 +53,6 @@ Module for hardware accelerated reconstruction algorithms.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-#import tomopy.util.mproc as mproc
-#import tomopy.util.extern as extern
-#import tomopy.util.dtype as dtype
-#from tomopy.sim.project import angles, get_center
-#import multiprocessing
 import logging
 import imp
 
@@ -150,6 +145,7 @@ def recon_accelerated(
 
     if implementation is None:
         implementation = _search_implementation()
+        print ('Implementation %s is chosen by default. ' %implementation )
     else:
 
         if isinstance(implementation, str):
