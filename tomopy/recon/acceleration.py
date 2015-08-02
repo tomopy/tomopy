@@ -160,7 +160,7 @@ def recon_accelerated(
 
     _impl_recon = _get_func(implementation)
 
-    return _impl_recon(tomo, theta, center=center, emission=emission, algorithm=algorithm, hardware=hardware, acc_option=acc_option, init_recon=init_recon, *kwargs)
+    return _impl_recon(tomo, theta, center, emission, algorithm, hardware, acc_option, init_recon, **kwargs)
    
 
 def _search_implementation():
