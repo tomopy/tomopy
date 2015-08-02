@@ -252,7 +252,7 @@ def _init_recon(shape, init_recon, val=1e-6):
     if init_recon is None:
         recon = val * np.ones(shape, dtype='float32')
     else:
-        recon = dtype.as_float32(recon)
+        recon = dtype.as_float32(init_recon)
     return recon
 
 
