@@ -73,7 +73,8 @@ def recon_accelerated(
         tomo, theta, center=None, emission=True, algorithm=None, hardware=None,
         implementation=None, acc_option=None, init_recon=None, **kwargs):
     """
-    Reconstruct object from projection data using hardware acceleration. 
+    Reconstruct object from projection data using hardware acceleration. A hardware acceleration implementation package is required. A free implementation can be downloaded from 
+    https://github.com/PeriLLC/tomopy_peri_0.1.x
 
     Parameters
     ----------
@@ -131,7 +132,6 @@ def recon_accelerated(
     Example
     -------
     >>> import tomopy
-    >>> import tomopy_peri
     >>> obj = tomopy.shepp3d() # Generate an object.
     >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
     >>> sim = tomopy.project(obj, ang) # Calculate projections.
@@ -145,7 +145,7 @@ def recon_accelerated(
 
     if implementation is None:
         implementation = _search_implementation()
-        print ('Implementation %s is chosen by default. ' %implementation )
+        logger.info ('Implementation %s is chosen by default. ' %implementation )
     else:
 
         if isinstance(implementation, str):
@@ -173,7 +173,8 @@ def _search_implementation():
         if found :
             return key
 
-    raise ValueError('No known hardware accelerated reconstruction implementation found!')
+    raise ValueError('No known hardware accelerated reconstruction implementation found, try install one from %s!' %
+                 (list(known_implementations.keys()),))
 
 def _get_func(implementation):
     if implementation == 'tomoperi':
