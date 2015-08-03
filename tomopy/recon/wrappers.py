@@ -76,7 +76,6 @@ needed_options = {
     'astra': ['method']
 }
 
-
 def astra(*args):
     """
     Reconstruct object using the ASTRA toolbox
@@ -113,6 +112,12 @@ def astra(*args):
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
     """
+    if args[5]['options']['proj_type']=='cuda':
+        mproc.SHARED_QUEUE.put([astra_run]+list(args))
+    else:
+        astra_run(*args)
+
+def astra_run(*args):
     # Lazy import ASTRA
     import astra as astra_mod
 
