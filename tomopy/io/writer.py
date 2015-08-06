@@ -175,7 +175,7 @@ def write_hdf5(
     """
     fname, data = _init_write(data, fname, '.h5', dtype, overwrite)
     f = h5py.File(fname, 'w')
-    ds = f.create_dataset('implements', data="exchange")
+    ds = f.create_dataset('implements', data=gname)
     exchangeGrp = f.create_group(gname)
     ds = exchangeGrp.create_dataset('data', data=data)
     f.close()
