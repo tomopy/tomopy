@@ -63,12 +63,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def _check_import(modname):
+    try:
+        return __import__(modname)
+    except ImportError:
+        logger.warn(modname + ' module not found')
+        return None
+
+dxtomo  = _check_import('dxtomo')
+
 
 __author__ = "Doga Gursoy"
 __credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['write_hdf5',
+__all__ = ['write_dxf',
+           'write_hdf5',
            'write_npy',
            'write_tiff',
            'write_tiff_stack']
@@ -178,6 +188,32 @@ def write_hdf5(
     ds = f.create_dataset('implements', data=gname)
     exchangeGrp = f.create_group(gname)
     ds = exchangeGrp.create_dataset('data', data=data)
+    f.close()
+
+
+def write_dxf(
+        data, fname='tmp/data.h5', axes='theta:y:x',
+        dtype=None, overwrite=False):
+    """
+    Write data to hdf5 file in a specific group.
+
+    Parameters
+    ----------
+    data : ndarray
+        Array data to be saved.
+    fname : str
+        File name to which the data is saved. ``.h5`` extension
+        will be appended if it does not already have one.
+    gname : str, optional
+        Path to the group inside hdf5 file where data will be written.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    overwrite: bool, optional
+        if True, overwrites the existing file if the file exists.
+    """
+    fname, data = _init_write(data, fname, '.h5', dtype, overwrite)
+    f = dxtomo.File(fname, mode='w')
+    f.add_entry(dxtomo.Entry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes': axes }))
     f.close()
 
 
