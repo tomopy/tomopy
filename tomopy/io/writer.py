@@ -154,7 +154,7 @@ def _init_write(arr, fname, ext, dtype, overwrite):
 
 
 def write_hdf5(
-        data, fname='tmp/data.tiff', gname='exchange',
+        data, fname='tmp/data.h5', gname='exchange',
         dtype=None, overwrite=False):
     """
     Write data to hdf5 file in a specific group.
