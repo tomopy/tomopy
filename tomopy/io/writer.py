@@ -195,7 +195,7 @@ def write_dxf(
         data, fname='tmp/data.h5', axes='theta:y:x',
         dtype=None, overwrite=False):
     """
-    Write data to hdf5 file in a specific group.
+    Write data to a data exchange hdf5 file.
 
     Parameters
     ----------
@@ -204,8 +204,8 @@ def write_dxf(
     fname : str
         File name to which the data is saved. ``.h5`` extension
         will be appended if it does not already have one.
-    gname : str, optional
-        Path to the group inside hdf5 file where data will be written.
+    axes : str
+        Attribute labels for the data array axes.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     overwrite: bool, optional
