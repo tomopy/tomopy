@@ -5,3 +5,4 @@ New features
 Improvements
 ------------
 - Added examples in docs
+- Some Win compatibility fixes
