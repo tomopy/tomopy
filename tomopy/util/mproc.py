@@ -152,17 +152,17 @@ def _prepare_args(func, args, kwargs, istart, iend):
 
 def _start_proc(arr, args):
     shared_arr = get_shared(arr)
-    if len(args)==1:
-        init_shared(shared_arr)
-        _arg_parser(args[0])
-    else:
-        with closing(
-            mp.Pool(processes=len(args),
-                    initializer=init_shared,
-                    initargs=(shared_arr,))) as p:
-            p.map_async(_arg_parser, args)
-        p.join()
-        p.close()
+    init_shared(shared_arr)
+    man = mp.Manager()
+    queue = man.Queue()
+    with closing(
+        mp.Pool(processes=len(args),
+                initializer=init_shared,
+                initargs=(shared_arr, queue))) as p:
+        p.map_async(_arg_parser, args)
+    p.join()
+    p.close()
+    clear_queue(queue)
     return shared_arr
 
 
@@ -183,9 +183,11 @@ def _to_numpy_array(mp_arr, dshape):
     return np.reshape(a, dshape)
 
 
-def init_shared(shared_arr):
+def init_shared(shared_arr, queue=None):
     global SHARED_ARRAY
     SHARED_ARRAY = shared_arr
+    global SHARED_QUEUE
+    SHARED_QUEUE = queue
 
 
 def init_tomo(arr):
@@ -196,3 +198,10 @@ def init_tomo(arr):
 def init_obj(arr):
     global SHARED_OBJ
     SHARED_OBJ = get_shared(arr)
+
+
+def clear_queue(queue):
+    while not queue.empty():
+        args = queue.get(False)
+        func = args[0]
+        func(*args[1::])

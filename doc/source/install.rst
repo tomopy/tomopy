@@ -10,8 +10,8 @@ This section covers the basics of how to download and install TomoPy.
 Installing from Conda/Binstar
 =============================
 
-To use this you must have `Conda <http://continuum.io/downloads>`_ 
-installed first. Open a terminal or a command prompt window and run::
+First you must have `Conda <http://continuum.io/downloads>`_ 
+installed, then open a terminal or a command prompt window and run::
 
     conda install -c dgursoy tomopy
 
@@ -19,7 +19,7 @@ installed first. Open a terminal or a command prompt window and run::
 Updating the installation
 =========================
 
-This is an active project, so we suggest you update your installation 
+TomoPy is an active project, so we suggest you update your installation 
 frequently. To update the installation run in your terminal::
 
     conda update -c dgursoy tomopy
