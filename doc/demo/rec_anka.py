@@ -1,45 +1,50 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
-TomoPy example script to reconstruct the Anka topo-tomo tomography data as original tiff
+TomoPy example script to reconstruct the Anka tomo-topo tomography data as original tiff.
 """
 
 import tomopy
 
-# Set path to the micro-CT data to reconstruct.
-fname = 'data_dir/'
+if __name__ == '__main__':
 
-proj_start = 0
-proj_end = 1800
-flat_start = 0
-flat_end = 100
-dark_start = 0
-dark_end = 100
+    # Set path to the micro-CT data to reconstruct.
+    fname = 'data_dir/'
 
-ind_tomo = range(proj_start, proj_end)
-ind_flat = range(flat_start, flat_end)
-ind_dark = range(dark_start, dark_end)
+    proj_start = 0
+    proj_end = 1800
+    flat_start = 0
+    flat_end = 100
+    dark_start = 0
+    dark_end = 100
 
-# Select the sinogram range to reconstruct.
-start = 0
-end = 16
+    ind_tomo = range(proj_start, proj_end)
+    ind_flat = range(flat_start, flat_end)
+    ind_dark = range(dark_start, dark_end)
 
-# Read the Anka tiff raw data.
-proj, flat, dark = tomopy.io.exchange.read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
+    # Select the sinogram range to reconstruct.
+    start = 0
+    end = 16
 
-# Set data collection angles as equally spaced between 0-180 degrees.
-theta  = tomopy.angles(proj.shape[0], 0, 180)
+    # Read the Anka tiff raw data.
+    proj, flat, dark = tomopy.read_anka_tomotopo(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
 
-# Flat-field correction of raw data.
-proj = tomopy.normalize(proj, flat, dark)
+    # Set data collection angles as equally spaced between 0-180 degrees.
+    theta  = tomopy.angles(proj.shape[0])
 
-# Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
-print "Center of rotation:", rot_center
+    # Flat-field correction of raw data.
+    proj = tomopy.normalize(proj, flat, dark)
 
-# Reconstruct object using Gridrec algorithm.
-rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
-    
-# Mask each reconstructed slice with a circle.
-rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+    # Find rotation center.
+    rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
+    print "Center of rotation: ", rot_center
 
-# Write data as stack of TIFs.
-tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon')
+    # Reconstruct object using Gridrec algorithm.
+    rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
+        
+    # Mask each reconstructed slice with a circle.
+    rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+
+    # Write data as stack of TIFs.
+    tomopy.write_tiff_stack(rec, fname='recon_dir/recon')
