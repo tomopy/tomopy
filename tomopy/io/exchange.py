@@ -376,8 +376,8 @@ def read_aps_7bm(fname, proj=None, sino=None):
     array
         Projection angles in radian.
     """
-    tomo_grp = os.path.join('exchange', 'data')
-    theta_grp = os.path.join('exchange', 'theta')
+    tomo_grp = '/'.join(['exchange', 'data'])
+    theta_grp = '/'.join(['exchange', 'theta'])
     tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
     theta = tio.read_hdf5(fname, theta_grp, slc=(proj, ))
     return tomo, theta
@@ -482,9 +482,9 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
     else:
         exchange_base = "exchange"
 
-    tomo_grp = os.path.join(exchange_base, 'data')
-    flat_grp = os.path.join(exchange_base, 'data_white')
-    dark_grp = os.path.join(exchange_base, 'data_dark')
+    tomo_grp = '/'.join([exchange_base, 'data'])
+    flat_grp = '/'.join([exchange_base, 'data_white'])
+    dark_grp = '/'.join([exchange_base, 'data_dark'])
     tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
     flat = tio.read_hdf5(fname, flat_grp, slc=(None, sino))
     dark = tio.read_hdf5(fname, dark_grp, slc=(None, sino))
@@ -493,8 +493,7 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
 
 def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     """
-    Read Australian Synchrotron Micro Computed Tomography standard
-    data format.
+    Read Australian Synchrotron micro-CT standard data format.
 
     Parameters
     ----------
