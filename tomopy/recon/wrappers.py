@@ -105,7 +105,8 @@ def astra(*args):
     >>>
     >>> # Reconstruct object:
     >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.astra,
-    >>>       options={'method':'SART', 'num_iter':10*180, 'proj_type':'linear',
+    >>>       options={'method':'SART', 'num_iter':10*180,
+    >>>       'proj_type':'linear',
     >>>       'extra_options':{'MinConstraint':0}})
     >>>
     >>> # Show 64th slice of the reconstructed object.
@@ -113,6 +114,13 @@ def astra(*args):
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
     """
+    if args[5]['options']['proj_type'] == 'cuda':
+        mproc.SHARED_QUEUE.put([astra_run] + list(args))
+    else:
+        astra_run(*args)
+
+
+def astra_run(*args):
     # Lazy import ASTRA
     import astra as astra_mod
 
@@ -134,16 +142,17 @@ def astra(*args):
 
     # Check options
     for o in needed_options['astra']:
-        if not o in opts:
+        if o not in opts:
             logger.error("Option %s needed for ASTRA reconstruction." % (o,))
             raise ValueError()
     for o in default_options['astra']:
-        if not o in opts:
+        if o not in opts:
             opts[o] = default_options['astra'][o]
 
     # Create ASTRA geometries
-    vol_geom = astra_mod.create_vol_geom((num_gridx,num_gridy))
-    proj_geom = astra_mod.create_proj_geom('parallel',1.0,ndet,angles.astype(np.float64))
+    vol_geom = astra_mod.create_vol_geom((num_gridx, num_gridy))
+    proj_geom = astra_mod.create_proj_geom(
+        'parallel', 1.0, ndet, angles.astype(np.float64))
 
     # Create ASTRA data id
     sino = np.zeros((nang, ndet), dtype=np.float32)
@@ -151,14 +160,14 @@ def astra(*args):
     # Create ASTRA config
     cfg = astra_mod.astra_dict(opts['method'])
 
-    if opts['proj_type']!='cuda':
+    if opts['proj_type'] != 'cuda':
         pi = astra_mod.create_projector(opts['proj_type'], proj_geom, vol_geom)
         sid = astra_mod.data2d.link('-sino', proj_geom, sino)
         cfg['ProjectorId'] = pi
         cfg['ProjectionDataId'] = sid
-        use_cuda=False
+        use_cuda = False
     else:
-        use_cuda=True
+        use_cuda = True
 
     if 'extra_options' in opts:
         cfg['option'] = opts['extra_options']
@@ -167,27 +176,32 @@ def astra(*args):
 
     # Perform reconstruction
     for i in xrange(istart, iend):
-        sino[:] = tomo[:,i,:]
+        sino[:] = tomo[:, i, :]
 
-        cfg['option']['z_id']=i
+        cfg['option']['z_id'] = i
 
         # Fix center of rotation
         if use_cuda:
-            proj_geom['option'] = {'ExtraDetectorOffset': (centers[i]-ndet/2.)*np.ones(nang)}
+            proj_geom['option'] = {
+                'ExtraDetectorOffset':
+                (centers[i] - ndet / 2.) * np.ones(nang)}
             sid = astra_mod.data2d.link('-sino', proj_geom, sino)
             cfg['ProjectionDataId'] = sid
-            pi = astra_mod.create_projector(opts['proj_type'], proj_geom, vol_geom)
+            pi = astra_mod.create_projector(
+                opts['proj_type'], proj_geom, vol_geom)
             cfg['ProjectorId'] = pi
         else:
             # Temporary workaround, will be fixed in later ASTRA version
-            shft = int(np.round(ndet/2.-centers[i]))
-            sino[:] = np.roll(sino,shft)
+            shft = int(np.round(ndet / 2. - centers[i]))
+            sino[:] = np.roll(sino, shft)
             l = shft
-            r = sino.shape[1]+shft
-            if l<0: l=0
-            if r>sino.shape[1]: r=sino.shape[1]
-            sino[:,0:l]=0
-            sino[:,r:sino.shape[1]]=0
+            r = sino.shape[1] + shft
+            if l < 0:
+                l = 0
+            if r > sino.shape[1]:
+                r = sino.shape[1]
+            sino[:, 0:l] = 0
+            sino[:, r:sino.shape[1]] = 0
 
         vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
         cfg['ReconstructionDataId'] = vid
@@ -203,4 +217,3 @@ def astra(*args):
     if not use_cuda:
         astra_mod.projector.delete(pi)
         astra_mod.data2d.delete(sid)
-
