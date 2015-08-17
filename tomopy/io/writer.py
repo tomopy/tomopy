@@ -63,6 +63,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def _check_import(modname):
     try:
         return __import__(modname)
@@ -70,7 +71,7 @@ def _check_import(modname):
         logger.warn(modname + ' module not found')
         return None
 
-dxtomo  = _check_import('dxtomo')
+dxtomo = _check_import('dxtomo')
 
 
 __author__ = "Doga Gursoy"
@@ -213,7 +214,9 @@ def write_dxf(
     """
     fname, data = _init_write(data, fname, '.h5', dtype, overwrite)
     f = dxtomo.File(fname, mode='w')
-    f.add_entry(dxtomo.Entry.data(data={'value': data, 'units':'counts', 'description': 'transmission', 'axes': axes }))
+    f.add_entry(dxtomo.Entry.data(data={
+                'value': data, 'units': 'counts',
+                'description': 'transmission', 'axes': axes}))
     f.close()
 
 

@@ -206,7 +206,7 @@ def calc_intensity(probe, proj, shift_x=None, shift_y=None, mode='near'):
     shift_x, shift_y : int, optional
         Shift amount of probe along x and y axes.
     mode : str, optional
-        Specify the regime. 'near' or 'far' 
+        Specify the regime. 'near' or 'far'
 
     Returns
     -------
