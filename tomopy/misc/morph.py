@@ -65,7 +65,8 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['pad',
            'downsample',
-           'upsample']
+           'upsample',
+           'sino_360_t0_180']
 
 
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
@@ -99,7 +100,7 @@ def pad(arr, axis, npad=None, val=0):
 
 
 def _get_npad(dim):
-    return int(np.ceil(dim * np.sqrt(2)))-dim
+    return int(np.ceil(dim * np.sqrt(2))) - dim
 
 
 def _get_pad_sequence(shape, axis, npad):
@@ -174,3 +175,43 @@ def _init_out(arr, axis, dim, val=0.):
     shape = [dx, dy, dz]
     shape[axis] = dim
     return val * np.ones(shape, dtype='float32')
+
+
+def sino_360_t0_180(data, overlap=0, rotation='left'):
+    """
+    Converts 0-360 degrees sinogram to a 0-180 sinogram.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input 3D data.
+
+    overlap : scalar, optional
+        Overlapping number of pixels.
+
+    rotation : string, optional
+        Left if rotation center is close to the left of the
+        field-of-view, right otherwise.
+
+    Returns
+    -------
+    data : ndarray
+        Output 3D data.
+    """
+    dx, dy, dz = data.shape
+
+    if rotation is 'left':
+        img1 = data[1:dx / 2 + 1, :, overlap:dz]
+    elif rotation is 'right':
+        img1 = data[1:dx / 2 + 1, :, 0:dz - overlap]
+
+    if dx % 2 != 0:  # if odd
+        img2 = data[dx / 2:dx - 1]
+    else:
+        img2 = data[dx / 2:dx]
+
+    if rotation is 'right':
+        data = np.c_[img1, img2]
+    elif rotation is 'left':
+        data = np.c_[img2[:, :, ::-1], img1]
+    return data
