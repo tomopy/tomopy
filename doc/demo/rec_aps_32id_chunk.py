@@ -7,8 +7,8 @@ in chuck of sinogrmas. This function is for reconstructing large
 data on limited memory computers.
 """
 
-import tomopy
 from __future__ import print_function
+import tomopy
 
 if __name__ == '__main__':
 

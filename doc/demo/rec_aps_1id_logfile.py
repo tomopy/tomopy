@@ -5,9 +5,9 @@
 Read the APS 1-ID tomography log file.
 """
 
+from __future__ import print_function
 import tomopy
 import os.path
-from __future__ import print_function
 
 if __name__ == '__main__':
 

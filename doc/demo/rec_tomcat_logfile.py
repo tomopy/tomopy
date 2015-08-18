@@ -5,9 +5,9 @@
 Read the Swiss Light Source tomcat tomography log file
 """
 
+from __future__ import print_function
 import tomopy
 import os.path
-from __future__ import print_function
 
 if __name__ == '__main__':
 

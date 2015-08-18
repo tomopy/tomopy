@@ -5,8 +5,8 @@
 TomoPy example script to reconstruct the Anka tomo-topo tomography data as original tiff.
 """
 
-import tomopy
 from __future__ import print_function
+import tomopy
 
 if __name__ == '__main__':
 
