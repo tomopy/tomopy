@@ -5,8 +5,8 @@
 TomoPy example script to reconstruct the ESRF tomography data as original edf files.
 """
 
-import tomopy
 from __future__ import print_function
+import tomopy
 
 if __name__ == '__main__':
 

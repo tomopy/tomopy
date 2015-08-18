@@ -7,9 +7,9 @@ a series of useless projections becuase of the presence of an
 environment cell blocking some of the sample views.
 """
  
+from __future__ import print_function
 import tomopy
 import numpy as np
-from __future__ import print_function
 
 if __name__ == '__main__':
 
