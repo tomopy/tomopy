@@ -6,6 +6,7 @@ TomoPy example script to reconstruct the ESRF tomography data as original edf fi
 """
 
 import tomopy
+from __future__ import print_function
 
 if __name__ == '__main__':
 
