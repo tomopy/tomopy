@@ -6,6 +6,7 @@ TomoPy example script to reconstruct the Elettra syrmep data as original tiff.
 """
 
 import tomopy
+from __future__ import print_function
 
 if __name__ == '__main__':
 
