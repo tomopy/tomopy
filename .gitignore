@@ -106,4 +106,5 @@ nosetests.xml
 
 # Private functions #
 #####################
+script
 ptycho.py

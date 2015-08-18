@@ -6,6 +6,7 @@ TomoPy example script to reconstruct the APS 1-ID tomography data as original ti
 """
 
 import tomopy
+from __future__ import print_function
 
 if __name__ == '__main__':
 

@@ -8,6 +8,7 @@ data on limited memory computers.
 """
 
 import tomopy
+from __future__ import print_function
 
 if __name__ == '__main__':
 
