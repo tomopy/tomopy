@@ -6,6 +6,7 @@ TomoPy example script to reconstruct the Swiss Light Source tomcat tomography da
 """
 
 import tomopy
+from __future__ import print_function
 
 if __name__ == '__main__':
 
