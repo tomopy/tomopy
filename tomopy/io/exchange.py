@@ -67,7 +67,7 @@ __credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
-           'read_anka_tomotopo',
+           'read_anka_topotomo',
            'read_aps_1id',
            'read_aps_2bm',
            'read_aps_7bm',
@@ -78,7 +78,7 @@ __all__ = ['read_als_832',
            'read_diamond_l12',
            'read_elettra_syrmep',
            'read_esrf_id19',
-           'read_petra3_p05',
+           'read_petraIII_p05',
            'read_sls_tomcat']
 
 
@@ -218,7 +218,7 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
     return tomo, flat, dark
 
 
-def read_anka_tomotopo(
+def read_anka_topotomo(
         fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read ANKA TOMO-TOMO standard data format.
@@ -236,6 +236,12 @@ def read_anka_tomotopo(
 
     ind_dark : list of int, optional
         Indices of the dark field files to read.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -609,6 +615,18 @@ def read_elettra_syrmep(
     ind_tomo : list of int
         Indices of the projection files to read.
 
+    ind_flat : list of int
+        Indices of the flat field files to read.
+
+    ind_dark : list of int
+        Indices of the dark field files to read.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
     Returns
     -------
     ndarray
@@ -633,7 +651,7 @@ def read_elettra_syrmep(
     return tomo, flat, dark
 
 
-def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
+def read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read Petra-III P05 standard data format.
 
@@ -650,6 +668,12 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
 
     ind_dark : list of int
         Indices of the dark field files to read.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
 
     Returns
     -------
@@ -668,10 +692,13 @@ def read_petra3_p05(fname, ind_tomo, ind_flat, ind_dark):
     flat_name = os.path.join(
         fname, 'scan_0001', 'ccd', 'pco01', 'ccd_0000.tif')
     dark_name = os.path.join(
-        fname, 'scan_0003', 'ccd', 'pco01', 'ccd_0000.tif')
-    tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
-    flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=4)
-    dark = tio.read_tiff_stack(dark_name, ind=ind_dark, digit=4)
+        fname, 'scan_0000', 'ccd', 'pco01', 'ccd_0000.tif')
+    tomo = tio.read_tiff_stack(
+        tomo_name, ind=ind_tomo, digit=4, slc=(sino, proj))
+    flat = tio.read_tiff_stack(
+        flat_name, ind=ind_flat, digit=4, slc=(sino, None))
+    dark = tio.read_tiff_stack(
+        dark_name, ind=ind_dark, digit=4, slc=(sino, None))
     return tomo, flat, dark
 
 
