@@ -65,7 +65,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['recon_accelerated']
 
 known_implementations = {
-    'tomoperi' : 'tomopy_peri'
+    'tomoperi': 'tomopy_peri'
 }
 
 
@@ -73,7 +73,9 @@ def recon_accelerated(
         tomo, theta, center=None, emission=True, algorithm=None, hardware=None,
         implementation=None, acc_option=None, init_recon=None, **kwargs):
     """
-    Reconstruct object from projection data using hardware acceleration. A hardware acceleration implementation package is required. A free implementation can be downloaded from 
+    Reconstruct object from projection data using hardware acceleration.
+    A hardware acceleration implementation package is required. A free
+    implementation can be downloaded from:
     https://github.com/PeriLLC/tomopy_peri_0.1.x
 
     Parameters
@@ -97,10 +99,12 @@ def recon_accelerated(
         'nVidia_GPU'
             nVidia GPU hardware platform.
     implementation : str, optional
-        One of the following supporting packages, or a function providing accelerated recon.
+        One of the following supporting packages,
+        or a function providing accelerated recon.
 
         'tomo_peri'
-            Tomopy_peri opensource packages, https://github.com/PeriLLC/tomopy_peri_0.1.x
+            Tomopy_peri opensource packages,
+            https://github.com/PeriLLC/tomopy_peri_0.1.x
     implementation : str, optional
         Options for hardware accelerated algorithms.
     num_gridx, num_gridy : int, optional
@@ -135,7 +139,10 @@ def recon_accelerated(
     >>> obj = tomopy.shepp3d() # Generate an object.
     >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
     >>> sim = tomopy.project(obj, ang) # Calculate projections.
-    >>> rec = tomopy.recon_accelerated(sim, ang, algorithm='ospml_hybrid', hardware='Xeon_Phi', implementation='tomoperi') # Reconstruct object.
+    >>> rec = tomopy.recon_accelerated(
+    >>>           sim, ang, algorithm='ospml_hybrid',
+    >>>           hardware='Xeon_Phi',
+    >>>           implementation='tomoperi') # Reconstruct object.
     >>>
     >>> # Show 64th slice of the reconstructed object.
     >>> import pylab
@@ -145,23 +152,30 @@ def recon_accelerated(
 
     if implementation is None:
         implementation = _search_implementation()
-        logger.info ('Implementation %s is chosen by default. ' %implementation )
+        logger.info('Implementation %s is chosen by default. ' %
+                    implementation)
     else:
 
         if isinstance(implementation, str):
             # Check whether we have a known implementation
-            if not implementation in known_implementations:
-                raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
-                             (list(known_implementations.keys()),))
+            if implementation not in known_implementations:
+                raise ValueError(
+                    'Keyword "implementation" must be one of %s, \
+                    or a Python method.' %
+                    (list(known_implementations.keys()),))
 
         elif not hasattr(implementation, '__call__'):
-            raise ValueError('Keyword "implementation" must be one of %s, or a Python method.' %
-                         (list(known_implementations),))
+            raise ValueError(
+                'Keyword "implementation" must be one of %s, \
+                or a Python method.' %
+                (list(known_implementations),))
 
     _impl_recon = _get_func(implementation)
 
-    return _impl_recon(tomo, theta, center, emission, algorithm, hardware, acc_option, init_recon, **kwargs)
-   
+    return _impl_recon(
+        tomo, theta, center, emission, algorithm,
+        hardware, acc_option, init_recon, **kwargs)
+
 
 def _search_implementation():
     for key in known_implementations:
@@ -170,11 +184,13 @@ def _search_implementation():
             found = True
         except ImportError:
             found = False
-        if found :
+        if found:
             return key
 
-    raise ValueError('No known hardware accelerated reconstruction implementation found, try install one from %s!' %
-                 (list(known_implementations.keys()),))
+    raise ValueError('No known hardware accelerated reconstruction \
+                     implementation found, try install one from %s!' %
+                     (list(known_implementations.keys()),))
+
 
 def _get_func(implementation):
     if implementation == 'tomoperi':
@@ -182,11 +198,9 @@ def _get_func(implementation):
             import tomopy_peri.algorithm as alg
             func = alg.recon_accelerated
         except ImportError:
-            raise ValueError('Tomoperi hardware accelerated reconstruction implementation not found!')
+            raise ValueError(
+                'Tomoperi hardware accelerated reconstruction \
+                 implementation not found!')
     else:
         func = implementation
     return func
-
-
-
-

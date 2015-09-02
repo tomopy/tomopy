@@ -1,35 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-TomoPy example script to reconstruct the ESRF tomography data as original edf files"""
 
+"""
+TomoPy example script to reconstruct the ESRF tomography data as original edf files.
+"""
+
+from __future__ import print_function
 import tomopy
 
-# Set path to the micro-CT data to reconstruct.
-fname = 'data_dir/'
+if __name__ == '__main__':
 
-# Select the sinogram range to reconstruct.
-start = 0
-end = 16
+    # Set path to the micro-CT data to reconstruct.
+    fname = 'data_dir/'
 
-# Read the ESRF ID-19 raw data.
-proj, flat, dark = tomopy.io.exchange.read_esrf_id19(fname, sino=(start, end))
+    # Select the sinogram range to reconstruct.
+    start = 0
+    end = 16
 
-# Set data collection angles as equally spaced between 0-180 degrees.
-theta  = tomopy.angles(proj.shape[0], 0, 180)
+    # Read the ESRF ID-19 raw data.
+    proj, flat, dark = tomopy.read_esrf_id19(fname, sino=(start, end))
 
-# Flat-field correction of raw data.
-proj = tomopy.normalize(proj, flat, dark)
+    # Set data collection angles as equally spaced between 0-180 degrees.
+    theta  = tomopy.angles(proj.shape[0])
 
-# Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
-print "Center of rotation:", rot_center
+    # Flat-field correction of raw data.
+    proj = tomopy.normalize(proj, flat, dark)
 
-# Reconstruct object using Gridrec algorithm.
-rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
-    
-# Mask each reconstructed slice with a circle.
-rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+    # Find rotation center.
+    rot_center = tomopy.find_center(proj, theta, emission=False, init=1024, ind=0, tol=0.5)
+    print("Center of rotation: ", rot_center)
 
-# Write data as stack of TIFs.
-tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon')
+    # Reconstruct object using Gridrec algorithm.
+    rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
+
+    # Mask each reconstructed slice with a circle.
+    rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+
+    # Write data as stack of TIFs.
+    tomopy.write_tiff_stack(rec, fname='recon_dir/recon')

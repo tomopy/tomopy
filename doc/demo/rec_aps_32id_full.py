@@ -2,36 +2,39 @@
 # -*- coding: utf-8 -*-
 
 """
-TomoPy example script to reconstruct micro-CT data set.
+TomoPy example script to reconstruct TXM data set.
 """
 
-import tomopy 
+from __future__ import print_function
+import tomopy
 
-# Set path to the micro-CT data to reconstruct.
-fname = 'data_dir/sample.h5'
+if __name__ == '__main__':
 
-# Select sinogram range to reconstruct.
-start = 0
-end = 16
+    # Set path to the micro-CT data to reconstruct.
+    fname = 'data_dir/sample.h5'
 
-# Read APS 32-ID or 2-BM raw data.
-proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(start, end))
+    # Select sinogram range to reconstruct.
+    start = 0
+    end = 16
 
-# Set data collection angles as equally spaced between 0-180 degrees.
-theta  = tomopy.angles(proj.shape[0], 0, 180)
+    # Read APS 32-ID raw data.
+    proj, flat, dark = tomopy.read_aps_32id(fname, sino=(start, end))
 
-# Flat-field correction of raw data.
-proj = tomopy.normalize(proj, flat, dark)
+    # Set data collection angles as equally spaced between 0-180 degrees.
+    theta  = tomopy.angles(proj.shape[0])
 
-# Find rotation center.
-rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
-print "Calculated rotation center: ", rot_center
+    # Flat-field correction of raw data.
+    proj = tomopy.normalize(proj, flat, dark)
 
-# Reconstruct object using Gridrec algorithm.
-rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
+    # Find rotation center.
+    rot_center = tomopy.find_center(proj, theta, emission=False, ind=0, init=1024, tol=0.5)
+    print("Center of rotation: ", rot_center)
 
-# Mask each reconstructed slice with a circle.
-rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+    # Reconstruct object using Gridrec algorithm.
+    rec = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec', emission=False)
 
-# Write data as stack of TIFs.
-tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon')
+    # Mask each reconstructed slice with a circle.
+    rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
+
+    # Write data as stack of TIFs.
+    tomopy.write_tiff_stack(rec, fname='recon_dir/recon')
