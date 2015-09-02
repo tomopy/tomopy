@@ -175,7 +175,8 @@ def recon(
     >>>
     >>> # Reconstruct object:
     >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.astra,
-    >>>       options={'method':'SART', 'num_iter':10*180, 'proj_type':'linear',
+    >>>       options={'method':'SART', 'num_iter':10*180,
+    >>>       'proj_type':'linear',
     >>>       'extra_options':{'MinConstraint':0}})
     >>>
     >>> # Show 64th slice of the reconstructed object.
@@ -211,9 +212,10 @@ def recon(
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
     if isinstance(algorithm, str):
         # Check whether we have an allowed method
-        if not algorithm in allowed_kwargs:
-            raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
-                             (list(allowed_kwargs.keys()),))
+        if algorithm not in allowed_kwargs:
+            raise ValueError(
+                'Keyword "algorithm" must be one of %s, or a Python method.' %
+                (list(allowed_kwargs.keys()),))
         # Make sure have allowed kwargs appropriate for algorithm.
         for key in kwargs:
             if key not in allowed_kwargs[algorithm]:
@@ -227,8 +229,9 @@ def recon(
         for kw in generic_kwargs:
             kwargs.setdefault(kw, kwargs_defaults[kw])
     else:
-        raise ValueError('Keyword "algorithm" must be one of %s, or a Python method.' %
-                         (list(allowed_kwargs.keys()),))
+        raise ValueError(
+            'Keyword "algorithm" must be one of %s, or a Python method.' %
+            (list(allowed_kwargs.keys()),))
 
     # Generate args for the algorithm.
     args = _get_algorithm_args(tomo.shape, theta, center)

@@ -127,7 +127,7 @@ def add_salt_pepper(tomo, prob=0.01, val=None):
     tomo : ndarray
         3D tomographic data.
     prob : float, optional
-        Independent probability that each element of a pixel might be 
+        Independent probability that each element of a pixel might be
         corrupted by the salt and pepper type noise.
     val : float, optional
         Value to be assigned to the corrupted pixels.
