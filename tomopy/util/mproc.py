@@ -158,7 +158,7 @@ def _start_proc(arr, args):
     with closing(
         mp.Pool(processes=len(args),
                 initializer=init_shared,
-                initargs=(shared_arr,queue))) as p:
+                initargs=(shared_arr, queue))) as p:
         p.map_async(_arg_parser, args)
     p.join()
     p.close()
@@ -198,6 +198,7 @@ def init_tomo(arr):
 def init_obj(arr):
     global SHARED_OBJ
     SHARED_OBJ = get_shared(arr)
+
 
 def clear_queue(queue):
     while not queue.empty():

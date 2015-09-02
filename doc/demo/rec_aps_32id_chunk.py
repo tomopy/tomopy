@@ -2,39 +2,42 @@
 # -*- coding: utf-8 -*-
 
 """
-TomoPy example script to reconstruct micro-CT data iteratively
+TomoPy example script to reconstruct TXM data iteratively
 in chuck of sinogrmas. This function is for reconstructing large 
 data on limited memory computers.
 """
 
+from __future__ import print_function
 import tomopy
 
-# Set path to the micro-CT data to reconstruct
-fname = 'data_dir/sample.h5'
+if __name__ == '__main__':
 
-# Select sinogram range to reconstruct.
-start = 512
-end = 2048
+    # Set path to the micro-CT data to reconstruct
+    fname = 'data_dir/sample.h5'
 
-# Set number of data chunks for the reconstruction.
-chunks = 64
-num_sino = (end - start) // chunks
+    # Select sinogram range to reconstruct.
+    start = 512
+    end = 2048
 
-for m in range(chunks):
-    sino_start = start + num_sino * m 
-    sino_end = start + num_sino * (m + 1)
+    # Set number of data chunks for the reconstruction.
+    chunks = 64
+    num_sino = (end - start) // chunks
 
-    # Read APS 32-ID or 2-BM raw data.
-    proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(sino_start, sino_end))
+    for m in range(chunks):
+        sino_start = start + num_sino * m 
+        sino_end = start + num_sino * (m + 1)
 
-    # Set data collection angles as equally spaced between 0-180 degrees.
-    theta  = tomopy.angles(proj.shape[0], ang1=0, ang2=180)
+        # Read APS 32-ID raw data.
+        proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(sino_start, sino_end))
 
-    # Flat-field correction of raw data.
-    proj = tomopy.normalize(proj, flat, dark)
+        # Set data collection angles as equally spaced between 0-180 degrees.
+        theta  = tomopy.angles(proj.shape[0])
 
-    # Reconstruct object using Gridrec algorithm.
-    rec = tomopy.recon(proj, theta, center=1024, algorithm='gridrec', emission=False)
+        # Flat-field correction of raw data.
+        proj = tomopy.normalize(proj, flat, dark)
 
-    # Write data as stack of TIFs.
-    tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon', start=sino_start)
+        # Reconstruct object using Gridrec algorithm.
+        rec = tomopy.recon(proj, theta, center=1024, algorithm='gridrec', emission=False)
+
+        # Write data as stack of TIFs.
+        tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon', start=sino_start)
