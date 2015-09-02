@@ -23,6 +23,7 @@ requirements:
     - spefile
     - edffile
     - tifffile
+    - dxfile
 
 test:
   # Python imports
@@ -57,3 +58,4 @@ about:
 # See
 # http://docs.continuum.io/conda/build.html for
 # more information about meta.yaml
+
