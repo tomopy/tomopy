@@ -11,7 +11,7 @@
    .. autosummary::
    
       read_als_832
-      read_anka_tomotopo
+      read_anka_topotomo
       read_aps_1id
       read_aps_2bm
       read_aps_7bm
@@ -21,5 +21,5 @@
       read_aus_microct
       read_diamond_l12
       read_elettra_syrmep
-      read_petra3_p05
+      read_petraIII_p05
       read_sls_tomcat
