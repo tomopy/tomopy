@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-TomoPy example script to reconstruct the Anka topo-tomo tomography data as original tiff.
+TomoPy example script to reconstruct the PetraIII P05 tomography data as original tiff.
 """
 
 from __future__ import print_function
@@ -28,8 +28,8 @@ if __name__ == '__main__':
     start = 0
     end = 16
 
-    # Read the Anka tiff raw data.
-    proj, flat, dark = tomopy.read_anka_topotomo(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
+    # Read the Petra III P05
+    proj, flat, dark = tomopy.io.exchange.read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
     theta  = tomopy.angles(proj.shape[0])
