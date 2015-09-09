@@ -101,6 +101,9 @@ def distribute_jobs(
     if ncore is not None and nchunk is not None:
         logger.warning('ncore will be overwritten according to nchunk')
 
+    if ncore <= 0:
+        ncore = 1
+
     # Arrange number of processors.
     if ncore is None or ncore > mp.cpu_count():
         ncore = mp.cpu_count()
@@ -160,8 +163,8 @@ def _start_proc(arr, args):
                 initializer=init_shared,
                 initargs=(shared_arr, queue))) as p:
         p.map_async(_arg_parser, args)
-    p.join()
     p.close()
+    p.join()
     clear_queue(queue)
     return shared_arr
 
