@@ -71,7 +71,7 @@ def _check_import(modname):
         logger.warn(modname + ' module not found')
         return None
 
-dxtomo = _check_import('dxtomo')
+dxfile = _check_import('dxfile')
 
 
 __author__ = "Doga Gursoy"
@@ -213,8 +213,8 @@ def write_dxf(
         if True, overwrites the existing file if the file exists.
     """
     fname, data = _init_write(data, fname, '.h5', dtype, overwrite)
-    f = dxtomo.File(fname, mode='w')
-    f.add_entry(dxtomo.Entry.data(data={
+    f = dxfile.dxtomo.File(fname, mode='w')
+    f.add_entry(dxfile.dxtomo.Entry.data(data={
                 'value': data, 'units': 'counts',
                 'description': 'transmission', 'axes': axes}))
     f.close()
