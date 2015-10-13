@@ -101,12 +101,12 @@ def distribute_jobs(
     if ncore is not None and nchunk is not None:
         logger.warning('ncore will be overwritten according to nchunk')
 
-    if ncore <= 0:
-        ncore = 1
-
     # Arrange number of processors.
     if ncore is None or ncore > mp.cpu_count():
         ncore = mp.cpu_count()
+    if ncore <= 0:
+        ncore = 1
+
     ndim = arr.shape[axis]
 
     # Maximum number of processors for the task.
