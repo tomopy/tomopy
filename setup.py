@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages, os
 
-extra_comp_args += ['-std=c99']
+extra_comp_args = ['-std=c99']
 if os.name == 'nt':
     extra_comp_args += ['-DWIN32']
 tomoc = Extension(
