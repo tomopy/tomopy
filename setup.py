@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_packages, os
 
+extra_comp_args = ['-std=c99']
+if os.name == 'nt':
+    extra_comp_args += ['-DWIN32']
 tomoc = Extension(
     name='lib.libtomopy',
-    extra_compile_args=['-std=c99'],
+    extra_compile_args=extra_comp_args,
     sources=[
         'src/utils.c',
         'src/project.c',
