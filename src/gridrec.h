@@ -74,7 +74,7 @@ typedef struct {
     float i;
 } complex;
 
-void 
+void DLL
 gridrec(
     float *data,
     int dx, int dy, int dz,
