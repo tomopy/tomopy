@@ -67,8 +67,9 @@ __all__ = ['astra']
 
 default_options = {
     'astra': {
-        'proj_type': 'line',
+        'proj_type': 'linear',
         'num_iter': 1,
+        'gpu_list': None,
     }
 }
 
@@ -88,13 +89,11 @@ def astra(*args):
     num_iter : int, optional
         Number of algorithm iterations performed.
     proj_type : str, optional
-        ASTRA projector type to use: 'line', 'linear', or 'strip' (CPU only).
+        ASTRA projector type to use: 'cuda', 'line', 'linear', or 'strip'.
+    gpu_list : list, optional
+        List of GPU indices to use
     extra_options : dict, optional
         Extra options for the ASTRA config (i.e. those in cfg['option'])
-
-    Warning
-    -------
-    When using CUDA, only 1 CPU core can be used.
 
     Example
     -------
@@ -123,6 +122,7 @@ def astra(*args):
 def astra_run(*args):
     # Lazy import ASTRA
     import astra as astra_mod
+    import concurrent.futures
 
     # Get shared arrays
     tomo = mproc.SHARED_TOMO
@@ -154,15 +154,24 @@ def astra_run(*args):
     proj_geom = astra_mod.create_proj_geom(
         'parallel', 1.0, ndet, angles.astype(np.float64))
 
-    # Create ASTRA data id
-    sino = np.zeros((nang, ndet), dtype=np.float32)
+    # Number of GPUs to use
+    if opts['proj_type'] == 'cuda' and opts['gpu_list'] is not None:
+        gpu_list = opts['gpu_list']
+        nbatch = len(gpu_list)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=nbatch)
+    else:
+        nbatch = 1
+
+
+    # Create ASTRA data
+    sino = np.zeros((nbatch, nang, ndet), dtype=np.float32)
 
     # Create ASTRA config
     cfg = astra_mod.astra_dict(opts['method'])
 
     if opts['proj_type'] != 'cuda':
         pi = astra_mod.create_projector(opts['proj_type'], proj_geom, vol_geom)
-        sid = astra_mod.data2d.link('-sino', proj_geom, sino)
+        sid = astra_mod.data2d.link('-sino', proj_geom, sino[0])
         cfg['ProjectorId'] = pi
         cfg['ProjectionDataId'] = sid
         use_cuda = False
@@ -175,43 +184,65 @@ def astra_run(*args):
         cfg['option'] = {}
 
     # Perform reconstruction
-    for i in xrange(istart, iend):
-        sino[:] = tomo[:, i, :]
+    vids = []
+    algs = []
+    pids = []
+    sids = []
+    for ib in xrange(istart, iend, nbatch):
+        for j in xrange(nbatch):
+            i = ib+j
+            if i>=iend: break
 
-        cfg['option']['z_id'] = i
+            sino[j] = tomo[:, i, :]
 
-        # Fix center of rotation
-        if use_cuda:
-            proj_geom['option'] = {
-                'ExtraDetectorOffset':
-                (centers[i] - ndet / 2.) * np.ones(nang)}
-            sid = astra_mod.data2d.link('-sino', proj_geom, sino)
-            cfg['ProjectionDataId'] = sid
-            pi = astra_mod.create_projector(
-                opts['proj_type'], proj_geom, vol_geom)
-            cfg['ProjectorId'] = pi
+            cfg['option']['z_id'] = i
+
+            # Fix center of rotation
+            if use_cuda:
+                proj_geom['option'] = {
+                    'ExtraDetectorOffset':
+                    (centers[i] - ndet / 2.) * np.ones(nang)}
+                sid = astra_mod.data2d.link('-sino', proj_geom, sino[j])
+                sids.append(sid)
+                cfg['ProjectionDataId'] = sid
+                pi = astra_mod.create_projector(
+                    opts['proj_type'], proj_geom, vol_geom)
+                pids.append(pi)
+                cfg['ProjectorId'] = pi
+            else:
+                # Temporary workaround, will be fixed in later ASTRA version
+                shft = int(np.round(ndet / 2. - centers[i]))
+                sino[0] = np.roll(sino, shft)
+                l = shft
+                r = sino.shape[1] + shft
+                if l < 0:
+                    l = 0
+                if r > sino.shape[1]:
+                    r = sino.shape[1]
+                sino[0, :, 0:l] = 0
+                sino[0, :,  r:sino.shape[1]] = 0
+            vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
+            vids.append(vid)
+            cfg['ReconstructionDataId'] = vid
+            if nbatch>1:
+                cfg['option']['GPUindex'] = gpu_list[j]
+            alg_id = astra_mod.algorithm.create(cfg)
+            algs.append(alg_id)
+        if nbatch==1:
+            astra_mod.algorithm.run(algs[0], opts['num_iter'])
         else:
-            # Temporary workaround, will be fixed in later ASTRA version
-            shft = int(np.round(ndet / 2. - centers[i]))
-            sino[:] = np.roll(sino, shft)
-            l = shft
-            r = sino.shape[1] + shft
-            if l < 0:
-                l = 0
-            if r > sino.shape[1]:
-                r = sino.shape[1]
-            sino[:, 0:l] = 0
-            sino[:, r:sino.shape[1]] = 0
-
-        vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
-        cfg['ReconstructionDataId'] = vid
-        alg_id = astra_mod.algorithm.create(cfg)
-        astra_mod.algorithm.run(alg_id, opts['num_iter'])
-        astra_mod.algorithm.delete(alg_id)
-        astra_mod.data2d.delete(vid)
+            thrds = [executor.submit(lambda q: astra_mod.algorithm.run(q, opts['num_iter']), alg_id) for alg_id in algs]
+            map(lambda q: q.result(), thrds)
+#            map(lambda q: q.join(), thrds)
+        astra_mod.algorithm.delete(algs)
+        del algs[:]
+        astra_mod.data2d.delete(vids)
+        del vids[:]
         if use_cuda:
-            astra_mod.projector.delete(pi)
-            astra_mod.data2d.delete(sid)
+            astra_mod.projector.delete(pids)
+            del pids[:]
+            astra_mod.data2d.delete(sids)
+            del sids[:]
 
     # Clean up
     if not use_cuda:
