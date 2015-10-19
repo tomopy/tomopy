@@ -170,7 +170,7 @@ gridrec(
             while(j<dz)  
             {     
                 sino[j].r = data[j+s*dz+p*dy*dz];
-                if (!(dy == 1 || iend-istart == 1))
+                if (!(dy == 1 || iend-s == 1))
                 {
                     sino[j].i = data[j+(s+1)*dz+p*dy*dz];
                 } else {
@@ -306,7 +306,7 @@ gridrec(
                         corrn = corrn_u*winv[k+padx];
                         
                         recon[islc1+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].r;
-                        if (!(dy == 1 || iend-istart == 1))
+                        if (!(dy == 1 || iend-s == 1))
                         {
                             recon[islc2+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].i;
                         }
