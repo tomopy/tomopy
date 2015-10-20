@@ -100,7 +100,7 @@ def as_int32(arr):
 
 def as_uint16(arr):
     arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.int32)
+    return as_dtype(arr, np.uint16)
 
 
 def as_uint8(arr):
