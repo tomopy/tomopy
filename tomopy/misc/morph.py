@@ -95,8 +95,7 @@ def pad(arr, axis, npad=None, val=0):
     if npad is None:
         npad = _get_npad(arr.shape[axis])
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
-    cval = _get_pad_sequence(arr.shape, axis, npad)
-    return np.pad(arr, pad_width, 'constant', constant_values=cval)
+    return np.pad(arr, pad_width, 'constant', constant_values=val)
 
 
 def _get_npad(dim):
