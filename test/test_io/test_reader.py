@@ -51,6 +51,7 @@ from __future__ import absolute_import, division, print_function
 from tomopy.io.reader import *
 import numpy as np
 import os.path
+import h5py
 from numpy.testing import assert_allclose
 
 
@@ -76,6 +77,14 @@ def test_read_hdf5():
     gname = os.path.join('exchange', 'data')
     assert_allclose(read_hdf5(fname, gname), np.ones((4, 8, 16)))
 
+
+def test_read_hdf5_stack():
+    gname = '20151120_100640_testBL832h5file'
+    fname = os.path.join('test', 'data', 'read_stack.h5')
+    dname = gname + '_0000_0000.tif'
+    assert_allclose(
+        read_hdf5_stack(h5py.File(fname)[gname], dname, range(20)),
+        np.ones((20, 10, 10)))
 
 if __name__ == '__main__':
     import nose
