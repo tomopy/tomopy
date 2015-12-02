@@ -216,8 +216,6 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
 
     if ind is None:
         ind = tomo.shape[1] // 2
-    if init is None:
-        init = tomo.shape[2] // 2
 
     # Reduce noise by smooth filtering.
     tomo = ndimage.filters.gaussian_filter(tomo, sigma=(3, 1))
