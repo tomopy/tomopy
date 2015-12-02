@@ -54,6 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.optimize import minimize
+from skimage.feature import register_translation
 from tomopy.io.writer import write_tiff
 from tomopy.misc.mask import circ_mask
 from tomopy.recon.algorithm import recon
@@ -69,6 +70,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['find_center',
            'find_center_vo',
+           'find_center_pc',
            'write_center']
 
 
@@ -195,6 +197,49 @@ def find_center_vo(tomo):
     Not implemented yet.
     """
     pass
+
+
+def find_center_pc(proj1, proj2, tol=0.5):
+    """
+    Find rotation axis location by finding the offset between the first
+    projection and a mirrored projection 180 degrees apart using
+    phase correlation in Fourier space.
+    The ``register_translation`` function uses cross-correlation in Fourier
+    space, optionally employing an upsampled matrix-multiplication DFT to
+    achieve arbitrary subpixel precision. [1]_
+
+    [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup,
+       "Efficient subpixel image registration algorithms," Optics Letters 33,
+       156-158 (2008).
+
+    Parameters
+    ----------
+    proj1 : ndarray
+        2D projection data.
+
+    proj2 : ndarray
+        2D projection data.
+
+    tol : scalar, optional
+        Subpixel accuracy
+
+    Returns
+    -------
+    float
+        Rotation axis location.
+    """
+
+    # create reflection of second projection
+    proj2 = np.fliplr(proj2)
+
+    # Determine shift between images using scikit-image pcm
+    shift = register_translation(proj1, proj2, upsample_factor=1.0/tol)
+
+    # Compute center of rotation as the center of first image and the
+    # registered translation with the second image
+    center = (proj1.shape[1] + shift[0][1])/2.0
+
+    return center
 
 
 def write_center(
