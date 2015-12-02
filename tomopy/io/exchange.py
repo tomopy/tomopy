@@ -651,7 +651,8 @@ def read_elettra_syrmep(
     return tomo, flat, dark
 
 
-def read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
+def read_petraIII_p05(
+        fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read Petra-III P05 standard data format.
 

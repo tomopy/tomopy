@@ -254,8 +254,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
             _sino[:, 0:i] = temp_img[:, 0:i]
         else:
             _sino[:, i:] = temp_img[:, i:]
-        listmetric[
-            i - smin] = np.sum(np.abs(np.fft.fftshift(np.fft.fft2(np.vstack((sino, _sino))))) * mask)
+        listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
+            np.fft.fft2(np.vstack((sino, _sino))))) * mask)
     minpos = np.argmin(listmetric)
     return centerfliplr + listshift[minpos] / 2.0
 
@@ -289,8 +289,8 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
         _sino = ndimage.ndi.interpolation.shift(
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
-        listmetric[num1] = np.sum(
-            np.abs(np.fft.fftshift(np.fft.fft2(sinojoin[:, lefttake:righttake + 1]))) * mask)
+        listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
+            np.fft.fft2(sinojoin[:, lefttake:righttake + 1]))) * mask)
         num1 = num1 + 1
     minpos = np.argmin(listmetric)
     return init_cen + listshift[minpos] / 2.0
@@ -304,7 +304,8 @@ def _create_mask(nrow, ncol, radius, drop):
     mask = np.zeros((nrow, ncol), dtype='float32')
     for i in range(nrow):
         num1 = np.round(((i - centerrow) * dv / radius) / du)
-        (p1, p2) = np.clip(np.sort((-num1 + centercol, num1 + centercol)), 0, ncol - 1)
+        (p1, p2) = np.clip(np.sort(
+            (-num1 + centercol, num1 + centercol)), 0, ncol - 1)
         mask[i, p1:p2 + 1] = np.ones(p2 - p1 + 1, dtype='float32')
     if drop < centerrow:
         mask[centerrow - drop:centerrow + drop + 1,
