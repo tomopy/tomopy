@@ -166,7 +166,7 @@ def _find_center_cost(
     """
     Cost function used for the ``find_center`` routine.
     """
-    logger.info('trying center: %s', center)
+    logger.info('Trying center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo[:, ind:ind + 1, :], theta, center,
@@ -180,8 +180,8 @@ def _find_center_cost(
     return -np.dot(hist, np.log2(hist))
 
 
-def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
-                   tol=0.5, ratio=2., drop=20):
+def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3, step=0.2,
+                   tol=0.5, ratio=1., drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -216,15 +216,16 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
 
     if ind is None:
         ind = tomo.shape[1] // 2
+    _tomo = tomo[ind]
 
     # Reduce noise by smooth filtering.
-    tomo = ndimage.filters.gaussian_filter(tomo, sigma=(3, 1))
+    _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
     # Coarse search for finiding the roataion center.
-    init_cen = _search_coarse(tomo, smin, smax, ratio, drop)
+    init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
 
     # Fine search for finiding the roataion center.
-    return _search_fine(tomo, srad, step, init_cen, ratio, drop)
+    return _search_fine(_tomo, srad, step, init_cen, ratio, drop)
 
 
 def _search_coarse(sino, smin, smax, ratio, drop):
@@ -234,8 +235,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     (Nrow, Ncol) = sino.shape
     centerfliplr = (Ncol - 1.0) / 2.0
 
-    # Copy the sinogram and flip left right, the purpose is to make a full
-    # [0;2Pi] sinogram
+    # Copy the sinogram and flip left right, the purpose is to
+    # make a full [0;2Pi] sinogram
     _copy_sino = np.fliplr(sino[1:])
 
     # This image is used for compensating the shift of sinogram 2
@@ -284,7 +285,7 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     listmetric = np.zeros(len(listshift), dtype='float32')
     num1 = 0
     for i in listshift:
-        _sino = ndimage.ndi.interpolation.shift(
+        _sino = ndimage.interpolation.shift(
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
         listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
@@ -351,6 +352,8 @@ def write_center(
         ind = dy / 2
     if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
+    if len(cen_range) < 3:
+        cen_range[2] = 1
     else:
         center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
 
