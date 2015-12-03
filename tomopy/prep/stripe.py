@@ -54,6 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import pywt
+import pyfftw
 import tomopy.util.mproc as mproc
 import logging
 
@@ -101,6 +102,9 @@ def remove_stripe_fw(
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
+    # Enable cache for FFTW.
+    pyfftw.interfaces.cache.enable()
+
     arr = mproc.distribute_jobs(
         tomo,
         func=_remove_stripe_fw,
@@ -136,7 +140,8 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
         # FFT transform of horizontal frequency bands.
         for n in range(level):
             # FFT
-            fcV = np.fft.fftshift(np.fft.fft(cV[n], axis=0))
+            fcV = np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft(
+                cV[n], axis=0, planner_effort='FFTW_ESTIMATE'))
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
@@ -145,7 +150,8 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
             fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
 
             # Inverse FFT.
-            cV[n] = np.real(np.fft.ifft(np.fft.ifftshift(fcV), axis=0))
+            cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
+                np.fft.ifftshift(fcV), axis=0, planner_effort='FFTW_ESTIMATE'))
 
         # Wavelet reconstruction.
         for n in range(level)[::-1]:
