@@ -53,6 +53,7 @@ Module for phase retrieval.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import pyfftw
 import tomopy.util.mproc as mproc
 import logging
 
@@ -118,6 +119,9 @@ def retrieve_phase(
     phase_filter = np.fft.fftshift(
         _paganin_filter_factor(energy, dist, alpha, w2))
 
+    # Enable cache for FFTW.
+    pyfftw.interfaces.cache.enable()
+
     prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
     arr = mproc.distribute_jobs(
         tomo,
@@ -134,9 +138,11 @@ def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
     dx, dy, dz = tomo.shape
     for m in range(istart, iend):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        fproj = np.fft.fft2(prj)
+        fproj = pyfftw.interfaces.numpy_fft.fft2(prj, 
+            planner_effort='FFTW_ESTIMATE')
         filtproj = np.multiply(phase_filter, fproj)
-        proj = np.real(np.fft.ifft2(filtproj)) / phase_filter.max()
+        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(filtproj, 
+            planner_effort='FFTW_ESTIMATE')) / phase_filter.max()
         if pad:
             proj = proj[px:dy + px, py:dz + py]
         tomo[m] = proj
