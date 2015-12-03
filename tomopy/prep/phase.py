@@ -136,16 +136,24 @@ def retrieve_phase(
 def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
     tomo = mproc.SHARED_ARRAY
     dx, dy, dz = tomo.shape
+    num_jobs = iend - istart
     for m in range(istart, iend):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        fproj = pyfftw.interfaces.numpy_fft.fft2(prj, 
-            planner_effort='FFTW_ESTIMATE')
+        fproj = pyfftw.interfaces.numpy_fft.fft2(
+            prj, planner_effort=_plan_effort(num_jobs))
         filtproj = np.multiply(phase_filter, fproj)
-        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(filtproj, 
-            planner_effort='FFTW_ESTIMATE')) / phase_filter.max()
+        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
+            filtproj, planner_effort=_plan_effort(num_jobs))) / phase_filter.max()
         if pad:
             proj = proj[px:dy + px, py:dz + py]
         tomo[m] = proj
+
+
+def _plan_effort(num_jobs):
+    if num_jobs > 10:
+        return 'FFTW_MEASURE'
+    else:
+        return 'FFTW_ESTIMATE'
 
 
 def _calc_pad(tomo, pixel_size, dist, energy, pad):
