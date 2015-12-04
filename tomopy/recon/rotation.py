@@ -56,7 +56,8 @@ import numpy as np
 from scipy import ndimage
 from scipy.optimize import minimize
 from tomopy.io.writer import write_tiff
-from tomopy.misc.mask import circ_mask
+from tomopy.misc.corr import circ_mask
+from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
 import os.path
@@ -166,7 +167,7 @@ def _find_center_cost(
     """
     Cost function used for the ``find_center`` routine.
     """
-    logger.info('trying center: %s', center)
+    logger.info('Trying center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo[:, ind:ind + 1, :], theta, center,
@@ -180,8 +181,8 @@ def _find_center_cost(
     return -np.dot(hist, np.log2(hist))
 
 
-def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
-                   tol=0.5, ratio=2., drop=20):
+def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
+                   ratio=2., drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -194,11 +195,11 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
     smin, smax : int, optional
         Reference to the horizontal center of the sinogram.
     srad : float, optional
-        Initial guess for the center.
-    tol : scalar, optional
-        Desired sub-pixel accuracy.
+        Fine search radius.
+    step : float, optional
+        Step of fine searching.
     ratio : float, optional
-        The ratio between the size of object and FOV of the camera.
+        The ratio between the FOV of the camera and the size of object.
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
@@ -216,17 +217,22 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3,
 
     if ind is None:
         ind = tomo.shape[1] // 2
-    if init is None:
-        init = tomo.shape[2] // 2
+    _tomo = tomo[:, ind, :]
 
     # Reduce noise by smooth filtering.
-    tomo = ndimage.filters.gaussian_filter(tomo, sigma=(3, 1))
+    _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
     # Coarse search for finiding the roataion center.
-    init_cen = _search_coarse(tomo, smin, smax, ratio, drop)
+    if _tomo.shape[0] * _tomo.shape[1] > 4e6: # If data is large (>2kx2k)
+        _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
+        init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
+    else:
+        init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
 
     # Fine search for finiding the roataion center.
-    return _search_fine(tomo, srad, step, init_cen, ratio, drop)
+    fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
+    logger.debug('Rotation center search finished: %i', fine_cen)
+    return fine_cen
 
 
 def _search_coarse(sino, smin, smax, ratio, drop):
@@ -236,8 +242,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     (Nrow, Ncol) = sino.shape
     centerfliplr = (Ncol - 1.0) / 2.0
 
-    # Copy the sinogram and flip left right, the purpose is to make a full
-    # [0;2Pi] sinogram
+    # Copy the sinogram and flip left right, the purpose is to
+    # make a full [0;2Pi] sinogram
     _copy_sino = np.fliplr(sino[1:])
 
     # This image is used for compensating the shift of sinogram 2
@@ -254,8 +260,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
             _sino[:, 0:i] = temp_img[:, 0:i]
         else:
             _sino[:, i:] = temp_img[:, i:]
-        listmetric[
-            i - smin] = np.sum(np.abs(np.fft.fftshift(np.fft.fft2(np.vstack((sino, _sino))))) * mask)
+        listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
+            np.fft.fft2(np.vstack((sino, _sino))))) * mask)
     minpos = np.argmin(listmetric)
     return centerfliplr + listshift[minpos] / 2.0
 
@@ -286,11 +292,11 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     listmetric = np.zeros(len(listshift), dtype='float32')
     num1 = 0
     for i in listshift:
-        _sino = ndimage.ndi.interpolation.shift(
+        _sino = ndimage.interpolation.shift(
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
-        listmetric[num1] = np.sum(
-            np.abs(np.fft.fftshift(np.fft.fft2(sinojoin[:, lefttake:righttake + 1]))) * mask)
+        listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
+            np.fft.fft2(sinojoin[:, lefttake:righttake + 1]))) * mask)
         num1 = num1 + 1
     minpos = np.argmin(listmetric)
     return init_cen + listshift[minpos] / 2.0
@@ -304,7 +310,8 @@ def _create_mask(nrow, ncol, radius, drop):
     mask = np.zeros((nrow, ncol), dtype='float32')
     for i in range(nrow):
         num1 = np.round(((i - centerrow) * dv / radius) / du)
-        (p1, p2) = np.clip(np.sort((-num1 + centercol, num1 + centercol)), 0, ncol - 1)
+        (p1, p2) = np.clip(np.sort(
+            (-num1 + centercol, num1 + centercol)), 0, ncol - 1)
         mask[i, p1:p2 + 1] = np.ones(p2 - p1 + 1, dtype='float32')
     if drop < centerrow:
         mask[centerrow - drop:centerrow + drop + 1,
@@ -352,6 +359,8 @@ def write_center(
         ind = dy / 2
     if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
+    if len(cen_range) < 3:
+        cen_range[2] = 1
     else:
         center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
 
