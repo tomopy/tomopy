@@ -32,7 +32,7 @@ if __name__ == '__main__':
     proj, flat, dark = tomopy.io.exchange.read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
-    theta  = tomopy.angles(proj.shape[0])
+    theta = tomopy.angles(proj.shape[0])
 
     # Flat-field correction of raw data.
     proj = tomopy.normalize(proj, flat, dark)
