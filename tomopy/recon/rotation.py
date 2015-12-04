@@ -56,7 +56,7 @@ import numpy as np
 from scipy import ndimage
 from scipy.optimize import minimize
 from tomopy.io.writer import write_tiff
-from tomopy.misc.mask import circ_mask
+from tomopy.misc.corr import circ_mask
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
 import os.path
