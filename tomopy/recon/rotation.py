@@ -208,10 +208,6 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     -------
     float
         Rotation axis location.
-
-    Warning
-    -------
-    Not tested yet.
     """
     tomo = dtype.as_float32(tomo)
 
