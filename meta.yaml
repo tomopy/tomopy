@@ -1,6 +1,6 @@
 package:
   name: tomopy
-  version: '0.1.11'
+  version: '0.1.12'
 
 source:
   git_url: https://github.com/tomopy/tomopy.git
@@ -19,6 +19,7 @@ requirements:
     - h5py
     - scikit-image
     - pywavelets
+    # - pyfftw
     - netcdf4
     - spefile
     - edffile
@@ -36,7 +37,6 @@ test:
     - tomopy.io.phantom
     - tomopy.misc
     - tomopy.misc.corr
-    - tomopy.misc.mask
     - tomopy.misc.morph
     - tomopy.prep
     - tomopy.prep.normalize
