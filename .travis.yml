@@ -16,7 +16,7 @@ before_install:
   - conda info -a
 
 install:
-  - conda install nose numpy=1.10.1 h5py scikit-image pywavelets pyfftw spefile netcdf4 edffile python-coveralls
+  - conda install nose numpy h5py scikit-image pywavelets fftw spefile netcdf4 edffile python-coveralls
   - mkdir lib
   - python setup.py build_ext --inplace
 
