@@ -57,6 +57,7 @@ from scipy import ndimage
 from scipy.optimize import minimize
 from tomopy.io.writer import write_tiff
 from tomopy.misc.corr import circ_mask
+from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
 import os.path
@@ -180,8 +181,8 @@ def _find_center_cost(
     return -np.dot(hist, np.log2(hist))
 
 
-def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3, step=0.2,
-                   tol=0.5, ratio=1., drop=20):
+def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
+                   ratio=2., drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -194,11 +195,11 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3, step=0.2,
     smin, smax : int, optional
         Reference to the horizontal center of the sinogram.
     srad : float, optional
-        Initial guess for the center.
-    tol : scalar, optional
-        Desired sub-pixel accuracy.
+        Fine search radius.
+    step : float, optional
+        Step of fine searching.
     ratio : float, optional
-        The ratio between the size of object and FOV of the camera.
+        The ratio between the FOV of the camera and the size of object.
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
@@ -216,16 +217,22 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=3, step=0.2,
 
     if ind is None:
         ind = tomo.shape[1] // 2
-    _tomo = tomo[ind]
+    _tomo = tomo[:, ind, :]
 
     # Reduce noise by smooth filtering.
     _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
     # Coarse search for finiding the roataion center.
-    init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
+    if _tomo.shape[0] * _tomo.shape[1] > 4e6: # If data is large (>2kx2k)
+        _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
+        init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
+    else:
+        init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
 
     # Fine search for finiding the roataion center.
-    return _search_fine(_tomo, srad, step, init_cen, ratio, drop)
+    fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
+    logger.debug('Rotation center search finished: %i', fine_cen)
+    return fine_cen
 
 
 def _search_coarse(sino, smin, smax, ratio, drop):
