@@ -218,14 +218,14 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     # Reduce noise by smooth filtering.
     _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
-    # Coarse search for finiding the roataion center.
+    # Coarse search for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6: # If data is large (>2kx2k)
         _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
         init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
     else:
         init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
 
-    # Fine search for finiding the roataion center.
+    # Fine search for finding the rotation center.
     fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
     logger.debug('Rotation center search finished: %i', fine_cen)
     return fine_cen
@@ -233,7 +233,7 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
 
 def _search_coarse(sino, smin, smax, ratio, drop):
     """
-    Coarse search for finiding the roataion center.
+    Coarse search for finding the rotation center.
     """
     (Nrow, Ncol) = sino.shape
     centerfliplr = (Ncol - 1.0) / 2.0
@@ -264,7 +264,7 @@ def _search_coarse(sino, smin, smax, ratio, drop):
 
 def _search_fine(sino, srad, step, init_cen, ratio, drop):
     """
-    Fine search for finiding the roataion center.
+    Fine search for finding the rotation center.
     """
     Nrow, Ncol = sino.shape
     centerfliplr = (Ncol + 1.0) / 2.0 - 1.0
