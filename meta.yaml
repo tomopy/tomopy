@@ -6,7 +6,7 @@ source:
   git_url: https://github.com/tomopy/tomopy.git
   
 build:
-  number: 0
+  number: 1
 
 requirements:
   build:
@@ -17,9 +17,10 @@ requirements:
     - python
     - numpy
     - h5py
+    - scipy
     - scikit-image
     - pywavelets
-    # - pyfftw
+    - pyfftw
     - netcdf4
     - spefile
     - edffile
