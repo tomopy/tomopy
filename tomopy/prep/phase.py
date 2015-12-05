@@ -53,7 +53,7 @@ Module for phase retrieval.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-# import pyfftw
+import pyfftw
 import tomopy.util.mproc as mproc
 import logging
 
@@ -120,7 +120,7 @@ def retrieve_phase(
         _paganin_filter_factor(energy, dist, alpha, w2))
 
     # Enable cache for FFTW.
-    # pyfftw.interfaces.cache.enable()
+    pyfftw.interfaces.cache.enable()
 
     prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
     arr = mproc.distribute_jobs(
@@ -139,14 +139,12 @@ def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
     num_jobs = iend - istart
     for m in range(istart, iend):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        fproj = np.fft.fft2(prj)
-        # fproj = pyfftw.interfaces.numpy_fft.fft2(
-        #     prj, planner_effort=_plan_effort(num_jobs))
+        fproj = pyfftw.interfaces.numpy_fft.fft2(
+            prj, planner_effort=_plan_effort(num_jobs))
         filtproj = np.multiply(phase_filter, fproj)
-        proj = np.real(np.fft.ifft2(filtproj)) / phase_filter.max()
-        # proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
-        #     filtproj, planner_effort=_plan_effort(num_jobs))
-        #    ) / phase_filter.max()
+        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
+            filtproj, planner_effort=_plan_effort(num_jobs))
+            ) / phase_filter.max()
         if pad:
             proj = proj[px:dy + px, py:dz + py]
         tomo[m] = proj
