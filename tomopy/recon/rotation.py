@@ -54,6 +54,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy import ndimage
+import pyfftw
 from scipy.optimize import minimize
 from tomopy.io.writer import write_tiff
 from tomopy.misc.corr import circ_mask
@@ -215,11 +216,14 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
         ind = tomo.shape[1] // 2
     _tomo = tomo[:, ind, :]
 
+    # Enable cache for FFTW.
+    pyfftw.interfaces.cache.enable()
+
     # Reduce noise by smooth filtering.
     _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
     # Coarse search for finding the rotation center.
-    if _tomo.shape[0] * _tomo.shape[1] > 4e6: # If data is large (>2kx2k)
+    if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
         _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
         init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
     else:
@@ -257,7 +261,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
         else:
             _sino[:, i:] = temp_img[:, i:]
         listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
-            np.fft.fft2(np.vstack((sino, _sino))))) * mask)
+            pyfftw.interfaces.numpy_fft.fft2(
+                np.vstack((sino, _sino))))) * mask)
     minpos = np.argmin(listmetric)
     return centerfliplr + listshift[minpos] / 2.0
 
@@ -292,7 +297,8 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
         listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
-            np.fft.fft2(sinojoin[:, lefttake:righttake + 1]))) * mask)
+            pyfftw.interfaces.numpy_fft.fft2(
+                sinojoin[:, lefttake:righttake + 1]))) * mask)
         num1 = num1 + 1
     minpos = np.argmin(listmetric)
     return init_cen + listshift[minpos] / 2.0
