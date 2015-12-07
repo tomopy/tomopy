@@ -155,7 +155,7 @@ def upsample(arr, level=1, axis=2):
 
 
 def _sample(arr, level, axis, mode):
-    arr = dtype.as_float32(arr)
+    arr = dtype.as_float32(arr.copy())
     dx, dy, dz = arr.shape
 
     if mode == 0:
