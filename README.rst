@@ -31,3 +31,11 @@ Project homepage:
 **TomoPy-BL832** is a custom version of the TomoPy toolbox with some additions
 for use at `beamline 8.3.2 <http://microct.lbl.gov>`_ at the 
 `Advanced Light Source <https://www-als.lbl.gov>`_.
+
+**Dependencies:**
+   * NumPy 	http://www.numpy.org
+   * SciPy  	http://www.scipy.org
+   * H5Py  	http://www.h5py.org
+   * PyWt  	http://www.pybytes.com/pywavelets
+   * Pillow  	https://pypi.python.org/pypi/Pillow
+   * Skimage 	http://scikit-image.org
