@@ -57,7 +57,6 @@ from tomopy.io.phantom import *
 from tomopy.io.reader import *
 from tomopy.io.writer import *
 from tomopy.misc.corr import *
-from tomopy.misc.mask import *
 from tomopy.misc.morph import *
 from tomopy.prep.normalize import *
 from tomopy.prep.phase import *
