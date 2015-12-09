@@ -47,7 +47,7 @@
 # #########################################################################
 
 """
-Module for data correction functions.
+Module for data correction and masking functions.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -67,6 +67,7 @@ __credits__ = "Mark Rivers, Xianghui Xiao"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['adjust_range',
+           'circ_mask',
            'gaussian_filter',
            'median_filter',
            'sobel_filter',
@@ -393,3 +394,61 @@ def remove_rings(rec, center_x=None, center_y=None, thresh=300.0,
                                 ncore=ncore,
                                 nchunk=nchunk)
     return arr
+
+
+def circ_mask(arr, axis, ratio=1, val=0.):
+    """
+    Apply circular mask to a 3D array.
+    
+    Parameters
+    ----------
+    arr : ndarray
+            Arbitrary 3D array.
+    axis : int
+        Axis along which mask will be performed.
+    ratio : int, optional
+        Ratio of the mask's diameter in pixels to
+        the smallest edge size along given axis.
+    val : int, optional
+        Value for the masked region.
+    
+    Returns
+    -------
+    ndarray
+        Masked array.
+    """
+    arr = dtype.as_float32(arr)
+    _arr = arr.swapaxes(0, axis)
+    dx, dy, dz = _arr.shape
+    mask = _get_mask(dy, dz, ratio)
+    for m in range(dx):
+        _arr[m, ~mask] = val
+    return _arr.swapaxes(0, axis)
+
+
+def _get_mask(dx, dy, ratio):
+    """
+    Calculate 2D boolean circular mask.
+
+    Parameters
+    ----------
+    dx, dy : int
+        Dimensions of the 2D mask.
+
+    ratio : int
+        Ratio of the circle's diameter in pixels to
+        the smallest mask dimension.
+
+    Returns
+    -------
+    ndarray
+        2D boolean array.
+    """
+    rad1 = dx / 2.
+    rad2 = dy / 2.
+    if dx < dy:
+        r2 = rad1 * rad1
+    else:
+        r2 = rad2 * rad2
+    y, x = np.ogrid[0.5 - rad1:0.5 + rad1, 0.5 - rad2:0.5 + rad2]
+    return x * x + y * y < ratio * ratio * r2

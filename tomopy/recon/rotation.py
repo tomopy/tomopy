@@ -53,10 +53,13 @@ Module for functions related to finding axis of rotation.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+from scipy import ndimage
+import pyfftw
 from scipy.optimize import minimize
 from skimage.feature import register_translation
 from tomopy.io.writer import write_tiff
-from tomopy.misc.mask import circ_mask
+from tomopy.misc.corr import circ_mask
+from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
 import os.path
@@ -72,6 +75,9 @@ __all__ = ['find_center',
            'find_center_vo',
            'find_center_pc',
            'write_center']
+
+
+PI = 3.14159265359
 
 
 def find_center(
@@ -164,7 +170,7 @@ def _find_center_cost(
     """
     Cost function used for the ``find_center`` routine.
     """
-    logger.info('trying center: %s', center)
+    logger.info('Trying center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo[:, ind:ind + 1, :], theta, center,
@@ -178,7 +184,8 @@ def _find_center_cost(
     return -np.dot(hist, np.log2(hist))
 
 
-def find_center_vo(tomo):
+def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
+                   ratio=2., drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -186,17 +193,134 @@ def find_center_vo(tomo):
     ----------
     tomo : ndarray
         3D tomographic data.
+    ind : int, optional
+        Index of the slice to be used for reconstruction.
+    smin, smax : int, optional
+        Reference to the horizontal center of the sinogram.
+    srad : float, optional
+        Fine search radius.
+    step : float, optional
+        Step of fine searching.
+    ratio : float, optional
+        The ratio between the FOV of the camera and the size of object.
+        It's used to generate the mask.
+    drop : int, optional
+        Drop lines around vertical center of the mask.
 
     Returns
     -------
     float
         Rotation axis location.
-
-    Warning
-    -------
-    Not implemented yet.
     """
-    pass
+    tomo = dtype.as_float32(tomo)
+
+    if ind is None:
+        ind = tomo.shape[1] // 2
+    _tomo = tomo[:, ind, :]
+
+    # Enable cache for FFTW.
+    pyfftw.interfaces.cache.enable()
+
+    # Reduce noise by smooth filtering.
+    _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
+
+    # Coarse search for finding the rotation center.
+    if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
+        _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
+        init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
+    else:
+        init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
+
+    # Fine search for finding the rotation center.
+    fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
+    logger.debug('Rotation center search finished: %i', fine_cen)
+    return fine_cen
+
+
+def _search_coarse(sino, smin, smax, ratio, drop):
+    """
+    Coarse search for finding the rotation center.
+    """
+    (Nrow, Ncol) = sino.shape
+    centerfliplr = (Ncol - 1.0) / 2.0
+
+    # Copy the sinogram and flip left right, the purpose is to
+    # make a full [0;2Pi] sinogram
+    _copy_sino = np.fliplr(sino[1:])
+
+    # This image is used for compensating the shift of sinogram 2
+    temp_img = np.zeros((Nrow - 1, Ncol), dtype='float32')
+    temp_img[:] = sino[-1]
+
+    # Start coarse search in which the shift step is 1
+    listshift = np.arange(smin, smax + 1)
+    listmetric = np.zeros(len(listshift), dtype='float32')
+    mask = _create_mask(2 * Nrow - 1, Ncol, 0.5 * ratio * Ncol, drop)
+    for i in listshift:
+        _sino = np.roll(_copy_sino, i, axis=1)
+        if i >= 0:
+            _sino[:, 0:i] = temp_img[:, 0:i]
+        else:
+            _sino[:, i:] = temp_img[:, i:]
+        listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
+            pyfftw.interfaces.numpy_fft.fft2(
+                np.vstack((sino, _sino))))) * mask)
+    minpos = np.argmin(listmetric)
+    return centerfliplr + listshift[minpos] / 2.0
+
+
+def _search_fine(sino, srad, step, init_cen, ratio, drop):
+    """
+    Fine search for finding the rotation center.
+    """
+    Nrow, Ncol = sino.shape
+    centerfliplr = (Ncol + 1.0) / 2.0 - 1.0
+
+    # Use to shift the sinogram 2 to the raw CoR.
+    shiftsino = np.int16(2 * (init_cen - centerfliplr))
+    _copy_sino = np.roll(np.fliplr(sino[1:]), shiftsino, axis=1)
+    lefttake = 0
+    righttake = Ncol - 1
+    if init_cen <= centerfliplr:
+        lefttake = np.ceil(srad + 1)
+        righttake = np.floor(2 * init_cen - srad - 1)
+    else:
+        lefttake = np.ceil(
+            init_cen - (Ncol - 1 - init_cen) + srad + 1)
+        righttake = np.floor(Ncol - 1 - srad - 1)
+    Ncol1 = righttake - lefttake + 1
+    mask = _create_mask(2 * Nrow - 1, Ncol1, 0.5 * ratio * Ncol, drop)
+    numshift = np.int16((2 * srad + 1.0) / step)
+    listshift = np.linspace(-srad, srad, num=numshift)
+    listmetric = np.zeros(len(listshift), dtype='float32')
+    num1 = 0
+    for i in listshift:
+        _sino = ndimage.interpolation.shift(
+            _copy_sino, (0, i), prefilter=False)
+        sinojoin = np.vstack((sino, _sino))
+        listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
+            pyfftw.interfaces.numpy_fft.fft2(
+                sinojoin[:, lefttake:righttake + 1]))) * mask)
+        num1 = num1 + 1
+    minpos = np.argmin(listmetric)
+    return init_cen + listshift[minpos] / 2.0
+
+
+def _create_mask(nrow, ncol, radius, drop):
+    du = 1.0 / ncol
+    dv = (nrow - 1.0) / (nrow * 2.0 * PI)
+    centerrow = np.ceil(nrow / 2) - 1
+    centercol = np.ceil(ncol / 2) - 1
+    mask = np.zeros((nrow, ncol), dtype='float32')
+    for i in range(nrow):
+        num1 = np.round(((i - centerrow) * dv / radius) / du)
+        (p1, p2) = np.clip(np.sort(
+            (-num1 + centercol, num1 + centercol)), 0, ncol - 1)
+        mask[i, p1:p2 + 1] = np.ones(p2 - p1 + 1, dtype='float32')
+    if drop < centerrow:
+        mask[centerrow - drop:centerrow + drop + 1,
+             :] = np.zeros((2 * drop + 1, ncol), dtype='float32')
+    return mask
 
 
 def find_center_pc(proj1, proj2, tol=0.5):
@@ -282,6 +406,8 @@ def write_center(
         ind = dy / 2
     if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
+    if len(cen_range) < 3:
+        cen_range[2] = 1
     else:
         center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
 

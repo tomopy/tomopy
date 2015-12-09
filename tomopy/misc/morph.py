@@ -128,7 +128,7 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
 
 
 def _get_npad(dim):
-    return int(np.ceil(dim * np.sqrt(2))) - dim
+    return int(np.ceil((dim * np.sqrt(2) - dim) / 2))
 
 
 def _get_pad_sequence(shape, axis, npad):
@@ -157,7 +157,7 @@ def downsample(arr, level=1, axis=2):
     Returns
     -------
     ndarray
-        Downsampled 3D array.
+        Downsampled 3D array in float32.
     """
     return _sample(arr, level, axis, mode=0)
 
@@ -178,13 +178,13 @@ def upsample(arr, level=1, axis=2):
     Returns
     -------
     ndarray
-        Upsampled 3D array.
+        Upsampled 3D array in float32.
     """
     return _sample(arr, level, axis, mode=1)
 
 
 def _sample(arr, level, axis, mode):
-    arr = dtype.as_float32(arr)
+    arr = dtype.as_float32(arr.copy())
     dx, dy, dz = arr.shape
 
     if mode == 0:
