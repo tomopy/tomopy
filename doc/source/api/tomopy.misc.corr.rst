@@ -11,6 +11,7 @@
    .. autosummary::
    
       adjust_range
+      circ_mask
       gaussian_filter
       median_filter
       sobel_filter
