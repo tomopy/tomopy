@@ -160,3 +160,67 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
         ncore=ncore,
         nchunk=nchunk)
     return arr
+
+
+def normalize_nf(tomo, flats, dark, flat_loc,
+                 cutoff=None, ncore=None, nchunk=None):
+    """
+    Normalize raw 3D projection data with flats taken more than once during
+    tomography. Normalization for each projection is done with the mean of the
+    nearest set of flat fields (nearest flat fields).
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    flats : ndarray
+        3D flat field data.
+    dark : ndarray
+        3D dark field data.
+    flat_loc : list of int
+        Indices of flat field data within tomography
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Normalized 3D tomographic data.
+    """
+
+    tomo = dtype.as_float32(tomo)
+    flats = dtype.as_float32(flats)
+    dark = dtype.as_float32(dark)
+
+    arr = np.zeros_like(tomo)
+
+    dark = np.median(dark, axis=0)
+
+    num_flats = len(flat_loc)
+    total_flats = flats.shape[0]
+    total_tomo = tomo.shape[0]
+    num_per_flat = total_flats//num_flats  # should always be an integer
+
+    for m, loc in enumerate(flat_loc):
+        fstart = m*num_per_flat
+        fend = (m + 1)*num_per_flat
+        flat = np.median(flats[fstart:fend], axis=0)
+
+        # Normalization can be parallelized much more efficiently outside this
+        # foor loop accounting for the nested parallelism arising from
+        # chunking the total normalization and each chunked normalization
+        tstart = 0 if m == 0 else tend
+        tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc)//2 + loc
+
+        _arr = mproc.distribute_jobs(tomo[tstart:tend],
+                                     func=_normalize,
+                                     args=(flat, dark, cutoff),
+                                     axis=0,
+                                     ncore=ncore,
+                                     nchunk=nchunk)
+
+        arr[tstart:tend] = _arr
+
+    return arr
