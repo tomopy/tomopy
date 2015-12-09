@@ -21,17 +21,17 @@ if __name__ == '__main__':
     contents = open(log_fname, 'r')
     for line in contents:
         ls = line.split()
-        if len(ls)>1:
-            if (ls[0]=="Tomography" and ls[1]=="scan"):
+        if len(ls) > 1:
+            if (ls[0] == "Tomography" and ls[1] == "scan"):
                 prj_start = int(ls[6])
-            elif (ls[0]=="Number" and ls[2]=="scan"):
+            elif (ls[0] == "Number" and ls[2] == "scan"):
                 nprj = int(ls[4])
-            elif (ls[0]=="Dark" and ls[1]=="field"):
+            elif (ls[0] == "Dark" and ls[1] == "field"):
                 dark_start = int(ls[6])
-            elif (ls[0]=="Number" and ls[2]=="dark"):
+            elif (ls[0] == "Number" and ls[2] == "dark"):
                 ndark = int(ls[5])
-            elif (ls[0]=="White" and ls[1]=="field"):
+            elif (ls[0] == "White" and ls[1] == "field"):
                 flat_start = int(ls[6])
-            elif (ls[0]=="Number" and ls[2]=="white"):
+            elif (ls[0] == "Number" and ls[2] == "white"):
                 nflat = int(ls[5])
     contents.close()

@@ -2,9 +2,10 @@ language: python
 
 python:
   - "2.7"
+  
+sudo: false
 
 before_install:
-  - sudo apt-get update
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -16,7 +17,7 @@ before_install:
   - conda info -a
 
 install:
-  - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile python-coveralls
+  - conda install nose numpy h5py scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile python-coveralls
   - mkdir lib
   - python setup.py build_ext --inplace
 

@@ -91,6 +91,10 @@ def test_remove_outlier():
         read_file('remove_zinger.npy'))
 
 
+def test_circ_mask():
+    loop_dim(circ_mask, read_file('obj.npy'))
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)

@@ -227,7 +227,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 
+  ('index',
   project+'.tex',
   project+u' Documentation',
   Argonne,'manual'),
@@ -259,7 +259,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index',project, 
+    ('index',project,
     project+u' Documentation',
     [Argonne,],
     1)
@@ -275,11 +275,11 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 
-  project, 
+  ('index',
+  project,
   project+u' Documentation',
-  Argonne, 
-  project, 
+  Argonne,
+  project,
   'TomoPy: Tomographic Reconstruction in Python.',
   'Miscellaneous'),
 ]
@@ -318,9 +318,9 @@ class Mock(object):
 
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
-    'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',  
+    'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
     'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
-    'skimage.io', 'skimage.filter', 'skimage.morphology', 'DM3lib']
+    'skimage.io', 'skimage.filter', 'skimage.morphology', 'DM3lib', 'pyfftw']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
