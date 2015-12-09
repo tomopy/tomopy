@@ -536,4 +536,3 @@ def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, flat_loc=None):
         arr[m] = _arr
 
     return arr
-
