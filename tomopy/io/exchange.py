@@ -67,6 +67,7 @@ __credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
+           'read_als_832h5',
            'read_anka_topotomo',
            'read_aps_1id',
            'read_aps_2bm',
@@ -216,6 +217,102 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
         flat = np.ones(1)
         dark = np.zeros(1)
     return tomo, flat, dark
+
+
+def read_als_832h5(
+     fname, ind_tomo=None, ind_flat=None, ind_dark=None, proj=None, sino=None):
+    """
+    Read ALS 8.3.2 hdf5 file with stacked datasets.
+
+    Parameters
+    ----------
+
+    fname : str
+        Path to hdf5 file.
+
+    ind_tomo : list of int, optional
+        Indices of the projection files to read.
+
+    ind_flat : list of int, optional
+        Indices of the flat field files to read.
+
+    ind_dark : list of int, optional
+        Indices of the dark field files to read.
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3D flat field data.
+
+    ndarray
+        3D dark field data.
+
+    list of int
+        Indices of flat field data within tomography projection list
+    """
+
+    f = h5py.File(fname, 'r')
+    dgroup = tio._find_dataset_group(f)
+    dname = dgroup.name.split('/')[-1]
+
+    tomo_name = dname + '_0000_0000.tif'
+    flat_name = dname + 'bak_0000.tif'
+    dark_name = dname + 'drk_0000.tif'
+
+    # Read metadata from dataset group attributes
+    keys = dgroup.attrs.keys()
+    if 'nangles' in keys:
+        nproj = int(dgroup.attrs['nangles'])
+    if 'i0cycle' in keys:
+        inter_bright = int(dgroup.attrs['i0cycle'])
+    if 'num_bright_field' in keys:
+        nflat = int(dgroup.attrs['num_bright_field'])
+    else:
+        nflat = tio._count_proj(dgroup, flat_name, nproj,
+                                inter_bright=inter_bright)
+    if 'num_dark_fields' in keys:
+        ndark = int(dgroup.attrs['num_dark_fields'])
+    else:
+        ndark = tio._count_proj(dgroup, dark_name, nproj)
+
+    # Create arrays of indices to read projections, flats and darks
+    if ind_tomo is None:
+        ind_tomo = range(0, nproj)
+    ind_dark = range(0, ndark)
+    group_dark = [nproj-1]
+    ind_flat = range(0, nflat)
+
+    if inter_bright > 0:
+        group_flat = range(0, nproj, inter_bright)
+        if group_flat[-1] != nproj-1:
+            group_flat.append(nproj-1)
+    elif inter_bright == 0:
+        group_flat = [0, nproj-1]
+    else:
+        group_flat = None
+
+    tomo = tio.read_hdf5_stack(dgroup, tomo_name, ind_tomo, slc=(proj, sino))
+
+    flat = tio.read_hdf5_stack(dgroup, flat_name, ind_flat, slc=(None, sino),
+                               flat_loc=group_flat)
+
+    dark = tio.read_hdf5_stack(dgroup, dark_name, ind_dark, slc=(None, sino),
+                               flat_loc=group_dark)
+
+    group_flat = tio._map_loc(ind_tomo, group_flat)
+
+    f.close()
+
+    return tomo, flat, dark, group_flat
 
 
 def read_anka_topotomo(
