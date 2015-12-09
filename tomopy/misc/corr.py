@@ -66,13 +66,13 @@ __credits__ = "Mark Rivers, Xianghui Xiao"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['adjust_range',
+           'circ_mask',
            'gaussian_filter',
            'median_filter',
            'sobel_filter',
            'remove_nan',
            'remove_neg',
-           'remove_outlier',
-           'circ_mask']
+           'remove_outlier']
 
 
 def adjust_range(arr, dmin=None, dmax=None):
