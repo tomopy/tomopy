@@ -1,7 +1,7 @@
 Examples
 ========
 
-This section contains code example for various tomoPy tasks.
+This section contains code example for various TomoPy tasks.
 
 .. toctree::
 
