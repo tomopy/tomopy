@@ -303,10 +303,10 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
     tomo = tio.read_hdf5_stack(dgroup, tomo_name, ind_tomo, slc=(proj, sino))
 
     flat = tio.read_hdf5_stack(dgroup, flat_name, ind_flat, slc=(None, sino),
-                               ind_out=group_flat)
+                               out_ind=group_flat)
 
     dark = tio.read_hdf5_stack(dgroup, dark_name, ind_dark, slc=(None, sino),
-                               ind_out=group_dark)
+                               out_ind=group_dark)
 
     group_flat = tio._map_loc(ind_tomo, group_flat)
 
