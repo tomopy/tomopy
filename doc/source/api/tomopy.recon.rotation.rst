@@ -12,4 +12,5 @@
 
       find_center
       find_center_vo
+      find_center_pc
       write_center
