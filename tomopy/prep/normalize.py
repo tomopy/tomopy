@@ -61,7 +61,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, Luis Barroso-Luque"
 __credits__ = "Mark Rivers"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
