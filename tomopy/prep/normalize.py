@@ -66,7 +66,8 @@ __credits__ = "Mark Rivers"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['normalize',
-           'normalize_bg']
+           'normalize_bg',
+           'normalize_nf']
 
 
 def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
