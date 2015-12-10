@@ -17,3 +17,4 @@
       read_spe
       read_tiff
       read_tiff_stack
+      read_hdf5_stack
