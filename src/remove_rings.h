@@ -46,20 +46,9 @@ polar_transform(
 		int r_scale, int ang_scale, int overhang);
 
 float**
-polar_transform_bilinear(
-	float** image, float center_x, float center_y, int width,
-	int height, int* p_pol_width, int* p_pol_height, float thresh_max,
-    float thresh_min, int r_scale, int ang_scale, int overhang);
-
-float**
 inverse_polar_transform(
 	float** polar_image, float center_x, float center_y, int pol_width,
 	int  pol_height, int width, int height, int r_scale, int over_hang);
-
-float**
-inverse_polar_transform_bilinear(
-	float** polar_image, float center_x, float center_y, int pol_width,
-    int pol_height, int width, int height, int r_scale, int overhang);
 
 void
 swap_float(
@@ -97,22 +86,10 @@ median_filter_fast_1D(
 	int kernel_rad,	int filter_width, int width, int height);
 
 void
-median_filter_1D(
-	float *** filtered_image, float*** image, int start_row,
-	int start_col, int end_row, int end_col, char axis, 
-	int kernel_rad,	int filter_width, int width, int height);
-
-void
 mean_filter_fast_1D(
 	float*** filtered_image, float*** image,
  	int start_row, int start_col, int end_row, int end_col,
 	char axis, int kernel_rad, int width, int height);
-
-void
-mean_filter_1D(
-	float*** filtered_image, float*** image, int start_row,
-	int start_col, int end_row, int end_col, char axis, 
-	int kernel_rad, int height, int width);
 
 void
 ring_filter(
