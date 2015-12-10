@@ -59,6 +59,7 @@ import numpy as np
 import os
 import h5py
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +85,8 @@ __all__ = ['read_edf',
            'read_npy',
            'read_spe',
            'read_tiff',
-           'read_tiff_stack']
+           'read_tiff_stack',
+           'read_hdf5_stack']
 
 
 def _check_read(fname):
@@ -383,3 +385,154 @@ def _list_file_stack(fname, ind, digit):
     for m in ind:
         list_fname.append(str(body + '{0:0={1}d}'.format(m, digit) + ext))
     return list_fname
+
+
+def _find_dataset_group(h5object):
+    """
+    Finds the group name containing the stack of projections datasets within
+    a ALS BL8.3.2 hdf5 file
+    """
+    # Only one root key means only one dataset in BL8.3.2 current format
+    keys = h5object.keys()
+    if len(keys) == 1:
+        if isinstance(h5object[keys[0]], h5py.Group):
+            group_keys = h5object[keys[0]].keys()
+            if isinstance(h5object[keys[0]][group_keys[0]], h5py.Dataset):
+                return h5object[keys[0]]
+            else:
+                return _find_dataset_group(h5object[keys[0]])
+        else:
+            raise Exception
+    else:
+        raise Exception
+
+
+def _count_proj(group, dname, nproj, digit=4, inter_bright=None):
+    """
+    Count the number of projections that have a specified name structure.
+    Used to count the number of brights or darks in ALS BL8.3.2 hdf5 files when
+    number is not present in metadata.
+    """
+
+    body = os.path.splitext(dname)[0]
+    body = ''.join(body[:-digit])
+
+    regex = re.compile('.*(' + body + ').*')
+    count = len(filter(regex.match, group.keys()))
+
+    if inter_bright > 0:
+        count = count/(nproj/inter_bright + 2)
+    elif inter_bright == 0:
+        count = count/2
+
+    return int(count)
+
+
+def _map_loc(ind, loc):
+    """
+    Does a linear mapping of the indices where brights where taken within the
+    full tomography to new indices of only those porjections which where read
+    The returned list of indices is used in normalize_nn function.
+    """
+
+    loc = np.array(loc)
+    low, upp = ind[0], ind[-1]
+    buff = (loc[-1] - loc[0])/len(loc)
+    min_loc = low - buff
+    max_loc = upp + buff
+    loc = np.intersect1d(loc[loc > min_loc], loc[loc < max_loc])
+    new_upp = len(ind)
+    loc = (new_upp*(loc - low))//(upp - low)
+    if loc[0] < 0:
+        loc[0] = 0
+
+    return np.ndarray.tolist(loc)
+
+
+def _list_hdf5_stack(dname, ind, digit, flat_loc=None):
+    """
+    Return a list of stacked dataset names in a hdf5 file.
+    ALS 8.3.2 hdf5 files have the same structure and naming as a folder with
+    tiff images.
+
+    Parameters
+    -----------
+
+    dname : str
+        String defining the dataset name
+
+    ind : list of int
+        Indeces of the datasets to be read
+
+    digit : int
+        Number of digits indexing the stacked datasets
+
+    flat_loc : list of int
+        Indices of projections were flat images are taken.
+        Used for instances were flats are taken at beginning and end or at
+        intervals during a tomography experiment.
+    """
+
+    dname = _check_read(dname)
+    list_fname = _list_file_stack(dname, ind, digit)
+    num_group = len(ind)
+
+    if flat_loc is not None:
+        list_fname = len(flat_loc)*list_fname
+
+    for m in range(num_group):
+        name = os.path.split(list_fname[m])[1]
+        body = name.split('.')[0]
+        ext = '.' + name.split('.')[1]
+        # Check if file stack to create is taken at intervals
+        # during the tomography experiment
+        if flat_loc is not None:
+            for n, ending in enumerate(flat_loc):
+                fname = body + '_' + '{0:0={1}d}'.format(ending, digit) + ext
+                list_fname[m + n*num_group] = fname
+        else:
+            list_fname[m] = body + ext
+
+    return list_fname
+
+
+def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, flat_loc=None):
+    """
+    Read data from stacked datasets in a hdf5 file
+
+    Parameters
+    ----------
+
+    fname : str
+        One of the dataset names in the dataset stack
+
+    ind : list of int
+        Indices of the datasets to be read
+
+    digit : int
+        Number of digits indexing the stacked datasets
+
+    slc : {sequence, int}
+        Range of values for slicing data.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
+        defines slicing parameters for each axis of the data matrix
+
+    flat_loc : list of int
+        Indices of projections were flat images are taken.
+        Used for instances were flats are taken at beginning and end or at
+        intervals during a tomography experiment.
+    """
+
+    dname = _check_read(dname)
+    list_fname = _list_hdf5_stack(dname, ind, digit, flat_loc)
+
+    for m, image in enumerate(list_fname):
+        _arr = h5group[image]
+        _arr = _slice_array(_arr, slc)
+        if m == 0:
+            dx, dy, dz = _arr.shape
+            dx = len(list_fname)
+            arr = np.empty((dx, dy, dz), dtype=_arr.dtype)
+        arr[m] = _arr
+
+    return arr
