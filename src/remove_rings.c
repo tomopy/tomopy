@@ -1,25 +1,49 @@
- /*
- This is code for a ring artifact removal algorithm that works in the
- reconstructed domain.
- Based on:
-	"Comparison of ring artifact correction methods for flat-detector CT"
-	by Prell, et al.
+ // Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.
 
- Works by:
-    -Performing a polar transform on the reconstructed image.
-    -Doing a median filter in the radial direction (with a kernel width
-     that depends on the radius).
-    -Taking the difference between the filtered and original polar image.
-    -Performing a mean filter in the azimuthal direction (again with a
-     kernel width that depends on the radius).
-    -Doing an inverse polar transformation (giving an image of just the
-     rings).
-    -Subtracting the ring image from the original image.
+// Copyright 2015. UChicago Argonne, LLC. This software was produced 
+// under U.S. Government contract DE-AC02-06CH11357 for Argonne National 
+// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the 
+// U.S. Department of Energy. The U.S. Government has rights to use, 
+// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR 
+// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR 
+// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is 
+// modified to produce derivative works, such modified software should 
+// be clearly marked, so as not to confuse it with the version available 
+// from ANL.
 
- Original author: Justin Blair
- */
+// Additionally, redistribution and use in source and binary forms, with 
+// or without modification, are permitted provided that the following 
+// conditions are met:
 
- #include "remove_rings.h"
+//     * Redistributions of source code must retain the above copyright 
+//       notice, this list of conditions and the following disclaimer. 
+
+//     * Redistributions in binary form must reproduce the above copyright 
+//       notice, this list of conditions and the following disclaimer in 
+//       the documentation and/or other materials provided with the 
+//       distribution. 
+
+//     * Neither the name of UChicago Argonne, LLC, Argonne National 
+//       Laboratory, ANL, the U.S. Government, nor the names of its 
+//       contributors may be used to endorse or promote products derived 
+//       from this software without specific prior written permission. 
+
+// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS 
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago 
+// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// POSSIBILITY OF SUCH DAMAGE.
+
+//Original author: Justin Blair
+
+#include "remove_rings.h"
 
 void remove_rings(float* data, float center_x, float center_y, int dx, int dy,
 				  int dz, float thresh_max, float thresh_min, float threshold, 
@@ -158,12 +182,15 @@ float** inverse_polar_transform(float** polar_image, float center_x,
 	}
 	for(int row=0; row < height; row++){
 		for(int col = 0; col < width; col++){
-			float theta = atan2((float)(row - center_y), (float)(col-center_x) - (PI/(float)pol_height));
+			float theta = atan2((float)(row - center_y), (float)(col-center_x)
+								- (PI/(float)pol_height));
 			if(theta < 0){
 				theta+= 2.0*PI;
 			}
 			int pol_row = iroundf(theta*(float)pol_height/(2.0*PI)); 
-			int pol_col = iroundf((float)r_scale*sqrtf(((float)row-center_y)*((float)row-center_y) + ((float)col-center_x)*((float)col-center_x)));
+			int pol_col = iroundf((float)r_scale*sqrtf(((float)row-center_y) *
+								  ((float)row-center_y) + ((float)col-center_x)
+								  * ((float)col-center_x)));
 			if(pol_row < pol_height && pol_col < pol_width){
 				cart_image[row][col] = polar_image[pol_row][pol_col];
 			}else{
