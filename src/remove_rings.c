@@ -1,12 +1,19 @@
  /*
- This is code for a ring artifact removal algorithm that works in the reconstructed domain.
- It's based on the paper "Comparison of ring artifact correction methods for flat-detector CT" by Prell, et al. It works by:
+ This is code for a ring artifact removal algorithm that works in the
+ reconstructed domain.
+ Based on:
+	"Comparison of ring artifact correction methods for flat-detector CT"
+	by Prell, et al.
 
+ Works by:
     -Performing a polar transform on the reconstructed image.
-    -Doing a median filter in the radial direction (with a kernel width that depends on the radius).
+    -Doing a median filter in the radial direction (with a kernel width
+     that depends on the radius).
     -Taking the difference between the filtered and original polar image.
-    -Performing a mean filter in the azimuthal direction (again with a kernel width that depends on the radius).
-    -Doing an inverse polar transformation (giving an image of just the rings).
+    -Performing a mean filter in the azimuthal direction (again with a
+     kernel width that depends on the radius).
+    -Doing an inverse polar transformation (giving an image of just the
+     rings).
     -Subtracting the ring image from the original image.
 
  Original author: Justin Blair
@@ -14,8 +21,8 @@
 
  #include "remove_rings.h"
 
-void remove_rings(float* data, float center_x, float center_y, int dx, int dy, int dz,
-				  float thresh_max, float thresh_min, float threshold, 
+void remove_rings(float* data, float center_x, float center_y, int dx, int dy,
+				  int dz, float thresh_max, float thresh_min, float threshold, 
 				  int angular_min, int ring_width, int istart, int iend)
 {
 	int pol_width=0;
@@ -33,21 +40,25 @@ void remove_rings(float* data, float center_x, float center_y, int dx, int dy, i
 	{
 		// Fill in reconstructed slice data array into reshaped 2D array
 		image[0] = data + s*dy*dx;
-		for (int i=1; i<dy; i++) { //CHECK ROW/COLUMN ORDERING
+		for (int i=1; i<dy; i++) {
 			image[i] = image[i-1] + dx;
 		}
 		//Translate Image to Polar Coordinates
-		//polar_image = polar_transform_bilinear(image, center_x, center_y, dx, dy, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
-		polar_image = polar_transform(image, center_x, center_y, dx, dy, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+		polar_image = polar_transform(image, center_x, center_y, dx, dy,
+									  &pol_width, &pol_height, thresh_max,
+									  thresh_min, r_scale, ang_scale,
+									  ring_width);
 		m_azi = ceil((float)pol_height/360.0)*angular_min;
 		m_rad = 2*ring_width+1;
 
 		//Call Ring Algorithm
-		ring_filter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width);
+		ring_filter(&polar_image, pol_height, pol_width,
+					threshold, m_rad, m_azi, ring_width);
 
 		//Translate Ring-Image to Cartesian Coordinates
-		//ring_image = inversepolar_transform_bilinear(polar_image, center_x, center_y, pol_width, pol_height, dx, dy, r_scale, ring_width);
-		ring_image = inverse_polar_transform(polar_image, center_x, center_y, pol_width, pol_height, dx, dy, r_scale, ring_width);
+		ring_image = inverse_polar_transform(polar_image, center_x, center_y,
+										     pol_width, pol_height, dx, dy,
+										     r_scale, ring_width);
 
 		//Subtract Ring-Image from Image
 		for(int row=0; row < dy; row++){
@@ -59,17 +70,14 @@ void remove_rings(float* data, float center_x, float center_y, int dx, int dy, i
 		//Flatten 2D filtered array
 		for(int j = 0; j < dy; j++){
 			for(int i = 0; i < dx; i++){
-				data[i+(j*dx)+s*dy*dx] = image[j][i]; //AGAIN CHECK ORDERING MAN
+				data[i+(j*dx)+s*dy*dx] = image[j][i];
 			}
 		}
 
 	}
 
-	//free(ring_image[0]);
 	free(ring_image);
-	//free(polar_image[0]);
 	free(polar_image);
-	//free(image[0]);
 	free(image);
 
 	return;
@@ -92,15 +100,17 @@ int min_distance_to_edge(float center_x, float center_y,
 	return min;
 }
 
+
 int iroundf(float x)
 {
 	return (x != 0.0) ? floor(x+0.5) : 0;
 }
 
-float** polar_transform(float** image, float center_x, float center_y, int width,
-                        int height, int* p_pol_width, int* p_pol_height,
-                        float thresh_max, float thresh_min, int r_scale,
-                        int ang_scale, int overhang)
+
+float** polar_transform(float** image, float center_x, float center_y,
+						int width, int height, int* p_pol_width,
+						int* p_pol_height, float thresh_max, float thresh_min, 
+						int r_scale, int ang_scale, int overhang)
 {
 	int max_r = min_distance_to_edge(center_x, center_y, width, height);
 	int pol_width = r_scale*max_r;
@@ -108,7 +118,7 @@ float** polar_transform(float** image, float center_x, float center_y, int width
 	*p_pol_width = pol_width;
 	*p_pol_height = pol_height;
 	
-	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float));	
+	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float));
 	float** polar_image = (float **) calloc(pol_height, sizeof(float *));
 	polar_image[0] = image_block;
 	for(int i=1; i<pol_height; i++){
@@ -134,65 +144,6 @@ float** polar_transform(float** image, float center_x, float center_y, int width
 	return polar_image;
 }
 
-/*Polar transform that uses simple bilinear interpolation to translate from (x,y) to (r, theta)*/
-float** polar_transform_bilinear(float** image, float center_x, float center_y,
-                                 int width, int height, int* p_pol_width,
-                                 int* p_pol_height, float thresh_max,
-                                 float thresh_min, int r_scale, int ang_scale,
-                                 int overhang)
-{
-	int max_r = min_distance_to_edge(center_x, center_y, width, height);
-	int pol_width = r_scale*max_r;
-	int pol_height = iroundf((float)ang_scale*2.0*PI*(float)max_r - 1.0);
-	*p_pol_width = pol_width;
-	*p_pol_height = pol_height;
-
-	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float));	
-	float** polar_image = (float **) calloc(pol_height, sizeof(float *));
-	polar_image[0] = image_block;
-	for(int i=1; i<pol_height; i++){
-		polar_image[i] = polar_image[i-1] + pol_width;
-	}
-
-	float theta, fl_x, fl_y, value;
-	int x_1, x_2, y_1, y_2;
-	for(int row = 0; row<pol_height; row++){
-		for(int r = 0; r<pol_width; r++){
-			//float theta = (float)row/(float)*pol_height*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
-			theta = (float)row*2.0*PI/(float)pol_height;
-			fl_x = (float)r*cos(theta)/r_scale + (float)center_x;
-			fl_y = (float)r*sin(theta)/r_scale + (float)center_y;
-			x_1 = floor(fl_x);
-			x_2 = ceil(fl_x);
-			y_1 = floor(fl_y);
-			y_2 = ceil(fl_y);
-			value = 0;
-			if(x_2 < width && y_2 < height && y_1 >= 0 && x_1 >= 0){
-			if(x_1 == x_2){
-				if(y_1 ==y_2){
-					value = image[y_1][x_1];
-				}else{
-					value = (y_2 - fl_y)*image[y_1][x_1] + (fl_y - y_1)*image[y_2][x_1];
-				}
-			}else if(y_1 == y_2){
-				value = (x_2 - fl_x)*image[y_1][x_1] + (fl_x - x_1)*image[y_1][x_2];
-			}else{
-				value = (y_2 - fl_y)*((x_2 - fl_x)*image[y_1][x_1] + (fl_x - x_1)*image[y_1][x_2]) + (fl_y - y_1)*((x_2 - fl_x)*image[y_2][x_1] + (fl_x - x_1)*image[y_2][x_2]);
-			}
-			}			
-			polar_image[row][r] = value;
-			if(polar_image[row][r] > thresh_max){
-				polar_image[row][r] = thresh_max;
-			}else if(polar_image[row][r] < thresh_min){
-				polar_image[row][r] = thresh_min;
-			}
-
-			
-		}
-	}
-
-	return polar_image;
-}
 
 float** inverse_polar_transform(float** polar_image, float center_x,
                                 float center_y, int pol_width, int  pol_height,
@@ -222,60 +173,7 @@ float** inverse_polar_transform(float** polar_image, float center_x,
 	}
 	return cart_image;
 }
-/*Inverse polar transform that uses simple bilinear interpolation to translate from (r, theta) to (x, y)*/
-float** inverse_polar_transform_bilinear(float** polar_image, float center_x,
-                                         float center_y, int pol_width,
-                                         int pol_height, int width, int height,
-                                         int r_scale, int overhang)
-{
-	float* image_block = (float *) calloc(height*width, sizeof(float));
-	float** cart_image = (float **) calloc(height, sizeof(float *));
-	cart_image[0] = image_block;
-	for(int i = 1; i < height; i++){
-		cart_image[i] = cart_image[i-1]+width;
-	}
-	float r, theta, upper_theta, lower_theta, delta_theta, value, row_float;
-	int col_1, col_2, row_1, row_2;
-	for(int y = 0; y < height; y++){
-		for(int x = 0; x < width; x++){
-			value = 0;
-			r = r_scale*sqrt((float)((x - center_x)*(x - center_x)) + (float)((y - center_y)*(y - center_y)));
-			if(r < pol_width - 1){
-				col_1 = floor(r);
-				col_2 = ceil(r);
-				theta = atan2((float)(y - center_y), (float)(x - center_x));
-				if(theta < 0){
-					theta += 2*PI;
-				}
-				row_float = theta*(float)pol_height/(2.0*PI);
-			/*	if(row_float >= pol_height){
-					row_float -= pol_height;
-				}*/
-				delta_theta = 2.0*PI/(float)pol_height;
-				lower_theta = (float)floor(row_float)*2.0*PI/(float)pol_height;
-				upper_theta = (float)ceil(row_float)*2.0*PI/(float)pol_height;
-				row_1 = (int)(floor(row_float))%(pol_height);
-				row_2 = (int)(ceil(row_float))%(pol_height);
-				if(col_1 == col_2){
-					if(row_1 == row_2){
-						value = polar_image[row_1][col_1];
-					}else{
-						value = (col_2*(upper_theta - theta)*polar_image[row_1][col_1] + col_1*(theta - lower_theta)*polar_image[row_2][col_1])/(col_1*delta_theta);
-					}
-				}else if(row_1 == row_2){
-					value = (col_2 - r)*polar_image[row_1][col_1] + (r - col_1)*polar_image[row_1][col_2];
-				}else{
-					value = ((upper_theta - theta)*((col_2*col_2 - r*r)*polar_image[row_1][col_1] + (r*r - col_1*col_1)*polar_image[row_1][col_2]) + (theta - lower_theta)*((col_2*col_2 - r*r)*polar_image[row_2][col_1] + (r*r - col_1*col_1)*polar_image[row_2][col_2]))/((col_2*col_2 - col_1*col_1)*delta_theta);
-				}
-			}
-/*			if(y == 500 && (x>=500 && x<=550)){
-				printf("(%d, %d), (%d, %d) %f\n", col_1, row_1, col_2, row_2, value);
-			}*/
-			cart_image[y][x] = value;	
-		}
-	}
-	return cart_image;
-}
+
 
 void swap_float(float* arr, int index1, int index2)
 {
@@ -284,6 +182,8 @@ void swap_float(float* arr, int index1, int index2)
 	arr[index2] = store_value;
 	return;
 }
+
+
 void swap_integer(int* arr, int index1, int index2)
 {
 	int store_value = arr[index1];
@@ -291,6 +191,7 @@ void swap_integer(int* arr, int index1, int index2)
 	arr[index2] = store_value;
 	return;
 }
+
 
 int partition(float* median_array, int left, int right, int pivot_index)
 {
@@ -307,7 +208,9 @@ int partition(float* median_array, int left, int right, int pivot_index)
 	return store_index;
 }
 
-int partition_2_arrays(float* median_array, int* position_array, int left, int right, int pivot_index)
+
+int partition_2_arrays(float* median_array, int* position_array, int left,
+					   int right, int pivot_index)
 {
 	float pivot_value = median_array[pivot_index];
 	swap_float(median_array, pivot_index, right);
@@ -325,28 +228,37 @@ int partition_2_arrays(float* median_array, int* position_array, int left, int r
 	return store_index;
 }
 
+
 void quick_sort(float* median_array, int left, int right)
 {
 	if(left < right){
 		int pivot_index = (int)((left + right)/2);
-		int new_pivot_index = partition(median_array, left, right, pivot_index);
+		int new_pivot_index = partition(median_array, left, right,
+										pivot_index);
 		quick_sort(median_array, left, new_pivot_index - 1);
 		quick_sort(median_array, new_pivot_index + 1, right);
 	}
 }
 
-void quick_sort_2_arrays(float* median_array, int* position_array, int left, int right)
+
+void quick_sort_2_arrays(float* median_array, int* position_array, int left,
+						 int right)
 {
 	if(left < right){
 		int pivot_index = (int)((left + right)/2);
-		int new_pivot_index = partition_2_arrays(median_array, position_array, left, right, pivot_index);
-		quick_sort_2_arrays(median_array, position_array, left, new_pivot_index - 1);
-		quick_sort_2_arrays(median_array, position_array, new_pivot_index + 1, right);
+		int new_pivot_index = partition_2_arrays(median_array, position_array,
+												 left, right, pivot_index);
+		quick_sort_2_arrays(median_array, position_array, left,
+							new_pivot_index - 1);
+		quick_sort_2_arrays(median_array, position_array, new_pivot_index + 1,
+							right);
 	}
 	return;
 }
 
-void bubble_2_arrays(float* median_array, int* position_array, int index, int length)
+
+void bubble_2_arrays(float* median_array, int* position_array, int index,
+					 int length)
 {
 	if(index > 0 && index < length -1){
 		if(median_array[index] < median_array[index-1]){
@@ -373,8 +285,10 @@ void bubble_2_arrays(float* median_array, int* position_array, int index, int le
 	}
 	return;
 }
+
+
 void median_filter_fast_1D(float *** filtered_image, float*** image, int start_row,
-						   int start_col, int end_row, int end_col, char axis, 
+						   int start_col, int end_row, int end_col, char axis,
 						   int kernel_rad,	int filter_width, int width, int height)
 {
 	int row, col;
@@ -473,67 +387,6 @@ void median_filter_fast_1D(float *** filtered_image, float*** image, int start_r
 }
 
 
-void median_filter_1D(float *** filtered_image, float*** image, int start_row,
-					  int start_col, int end_row, int end_col, char axis, 
-					  int kernel_rad,	int filter_width, int width, int height)
-{
-	int row, col;
-	float* median_array = (float*) calloc(2*kernel_rad+1, sizeof(float));
-	if(axis == 'x'){
-		for(row = start_row; row <= end_row; row++){
-			for(col = start_col; col <= end_col; col++){
-				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
-					int subsampl_col = col + iroundf((float)n*(float)filter_width/((float)(2.0*kernel_rad)+1.0));
-					int adjusted_row = row;
-					if(subsampl_col < 0){
-						subsampl_col = -subsampl_col;
-						if(row < height/2){
-							adjusted_row += height/2;
-						}else{
-							adjusted_row -= height/2;
-						}
-						median_array[n+kernel_rad] = image[0][adjusted_row][subsampl_col];
-					}else if(subsampl_col >= width){
-						median_array[n+kernel_rad] = 0.0;
-					}else{
-						median_array[n+kernel_rad] = image[0][row][subsampl_col];
-					}
-				}
-				//Sort the array - this part is REALLY slow right now... why is that?
-				quick_sort(median_array, 0, 2*kernel_rad);
-				filtered_image[0][row][col] = median_array[kernel_rad];
-			}
-		}
-	}else if(axis == 'y'){
-		for(col = start_col; col <= end_col; col++){
-			for(row = start_row; row <= end_row; row++){
-				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
-					int subsampl_row = row + iroundf((float)n*(float)filter_width/(float)(2*kernel_rad));
-					//Dealing with edge cases - need to make this a bit more elegant...
-					if(subsampl_row < 0){
-						/*subsampl_col = -subsampl_col;
-						if(row < height/2){
-							row += height/2;
-						}else{
-							row -= height/2;
-						}
-						median_array[n+kernel_rad] = image[0][row][subsampl_col];
-						*/
-					}else if(subsampl_row == width){
-						median_array[n+kernel_rad] = 0.0;
-					}else{
-						median_array[n+kernel_rad] = image[0][subsampl_row][col];
-					}
-				}
-				//Sort the array - this part is REALLY slow right now... why is that?
-				quick_sort(median_array, 0, 2*kernel_rad);
-				filtered_image[0][row][col] = median_array[kernel_rad];
-			}
-		}
-	}
-	return;
-}
-
 /* Runs slightly faster than the above mean filter, but floating-point rounding causes errors on
  * the order of 1E-10. Should be small enough error to not care about, but be careful...
  */
@@ -615,32 +468,6 @@ void mean_filter_fast_1D(float*** filtered_image, float*** image,
 	return;	
 }
 
-void mean_filter_1D(float*** filtered_image, float*** image, int start_row,
-					int start_col, int end_row, int end_col, char axis, 
-					int kernel_rad, int height, int width)
-{
-	float mean = 0, sum = 0, num_elems = (float)(2*kernel_rad +1);
-	int col = 0 , row = 0;
-	if(axis == 'x'){
-	
-	}else if(axis == 'y'){
-		for(col = start_col; col <= end_col; col++){
-			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
-				row = start_row + n;
-				if(row < 0){
-					row += height;
-				}else if(row >= height){
-					row -= height;
-				}
-				sum += image[0][row][col];
-			}
-			mean = sum/num_elems;
-			filtered_image[0][row][col] =  mean;
-		}
-	}
-	return;	
-}
-
 
 void ring_filter(float*** polar_image, int pol_height, int pol_width,
 	     		 float threshold, int m_rad, int m_azi, int ring_width)
@@ -653,9 +480,15 @@ void ring_filter(float*** polar_image, int pol_height, int pol_width,
 		filtered_image[i] = filtered_image[i-1] + pol_width;
 	}
 		
-	median_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad/3, ring_width, pol_width, pol_height);
-	median_filter_fast_1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
-	median_filter_fast_1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad, ring_width, pol_width, pol_height);
+	median_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1,
+						  pol_width/3 -1, 'x', m_rad/3, ring_width, pol_width,
+						  pol_height);
+	median_filter_fast_1D(&filtered_image, polar_image, 0, pol_width/3,
+						  pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3,
+						  ring_width, pol_width, pol_height);
+	median_filter_fast_1D(&filtered_image, polar_image, 0, 2*pol_width/3,
+		 				  pol_height-1, pol_width-1, 'x', m_rad, ring_width,
+		 				  pol_width, pol_height);
 
 	//subtract filtered image from polar image to get difference image & do last thresholding
 
@@ -663,19 +496,24 @@ void ring_filter(float*** polar_image, int pol_height, int pol_width,
 		for(int col = 0; col <  pol_width; col++){
 			polar_image[0][row][col] -= filtered_image[row][col];
 			if(polar_image[0][row][col] > threshold || polar_image[0][row][col] < -threshold){
-	//		if(polar_image[0][row][col] < threshold){
 				polar_image[0][row][col] = 0;
 			}
 		}
 	}
 	
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
-	 * using different kernel sizes for the different regions of the image (based on radius)
+	 * using different kernel sizes for the different regions of the image
+	 * (based on radius)
 	 */
 
-	mean_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
-	mean_filter_fast_1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
-	mean_filter_fast_1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
+	mean_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1,
+						pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
+	mean_filter_fast_1D(&filtered_image, polar_image, 0, pol_width/3,
+						pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3,
+						pol_width, pol_height);
+	mean_filter_fast_1D(&filtered_image, polar_image, 0, 2*pol_width/3,
+						pol_height-1, pol_width-1, 'y', m_azi, pol_width,
+						pol_height);
 
 	//Set "polar_image" to the fully filtered data
 	for(int row = 0; row < pol_height; row++){

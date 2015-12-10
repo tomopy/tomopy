@@ -330,11 +330,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
     phase correlation in Fourier space.
     The ``register_translation`` function uses cross-correlation in Fourier
     space, optionally employing an upsampled matrix-multiplication DFT to
-    achieve arbitrary subpixel precision. [1]_
-
-    [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup,
-       "Efficient subpixel image registration algorithms," Optics Letters 33,
-       156-158 (2008).
+    achieve arbitrary subpixel precision. :cite:`Guizar:08`.
 
     Parameters
     ----------

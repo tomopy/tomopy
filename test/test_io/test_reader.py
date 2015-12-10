@@ -86,6 +86,7 @@ def test_read_hdf5_stack():
         read_hdf5_stack(h5py.File(fname)[gname], dname, range(20)),
         np.ones((20, 10, 10)))
 
+
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)
