@@ -61,7 +61,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, Luis Barroso-Luque"
 __credits__ = "Mark Rivers"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
@@ -191,9 +191,9 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         Normalized 3D tomographic data.
     """
 
-    tomo = np.array(tomo, dtype=np.float32)  # dtype.as_float32(tomo)
-    flats = np.array(flats, dtype=np.float32)  # dtype.as_float32(flats)
-    dark = np.array(dark, dtype=np.float32)  # dtype.as_float32(dark)
+    tomo = dtype.as_float32(tomo)
+    flats = dtype.as_float32(flats)
+    dark = dtype.as_float32(dark)
 
     arr = np.zeros_like(tomo)
 
@@ -202,7 +202,9 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     num_flats = len(flat_loc)
     total_flats = flats.shape[0]
     total_tomo = tomo.shape[0]
-    num_per_flat = total_flats//num_flats  # should always be an integer
+
+    num_per_flat = total_flats//num_flats
+    tend = 0
 
     for m, loc in enumerate(flat_loc):
         fstart = m*num_per_flat
