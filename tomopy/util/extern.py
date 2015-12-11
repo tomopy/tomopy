@@ -79,7 +79,7 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
-           'c_remove_rings']
+           'c_remove_ring']
 
 
 def c_shared_lib(lib_name):
@@ -383,11 +383,11 @@ def c_sirt(*args):
         dtype.as_c_int(args[7]))  # iend
 
 
-def c_remove_rings(*args):
+def c_remove_ring(*args):
     data = mproc.SHARED_ARRAY
 
-    LIB_TOMOPY.remove_rings.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.remove_rings(
+    LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.remove_ring(
         dtype.as_c_float_p(data),
         dtype.as_c_float(args[0]),  # center_x
         dtype.as_c_float(args[1]),  # center_y
