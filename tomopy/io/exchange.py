@@ -68,7 +68,6 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
            'read_als_832h5',
-           'read_als_832h5_metadata',
            'read_anka_topotomo',
            'read_aps_1id',
            'read_aps_2bm',
@@ -314,35 +313,6 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
     f.close()
 
     return tomo, flat, dark, group_flat
-
-
-def read_als_832h5_metadata(fname):
-    """
-    Read metadata in ALS 8.3.2 hdf5 dataset files
-
-    Parameters
-    ----------
-    fname : str
-        Path to hdf5 file.
-
-    Returns
-    -------
-    dict
-        dictionary of metadata items
-    """
-
-    fdata = {}
-    gdata = {}
-    with h5py.File(fname, 'r') as f:
-
-        g = tio._find_dataset_group(f)
-
-        for key in f.attrs.keys():
-            fdata[key] = f.attrs[key]
-        for key in g.attrs.keys():
-            gdata[key] = g.attrs[key]
-
-    return fdata, gdata
 
 
 def read_anka_topotomo(
