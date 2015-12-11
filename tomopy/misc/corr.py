@@ -388,7 +388,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
             thresh, theta_min, rwidth)
 
     arr = mproc.distribute_jobs(rec,
-                                func=extern.c_remove_rings,
+                                func=extern.c_remove_ring,
                                 args=args,
                                 axis=0,
                                 ncore=ncore,
