@@ -219,8 +219,8 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
     return tomo, flat, dark
 
 
-def read_als_832h5(
-     fname, ind_tomo=None, ind_flat=None, ind_dark=None, proj=None, sino=None):
+def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
+                   proj=None, sino=None):
     """
     Read ALS 8.3.2 hdf5 file with stacked datasets.
 
@@ -303,10 +303,10 @@ def read_als_832h5(
     tomo = tio.read_hdf5_stack(dgroup, tomo_name, ind_tomo, slc=(proj, sino))
 
     flat = tio.read_hdf5_stack(dgroup, flat_name, ind_flat, slc=(None, sino),
-                               flat_loc=group_flat)
+                               out_ind=group_flat)
 
     dark = tio.read_hdf5_stack(dgroup, dark_name, ind_dark, slc=(None, sino),
-                               flat_loc=group_dark)
+                               out_ind=group_dark)
 
     group_flat = tio._map_loc(ind_tomo, group_flat)
 
