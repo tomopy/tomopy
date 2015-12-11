@@ -25,7 +25,7 @@ tomoc = Extension(
         'src/prep.c',
         'src/sirt.c',
         'src/morph.c',
-        'src/remove_rings.c'])
+        'src/remove_ring.c'])
 
 setup(
     name='tomopy',
