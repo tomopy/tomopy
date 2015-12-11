@@ -28,10 +28,6 @@ processing and image reconstruction tasks at the
 Project homepage:
 `http://tomopy.readthedocs.org <http://tomopy.readthedocs.org>`_
 
-**TomoPy-BL832** is a custom version of the TomoPy toolbox with some additions
-for use at `beamline 8.3.2 <http://microct.lbl.gov>`_ at the 
-`Advanced Light Source <https://www-als.lbl.gov>`_.
-
 **Dependencies:**
    * NumPy 	http://www.numpy.org
    * SciPy  	http://www.scipy.org
