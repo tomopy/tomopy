@@ -74,7 +74,7 @@ __all__ = ['adjust_range',
            'remove_nan',
            'remove_neg',
            'remove_outlier',
-           'remove_rings']
+           'remove_ring']
 
 
 def adjust_range(arr, dmin=None, dmax=None):
@@ -339,7 +339,7 @@ def _remove_outlier_from_img(img, dif, size):
     return tmp * mask + img * (1 - mask)
 
 
-def remove_rings(rec, center_x=None, center_y=None, thresh=300.0,
+def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                  thresh_max=300.0, thresh_min=-100.0, theta_min=30,
                  rwidth=30, ncore=None, nchunk=None):
     """
