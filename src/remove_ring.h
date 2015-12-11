@@ -43,8 +43,8 @@
 
 //Module for ring removal in reconstructed domain
 
-#ifndef _remove_rings_h
-#define _remove_rings_h
+#ifndef _remove_ring_h
+#define _remove_ring_h
 
 #include <math.h> 
 #include <stdlib.h>
@@ -60,7 +60,7 @@
 #pragma once
 
 void DLL
-remove_rings(
+remove_ring(
 		float* data,
 		float center_x, 
 		float center_y,

@@ -18,3 +18,4 @@
       remove_nan
       remove_neg
       remove_outlier
+      remove_ring
