@@ -378,7 +378,7 @@ def _list_file_stack(fname, ind, digit):
     digit : int
         Number of digits in indexing stacked files.
     """
-    fname = os.path.abspath(fname)
+
     body = writer.get_body(fname, digit)
     ext = writer.get_extension(fname)
     list_fname = []
@@ -449,54 +449,7 @@ def _map_loc(ind, loc):
     return np.ndarray.tolist(loc)
 
 
-def _list_hdf5_stack(dname, ind, digit, flat_loc=None):
-    """
-    Return a list of stacked dataset names in a hdf5 file.
-    ALS 8.3.2 hdf5 files have the same structure and naming as a folder with
-    tiff images.
-
-    Parameters
-    -----------
-
-    dname : str
-        String defining the dataset name
-
-    ind : list of int
-        Indeces of the datasets to be read
-
-    digit : int
-        Number of digits indexing the stacked datasets
-
-    flat_loc : list of int
-        Indices of projections were flat images are taken.
-        Used for instances were flats are taken at beginning and end or at
-        intervals during a tomography experiment.
-    """
-
-    dname = _check_read(dname)
-    list_fname = _list_file_stack(dname, ind, digit)
-    num_group = len(ind)
-
-    if flat_loc is not None:
-        list_fname = len(flat_loc)*list_fname
-
-    for m in range(num_group):
-        name = os.path.split(list_fname[m])[1]
-        body = name.split('.')[0]
-        ext = '.' + name.split('.')[1]
-        # Check if file stack to create is taken at intervals
-        # during the tomography experiment
-        if flat_loc is not None:
-            for n, ending in enumerate(flat_loc):
-                fname = body + '_' + '{0:0={1}d}'.format(ending, digit) + ext
-                list_fname[m + n*num_group] = fname
-        else:
-            list_fname[m] = body + ext
-
-    return list_fname
-
-
-def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, flat_loc=None):
+def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, out_ind=None):
     """
     Read data from stacked datasets in a hdf5 file
 
@@ -517,14 +470,21 @@ def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, flat_loc=None):
         ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix
 
-    flat_loc : list of int
-        Indices of projections were flat images are taken.
-        Used for instances were flats are taken at beginning and end or at
-        intervals during a tomography experiment.
+    out_ind : list of int, optional
+        Outer level indices for files with two levels of indexing.
+        i.e. [name_000_000.tif, name_000_001.tif, ..., name_000_lmn.tif,
+        name_001_lmn.tif, ..., ..., name_fgh_lmn.tif]
     """
 
-    dname = _check_read(dname)
-    list_fname = _list_hdf5_stack(dname, ind, digit, flat_loc)
+    list_fname = _list_file_stack(dname, ind, digit)
+
+    if out_ind is not None:
+        list_fname_ = []
+        for name in list_fname:
+            fname = (writer.get_body(name).split('/')[-1] + '_' + digit*'0' +
+                     writer.get_extension(name))
+            list_fname_.extend(_list_file_stack(fname, out_ind, digit))
+        list_fname = list_fname_
 
     for m, image in enumerate(list_fname):
         _arr = h5group[image]

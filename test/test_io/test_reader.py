@@ -83,7 +83,7 @@ def test_read_hdf5_stack():
     fname = os.path.join('test', 'data', 'read_stack.h5')
     dname = gname + '_0000_0000.tif'
     assert_allclose(
-        read_hdf5_stack(h5py.File(fname)[gname], dname, range(20)),
+        read_hdf5_stack(h5py.File(fname, 'r')[gname], dname, range(20)),
         np.ones((20, 10, 10)))
 
 

@@ -99,14 +99,10 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
         Padded 3D array.
     """
 
-    allowedkwargs = {
-                     'constant': ['constant_values'],
-                     'edge': [],
-                     }
+    allowedkwargs = {'constant': ['constant_values'],
+                     'edge': [], }
 
-    kwdefaults = {
-                  'constant_values': 0,
-                  }
+    kwdefaults = {'constant_values': 0, }
 
     if isinstance(mode, str):
         for key in kwargs:
