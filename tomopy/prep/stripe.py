@@ -56,7 +56,9 @@ import numpy as np
 import pywt
 import pyfftw
 import tomopy.prep.phase as phase
+import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -67,7 +69,8 @@ __credits__ = "Juan V. Bermudez, Hugo H. Slepicka"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['remove_stripe_fw',
-           'remove_stripe_ti']
+           'remove_stripe_ti',
+           'remove_stripe_sf']
 
 
 def remove_stripe_fw(
@@ -310,3 +313,35 @@ def _ringb(sino, m, n, step):
         new[:, k * step:(k + 1) * step] = np.add(sino_block, K)
     newsino = new.astype(np.float32)
     return np.transpose(newsino)
+
+
+def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
+    """
+    Normalize raw projection data using a smoothing filter approach.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    size : int, optional
+        Size of the smoothing filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    tomo = dtype.as_float32(tomo)
+    dx, dy, dz = tomo.shape
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=extern.c_remove_stripe_sf,
+        args=(dx, dy, dz, size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
