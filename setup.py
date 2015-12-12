@@ -24,7 +24,8 @@ tomoc = Extension(
         'src/pml_quad.c',
         'src/prep.c',
         'src/sirt.c',
-        'src/morph.c'])
+        'src/morph.c',
+        'src/stripe.c'])
 
 setup(
     name='tomopy',
