@@ -46,8 +46,8 @@
 #include "remove_ring.h"
 
 void remove_ring(float* data, float center_x, float center_y, int dx, int dy,
-				  int dz, float thresh_max, float thresh_min, float threshold, 
-				  int angular_min, int ring_width, int istart, int iend)
+		 int dz, float thresh_max, float thresh_min, float threshold, 
+		 int angular_min, int ring_width, int istart, int iend)
 {
 	int pol_width=0;
 	int pol_height=0;
