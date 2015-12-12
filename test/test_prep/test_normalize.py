@@ -72,6 +72,8 @@ def test_normalize_bg():
         normalize_bg(read_file('tomo.npy')),
         read_file('normalize_bg.npy'))
 
+# def test_normalize_nf():
+#   This needs to be implemented
 
 if __name__ == '__main__':
     import nose
