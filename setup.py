@@ -25,6 +25,7 @@ tomoc = Extension(
         'src/prep.c',
         'src/sirt.c',
         'src/morph.c',
+        'src/stripe.c',
         'src/remove_ring.c'])
 
 setup(

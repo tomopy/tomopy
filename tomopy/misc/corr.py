@@ -387,19 +387,20 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth)
 
-    arr = mproc.distribute_jobs(rec,
-                                func=extern.c_remove_ring,
-                                args=args,
-                                axis=0,
-                                ncore=ncore,
-                                nchunk=nchunk)
+    arr = mproc.distribute_jobs(
+        rec,
+        func=extern.c_remove_ring,
+        args=args,
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
     return arr
 
 
 def circ_mask(arr, axis, ratio=1, val=0.):
     """
     Apply circular mask to a 3D array.
-    
+
     Parameters
     ----------
     arr : ndarray
@@ -411,7 +412,7 @@ def circ_mask(arr, axis, ratio=1, val=0.):
         the smallest edge size along given axis.
     val : int, optional
         Value for the masked region.
-    
+
     Returns
     -------
     ndarray
