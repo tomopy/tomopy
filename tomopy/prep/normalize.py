@@ -202,6 +202,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     num_flats = len(flat_loc)
     total_flats = flats.shape[0]
     total_tomo = tomo.shape[0]
+
     num_per_flat = total_flats//num_flats
     tend = 0
 

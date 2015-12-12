@@ -72,6 +72,7 @@ __all__ = ['as_ndarray',
            'as_uint16',
            'as_c_float_p',
            'as_c_int',
+           'as_c_float',
            'as_c_char_p',
            'as_c_void_p']
 
@@ -115,6 +116,10 @@ def as_c_float_p(arr):
 
 def as_c_int(arr):
     return ctypes.c_int(arr)
+
+
+def as_c_float(arr):
+    return ctypes.c_float(arr)
 
 
 def as_c_char_p(arr):
