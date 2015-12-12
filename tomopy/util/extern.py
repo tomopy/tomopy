@@ -54,7 +54,6 @@ from __future__ import absolute_import, division, print_function
 
 import os.path
 import ctypes
-import numpy as np
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
 import logging
@@ -80,7 +79,8 @@ __all__ = ['c_shared_lib',
            'c_ospml_quad',
            'c_pml_hybrid',
            'c_pml_quad',
-           'c_sirt']
+           'c_sirt',
+           'c_remove_ring']
 
 
 def c_shared_lib(lib_name):
@@ -396,3 +396,23 @@ def c_sirt(*args):
         dtype.as_c_int(args[5]['num_iter']),
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
+
+
+def c_remove_ring(*args):
+    data = mproc.SHARED_ARRAY
+
+    LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.remove_ring(
+        dtype.as_c_float_p(data),
+        dtype.as_c_float(args[0]),  # center_x
+        dtype.as_c_float(args[1]),  # center_y
+        dtype.as_c_int(args[2]),  # dx
+        dtype.as_c_int(args[3]),  # dy
+        dtype.as_c_int(args[4]),  # dz
+        dtype.as_c_float(args[5]),  # thresh_max
+        dtype.as_c_float(args[6]),  # thresh_min
+        dtype.as_c_float(args[7]),  # thresh
+        dtype.as_c_int(args[8]),  # theta_min
+        dtype.as_c_int(args[9]),  # rwidth
+        dtype.as_c_int(args[10]),  # istart
+        dtype.as_c_int(args[11]))  # iend
