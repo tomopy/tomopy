@@ -61,34 +61,34 @@
 
 void DLL
 remove_ring(
-		float* data,
-		float center_x, 
-		float center_y,
-		int dx,
-		int dy,
-		int dz,
-		float thresh_max,
-		float thresh_min,
-		float threshold, 
-		int angular_min,
-		int ring_width,
-		int istart,
-		int iend);
+	    float* data,
+	    float center_x, 
+            float center_y,
+	    int dx,
+	    int dy,
+	    int dz,
+            float thresh_max,
+	    float thresh_min,
+	    float threshold, 
+	    int angular_min,
+	    int ring_width,
+	    int istart,
+	    int iend);
 
 int
 min_distance_to_edge(
-	float center_x, float center_y,
-	int width, int height);
+	             float center_x, float center_y,
+	             int width, int height);
 
 int
 iroundf(float x);
 
 float**
 polar_transform(
-		float** image, float center_x, float center_y,
-		int width, int height, int* p_pol_width,
-		int* p_pol_height, float thresh_max, float thresh_min,
-		int r_scale, int ang_scale, int overhang);
+	float** image, float center_x, float center_y,
+	int width, int height, int* p_pol_width,
+	int* p_pol_height, float thresh_max, float thresh_min,
+	int r_scale, int ang_scale, int overhang);
 
 float**
 inverse_polar_transform(
