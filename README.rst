@@ -27,11 +27,3 @@ processing and image reconstruction tasks at the
 
 Project homepage:
 `http://tomopy.readthedocs.org <http://tomopy.readthedocs.org>`_
-
-**Dependencies:**
-   * NumPy 	http://www.numpy.org
-   * SciPy  	http://www.scipy.org
-   * H5Py  	http://www.h5py.org
-   * PyWt  	http://www.pybytes.com/pywavelets
-   * Pillow  	https://pypi.python.org/pypi/Pillow
-   * Skimage 	http://scikit-image.org
