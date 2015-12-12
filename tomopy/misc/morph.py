@@ -72,7 +72,7 @@ __all__ = ['pad',
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, val=0):
+def pad(arr, axis, npad=None, mode='constant', **kwargs):
     """
     Pad an array along specified axis.
 
@@ -84,18 +84,43 @@ def pad(arr, axis, npad=None, val=0):
         New dimension after padding.
     axis : int, optional
         Axis along which padding will be performed.
-    val : float, optional
-        Pad value.
+    mode : str or function
+        One of the following string values or a user supplied function.
+        'constant'
+            Pads with a constant value.
+        'edge'
+            Pads with the edge values of array.
+    constant_values : float, optional
+        Used in 'constant'. Pad value
 
     Returns
     -------
     ndarray
         Padded 3D array.
     """
+
+    allowedkwargs = {'constant': ['constant_values'],
+                     'edge': [], }
+
+    kwdefaults = {'constant_values': 0, }
+
+    if isinstance(mode, str):
+        for key in kwargs:
+            if key not in allowedkwargs[mode]:
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                 (key, allowedkwargs[mode]))
+        for kw in allowedkwargs[mode]:
+            kwargs.setdefault(kw, kwdefaults[kw])
+
     if npad is None:
         npad = _get_npad(arr.shape[axis])
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
-    return np.pad(arr, pad_width, 'constant', constant_values=val)
+
+    if mode == 'constant':
+        return np.pad(arr, pad_width, 'constant',
+                      constant_values=kwargs['constant_values'])
+    elif mode == 'edge':
+        return np.pad(arr, pad_width, 'edge')
 
 
 def _get_npad(dim):

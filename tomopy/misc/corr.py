@@ -56,6 +56,7 @@ import numpy as np
 from scipy.ndimage import filters
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
+import tomopy.util.extern as extern
 import logging
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,8 @@ __all__ = ['adjust_range',
            'sobel_filter',
            'remove_nan',
            'remove_neg',
-           'remove_outlier']
+           'remove_outlier',
+           'remove_ring']
 
 
 def adjust_range(arr, dmin=None, dmax=None):
@@ -337,14 +339,71 @@ def _remove_outlier_from_img(img, dif, size):
     return tmp * mask + img * (1 - mask)
 
 
-def circ_mask(arr, axis, ratio=1, val=0.):
+def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
+                thresh_max=300.0, thresh_min=-100.0, theta_min=30,
+                rwidth=30, ncore=None, nchunk=None):
     """
-    Apply circular mask to a 3D array.
+    Remove ring artifacts from images in the reconstructed domain.
+    Descriptions of parameters need to be more clear for sure.
 
     Parameters
     ----------
     arr : ndarray
-        Arbitrary 3D array.
+        Array of reconstruction data
+    center_x : float, optional
+        abscissa location of center of rotation
+    center_y : float, optional
+        ordinate location of center of rotation
+    thresh : float, optional
+        maximum value of an offset due to a ring artifact
+    thresh_max : float, optional
+        max value for portion of image to filter
+    thresh_min : float, optional
+        min value for portion of image to filer
+    theta_min : int, optional
+        minimum angle in degrees (int) to be considered ring artifact
+    rwidth : int, optional
+        Maximum width of the rings to be filtered in pixels
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected reconstruction data
+    """
+
+    rec = dtype.as_float32(rec)
+
+    dz, dy, dx = rec.shape
+
+    if center_x is None:
+        center_x = (dx - 1.0)/2.0
+    if center_y is None:
+        center_y = (dy - 1.0)/2.0
+
+    args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
+            thresh, theta_min, rwidth)
+
+    arr = mproc.distribute_jobs(rec,
+                                func=extern.c_remove_ring,
+                                args=args,
+                                axis=0,
+                                ncore=ncore,
+                                nchunk=nchunk)
+    return arr
+
+
+def circ_mask(arr, axis, ratio=1, val=0.):
+    """
+    Apply circular mask to a 3D array.
+    
+    Parameters
+    ----------
+    arr : ndarray
+            Arbitrary 3D array.
     axis : int
         Axis along which mask will be performed.
     ratio : int, optional
@@ -352,7 +411,7 @@ def circ_mask(arr, axis, ratio=1, val=0.):
         the smallest edge size along given axis.
     val : int, optional
         Value for the masked region.
-
+    
     Returns
     -------
     ndarray
