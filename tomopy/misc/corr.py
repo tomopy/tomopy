@@ -340,8 +340,8 @@ def _remove_outlier_from_img(img, dif, size):
 
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
-                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                 rwidth=30, ncore=None, nchunk=None):
+                thresh_max=300.0, thresh_min=-100.0, theta_min=30,
+                rwidth=30, ncore=None, nchunk=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
