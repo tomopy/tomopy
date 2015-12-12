@@ -46,8 +46,8 @@
 #include "remove_ring.h"
 
 void remove_ring(float* data, float center_x, float center_y, int dx, int dy,
-		 int dz, float thresh_max, float thresh_min, float threshold, 
-		 int angular_min, int ring_width, int istart, int iend)
+		         int dz, float thresh_max, float thresh_min, float threshold, 
+		         int angular_min, int ring_width, int istart, int iend)
 {
 	int pol_width=0;
 	int pol_height=0;
@@ -69,9 +69,9 @@ void remove_ring(float* data, float center_x, float center_y, int dx, int dy,
 		}
 		//Translate Image to Polar Coordinates
 		polar_image = polar_transform(image, center_x, center_y, dx, dy,
-									  &pol_width, &pol_height, thresh_max,
-									  thresh_min, r_scale, ang_scale,
-									  ring_width);
+					                  &pol_width, &pol_height, thresh_max,
+					                  thresh_min, r_scale, ang_scale,
+					                  ring_width);
 		m_azi = ceil((float)pol_height/360.0)*angular_min;
 		m_rad = 2*ring_width+1;
 
@@ -81,8 +81,8 @@ void remove_ring(float* data, float center_x, float center_y, int dx, int dy,
 
 		//Translate Ring-Image to Cartesian Coordinates
 		ring_image = inverse_polar_transform(polar_image, center_x, center_y,
-										     pol_width, pol_height, dx, dy,
-										     r_scale, ring_width);
+						                     pol_width, pol_height, dx, dy,
+						                     r_scale, ring_width);
 
 		//Subtract Ring-Image from Image
 		for(int row=0; row < dy; row++){
@@ -108,7 +108,7 @@ void remove_ring(float* data, float center_x, float center_y, int dx, int dy,
 }
 
 int min_distance_to_edge(float center_x, float center_y,
-						 int width, int height)
+			             int width, int height)
 {
 	int* dist = calloc(4, sizeof(int));
 	dist[0] = center_x+1;
@@ -132,9 +132,9 @@ int iroundf(float x)
 
 
 float** polar_transform(float** image, float center_x, float center_y,
-						int width, int height, int* p_pol_width,
-						int* p_pol_height, float thresh_max, float thresh_min, 
-						int r_scale, int ang_scale, int overhang)
+			            int width, int height, int* p_pol_width,
+			            int* p_pol_height, float thresh_max, float thresh_min, 
+			            int r_scale, int ang_scale, int overhang)
 {
 	int max_r = min_distance_to_edge(center_x, center_y, width, height);
 	int pol_width = r_scale*max_r;
@@ -237,7 +237,7 @@ int partition(float* median_array, int left, int right, int pivot_index)
 
 
 int partition_2_arrays(float* median_array, int* position_array, int left,
-					   int right, int pivot_index)
+		       		   int right, int pivot_index)
 {
 	float pivot_value = median_array[pivot_index];
 	swap_float(median_array, pivot_index, right);
