@@ -67,6 +67,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
            'c_normalize_bg',
+           'c_remove_stripe_sf,'
            'c_sample',
            'c_art',
            'c_bart',
@@ -113,6 +114,20 @@ def c_normalize_bg(dx, dy, dz, air, istart, iend):
         dtype.as_c_int(dy),
         dtype.as_c_int(dz),
         dtype.as_c_int(air),
+        dtype.as_c_int(istart),
+        dtype.as_c_int(iend))
+
+
+def c_remove_stripe_sf(dx, dy, dz, size, istart, iend):
+    tomo = mproc.SHARED_ARRAY
+
+    LIB_TOMOPY.remove_stripe_sf.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.remove_stripe_sf(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+        dtype.as_c_int(size),
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
 
