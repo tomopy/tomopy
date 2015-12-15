@@ -360,7 +360,7 @@ void median_filter_fast_1D(
 					next_value = image[0][row][next_value_col];
 				}
 				float last_value;
-				int last_value_index; 
+				int last_value_index = 0; 
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
@@ -401,7 +401,7 @@ void median_filter_fast_1D(
 					next_value = image[0][next_value_row][col];
 				}
 				float last_value;
-				int last_value_index; 
+				int last_value_index = 0; 
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
