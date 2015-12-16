@@ -51,7 +51,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-
 from test.util import read_file, loop_dim
 from tomopy.misc.corr import *
 import numpy as np
