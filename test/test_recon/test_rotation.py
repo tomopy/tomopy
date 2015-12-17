@@ -73,12 +73,12 @@ def test_write_center():
         read_file('proj.npy'),
         read_file('angle.npy'),
         dpath, cen_range=cen_range)
-    for m in range(0):
+    for m in range(cen.size):
         assert_equals(
             os.path.isfile(
                 os.path.join(
-                    os.path.join('tmp', 'center'),
-                    str('{:.2f}'.format(cen[m]) + '.tiff'))), True)
+                    os.path.join('test', 'tmp'),
+                    str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
     shutil.rmtree(dpath)
 
 
