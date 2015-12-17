@@ -6,7 +6,7 @@ extra_comp_args = ['-std=c99']
 if os.name == 'nt':
     extra_comp_args += ['-DWIN32']
 tomoc = Extension(
-    name='lib.libtomopy',
+    name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
     sources=[
         'src/utils.c',
