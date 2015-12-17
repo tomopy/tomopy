@@ -19,7 +19,7 @@ before_install:
   - conda info -a
 
 install:
-  - conda install nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile
+  - conda install nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile tifffile
   - python setup.py build_ext --inplace
 
 script: 
