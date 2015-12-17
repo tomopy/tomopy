@@ -187,9 +187,9 @@ def _sample(arr, level, axis, mode):
     dx, dy, dz = arr.shape
 
     if mode == 0:
-        dim = arr.shape[axis] / np.power(2, level)
+        dim = int(arr.shape[axis] / np.power(2, level))
     if mode == 1:
-        dim = arr.shape[axis] * np.power(2, level)
+        dim = int(arr.shape[axis] * np.power(2, level))
 
     out = _init_out(arr, axis, dim)
     return extern.c_sample(mode, arr, dx, dy, dz, level, axis, out)
