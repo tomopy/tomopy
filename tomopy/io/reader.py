@@ -56,8 +56,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import tomopy.io.writer as writer
-from skimage import io as sio
-import warnings
 import numpy as np
 import os
 import h5py
@@ -94,7 +92,7 @@ __all__ = ['read_edf',
 
 def _check_read(fname):
     known_extensions = ['.edf', '.tiff', '.tif', '.h5', '.hdf', '.npy']
-    if not isinstance(fname, basestring):
+    if not isinstance(fname, (str, bytes)):
         logger.error('File name must be a string')
     else:
         if writer.get_extension(fname) not in known_extensions:
@@ -121,13 +119,12 @@ def read_tiff(fname, slc=None):
         Output 2D image.
     """
     fname = _check_read(fname)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        try:
-            arr = sio.imread(fname, plugin='tifffile', memmap=True)
-        except IOError:
-            logger.error('No such file or directory: %s', fname)
-            return False
+    try:
+        import tifffile
+        arr = tifffile.imread(fname, memmap=True)
+    except IOError:
+        logger.error('No such file or directory: %s', fname)
+        return False
     arr = _slice_array(arr, slc)
     _log_imported_data(fname, arr)
     return arr
