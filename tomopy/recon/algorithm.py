@@ -213,7 +213,7 @@ def recon(
 
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
-    if isinstance(algorithm, str):
+    if isinstance(algorithm, unicode):
         # Check whether we have an allowed method
         if algorithm not in allowed_kwargs:
             raise ValueError(
