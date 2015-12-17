@@ -127,8 +127,8 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
     dx, dy, dz = tomo.shape
     nx = dx
     if pad:
-        nx = dx + dx / 8
-    xshift = int((nx - dx) / 2.)
+        nx = dx + dx // 8
+    xshift = int((nx - dx) // 2)
 
     num_jobs = iend - istart
     for m in range(istart, iend):
