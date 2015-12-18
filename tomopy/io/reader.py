@@ -57,6 +57,7 @@ from __future__ import unicode_literals
 
 import tomopy.io.writer as writer
 import numpy as np
+import six
 import os
 import h5py
 import logging
@@ -92,7 +93,7 @@ __all__ = ['read_edf',
 
 def _check_read(fname):
     known_extensions = ['.edf', '.tiff', '.tif', '.h5', '.hdf', '.npy']
-    if not isinstance(fname, (str, bytes)):
+    if not isinstance(fname, six.string_types):
         logger.error('File name must be a string')
     else:
         if writer.get_extension(fname) not in known_extensions:
