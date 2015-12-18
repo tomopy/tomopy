@@ -50,8 +50,12 @@
 Module for reconstruction algorithms.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
+import six
 import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
@@ -207,10 +211,10 @@ def recon(
     }
 
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
-
+    
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
-    if isinstance(algorithm, str):
+    if isinstance(algorithm, six.string_types):
         # Check whether we have an allowed method
         if algorithm not in allowed_kwargs:
             raise ValueError(
