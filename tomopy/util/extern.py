@@ -50,10 +50,14 @@
 Module for internal utility functions.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import os.path
 import ctypes
+import glob
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
 import logging
@@ -92,10 +96,8 @@ def c_shared_lib(lib_name):
             ext = '.pyd'
         else:
             ext = '.so'
-        libpath = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..', '..', 'lib', lib_name + ext))
+        _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
         return ctypes.CDLL(libpath)
     except OSError as e:
         logger.warning('OSError: Shared library missing.')
