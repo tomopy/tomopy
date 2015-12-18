@@ -6,7 +6,7 @@ extra_comp_args = ['-std=c99']
 if os.name == 'nt':
     extra_comp_args += ['-DWIN32']
 tomoc = Extension(
-    name='lib.libtomopy',
+    name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
     sources=[
         'src/utils.c',
@@ -30,7 +30,7 @@ tomoc = Extension(
 
 setup(
     name='tomopy',
-    packages=find_packages(),
+    packages=find_packages(exclude=['test*']),
     version=open('VERSION').read().strip(),
     include_package_data=True,
     ext_modules=[tomoc],
@@ -40,8 +40,8 @@ setup(
     description='Tomographic Reconstruction in Python.',
     keywords=['tomography', 'reconstruction', 'imaging'],
     url='http://tomopy.readthedocs.org',
-    download_url='http://github.com/dgursoy/tomopy.git',
-    license='BSD',
+    download_url='http://github.com/tomopy/tomopy.git',
+    license='BSD-3',
     platforms='Any',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -51,6 +51,9 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: C']
 )

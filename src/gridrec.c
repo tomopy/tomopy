@@ -566,11 +566,11 @@ float (*get_filter(char *name))(float)
         float (*fp)(float);
     } fltbl[] = {
         {"none", filter_none},
-        {"shepp", filter_shepp},
+        {"shepp", filter_shepp}, // Default
         {"cosine", filter_cosine},
         {"hann", filter_hann},
         {"hamming", filter_hamming},
-        {"ramlak", filter_ramlak}, // Default
+        {"ramlak", filter_ramlak},
         {"parzen", filter_parzen},
         {"butterworth", filter_butterworth}};
 
@@ -581,5 +581,5 @@ float (*get_filter(char *name))(float)
             return fltbl[i].fp;
         }
     }
-    return fltbl[5].fp;   
+    return fltbl[1].fp;   
 }

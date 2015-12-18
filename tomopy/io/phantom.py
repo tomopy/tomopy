@@ -50,11 +50,14 @@
 Module for generating synthetic phantoms.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
-from skimage import io as sio
 import numpy as np
 import scipy as sp
+import tifffile
 import os.path
 import logging
 
@@ -97,7 +100,7 @@ def baboon(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'baboon.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     if not isinstance(size, tuple):
         size = (size, size)
     im = sp.misc.imresize(im, size, interp='cubic')
@@ -124,7 +127,7 @@ def barbara(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'barbara.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -148,7 +151,7 @@ def cameraman(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'cameraman.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -172,7 +175,7 @@ def checkerboard(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'checkerboard.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -196,7 +199,7 @@ def lena(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'lena.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -220,7 +223,7 @@ def peppers(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'peppers.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -244,7 +247,7 @@ def shepp2d(size=512, dtype='float32'):
     """
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'shepp2d.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
@@ -391,8 +394,8 @@ def _transform(coords, p):
     alpha = _rotation_matrix(p)
     x, y, z = coords
     ndim = len(coords)
-    out_coords = [sum([alpha[j, i] * coords[i] for i in xrange(ndim)])
-                  for j in xrange(ndim)]
+    out_coords = [sum([alpha[j, i] * coords[i] for i in range(ndim)])
+                  for j in range(ndim)]
     M0 = [p['x0'], p['y0'], p['z0']]
     sc = [p['a'], p['b'], p['c']]
     out_coords = [(u - u0) / su for u, u0, su in zip(out_coords, M0, sc)]
@@ -430,9 +433,9 @@ def _array_to_params(array):
 
     array = np.asarray(array)
     out = []
-    for i in xrange(array.shape[0]):
+    for i in range(array.shape[0]):
         tmp = dict()
-        for k, j in zip(params_tuple, xrange(array.shape[1])):
+        for k, j in zip(params_tuple, range(array.shape[1])):
             tmp[k] = array[i, j]
         out.append(tmp)
     return out

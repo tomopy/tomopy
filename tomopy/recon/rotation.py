@@ -50,7 +50,10 @@
 Module for functions related to finding axis of rotation.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import numpy as np
 from scipy import ndimage
@@ -399,7 +402,7 @@ def write_center(
 
     dx, dy, dz = tomo.shape
     if ind is None:
-        ind = dy / 2
+        ind = dy // 2
     if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
     if len(cen_range) < 3:
@@ -423,5 +426,5 @@ def write_center(
     for m in range(len(center)):
         if m % 2 == 0:  # 2 slices same bec of gridrec.
             fname = os.path.join(
-                dpath, str('{:.2f}'.format(center[m]) + '.tiff'))
+                dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
             write_tiff(rec[m:m + 1], fname=fname, overwrite=True)
