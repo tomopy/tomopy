@@ -1,6 +1,6 @@
 package:
   name: tomopy
-  version: '0.1.13'
+  version: '0.1.14'
 
 source:
   git_url: https://github.com/tomopy/tomopy.git
