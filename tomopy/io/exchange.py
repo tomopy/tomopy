@@ -50,10 +50,8 @@
 Module for describing beamline/experiment specific data recipes.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import os.path
@@ -148,13 +146,13 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
             ndark = int(re.findall(r'\d+', line)[0])
     contents.close()
     if ind_tomo is None:
-        ind_tomo = range(0, nproj)
+        ind_tomo = list(range(0, nproj))
     if not normalized:
-        ind_flat = range(0, nflat)
+        ind_flat = list(range(0, nflat))
         if inter_bright > 0:
-            ind_flat = range(0, nproj, inter_bright)
+            ind_flat = list(range(0, nproj, inter_bright))
             flat_name = fname + 'bak_0000_0000.tif'
-        ind_dark = range(0, ndark)
+        ind_dark = list(range(0, ndark))
 
     # Read image data from tiff stack.
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
@@ -272,7 +270,7 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
     dark_name = dname + 'drk_0000.tif'
 
     # Read metadata from dataset group attributes
-    keys = dgroup.attrs.keys()
+    keys = list(dgroup.attrs.keys())
     if 'nangles' in keys:
         nproj = int(dgroup.attrs['nangles'])
     if 'i0cycle' in keys:
@@ -289,13 +287,13 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
 
     # Create arrays of indices to read projections, flats and darks
     if ind_tomo is None:
-        ind_tomo = range(0, nproj)
-    ind_dark = range(0, ndark)
+        ind_tomo = list(range(0, nproj))
+    ind_dark = list(range(0, ndark))
     group_dark = [nproj-1]
-    ind_flat = range(0, nflat)
+    ind_flat = list(range(0, nflat))
 
     if inter_bright > 0:
-        group_flat = range(0, nproj, inter_bright)
+        group_flat = list(range(0, nproj, inter_bright))
         if group_flat[-1] != nproj-1:
             group_flat.append(nproj-1)
     elif inter_bright == 0:
@@ -421,9 +419,9 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     contents.close()
 
     if ind_tomo is None:
-        ind_tomo = range(prj_start, prj_start + nprj)
-    ind_flat = range(flat_start, flat_start + nflat)
-    ind_dark = range(dark_start, dark_start + ndark)
+        ind_tomo = list(range(prj_start, prj_start + nprj))
+    ind_flat = list(range(flat_start, flat_start + nflat))
+    ind_dark = list(range(dark_start, dark_start + ndark))
     tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(sino, proj))
     flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(sino, None))
     dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(sino, None))
@@ -696,7 +694,7 @@ def read_diamond_l12(fname, ind_tomo):
     fname = os.path.abspath(fname)
     tomo_name = os.path.join(fname, 'im_001000.tif')
     flat_name = os.path.join(fname, 'flat_000000.tif')
-    ind_flat = range(0, 1)
+    ind_flat = list(range(0, 1))
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=6)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=6)
     return tomo, flat
@@ -858,9 +856,9 @@ def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
     proj_end = proj_start + nproj
 
     if ind_tomo is None:
-        ind_tomo = range(proj_start, proj_end)
-    ind_flat = range(flat_start, flat_end)
-    ind_dark = range(dark_start, dark_end)
+        ind_tomo = list(range(proj_start, proj_end))
+    ind_flat = list(range(flat_start, flat_end))
+    ind_dark = list(range(dark_start, dark_end))
     tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(sino, proj))
     flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(sino, None))
     dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(sino, None))
