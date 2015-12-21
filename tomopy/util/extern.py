@@ -99,7 +99,7 @@ def c_shared_lib(lib_name):
         _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
         return ctypes.CDLL(libpath)
-    except OSError as e:
+    except (OSError, IndexError) as e:
         logger.warning('OSError: Shared library missing.')
 
 
