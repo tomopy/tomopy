@@ -50,10 +50,8 @@
 Module for reconstruction software wrappers.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import logging
 import tomopy.util.mproc as mproc
@@ -178,7 +176,7 @@ def astra_run(*args):
         cfg['option'] = {}
 
     # Perform reconstruction
-    for i in xrange(istart, iend):
+    for i in range(istart, iend):
         sino[:] = tomo[:, i, :]
 
         cfg['option']['z_id'] = i
