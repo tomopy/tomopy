@@ -99,8 +99,6 @@ def baboon(size=512, dtype='float32'):
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'baboon.tif')
     im = tifffile.imread(fname)
-    if not isinstance(size, tuple):
-        size = (size, size)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
