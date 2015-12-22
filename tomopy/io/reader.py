@@ -50,10 +50,8 @@
 Module for data I/O.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import tomopy.io.writer as writer
 import numpy as np
@@ -394,10 +392,10 @@ def _find_dataset_group(h5object):
     a ALS BL8.3.2 hdf5 file
     """
     # Only one root key means only one dataset in BL8.3.2 current format
-    keys = h5object.keys()
+    keys = list(h5object.keys())
     if len(keys) == 1:
         if isinstance(h5object[keys[0]], h5py.Group):
-            group_keys = h5object[keys[0]].keys()
+            group_keys = list(h5object[keys[0]].keys())
             if isinstance(h5object[keys[0]][group_keys[0]], h5py.Dataset):
                 return h5object[keys[0]]
             else:
@@ -419,7 +417,7 @@ def _count_proj(group, dname, nproj, digit=4, inter_bright=None):
     body = ''.join(body[:-digit])
 
     regex = re.compile('.*(' + body + ').*')
-    count = len(filter(regex.match, group.keys()))
+    count = len(list(filter(regex.match, list(group.keys()))))
 
     if inter_bright > 0:
         count = count/(nproj/inter_bright + 2)
