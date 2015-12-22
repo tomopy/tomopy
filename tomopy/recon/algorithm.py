@@ -227,7 +227,7 @@ def recon(
     }
 
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
-    
+
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
 
@@ -240,7 +240,7 @@ def recon(
                 (list(allowed_kwargs.keys()),))
 
         # Make sure have allowed kwargs appropriate for algorithm.
-        for key, value in kwargs.iteritems():
+        for key, value in list(kwargs.items()):
             if key not in allowed_kwargs[algorithm]:
                 raise ValueError(
                     '%s keyword not in allowed keywords %s' %
