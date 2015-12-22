@@ -282,6 +282,7 @@ def recon(
 def _init_tomo(tomo, emission):
     tomo = dtype.as_float32(tomo)
     if not emission:
+        tomo[tomo <= 0.] = 1.
         tomo = -np.log(tomo)
     return tomo
 
