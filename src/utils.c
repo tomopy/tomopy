@@ -81,7 +81,9 @@ calc_quadrant(
 {
     int quadrant;
     if ((theta_p >= 0 && theta_p < M_PI/2) ||
-            (theta_p >= M_PI && theta_p < 3*M_PI/2)) 
+        (theta_p >= M_PI && theta_p < 3*M_PI/2) ||
+        (theta_p >= -M_PI && theta_p < -M_PI/2) ||
+        (theta_p >= -2*M_PI && theta_p < -3*M_PI/2)) 
     {
         quadrant = 1;
     } 
