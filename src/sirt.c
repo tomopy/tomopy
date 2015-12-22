@@ -81,6 +81,7 @@ sirt(
 
     for (i=0; i<num_iter; i++) 
     {
+        printf("Iteration=%i \n", i);
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         // For each slice
