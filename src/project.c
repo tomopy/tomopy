@@ -50,19 +50,18 @@ project(
     float *data, int dx, int dy, int dz, float *center, float *theta,
     int istart, int iend)
 {
-
     float *gridx = (float *)malloc((oy+1)*sizeof(float));
     float *gridy = (float *)malloc((oz+1)*sizeof(float));
     float *coordx = (float *)malloc((oz+1)*sizeof(float));
     float *coordy = (float *)malloc((oy+1)*sizeof(float));
-    float *ax = (float *)malloc((oy+oz)*sizeof(float));
-    float *ay = (float *)malloc((oy+oz)*sizeof(float));
-    float *bx = (float *)malloc((oy+oz)*sizeof(float));
-    float *by = (float *)malloc((oy+oz)*sizeof(float));
-    float *coorx = (float *)malloc((oy+oz)*sizeof(float));
-    float *coory = (float *)malloc((oy+oz)*sizeof(float));
-    float *dist = (float *)malloc((oy+oz)*sizeof(float));
-    int *indi = (int *)malloc((oy+oz)*sizeof(int));
+    float *ax = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *ay = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *bx = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *by = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *coorx = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *coory = (float *)malloc((oy+oz+2)*sizeof(float));
+    float *dist = (float *)malloc((oy+oz+1)*sizeof(float));
+    int *indi = (int *)malloc((oy+oz+1)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&

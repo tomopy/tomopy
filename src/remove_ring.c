@@ -359,13 +359,11 @@ void median_filter_fast_1D(
 				if (next_value_col < width){
 					next_value = image[0][row][next_value_col];
 				}
-				float last_value;
 				int last_value_index = 0; 
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
 						last_value_index = i;
-						last_value = median_array[i];
 						position_array[i] = 2*kernel_rad;
 						median_array[i] = next_value;
 					}
@@ -400,13 +398,11 @@ void median_filter_fast_1D(
 				if (next_value_row < height){
 					next_value = image[0][next_value_row][col];
 				}
-				float last_value;
 				int last_value_index = 0; 
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
 						last_value_index = i;
-						last_value = median_array[i];
 						position_array[i] = 2*kernel_rad;
 						median_array[i] = next_value;
 					}

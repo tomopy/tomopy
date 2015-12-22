@@ -50,10 +50,8 @@
 Module for data I/O.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.misc.corr import adjust_range
 import tomopy.util.dtype as dt
@@ -158,7 +156,8 @@ def _init_write(arr, fname, ext, dtype, overwrite):
         if not fname.endswith(ext):
             fname = fname + ext
     fname = os.path.abspath(fname)
-    fname = _suggest_new_fname(fname, digit=1)
+    if not overwrite:
+        fname = _suggest_new_fname(fname, digit=1)
     _init_dirs(fname)
     if dtype is not None:
         arr = dt.as_dtype(arr, dtype)

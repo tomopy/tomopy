@@ -46,13 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import logging
-logging.basicConfig()
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.io import *
 from tomopy.io.exchange import *
@@ -71,6 +66,9 @@ from tomopy.recon.rotation import *
 from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
+
+import logging
+logging.basicConfig()
 
 try:
     import pkg_resources

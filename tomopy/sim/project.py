@@ -50,10 +50,8 @@
 Module for simulation of x-rays.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import shutil
@@ -172,6 +170,10 @@ def angles(nang, ang1=0., ang2=180.):
     return np.linspace(ang1 * np.pi / 180., ang2 * np.pi / 180., nang)
 
 
+def _round_to_even(num):
+    return (np.ceil(num / 2.) * 2).astype('int')
+
+
 def project(obj, theta, center=None, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
@@ -201,7 +203,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     ox, oy, oz = obj.shape
     dx = theta.size
     dy = ox
-    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
+    dz = _round_to_even(np.sqrt(oy * oy + oz * oz) + 2)
     shape = dx, dy, dz
     tomo = np.zeros(shape, dtype='float32')
     center = get_center(shape, center)
