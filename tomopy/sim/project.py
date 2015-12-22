@@ -170,6 +170,10 @@ def angles(nang, ang1=0., ang2=180.):
     return np.linspace(ang1 * np.pi / 180., ang2 * np.pi / 180., nang)
 
 
+def _round_to_even(num):
+    return (np.ceil(num / 2.) * 2).astype('int')
+
+
 def project(obj, theta, center=None, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
@@ -199,7 +203,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     ox, oy, oz = obj.shape
     dx = theta.size
     dy = ox
-    dz = np.ceil(np.sqrt(oy * oy + oz * oz)).astype('int')
+    dz = _round_to_even(np.sqrt(oy * oy + oz * oz) + 2)
     shape = dx, dy, dz
     tomo = np.zeros(shape, dtype='float32')
     center = get_center(shape, center)
@@ -217,7 +221,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
 
 def get_center(shape, center):
     if center is None:
-        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+        center = np.ones(shape[1], dtype='float32') * (shape[2]-1) / 2.
     elif np.array(center).size == 1:
         center = np.ones(shape[1], dtype='float32') * center
     return dtype.as_float32(center)

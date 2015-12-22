@@ -156,7 +156,8 @@ def _init_write(arr, fname, ext, dtype, overwrite):
         if not fname.endswith(ext):
             fname = fname + ext
     fname = os.path.abspath(fname)
-    fname = _suggest_new_fname(fname, digit=1)
+    if not overwrite:
+        fname = _suggest_new_fname(fname, digit=1)
     _init_dirs(fname)
     if dtype is not None:
         arr = dt.as_dtype(arr, dtype)
