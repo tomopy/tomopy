@@ -108,7 +108,7 @@ calc_coords(
     srcx = xi*cos_p-yi*sin_p;
     srcy = xi*sin_p+yi*cos_p;
     detx = -xi*cos_p-yi*sin_p;
-    dety = -xi*sin_p+yi*cos_p;    
+    dety = -xi*sin_p+yi*cos_p;
 
     slope = (srcy-dety)/(srcx-detx);
     islope = 1/slope;
@@ -137,10 +137,10 @@ trim_coords(
     *bsize = 0;
     for (n=0; n<=rz; n++) 
     {
-        if (coordx[n] >= gridx[0]) 
+        if (coordx[n] >= gridx[0]+1e-2) 
         {
-            if (coordx[n] <= gridx[ry]) 
-            {
+            if (coordx[n] <= gridx[ry]-1e-2) 
+            {        
                 ax[*asize] = coordx[n];
                 ay[*asize] = gridy[n];
                 (*asize)++;
@@ -149,9 +149,9 @@ trim_coords(
     }
     for (n=0; n<=ry; n++) 
     {
-        if (coordy[n] >= gridy[0]) 
+        if (coordy[n] >= gridy[0]+1e-2) 
         {
-            if (coordy[n] <= gridy[rz]) 
+            if (coordy[n] <= gridy[rz]-1e-2) 
             {
                 bx[*bsize] = gridx[n];
                 by[*bsize] = coordy[n];
