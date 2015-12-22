@@ -221,7 +221,7 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
 
 def get_center(shape, center):
     if center is None:
-        center = np.ones(shape[1], dtype='float32') * (shape[2]-1) / 2.
+        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
     elif np.array(center).size == 1:
         center = np.ones(shape[1], dtype='float32') * center
     return dtype.as_float32(center)
