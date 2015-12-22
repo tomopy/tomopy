@@ -49,9 +49,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import logging
-logging.basicConfig()
-
 from tomopy.io import *
 from tomopy.io.exchange import *
 from tomopy.io.phantom import *
@@ -69,6 +66,9 @@ from tomopy.recon.rotation import *
 from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
+
+import logging
+logging.basicConfig()
 
 try:
     import pkg_resources

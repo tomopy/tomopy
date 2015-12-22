@@ -89,7 +89,7 @@ def test_remove_outlier():
     proj[8][4][6] = 20
     assert_allclose(
         remove_outlier(proj, dif=10),
-        read_file('remove_zinger.npy'))
+        read_file('remove_outlier.npy'))
 
 
 def test_circ_mask():
