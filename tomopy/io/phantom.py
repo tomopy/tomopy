@@ -50,10 +50,8 @@
 Module for generating synthetic phantoms.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import scipy as sp
@@ -101,8 +99,6 @@ def baboon(size=512, dtype='float32'):
     size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'baboon.tif')
     im = tifffile.imread(fname)
-    if not isinstance(size, tuple):
-        size = (size, size)
     im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
@@ -435,7 +431,7 @@ def _array_to_params(array):
     out = []
     for i in range(array.shape[0]):
         tmp = dict()
-        for k, j in zip(params_tuple, range(array.shape[1])):
+        for k, j in zip(params_tuple, list(range(array.shape[1]))):
             tmp[k] = array[i, j]
         out.append(tmp)
     return out

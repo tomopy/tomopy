@@ -67,10 +67,11 @@ preprocessing(
         gridy[i] = -rz/2.+i;
     }
 
-    *mov = (float)num_pixels/2.0-center;
-    if(*mov-ceil(*mov) < 1e-2) {
-        *mov += 1e-2;
+    *mov = ((float)num_pixels-1)/2.0-center;
+    if(*mov-floor(*mov) < 0.01) {
+        *mov += 0.01;
     }
+    *mov += 0.5;
 }
 
 
@@ -80,7 +81,9 @@ calc_quadrant(
 {
     int quadrant;
     if ((theta_p >= 0 && theta_p < M_PI/2) ||
-            (theta_p >= M_PI && theta_p < 3*M_PI/2)) 
+        (theta_p >= M_PI && theta_p < 3*M_PI/2) ||
+        (theta_p >= -M_PI && theta_p < -M_PI/2) ||
+        (theta_p >= -2*M_PI && theta_p < -3*M_PI/2)) 
     {
         quadrant = 1;
     } 
@@ -136,10 +139,10 @@ trim_coords(
     *bsize = 0;
     for (n=0; n<=rz; n++) 
     {
-        if (coordx[n] > gridx[0]) 
+        if (coordx[n] >= gridx[0]+1e-2) 
         {
-            if (coordx[n] < gridx[ry]) 
-            {
+            if (coordx[n] <= gridx[ry]-1e-2) 
+            {        
                 ax[*asize] = coordx[n];
                 ay[*asize] = gridy[n];
                 (*asize)++;
@@ -148,9 +151,9 @@ trim_coords(
     }
     for (n=0; n<=ry; n++) 
     {
-        if (coordy[n] > gridy[0]) 
+        if (coordy[n] >= gridy[0]+1e-2) 
         {
-            if (coordy[n] < gridy[rz]) 
+            if (coordy[n] <= gridy[rz]-1e-2) 
             {
                 bx[*bsize] = gridx[n];
                 by[*bsize] = coordy[n];
