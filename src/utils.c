@@ -67,10 +67,11 @@ preprocessing(
         gridy[i] = -rz/2.+i;
     }
 
-    *mov = (float)num_pixels/2.0-center;
-    if(*mov-ceil(*mov) < 1e-2) {
-        *mov += 1e-2;
+    *mov = ((float)num_pixels-1)/2.0-center;
+    if(*mov-floor(*mov) < 0.01) {
+        *mov += 0.01;
     }
+    *mov += 0.5;
 }
 
 
@@ -107,7 +108,7 @@ calc_coords(
     srcx = xi*cos_p-yi*sin_p;
     srcy = xi*sin_p+yi*cos_p;
     detx = -xi*cos_p-yi*sin_p;
-    dety = -xi*sin_p+yi*cos_p;
+    dety = -xi*sin_p+yi*cos_p;    
 
     slope = (srcy-dety)/(srcx-detx);
     islope = 1/slope;
@@ -136,9 +137,9 @@ trim_coords(
     *bsize = 0;
     for (n=0; n<=rz; n++) 
     {
-        if (coordx[n] > gridx[0]) 
+        if (coordx[n] >= gridx[0]) 
         {
-            if (coordx[n] < gridx[ry]) 
+            if (coordx[n] <= gridx[ry]) 
             {
                 ax[*asize] = coordx[n];
                 ay[*asize] = gridy[n];
@@ -148,9 +149,9 @@ trim_coords(
     }
     for (n=0; n<=ry; n++) 
     {
-        if (coordy[n] > gridy[0]) 
+        if (coordy[n] >= gridy[0]) 
         {
-            if (coordy[n] < gridy[rz]) 
+            if (coordy[n] <= gridy[rz]) 
             {
                 bx[*bsize] = gridx[n];
                 by[*bsize] = coordy[n];
