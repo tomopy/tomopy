@@ -78,6 +78,7 @@ art(
 
     for (i=0; i<num_iter; i++) 
     {
+        printf("Iteration=%i \n", i);
         simdata = (float *)calloc((dx*dy*dz), sizeof(float));
 
         preprocessing(ngridx, ngridy, dz, center[0], 
