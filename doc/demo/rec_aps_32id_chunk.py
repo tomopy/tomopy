@@ -28,7 +28,7 @@ if __name__ == '__main__':
         sino_end = start + num_sino * (m + 1)
 
         # Read APS 32-ID raw data.
-        proj, flat, dark = tomopy.io.exchange.read_aps_32id(fname, sino=(sino_start, sino_end))
+        proj, flat, dark = tomopy.read_aps_32id(fname, sino=(sino_start, sino_end))
 
         # Set data collection angles as equally spaced between 0-180 degrees.
         theta = tomopy.angles(proj.shape[0])
@@ -40,4 +40,4 @@ if __name__ == '__main__':
         rec = tomopy.recon(proj, theta, center=1024, algorithm='gridrec', emission=False)
 
         # Write data as stack of TIFs.
-        tomopy.io.writer.write_tiff_stack(rec, fname='recon_dir/recon', start=sino_start)
+        tomopy.write_tiff_stack(rec, fname='recon_dir/recon', start=sino_start)
