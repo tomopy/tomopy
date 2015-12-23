@@ -150,7 +150,7 @@ def _suggest_new_fname(fname, digit):
 
 
 def _init_write(arr, fname, ext, dtype, overwrite):
-    if not (isinstance(fname, six.string_types)):
+    if not isinstance(fname, six.string_types):
         fname = 'tmp/data' + ext
     else:
         if not fname.endswith(ext):
