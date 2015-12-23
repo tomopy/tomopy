@@ -71,12 +71,6 @@ def test_remove_stripe_ti():
         read_file('remove_stripe_ti.npy'), rtol=1e-2)
 
 
-def test_remove_stripe_sf():
-    assert_allclose(
-        remove_stripe_sf(read_file('proj.npy')),
-        read_file('remove_stripe_sf.npy'), rtol=1e-2)
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule(exit=False)
