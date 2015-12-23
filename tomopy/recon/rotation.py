@@ -403,7 +403,7 @@ def write_center(
         ind = dy // 2
     if cen_range is None:
         center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
-    if len(cen_range) < 3:
+    elif len(cen_range) < 3:
         cen_range[2] = 1
     else:
         center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
