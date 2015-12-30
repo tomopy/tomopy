@@ -72,14 +72,14 @@ __all__ = ['normalize',
            'normalize_nf']
 
 
-def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
+def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     """
     Normalize raw projection data using the flat and dark field projections.
 
     Parameters
     ----------
-    tomo : ndarray
-        3D tomographic data.
+    arr : ndarray
+        3D stack of projections.
     flat : ndarray
         3D flat field data.
     dark : ndarray
@@ -88,43 +88,42 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
     ndarray
         Normalized 3D tomographic data.
     """
-    tomo = dtype.as_float32(tomo)
+    arr = dtype.as_float32(arr)
     flat = dtype.as_float32(flat)
     dark = dtype.as_float32(dark)
 
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_normalize,
-        args=(flat, dark, cutoff),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
-
-
-def _normalize(flat, dark, cutoff, istart, iend):
-    tomo = mproc.SHARED_ARRAY
-
     # Avoid zero division in normalization
     denom = flat - dark
-    denom[denom == 0] = 1e-6
+    denom[denom <= 1e-6] = 1e-6
 
-    for m in range(istart, iend):
-        proj = np.true_divide(tomo[m, :, :] - dark, denom)
-        if cutoff is not None:
-            proj[proj > cutoff] = cutoff
-        tomo[m, :, :] = proj
+    arr = mproc.distribute_jobs(
+        arr,
+        func=_normalize,
+        args=(denom, dark, cutoff),
+        axis=0,
+        ncore=ncore,
+        nchunk=0,
+        out=out)
+    return arr
+
+# in-place normalization
+def _normalize(proj, denom, dark, cutoff):
+    proj -= dark
+    np.true_divide(proj, denom, proj)
+    if cutoff is not None:
+        proj[proj > cutoff] = cutoff
+    return proj
 
 
 def normalize_roi(tomo, roi=[0, 0, 10, 10], ncore=None, nchunk=None):
