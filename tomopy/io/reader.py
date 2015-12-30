@@ -58,6 +58,7 @@ import numpy as np
 import six
 import os
 import h5py
+from tomopy.util.dtype import empty_shared_array
 import logging
 import re
 
@@ -209,7 +210,7 @@ def read_edf(fname, slc=None):
     return arr
 
 
-def read_hdf5(fname, group, slc=None):
+def read_hdf5(fname, dataset, slc=None, dtype=None, shared=False):
     """
     Read data from hdf5 file from a specific group.
 
@@ -217,28 +218,43 @@ def read_hdf5(fname, group, slc=None):
     ----------
     fname : str
         String defining the path of file or file name.
-    group : str
-        Path to the group inside hdf5 file where data is located.
+    dataset : str
+        Path to the dataset inside hdf5 file where data is located.
     slc : sequence of tuples, optional
         Range of values for slicing data in each axis.
         ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
         defines slicing parameters for each axis of the data matrix.
+    dtype : numpy datatype (optional)
+        Convert data to this datatype on read if specified.
+    shared : bool (optional)
+        If True, read data into shared memory location.  Defaults to False.
 
     Returns
     -------
     ndarray
         Data.
     """
-    fname = _check_read(fname)
-    f = h5py.File(fname, "r")
     try:
-        arr = f[group]
+        fname = _check_read(fname)
+        with h5py.File(fname, "r") as f:
+            try:
+                data = f[dataset]
+            except KeyError:
+                # NOTE: I think it would be better to raise an exception here.
+                logger.error('Unrecognized hdf5 dataset: "%s"'%(str(dataset)))
+                return None
+            shape = _shape_after_slice(data.shape, slc)
+            if dtype is None:
+                dtype = data.dtype
+            if shared:
+                arr = empty_shared_array(shape, dtype)
+            else:
+                arr = np.empty(shape, dtype)
+            # replace None in slc with np.s_[:]
+            slc = tuple([s is None and np.s_[:] or s for s in slc])
+            data.read_direct(arr, np.s_[slc])
     except KeyError:
-        f.close()
-        logger.error('Unrecognized hdf5 group')
-        return None
-    arr = _slice_array(arr, slc)
-    f.close()
+        arr = None
     _log_imported_data(fname, arr)
     return arr
 
@@ -385,6 +401,21 @@ def _list_file_stack(fname, ind, digit):
         list_fname.append(str(body + '{0:0={1}d}'.format(m, digit) + ext))
     return list_fname
 
+#TODO: this code is NOT robust.  It should handle an actual slice object.
+# It needs to handle negative values and [:] notation.
+def _shape_after_slice(shape, slc):
+    if slc is None:
+        return shape
+    new_shape = list(shape)
+    for m, s in enumerate(slc):
+        if s is None or s[0] is None:
+            s = (0, )
+        if len(s) < 2 or s[1] is None:
+            s += (shape[m], )
+        if len(s) < 3 or s[2] is None:
+            s += (1, )        
+        new_shape[m] = (s[1] - s[0]) // s[2]
+    return tuple(new_shape)
 
 def _find_dataset_group(h5object):
     """
