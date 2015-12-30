@@ -8,6 +8,7 @@ if os.name == 'nt':
 tomoc = Extension(
     name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
+    extra_link_args=['-lfftw3f', '-lm'],
     sources=[
         'src/utils.c',
         'src/project.c',
