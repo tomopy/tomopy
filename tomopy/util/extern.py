@@ -228,26 +228,27 @@ def c_fbp(*args):
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
 
-
-def c_gridrec(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
-
+def c_gridrec(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
     LIB_TOMOPY.gridrec.restype = dtype.as_c_void_p()
     LIB_TOMOPY.gridrec(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_char_p(args[5]['filter_name']),
-        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_char_p(kwargs['filter_name']))
+        dtype.as_c_float_p(kwargs['filter_par']), # filter_par
+    return recon
 
 
 def c_mlem(*args):
