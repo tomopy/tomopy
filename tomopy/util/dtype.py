@@ -53,10 +53,9 @@ Module for internal utility functions.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
 import ctypes
 import numpy as np
-import multiprocessing
+import multiprocessing as mp
 import logging
 
 logger = logging.getLogger(__name__)
@@ -130,3 +129,53 @@ def as_c_char_p(arr):
 
 def as_c_void_p():
     return ctypes.POINTER(ctypes.c_void_p)
+
+
+def as_sharedmem(arr, copy=False):
+    # first check to see if it already a shared array
+    if not copy and is_sharedmem(arr):
+        return arr
+    # get ctype from numpy array
+    ctype = np.ctypeslib._typecodes[arr.__array_interface__['typestr']]
+    # create shared ctypes object with no lock
+    shared_obj = mp.RawArray(ctype, arr.size)
+    # create numpy array from shared object
+    #shared_arr = np.ctypeslib.as_array(shared_obj)
+    shared_arr = np.frombuffer(shared_obj, dtype=arr.dtype)
+    shared_arr = np.reshape(shared_arr, arr.shape)
+    # copy data to shared array
+    shared_arr[:] = arr[:]
+    return shared_arr
+
+
+def is_sharedmem(arr):
+    # attempt to determine if data is in shared memory
+    try:
+        base = arr.base
+        if base is None:
+            return False
+        elif type(base).__module__.startswith('multiprocessing.sharedctypes'):
+            return True
+        else:
+            return is_sharedmem(base)
+    except:
+        return False
+
+
+def is_contiguous(arr):
+    return arr.flags.c_contiguous
+
+def empty_shared_array(shape, dtype=np.float32):
+    # create a shared ndarray with the provided shape and type
+    # get ctype from np dtype
+    temp_arr = np.empty((1), dtype)
+    ctype = np.ctypeslib._typecodes[temp_arr.__array_interface__['typestr']]
+    # create shared ctypes object with no lock
+    size = 1
+    for dim in shape:
+        size *= dim
+    shared_obj = mp.RawArray(ctype, size)
+    # create numpy array from shared object
+    arr = np.frombuffer(shared_obj, dtype)
+    arr = arr.reshape(shape)    
+    return arr
