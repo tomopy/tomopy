@@ -163,16 +163,17 @@ def distribute_jobs(arr,
 #        else:
 #            _arg_parser((func, args, kwargs, i, axis))
 
+    # if nchunk is zero, remove dimension from slice.
+    map_args = []
+    for i in xrange(0, axis_size, nchunk or 1):
+        if nchunk:
+            map_args.append((func, args, kwargs, np.s_[i:i+nchunk], axis))                
+        else:
+            map_args.append((func, args, kwargs, i, axis))
+
     with closing(mp.Pool(processes=ncore,
                          initializer=init_shared,
                          initargs=(shared_arrays, shared_out))) as p:
-        # if nchunk is zero, remove dimension from slice.
-        map_args = []
-        for i in xrange(0, axis_size, nchunk or 1):
-            if nchunk:
-                map_args.append((func, args, kwargs, np.s_[i:i+nchunk], axis))                
-            else:
-                map_args.append((func, args, kwargs, i, axis))
         p.map(_arg_parser, map_args)
     p.join()
 

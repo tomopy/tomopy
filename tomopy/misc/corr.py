@@ -106,7 +106,7 @@ def adjust_range(arr, dmin=None, dmax=None):
     return arr
 
 
-def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
+def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
     """
     Apply Gaussian filter to 3D array along specified axis.
 
@@ -129,8 +129,6 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
         Axis along which median filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -139,22 +137,16 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None, nchunk=None):
     """
     arr = dtype.as_float32(arr)
     arr = mproc.distribute_jobs(
-        arr.swapaxes(0, axis),
-        func=_gaussian_filter,
+        arr,
+        func=filters.gaussian_filter,
         args=(sigma, order),
         axis=axis,
         ncore=ncore,
-        nchunk=nchunk)
-    return arr.swapaxes(0, axis)
+        nchunk=0)
+    return arr
 
 
-def _gaussian_filter(sigma, order, istart, iend):
-    arr = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
-        arr[m] = filters.gaussian_filter(arr[m], sigma, order)
-
-
-def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
+def median_filter(arr, size=3, axis=0, ncore=None):
     """
     Apply median filter to 3D array along specified axis.
 
@@ -168,8 +160,6 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
         Axis along which median filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -178,22 +168,16 @@ def median_filter(arr, size=3, axis=0, ncore=None, nchunk=None):
     """
     arr = dtype.as_float32(arr)
     arr = mproc.distribute_jobs(
-        arr.swapaxes(0, axis),
-        func=_median_filter,
-        args=(size,),
+        arr,
+        func=filters.median_filter,
+        args=((size, size),),
         axis=axis,
         ncore=ncore,
-        nchunk=nchunk)
-    return arr.swapaxes(0, axis)
+        nchunk=0)
+    return arr
 
 
-def _median_filter(size, istart, iend):
-    arr = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
-        arr[m] = filters.median_filter(arr[m], (size, size))
-
-
-def sobel_filter(arr, axis=0, ncore=None, nchunk=None):
+def sobel_filter(arr, axis=0, ncore=None):
     """
     Apply Sobel filter to 3D array along specified axis.
 
@@ -205,8 +189,6 @@ def sobel_filter(arr, axis=0, ncore=None, nchunk=None):
         Axis along which sobel filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -215,18 +197,12 @@ def sobel_filter(arr, axis=0, ncore=None, nchunk=None):
     """
     arr = dtype.as_float32(arr)
     arr = mproc.distribute_jobs(
-        arr.swapaxes(0, axis),
-        func=_sobel_filter,
+        arr,
+        func=filters.sobel,
         axis=axis,
         ncore=ncore,
-        nchunk=nchunk)
-    return arr.swapaxes(0, axis)
-
-
-def _sobel_filter(istart, iend):
-    arr = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
-        arr[m] = filters.sobel(arr[m])
+        nchunk=0)
+    return arr
 
 
 def remove_nan(arr, val=0.):
@@ -271,7 +247,7 @@ def remove_neg(arr, val=0.):
     return arr
 
 
-def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
+def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
     """
     Remove high intensity bright spots from a 3D array along specified
     dimension.
@@ -289,8 +265,6 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
         Axis along which median filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -299,19 +273,13 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, nchunk=None):
     """
     arr = dtype.as_float32(arr)
     arr = mproc.distribute_jobs(
-        arr.swapaxes(0, axis),
-        func=_remove_outlier,
+        arr,
+        func=_remove_outlier_from_img,
         args=(dif, size),
-        axis=0,
+        axis=axis,
         ncore=ncore,
-        nchunk=nchunk)
-    return arr.swapaxes(0, axis)
-
-
-def _remove_outlier(dif, size, istart, iend):
-    arr = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
-        arr[m] = _remove_outlier_from_img(arr[m], dif, size)
+        nchunk=0)
+    return arr
 
 
 def _remove_outlier_from_img(img, dif, size):
@@ -320,7 +288,7 @@ def _remove_outlier_from_img(img, dif, size):
 
     Parameters
     ----------
-    arr : ndarray
+    img : ndarray
         Input array.
     dif : float
         Expected difference value between outlier value and
@@ -334,7 +302,6 @@ def _remove_outlier_from_img(img, dif, size):
        Corrected array.
     """
     img = dtype.as_float32(img)
-    mask = np.zeros(img.shape)
     tmp = filters.median_filter(img, (size, size))
     mask = ((img - tmp) >= dif).astype(int)
     return tmp * mask + img * (1 - mask)
@@ -388,14 +355,14 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth)
 
-    arr = mproc.distribute_jobs(
+    rec = mproc.distribute_jobs(
         rec,
         func=extern.c_remove_ring,
         args=args,
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    return rec
 
 
 def circ_mask(arr, axis, ratio=1, val=0.):

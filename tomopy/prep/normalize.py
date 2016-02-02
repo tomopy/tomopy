@@ -102,14 +102,10 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     flat = flat.mean(axis=0)
     dark = dark.mean(axis=0)
 
-    # Avoid zero division in normalization
-    denom = flat - dark
-    denom[denom <= 1e-6] = 1e-6
-
     arr = mproc.distribute_jobs(
         arr,
         func=_normalize,
-        args=(denom, dark, cutoff),
+        args=(flat, dark, cutoff),
         axis=0,
         ncore=ncore,
         nchunk=0,
@@ -117,7 +113,9 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     return arr
 
 # in-place normalization
-def _normalize(proj, denom, dark, cutoff):
+def _normalize(proj, flat, dark, cutoff):
+    denom = flat - dark
+    denom[denom < 1e-6] = 1e-6
     proj -= dark
     np.true_divide(proj, denom, proj)
     if cutoff is not None:
@@ -151,12 +149,11 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     """
     tomo = dtype.as_float32(tomo)
     air = dtype.as_int32(air)
-    dx, dy, dz = tomo.shape
 
     arr = mproc.distribute_jobs(
         tomo,
         func=extern.c_normalize_bg,
-        args=(dx, dy, dz, air),
+        args=(air,),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -164,7 +161,7 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
 
 
 def normalize_nf(tomo, flats, dark, flat_loc,
-                 cutoff=None, ncore=None, nchunk=None):
+                 cutoff=None, ncore=None):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
@@ -182,8 +179,6 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         Indices of flat field data within tomography
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -214,7 +209,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         # Normalization can be parallelized much more efficiently outside this
         # foor loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
-        tstart = 0 if m == 0 else tend
+        tstart = tend
         tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc)//2 + loc
 
         _arr = mproc.distribute_jobs(tomo[tstart:tend],
@@ -222,7 +217,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
                                      args=(flat, dark, cutoff),
                                      axis=0,
                                      ncore=ncore,
-                                     nchunk=nchunk)
+                                     nchunk=0)
 
         arr[tstart:tend] = _arr
 

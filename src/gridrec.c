@@ -41,9 +41,10 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-// TODO: Load and save FFTW "wisdom" to file
-// TODO: Use guru interface to load real and imag into FFTW without copying
-// TODO: Profile code and check adding SIMD to various functions (from OpenMP)
+// Possible speedups:
+//   * Load and save FFTW "wisdom" to file
+//   * Use guru interface to load real and imag into FFTW without copying
+//   * Profile code and check adding SIMD to various functions (from OpenMP)
 
 #define USE_FFTW
 #define _USE_MATH_DEFINES
@@ -86,7 +87,7 @@ gridrec(
         -0.1295941E-05,  0.3817796E-07};
     
     // Compute pdim = next power of 2 >= dx
-    for(pdim = 4; pdim < dx; pdim *= 2);
+    for(pdim = 2; pdim < dx; pdim *= 2);
 
     const int M02 = pdim/2-1;
 
@@ -105,10 +106,10 @@ gridrec(
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 #ifdef USE_FFTW
     // Set up fftw plans
-    fftwf_plan forward_1d;
-    fftwf_plan reverse_2d;
-    forward_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_FORWARD, FFTW_MEASURE);
-    reverse_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_BACKWARD, FFTW_MEASURE);
+    fftwf_plan reverse_1d;
+    fftwf_plan forward_2d;
+    reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
+    forward_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_MEASURE);
 #endif
     // For each slice.
     for (s=0; s<dy; s+=2)
@@ -140,7 +141,7 @@ gridrec(
             
         //     3. Multiply each element of the 1-D transform by a complex,
         //      frequency dependent factor, filphase[].  These factors were
-        //      precomputed as part of recon_init() and combine the 
+        //      precomputed as part of recofour1((float*)sino-1,pdim,1);n_init() and combine the 
         //      tomographic filtering with a phase factor which shifts the 
         //      origin in configuration space to the projection of the 
         //      rotation axis as defined by the parameter, "center".  If a 
@@ -181,26 +182,30 @@ gridrec(
         // For each projection
         for(p=0; p<dt; p++)
         {
-            for(j=0; j<dx; j++)
+            for(j=0; j<pdim; j++)
             {
-                float second_sino = 0.0; //idea: just do same slice twice to process faster
-                const unsigned int index = j+p*dx+s*dx*dt;
-                if ((s + 1) < dy)
+                if(j < dx)
                 {
-                    second_sino = data[index + dx*dt];
+                    // Add data from both slices
+                    float second_sino = 0.0;
+                    const unsigned int index = j+p*dx+s*dx*dt;
+                    if ((s + 1) < dy)
+                    {
+                        second_sino = data[index + dx*dt];
+                    }
+                    sino[j] = data[index] + I*second_sino;
                 }
-                sino[j] = data[index] + I*second_sino;
-            }
+                else
+                {
+                    // Zero fill the rest of the array
+                    sino[j] = 0.0;
 
-            // Zero fill the rest of the array
-            for(;j<pdim;j++)
-            {
-                sino[j] = 0.0;
+                }
             }
 
             // Take FFT of the projection array
 #ifdef USE_FFTW
-            fftwf_execute(forward_1d);
+            fftwf_execute(reverse_1d);
 #else
             four1((float*)sino-1,pdim,1);
 #endif
@@ -253,7 +258,7 @@ gridrec(
         // (resp. left [X<0]) half of the image.
 
 #ifdef USE_FFTW
-        fftwf_execute(reverse_2d);
+        fftwf_execute(forward_2d);
 #else
         const unsigned long H_size[2] = {pdim, pdim};
         fourn((float*)(*H)-1, H_size-1, 2, -1);
@@ -345,8 +350,8 @@ gridrec(
     free_vector_f(work);
     free_matrix_c(H);
 #ifdef USE_FFTW
-    fftwf_destroy_plan(forward_1d);
-    fftwf_destroy_plan(reverse_2d);
+    fftwf_destroy_plan(reverse_1d);
+    fftwf_destroy_plan(forward_2d);
 #endif
     return;
 }
@@ -362,13 +367,12 @@ set_filter_tables(
     // (*pf)()], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments.
 
-    const int pd2 = pd/2;
     const float norm = M_PI/pd/dt;
     const float rtmp1 = 2*M_PI*center/pd;
     int j;
     float x, rtmp2;
 
-    for(j=0; j<pd2; j++)
+    for(j=0; j<pd/2; j++)
     {
         x = j*rtmp1;
         rtmp2 = (*pf)((float)j/pd)*norm;
@@ -410,7 +414,7 @@ set_pswf_tables(
         // corrects for "natural" data layout
         // in array H at end of Phase 1.
         norm = -norm; 
-        winv[linv+i] = winv[linv-i] = norm / wtbl[(int)((i*fac)+0.5)];
+        winv[linv+i] = winv[linv-i] = norm / wtbl[lroundf(i*fac)];
     }
 }
 
@@ -438,28 +442,18 @@ legendre(int n, const float *coefs, float x)
     // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
     // where P(j,x) is the jth Legendre polynomial.
     // x must be between -1 and 1.
-    // FIXME: rename "new", keyword in c++
     float penult, last, cur, y;
-    int j, k, even;
 
     y = coefs[0];
     penult = 1.0;
     last = x;
-    even = 1;
-    k = 1;
-    for(j=2; j<=n; j++)
+    for(int j=2; j<=n; j++)
     {
         cur = (x*(2*j-1)*last-(j-1)*penult)/j;
-        if(even)
+        if(!(j&1)) // if j is even
         {
-            y += cur*coefs[k];
-            even = 0;
-            k++;
+            y += cur*coefs[j/2];
         } 
-        else
-        {
-            even = 1;
-        }
 
         penult = last;
         last = cur;
@@ -515,7 +509,6 @@ malloc_matrix_c(size_t nr, size_t nc)
     long i;
 
     // Allocate pointers to rows,
-    //m = (float _Complex **) fftwf_malloc(nr * sizeof(float _Complex *));
     m = (float _Complex **) malloc(nr * sizeof(float _Complex *));
 
     /* Allocate rows and set the pointers to them */
@@ -547,7 +540,7 @@ filter_none(float x)
 float 
 filter_shepp(float x)
 {
-    return fabs(sin(M_PI*x)/M_PI);
+    return fabs(sinf(M_PI*x)/M_PI);
 }
 
 
@@ -555,7 +548,7 @@ filter_shepp(float x)
 float 
 filter_cosine(float x)
 {
-    return fabs(x)*(cos(M_PI*x));
+    return fabs(x)*(cosf(M_PI*x));
 }
 
 
@@ -564,7 +557,7 @@ float
 filter_hann(float x)
 {
     float cutoff = 0.5;
-    return fabs(x)*0.5*(1.+cos(M_PI*x/cutoff));
+    return fabs(x)*0.5*(1.+cosf(M_PI*x/cutoff));
 }
 
 
@@ -573,7 +566,7 @@ float
 filter_hamming(float x)
 {
     float cutoff = 0.5;
-    return fabs(x)*(0.54+0.46*cos(M_PI*x/cutoff));
+    return fabs(x)*(0.54+0.46*cosf(M_PI*x/cutoff));
 }
 
 // Ramlak filter
@@ -617,7 +610,7 @@ float (*get_filter(const char *name))(float)
         {"parzen", filter_parzen},
         {"butterworth", filter_butterworth}};
 
-    for(int i=0; i<sizeof(fltbl); i++)
+    for(int i=0; i<8; i++)
     {
         if(!strcmp(name, fltbl[i].name))
         {
