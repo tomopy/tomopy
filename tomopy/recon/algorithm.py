@@ -58,6 +58,7 @@ import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
+from tomopy.sim.project import get_center
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['recon']
+__all__ = ['recon', 'init_tomo']
 
 
 def recon(
@@ -207,7 +208,7 @@ def recon(
     """
 
     # Initialize tomography data.
-    tomo = _init_tomo(tomo, emission, sinogram_order)
+    tomo = init_tomo(tomo, emission, sinogram_order)
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -275,7 +276,7 @@ def recon(
             (list(allowed_kwargs.keys()),))
 
     # Generate args for the algorithm.
-    center_arr = _get_center(tomo.shape, center)
+    center_arr = get_center(tomo.shape, center)
     args = _get_algorithm_args(theta)
 
     # Initialize reconstruction.
@@ -287,8 +288,7 @@ def recon(
 
 # Convert data to floating point emissive type and sinogram order
 # Also ensure contiguous data and set to sharedmem if parameter set to True
-# FIXME: this should be a globally available function
-def _init_tomo(tomo, emission, sinogram_order, sharedmem=True):
+def init_tomo(tomo, emission, sinogram_order, sharedmem=True):
     tomo = dtype.as_float32(tomo)
     if not emission:
         tomo[tomo <= 0.] = 1E-6
@@ -350,22 +350,13 @@ def _get_func(algorithm):
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     #assert tomo.flags.aligned
     return mproc.distribute_jobs(
-        (tomo,center, recon),
+        (tomo, center, recon),
         func=algorithm,
         args=args,
         kwargs=kwargs,
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
-
-#NOTE: replicates get_center in sim.project; however shape follows sinogram
-# order here (theta is axis one instead of zero).
-def _get_center(shape, center):
-    if center is None:
-        center = np.ones(shape[0], dtype='float32') * (shape[2] / 2.)
-    elif np.array(center).size == 1:
-        center = np.ones(shape[0], dtype='float32') * center
-    return dtype.as_float32(center)
 
 
 def _get_algorithm_args(theta):
@@ -383,6 +374,6 @@ def _get_algorithm_kwargs(shape):
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dt, dtype='float32'),
+        'ind_block': np.arange(0, dt, dtype=np.float32), #TODO: I think this should be int
         'options': {},
     }
