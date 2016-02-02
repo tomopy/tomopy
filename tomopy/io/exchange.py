@@ -546,8 +546,8 @@ def read_aps_13id(
     return tomo
 
 
-def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, dtype=None, 
-                  shared=False):
+def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, 
+                  dtype=None, shared=False):
     """
     Read APS 32-ID standard data format.
 
