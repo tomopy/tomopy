@@ -61,6 +61,7 @@ import h5py
 from tomopy.util.dtype import empty_shared_array
 import logging
 import re
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,8 @@ __all__ = ['read_edf',
            'read_hdf5_stack']
 
 
+#FIXME: raise exception would make more sense, also not sure an extension check
+# is very useful, unless we are automatically mapping an extension to a function.
 def _check_read(fname):
     known_extensions = ['.edf', '.tiff', '.tif', '.h5', '.hdf', '.npy']
     if not isinstance(fname, six.string_types):
@@ -250,9 +253,7 @@ def read_hdf5(fname, dataset, slc=None, dtype=None, shared=False):
                 arr = empty_shared_array(shape, dtype)
             else:
                 arr = np.empty(shape, dtype)
-            # replace None in slc with np.s_[:]
-            slc = tuple([s is None and np.s_[:] or s for s in slc])
-            data.read_direct(arr, np.s_[slc])
+            data.read_direct(arr, _fix_slice(slc))
     except KeyError:
         arr = None
     _log_imported_data(fname, arr)
@@ -344,6 +345,36 @@ def read_spe(fname, slc=None):
     return arr
 
 
+def _fix_slice(slc):
+    """
+    Fix up a slc object to be tuple of slices.
+    slc = None is treated as no slc
+    slc is container and each element is converted into a slice object
+    None is treated as slice(None)
+    
+    Parameters
+    ----------
+    slc : None or sequence of tuples
+        Range of values for slicing data in each axis.
+        ((start_1, end_1, step_1), ... , (start_N, end_N, step_N))
+        defines slicing parameters for each axis of the data matrix.  
+    """
+    if slc is None:
+        return None # need arr shape to create slice
+    fixed_slc = list()
+    for s in slc:
+        if not isinstance(s, slice):
+            # create slice object
+            if s is None or isinstance(s, int):
+                # slice(None) is equivalent to np.s_[:]                
+                # numpy will return an int when only an int is passed to np.s_[]
+                s = slice(s)
+            else:
+                s = slice(*s)
+        fixed_slc.append(s)
+    return tuple(fixed_slc)
+
+
 def _slice_array(arr, slc):
     """
     Perform slicing on ndarray.
@@ -362,22 +393,39 @@ def _slice_array(arr, slc):
     ndarray
         Sliced array.
     """
-    if not isinstance(slc, tuple):
-        slc = (slc, )
-    if all(v is None for v in slc):
+    if slc is None:
         logger.debug('No slicing applied to image')
         return arr[:]
-    axis_slice = ()
-    for m, s in enumerate(slc):
-        if s is None:
-            s = (0, )
-        if len(s) < 2:
-            s += (arr.shape[m], )
-        if len(s) < 3:
-            s += (1, )
-        axis_slice += (slice(s[0], s[1], s[2]), )
+    axis_slice = _fix_slice(slc)
     logger.debug('Data sliced according to: %s', axis_slice)
     return arr[axis_slice]
+
+
+def _shape_after_slice(shape, slc):
+    """
+    Return the calculated shape of an array after it has been sliced.  
+    Only handles basic slicing (not advanced slicing).
+    
+    Parameters
+    ----------
+    shape : tuple of ints
+        Tuple of ints defining the ndarray shape
+    slc : tuple of slices
+        Object representing a slice on the array.  Should be one slice per
+        dimension in shape.
+    
+    """
+    if slc is None:
+        return shape
+    new_shape = list(shape)
+    slc = _fix_slice(slc)
+    for m, s in enumerate(slc):
+        # indicies will perform wrapping and such for the shape
+        start, stop, step = s.indices(shape[m])
+        new_shape[m] = int(math.ceil((stop - start) / float(step)))
+        if new_shape[m] < 0:
+            new_shape[m] = 0
+    return tuple(new_shape)
 
 
 def _list_file_stack(fname, ind, digit):
@@ -401,21 +449,6 @@ def _list_file_stack(fname, ind, digit):
         list_fname.append(str(body + '{0:0={1}d}'.format(m, digit) + ext))
     return list_fname
 
-#TODO: this code is NOT robust.  It should handle an actual slice object.
-# It needs to handle negative values and [:] notation.
-def _shape_after_slice(shape, slc):
-    if slc is None:
-        return shape
-    new_shape = list(shape)
-    for m, s in enumerate(slc):
-        if s is None or s[0] is None:
-            s = (0, )
-        if len(s) < 2 or s[1] is None:
-            s += (shape[m], )
-        if len(s) < 3 or s[2] is None:
-            s += (1, )        
-        new_shape[m] = (s[1] - s[0]) // s[2]
-    return tuple(new_shape)
 
 def _find_dataset_group(h5object):
     """
