@@ -120,16 +120,15 @@ def remove_stripe_fw(
     return arr
 
 
-def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
-    tomo = mproc.SHARED_ARRAY
+def _remove_stripe_fw(tomo, level, wname, sigma, pad):
     dx, dy, dz = tomo.shape
     nx = dx
     if pad:
         nx = dx + dx // 8
     xshift = int((nx - dx) // 2)
 
-    num_jobs = iend - istart
-    for m in range(istart, iend):
+    num_jobs = tomo.shape[1]
+    for m in range(num_jobs):
         sli = np.zeros((nx, dz), dtype='float32')
         sli[xshift:dx + xshift] = tomo[:, m, :]
 
@@ -200,9 +199,8 @@ def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     return arr
 
 
-def _remove_stripe_ti(nblock, alpha, istart, iend):
-    tomo = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
+def _remove_stripe_ti(tomo, nblock, alpha):
+    for m in range(tomo.shape[1]):
         sino = tomo[:, m, :]
         if nblock == 0:
             d1 = _ring(sino, 1, 1)
@@ -337,11 +335,10 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Corrected 3D tomographic data.
     """
     tomo = dtype.as_float32(tomo)
-    dx, dy, dz = tomo.shape
     arr = mproc.distribute_jobs(
         tomo,
         func=extern.c_remove_stripe_sf,
-        args=(dx, dy, dz, size),
+        args=(size,),
         axis=1,
         ncore=ncore,
         nchunk=nchunk)
