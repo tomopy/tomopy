@@ -134,11 +134,10 @@ def retrieve_phase(
     return arr
 
 
-def _retrieve_phase(phase_filter, px, py, prj, pad, istart, iend):
-    tomo = mproc.SHARED_ARRAY
+def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
     dx, dy, dz = tomo.shape
-    num_jobs = iend - istart
-    for m in range(istart, iend):
+    num_jobs = tomo.shape[0]
+    for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
         fproj = pyfftw.interfaces.numpy_fft.fft2(
             prj, planner_effort=_plan_effort(num_jobs))
