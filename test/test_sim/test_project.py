@@ -49,9 +49,17 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from test.util import read_file
+import sys
+#FIXME: inserting local tomopy copy for testing
+lib_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy/build/lib.linux-x86_64-2.7/tomopy"
+src_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy"
+sys.path.insert(0, lib_folder)
+sys.path.insert(0, src_folder)
+
+from test.util import read_file, write_file
 from tomopy.sim.project import *
 from numpy.testing import assert_allclose
+import numpy as np
 
 
 __author__ = "Doga Gursoy"
@@ -62,7 +70,7 @@ __docformat__ = 'restructuredtext en'
 def test_project():
     assert_allclose(
         project(read_file('obj.npy'), read_file('angle.npy')),
-        read_file('proj.npy'), rtol=1e-2)
+        np.swapaxes(read_file('proj.npy'), 0, 1), rtol=1e-2)
 
 
 if __name__ == '__main__':

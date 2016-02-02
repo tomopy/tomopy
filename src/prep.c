@@ -46,12 +46,12 @@
 
 DLL void 
 normalize_bg(
-    float* data, int dx, int dy, int dz, int nair, int istart, int iend) 
+    float* data, int dx, int dy, int dz, int nair)
 {
     int n, m, i, j, iproj;
     float air_left, air_right, air_slope, air;
 
-    for (m = istart; m < iend; m++) 
+    for (m = 0; m < dx; m++)
     {
         iproj = m * (dz * dy);
             

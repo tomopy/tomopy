@@ -52,6 +52,7 @@ from __future__ import (absolute_import, division, print_function,
 from tomopy.prep.phase import *
 from test.util import read_file
 from numpy.testing import assert_allclose
+import numpy as np
 
 
 __author__ = "Doga Gursoy"

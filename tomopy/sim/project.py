@@ -54,7 +54,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-import shutil
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
@@ -200,19 +199,19 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     theta = dtype.as_float32(theta)
 
     # Estimate data dimensions.
-    ox, oy, oz = obj.shape
-    dx = theta.size
-    dy = ox
-    dz = _round_to_even(np.sqrt(oy * oy + oz * oz) + 2)
-    shape = dx, dy, dz
-    tomo = np.zeros(shape, dtype='float32')
+    oy, ox, oz = obj.shape
+    dt = theta.size
+    dy = oy
+    dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
+    shape = dy, dt, dx
+    tomo = dtype.empty_shared_array(shape)
+    tomo[:] = 0.0
     center = get_center(shape, center)
 
-    mproc.init_obj(obj)
     arr = mproc.distribute_jobs(
-        tomo,
+        (obj, center, tomo),
         func=extern.c_project,
-        args=(ox, oy, oz, theta, center, dx, dy, dz),
+        args=(theta,),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -221,10 +220,18 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
 
 def get_center(shape, center):
     if center is None:
-        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+        center = np.ones(shape[0], dtype='float32') * (shape[2] / 2.)
     elif np.array(center).size == 1:
-        center = np.ones(shape[1], dtype='float32') * center
+        center = np.ones(shape[0], dtype='float32') * center
     return dtype.as_float32(center)
+
+
+#def get_center(shape, center):
+#    if center is None:
+#        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+#    elif np.array(center).size == 1:
+#        center = np.ones(shape[1], dtype='float32') * center
+#    return dtype.as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):

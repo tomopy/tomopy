@@ -46,10 +46,10 @@
 
 void 
 ospml_quad(
-    float *data, int dx, int dy, int dz, float *center, float *theta,
-    float *recon, int ngridx, int ngridy, int num_iter, float *reg_pars, 
-    int num_block, float *ind_block, 
-    int istart, int iend)
+    const float *data, int dy, int dt, int dx,
+	const float *center, const float *theta,
+    float *recon, int ngridx, int ngridy, int num_iter,
+	const float *reg_pars, int num_block, const float *ind_block)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
     float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
@@ -85,15 +85,15 @@ ospml_quad(
 
     for (i=0; i<num_iter; i++) 
     {
-        simdata = (float *)calloc((dx*dy*dz), sizeof(float));
+        simdata = (float *)calloc((dt*dy*dx), sizeof(float));
 
         // For each slice
-        for (s=istart; s<iend; s++)
+        for (s=0; s<dy; s++)
         {
-            preprocessing(ngridx, ngridy, dz, center[s], 
+            preprocessing(ngridx, ngridy, dx, center[s], 
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
             
-            subset_ind1 = dx/num_block;
+            subset_ind1 = dt/num_block;
             subset_ind2 = subset_ind1;
 
             // For each ordered-subset num_subset
@@ -101,7 +101,7 @@ ospml_quad(
             {
                 if (os == num_block) 
                 {
-                    subset_ind2 = dx%num_block;
+                    subset_ind2 = dt%num_block;
                 }
 
                 sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
@@ -123,11 +123,11 @@ ospml_quad(
                     cos_p = cosf(theta_p);
 
                     // For each detector pixel 
-                    for (d=0; d<dz; d++) 
+                    for (d=0; d<dx; d++) 
                     {
                         // Calculate coordinates
                         xi = -ngridx-ngridy;
-                        yi = (1-dz)/2.0+d+mov;
+                        yi = (1-dx)/2.0+d+mov;
                         calc_coords(
                             ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                             coordx, coordy);
@@ -153,7 +153,7 @@ ospml_quad(
                             indi, dist);
 
                         // Calculate simdata 
-                        calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
+                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
                             csize, indi, dist, recon,
                             simdata); // Output: simdata
 
@@ -169,7 +169,7 @@ ospml_quad(
                         // Update
                         if (sum_dist2 != 0.0) 
                         {
-                            ind_data = d+s*dz+p*dy*dz;
+                            ind_data = d+p*dx+s*dt*dx;
                             ind_recon = s*ngridx*ngridy;
                             upd = data[ind_data]/simdata[ind_data];
                             for (n=0; n<csize-1; n++) 
