@@ -152,7 +152,7 @@ def normalize_roi(tomo, roi=[0, 0, 10, 10], ncore=None, nchunk=None):
 
     arr = mproc.distribute_jobs(
         tomo,
-        func=_normalize,
+        func=_normalize_roi,
         args=(roi, ),
         axis=0,
         ncore=ncore,
@@ -167,7 +167,8 @@ def _normalize_roi(roi, istart, iend):
     roi[roi == 0] = 1.
 
     for m in range(istart, iend):
-        tomo[m, :, :] = np.true_divide(tomo[m, :, :], roi[m])
+        bg = tomo[m, roi[0]:roi[2], roi[1]:roi[3]].mean()
+        tomo[m, :, :] = np.true_divide(tomo[m, :, :], bg)
 
 
 def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
