@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.prep.phase import *
 from test.util import read_file
@@ -61,7 +62,7 @@ __docformat__ = 'restructuredtext en'
 def test_retrieve_phase():
     assert_allclose(
         retrieve_phase(read_file('proj.npy')),
-        read_file('retrieve_phase.npy'))
+        read_file('retrieve_phase.npy'), rtol=1e-6)
 
 
 if __name__ == '__main__':

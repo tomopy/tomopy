@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.prep.normalize import *
 from test.util import read_file
@@ -72,6 +73,8 @@ def test_normalize_bg():
         normalize_bg(read_file('tomo.npy')),
         read_file('normalize_bg.npy'))
 
+# def test_normalize_nf():
+#   This needs to be implemented
 
 if __name__ == '__main__':
     import nose

@@ -41,102 +41,62 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gridrec_h
-#define _gridrec_h
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <stddef.h>
-#include <time.h>
-#include <sys/stat.h>
-
-
-#ifdef WIN32
-#define DLL __declspec(dllexport)
-#else
-#define DLL 
-#endif
-#define ANSI
-#define max(A,B) ((A)>(B)?(A):(B))
-#define min(A,B) ((A)<(B)?(A):(B))
-#define free_matrix(A) (free(*(A)),free(A))
-#define abs(A) ((A)>0 ?(A):-(A))
-#define PI 3.14159265359
-#define Cnvlvnt(X) (wtbl[(int)(X+0.5)])    
-#define Cmult(A,B,C) {(A).r=(B).r*(C).r-(B).i*(C).i;\
-             (A).i=(B).r*(C).i+(B).i*(C).r;}
-
-
-typedef struct {
-    float r;
-    float i;
-} complex;
-
-void DLL
-gridrec(
-    float *data,
-    int dx, int dy, int dz,
-    float *center,
-    float *theta,
-    float *recon,
-    int ngridx, int ngridy,
-    char name[16],
-    float *filter_par,
-    int istart,
-    int iend);
-
-float* 
-malloc_vector_f(long n);
-
-complex* 
-malloc_vector_c(long n);
-
-complex**
-malloc_matrix_c(long nr, long nc);
-
-float 
-(*get_filter(char *name))(float, float, float);
-
-float 
-filter_none(float, float, float);
-
-float 
-filter_shepp(float, float, float);
-
-float 
-filter_hann(float, float, float);
-
-float 
-filter_hamming(float, float, float);
-
-float 
-filter_ramlak(float, float, float);
-
-float 
-filter_parzen(float, float, float);
-
-float 
-filter_butterworth(float, float, float);
+#include "stripe.h"
 
 void 
-set_filter_tables(
-    int dx, int pd, 
-    float fac, float(*pf)(float, float, float), float *filter_par,
-    complex *A);
+remove_stripe_sf(
+    float *data, int dx, int dy, int dz, int size, int istart, int iend)
+{
+    int i, j, k, p, s;
+    float *avrage_row;
+    float *smooth_row;
 
-void 
-set_trig_tables(
-    int dx, float *theta, 
-    float **SP, float **CP);
+    // For each slice.
+    for (s=istart; s<iend; s++)
+    {
+        avrage_row = (float *) calloc(dz, sizeof(float));
+        smooth_row = (float *) calloc(dz, sizeof(float));
+        
+        // For each projection.
+        for (p=0; p<dx; p++)
+        {
+            // For each pixel.
+            for (j=0; j<dz; j++)
+            {
+                avrage_row[j] += (data[j+s*dz+p*dy*dz]/dz);
+            }
+        }
 
-void 
-set_pswf_tables(
-    float C, int nt, float lmbda, float *coefs, 
-    int ltbl, int linv, float* wtbl, float* winv);
+        // For each projection.
+        for (p=0; p<dx; p++)
+        {
+            // We have now computed the average row of the sinogram.
+            // Smooth it
+            for (i=0; i<dz; i++)
+            {
+                avrage_row[i] /= 1;
+            }
+            for (i=0; i<dz; i++)
+            {
+                smooth_row[i] = 0;
+                for (j=0; j<size; j++)
+                {
+                   k = i+j-size/2;
+                   if (k < 0) k = 0;
+                   if (k > dz - 1) k = dz -1;
+                   smooth_row[i] += avrage_row[k];
+                }
+                smooth_row[i] /= size;
+            }
 
-float 
-legendre(int n, float *coefs, float x);
+            // Subtract this difference from each row in sinogram.     
+            for (j=0; j<dz; j++)
+            {
+               data[j+s*dz+p*dy*dz] -= (avrage_row[j] - smooth_row[j]);
+            }
+        }
 
-#endif
+        free(avrage_row);
+        free(smooth_row);
+    }
+}

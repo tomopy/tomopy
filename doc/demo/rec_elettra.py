@@ -32,7 +32,7 @@ if __name__ == '__main__':
     proj, flat, dark = tomopy.read_elettra_syrmep(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
-    theta  = tomopy.angles(proj.shape[0], 0, 180)
+    theta = tomopy.angles(proj.shape[0], 0, 180)
 
     # Flat-field correction of raw data.
     proj = tomopy.normalize(proj, flat, dark)

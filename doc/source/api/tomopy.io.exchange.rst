@@ -11,6 +11,7 @@
    .. autosummary::
    
       read_als_832
+      read_als_832h5
       read_anka_topotomo
       read_aps_1id
       read_aps_2bm

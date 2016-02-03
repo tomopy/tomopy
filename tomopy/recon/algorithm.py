@@ -50,8 +50,10 @@
 Module for reconstruction algorithms.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
+import six
 import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
@@ -121,6 +123,26 @@ def recon(
         Number of pixels along x- and y-axes in the reconstruction grid.
     filter_name : str, optional
         Name of the filter for analytic reconstruction.
+
+        'none'
+            No filter.
+        'shepp'
+            Shepp-Logan filter (default).
+        'cosine'
+            Cosine filter.
+        'hann'
+            Cosine filter.
+        'hamming'
+            Hamming filter.
+        'ramlak'
+            Ram-Lak filter.
+        'parzen'
+            Parzen filter.
+        'butterworth'
+            Butterworth filter.
+
+    filter_par: list, optional
+        Filter parameters as a list.
     num_iter : int, optional
         Number of algorithm iterations performed.
     num_block : int, optional
@@ -192,8 +214,8 @@ def recon(
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
         'bart': ['num_gridx', 'num_gridy', 'num_iter',
                  'num_block', 'ind_block'],
-        'fbp': ['num_gridx', 'num_gridy', 'filter_name'],
-        'gridrec': ['num_gridx', 'num_gridy', 'filter_name'],
+        'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+        'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
         'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
         'osem': ['num_gridx', 'num_gridy', 'num_iter',
                  'num_block', 'ind_block'],
@@ -210,20 +232,40 @@ def recon(
 
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
-    if isinstance(algorithm, str):
+
+    if isinstance(algorithm, six.string_types):
+
         # Check whether we have an allowed method
         if algorithm not in allowed_kwargs:
             raise ValueError(
                 'Keyword "algorithm" must be one of %s, or a Python method.' %
                 (list(allowed_kwargs.keys()),))
+
         # Make sure have allowed kwargs appropriate for algorithm.
-        for key in kwargs:
+        for key, value in list(kwargs.items()):
             if key not in allowed_kwargs[algorithm]:
-                raise ValueError('%s keyword not in allowed keywords %s' %
-                                 (key, allowed_kwargs[algorithm]))
+                raise ValueError(
+                    '%s keyword not in allowed keywords %s' %
+                    (key, allowed_kwargs[algorithm]))
+            else:
+                # Make sure they are numpy arrays.
+                if not isinstance(kwargs, (np.ndarray, np.generic)):
+                    kwargs[key] = np.array(value)
+
+                # Make sure reg_par is float32.
+                if key == 'reg_par':
+                    if not isinstance(kwargs['reg_par'], np.float32):
+                        kwargs['reg_par'] = np.array(value, dtype='float32')
+
+                # Make sure filter_par is float32.
+                if key == 'filter_par':
+                    if not isinstance(kwargs['filter_par'], np.float32):
+                        kwargs['filter_par'] = np.array(value, dtype='float32')
+
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
+
     elif hasattr(algorithm, '__call__'):
         # Set kwarg defaults.
         for kw in generic_kwargs:
@@ -247,6 +289,7 @@ def recon(
 def _init_tomo(tomo, emission):
     tomo = dtype.as_float32(tomo)
     if not emission:
+        tomo[tomo <= 0.] = 1.
         tomo = -np.log(tomo)
     return tomo
 
@@ -312,6 +355,7 @@ def _get_algorithm_kwargs(shape):
         'num_gridx': dz,
         'num_gridy': dz,
         'filter_name': np.array('shepp', dtype=(str, 16)),
+        'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),

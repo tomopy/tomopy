@@ -50,10 +50,12 @@
 Module for generating synthetic phantoms.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from skimage import io as sio
 import numpy as np
+import scipy as sp
+import tifffile
 import os.path
 import logging
 
@@ -78,12 +80,14 @@ DATA_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 
-def baboon(dtype='float32'):
+def baboon(size=512, dtype='float32'):
     """
     Load test baboon image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -92,19 +96,23 @@ def baboon(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'baboon.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
     return im
 
 
-def barbara(dtype='float32'):
+def barbara(size=512, dtype='float32'):
     """
     Load test Barbara image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -113,19 +121,22 @@ def barbara(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'barbara.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def cameraman(dtype='float32'):
+def cameraman(size=512, dtype='float32'):
     """
     Load test cameraman image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -134,19 +145,22 @@ def cameraman(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'cameraman.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def checkerboard(dtype='float32'):
+def checkerboard(size=512, dtype='float32'):
     """
     Load test checkerboard image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -155,19 +169,22 @@ def checkerboard(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'checkerboard.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def lena(dtype='float32'):
+def lena(size=512, dtype='float32'):
     """
     Load test Lena image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -176,19 +193,22 @@ def lena(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'lena.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def peppers(dtype='float32'):
+def peppers(size=512, dtype='float32'):
     """
     Load test peppers image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -197,19 +217,22 @@ def peppers(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'peppers.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def shepp2d(dtype='float32'):
+def shepp2d(size=512, dtype='float32'):
     """
     Load test Shepp-Logan image array.
 
     Parameters
     ----------
+    size : int or tuple of int, optional
+        Size of the output image.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -218,21 +241,34 @@ def shepp2d(dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 2)
     fname = os.path.join(DATA_PATH, 'shepp2d.tif')
-    im = sio.imread(fname)
+    im = tifffile.imread(fname)
+    im = sp.misc.imresize(im, size, interp='cubic')
     im = np.expand_dims(im, 0)
-    im = im.astype(dtype)
-    return im
+    return im.astype(dtype)
 
 
-def shepp3d(shape=(128, 128, 128), dtype='float32'):
+def _totuple(size, dim):
+    """
+    Converts size to tuple.
+    """
+    if not isinstance(size, tuple):
+        if dim == 2:
+            size = (size, size)
+        elif dim == 3:
+            size = (size, size, size)
+    return size
+
+
+def shepp3d(size=128, dtype='float32'):
     """
     Load 3D Shepp-Logan image array.
 
     Parameters
     ----------
-    shape : list, optional
-        Shape of the 3D data.
+    size : int or tuple, optional
+        Size of the 3D data.
     dtype : str, optional
         The desired data-type for the array.
 
@@ -241,18 +277,19 @@ def shepp3d(shape=(128, 128, 128), dtype='float32'):
     ndarray
         Output 3D test image.
     """
+    size = _totuple(size, 3)
     shepp_params = _array_to_params(_get_shepp_array())
-    return phantom(shape, shepp_params, dtype).clip(0, np.inf)
+    return phantom(size, shepp_params, dtype).clip(0, np.inf)
 
 
-def phantom(shape, params, dtype='float32'):
+def phantom(size, params, dtype='float32'):
     """
-    Generate a cube of given shape using a list of ellipsoid parameters.
+    Generate a cube of given size using a list of ellipsoid parameters.
 
     Parameters
     ----------
-    shape: tuple of int
-        Shape of the output cube.
+    size: tuple of int
+        Size of the output cube.
     params: list of dict
         List of dictionaries with the parameters defining the ellipsoids
         to include in the cube.
@@ -265,10 +302,10 @@ def phantom(shape, params, dtype='float32'):
         3D object filled with the specified ellipsoids.
     """
     # instantiate ndarray cube
-    obj = np.zeros(shape, dtype=dtype)
+    obj = np.zeros(size, dtype=dtype)
 
     # define coords
-    coords = _define_coords(shape)
+    coords = _define_coords(size)
 
     # recursively add ellipsoids to cube
     for param in params:
@@ -353,8 +390,8 @@ def _transform(coords, p):
     alpha = _rotation_matrix(p)
     x, y, z = coords
     ndim = len(coords)
-    out_coords = [sum([alpha[j, i] * coords[i] for i in xrange(ndim)])
-                  for j in xrange(ndim)]
+    out_coords = [sum([alpha[j, i] * coords[i] for i in range(ndim)])
+                  for j in range(ndim)]
     M0 = [p['x0'], p['y0'], p['z0']]
     sc = [p['a'], p['b'], p['c']]
     out_coords = [(u - u0) / su for u, u0, su in zip(out_coords, M0, sc)]
@@ -392,9 +429,9 @@ def _array_to_params(array):
 
     array = np.asarray(array)
     out = []
-    for i in xrange(array.shape[0]):
+    for i in range(array.shape[0]):
         tmp = dict()
-        for k, j in zip(params_tuple, xrange(array.shape[1])):
+        for k, j in zip(params_tuple, list(range(array.shape[1]))):
             tmp[k] = array[i, j]
         out.append(tmp)
     return out

@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.prep.stripe import *
 from test.util import read_file
@@ -68,6 +69,12 @@ def test_remove_stripe_ti():
     assert_allclose(
         remove_stripe_ti(read_file('proj.npy')),
         read_file('remove_stripe_ti.npy'), rtol=1e-2)
+
+
+def test_remove_stripe_sf():
+    assert_allclose(
+        remove_stripe_sf(read_file('proj.npy')),
+        read_file('remove_stripe_sf.npy'), rtol=1e-2)
 
 
 if __name__ == '__main__':

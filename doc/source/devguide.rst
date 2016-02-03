@@ -76,7 +76,6 @@ is incremented for API changes which are not backward-compatible. For
 example, software which relies on version 2.1.5 of an API is compatible
 with version 2.2.3, but not necessarily with 3.2.4.
 
-
 Commiting changes
 =================
 

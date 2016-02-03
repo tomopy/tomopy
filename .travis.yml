@@ -1,23 +1,28 @@
 language: python
 
 python:
+  - "2.6"
   - "2.7"
+  - "3.4"
+  - "3.5"
+
+os:
+  - linux
+  
+sudo: false
 
 before_install:
-  - sudo apt-get update
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda config --add channels dgursoy
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
-  - conda install conda-build
-  - conda update -n root conda-build
+  - conda install anaconda-client
   - conda info -a
 
 install:
-  - conda install nose numpy h5py scikit-image pywavelets spefile netcdf4 edffile python-coveralls
-  - mkdir lib
+  - conda install nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile tifffile python-coveralls
   - python setup.py build_ext --inplace
 
 script: 
