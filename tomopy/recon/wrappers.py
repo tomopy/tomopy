@@ -229,14 +229,14 @@ def astra_run(*args):
                 cfg['option']['GPUindex'] = gpu_list[j]
             alg_id = astra_mod.algorithm.create(cfg)
             algs.append(alg_id)
-        
-	if nbatch==1:
+        if nbatch==1:
             astra_mod.algorithm.run(algs[0], opts['num_iter'])
         else:
             thrds = [executor.submit(lambda q: astra_mod.algorithm.run(q, opts['num_iter']), alg_id) for alg_id in algs]
-            map(lambda q: q.result(), thrds)
+            for q in thrds:
+               q.result()
         
-	astra_mod.algorithm.delete(algs)
+        astra_mod.algorithm.delete(algs)
         del algs[:]
         astra_mod.data2d.delete(vids)
         del vids[:]
