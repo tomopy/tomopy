@@ -46,11 +46,13 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.io.reader import *
 import numpy as np
 import os.path
+import h5py
 from numpy.testing import assert_allclose
 
 
@@ -67,7 +69,7 @@ def test_read_tiff():
 def test_read_tiff_stack():
     fname = os.path.join('test', 'data', 'reader_00000.tiff')
     assert_allclose(
-        read_tiff_stack(fname, ind=range(0, 4), digit=5),
+        read_tiff_stack(fname, ind=list(range(0, 4)), digit=5),
         np.ones((4, 8, 16)))
 
 
@@ -75,6 +77,15 @@ def test_read_hdf5():
     fname = os.path.join('test', 'data', 'reader.h5')
     gname = os.path.join('exchange', 'data')
     assert_allclose(read_hdf5(fname, gname), np.ones((4, 8, 16)))
+
+
+def test_read_hdf5_stack():
+    gname = '20151120_100640_testBL832h5file'
+    fname = os.path.join('test', 'data', 'read_stack.h5')
+    dname = gname + '_0000_0000.tif'
+    assert_allclose(
+        read_hdf5_stack(h5py.File(fname, 'r')[gname], dname, list(range(20))),
+        np.ones((20, 10, 10)))
 
 
 if __name__ == '__main__':

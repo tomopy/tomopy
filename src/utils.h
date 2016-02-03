@@ -66,7 +66,7 @@
 
 // Data simulation
 
-void 
+void DLL
 project(
     float *obj,
     int ox, 
@@ -83,7 +83,7 @@ project(
 
 // Reconstruction algorithms
 
-void 
+void DLL
 art(
     float *data,
     int dx, 
@@ -98,7 +98,7 @@ art(
     int istart, 
     int iend);
 
-void 
+void DLL
 bart(
     float *data,
     int dx, 
@@ -115,7 +115,7 @@ bart(
     int istart, 
     int iend);
 
-void 
+void DLL
 fbp(
     float *data,
     int dx, 
@@ -127,10 +127,11 @@ fbp(
     int ngridx,
     int ngridy,
     char name[16],
+    float *filter_par,
     int istart, 
     int iend);
 
-void 
+void DLL
 mlem(
     float *data,
     int dx, 
@@ -145,7 +146,7 @@ mlem(
     int istart, 
     int iend);
 
-void 
+void DLL
 osem(
     float *data,
     int dx, 
@@ -162,7 +163,7 @@ osem(
     int istart, 
     int iend);
 
-void 
+void DLL
 ospml_hybrid(
     float *data,
     int dx, 
@@ -180,7 +181,7 @@ ospml_hybrid(
     int istart, 
     int iend);
 
-void 
+void DLL
 ospml_quad(
     float *data,
     int dx, 
@@ -198,7 +199,7 @@ ospml_quad(
     int istart, 
     int iend);
 
-void 
+void DLL
 pml_hybrid(
     float *data,
     int dx, 
@@ -214,7 +215,7 @@ pml_hybrid(
     int istart, 
     int iend);
 
-void 
+void DLL
 pml_quad(
     float *data,
     int dx, 
@@ -230,7 +231,7 @@ pml_quad(
     int istart, 
     int iend);
 
-void 
+void DLL
 sirt(
     float *data,
     int dx, 
@@ -247,18 +248,18 @@ sirt(
 
 // Utility functions for data simultation
 
-void 
+void DLL
 preprocessing(
     int ngridx, int ngridy, 
     int dz, 
     float center, float *mov, 
     float *gridx, float *gridy);
 
-int 
+int DLL
 calc_quadrant(
     float theta_p); 
 
-void 
+void DLL
 calc_coords(
     int ngridx, int ngridy,
     float xi, float yi,
@@ -266,7 +267,7 @@ calc_coords(
     float *gridx, float *gridy,
     float *coordx, float *coordy);
 
-void 
+void DLL
 trim_coords(
     int ngridx, int ngridy,
     float *coordx, float *coordy, 
@@ -274,7 +275,7 @@ trim_coords(
     int *asize, float *ax, float *ay, 
     int *bsize, float *bx, float *by);
 
-void 
+void DLL
 sort_intersections(
     int ind_condition, 
     int asize, float *ax, float *ay, 
@@ -282,7 +283,7 @@ sort_intersections(
     int *csize, 
     float *coorx, float *coory);
 
-void 
+void DLL
 calc_dist(
     int ngridx, int ngridy, 
     int csize, 
@@ -290,7 +291,7 @@ calc_dist(
     int *indi, 
     float *dist);
 
-void 
+void DLL
 calc_simdata(
     int p, int s, int d, 
     int ngridx, int ngridy, 

@@ -50,11 +50,16 @@
 Module for pre-processing tasks.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import pywt
+import pyfftw
+import tomopy.prep.phase as phase
+import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
+import tomopy.util.dtype as dtype
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,7 +70,8 @@ __credits__ = "Juan V. Bermudez, Hugo H. Slepicka"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['remove_stripe_fw',
-           'remove_stripe_ti']
+           'remove_stripe_ti',
+           'remove_stripe_sf']
 
 
 def remove_stripe_fw(
@@ -101,6 +107,9 @@ def remove_stripe_fw(
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
+    # Enable cache for FFTW.
+    pyfftw.interfaces.cache.enable()
+
     arr = mproc.distribute_jobs(
         tomo,
         func=_remove_stripe_fw,
@@ -116,9 +125,10 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
     dx, dy, dz = tomo.shape
     nx = dx
     if pad:
-        nx = dx + dx / 8
-    xshift = int((nx - dx) / 2.)
+        nx = dx + dx // 8
+    xshift = int((nx - dx) // 2)
 
+    num_jobs = iend - istart
     for m in range(istart, iend):
         sli = np.zeros((nx, dz), dtype='float32')
         sli[xshift:dx + xshift] = tomo[:, m, :]
@@ -136,7 +146,8 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
         # FFT transform of horizontal frequency bands.
         for n in range(level):
             # FFT
-            fcV = np.fft.fftshift(np.fft.fft(cV[n], axis=0))
+            fcV = np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft(
+                cV[n], axis=0, planner_effort=phase._plan_effort(num_jobs)))
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
@@ -145,7 +156,9 @@ def _remove_stripe_fw(level, wname, sigma, pad, istart, iend):
             fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
 
             # Inverse FFT.
-            cV[n] = np.real(np.fft.ifft(np.fft.ifftshift(fcV), axis=0))
+            cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
+                np.fft.ifftshift(fcV), axis=0,
+                planner_effort=phase._plan_effort(num_jobs)))
 
         # Wavelet reconstruction.
         for n in range(level)[::-1]:
@@ -301,3 +314,35 @@ def _ringb(sino, m, n, step):
         new[:, k * step:(k + 1) * step] = np.add(sino_block, K)
     newsino = new.astype(np.float32)
     return np.transpose(newsino)
+
+
+def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
+    """
+    Normalize raw projection data using a smoothing filter approach.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    size : int, optional
+        Size of the smoothing filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    tomo = dtype.as_float32(tomo)
+    dx, dy, dz = tomo.shape
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=extern.c_remove_stripe_sf,
+        args=(dx, dy, dz, size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr

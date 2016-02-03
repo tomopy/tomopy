@@ -50,7 +50,8 @@
 Module for simulation of x-rays.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import tomopy.util.dtype as dtype

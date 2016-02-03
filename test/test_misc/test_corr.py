@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from test.util import read_file, loop_dim
 from tomopy.misc.corr import *
@@ -88,7 +89,11 @@ def test_remove_outlier():
     proj[8][4][6] = 20
     assert_allclose(
         remove_outlier(proj, dif=10),
-        read_file('remove_zinger.npy'))
+        read_file('remove_outlier.npy'))
+
+
+def test_circ_mask():
+    loop_dim(circ_mask, read_file('obj.npy'))
 
 
 if __name__ == '__main__':

@@ -50,11 +50,12 @@
 Module for internal utility functions.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import os.path
 import ctypes
-import numpy as np
+import glob
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
 import logging
@@ -68,6 +69,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
            'c_normalize_bg',
+           'c_remove_stripe_sf,'
            'c_sample',
            'c_art',
            'c_bart',
@@ -79,7 +81,8 @@ __all__ = ['c_shared_lib',
            'c_ospml_quad',
            'c_pml_hybrid',
            'c_pml_quad',
-           'c_sirt']
+           'c_sirt',
+           'c_remove_ring']
 
 
 def c_shared_lib(lib_name):
@@ -91,12 +94,10 @@ def c_shared_lib(lib_name):
             ext = '.pyd'
         else:
             ext = '.so'
-        libpath = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..', '..', 'lib', lib_name + ext))
+        _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
         return ctypes.CDLL(libpath)
-    except OSError as e:
+    except (OSError, IndexError) as e:
         logger.warning('OSError: Shared library missing.')
 
 
@@ -113,6 +114,20 @@ def c_normalize_bg(dx, dy, dz, air, istart, iend):
         dtype.as_c_int(dy),
         dtype.as_c_int(dz),
         dtype.as_c_int(air),
+        dtype.as_c_int(istart),
+        dtype.as_c_int(iend))
+
+
+def c_remove_stripe_sf(dx, dy, dz, size, istart, iend):
+    tomo = mproc.SHARED_ARRAY
+
+    LIB_TOMOPY.remove_stripe_sf.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.remove_stripe_sf(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+        dtype.as_c_int(size),
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
 
@@ -209,6 +224,7 @@ def c_fbp(*args):
         dtype.as_c_int(args[5]['num_gridx']),
         dtype.as_c_int(args[5]['num_gridy']),
         dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
 
@@ -229,6 +245,7 @@ def c_gridrec(*args):
         dtype.as_c_int(args[5]['num_gridx']),
         dtype.as_c_int(args[5]['num_gridy']),
         dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
 
@@ -381,3 +398,23 @@ def c_sirt(*args):
         dtype.as_c_int(args[5]['num_iter']),
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
+
+
+def c_remove_ring(*args):
+    data = mproc.SHARED_ARRAY
+
+    LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.remove_ring(
+        dtype.as_c_float_p(data),
+        dtype.as_c_float(args[0]),  # center_x
+        dtype.as_c_float(args[1]),  # center_y
+        dtype.as_c_int(args[2]),  # dx
+        dtype.as_c_int(args[3]),  # dy
+        dtype.as_c_int(args[4]),  # dz
+        dtype.as_c_float(args[5]),  # thresh_max
+        dtype.as_c_float(args[6]),  # thresh_min
+        dtype.as_c_float(args[7]),  # thresh
+        dtype.as_c_int(args[8]),  # theta_min
+        dtype.as_c_int(args[9]),  # rwidth
+        dtype.as_c_int(args[10]),  # istart
+        dtype.as_c_int(args[11]))  # iend

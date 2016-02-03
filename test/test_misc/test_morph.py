@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from test.util import read_file, loop_dim
 from tomopy.misc.morph import *
@@ -58,10 +59,6 @@ from numpy.testing import assert_array_almost_equal
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-
-
-def test_pad():
-    loop_dim(pad, read_file('obj.npy'))
 
 
 def test_downsample():

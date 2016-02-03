@@ -50,7 +50,8 @@
 Module for data size morphing functions.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 import tomopy.util.extern as extern
@@ -72,7 +73,7 @@ __all__ = ['pad',
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, val=0):
+def pad(arr, axis, npad=None, mode='constant', **kwargs):
     """
     Pad an array along specified axis.
 
@@ -84,23 +85,47 @@ def pad(arr, axis, npad=None, val=0):
         New dimension after padding.
     axis : int, optional
         Axis along which padding will be performed.
-    val : float, optional
-        Pad value.
+    mode : str or function
+        One of the following string values or a user supplied function.
+        'constant'
+            Pads with a constant value.
+        'edge'
+            Pads with the edge values of array.
+    constant_values : float, optional
+        Used in 'constant'. Pad value
 
     Returns
     -------
     ndarray
         Padded 3D array.
     """
+
+    allowedkwargs = {'constant': ['constant_values'],
+                     'edge': [], }
+
+    kwdefaults = {'constant_values': 0, }
+
+    if isinstance(mode, str):
+        for key in kwargs:
+            if key not in allowedkwargs[mode]:
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                 (key, allowedkwargs[mode]))
+        for kw in allowedkwargs[mode]:
+            kwargs.setdefault(kw, kwdefaults[kw])
+
     if npad is None:
         npad = _get_npad(arr.shape[axis])
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
-    cval = _get_pad_sequence(arr.shape, axis, npad)
-    return np.pad(arr, pad_width, 'constant', constant_values=cval)
+
+    if mode == 'constant':
+        return np.pad(arr, pad_width, 'constant',
+                      constant_values=kwargs['constant_values'])
+    elif mode == 'edge':
+        return np.pad(arr, pad_width, 'edge')
 
 
 def _get_npad(dim):
-    return int(np.ceil(dim * np.sqrt(2))) - dim
+    return int(np.ceil((dim * np.sqrt(2) - dim) / 2))
 
 
 def _get_pad_sequence(shape, axis, npad):
@@ -129,7 +154,7 @@ def downsample(arr, level=1, axis=2):
     Returns
     -------
     ndarray
-        Downsampled 3D array.
+        Downsampled 3D array in float32.
     """
     return _sample(arr, level, axis, mode=0)
 
@@ -150,19 +175,19 @@ def upsample(arr, level=1, axis=2):
     Returns
     -------
     ndarray
-        Upsampled 3D array.
+        Upsampled 3D array in float32.
     """
     return _sample(arr, level, axis, mode=1)
 
 
 def _sample(arr, level, axis, mode):
-    arr = dtype.as_float32(arr)
+    arr = dtype.as_float32(arr.copy())
     dx, dy, dz = arr.shape
 
     if mode == 0:
-        dim = arr.shape[axis] / np.power(2, level)
+        dim = int(arr.shape[axis] / np.power(2, level))
     if mode == 1:
-        dim = arr.shape[axis] * np.power(2, level)
+        dim = int(arr.shape[axis] * np.power(2, level))
 
     out = _init_out(arr, axis, dim)
     return extern.c_sample(mode, arr, dx, dy, dz, level, axis, out)

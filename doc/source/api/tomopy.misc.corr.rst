@@ -11,9 +11,11 @@
    .. autosummary::
    
       adjust_range
+      circ_mask
       gaussian_filter
       median_filter
       sobel_filter
       remove_nan
       remove_neg
       remove_outlier
+      remove_ring
