@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-TomoPy example script to reconstruct a TXM data containing 
-a series of useless projections becuase of the presence of an 
+TomoPy example script to reconstruct a TXM data containing
+a series of useless projections becuase of the presence of an
 environment cell blocking some of the sample views.
 """
- 
+
 from __future__ import print_function
 import tomopy
 import numpy as np
@@ -28,14 +28,14 @@ if __name__ == '__main__':
     num_sino = (end - start) // chunks
 
     for m in range(chunks):
-        sino_start = start + num_sino * m 
+        sino_start = start + num_sino * m
         sino_end = start + num_sino * (m + 1)
 
         # Read APS 32-ID raw data.
         proj, flat, dark = tomopy.read_aps_32id(fname, sino=(sino_start, sino_end))
 
         # Set data collection angles as equally spaced between 0-180 degrees.
-        theta  = tomopy.angles(proj.shape[0])
+        theta = tomopy.angles(proj.shape[0])
 
         # Remove the missing angles from data.
         proj = np.concatenate((proj[0:miss_projs[0], :, :], proj[miss_projs[1] + 1:-1, :, :]), axis=0)
@@ -49,4 +49,4 @@ if __name__ == '__main__':
 
         # Write data as stack of TIFs.
         tomopy.write_tiff_stack(rec, fname='recon_dir/recon', start=sino_start)
-    
+

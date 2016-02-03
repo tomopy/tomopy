@@ -66,6 +66,13 @@ doc/_build
 .settings
 pip-log.txt
 
+# Other byproducts #
+####################
+.idea
+.project
+.spyderproject
+.pydevproject
+
 # LaTex generated files #
 #########################
 *.aux

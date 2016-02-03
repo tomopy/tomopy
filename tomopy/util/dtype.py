@@ -50,7 +50,8 @@
 Module for internal utility functions.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import os
 import ctypes
@@ -72,6 +73,7 @@ __all__ = ['as_ndarray',
            'as_uint16',
            'as_c_float_p',
            'as_c_int',
+           'as_c_float',
            'as_c_char_p',
            'as_c_void_p']
 
@@ -100,7 +102,7 @@ def as_int32(arr):
 
 def as_uint16(arr):
     arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.int32)
+    return as_dtype(arr, np.uint16)
 
 
 def as_uint8(arr):
@@ -115,6 +117,10 @@ def as_c_float_p(arr):
 
 def as_c_int(arr):
     return ctypes.c_int(arr)
+
+
+def as_c_float(arr):
+    return ctypes.c_float(arr)
 
 
 def as_c_char_p(arr):

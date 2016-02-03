@@ -47,12 +47,12 @@
 
 void 
 gridrec(
-    float *data, int dx, int dy, int dz, float *center, float *theta, 
-    float *recon, int ngridx, int ngridy, char *fname, 
+    float *data, int dx, int dy, int dz, float *center, float *theta,
+    float *recon, int ngridx, int ngridy, char *fname, float *filter_par,
     int istart, int iend)
 {
     int s, p, iu, iv;
-    float (*filter)(float);
+    float (*filter)(float, float, float);
     float *sine, *cose, *wtbl, *work, *winv;
     float C, nt, lambda;
     float L;
@@ -101,7 +101,7 @@ gridrec(
     for (s=istart; s<iend; s+=2)
     {
         // Set up table of combined filter-phase factors.
-        set_filter_tables(dx, pdim, center[s], filter, filphase);
+        set_filter_tables(dx, pdim, center[s], filter, filter_par, filphase);
 
         // First clear the array H
         for(iu=0; iu<pdim; iu++) 
@@ -170,7 +170,7 @@ gridrec(
             while(j<dz)  
             {     
                 sino[j].r = data[j+s*dz+p*dy*dz];
-                if (!(dy == 1 || iend-istart == 1))
+                if (!(dy == 1 || iend-s == 1))
                 {
                     sino[j].i = data[j+(s+1)*dz+p*dy*dz];
                 } else {
@@ -306,7 +306,7 @@ gridrec(
                         corrn = corrn_u*winv[k+padx];
                         
                         recon[islc1+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].r;
-                        if (!(dy == 1 || iend-istart == 1))
+                        if (!(dy == 1 || iend-s == 1))
                         {
                             recon[islc2+ngridy*(ngridx-1-k)+j] = corrn*H[iu][iv].i;
                         }
@@ -342,7 +342,7 @@ gridrec(
 void 
 set_filter_tables(
     int dx, int pd, float center, 
-    float(*pf)(float), complex *A)
+    float(*pf)(float, float,  float), float *filter_par, complex *A)
 { 
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
@@ -356,7 +356,7 @@ set_filter_tables(
     for(j=0; j<pd2; j++)
     {
         x = j*rtmp1;
-        rtmp2 = (*pf)((float)j/pd)*norm;
+        rtmp2 = (*pf)((float)j/pd, (float)filter_par[0], (float)filter_par[1])*norm;
         A[j].r = rtmp2*cosf(x);
         A[j].i = -rtmp2*sinf(x);
     }
@@ -494,7 +494,7 @@ malloc_matrix_c(long nr, long nc)
 
 // No filter
 float 
-filter_none(float x)
+filter_none(float x, float y, float z)
 {
     return 1;
 }
@@ -502,7 +502,7 @@ filter_none(float x)
 
 // Shepp-Logan filter
 float 
-filter_shepp(float x)
+filter_shepp(float x, float y, float z)
 {
     return abs(sin(PI*x)/PI);
 }
@@ -510,7 +510,7 @@ filter_shepp(float x)
 
 // Cosine filter 
 float 
-filter_cosine(float x)
+filter_cosine(float x, float y, float z)
 {
     return abs(x)*(cos(PI*x));
 }
@@ -518,59 +518,54 @@ filter_cosine(float x)
 
 // Hann filter 
 float 
-filter_hann(float x)
+filter_hann(float x, float cutoff, float z)
 {
-    float cutoff = 0.5;
     return abs(x)*0.5*(1.+cos(PI*x/cutoff));
 }
 
 
 // Hamming filter 
 float 
-filter_hamming(float x)
+filter_hamming(float x, float cutoff, float z)
 {
-    float cutoff = 0.5;
     return abs(x)*(0.54+0.46*cos(PI*x/cutoff));
 }
 
 // Ramlak filter
 float 
-filter_ramlak(float x)
+filter_ramlak(float x, float y, float z)
 {
     return abs(x);
 }
 
 // Parzen filter
 float 
-filter_parzen(float x)
+filter_parzen(float x, float cutoff, float z)
 {
-    float cutoff = 0.5;
     return abs(x)*pow(1-abs(x)/cutoff, 3);
 }
 
 // Butterworth filter
 float 
-filter_butterworth(float x)
+filter_butterworth(float x, float cutoff, float order)
 {
-    float cutoff = 0.4;
-    float order = 8;
     return abs(x)/(1+pow(x/cutoff, 2*order));
 }
 
 
-float (*get_filter(char *name))(float) 
+float (*get_filter(char *name))(float, float, float) 
 {
     struct 
     {
         char* name; 
-        float (*fp)(float);
+        float (*fp)(float, float, float);
     } fltbl[] = {
         {"none", filter_none},
-        {"shepp", filter_shepp},
+        {"shepp", filter_shepp}, // Default
         {"cosine", filter_cosine},
         {"hann", filter_hann},
         {"hamming", filter_hamming},
-        {"ramlak", filter_ramlak}, // Default
+        {"ramlak", filter_ramlak},
         {"parzen", filter_parzen},
         {"butterworth", filter_butterworth}};
 
@@ -581,5 +576,5 @@ float (*get_filter(char *name))(float)
             return fltbl[i].fp;
         }
     }
-    return fltbl[5].fp;   
+    return fltbl[1].fp;   
 }

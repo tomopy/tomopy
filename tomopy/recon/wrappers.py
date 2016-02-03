@@ -50,7 +50,8 @@
 Module for reconstruction software wrappers.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import logging
 import tomopy.util.mproc as mproc
@@ -188,8 +189,8 @@ def astra_run(*args):
     algs = []
     pids = []
     sids = []
-    for ib in xrange(istart, iend, nbatch):
-        for j in xrange(nbatch):
+    for ib in range(istart, iend, nbatch):
+        for j in range(nbatch):
             i = ib+j
             if i>=iend: break
 
@@ -228,13 +229,14 @@ def astra_run(*args):
                 cfg['option']['GPUindex'] = gpu_list[j]
             alg_id = astra_mod.algorithm.create(cfg)
             algs.append(alg_id)
-        if nbatch==1:
+        
+	if nbatch==1:
             astra_mod.algorithm.run(algs[0], opts['num_iter'])
         else:
             thrds = [executor.submit(lambda q: astra_mod.algorithm.run(q, opts['num_iter']), alg_id) for alg_id in algs]
             map(lambda q: q.result(), thrds)
-#            map(lambda q: q.join(), thrds)
-        astra_mod.algorithm.delete(algs)
+        
+	astra_mod.algorithm.delete(algs)
         del algs[:]
         astra_mod.data2d.delete(vids)
         del vids[:]

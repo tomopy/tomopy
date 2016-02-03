@@ -47,15 +47,17 @@
 # #########################################################################
 
 """
-Module for data correction functions.
+Module for data correction and masking functions.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import numpy as np
 from scipy.ndimage import filters
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
+import tomopy.util.extern as extern
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,12 +68,14 @@ __credits__ = "Mark Rivers, Xianghui Xiao"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['adjust_range',
+           'circ_mask',
            'gaussian_filter',
            'median_filter',
            'sobel_filter',
            'remove_nan',
            'remove_neg',
-           'remove_outlier']
+           'remove_outlier',
+           'remove_ring']
 
 
 def adjust_range(arr, dmin=None, dmax=None):
@@ -334,3 +338,119 @@ def _remove_outlier_from_img(img, dif, size):
     tmp = filters.median_filter(img, (size, size))
     mask = ((img - tmp) >= dif).astype(int)
     return tmp * mask + img * (1 - mask)
+
+
+def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
+                thresh_max=300.0, thresh_min=-100.0, theta_min=30,
+                rwidth=30, ncore=None, nchunk=None):
+    """
+    Remove ring artifacts from images in the reconstructed domain.
+    Descriptions of parameters need to be more clear for sure.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Array of reconstruction data
+    center_x : float, optional
+        abscissa location of center of rotation
+    center_y : float, optional
+        ordinate location of center of rotation
+    thresh : float, optional
+        maximum value of an offset due to a ring artifact
+    thresh_max : float, optional
+        max value for portion of image to filter
+    thresh_min : float, optional
+        min value for portion of image to filer
+    theta_min : int, optional
+        minimum angle in degrees (int) to be considered ring artifact
+    rwidth : int, optional
+        Maximum width of the rings to be filtered in pixels
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected reconstruction data
+    """
+
+    rec = dtype.as_float32(rec)
+
+    dz, dy, dx = rec.shape
+
+    if center_x is None:
+        center_x = (dx - 1.0)/2.0
+    if center_y is None:
+        center_y = (dy - 1.0)/2.0
+
+    args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
+            thresh, theta_min, rwidth)
+
+    arr = mproc.distribute_jobs(
+        rec,
+        func=extern.c_remove_ring,
+        args=args,
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def circ_mask(arr, axis, ratio=1, val=0.):
+    """
+    Apply circular mask to a 3D array.
+
+    Parameters
+    ----------
+    arr : ndarray
+            Arbitrary 3D array.
+    axis : int
+        Axis along which mask will be performed.
+    ratio : int, optional
+        Ratio of the mask's diameter in pixels to
+        the smallest edge size along given axis.
+    val : int, optional
+        Value for the masked region.
+
+    Returns
+    -------
+    ndarray
+        Masked array.
+    """
+    arr = dtype.as_float32(arr)
+    _arr = arr.swapaxes(0, axis)
+    dx, dy, dz = _arr.shape
+    mask = _get_mask(dy, dz, ratio)
+    for m in range(dx):
+        _arr[m, ~mask] = val
+    return _arr.swapaxes(0, axis)
+
+
+def _get_mask(dx, dy, ratio):
+    """
+    Calculate 2D boolean circular mask.
+
+    Parameters
+    ----------
+    dx, dy : int
+        Dimensions of the 2D mask.
+
+    ratio : int
+        Ratio of the circle's diameter in pixels to
+        the smallest mask dimension.
+
+    Returns
+    -------
+    ndarray
+        2D boolean array.
+    """
+    rad1 = dx / 2.
+    rad2 = dy / 2.
+    if dx < dy:
+        r2 = rad1 * rad1
+    else:
+        r2 = rad2 * rad2
+    y, x = np.ogrid[0.5 - rad1:0.5 + rad1, 0.5 - rad2:0.5 + rad2]
+    return x * x + y * y < ratio * ratio * r2

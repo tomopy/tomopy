@@ -12,3 +12,4 @@
    
       normalize
       normalize_bg
+      normalize_nf

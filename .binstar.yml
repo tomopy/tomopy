@@ -22,7 +22,7 @@ platform:
 ## The engine are the inital conda packages you want to run with 
 engine:
  - python=2
-#  - python=3
+ - python=3
 ## The env param is an environment variable list 
 # engine:
 #  - MY_ENV=A CC=gcc

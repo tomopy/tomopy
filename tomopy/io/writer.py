@@ -50,14 +50,14 @@
 Module for data I/O.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.misc.corr import adjust_range
 import tomopy.util.dtype as dt
-from skimage import io as sio
-import warnings
 import numpy as np
 import os
+import six
 import h5py
 import logging
 
@@ -68,7 +68,7 @@ def _check_import(modname):
     try:
         return __import__(modname)
     except ImportError:
-        logger.warn(modname + ' module not found')
+        logger.warn('Warning: ' + modname + ' module not found')
         return None
 
 dxfile = _check_import('dxfile')
@@ -150,7 +150,7 @@ def _suggest_new_fname(fname, digit):
 
 
 def _init_write(arr, fname, ext, dtype, overwrite):
-    if not isinstance(fname, basestring):
+    if not (isinstance(fname, six.string_types)):
         fname = 'tmp/data' + ext
     else:
         if not fname.endswith(ext):
@@ -255,9 +255,8 @@ def write_tiff(
         if True, overwrites the existing file if the file exists.
     """
     fname, data = _init_write(data, fname, '.tiff', dtype, overwrite)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        sio.imsave(fname, data, plugin='tifffile')
+    import tifffile
+    tifffile.imsave(fname, data)
 
 
 def write_tiff_stack(

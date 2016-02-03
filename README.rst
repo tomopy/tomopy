@@ -21,7 +21,7 @@ TomoPy
    :target: https://binstar.org/dgursoy/tomopy
    :alt: Binstar downloads
 
-TomoPy is an open-sourced Python toolbox to perform tomographic data 
+**TomoPy** is an open-sourced Python toolbox to perform tomographic data 
 processing and image reconstruction tasks at the 
 `Advanced Photon Source <http://www.aps.anl.gov>`_.
 

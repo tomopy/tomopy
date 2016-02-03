@@ -46,7 +46,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from tomopy.io.phantom import *
 from nose.tools import assert_equals
@@ -60,42 +61,57 @@ __docformat__ = 'restructuredtext en'
 def test_baboon():
     assert_equals(baboon().dtype, 'float32')
     assert_equals(baboon().shape, (1, 512, 512))
+    assert_equals(baboon(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(baboon(size=64).shape, (1, 64, 64))
 
 
 def test_barbara():
     assert_equals(barbara().dtype, 'float32')
     assert_equals(barbara().shape, (1, 512, 512))
+    assert_equals(barbara(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(barbara(size=64).shape, (1, 64, 64))
 
 
 def test_cameraman():
     assert_equals(cameraman().dtype, 'float32')
     assert_equals(cameraman().shape, (1, 512, 512))
+    assert_equals(cameraman(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(cameraman(size=64).shape, (1, 64, 64))
 
 
 def test_checkerboard():
     assert_equals(checkerboard().dtype, 'float32')
     assert_equals(checkerboard().shape, (1, 512, 512))
+    assert_equals(checkerboard(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(checkerboard(size=64).shape, (1, 64, 64))
 
 
 def test_lena():
     assert_equals(lena().dtype, 'float32')
     assert_equals(lena().shape, (1, 512, 512))
+    assert_equals(lena(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(lena(size=64).shape, (1, 64, 64))
 
 
 def test_peppers():
     assert_equals(peppers().dtype, 'float32')
     assert_equals(peppers().shape, (1, 512, 512))
+    assert_equals(peppers(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(peppers(size=64).shape, (1, 64, 64))
 
 
 def test_shepp2d():
     assert_equals(shepp2d().dtype, 'float32')
     assert_equals(shepp2d().shape, (1, 512, 512))
+    assert_equals(shepp2d(size=(128, 256)).shape, (1, 128, 256))
+    assert_equals(shepp2d(size=64).shape, (1, 64, 64))
 
 
 def test_shepp3d():
-    assert_equals(shepp3d((6, 8, 10)).dtype, 'float32')
-    assert_equals(shepp3d((6, 8, 10)).shape, (6, 8, 10))
-    assert_equals(shepp3d((6, 8, 10)).min(), 0)
+    assert_equals(shepp3d(size=(6, 8, 10)).dtype, 'float32')
+    assert_equals(shepp3d(size=(6, 8, 10)).shape, (6, 8, 10))
+    assert_equals(shepp3d(size=(6, 8, 10)).min(), 0)
+    assert_equals(shepp3d(size=6).shape, (6, 6, 6))
 
 
 if __name__ == '__main__':
