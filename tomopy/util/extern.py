@@ -224,6 +224,7 @@ def c_fbp(*args):
         dtype.as_c_int(args[5]['num_gridx']),
         dtype.as_c_int(args[5]['num_gridy']),
         dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
 
@@ -244,6 +245,7 @@ def c_gridrec(*args):
         dtype.as_c_int(args[5]['num_gridx']),
         dtype.as_c_int(args[5]['num_gridy']),
         dtype.as_c_char_p(args[5]['filter_name']),
+        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
         dtype.as_c_int(args[6]),  # istart
         dtype.as_c_int(args[7]))  # iend
 
