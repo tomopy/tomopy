@@ -141,6 +141,8 @@ def recon(
         'butterworth'
             Butterworth filter.
 
+    filter_par: list, optional
+        Filter parameters as a list.
     num_iter : int, optional
         Number of algorithm iterations performed.
     num_block : int, optional
@@ -212,8 +214,8 @@ def recon(
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
         'bart': ['num_gridx', 'num_gridy', 'num_iter',
                  'num_block', 'ind_block'],
-        'fbp': ['num_gridx', 'num_gridy', 'filter_name'],
-        'gridrec': ['num_gridx', 'num_gridy', 'filter_name'],
+        'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+        'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
         'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
         'osem': ['num_gridx', 'num_gridy', 'num_iter',
                  'num_block', 'ind_block'],
@@ -254,6 +256,11 @@ def recon(
                 if key == 'reg_par':
                     if not isinstance(kwargs['reg_par'], np.float32):
                         kwargs['reg_par'] = np.array(value, dtype='float32')
+
+                # Make sure filter_par is float32.
+                if key == 'filter_par':
+                    if not isinstance(kwargs['filter_par'], np.float32):
+                        kwargs['filter_par'] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
@@ -348,6 +355,7 @@ def _get_algorithm_kwargs(shape):
         'num_gridx': dz,
         'num_gridy': dz,
         'filter_name': np.array('shepp', dtype=(str, 16)),
+        'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),
