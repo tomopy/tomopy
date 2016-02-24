@@ -72,14 +72,14 @@ __all__ = ['normalize',
            'normalize_nf']
 
 
-def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
+def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     """
     Normalize raw projection data using the flat and dark field projections.
 
     Parameters
     ----------
-    tomo : ndarray
-        3D tomographic data.
+    arr : ndarray
+        3D stack of projections.
     flat : ndarray
         3D flat field data.
     dark : ndarray
@@ -88,15 +88,15 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
     ndarray
         Normalized 3D tomographic data.
     """
-    tomo = dtype.as_float32(tomo)
+    arr = dtype.as_float32(arr)
     flat = dtype.as_float32(flat)
     dark = dtype.as_float32(dark)
 
@@ -104,27 +104,24 @@ def normalize(tomo, flat, dark, cutoff=None, ncore=None, nchunk=None):
     dark = dark.mean(axis=0)
 
     arr = mproc.distribute_jobs(
-        tomo,
+        arr,
         func=_normalize,
         args=(flat, dark, cutoff),
         axis=0,
         ncore=ncore,
-        nchunk=nchunk)
+        nchunk=0,
+        out=out)
     return arr
 
-
-def _normalize(flat, dark, cutoff, istart, iend):
-    tomo = mproc.SHARED_ARRAY
-
-    # Avoid zero division in normalization
+# in-place normalization
+def _normalize(proj, flat, dark, cutoff):
     denom = flat - dark
-    denom[denom == 0] = 1e-6
-
-    for m in range(istart, iend):
-        proj = np.true_divide(tomo[m, :, :] - dark, denom)
-        if cutoff is not None:
-            proj[proj > cutoff] = cutoff
-        tomo[m, :, :] = proj
+    denom[denom < 1e-6] = 1e-6
+    proj -= dark
+    np.true_divide(proj, denom, proj)
+    if cutoff is not None:
+        proj[proj > cutoff] = cutoff
+    return proj
 
 
 def normalize_roi(tomo, roi=[0, 0, 10, 10], ncore=None, nchunk=None):
@@ -197,12 +194,11 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     """
     tomo = dtype.as_float32(tomo)
     air = dtype.as_int32(air)
-    dx, dy, dz = tomo.shape
 
     arr = mproc.distribute_jobs(
         tomo,
         func=extern.c_normalize_bg,
-        args=(dx, dy, dz, air),
+        args=(air,),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
@@ -210,7 +206,7 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
 
 
 def normalize_nf(tomo, flats, dark, flat_loc,
-                 cutoff=None, ncore=None, nchunk=None):
+                 cutoff=None, ncore=None):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
@@ -228,8 +224,6 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         Indices of flat field data within tomography
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
@@ -260,7 +254,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         # Normalization can be parallelized much more efficiently outside this
         # foor loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
-        tstart = 0 if m == 0 else tend
+        tstart = tend
         tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc)//2 + loc
 
         _arr = mproc.distribute_jobs(tomo[tstart:tend],
@@ -268,7 +262,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
                                      args=(flat, dark, cutoff),
                                      axis=0,
                                      ncore=ncore,
-                                     nchunk=nchunk)
+                                     nchunk=0)
 
         arr[tstart:tend] = _arr
 

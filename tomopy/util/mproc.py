@@ -55,8 +55,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import multiprocessing as mp
-import ctypes
+import math
 from contextlib import closing
+from .dtype import as_sharedmem
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,24 +66,30 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['distribute_jobs',
-           'init_tomo',
-           'init_obj']
+__all__ = ['distribute_jobs']
 
+#global shared variables
+SHARED_ARRAYS = None
+SHARED_OUT = None
 
-def distribute_jobs(
-        arr, func, axis, args=None, kwargs=None, ncore=None, nchunk=None):
+def distribute_jobs(arr,
+                    func,
+                    axis,
+                    args=None,
+                    kwargs=None,
+                    ncore=None,
+                    nchunk=None,
+                    out=None):
     """
-    Distribute N-dimensional shared-memory array in chunks into cores.
-
-    One can either specify the number of cores (ncore) or the size of data
-    chunking (nchunk). If both arguments are provided simultaneously as
-    input, ncore will be overwritten according to the given nchunk.
+    Distribute N-dimensional shared-memory array into cores by splitting along
+    an axis.
 
     Parameters
     ----------
+    arr : ndarray, or iterable(ndarray)
+        Array(s) to be split up for processing.
     func : func
-        Function to be parallelized.
+        Function to be parallelized.  Should return an ndarray.
     args : list
         Arguments of the function in a list.
     kwargs : list
@@ -92,120 +99,107 @@ def distribute_jobs(
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
-        Chunk size for each core.
+        Chunk size to use when parallelizing data.  None will maximize the chunk
+        size for the number of cores used.  Zero will use a chunk size of one, 
+        but will also remove the dimension from the array.
+    out : ndarray, optional
+        Output array.  Results of functions will be compiled into this array.
+        If not provided, new array will be created for output.
 
     Returns
     -------
     ndarray
         Output array.
     """
-    if ncore is not None and nchunk is not None:
-        logger.warning('ncore will be overwritten according to nchunk')
+    if isinstance(arr, np.ndarray):
+        arrs = [arr]
+    else:
+        # assume this is multiple arrays
+        arrs = list(arr)
 
-    # Arrange number of processors.
+    axis_size = arrs[0].shape[axis]
+    # limit chunk size to size of array along axis     
+    if nchunk and nchunk > axis_size:
+        nchunk = axis_size
+    # default ncore to max and limit number of cores to max number
     if ncore is None or ncore > mp.cpu_count():
         ncore = mp.cpu_count()
-    if ncore <= 0:
-        ncore = 1
-
-    ndim = arr.shape[axis]
-
-    # Maximum number of processors for the task.
-    if ndim < ncore:
-        ncore = ndim
-
-    # Arrange chunk size.
+    # limit number of cores based on nchunk so that all cores are used
+    if ncore > math.ceil(axis_size / (nchunk or 1)):
+        ncore = int(math.ceil(axis_size / (nchunk or 1)))
+    # default nchunk to only use each core for one call
     if nchunk is None:
-        nchunk = (ndim - 1) // ncore + 1
+        nchunk = int(math.ceil(axis_size / ncore))
 
-    # Determine pool size.
-    npool = ndim // nchunk + 1
+    # prepare all args (func, args, kwargs)
+    # NOTE: args will include shared_arr slice as first arg
+    args = args or tuple()
+    kwargs = kwargs or dict()
 
-    # Zip arguments.
-    _args = []
-    for m in range(npool):
-        istart = m * nchunk
-        iend = (m + 1) * nchunk
+    # prepare global sharedmem arrays
+    shared_arrays = []
+    shared_out = None
+    for arr in arrs:
+        arr_shared = as_sharedmem(arr)
+        shared_arrays.append(arr_shared)
+        if out is not None and np.may_share_memory(arr, out) and \
+            arr.shape == out.shape and arr.dtype == out.dtype:
+            # assume these are the same array
+            shared_out = arr_shared
+    if out is None:
+        # default out to last array in list
+        out = shared_arrays[-1]
+        shared_out = out
+    if shared_out is None:
+        shared_out = as_sharedmem(out)
 
-        # Adjustments for last chunk.
-        if istart >= ndim:
-            npool -= 1
-            break
-        if iend > ndim:
-            iend = ndim
+    # kick off process
+    # testing single threaded
+#    init_shared(shared_arrays, shared_out)
+#    for i in xrange(0, axis_size, nchunk or 1):
+#        logger.warning("loop %d of %d"%(i+1, axis_size))
+#        if nchunk:
+#            _arg_parser((func, args, kwargs, np.s_[i:i+nchunk], axis))
+#        else:
+#            _arg_parser((func, args, kwargs, i, axis))
 
-        # Generate sorted args.
-        _args.append(_prepare_args(func, args, kwargs, istart, iend))
+    # if nchunk is zero, remove dimension from slice.
+    map_args = []
+    for i in xrange(0, axis_size, nchunk or 1):
+        if nchunk:
+            map_args.append((func, args, kwargs, np.s_[i:i+nchunk], axis))                
+        else:
+            map_args.append((func, args, kwargs, i, axis))
 
-    # Start processes.
-    return _start_proc(arr, _args)
-
-
-def _prepare_args(func, args, kwargs, istart, iend):
-    _arg = []
-    _arg.append(func)
-    if args is not None:
-        for a in args:
-            _arg.append(a)
-    if kwargs is not None:
-        _arg.append(kwargs)
-    _arg.append(istart)
-    _arg.append(iend)
-    return _arg
-
-
-def _start_proc(arr, args):
-    shared_arr = get_shared(arr)
-    init_shared(shared_arr)
-    man = mp.Manager()
-    queue = man.Queue()
-    with closing(
-        mp.Pool(processes=len(args),
-                initializer=init_shared,
-                initargs=(shared_arr, queue))) as p:
-        p.map_async(_arg_parser, args)
-    p.close()
+    with closing(mp.Pool(processes=ncore,
+                         initializer=init_shared,
+                         initargs=(shared_arrays, shared_out))) as p:
+        p.map(_arg_parser, map_args)
     p.join()
-    clear_queue(queue)
-    return shared_arr
+
+    # NOTE: will only copy if out wasn't sharedmem
+    out[:] = shared_out[:]
+    return out
 
 
-def _arg_parser(args):
-    func = args[0]
-    func(*args[1::])
+def init_shared(shared_arrays, shared_out):
+    global SHARED_ARRAYS
+    global SHARED_OUT
+    SHARED_ARRAYS = shared_arrays
+    SHARED_OUT = shared_out
 
 
-def get_shared(arr):
-    shared_arr = mp.Array(ctypes.c_float, arr.size)
-    shared_arr = _to_numpy_array(shared_arr, arr.shape)
-    shared_arr[:] = arr
-    return shared_arr
+def _arg_parser(params):
+    global SHARED_ARRAYS
+    global SHARED_OUT
+    func, args, kwargs, slc, axis = params
+    func_args = tuple((slice_axis(a, slc, axis) for a in SHARED_ARRAYS)) + args
+    #NOTE: will only copy if actually different arrays
+    result = func(*func_args, **kwargs)
+    if result is not None and isinstance(result, np.ndarray):
+        outslice = slice_axis(SHARED_OUT, slc, axis)
+        outslice[:] = result[:]
 
-
-def _to_numpy_array(mp_arr, dshape):
-    a = np.frombuffer(mp_arr.get_obj(), dtype=np.float32)
-    return np.reshape(a, dshape)
-
-
-def init_shared(shared_arr, queue=None):
-    global SHARED_ARRAY
-    SHARED_ARRAY = shared_arr
-    global SHARED_QUEUE
-    SHARED_QUEUE = queue
-
-
-def init_tomo(arr):
-    global SHARED_TOMO
-    SHARED_TOMO = get_shared(arr)
-
-
-def init_obj(arr):
-    global SHARED_OBJ
-    SHARED_OBJ = get_shared(arr)
-
-
-def clear_queue(queue):
-    while not queue.empty():
-        args = queue.get(False)
-        func = args[0]
-        func(*args[1::])
+# apply slice to specific axis on ndarray
+def slice_axis(arr, slc, axis):
+    return arr[[slice(None) if i != axis else slc for i in xrange(arr.ndim)]]

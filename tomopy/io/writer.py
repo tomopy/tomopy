@@ -53,7 +53,6 @@ Module for data I/O.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from tomopy.misc.corr import adjust_range
 import tomopy.util.dtype as dt
 import numpy as np
 import os

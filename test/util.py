@@ -63,8 +63,17 @@ def read_file(fname):
     """
     Read numpy array from file in data folder.
     """
-    return np.load(os.path.join('test', 'data', fname))
+    test_dir = os.path.dirname(os.path.realpath(__file__))
+    return np.load(os.path.join(test_dir, 'data', fname))
 
+
+def write_file(fname, arr):
+    """
+    Write numpy array to file in data folder.
+    """
+    test_dir = os.path.dirname(os.path.realpath(__file__))
+    return np.save(os.path.join(test_dir, 'data', fname), arr)
+    
 
 def loop_dim(func, data):
     for m in range(3):
