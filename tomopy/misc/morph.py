@@ -73,7 +73,7 @@ __all__ = ['pad',
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, mode='constant', **kwargs):
+def pad(arr, axis, npad=None, mode=str('constant'), **kwargs):
     """
     Pad an array along specified axis.
 
@@ -112,16 +112,16 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
                                  (key, allowedkwargs[mode]))
         for kw in allowedkwargs[mode]:
             kwargs.setdefault(kw, kwdefaults[kw])
+    else:
+        raise ValueError('mode keyword value must be string, got %s: ' %
+                         type(mode))
 
     if npad is None:
         npad = _get_npad(arr.shape[axis])
+
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
 
-    if mode == 'constant':
-        return np.pad(arr, pad_width, 'constant',
-                      constant_values=kwargs['constant_values'])
-    elif mode == 'edge':
-        return np.pad(arr, pad_width, 'edge')
+    return np.pad(arr, pad_width, mode, **kwargs)
 
 
 def _get_npad(dim):
