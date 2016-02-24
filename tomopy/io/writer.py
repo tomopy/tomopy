@@ -68,7 +68,7 @@ def _check_import(modname):
     try:
         return __import__(modname)
     except ImportError:
-        logger.warn(modname + ' module not found')
+        logger.warn('Warning: ' + modname + ' module not found')
         return None
 
 dxfile = _check_import('dxfile')
