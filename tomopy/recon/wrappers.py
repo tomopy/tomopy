@@ -123,7 +123,6 @@ def astra(*args):
 def astra_run(*args):
     # Lazy import ASTRA
     import astra as astra_mod
-    import concurrent.futures
 
     # Get shared arrays
     tomo = mproc.SHARED_TOMO
@@ -157,6 +156,7 @@ def astra_run(*args):
 
     # Number of GPUs to use
     if opts['proj_type'] == 'cuda' and opts['gpu_list'] is not None:
+        import concurrent.futures
         gpu_list = opts['gpu_list']
         nbatch = len(gpu_list)
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=nbatch)
