@@ -83,7 +83,7 @@ PI = 3.14159265359
 
 def find_center(
         tomo, theta, ind=None, emission=True, init=None,
-        tol=0.5, mask=True, ratio=1.):
+        tol=0.5, mask=True, ratio=1., sinogram_order=False):
     """
     Find rotation axis location.
 
@@ -112,6 +112,9 @@ def find_center(
     ratio : float, optional
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
+    sinogram_order: bool, optional
+        Determins whether data is a stack of sinograms (True, y-axis first axis) 
+        or a stack of radiographs (False, theta first axis).
 
     Returns
     -------
@@ -121,26 +124,41 @@ def find_center(
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
 
+    if sinogram_order:
+        dy, dt, dx = tomo.shape
+    else:
+        dt, dy, dx = tomo.shape    
+
     if ind is None:
-        ind = tomo.shape[1] // 2
+        ind = dy // 2
     if init is None:
-        init = tomo.shape[2] // 2
+        init = dx // 2
+
+    # extract slice we are using to find center
+    if sinogram_order:
+        tomo_ind = tomo[ind:ind + 1]
+    else:
+        tomo_ind = tomo[:, ind:ind + 1, :]
 
     hmin, hmax = _adjust_hist_limits(
-        tomo[:, ind:ind + 1, :], theta, ind, mask, emission)
+        tomo_ind, theta, mask, emission, sinogram_order)
 
     # Magic is ready to happen...
     res = minimize(
         _find_center_cost, init,
-        args=(tomo, theta, ind, hmin, hmax, mask, ratio, emission),
+        args=(tomo_ind, theta, hmin, hmax, mask, ratio, emission, sinogram_order),
         method='Nelder-Mead',
         tol=tol)
     return res.x
 
 
-def _adjust_hist_limits(tomo, theta, ind, mask, emission):
+def _adjust_hist_limits(tomo_ind, theta, mask, emission, sinogram_order):
     # Make an initial reconstruction to adjust histogram limits.
-    rec = recon(tomo, theta, emission=emission, algorithm='gridrec')
+    rec = recon(tomo_ind, 
+                theta, 
+                emission=emission, 
+                sinogram_order=sinogram_order, 
+                algorithm='gridrec')
 
     # Apply circular mask.
     if mask is True:
@@ -167,22 +185,25 @@ def _adjust_hist_max(val):
 
 
 def _find_center_cost(
-        center, tomo, theta, ind, hmin, hmax, mask, ratio, emission):
+        center, tomo_ind, theta, hmin, hmax, mask, ratio, emission, 
+        sinogram_order=False):
     """
     Cost function used for the ``find_center`` routine.
     """
-    logger.info('Trying center: %s', center)
+    logger.warn('Trying center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
-        tomo[:, ind:ind + 1, :], theta, center,
-        emission=emission, algorithm='gridrec')
+        tomo_ind, theta, center,
+        emission=emission, sinogram_order=sinogram_order, algorithm='gridrec')
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
 
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
-    return -np.dot(hist, np.log2(hist))
+    val = -np.dot(hist, np.log2(hist))
+    logger.warn("val = %f"%val)    
+    return val
 
 
 def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
@@ -365,7 +386,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
 def write_center(
         tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
-        emission=True, mask=False, ratio=1.):
+        emission=True, mask=False, ratio=1., sinogram_order=False):
     """
     Save images reconstructed with a range of rotation centers.
 
@@ -394,27 +415,40 @@ def write_center(
     ratio : float, optional
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
+    sinogram_order: bool, optional
+        Determins whether data is a stack of sinograms (True, y-axis first axis) 
+        or a stack of radiographs (False, theta first axis).        
     """
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
 
-    dx, dy, dz = tomo.shape
+    if sinogram_order:
+        dy, dt, dx = tomo.shape
+    else:
+        dt, dy, dx = tomo.shape
     if ind is None:
         ind = dy // 2
     if cen_range is None:
-        center = np.arange(dz / 2 - 5, dz / 2 + 5, 0.5)
-    if len(cen_range) < 3:
-        cen_range[2] = 1
+        center = np.arange(dx / 2 - 5, dx / 2 + 5, 0.5)
     else:
-        center = np.arange(cen_range[0], cen_range[1], cen_range[2] / 2.)
+        center = np.arange(*cen_range)
 
-    stack = np.zeros((dx, len(center), dz))
+    stack = dtype.empty_shared_array((len(center), dt, dx))
+        
     for m in range(center.size):
-        stack[:, m, :] = tomo[:, ind, :]
+        if sinogram_order:
+            stack[m] = tomo[ind]
+        else:
+            stack[m] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
-    rec = recon(
-        stack, theta, center=center, emission=emission, algorithm='gridrec')
+    rec = recon(stack, 
+                theta, 
+                center=center, 
+                emission=emission, 
+                sinogram_order=True, 
+                algorithm='gridrec',
+                nchunk=1)
 
     # Apply circular mask.
     if mask is True:
@@ -422,7 +456,6 @@ def write_center(
 
     # Save images to a temporary folder.
     for m in range(len(center)):
-        if m % 2 == 0:  # 2 slices same bec of gridrec.
-            fname = os.path.join(
-                dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
-            write_tiff(rec[m:m + 1], fname=fname, overwrite=True)
+        fname = os.path.join(
+            dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
+        write_tiff(rec[m], fname=fname, overwrite=True)

@@ -46,9 +46,15 @@
 
 void 
 fbp(
+<<<<<<< HEAD
     float *data, int dx, int dy, int dz, float *center, float *theta,
     float *recon, int ngridx, int ngridy, char *fname, float *filter_par,
     int istart, int iend)
+=======
+    const float *data, int dy, int dt, int dx,
+    const float *center, const float *theta,
+    float *recon, int ngridx, int ngridy, char *fname)
+>>>>>>> 397df9d1cfeb5f47215fd40a993486327b871411
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
     float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
@@ -72,19 +78,16 @@ fbp(
     float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
-    float* simdata;
     int ind_data, ind_recon;
 
-    simdata = (float *)calloc((dx*dy*dz), sizeof(float));
-
     // For each slice
-    for (s=istart; s<iend; s++)
+    for (s=0; s<dy; s++)
     {
-        preprocessing(ngridx, ngridy, dz, center[s], 
+        preprocessing(ngridx, ngridy, dx, center[s], 
             &mov, gridx, gridy); // Outputs: mov, gridx, gridy
             
         // For each projection angle 
-        for (p=0; p<dx; p++) 
+        for (p=0; p<dt; p++) 
         {
             // Calculate the sin and cos values 
             // of the projection angle and find
@@ -95,11 +98,11 @@ fbp(
             cos_p = cosf(theta_p);
 
             // For each detector pixel 
-            for (d=0; d<dz; d++) 
+            for (d=0; d<dx; d++) 
             {
                 // Calculate coordinates
                 xi = -ngridx-ngridy;
-                yi = (1-dz)/2.0+d+mov;
+                yi = (1-dx)/2.0+d+mov;
                 calc_coords(
                     ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                     coordx, coordy);
@@ -124,34 +127,17 @@ fbp(
                     ngridx, ngridy, csize, coorx, coory, 
                     indi, dist);
 
-                // Calculate simdata 
-                calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
-                    csize, indi, dist, recon,
-                    simdata); // Output: simdata
-
-
-                // Calculate dist*dist
-                float sum_dist2 = 0.0;
-                for (n=0; n<csize-1; n++) 
-                {
-                    sum_dist2 += dist[n]*dist[n];
-                }
-
                 // Update
-                if (sum_dist2 != 0.0) 
+                ind_recon = s*ngridx*ngridy;
+                ind_data = d+p*dx+s*dt*dx;
+                for (n=0; n<csize-1; n++)
                 {
-                    ind_recon = s*ngridx*ngridy;
-                    ind_data = d+s*dz+p*dy*dz;
-                    for (n=0; n<csize-1; n++) 
-                    {
-                        recon[indi[n]+ind_recon] += data[ind_data]*dist[n];
-                    }
+                	recon[indi[n]+ind_recon] += data[ind_data]*dist[n];
                 }
             }
         }
     }
 
-    free(simdata);
     free(gridx);
     free(gridy);
     free(coordx);

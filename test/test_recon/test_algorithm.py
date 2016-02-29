@@ -49,9 +49,15 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
+#FIXME: inserting local tomopy copy for testing
+lib_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy/build/lib.linux-x86_64-2.7/tomopy"
+src_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy"
+sys.path.insert(0, lib_folder)
+sys.path.insert(0, src_folder)
+
 from test.util import read_file
 from tomopy.recon.algorithm import *
-import numpy as np
 from numpy.testing import assert_allclose
 
 
@@ -82,9 +88,13 @@ class TestRecon(object):
             read_file('fbp.npy'), rtol=1e-2)
 
     def test_gridrec(self):
+#        result = recon(self.prj, self.ang, algorithm='gridrec')
+#        expected = read_file('gridrec.npy')
+#        diff = result - expected
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec'),
             read_file('gridrec.npy'), rtol=1e-2)
+        
 
     def test_mlem(self):
         assert_allclose(
