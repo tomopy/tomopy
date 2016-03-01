@@ -13,7 +13,6 @@ tomoc = Extension(
         'src/utils.c',
         'src/project.c',
         'src/gridrec.c',
-        'src/fft.c',
         'src/art.c',
         'src/bart.c',
         'src/fbp.c',
