@@ -90,7 +90,9 @@ def astra(*args):
     num_iter : int, optional
         Number of algorithm iterations performed.
     proj_type : str, optional
-        ASTRA projector type to use: 'cuda', 'line', 'linear', or 'strip'.
+        ASTRA projector type to use (see ASTRA docs for more information):
+            - 'cuda' (for GPU algorithms)
+            - 'line', 'linear', or 'strip' (for CPU algorithms)
     gpu_list : list, optional
         List of GPU indices to use
     extra_options : dict, optional
