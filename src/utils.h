@@ -127,6 +127,7 @@ fbp(
     int ngridx,
     int ngridy,
     char name[16],
+    float *filter_par,
     int istart, 
     int iend);
 
