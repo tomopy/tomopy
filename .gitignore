@@ -115,3 +115,5 @@ nosetests.xml
 #####################
 script
 ptycho.py
+*.autotools
+*.cproject
