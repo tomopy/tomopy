@@ -83,6 +83,7 @@ gridrec(
     float *recon,
     int ngridx, int ngridy,
     char name[16],
+    float *filter_par,
     int istart,
     int iend);
 
@@ -96,27 +97,33 @@ complex**
 malloc_matrix_c(long nr, long nc);
 
 float 
-(*get_filter(char *name))(float);
+(*get_filter(char *name))(float, float, float);
 
 float 
-filter_none(float);
+filter_none(float, float, float);
 
 float 
-filter_shepp(float);
+filter_shepp(float, float, float);
 
 float 
-filter_hann(float);
+filter_hann(float, float, float);
 
 float 
-filter_hamming(float);
+filter_hamming(float, float, float);
 
 float 
-filter_ramlak(float);
+filter_ramlak(float, float, float);
+
+float 
+filter_parzen(float, float, float);
+
+float 
+filter_butterworth(float, float, float);
 
 void 
 set_filter_tables(
     int dx, int pd, 
-    float fac, float(*pf)(float), 
+    float fac, float(*pf)(float, float, float), float *filter_par,
     complex *A);
 
 void 

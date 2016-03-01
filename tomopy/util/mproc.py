@@ -163,9 +163,26 @@ def _start_proc(arr, args):
         mp.Pool(processes=len(args),
                 initializer=init_shared,
                 initargs=(shared_arr, queue))) as p:
-        p.map_async(_arg_parser, args)
-    p.close()
-    p.join()
+        if p._pool:
+            proclist = p._pool[:]
+            res = p.map_async(_arg_parser, args)
+            try:
+                while not res.ready():
+                    if any(proc.exitcode for proc in proclist):
+                        p.terminate()
+                        raise RuntimeError("Child process terminated before finishing")
+                    res.wait(timeout=1)
+            except KeyboardInterrupt:
+                p.terminate()
+                raise
+        else:
+            p.map_async(_arg_parser, args)
+    try:
+        p.close()
+        p.join()
+    except KeyboardInterrupt:
+        p.terminate()
+        raise
     clear_queue(queue)
     return shared_arr
 
