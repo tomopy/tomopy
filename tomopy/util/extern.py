@@ -431,12 +431,12 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_remove_ring(*args):
-    data = mproc.SHARED_ARRAY
-
+def c_remove_ring(rec, *args):
+    istart = 0
+    iend = rec.shape[0]
     LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
     LIB_TOMOPY.remove_ring(
-        dtype.as_c_float_p(data),
+        dtype.as_c_float_p(rec),
         dtype.as_c_float(args[0]),  # center_x
         dtype.as_c_float(args[1]),  # center_y
         dtype.as_c_int(args[2]),  # dx
@@ -447,5 +447,5 @@ def c_remove_ring(*args):
         dtype.as_c_float(args[7]),  # thresh
         dtype.as_c_int(args[8]),  # theta_min
         dtype.as_c_int(args[9]),  # rwidth
-        dtype.as_c_int(args[10]),  # istart
-        dtype.as_c_int(args[11]))  # iend
+        dtype.as_c_int(istart),  # istart
+        dtype.as_c_int(iend))  # iend
