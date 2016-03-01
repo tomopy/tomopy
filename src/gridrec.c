@@ -46,16 +46,11 @@
 //   * Use guru interface to load real and imag into FFTW without copying
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
-#define USE_FFTW
+//#define WRITE_FILES
 #define _USE_MATH_DEFINES
 
 #include "gridrec.h"
-#ifdef USE_FFTW
-    #include <fftw3.h>
-#else
-    #include "fft.h"
-#endif
-#include "fft.h"
+#include <fftw3.h>
 #include <math.h>
 #include <string.h>
 
@@ -87,7 +82,7 @@ gridrec(
         -0.1295941E-05,  0.3817796E-07};
     
     // Compute pdim = next power of 2 >= dx
-    for(pdim = 2; pdim < dx; pdim *= 2);
+    for(pdim = 16; pdim < dx; pdim *= 2);
 
     const int M02 = pdim/2-1;
 
@@ -104,13 +99,13 @@ gridrec(
 
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
-#ifdef USE_FFTW
+
     // Set up fftw plans
     fftwf_plan reverse_1d;
     fftwf_plan forward_2d;
     reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
     forward_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_MEASURE);
-#endif
+
     // For each slice.
     for (s=0; s<dy; s+=2)
     {
@@ -204,11 +199,8 @@ gridrec(
             }
 
             // Take FFT of the projection array
-#ifdef USE_FFTW
             fftwf_execute(reverse_1d);
-#else
-            four1((float*)sino-1,pdim,1);
-#endif
+
             // For each FFT(projection)
             for(j=1; j<pdim2; j++)
             {    
@@ -257,12 +249,8 @@ gridrec(
         // array, the first (resp. second) half contains data for the right [X>0]
         // (resp. left [X<0]) half of the image.
 
-#ifdef USE_FFTW
         fftwf_execute(forward_2d);
-#else
-        const unsigned long H_size[2] = {pdim, pdim};
-        fourn((float*)(*H)-1, H_size-1, 2, -1);
-#endif
+
         // Copy the real and imaginary parts of the complex data from H[][],
         // into the output buffers for the two reconstructed real images, 
         // simultaneously carrying out a final multiplicative correction.  
@@ -291,7 +279,7 @@ gridrec(
         // wrap-around ordering, the subarray must actually be taken from the four
         // corners" of the 2D array, H[][] -- See Phase 2 description, above.
 
-        // The final data correponds physically to the linear X-ray absorption
+        // The final data corresponds physically to the linear X-ray absorption
         // coefficient expressed in units of the inverse detector spacing -- to 
         // convert to inverse cm (say), one must divide the data by the detector 
         // spacing in cm.
@@ -349,10 +337,8 @@ gridrec(
     free_vector_f(winv);
     free_vector_f(work);
     free_matrix_c(H);
-#ifdef USE_FFTW
     fftwf_destroy_plan(reverse_1d);
     fftwf_destroy_plan(forward_2d);
-#endif
     return;
 }
 
@@ -464,41 +450,25 @@ legendre(int n, const float *coefs, float x)
 float*
 malloc_vector_f(size_t n) 
 {
-#ifdef USE_FFTW
     return fftwf_alloc_real(n);
-#else
-    return (float *) malloc(n * sizeof(float));
-#endif
 }
 
 void
 free_vector_f(float* v)
 {
-#ifdef USE_FFTW
     fftwf_free(v);
-#else
-    free(v);
-#endif
 }
 
 float _Complex*
 malloc_vector_c(size_t n) 
 {
-#ifdef USE_FFTW
     return fftwf_alloc_complex(n);
-#else
-    return (float _Complex *) malloc(n * sizeof(float _Complex));
-#endif
 }
 
 void
 free_vector_c(float _Complex* v)
 {
-#ifdef USE_FFTW
     fftwf_free(v);
-#else
-    free(v);
-#endif
 }
 
 
@@ -607,7 +577,7 @@ float (*get_filter(const char *name))(float, float, float)
 
     for(int i=0; i<8; i++)
     {
-        if(!strcmp(name, fltbl[i].name))
+        if(!strncmp(name, fltbl[i].name, 16))
         {
             return fltbl[i].fp;
         }
