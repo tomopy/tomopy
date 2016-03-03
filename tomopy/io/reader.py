@@ -329,7 +329,7 @@ def read_spe(fname, slc=None):
     return arr
 
 
-def read_fits(fname):
+def read_fits(fname, fixdtype=True):
     """
     Read data from fits file.
 
@@ -345,8 +345,12 @@ def read_fits(fname):
     """
     def _getDataType(path):
         bitpix = _readBITPIX(path)
-        if bitpix > 0: dtype = 'uint%s' % bitpix
-        else: dtype = 'int%s' % -bitpix
+        if bitpix > 0: 
+            dtype = 'uint%s' % bitpix
+        elif bitpix <= -32:
+            dtype = 'float%s' % -bitpix
+        else:
+            dtype = 'int%s' % -bitpix
         return dtype
         
     def _readBITPIX(path):
@@ -365,11 +369,14 @@ def read_fits(fname):
 
     from astropy.io import fits
     f = fits.open(fname)
-    d = f[0].data
+    arr = f[0].data
     f.close()
-    dtype = _getDataType(fname)
-    return np.array(d, dtype=dtype)
-    
+    if fixdtype:
+        dtype = _getDataType(fname)
+        if dtype:
+            arr = np.array(arr, dtype=dtype)
+    _log_imported_data(fname, arr)
+    return arr
 
 
 def _slice_array(arr, slc):

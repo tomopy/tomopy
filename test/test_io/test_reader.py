@@ -90,7 +90,21 @@ def test_read_hdf5_stack():
 
 def test_read_cif():
     fname = os.path.join('test', 'data', 'ones.fits')
-    assert_allclose(read_fits(fname), np.ones((6,4), dtype="uint16"))
+
+    assert_allclose_and_dtype(read_fits(fname), np.ones((6,4), dtype="uint16"))
+    assert_allclose_and_dtype(
+        read_fits(fname, fixdtype=False),
+        np.ones((6,4), dtype="float32")
+    )
+    
+    fname = os.path.join('test', 'data', 'ones-float64.fits')
+    assert_allclose_and_dtype(read_fits(fname), np.ones((6,4), dtype="float64"))
+    return
+
+
+def assert_allclose_and_dtype(a1, a2):
+    assert_allclose(a1, a2)
+    assert(a1.dtype == a2.dtype), "dtype mismatch: %s vs %s" % (a1.dtype, a2.dtype)
     return
 
 
