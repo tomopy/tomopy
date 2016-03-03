@@ -84,6 +84,7 @@ __all__ = ['read_edf',
            'read_netcdf4',
            'read_npy',
            'read_spe',
+           'read_fits',
            'read_tiff',
            'read_tiff_stack',
            'read_hdf5_stack']
@@ -326,6 +327,49 @@ def read_spe(fname, slc=None):
     arr = _slice_array(arr, slc)
     _log_imported_data(fname, arr)
     return arr
+
+
+def read_fits(fname):
+    """
+    Read data from fits file.
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path of file or file name.
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
+    def _getDataType(path):
+        bitpix = _readBITPIX(path)
+        if bitpix > 0: dtype = 'uint%s' % bitpix
+        else: dtype = 'int%s' % -bitpix
+        return dtype
+        
+    def _readBITPIX(path):
+        # astropy fits reader has a problem
+        # have to read BITPIX from the fits file directly
+        stream = open(path, 'rb')
+        while True:
+            line = stream.read(80).decode("utf-8")
+            if line.startswith('BITPIX'):
+                value = line.split('/')[0].split('=')[1].strip()
+                value = int(value)
+                break
+            continue
+        stream.close()
+        return value
+
+    from astropy.io import fits
+    f = fits.open(fname)
+    d = f[0].data
+    f.close()
+    dtype = _getDataType(fname)
+    return np.array(d, dtype=dtype)
+    
 
 
 def _slice_array(arr, slc):
