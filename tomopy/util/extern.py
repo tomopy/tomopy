@@ -57,7 +57,6 @@ import os.path
 import ctypes
 import glob
 import tomopy.util.dtype as dtype
-import tomopy.util.mproc as mproc
 import logging
 
 logger = logging.getLogger(__name__)
