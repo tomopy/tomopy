@@ -173,7 +173,7 @@ def _round_to_even(num):
     return (np.ceil(num / 2.) * 2).astype('int')
 
 
-def project(obj, theta, center=None, ncore=None, nchunk=None):
+def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
@@ -185,6 +185,11 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
         Projection angles in radian.
     center: array, optional
         Location of rotation axis.
+    emission : bool, optional
+        Determines whether output data is emission or transmission type.
+    sinogram_order: bool, optional
+        Determins whether output data is a stack of sinograms (True, y-axis first axis) 
+        or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -208,14 +213,24 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     tomo[:] = 0.0
     center = get_center(shape, center)
 
-    arr = mproc.distribute_jobs(
+    tomo = mproc.distribute_jobs(
         (obj, center, tomo),
         func=extern.c_project,
         args=(theta,),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    # NOTE: returns sinogram order with emmission=True
+    if not emission:
+        # convert data to be transmission type
+        np.exp(-tomo, tomo)
+    if not sinogram_order:
+        # rotate to radiograph order
+        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+        # copy data to sharedmem
+        tomo = dtype.as_sharedmem(tomo, copy=True)
+        
+    return tomo
 
 
 def get_center(shape, center):
