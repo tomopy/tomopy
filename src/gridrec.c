@@ -61,7 +61,8 @@
 void 
 gridrec(
     const float *data, int dy, int dt, int dx, const float *center, 
-    const float *theta, float *recon, int ngridx, int ngridy, const char *fname, const float *filter_par)
+    const float *theta, float *recon, int ngridx, int ngridy, const char *fname,
+	const float *filter_par)
 {
     int s, p, iu, iv;
     float *sine, *cose, *wtbl, *work, *winv;
