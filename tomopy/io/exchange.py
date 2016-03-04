@@ -50,8 +50,7 @@
 Module for describing beamline/experiment specific data recipes.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import os.path
@@ -63,12 +62,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy, Luis Barroso-Luque"
+__author__ = "Doga Gursoy"
 __credits__ = "Francesco De Carlo"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_als_832',
-           'read_als_832h5',
            'read_anka_topotomo',
            'read_aps_1id',
            'read_aps_2bm',
@@ -80,6 +78,7 @@ __all__ = ['read_als_832',
            'read_diamond_l12',
            'read_elettra_syrmep',
            'read_esrf_id19',
+           'read_lnls_imx',
            'read_petraIII_p05',
            'read_sls_tomcat']
 
@@ -146,13 +145,13 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
             ndark = int(re.findall(r'\d+', line)[0])
     contents.close()
     if ind_tomo is None:
-        ind_tomo = list(range(0, nproj))
+        ind_tomo = range(0, nproj)
     if not normalized:
-        ind_flat = list(range(0, nflat))
+        ind_flat = range(0, nflat)
         if inter_bright > 0:
-            ind_flat = list(range(0, nproj, inter_bright))
+            ind_flat = range(0, nproj, inter_bright)
             flat_name = fname + 'bak_0000_0000.tif'
-        ind_dark = list(range(0, ndark))
+        ind_dark = range(0, ndark)
 
     # Read image data from tiff stack.
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=4)
@@ -218,102 +217,6 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
         flat = np.ones(1)
         dark = np.zeros(1)
     return tomo, flat, dark
-
-
-def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
-                   proj=None, sino=None):
-    """
-    Read ALS 8.3.2 hdf5 file with stacked datasets.
-
-    Parameters
-    ----------
-
-    fname : str
-        Path to hdf5 file.
-
-    ind_tomo : list of int, optional
-        Indices of the projection files to read.
-
-    ind_flat : list of int, optional
-        Indices of the flat field files to read.
-
-    ind_dark : list of int, optional
-        Indices of the dark field files to read.
-
-    proj : {sequence, int}, optional
-        Specify projections to read. (start, end, step)
-
-    sino : {sequence, int}, optional
-        Specify sinograms to read. (start, end, step)
-
-    Returns
-    -------
-    ndarray
-        3D tomographic data.
-
-    ndarray
-        3D flat field data.
-
-    ndarray
-        3D dark field data.
-
-    list of int
-        Indices of flat field data within tomography projection list
-    """
-
-    f = h5py.File(fname, 'r')
-    dgroup = tio._find_dataset_group(f)
-    dname = dgroup.name.split('/')[-1]
-
-    tomo_name = dname + '_0000_0000.tif'
-    flat_name = dname + 'bak_0000.tif'
-    dark_name = dname + 'drk_0000.tif'
-
-    # Read metadata from dataset group attributes
-    keys = list(dgroup.attrs.keys())
-    if 'nangles' in keys:
-        nproj = int(dgroup.attrs['nangles'])
-    if 'i0cycle' in keys:
-        inter_bright = int(dgroup.attrs['i0cycle'])
-    if 'num_bright_field' in keys:
-        nflat = int(dgroup.attrs['num_bright_field'])
-    else:
-        nflat = tio._count_proj(dgroup, flat_name, nproj,
-                                inter_bright=inter_bright)
-    if 'num_dark_fields' in keys:
-        ndark = int(dgroup.attrs['num_dark_fields'])
-    else:
-        ndark = tio._count_proj(dgroup, dark_name, nproj)
-
-    # Create arrays of indices to read projections, flats and darks
-    if ind_tomo is None:
-        ind_tomo = list(range(0, nproj))
-    ind_dark = list(range(0, ndark))
-    group_dark = [nproj-1]
-    ind_flat = list(range(0, nflat))
-
-    if inter_bright > 0:
-        group_flat = list(range(0, nproj, inter_bright))
-        if group_flat[-1] != nproj-1:
-            group_flat.append(nproj-1)
-    elif inter_bright == 0:
-        group_flat = [0, nproj-1]
-    else:
-        group_flat = None
-
-    tomo = tio.read_hdf5_stack(dgroup, tomo_name, ind_tomo, slc=(proj, sino))
-
-    flat = tio.read_hdf5_stack(dgroup, flat_name, ind_flat, slc=(None, sino),
-                               out_ind=group_flat)
-
-    dark = tio.read_hdf5_stack(dgroup, dark_name, ind_dark, slc=(None, sino),
-                               out_ind=group_dark)
-
-    group_flat = tio._map_loc(ind_tomo, group_flat)
-
-    f.close()
-
-    return tomo, flat, dark, group_flat
 
 
 def read_anka_topotomo(
@@ -404,24 +307,24 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     for line in contents:
         ls = line.split()
         if len(ls) > 1:
-            if ls[0] == "Tomography" and ls[1] == "scan":
+            if (ls[0] == "Tomography" and ls[1] == "scan"):
                 prj_start = int(ls[6])
-            elif ls[0] == "Number" and ls[2] == "scan":
+            elif (ls[0] == "Number" and ls[2] == "scan"):
                 nprj = int(ls[4])
-            elif ls[0] == "Dark" and ls[1] == "field":
+            elif (ls[0] == "Dark" and ls[1] == "field"):
                 dark_start = int(ls[6])
-            elif ls[0] == "Number" and ls[2] == "dark":
+            elif (ls[0] == "Number" and ls[2] == "dark"):
                 ndark = int(ls[5])
-            elif ls[0] == "White" and ls[1] == "field":
+            elif (ls[0] == "White" and ls[1] == "field"):
                 flat_start = int(ls[6])
-            elif ls[0] == "Number" and ls[2] == "white":
+            elif (ls[0] == "Number" and ls[2] == "white"):
                 nflat = int(ls[5])
     contents.close()
 
     if ind_tomo is None:
-        ind_tomo = list(range(prj_start, prj_start + nprj))
-    ind_flat = list(range(flat_start, flat_start + nflat))
-    ind_dark = list(range(dark_start, dark_start + ndark))
+        ind_tomo = range(prj_start, prj_start + nprj)
+    ind_flat = range(flat_start, flat_start + nflat)
+    ind_dark = range(dark_start, dark_start + ndark)
     tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=6, slc=(sino, proj))
     flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=6, slc=(sino, None))
     dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=6, slc=(sino, None))
@@ -694,7 +597,7 @@ def read_diamond_l12(fname, ind_tomo):
     fname = os.path.abspath(fname)
     tomo_name = os.path.join(fname, 'im_001000.tif')
     flat_name = os.path.join(fname, 'flat_000000.tif')
-    ind_flat = list(range(0, 1))
+    ind_flat = range(0, 1)
     tomo = tio.read_tiff_stack(tomo_name, ind=ind_tomo, digit=6)
     flat = tio.read_tiff_stack(flat_name, ind=ind_flat, digit=6)
     return tomo, flat
@@ -749,8 +652,43 @@ def read_elettra_syrmep(
     return tomo, flat, dark
 
 
-def read_petraIII_p05(
-        fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
+def read_lnls_imx(folder, proj=None, sino=None):
+    """
+    Read LNLS IMX standard data format.
+
+    Parameters
+    ----------
+    folder : str
+        Path to sample folder (containing tomo.h5, flat.h5, dark.h5)
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    folder = os.path.abspath(folder)
+    tomo_name = os.path.join(folder, 'tomo.h5')
+    flat_name = os.path.join(folder, 'tomo_flat_before.h5')
+    dark_name = os.path.join(folder, 'tomo_dark_before.h5')
+    tomo = tio.read_hdf5(tomo_name, 'images', slc=(proj, sino))
+    flat = tio.read_hdf5(flat_name, 'flats', slc=(None, sino))
+    dark = tio.read_hdf5(dark_name, 'darks', slc=(None, sino))
+    return tomo, flat, dark
+
+
+def read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
     Read Petra-III P05 standard data format.
 
@@ -856,11 +794,12 @@ def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
     proj_end = proj_start + nproj
 
     if ind_tomo is None:
-        ind_tomo = list(range(proj_start, proj_end))
-    ind_flat = list(range(flat_start, flat_end))
-    ind_dark = list(range(dark_start, dark_end))
+        ind_tomo = range(proj_start, proj_end)
+    ind_flat = range(flat_start, flat_end)
+    ind_dark = range(dark_start, dark_end)
     tomo = tio.read_tiff_stack(_fname, ind=ind_tomo, digit=4, slc=(sino, proj))
     flat = tio.read_tiff_stack(_fname, ind=ind_flat, digit=4, slc=(sino, None))
     dark = tio.read_tiff_stack(_fname, ind=ind_dark, digit=4, slc=(sino, None))
 
     return tomo, flat, dark
+
