@@ -176,7 +176,7 @@ def distribute_jobs(arr,
                          initargs=(shared_arrays, shared_out))) as p:
         if p._pool:
             proclist = p._pool[:]
-            res = p.map_async(_arg_parser, args)
+            res = p.map_async(_arg_parser, map_args)
             try:
                 while not res.ready():
                     if any(proc.exitcode for proc in proclist):
@@ -187,12 +187,13 @@ def distribute_jobs(arr,
                 p.terminate()
                 raise
         else:
-            p.map(_arg_parser, args)
+            p.map(_arg_parser, map_args)
     try:
         p.join()
-    except KeyboardInterrupt:
+    except:
         p.terminate()
         raise
+
     # NOTE: will only copy if out wasn't sharedmem
     out[:] = shared_out[:]
     return out
