@@ -88,7 +88,7 @@ def test_read_hdf5_stack():
         np.ones((20, 10, 10)))
 
 
-def test_read_cif():
+def test_read_fits():
     fname = os.path.join('test', 'data', 'ones.fits')
     assert_allclose_and_dtype(read_fits(fname), np.ones((6,4), dtype="uint16"))
     assert_allclose(
