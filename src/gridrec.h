@@ -111,7 +111,8 @@ filter_butterworth(float, float, float);
 void 
 set_filter_tables(
     int dt, int pd, 
-    float fac, float(* const pf)(float), const float *filter_par, 
+    float fac, 
+    float(* const pf)(float), const float *filter_par, 
     float _Complex *A);
 
 void 

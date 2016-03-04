@@ -120,8 +120,8 @@ fbp(
     float *recon,
     int ngridx,
     int ngridy,
-    char name[16]);
-    const float *filter_par,
+    const char name[16],
+    const float *filter_par);
 
 void DLL
 mlem(
