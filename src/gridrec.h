@@ -63,8 +63,8 @@ gridrec(
     const float *theta,
     float *recon,
     int ngridx, int ngridy,
-    const char fname[16]);
-    float *filter_par,
+    const char fname[16],
+    const float *filter_par);
 
 float* 
 malloc_vector_f(size_t n);
@@ -111,7 +111,7 @@ filter_butterworth(float, float, float);
 void 
 set_filter_tables(
     int dt, int pd, 
-    float fac, float(* const pf)(float), float *filter_par, 
+    float fac, float(* const pf)(float), const float *filter_par, 
     float _Complex *A);
 
 void 
