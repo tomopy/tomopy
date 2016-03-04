@@ -346,7 +346,7 @@ gridrec(
 void 
 set_filter_tables(
     int dt, int pd, float center, 
-    float(* const pf)(float), float *filter_par, float _Complex *A)
+    float(* const pf)(float, float, float), const float *filter_par, float _Complex *A)
 { 
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
