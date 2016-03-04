@@ -3,12 +3,16 @@
 from setuptools import setup, Extension, find_packages, os
 
 extra_comp_args = ['-std=c99']
+extra_link_args = ['-lm']
 if os.name == 'nt':
     extra_comp_args += ['-DWIN32']
+    extra_link_args += ['-lfftw3f-3']
+else:
+    extra_link_args += ['-lfftw3f']
 tomoc = Extension(
     name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
-    extra_link_args=['-lfftw3f', '-lm'],
+    extra_link_args=extra_link_args,
     sources=[
         'src/utils.c',
         'src/project.c',
