@@ -343,6 +343,9 @@ def read_fits(fname, fixdtype=True):
     ndarray
         Data.
     """
+    # NOTE:
+    # at astropy 1.0.5, it is necessary to fix the dtype
+    # but at 1.1.1, it seems unnecessary
     def _getDataType(path):
         bitpix = _readBITPIX(path)
         if bitpix > 0: 
