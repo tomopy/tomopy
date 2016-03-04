@@ -187,13 +187,12 @@ def distribute_jobs(arr,
                 p.terminate()
                 raise
         else:
-            p.map_async(_arg_parser, args)
+            p.map(_arg_parser, args)
     try:
         p.join()
     except KeyboardInterrupt:
         p.terminate()
         raise
-
     # NOTE: will only copy if out wasn't sharedmem
     out[:] = shared_out[:]
     return out
