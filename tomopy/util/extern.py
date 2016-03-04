@@ -240,8 +240,8 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
         dtype.as_c_float_p(recon),
         dtype.as_c_int(kwargs['num_gridx']),
         dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_char_p(kwargs['filter_name']))
-        dtype.as_c_float_p(kwargs['filter_par']), # filter_par
+        dtype.as_c_char_p(kwargs['filter_name']),
+        dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
@@ -262,8 +262,8 @@ def c_gridrec(tomo, center, recon, theta, **kwargs):
         dtype.as_c_float_p(recon),
         dtype.as_c_int(kwargs['num_gridx']),
         dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_char_p(kwargs['filter_name']))
-        dtype.as_c_float_p(kwargs['filter_par']), # filter_par
+        dtype.as_c_char_p(kwargs['filter_name']),
+        dtype.as_c_float_p(kwargs['filter_par']))
     return recon
 
 
