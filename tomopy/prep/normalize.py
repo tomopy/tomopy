@@ -124,48 +124,43 @@ def _normalize(proj, flat, dark, cutoff):
     return proj
 
 
-def normalize_roi(tomo, roi=[0, 0, 10, 10], ncore=None, nchunk=None):
+#TODO: replace roi indexes with slc object
+def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     """
     Normalize raw projection data using an average of a selected window
     on projection images.
 
     Parameters
     ----------
-    tomo : ndarray
+    arr : ndarray
         3D tomographic data.
     roi: list of int, optional
         [top-left, top-right, bottom-left, bottom-right] pixel coordinates.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
-    nchunk : int, optional
-        Chunk size for each core.
 
     Returns
     -------
     ndarray
         Normalized 3D tomographic data.
     """
-    tomo = dtype.as_float32(tomo)
+    arr = dtype.as_float32(arr)
 
     arr = mproc.distribute_jobs(
-        tomo,
+        arr,
         func=_normalize_roi,
         args=(roi, ),
         axis=0,
         ncore=ncore,
-        nchunk=nchunk)
+        nchunk=0)
     return arr
 
 
-def _normalize_roi(roi, istart, iend):
-    tomo = mproc.SHARED_ARRAY
-
-    # Avoid zero division in normalization
-    roi[roi == 0] = 1.
-
-    for m in range(istart, iend):
-        bg = tomo[m, roi[0]:roi[2], roi[1]:roi[3]].mean()
-        tomo[m, :, :] = np.true_divide(tomo[m, :, :], bg)
+def _normalize_roi(proj, roi):
+    bg = proj[roi[0]:roi[2], roi[1]:roi[3]].mean()
+    # avoid divide by zero
+    if bg != 0:
+        np.true_divide(proj, bg, proj)
 
 
 def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
