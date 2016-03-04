@@ -81,7 +81,7 @@ def test_write_center():
 
 
 def test_find_center():
-    fname = os.path.join('test', 'data', 'sinogram.npy')
+    fname = os.path.join('data', 'sinogram.npy')
     sim = np.load(fname)
     ang = np.linspace(0, np.pi, sim.shape[0])
     cen = find_center(sim, ang)
