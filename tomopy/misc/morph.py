@@ -73,7 +73,7 @@ __all__ = ['pad',
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, mode=str('constant'), **kwargs):
+def pad(arr, axis, npad=None, mode='constant', **kwargs):
     """
     Pad an array along specified axis.
 
@@ -121,7 +121,7 @@ def pad(arr, axis, npad=None, mode=str('constant'), **kwargs):
 
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
 
-    return np.pad(arr, pad_width, mode, **kwargs)
+    return np.pad(arr, pad_width, str(mode), **kwargs)
 
 
 def _get_npad(dim):
