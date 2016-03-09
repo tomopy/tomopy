@@ -112,16 +112,16 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
                                  (key, allowedkwargs[mode]))
         for kw in allowedkwargs[mode]:
             kwargs.setdefault(kw, kwdefaults[kw])
+    else:
+        raise ValueError('mode keyword value must be string, got %s: ' %
+                         type(mode))
 
     if npad is None:
         npad = _get_npad(arr.shape[axis])
+
     pad_width = _get_pad_sequence(arr.shape, axis, npad)
 
-    if mode == 'constant':
-        return np.pad(arr, pad_width, 'constant',
-                      constant_values=kwargs['constant_values'])
-    elif mode == 'edge':
-        return np.pad(arr, pad_width, 'edge')
+    return np.pad(arr, pad_width, str(mode), **kwargs)
 
 
 def _get_npad(dim):
