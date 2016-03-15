@@ -2,6 +2,20 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages, os
 
+# Get shared library locations.
+LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
+if LD_LIBRARY_PATH is None:
+    LD_LIBRARY_PATH = []
+else:
+    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
+
+# Get header file locations.
+C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
+if C_INCLUDE_PATH is None:
+    C_INCLUDE_PATH = []
+else:
+    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
 if os.name == 'nt':
@@ -13,6 +27,8 @@ tomoc = Extension(
     name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
     extra_link_args=extra_link_args,
+    library_dirs=LD_LIBRARY_PATH,
+    include_dirs=C_INCLUDE_PATH,
     sources=[
         'src/utils.c',
         'src/project.c',
