@@ -79,6 +79,7 @@ __all__ = ['read_als_832',
            'read_diamond_l12',
            'read_elettra_syrmep',
            'read_esrf_id19',
+           'read_lnls_imx',
            'read_petraIII_p05',
            'read_sls_tomcat']
 
@@ -752,6 +753,42 @@ def read_elettra_syrmep(
         flat_name, ind=ind_flat, digit=1, slc=(sino, None))
     dark = tio.read_tiff_stack(
         dark_name, ind=ind_dark, digit=1, slc=(sino, None))
+    return tomo, flat, dark
+
+
+def read_lnls_imx(folder, proj=None, sino=None):
+    """
+    Read LNLS IMX standard data format.
+
+    Parameters
+    ----------
+    folder : str
+        Path to sample folder (containing tomo.h5, flat.h5, dark.h5)
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    folder = os.path.abspath(folder)
+    tomo_name = os.path.join(folder, 'tomo.h5')
+    flat_name = os.path.join(folder, 'tomo_flat_before.h5')
+    dark_name = os.path.join(folder, 'tomo_dark_before.h5')
+    tomo = tio.read_hdf5(tomo_name, 'images', slc=(proj, sino))
+    flat = tio.read_hdf5(flat_name, 'flats', slc=(None, sino))
+    dark = tio.read_hdf5(dark_name, 'darks', slc=(None, sino))
     return tomo, flat, dark
 
 
