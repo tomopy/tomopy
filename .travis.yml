@@ -11,9 +11,7 @@ os:
 sudo: false
   
 env:
-  - PATH=$HOME/miniconda/bin:$PATH
-  - LD_LIBRARY_PATH=$HOME/miniconda/lib
-  - C_INCLUDE_PATH=$HOME/miniconda/include
+  - PATH=$HOME/miniconda/bin:$PATH LD_LIBRARY_PATH=$HOME/miniconda/lib C_INCLUDE_PATH=$HOME/miniconda/include
 
 before_install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
