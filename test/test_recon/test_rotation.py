@@ -66,7 +66,7 @@ __docformat__ = 'restructuredtext en'
 def test_write_center():
     dpath = os.path.join('test', 'tmp')
     cen_range = (5, 7, 0.5)
-    cen = np.arange(cen_range[0], cen_range[1], cen_range[2])
+    cen = np.arange(*cen_range)
     write_center(
         read_file('proj.npy'),
         read_file('angle.npy'),
@@ -81,7 +81,7 @@ def test_write_center():
 
 
 def test_find_center():
-    fname = os.path.join('test', 'data', 'sinogram.npy')
+    fname = os.path.join('data', 'sinogram.npy')
     sim = np.load(fname)
     ang = np.linspace(0, np.pi, sim.shape[0])
     cen = find_center(sim, ang)

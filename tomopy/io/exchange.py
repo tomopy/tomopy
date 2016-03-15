@@ -56,7 +56,6 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 import os.path
 import re
-import h5py
 import tomopy.io.reader as tio
 import logging
 
@@ -548,7 +547,8 @@ def read_aps_13id(
     return tomo
 
 
-def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
+def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, 
+                  dtype=None, shared=False):
     """
     Read APS 32-ID standard data format.
 
@@ -565,11 +565,17 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
         exchange_rank = 1, 2, ... will direct tomopy to process
         "exchange1/...",
 
-    proj : {sequence, int}, optional
+    proj : {sequence, int} or np.slice, optional
         Specify projections to read. (start, end, step)
 
-    sino : {sequence, int}, optional
+    sino : {sequence, int} or np.slice, optional
         Specify sinograms to read. (start, end, step)
+
+    dtype : numpy datatype, optional
+        Convert data to this datatype on read if specified.
+
+    shared : bool, optional
+        If True, read proj data into shared memory location.  Defaults to False.
 
     Returns
     -------
@@ -586,13 +592,13 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
         exchange_base = 'exchange{:d}'.format(int(exchange_rank))
     else:
         exchange_base = "exchange"
-
+    
     tomo_grp = '/'.join([exchange_base, 'data'])
     flat_grp = '/'.join([exchange_base, 'data_white'])
     dark_grp = '/'.join([exchange_base, 'data_dark'])
-    tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
-    flat = tio.read_hdf5(fname, flat_grp, slc=(None, sino))
-    dark = tio.read_hdf5(fname, dark_grp, slc=(None, sino))
+    tomo = tio.read_hdf5(fname, tomo_grp, (proj, sino), dtype, shared)
+    flat = tio.read_hdf5(fname, flat_grp, (None, sino), dtype)
+    dark = tio.read_hdf5(fname, dark_grp, (None, sino), dtype)
     return tomo, flat, dark
 
 

@@ -46,7 +46,7 @@
 
 DLL void 
 sample(
-    int mode, float* data, int dx, int dy, int dz,
+    int mode, const float* data, int dx, int dy, int dz,
     int level, int axis, float* out)
 {
     if (mode == 0) 
@@ -63,7 +63,7 @@ sample(
 
 DLL void 
 downsample(
-    float* data, int dx, int dy, int dz,
+    const float* data, int dx, int dy, int dz,
     int level, int axis, float* out) 
 {
     int m, n, k, i, j, p, ind;
@@ -136,7 +136,7 @@ downsample(
 
 DLL void 
 upsample(
-    float* data, int dx, int dy, int dz,
+    const float* data, int dx, int dy, int dz,
     int level, int axis, float* out) {
 
     int m, n, k, i, j, p, ind;
