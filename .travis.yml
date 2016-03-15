@@ -20,16 +20,14 @@ before_install:
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
-  - env
   - conda config --add channels dgursoy
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
   - conda install anaconda-client
 
 install:
-  - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile tifffile coverage python-coveralls
+  - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile tifffile python-coveralls
   - conda info -a
-  - ls $HOME/miniconda/lib
   - python setup.py build_ext --inplace
 
 script: 
