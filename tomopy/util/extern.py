@@ -55,9 +55,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import os.path
 import ctypes
+import numpy as np
 import glob
 import tomopy.util.dtype as dtype
-import tomopy.util.mproc as mproc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -97,59 +97,71 @@ def c_shared_lib(lib_name):
         _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
         return ctypes.CDLL(libpath)
-    except (OSError, IndexError) as e:
+    except (OSError, IndexError):
         logger.warning('OSError: Shared library missing.')
 
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
 
 
-def c_normalize_bg(dx, dy, dz, air, istart, iend):
-    tomo = mproc.SHARED_ARRAY
+def c_normalize_bg(tomo, air):
+    dt, dy, dx = tomo.shape
 
     LIB_TOMOPY.normalize_bg.restype = dtype.as_c_void_p()
     LIB_TOMOPY.normalize_bg(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dx),
+        dtype.as_c_int(dt),
         dtype.as_c_int(dy),
-        dtype.as_c_int(dz),
-        dtype.as_c_int(air),
-        dtype.as_c_int(istart),
-        dtype.as_c_int(iend))
+        dtype.as_c_int(dx),
+        dtype.as_c_int(air))
 
 
-def c_remove_stripe_sf(dx, dy, dz, size, istart, iend):
-    tomo = mproc.SHARED_ARRAY
+def c_remove_stripe_sf(tomo, size):
+    #TODO: we should fix this elsewhere... 
+    # TOMO object must be contiguous for c function to work
+    contiguous_tomo = np.require(tomo, requirements="AC")
+    dx, dy, dz = tomo.shape
+    istart = 0
+    iend = dy
 
     LIB_TOMOPY.remove_stripe_sf.restype = dtype.as_c_void_p()
     LIB_TOMOPY.remove_stripe_sf(
-        dtype.as_c_float_p(tomo),
+        dtype.as_c_float_p(contiguous_tomo),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),
         dtype.as_c_int(dz),
         dtype.as_c_int(size),
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
+    tomo[:] = contiguous_tomo[:]
 
+def c_project(obj, center, tomo, theta):
+    if len(obj.shape) == 2:
+        # no y-axis (only one slice)
+        oy = 1
+        ox, oz = obj.shape
+    else:
+        oy, ox, oz = obj.shape
 
-def c_project(ox, oy, oz, theta, center, dx, dy, dz, istart, iend):
-    obj = mproc.SHARED_OBJ
-    tomo = mproc.SHARED_ARRAY
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.project.restype = dtype.as_c_void_p()
     LIB_TOMOPY.project(
         dtype.as_c_float_p(obj),
-        dtype.as_c_int(ox),
         dtype.as_c_int(oy),
+        dtype.as_c_int(ox),
         dtype.as_c_int(oz),
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dx),
         dtype.as_c_int(dy),
-        dtype.as_c_int(dz),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
         dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_int(istart),
-        dtype.as_c_int(iend))
+        dtype.as_c_float_p(theta))
 
 
 def c_sample(mode, arr, dx, dy, dz, level, axis, out):
@@ -166,246 +178,268 @@ def c_sample(mode, arr, dx, dy, dz, level, axis, out):
     return out
 
 
-def c_art(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_art(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.art.restype = dtype.as_c_void_p()
     LIB_TOMOPY.art(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_bart(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_bart(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.bart.restype = dtype.as_c_void_p()
     LIB_TOMOPY.bart(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_int(args[5]['num_block']),
-        dtype.as_c_float_p(args[5]['ind_block']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: I think this should be int_p
 
 
-def c_fbp(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_fbp(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.fbp.restype = dtype.as_c_void_p()
     LIB_TOMOPY.fbp(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_char_p(args[5]['filter_name']),
-        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_char_p(kwargs['filter_name']),
+        dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
 
-
-def c_gridrec(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_gridrec(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.gridrec.restype = dtype.as_c_void_p()
     LIB_TOMOPY.gridrec(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_char_p(args[5]['filter_name']),
-        dtype.as_c_float_p(args[5]['filter_par']), # filter_par
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_char_p(kwargs['filter_name']),
+        dtype.as_c_float_p(kwargs['filter_par']))
+    return recon
 
 
-def c_mlem(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_mlem(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.mlem.restype = dtype.as_c_void_p()
     LIB_TOMOPY.mlem(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_osem(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_osem(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.osem.restype = dtype.as_c_void_p()
     LIB_TOMOPY.osem(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_int(args[5]['num_block']),
-        dtype.as_c_float_p(args[5]['ind_block']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
-def c_ospml_hybrid(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_hybrid.restype = dtype.as_c_void_p()
     LIB_TOMOPY.ospml_hybrid(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_float_p(args[5]['reg_par']),
-        dtype.as_c_int(args[5]['num_block']),
-        dtype.as_c_float_p(args[5]['ind_block']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_float_p(kwargs['reg_par']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
-def c_ospml_quad(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_ospml_quad(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_quad.restype = dtype.as_c_void_p()
     LIB_TOMOPY.ospml_quad(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_float_p(args[5]['reg_par']),
-        dtype.as_c_int(args[5]['num_block']),
-        dtype.as_c_float_p(args[5]['ind_block']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_float_p(kwargs['reg_par']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
-def c_pml_hybrid(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_hybrid.restype = dtype.as_c_void_p()
     LIB_TOMOPY.pml_hybrid(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_float_p(args[5]['reg_par']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_float_p(kwargs['reg_par']))
 
 
-def c_pml_quad(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_pml_quad(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_quad.restype = dtype.as_c_void_p()
     LIB_TOMOPY.pml_quad(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_float_p(args[5]['reg_par']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_float_p(kwargs['reg_par']))
 
 
-def c_sirt(*args):
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
+def c_sirt(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.sirt.restype = dtype.as_c_void_p()
     LIB_TOMOPY.sirt(
         dtype.as_c_float_p(tomo),
-        dtype.as_c_int(args[0]),  # dx
-        dtype.as_c_int(args[1]),  # dy
-        dtype.as_c_int(args[2]),  # dz
-        dtype.as_c_float_p(args[3]),  # center
-        dtype.as_c_float_p(args[4]),  # theta
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
         dtype.as_c_float_p(recon),
-        dtype.as_c_int(args[5]['num_gridx']),
-        dtype.as_c_int(args[5]['num_gridy']),
-        dtype.as_c_int(args[5]['num_iter']),
-        dtype.as_c_int(args[6]),  # istart
-        dtype.as_c_int(args[7]))  # iend
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_remove_ring(*args):
-    data = mproc.SHARED_ARRAY
-
+def c_remove_ring(rec, *args):
+    istart = 0
+    iend = rec.shape[0]
     LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
     LIB_TOMOPY.remove_ring(
-        dtype.as_c_float_p(data),
+        dtype.as_c_float_p(rec),
         dtype.as_c_float(args[0]),  # center_x
         dtype.as_c_float(args[1]),  # center_y
         dtype.as_c_int(args[2]),  # dx
@@ -416,5 +450,5 @@ def c_remove_ring(*args):
         dtype.as_c_float(args[7]),  # thresh
         dtype.as_c_int(args[8]),  # theta_min
         dtype.as_c_int(args[9]),  # rwidth
-        dtype.as_c_int(args[10]),  # istart
-        dtype.as_c_int(args[11]))  # iend
+        dtype.as_c_int(istart),  # istart
+        dtype.as_c_int(iend))  # iend
