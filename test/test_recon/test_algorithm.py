@@ -49,13 +49,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
-#FIXME: inserting local tomopy copy for testing
-lib_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy/build/lib.linux-x86_64-2.7/tomopy"
-src_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy"
-sys.path.insert(0, lib_folder)
-sys.path.insert(0, src_folder)
-
 from test.util import read_file
 from tomopy.recon.algorithm import *
 from numpy.testing import assert_allclose
@@ -70,7 +63,7 @@ class TestRecon(object):
 
     def __init__(self):
         self.prj = read_file('proj.npy')
-        self.ang = read_file('angle.npy')
+        self.ang = read_file('angle.npy').astype('float32')
 
     def test_art(self):
         assert_allclose(
@@ -87,15 +80,32 @@ class TestRecon(object):
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
-    def test_gridrec(self):
-#        result = recon(self.prj, self.ang, algorithm='gridrec')
-#        expected = read_file('gridrec.npy')
-#        diff = result - expected
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec'),
-            read_file('gridrec.npy'), rtol=1e-2)
+    # def test_gridrec(self):
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
+    #         read_file('gridrec_none.npy'), rtol=1e-2)
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='shepp'),
+    #         read_file('gridrec_shepp.npy'), rtol=1e-2)
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='cosine'),
+    #         read_file('gridrec_cosine.npy'), rtol=1e-2)
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='hann'),
+    #         read_file('gridrec_hann.npy'), rtol=1e-2)
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='hamming'),
+    #         read_file('gridrec_hamming.npy'), rtol=1e-2)
+    #     assert_almost_equal(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='ramlak'),
+    #         read_file('gridrec_ramlak.npy'))
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
+    #         read_file('gridrec_parzen.npy'), rtol=1e-2)
+    #     assert_allclose(
+    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
+    #         read_file('gridrec_butterworth.npy'), rtol=1e-2)
         
-
     def test_mlem(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
