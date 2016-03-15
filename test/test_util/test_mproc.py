@@ -51,7 +51,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import tomopy.util.mproc as mproc
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
+import unittest
+import logging
 
 
 __author__ = "Doga Gursoy"
@@ -59,20 +61,58 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def _synthetic_func(val, istart, iend):
-    a = mproc.SHARED_ARRAY
-    for m in range(istart, iend):
+
+def _synthetic_func(a, val):
+    for m in range(a.shape[0]):
         a[m, :, :] = val
 
+def _test_shape(a, expected_shape):
+    assert a.shape == expected_shape
+    return a
 
-def test_distribute_jobs():
-    assert_allclose(
-        mproc.distribute_jobs(
-            np.zeros((8, 8, 8)),
-            func=_synthetic_func,
-            args=(1.,),
-            axis=0),
-        np.ones((8, 8, 8)))
+
+class TestDistributeJobs(unittest.TestCase):
+
+    def _test_shape(self, a, expected_shape, axis=0, ncore=None, nchunk=None):
+        ret = mproc.distribute_jobs(
+            a,
+            func=_test_shape,
+            args=(expected_shape,),
+            axis=axis,
+            ncore=ncore,
+            nchunk=nchunk)
+        assert_array_equal(a, ret)
+
+
+    def test_shape(self):
+        a = np.zeros((2, 4, 8))
+        # whole array on single core
+        self._test_shape(a, a.shape, axis=0, ncore=1, nchunk=None)
+        # chunk=0 for diff axis
+        self._test_shape(a, (4, 8), axis=0, ncore=1, nchunk=0)
+        self._test_shape(a, (4, 8), axis=0, ncore=None, nchunk=0)
+        self._test_shape(a, (2, 8), axis=1, ncore=1, nchunk=0)
+        self._test_shape(a, (2, 8), axis=1, ncore=None, nchunk=0)
+        self._test_shape(a, (2, 4), axis=2, ncore=1, nchunk=0)
+        self._test_shape(a, (2, 4), axis=2, ncore=None, nchunk=0)
+        # two core tests
+        self._test_shape(a, (1, 4, 8), axis=0, ncore=2, nchunk=None)
+        self._test_shape(a, (2, 2, 8), axis=1, ncore=2, nchunk=None)
+        self._test_shape(a, (2, 4, 4), axis=2, ncore=2, nchunk=None)
+        # change nchunk size
+        self._test_shape(a, (1, 4, 8), axis=0, ncore=None, nchunk=1)
+        self._test_shape(a, (2, 2, 8), axis=1, ncore=None, nchunk=2)
+        self._test_shape(a, (2, 4, 2), axis=2, ncore=None, nchunk=2)
+        
+    
+    def test_distribute_jobs(self):
+        assert_allclose(
+            mproc.distribute_jobs(
+                np.zeros((8, 8, 8)),
+                func=_synthetic_func,
+                args=(1.,),
+                axis=0),
+            np.ones((8, 8, 8)))
 
 
 if __name__ == '__main__':

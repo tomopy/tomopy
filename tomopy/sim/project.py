@@ -54,7 +54,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-import shutil
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
@@ -174,7 +173,7 @@ def _round_to_even(num):
     return (np.ceil(num / 2.) * 2).astype('int')
 
 
-def project(obj, theta, center=None, ncore=None, nchunk=None):
+def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
@@ -186,6 +185,11 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
         Projection angles in radian.
     center: array, optional
         Location of rotation axis.
+    emission : bool, optional
+        Determines whether output data is emission or transmission type.
+    sinogram_order: bool, optional
+        Determins whether output data is a stack of sinograms (True, y-axis first axis) 
+        or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -200,31 +204,49 @@ def project(obj, theta, center=None, ncore=None, nchunk=None):
     theta = dtype.as_float32(theta)
 
     # Estimate data dimensions.
-    ox, oy, oz = obj.shape
-    dx = theta.size
-    dy = ox
-    dz = _round_to_even(np.sqrt(oy * oy + oz * oz) + 2)
-    shape = dx, dy, dz
-    tomo = np.zeros(shape, dtype='float32')
+    oy, ox, oz = obj.shape
+    dt = theta.size
+    dy = oy
+    dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
+    shape = dy, dt, dx
+    tomo = dtype.empty_shared_array(shape)
+    tomo[:] = 0.0
     center = get_center(shape, center)
 
-    mproc.init_obj(obj)
-    arr = mproc.distribute_jobs(
-        tomo,
+    tomo = mproc.distribute_jobs(
+        (obj, center, tomo),
         func=extern.c_project,
-        args=(ox, oy, oz, theta, center, dx, dy, dz),
+        args=(theta,),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
-    return arr
+    # NOTE: returns sinogram order with emmission=True
+    if not emission:
+        # convert data to be transmission type
+        np.exp(-tomo, tomo)
+    if not sinogram_order:
+        # rotate to radiograph order
+        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+        # copy data to sharedmem
+        tomo = dtype.as_sharedmem(tomo, copy=True)
+        
+    return tomo
 
 
 def get_center(shape, center):
     if center is None:
-        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+        center = np.ones(shape[0], dtype='float32') * (shape[2] / 2.)
     elif np.array(center).size == 1:
-        center = np.ones(shape[1], dtype='float32') * center
+        center = np.ones(shape[0], dtype='float32') * center
     return dtype.as_float32(center)
+
+
+#def get_center(shape, center):
+#    if center is None:
+#        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
+#    elif np.array(center).size == 1:
+#        center = np.ones(shape[1], dtype='float32') * center
+#    return dtype.as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):

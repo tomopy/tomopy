@@ -46,10 +46,10 @@
 
 void 
 bart(
-    float *data, int dx, int dy, int dz, float *center, float *theta,
+    const float *data, int dy, int dt, int dx,
+    const float *center, const float *theta,
     float *recon, int ngridx, int ngridy, int num_iter, 
-    int num_block, float *ind_block, 
-    int istart, int iend)
+    int num_block, const float *ind_block) //TODO: I think ind_block should be int*
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
     float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
@@ -63,35 +63,38 @@ bart(
     float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
     float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
     int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
+    float *simdata = (float *)malloc((dy*dt*dx)*sizeof(float));
+    float *sum_dist = (float *)malloc((ngridx*ngridy)*sizeof(float));
+    float *update = (float *)malloc((ngridx*ngridy)*sizeof(float));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
-        coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
+        coorx != NULL && coory != NULL && dist != NULL &&
+        indi != NULL && simdata != NULL && sum_dist != NULL &&
+        update != NULL);
 
-    int s, q, p, d, i, m, n, os;
+    int s, q, p, d, i, n, os;
     int quadrant;
     float theta_p, sin_p, cos_p;
     float mov, xi, yi;
     int asize, bsize, csize;
-    float *simdata;
     float upd;
     int ind_data, ind_recon;
-    float *sum_dist;
     float sum_dist2;
-    float *update;
     int subset_ind1, subset_ind2;
 
     for (i=0; i<num_iter; i++) 
     {
-        simdata = (float *)calloc((dx*dy*dz), sizeof(float));
+        // initialize simdata to zero
+        memset(simdata, 0, dy*dt*dx*sizeof(float));
 
         // For each slice
-        for (s=istart; s<iend; s++)
+        for (s=0; s<dy; s++)
         {
-            preprocessing(ngridx, ngridy, dz, center[s], 
+            preprocessing(ngridx, ngridy, dx, center[s],
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            subset_ind1 = dx/num_block;
+            subset_ind1 = dt/num_block;
             subset_ind2 = subset_ind1;
 
             // For each ordered-subset num_subset
@@ -99,11 +102,12 @@ bart(
             {
                 if (os == num_block) 
                 {
-                    subset_ind2 = dx%num_block;
+                    subset_ind2 = dt%num_block;
                 }
 
-                sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
-                update = (float *)calloc((ngridx*ngridy), sizeof(float));
+                // initialize sum_dist and update to zero
+                memset(sum_dist, 0, (ngridx*ngridy)*sizeof(float));
+                memset(update, 0, (ngridx*ngridy)*sizeof(float));
                 
                 // For each projection angle 
                 for (q=0; q<subset_ind2; q++) 
@@ -119,11 +123,11 @@ bart(
                     cos_p = cosf(theta_p);
 
                     // For each detector pixel 
-                    for (d=0; d<dz; d++) 
+                    for (d=0; d<dx; d++)
                     {
                         // Calculate coordinates
                         xi = -ngridx-ngridy;
-                        yi = (1-dz)/2.0+d+mov;
+                        yi = (1-dx)/2.0+d+mov;
                         calc_coords(
                             ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                             coordx, coordy);
@@ -149,7 +153,7 @@ bart(
                             indi, dist);
 
                         // Calculate simdata 
-                        calc_simdata(p, s, d, ngridx, ngridy, dy, dz,
+                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
                             csize, indi, dist, recon,
                             simdata); // Output: simdata
 
@@ -165,7 +169,7 @@ bart(
                         // Update
                         if (sum_dist2 != 0.0) 
                         {
-                            ind_data = d+s*dz+p*dy*dz;
+                            ind_data = d+p*dx+s*dt*dx;
                             upd = (data[ind_data]-simdata[ind_data])/sum_dist2;
                             for (n=0; n<csize-1; n++) 
                             {
@@ -175,21 +179,14 @@ bart(
                     }
                 }
 
-                m = 0;
                 for (n = 0; n < ngridx*ngridy; n++) {
                     if (sum_dist[n] != 0.0) {
                         ind_recon = s*ngridx*ngridy;
-                        recon[m+ind_recon] += update[m]/sum_dist[n];
+                        recon[n+ind_recon] += update[n]/sum_dist[n];
                     }
-                    m++;
                 }
-
-                free(sum_dist);
-                free(update);
             }
         }
-
-        free(simdata);
     }
 
     free(gridx);
@@ -204,4 +201,7 @@ bart(
     free(coory);
     free(dist);
     free(indi);
+    free(simdata);
+    free(sum_dist);
+    free(update);
 }
