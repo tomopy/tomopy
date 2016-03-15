@@ -249,9 +249,8 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         # Normalization can be parallelized much more efficiently outside this
         # foor loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
-        tstart = tend
-        tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc)//2 + loc
-
+        tstart = 0 if m == 0 else tend
+        tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc-1)//2 + loc
         _arr = mproc.distribute_jobs(tomo[tstart:tend],
                                      func=_normalize,
                                      args=(flat, dark, cutoff),
