@@ -21,6 +21,7 @@ before_install:
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - env
+  - ls $HOME/miniconda/lib
   - conda config --add channels dgursoy
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
