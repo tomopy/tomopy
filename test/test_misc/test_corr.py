@@ -69,10 +69,6 @@ def test_median_filter():
     loop_dim(median_filter, read_file('cube.npy'))
 
 
-def test_sobel_filter():
-    loop_dim(sobel_filter, read_file('cube.npy'))
-
-
 def test_remove_neg():
     assert_allclose(
         remove_neg([-2, -1, 0, 1, 2]),

@@ -62,26 +62,26 @@ __docformat__ = 'restructuredtext en'
 
 
 def test_read_tiff():
-    fname = os.path.join('data', 'reader_00000.tiff')
+    fname = os.path.join('test', 'data', 'reader_00000.tiff')
     assert_allclose(read_tiff(fname), np.ones((8, 16)))
 
 
 def test_read_tiff_stack():
-    fname = os.path.join('data', 'reader_00000.tiff')
+    fname = os.path.join('test', 'data', 'reader_00000.tiff')
     assert_allclose(
         read_tiff_stack(fname, ind=list(range(0, 4)), digit=5),
         np.ones((4, 8, 16)))
 
 
 def test_read_hdf5():
-    fname = os.path.join('data', 'reader.h5')
+    fname = os.path.join('test', 'data', 'reader.h5')
     gname = os.path.join('exchange', 'data')
     assert_allclose(read_hdf5(fname, gname), np.ones((4, 8, 16)))
 
 
 def test_read_hdf5_stack():
     gname = '20151120_100640_testBL832h5file'
-    fname = os.path.join('data', 'read_stack.h5')
+    fname = os.path.join('test', 'data', 'read_stack.h5')
     dname = gname + '_0000_0000.tif'
     assert_allclose(
         read_hdf5_stack(h5py.File(fname, 'r')[gname], dname, list(range(20))),
