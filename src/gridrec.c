@@ -50,7 +50,7 @@
 #define _USE_MATH_DEFINES
 
 #include "gridrec.h"
-#include <fftw3.h>
+#include "fftw3.h"
 #include <math.h>
 #include <string.h>
 
