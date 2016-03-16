@@ -71,6 +71,7 @@ __all__ = ['distribute_jobs']
 #global shared variables
 SHARED_ARRAYS = None
 SHARED_OUT = None
+SHARED_QUEUE = None
 
 def distribute_jobs(arr,
                     func,
@@ -163,6 +164,10 @@ def distribute_jobs(arr,
 #        else:
 #            _arg_parser((func, args, kwargs, i, axis))
 
+    # Set up queue
+    man = mp.Manager()
+    queue = man.Queue()
+
     # if nchunk is zero, remove dimension from slice.
     map_args = []
     for i in range(0, axis_size, nchunk or 1):
@@ -171,52 +176,74 @@ def distribute_jobs(arr,
         else:
             map_args.append((func, args, kwargs, i, axis))
 
-    with closing(mp.Pool(processes=ncore,
-                         initializer=init_shared,
-                         initargs=(shared_arrays, shared_out))) as p:
-        if p._pool:
-            proclist = p._pool[:]
-            res = p.map_async(_arg_parser, map_args)
-            try:
-                while not res.ready():
-                    if any(proc.exitcode for proc in proclist):
-                        p.terminate()
-                        raise RuntimeError("Child process terminated before finishing")
-                    res.wait(timeout=1)
-            except KeyboardInterrupt:
-                p.terminate()
-                raise
-        else:
-            p.map_async(_arg_parser, map_args)
-    try:
-        p.join()
-    except:
-        p.terminate()
-        raise
+    init_shared(shared_arrays, shared_out, queue)
+
+    if ncore>1:
+        with closing(mp.Pool(processes=ncore,
+                             initializer=init_shared,
+                             initargs=(shared_arrays, shared_out, queue))) as p:
+            if p._pool:
+                proclist = p._pool[:]
+                res = p.map_async(_arg_parser, map_args)
+                try:
+                    while not res.ready():
+                        if any(proc.exitcode for proc in proclist):
+                            p.terminate()
+                            raise RuntimeError("Child process terminated before finishing")
+                        res.wait(timeout=1)
+                except KeyboardInterrupt:
+                    p.terminate()
+                    raise
+            else:
+                p.map_async(_arg_parser, map_args)
+        try:
+            p.join()
+        except:
+            p.terminate()
+            raise
+
+        clear_queue(queue, shared_arrays, shared_out)
+    else:
+        for m in map_args:
+            _arg_parser(m, on_host=True)
 
     # NOTE: will only copy if out wasn't sharedmem
     out[:] = shared_out[:]
     return out
 
 
-def init_shared(shared_arrays, shared_out):
+def init_shared(shared_arrays, shared_out, queue=None):
     global SHARED_ARRAYS
     global SHARED_OUT
+    global SHARED_QUEUE
     SHARED_ARRAYS = shared_arrays
     SHARED_OUT = shared_out
+    SHARED_QUEUE = queue
 
 
-def _arg_parser(params):
+def _arg_parser(params, on_host=False):
     global SHARED_ARRAYS
     global SHARED_OUT
+    global SHARED_QUEUE
     func, args, kwargs, slc, axis = params
     func_args = tuple((slice_axis(a, slc, axis) for a in SHARED_ARRAYS)) + args
     #NOTE: will only copy if actually different arrays
-    result = func(*func_args, **kwargs)
-    if result is not None and isinstance(result, np.ndarray):
-        outslice = slice_axis(SHARED_OUT, slc, axis)
-        outslice[:] = result[:]
+    try:
+        result = func(*func_args, on_host=on_host, **kwargs)
+        if result is not None and isinstance(result, np.ndarray):
+            outslice = slice_axis(SHARED_OUT, slc, axis)
+            outslice[:] = result[:]
+    except RunOnHostException:
+        SHARED_QUEUE.put(params)
 
 # apply slice to specific axis on ndarray
 def slice_axis(arr, slc, axis):
     return arr[[slice(None) if i != axis else slc for i in range(arr.ndim)]]
+    
+def clear_queue(queue, shared_arrays, shared_out):
+    while not queue.empty():
+        params = queue.get(False)
+        _arg_parser(params, on_host=True)
+
+class RunOnHostException(Exception):
+    pass
