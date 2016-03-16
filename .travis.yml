@@ -28,7 +28,7 @@ before_install:
 install:
   - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw spefile netcdf4 edffile tifffile python-coveralls
   - conda info -a
-  - pip install coverage
+  - conda install python=$TRAVIS_PYTHON_VERSION coverage
   - python setup.py build_ext --inplace
 
 script: 
