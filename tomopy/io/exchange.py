@@ -261,8 +261,7 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
         Indices of flat field data within tomography projection list
     """
 
-    f = h5py.File(fname, 'r')
-    dgroup = tio._find_dataset_group(f)
+    dgroup = tio._find_dataset_group(fname)
     dname = dgroup.name.split('/')[-1]
 
     tomo_name = dname + '_0000_0000.tif'
@@ -310,8 +309,6 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
                                out_ind=group_dark)
 
     group_flat = tio._map_loc(ind_tomo, group_flat)
-
-    f.close()
 
     return tomo, flat, dark, group_flat
 
