@@ -165,7 +165,7 @@ def distribute_jobs(arr,
 
     # if nchunk is zero, remove dimension from slice.
     map_args = []
-    for i in xrange(0, axis_size, nchunk or 1):
+    for i in range(0, axis_size, nchunk or 1):
         if nchunk:
             map_args.append((func, args, kwargs, np.s_[i:i+nchunk], axis))                
         else:
@@ -187,7 +187,7 @@ def distribute_jobs(arr,
                 p.terminate()
                 raise
         else:
-            p.map(_arg_parser, map_args)
+            p.map_async(_arg_parser, map_args)
     try:
         p.join()
     except:
@@ -219,4 +219,4 @@ def _arg_parser(params):
 
 # apply slice to specific axis on ndarray
 def slice_axis(arr, slc, axis):
-    return arr[[slice(None) if i != axis else slc for i in xrange(arr.ndim)]]
+    return arr[[slice(None) if i != axis else slc for i in range(arr.ndim)]]
