@@ -450,12 +450,23 @@ def _list_file_stack(fname, ind, digit):
     return list_fname
 
 
-def _find_dataset_group(h5object):
+def _find_dataset_group(fname):
     """
     Finds the group name containing the stack of projections datasets within
-    a ALS BL8.3.2 hdf5 file
+    hdf5 file with a stack of images
+
+    Parameters
+    ----------
+    fname : str
+        String defining the path of file or file name.
+    
+    Returns
+    -------
+    h5py.Group
     """
     # Only one root key means only one dataset in BL8.3.2 current format
+    h5object = h5py.File(fname, 'r')    
+    
     keys = list(h5object.keys())
     if len(keys) == 1:
         if isinstance(h5object[keys[0]], h5py.Group):
@@ -472,7 +483,7 @@ def _find_dataset_group(h5object):
 
 def _count_proj(group, dname, nproj, digit=4, inter_bright=None):
     """
-    Count the number of projections that have a specified name structure.
+    Counts the number of projections that have a specified name structure.
     Used to count the number of brights or darks in ALS BL8.3.2 hdf5 files when
     number is not present in metadata.
     """
