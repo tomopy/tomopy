@@ -209,6 +209,7 @@ def distribute_jobs(arr,
 
     # NOTE: will only copy if out wasn't sharedmem
     out[:] = shared_out[:]
+    clear_shared()
     return out
 
 
@@ -220,6 +221,13 @@ def init_shared(shared_arrays, shared_out, queue=None):
     SHARED_OUT = shared_out
     SHARED_QUEUE = queue
 
+def clear_shared():
+    global SHARED_ARRAYS
+    global SHARED_OUT
+    global SHARED_QUEUE
+    SHARED_ARRAYS=None
+    SHARED_OUT=None
+    SHARED_QUEUE=None
 
 def _arg_parser(params, on_host=False):
     global SHARED_ARRAYS
