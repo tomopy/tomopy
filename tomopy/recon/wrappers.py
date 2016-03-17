@@ -210,7 +210,7 @@ def astra_run(tomo, center, recon, theta, **kwargs):
                 # Temporary workaround, will be fixed in later ASTRA version
                 shft = int(np.round(ndet / 2. - center[i]))
                 if not shft==0:
-                    sino[0] = np.roll(sino[i], shft)
+                    sino[0] = np.roll(tomo[i], shft)
                     l = shft
                     r = sino.shape[1] + shft
                     if l < 0:
