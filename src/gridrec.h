@@ -44,14 +44,8 @@
 #ifndef _gridrec_h
 #define _gridrec_h
 
-#include <stdio.h>
+#include <complex.h> 
 #include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <stddef.h>
-#include <time.h>
-#include <sys/stat.h>
-
 
 #ifdef WIN32
 #define DLL __declspec(dllexport)
@@ -59,45 +53,39 @@
 #define DLL 
 #endif
 #define ANSI
-#define max(A,B) ((A)>(B)?(A):(B))
-#define min(A,B) ((A)<(B)?(A):(B))
-#define free_matrix(A) (free(*(A)),free(A))
-#define abs(A) ((A)>0 ?(A):-(A))
-#define PI 3.14159265359
-#define Cnvlvnt(X) (wtbl[(int)(X+0.5)])    
-#define Cmult(A,B,C) {(A).r=(B).r*(C).r-(B).i*(C).i;\
-             (A).i=(B).r*(C).i+(B).i*(C).r;}
 
-
-typedef struct {
-    float r;
-    float i;
-} complex;
 
 void DLL
 gridrec(
-    float *data,
-    int dx, int dy, int dz,
-    float *center,
-    float *theta,
+    const float *data,
+    int dy, int dt, int dx,
+    const float *center,
+    const float *theta,
     float *recon,
     int ngridx, int ngridy,
-    char name[16],
-    float *filter_par,
-    int istart,
-    int iend);
+    const char fname[16],
+    const float *filter_par);
 
 float* 
-malloc_vector_f(long n);
+malloc_vector_f(size_t n);
 
-complex* 
-malloc_vector_c(long n);
+void
+free_vector_f(float* v);
 
-complex**
-malloc_matrix_c(long nr, long nc);
+float _Complex* 
+malloc_vector_c(size_t n);
+
+void
+free_vector_c(float _Complex* v);
+
+float _Complex**
+malloc_matrix_c(size_t nr, size_t nc);
+
+void
+free_matrix_c(float _Complex** m);
 
 float 
-(*get_filter(char *name))(float, float, float);
+(*get_filter(const char *name))(float, float, float);
 
 float 
 filter_none(float, float, float);
@@ -122,21 +110,22 @@ filter_butterworth(float, float, float);
 
 void 
 set_filter_tables(
-    int dx, int pd, 
-    float fac, float(*pf)(float, float, float), float *filter_par,
-    complex *A);
+    int dt, int pd, 
+    float fac, 
+    float(* const pf)(float, float, float), const float *filter_par,
+    float _Complex *A);
 
 void 
 set_trig_tables(
-    int dx, float *theta, 
+    int dt, const float *theta, 
     float **SP, float **CP);
 
 void 
 set_pswf_tables(
-    float C, int nt, float lmbda, float *coefs, 
+    float C, int nt, float lmbda, const float *coefs, 
     int ltbl, int linv, float* wtbl, float* winv);
 
 float 
-legendre(int n, float *coefs, float x);
+legendre(int n, const float *coefs, float x);
 
 #endif

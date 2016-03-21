@@ -49,6 +49,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+
 from test.util import read_file, loop_dim
 from tomopy.misc.corr import *
 import numpy as np
@@ -68,10 +69,6 @@ def test_median_filter():
     loop_dim(median_filter, read_file('cube.npy'))
 
 
-def test_sobel_filter():
-    loop_dim(sobel_filter, read_file('cube.npy'))
-
-
 def test_remove_neg():
     assert_allclose(
         remove_neg([-2, -1, 0, 1, 2]),
@@ -89,7 +86,7 @@ def test_remove_outlier():
     proj[8][4][6] = 20
     assert_allclose(
         remove_outlier(proj, dif=10),
-        read_file('remove_outlier.npy'))
+        read_file('proj.npy'))
 
 
 def test_circ_mask():

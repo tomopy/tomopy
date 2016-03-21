@@ -58,8 +58,7 @@ import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
-from tomopy.sim.project import angles, get_center
-import multiprocessing
+from tomopy.sim.project import get_center
 import logging
 
 logger = logging.getLogger(__name__)
@@ -68,11 +67,11 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['recon']
+__all__ = ['recon', 'init_tomo']
 
 
 def recon(
-        tomo, theta, center=None, emission=True, algorithm=None,
+        tomo, theta, center=None, emission=True, sinogram_order=False, algorithm=None,
         init_recon=None, ncore=None, nchunk=None, **kwargs):
     """
     Reconstruct object from projection data.
@@ -87,6 +86,9 @@ def recon(
         Location of rotation axis.
     emission : bool, optional
         Determines whether data is emission or transmission type.
+    sinogram_order: bool, optional
+        Determins whether data is a stack of sinograms (True, y-axis first axis) 
+        or a stack of radiographs (False, theta first axis).
     algorithm : {str, function}
         One of the following string values.
 
@@ -149,8 +151,6 @@ def recon(
         Number of data blocks for intermediate updating the object.
     ind_block : array of int, optional
         Order of projections to be used for updating.
-    num_iter : int, optional
-        Number of algorithm iterations performed.
     reg_par : float, optional
         Regularization parameter for smoothing.
     init_recon : ndarray, optional
@@ -208,7 +208,7 @@ def recon(
     """
 
     # Initialize tomography data.
-    tomo = _init_tomo(tomo, emission)
+    tomo = init_tomo(tomo, emission, sinogram_order)
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -276,32 +276,49 @@ def recon(
             (list(allowed_kwargs.keys()),))
 
     # Generate args for the algorithm.
-    args = _get_algorithm_args(tomo.shape, theta, center)
+    center_arr = get_center(tomo.shape, center)
+    args = _get_algorithm_args(theta)
 
     # Initialize reconstruction.
-    recon = _init_recon(
-        (tomo.shape[1], kwargs['num_gridx'], kwargs['num_gridy']),
-        init_recon)
+    recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
+    recon = _init_recon(recon_shape, init_recon)
     return _dist_recon(
-        tomo, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
+        tomo, center_arr, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
 
 
-def _init_tomo(tomo, emission):
+# Convert data to floating point emissive type and sinogram order
+# Also ensure contiguous data and set to sharedmem if parameter set to True
+def init_tomo(tomo, emission, sinogram_order, sharedmem=True):
     tomo = dtype.as_float32(tomo)
     if not emission:
-        tomo[tomo <= 0.] = 1.
-        tomo = -np.log(tomo)
+        tomo[tomo <= 0.] = 1E-6
+        np.log(tomo, tomo) #in-place
+        np.negative(tomo, tomo) #in-place
+    if not sinogram_order:
+        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+    if sharedmem:
+        # copy data to sharedmem (if not already or not contiguous)
+        tomo = dtype.as_sharedmem(tomo, copy=not dtype.is_contiguous(tomo))
+    else:
+        # ensure contiguous
+        tomo = np.require(tomo, requirements="AC")
     return tomo
 
 
-def _init_recon(shape, init_recon, val=1e-6):
+def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
     if init_recon is None:
-        recon = val * np.ones(shape, dtype='float32')
+        if sharedmem:
+            recon = dtype.empty_shared_array(shape)
+            recon[:] = val
+        else:
+            recon = np.full(shape, val, dtype=np.float32)
     else:
-        recon = dtype.as_float32(init_recon)
+        recon = np.require(recon, dtype=np.float32, requirements="AC")
+        if sharedmem:
+            recon = dtype.as_sharedmem(recon)
     return recon
 
-
+#TODO: replace with dict, then users could easily add their own functions
 def _get_func(algorithm):
     if algorithm == 'art':
         func = extern.c_art
@@ -330,10 +347,10 @@ def _get_func(algorithm):
     return func
 
 
-def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
-    mproc.init_tomo(tomo)
+def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
+    #assert tomo.flags.aligned
     return mproc.distribute_jobs(
-        recon,
+        (tomo, center, recon),
         func=algorithm,
         args=args,
         kwargs=kwargs,
@@ -342,23 +359,21 @@ def _dist_recon(tomo, recon, algorithm, args, kwargs, ncore, nchunk):
         nchunk=nchunk)
 
 
-def _get_algorithm_args(shape, theta, center):
-    dx, dy, dz = shape
+def _get_algorithm_args(theta):
     theta = dtype.as_float32(theta)
-    center = get_center(shape, center)
-    return (dx, dy, dz, center, theta)
+    return (theta, )
 
 
 def _get_algorithm_kwargs(shape):
-    dx, dy, dz = shape
+    dy, dt, dx = shape
     return {
-        'num_gridx': dz,
-        'num_gridy': dz,
+        'num_gridx': dx,
+        'num_gridy': dx,
         'filter_name': np.array('shepp', dtype=(str, 16)),
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dx, dtype='float32'),
+        'ind_block': np.arange(0, dt, dtype=np.float32), #TODO: I think this should be int
         'options': {},
     }

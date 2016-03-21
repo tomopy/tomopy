@@ -100,7 +100,7 @@ calc_coords(
     int ry, int rz,
     float xi, float yi,
     float sin_p, float cos_p,
-    float *gridx, float *gridy,
+    const float *gridx, const float *gridy,
     float *coordx, float *coordy)
 {
     float srcx, srcy, detx, dety;
@@ -128,8 +128,8 @@ calc_coords(
 void 
 trim_coords(
     int ry, int rz,
-    float *coordx, float *coordy, 
-    float *gridx, float* gridy, 
+    const float *coordx, const float *coordy,
+    const float *gridx, const float* gridy,
     int *asize, float *ax, float *ay, 
     int *bsize, float *bx, float *by)
 {
@@ -167,8 +167,8 @@ trim_coords(
 void 
 sort_intersections(
     int ind_condition, 
-    int asize, float *ax, float *ay, 
-    int bsize, float *bx, float *by, 
+    int asize, const float *ax, const float *ay,
+    int bsize, const float *bx, const float *by,
     int *csize, float *coorx, float *coory)
 {
     int i=0, j=0, k=0;
@@ -213,7 +213,7 @@ sort_intersections(
 void 
 calc_dist(
     int ry, int rz, 
-    int csize, float *coorx, float *coory, 
+    int csize, const float *coorx, const float *coory,
     int *indi, float *dist)
 {
     int n, i1, i2;
@@ -241,16 +241,16 @@ calc_dist(
 
 void 
 calc_simdata(
-    int p, int s, int c, 
+    int s, int p, int d,
     int ry, int rz, 
-    int num_slices, int num_pixels, 
-    int csize, int *indi, float *dist, 
-    float *model, float *simdata)
+    int dt, int dx,
+    int csize, const int *indi, const float *dist,
+    const float *model, float *simdata)
 {
     int n;
 
     int index_model = s*ry*rz;
-    int index_data = c+s*num_pixels+p*num_slices*num_pixels;
+    int index_data = d+p*dx+s*dt*dx;
     for (n=0; n<csize-1; n++) 
     {
         simdata[index_data] += model[indi[n]+index_model]*dist[n];
