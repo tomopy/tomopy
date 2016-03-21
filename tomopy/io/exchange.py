@@ -56,7 +56,6 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 import os.path
 import re
-import h5py
 import tomopy.io.reader as tio
 import logging
 
@@ -80,6 +79,7 @@ __all__ = ['read_als_832',
            'read_diamond_l12',
            'read_elettra_syrmep',
            'read_esrf_id19',
+           'read_lnls_imx',
            'read_petraIII_p05',
            'read_sls_tomcat']
 
@@ -547,7 +547,8 @@ def read_aps_13id(
     return tomo
 
 
-def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
+def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, 
+                  dtype=None, shared=False):
     """
     Read APS 32-ID standard data format.
 
@@ -564,11 +565,17 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
         exchange_rank = 1, 2, ... will direct tomopy to process
         "exchange1/...",
 
-    proj : {sequence, int}, optional
+    proj : {sequence, int} or np.slice, optional
         Specify projections to read. (start, end, step)
 
-    sino : {sequence, int}, optional
+    sino : {sequence, int} or np.slice, optional
         Specify sinograms to read. (start, end, step)
+
+    dtype : numpy datatype, optional
+        Convert data to this datatype on read if specified.
+
+    shared : bool, optional
+        If True, read proj data into shared memory location.  Defaults to False.
 
     Returns
     -------
@@ -585,13 +592,13 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None):
         exchange_base = 'exchange{:d}'.format(int(exchange_rank))
     else:
         exchange_base = "exchange"
-
+    
     tomo_grp = '/'.join([exchange_base, 'data'])
     flat_grp = '/'.join([exchange_base, 'data_white'])
     dark_grp = '/'.join([exchange_base, 'data_dark'])
-    tomo = tio.read_hdf5(fname, tomo_grp, slc=(proj, sino))
-    flat = tio.read_hdf5(fname, flat_grp, slc=(None, sino))
-    dark = tio.read_hdf5(fname, dark_grp, slc=(None, sino))
+    tomo = tio.read_hdf5(fname, tomo_grp, (proj, sino), dtype, shared)
+    flat = tio.read_hdf5(fname, flat_grp, (None, sino), dtype)
+    dark = tio.read_hdf5(fname, dark_grp, (None, sino), dtype)
     return tomo, flat, dark
 
 
@@ -746,6 +753,42 @@ def read_elettra_syrmep(
         flat_name, ind=ind_flat, digit=1, slc=(sino, None))
     dark = tio.read_tiff_stack(
         dark_name, ind=ind_dark, digit=1, slc=(sino, None))
+    return tomo, flat, dark
+
+
+def read_lnls_imx(folder, proj=None, sino=None):
+    """
+    Read LNLS IMX standard data format.
+
+    Parameters
+    ----------
+    folder : str
+        Path to sample folder (containing tomo.h5, flat.h5, dark.h5)
+
+    proj : {sequence, int}, optional
+        Specify projections to read. (start, end, step)
+
+    sino : {sequence, int}, optional
+        Specify sinograms to read. (start, end, step)
+
+    Returns
+    -------
+    ndarray
+        3D tomographic data.
+
+    ndarray
+        3d flat field data.
+
+    ndarray
+        3D dark field data.
+    """
+    folder = os.path.abspath(folder)
+    tomo_name = os.path.join(folder, 'tomo.h5')
+    flat_name = os.path.join(folder, 'tomo_flat_before.h5')
+    dark_name = os.path.join(folder, 'tomo_dark_before.h5')
+    tomo = tio.read_hdf5(tomo_name, 'images', slc=(proj, sino))
+    flat = tio.read_hdf5(flat_name, 'flats', slc=(None, sino))
+    dark = tio.read_hdf5(dark_name, 'darks', slc=(None, sino))
     return tomo, flat, dark
 
 

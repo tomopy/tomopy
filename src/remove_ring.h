@@ -57,7 +57,6 @@
 #endif
 
 #define PI 3.14159265359
-#pragma once
 
 void DLL
 remove_ring(
