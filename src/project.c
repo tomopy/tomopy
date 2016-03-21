@@ -46,22 +46,22 @@
 
 void 
 project(
-    float *obj, int ox, int oy, int oz, 
-    float *data, int dx, int dy, int dz, float *center, float *theta,
-    int istart, int iend)
+    const float *obj, int oy, int ox, int oz, 
+    float *data, int dy, int dt, int dx,
+    const float *center, const float *theta)
 {
-    float *gridx = (float *)malloc((oy+1)*sizeof(float));
+    float *gridx = (float *)malloc((ox+1)*sizeof(float));
     float *gridy = (float *)malloc((oz+1)*sizeof(float));
     float *coordx = (float *)malloc((oz+1)*sizeof(float));
-    float *coordy = (float *)malloc((oy+1)*sizeof(float));
-    float *ax = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *ay = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *bx = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *by = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *coorx = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *coory = (float *)malloc((oy+oz+2)*sizeof(float));
-    float *dist = (float *)malloc((oy+oz+1)*sizeof(float));
-    int *indi = (int *)malloc((oy+oz+1)*sizeof(int));
+    float *coordy = (float *)malloc((ox+1)*sizeof(float));
+    float *ax = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *ay = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *bx = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *by = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *coorx = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *coory = (float *)malloc((ox+oz+2)*sizeof(float));
+    float *dist = (float *)malloc((ox+oz+1)*sizeof(float));
+    int *indi = (int *)malloc((ox+oz+1)*sizeof(int));
 
     assert(coordx != NULL && coordy != NULL &&
         ax != NULL && ay != NULL && by != NULL && bx != NULL &&
@@ -73,11 +73,11 @@ project(
     float mov, xi, yi;
     int asize, bsize, csize;
 
-    preprocessing(oy, oz, dz, center[0], 
+    preprocessing(ox, oz, dx, center[0], 
         &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
     // For each projection angle
-    for (p=istart; p<iend; p++) 
+    for (p=0; p<dt; p++)
     {
         // Calculate the sin and cos values 
         // of the projection angle and find
@@ -87,18 +87,18 @@ project(
         sin_p = sinf(theta_p);
         cos_p = cosf(theta_p);
 
-        for (d=0; d<dz; d++) 
+        for (d=0; d<dx; d++) 
         {
             // Calculate coordinates
-            xi = -oy-oz;
-            yi = (1-dz)/2.0+d+mov;
+            xi = -ox-oz;
+            yi = (1-dx)/2.0+d+mov;
             calc_coords(
-                oy, oz, xi, yi, sin_p, cos_p, gridx, gridy, 
+                ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, 
                 coordx, coordy);
 
             // Merge the (coordx, gridy) and (gridx, coordy)
             trim_coords(
-                oy, oz, coordx, coordy, gridx, gridy, 
+                ox, oz, coordx, coordy, gridx, gridy, 
                 &asize, ax, ay, &bsize, bx, by);
 
             // Sort the array of intersection points (ax, ay) and
@@ -113,14 +113,14 @@ project(
             // intersection points (coorx, coory). Find the 
             // indices of the pixels on the object grid.
             calc_dist(
-                oy, oz, csize, coorx, coory, 
+                ox, oz, csize, coorx, coory, 
                 indi, dist);
 
             // For each slice
             for (s=0; s<dy; s++) 
             {
                 // Calculate simdata 
-                calc_simdata(p, s, d, oy, oz, dy, dz,
+                calc_simdata(s, p, d, ox, oz, dt, dx,
                     csize, indi, dist, obj,
                     data); // Output: simulated data
             }
