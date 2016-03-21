@@ -210,17 +210,17 @@ def astra_run(tomo, center, recon, theta, **kwargs):
                 # Temporary workaround, will be fixed in later ASTRA version
                 shft = int(np.round(ndet / 2. - center[i]))
                 if not shft==0:
-                    sino[0] = np.roll(tomo[i], shft)
+                    sino[0,:,:] = np.roll(tomo[i], shft)
                     l = shft
                     r = sino.shape[1] + shft
                     if l < 0:
                         l = 0
-                    if r > sino.shape[1]:
-                        r = sino.shape[1]
-                    sino[0, :, 0:l] = 0
-                    sino[0, :,  r:sino.shape[1]] = 0
+                    if r > ndet:
+                        r = ndet
+                    sino[0, :, :l] = 0
+                    sino[0, :,  r:] = 0
                 else:
-                    sino[0] = tomo[i]
+                    sino[0,:,:] = tomo[i]
             vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
             vids.append(vid)
             cfg['ReconstructionDataId'] = vid
