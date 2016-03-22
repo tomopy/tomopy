@@ -79,7 +79,7 @@ needed_options = {
 }
 
 
-def astra(*args, on_host=False, **kwargs):
+def astra(*args, **kwargs):
     """
     Reconstruct object using the ASTRA toolbox
 
@@ -116,7 +116,7 @@ def astra(*args, on_host=False, **kwargs):
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
     """
-    if kwargs['options']['proj_type'] == 'cuda' and on_host==False:
+    if kwargs['options']['proj_type'] == 'cuda' and mproc.ON_HOST==False:
         raise mproc.RunOnHostException()
     else:
         astra_run(*args, **kwargs)

@@ -72,6 +72,7 @@ __all__ = ['distribute_jobs']
 SHARED_ARRAYS = None
 SHARED_OUT = None
 SHARED_QUEUE = None
+ON_HOST = False
 
 def distribute_jobs(arr,
                     func,
@@ -176,7 +177,7 @@ def distribute_jobs(arr,
         else:
             map_args.append((func, args, kwargs, i, axis))
 
-    init_shared(shared_arrays, shared_out, queue)
+    init_shared(shared_arrays, shared_out, queue, on_host=True)
 
     if ncore>1:
         with closing(mp.Pool(processes=ncore,
@@ -205,7 +206,7 @@ def distribute_jobs(arr,
         clear_queue(queue, shared_arrays, shared_out)
     else:
         for m in map_args:
-            _arg_parser(m, on_host=True)
+            _arg_parser(m)
 
     # NOTE: will only copy if out wasn't sharedmem
     out[:] = shared_out[:]
@@ -213,13 +214,15 @@ def distribute_jobs(arr,
     return out
 
 
-def init_shared(shared_arrays, shared_out, queue=None):
+def init_shared(shared_arrays, shared_out, queue=None, on_host=False):
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
+    global ON_HOST
     SHARED_ARRAYS = shared_arrays
     SHARED_OUT = shared_out
     SHARED_QUEUE = queue
+    ON_HOST = on_host
 
 def clear_shared():
     global SHARED_ARRAYS
@@ -229,7 +232,7 @@ def clear_shared():
     SHARED_OUT=None
     SHARED_QUEUE=None
 
-def _arg_parser(params, on_host=False):
+def _arg_parser(params):
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
@@ -237,7 +240,7 @@ def _arg_parser(params, on_host=False):
     func_args = tuple((slice_axis(a, slc, axis) for a in SHARED_ARRAYS)) + args
     #NOTE: will only copy if actually different arrays
     try:
-        result = func(*func_args, on_host=on_host, **kwargs)
+        result = func(*func_args, **kwargs)
         if result is not None and isinstance(result, np.ndarray):
             outslice = slice_axis(SHARED_OUT, slc, axis)
             outslice[:] = result[:]
@@ -251,7 +254,7 @@ def slice_axis(arr, slc, axis):
 def clear_queue(queue, shared_arrays, shared_out):
     while not queue.empty():
         params = queue.get(False)
-        _arg_parser(params, on_host=True)
+        _arg_parser(params)
 
 class RunOnHostException(Exception):
     pass
