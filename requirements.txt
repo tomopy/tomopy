@@ -1,0 +1,8 @@
+python
+nose
+six
+numpy
+scipy
+scikit-image
+pywavelets
+pyfftw
