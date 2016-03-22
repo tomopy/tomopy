@@ -180,7 +180,7 @@ def empty_shared_array(shape, dtype=np.float32):
     size = 1
     for dim in shape:
         size *= dim
-    shared_obj = mp.RawArray(ctype, size)
+    shared_obj = mp.RawArray(ctype, int(size))
     # create numpy array from shared object
     arr = np.frombuffer(shared_obj, dtype)
     arr = arr.reshape(shape)    
