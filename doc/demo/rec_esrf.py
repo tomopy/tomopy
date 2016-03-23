@@ -8,6 +8,7 @@ files.
 
 from __future__ import print_function
 import tomopy
+import dxchange
 
 if __name__ == '__main__':
     # Set path to the micro-CT data to reconstruct.
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     end = 16
 
     # Read the ESRF ID-19 raw data.
-    proj, flat, dark = tomopy.read_esrf_id19(fname, sino=(start, end))
+    proj, flat, dark = dxchange.read_esrf_id19(fname, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
     theta = tomopy.angles(proj.shape[0])
@@ -39,4 +40,4 @@ if __name__ == '__main__':
     rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
     # Write data as stack of TIFs.
-    tomopy.write_tiff_stack(rec, fname='recon_dir/recon')
+    dxchange.write_tiff_stack(rec, fname='recon_dir/recon')
