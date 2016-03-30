@@ -213,7 +213,7 @@ def read_edf(fname, slc=None):
     return arr
 
 
-def read_hdf5(fname, dataset, slc=None, dtype=None, shared=False):
+def read_hdf5(fname, dataset, slc=None, dtype=None, shared=True):
     """
     Read data from hdf5 file from a specific group.
 
