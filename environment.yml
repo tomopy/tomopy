@@ -12,3 +12,5 @@ dependencies:
   - scikit-image
   - pywavelets
   - pyfftw
+  - dxfile
+  - dxchange
