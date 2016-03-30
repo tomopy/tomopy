@@ -1,6 +1,5 @@
 name: tomopy
 
-
 channels:
   - 'https://conda.anaconda.org/dgursoy'
 
