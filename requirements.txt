@@ -1,1 +1,8 @@
-sphinxcontrib-bibtex
+python
+nose
+six
+numpy
+scipy
+scikit-image
+pywavelets
+pyfftw
