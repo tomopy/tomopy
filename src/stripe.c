@@ -57,42 +57,38 @@ remove_stripe_sf(
         avrage_row = (float *) calloc(dz, sizeof(float));
         smooth_row = (float *) calloc(dz, sizeof(float));
         
-        // For each projection.
-        for (p=0; p<dx; p++)
+        // For each pixel.
+        for (j=0; j<dz; j++)
         {
-            // For each pixel.
-            for (j=0; j<dz; j++)
+            // For each projection.
+            for (p=0; p<dx; p++)
             {
-                avrage_row[j] += (data[j+s*dz+p*dy*dz]/dz);
+                avrage_row[j] += data[j+s*dz+p*dy*dz]/dx;
             }
+        }
+
+        // We have now computed the average row of the sinogram.
+        // Smooth it
+        for (i=0; i<dz; i++)
+        {
+            smooth_row[i] = 0;
+            for (j=0; j<size; j++)
+            {
+               k = i+j-size/2;
+               if (k < 0) k = 0;
+               if (k > dz - 1) k = dz -1;
+               smooth_row[i] += avrage_row[k];
+            }
+            smooth_row[i] /= size;
         }
 
         // For each projection.
         for (p=0; p<dx; p++)
         {
-            // We have now computed the average row of the sinogram.
-            // Smooth it
-            for (i=0; i<dz; i++)
-            {
-                avrage_row[i] /= 1;
-            }
-            for (i=0; i<dz; i++)
-            {
-                smooth_row[i] = 0;
-                for (j=0; j<size; j++)
-                {
-                   k = i+j-size/2;
-                   if (k < 0) k = 0;
-                   if (k > dz - 1) k = dz -1;
-                   smooth_row[i] += avrage_row[k];
-                }
-                smooth_row[i] /= size;
-            }
-
             // Subtract this difference from each row in sinogram.     
             for (j=0; j<dz; j++)
             {
-               data[j+s*dz+p*dy*dz] -= (avrage_row[j] - smooth_row[j]);
+                data[j+s*dz+p*dy*dz] -= (avrage_row[j] - smooth_row[j]);
             }
         }
 
