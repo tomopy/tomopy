@@ -28,6 +28,7 @@ requirements:
     - edffile
     - tifffile
     - dxfile
+    - dxchange
 
 test:
   # Python imports
