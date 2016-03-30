@@ -548,7 +548,7 @@ def read_aps_13id(
 
 
 def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, 
-                  dtype=None, shared=False):
+                  dtype=None, shared=True):
     """
     Read APS 32-ID standard data format.
 
