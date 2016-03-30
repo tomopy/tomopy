@@ -1,0 +1,15 @@
+name: tomopy
+
+
+channels:
+  - 'https://conda.anaconda.org/dgursoy'
+
+dependencies:
+  - python
+  - nose
+  - six
+  - numpy
+  - scipy
+  - scikit-image
+  - pywavelets
+  - pyfftw
