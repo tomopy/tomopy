@@ -48,12 +48,20 @@ tomoc = Extension(
         'src/stripe.c',
         'src/remove_ring.c'])
 
+ext_mods = [tomoc]
+
+# Remove external C code for RTD builds
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if on_rtd:
+    ext_mods = []
+
+
 setup(
     name='tomopy',
     packages=find_packages(exclude=['test*']),
     version=open('VERSION').read().strip(),
     include_package_data=True,
-    ext_modules=[tomoc],
+    ext_modules=ext_mods,
     zip_safe=False,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',
