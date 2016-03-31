@@ -71,7 +71,7 @@ __all__ = ['recon', 'init_tomo']
 
 
 def recon(
-        tomo, theta, center=None, emission=True, sinogram_order=False, algorithm=None,
+        tomo, theta, center=None, sinogram_order=False, algorithm=None,
         init_recon=None, ncore=None, nchunk=None, **kwargs):
     """
     Reconstruct object from projection data.
@@ -84,8 +84,6 @@ def recon(
         Projection angles in radian.
     center: array, optional
         Location of rotation axis.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
     sinogram_order: bool, optional
         Determins whether data is a stack of sinograms (True, y-axis first axis) 
         or a stack of radiographs (False, theta first axis).
@@ -208,7 +206,7 @@ def recon(
     """
 
     # Initialize tomography data.
-    tomo = init_tomo(tomo, emission, sinogram_order)
+    tomo = init_tomo(tomo, sinogram_order)
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -286,14 +284,10 @@ def recon(
         tomo, center_arr, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
 
 
-# Convert data to floating point emissive type and sinogram order
+# Convert data to sinogram order
 # Also ensure contiguous data and set to sharedmem if parameter set to True
-def init_tomo(tomo, emission, sinogram_order, sharedmem=True):
+def init_tomo(tomo, sinogram_order, sharedmem=True):
     tomo = dtype.as_float32(tomo)
-    if not emission:
-        tomo[tomo <= 0.] = 1E-6
-        np.log(tomo, tomo) #in-place
-        np.negative(tomo, tomo) #in-place
     if not sinogram_order:
         tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
     if sharedmem:
