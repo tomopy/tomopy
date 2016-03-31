@@ -48,7 +48,6 @@ tomoc = Extension(
         'src/stripe.c',
         'src/remove_ring.c'])
 
-
 ext_mods = [tomoc]
 
 # Remove external C code for RTD builds
