@@ -55,7 +55,6 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if on_rtd:
     ext_mods = []
 
-
 setup(
     name='tomopy',
     packages=find_packages(exclude=['test*']),
