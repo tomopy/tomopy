@@ -66,10 +66,29 @@ __author__ = "Doga Gursoy, Luis Barroso-Luque"
 __credits__ = "Mark Rivers"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['normalize',
+__all__ = ['minus_log',
+           'normalize',
            'normalize_bg',
            'normalize_roi',
            'normalize_nf']
+
+
+def minus_log(arr):
+    """
+    In-place computation of the minus log of a given array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        3D stack of projections.
+
+    Returns
+    -------
+    none
+    """
+    arr = dtype.as_float32(arr)
+    np.log(arr, arr) # in-place
+    np.negative(arr, arr) # in-place
 
 
 def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
