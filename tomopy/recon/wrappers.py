@@ -79,7 +79,7 @@ needed_options = {
 }
 
 
-def astra(*args):
+def astra(*args, **kwargs):
     """
     Reconstruct object using the ASTRA toolbox
 
@@ -116,32 +116,24 @@ def astra(*args):
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
     """
-    if args[5]['options']['proj_type'] == 'cuda':
-        mproc.SHARED_QUEUE.put([astra_run] + list(args))
+    if kwargs['options']['proj_type'] == 'cuda' and mproc.ON_HOST==False:
+        raise mproc.RunOnHostException()
     else:
-        astra_run(*args)
+        astra_run(*args, **kwargs)
 
 
-def astra_run(*args):
+def astra_run(tomo, center, recon, theta, **kwargs):
     # Lazy import ASTRA
     import astra as astra_mod
 
-    # Get shared arrays
-    tomo = mproc.SHARED_TOMO
-    recon = mproc.SHARED_ARRAY
-
     # Unpack arguments
-    nang = args[0]
-    nslices = args[1]
-    ndet = args[2]
-    centers = args[3]
-    angles = args[4]
-    num_gridx = args[5]['num_gridx']
-    num_gridy = args[5]['num_gridy']
-    opts = args[5]['options']
-    istart = args[6]
-    iend = args[7]
-
+    nang = tomo.shape[1]
+    nslices = tomo.shape[0]
+    ndet = tomo.shape[2]
+    num_gridx = kwargs['num_gridx']
+    num_gridy = kwargs['num_gridy']
+    opts = kwargs['options']
+    
     # Check options
     for o in needed_options['astra']:
         if o not in opts:
@@ -150,11 +142,13 @@ def astra_run(*args):
     for o in default_options['astra']:
         if o not in opts:
             opts[o] = default_options['astra'][o]
+    
+    niter = opts['num_iter']
 
     # Create ASTRA geometries
     vol_geom = astra_mod.create_vol_geom((num_gridx, num_gridy))
     proj_geom = astra_mod.create_proj_geom(
-        'parallel', 1.0, ndet, angles.astype(np.float64))
+        'parallel', 1.0, ndet, theta.astype(np.float64))
 
     # Number of GPUs to use
     if opts['proj_type'] == 'cuda' and opts['gpu_list'] is not None:
@@ -186,17 +180,17 @@ def astra_run(*args):
     else:
         cfg['option'] = {}
 
+    const_theta = np.ones(nang)
+
     # Perform reconstruction
     vids = []
     algs = []
     pids = []
     sids = []
-    for ib in range(istart, iend, nbatch):
+    for ib in range(0, nslices, nbatch):
         for j in range(nbatch):
             i = ib+j
-            if i>=iend: break
-
-            sino[j] = tomo[:, i, :]
+            if i>=nslices: break
 
             cfg['option']['z_id'] = i
 
@@ -204,8 +198,8 @@ def astra_run(*args):
             if use_cuda:
                 proj_geom['option'] = {
                     'ExtraDetectorOffset':
-                    (centers[i] - ndet / 2.) * np.ones(nang)}
-                sid = astra_mod.data2d.link('-sino', proj_geom, sino[j])
+                    (center[i] - ndet / 2.) * const_theta}
+                sid = astra_mod.data2d.link('-sino', proj_geom, tomo[i])
                 sids.append(sid)
                 cfg['ProjectionDataId'] = sid
                 pi = astra_mod.create_projector(
@@ -214,16 +208,19 @@ def astra_run(*args):
                 cfg['ProjectorId'] = pi
             else:
                 # Temporary workaround, will be fixed in later ASTRA version
-                shft = int(np.round(ndet / 2. - centers[i]))
-                sino[0] = np.roll(sino, shft)
-                l = shft
-                r = sino.shape[1] + shft
-                if l < 0:
-                    l = 0
-                if r > sino.shape[1]:
-                    r = sino.shape[1]
-                sino[0, :, 0:l] = 0
-                sino[0, :,  r:sino.shape[1]] = 0
+                shft = int(np.round(ndet / 2. - center[i]))
+                if not shft==0:
+                    sino[0,:,:] = np.roll(tomo[i], shft)
+                    l = shft
+                    r = sino.shape[1] + shft
+                    if l < 0:
+                        l = 0
+                    if r > ndet:
+                        r = ndet
+                    sino[0, :, :l] = 0
+                    sino[0, :,  r:] = 0
+                else:
+                    sino[0,:,:] = tomo[i]
             vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
             vids.append(vid)
             cfg['ReconstructionDataId'] = vid
@@ -232,9 +229,9 @@ def astra_run(*args):
             alg_id = astra_mod.algorithm.create(cfg)
             algs.append(alg_id)
         if nbatch==1:
-            astra_mod.algorithm.run(algs[0], opts['num_iter'])
+            astra_mod.algorithm.run(algs[0], niter)
         else:
-            thrds = [executor.submit(lambda q: astra_mod.algorithm.run(q, opts['num_iter']), alg_id) for alg_id in algs]
+            thrds = [executor.submit(lambda q: astra_mod.algorithm_c.run(q, niter), alg_id) for alg_id in algs]
             for q in thrds:
                q.result()
         
