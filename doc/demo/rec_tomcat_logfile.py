@@ -6,7 +6,6 @@ Read the Swiss Light Source TOMCAT tomography log file
 """
 
 from __future__ import print_function
-import tomopy
 import os.path
 
 if __name__ == '__main__':
