@@ -46,22 +46,39 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for internal utility functions.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from tomopy.io.writer import *
-import numpy as np
-import h5py
-import os
-import shutil
-from nose.tools import assert_equals
+import logging
+import warnings
+
+logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+__all__ = ['deprecated']
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+def deprecated(func):
+    '''This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emitted
+    when the function is used.'''
+    def new_func(*args, **kwargs):
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn("Call to deprecated function {}.".format(func.__name__) + \
+        " TomoPy's I/O methods are deprecated and will be " + \
+        "removed in a future version (see " + \
+        "http://dxchange.readthedocs.org)", category=DeprecationWarning)
+        return func(*args, **kwargs)
+
+    new_func.__name__ = func.__name__
+    new_func.__doc__ = func.__doc__
+    new_func.__dict__.update(func.__dict__)
+    return new_func
+

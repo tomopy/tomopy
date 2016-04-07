@@ -7,6 +7,7 @@ TomoPy example script to reconstruct the PetraIII P05 tomography data as origina
 
 from __future__ import print_function
 import tomopy
+import dxchange
 
 if __name__ == '__main__':
 
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     end = 16
 
     # Read the Petra III P05
-    proj, flat, dark = tomopy.read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
+    proj, flat, dark = dxchange.read_petraIII_p05(fname, ind_tomo, ind_flat, ind_dark, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
     theta = tomopy.angles(proj.shape[0])
@@ -48,4 +49,4 @@ if __name__ == '__main__':
     rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
     # Write data as stack of TIFs.
-    tomopy.write_tiff_stack(rec, fname='recon_dir/recon')
+    dxchange.write_tiff_stack(rec, fname='recon_dir/recon')
