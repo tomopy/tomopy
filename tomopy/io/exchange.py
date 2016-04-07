@@ -57,6 +57,7 @@ import numpy as np
 import os.path
 import re
 import tomopy.io.reader as tio
+from tomopy.util.misc import deprecated
 import logging
 import warnings
 
@@ -83,23 +84,6 @@ __all__ = ['read_als_832',
            'read_lnls_imx',
            'read_petraIII_p05',
            'read_sls_tomcat']
-
-def deprecated(func):
-    '''This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used.'''
-    def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning)
-        warnings.warn("Call to deprecated function {}.".format(func.__name__) + \
-        " TomoPy's I/O methods are deprecated and will be " + \
-        "removed in a future version (see " + \
-        "http://dxchange.readthedocs.org)", category=DeprecationWarning)
-        return func(*args, **kwargs)
-
-    new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
-    return new_func
 
 
 @deprecated
