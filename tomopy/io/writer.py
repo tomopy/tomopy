@@ -54,6 +54,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import tomopy.util.dtype as dt
+from tomopy.util.misc import deprecated
 import numpy as np
 import os
 import six
@@ -83,22 +84,6 @@ __all__ = ['write_dxf',
            'write_npy',
            'write_tiff',
            'write_tiff_stack']
-
-def deprecated(func):
-    '''This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used.'''
-    def new_func(*args, **kwargs):
-        warnings.warn("Call to deprecated function {}.".format(func.__name__) + \
-        " TomoPy's I/O methods are deprecated and will be " + \
-        "removed in a future version (see " + \
-        "http://dxchange.readthedocs.org)", category=DeprecationWarning)
-        return func(*args, **kwargs)
-
-    new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
-    return new_func
 
 
 def get_body(fname, digit=None):
