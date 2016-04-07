@@ -23,7 +23,8 @@ requirements:
     - scikit-image
     - pywavelets
     - pyfftw
-
+    - dxchange
+    
 test:
   # Python imports
   imports:
