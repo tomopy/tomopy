@@ -54,11 +54,13 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import tomopy.util.dtype as dt
+from tomopy.util.misc import deprecated
 import numpy as np
 import os
 import six
 import h5py
 import logging
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +165,7 @@ def _init_write(arr, fname, ext, dtype, overwrite):
     return fname, arr
 
 
+@deprecated
 def write_hdf5(
         data, fname='tmp/data.h5', gname='exchange',
         dtype=None, overwrite=False):
@@ -191,6 +194,7 @@ def write_hdf5(
     f.close()
 
 
+@deprecated
 def write_dxf(
         data, fname='tmp/data.h5', axes='theta:y:x',
         dtype=None, overwrite=False):
@@ -219,6 +223,7 @@ def write_dxf(
     f.close()
 
 
+@deprecated
 def write_npy(
         data, fname='tmp/data.npy', dtype=None, overwrite=False):
     """
@@ -236,6 +241,7 @@ def write_npy(
     np.save(fname, data)
 
 
+@deprecated
 def write_tiff(
         data, fname='tmp/data.tiff', dtype=None, overwrite=False):
     """
@@ -258,6 +264,7 @@ def write_tiff(
     tifffile.imsave(fname, data)
 
 
+@deprecated
 def write_tiff_stack(
         data, fname='tmp/data.tiff', dtype=None, axis=0, digit=5,
         start=0, overwrite=False):

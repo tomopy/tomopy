@@ -50,10 +50,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from tomopy.io import *
-from tomopy.io.exchange import *
 from tomopy.io.phantom import *
-from tomopy.io.reader import *
-from tomopy.io.writer import *
+from tomopy.io.exchange import * # deprecated
+from tomopy.io.reader import *   # deprecated
+from tomopy.io.writer import *   # deprecated
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.prep.normalize import *

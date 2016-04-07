@@ -56,9 +56,9 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 from scipy import ndimage
 import pyfftw
+import dxchange
 from scipy.optimize import minimize
 from skimage.feature import register_translation
-from tomopy.io.writer import write_tiff
 from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
@@ -452,4 +452,4 @@ def write_center(
     for m in range(len(center)):
         fname = os.path.join(
             dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
-        write_tiff(rec[m], fname=fname, overwrite=True)
+        dxchange.write_tiff(rec[m], fname=fname, overwrite=True)

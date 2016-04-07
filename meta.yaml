@@ -23,21 +23,13 @@ requirements:
     - scikit-image
     - pywavelets
     - pyfftw
-    - netcdf4
-    - spefile
-    - edffile
-    - tifffile
-    - dxfile
     - dxchange
-
+    
 test:
   # Python imports
   imports:
     - tomopy
     - tomopy.io
-    - tomopy.io.reader
-    - tomopy.io.writer
-    - tomopy.io.exchange
     - tomopy.io.phantom
     - tomopy.misc
     - tomopy.misc.corr

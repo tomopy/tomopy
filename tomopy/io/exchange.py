@@ -57,7 +57,9 @@ import numpy as np
 import os.path
 import re
 import tomopy.io.reader as tio
+from tomopy.util.misc import deprecated
 import logging
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,7 @@ __all__ = ['read_als_832',
            'read_sls_tomcat']
 
 
+@deprecated
 def read_als_832(fname, ind_tomo=None, normalized=False):
     """
     Read ALS 8.3.2 standard data format.
@@ -220,6 +223,7 @@ def read_als_832(fname, ind_tomo=None, normalized=False):
     return tomo, flat, dark
 
 
+@deprecated
 def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
                    proj=None, sino=None):
     """
@@ -316,6 +320,7 @@ def read_als_832h5(fname, ind_tomo=None, ind_flat=None, ind_dark=None,
     return tomo, flat, dark, group_flat
 
 
+@deprecated
 def read_anka_topotomo(
         fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
@@ -365,6 +370,7 @@ def read_anka_topotomo(
     return tomo, flat, dark
 
 
+@deprecated
 def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     """
     Read APS 1-ID standard data format.
@@ -428,6 +434,7 @@ def read_aps_1id(fname, ind_tomo=None, proj=None, sino=None):
     return tomo, flat, dark
 
 
+@deprecated
 def read_aps_2bm(fname, proj=None, sino=None):
     """
     Read APS 2-BM standard data format.
@@ -457,6 +464,7 @@ def read_aps_2bm(fname, proj=None, sino=None):
     return read_aps_32id(fname, proj=proj, sino=sino)
 
 
+@deprecated
 def read_aps_7bm(fname, proj=None, sino=None):
     """
     Read APS 7-BM standard data format.
@@ -487,6 +495,7 @@ def read_aps_7bm(fname, proj=None, sino=None):
     return tomo, theta
 
 
+@deprecated
 def read_aps_13bm(fname, format, proj=None, sino=None):
     """
     Read APS 13-BM standard data format.
@@ -517,6 +526,7 @@ def read_aps_13bm(fname, format, proj=None, sino=None):
     return tomo
 
 
+@deprecated
 def read_aps_13id(
         fname, group='/xrfmap/roimap/sum_cor', proj=None, sino=None):
     """
@@ -547,6 +557,7 @@ def read_aps_13id(
     return tomo
 
 
+@deprecated
 def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None, 
                   dtype=None, shared=True):
     """
@@ -602,6 +613,7 @@ def read_aps_32id(fname, exchange_rank=0, proj=None, sino=None,
     return tomo, flat, dark
 
 
+@deprecated
 def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     """
     Read Australian Synchrotron micro-CT standard data format.
@@ -641,6 +653,7 @@ def read_aus_microct(fname, ind_tomo, ind_flat, ind_dark):
     return tomo, flat, dark
 
 
+@deprecated
 def read_esrf_id19(fname, proj=None, sino=None):
     """
     Read ESRF ID-19 standard data format.
@@ -678,6 +691,7 @@ def read_esrf_id19(fname, proj=None, sino=None):
     return tomo, flat, dark
 
 
+@deprecated
 def read_diamond_l12(fname, ind_tomo):
     """
     Read Diamond Light Source L12 (JEEP) standard data format.
@@ -707,6 +721,7 @@ def read_diamond_l12(fname, ind_tomo):
     return tomo, flat
 
 
+@deprecated
 def read_elettra_syrmep(
         fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
@@ -756,6 +771,7 @@ def read_elettra_syrmep(
     return tomo, flat, dark
 
 
+@deprecated
 def read_lnls_imx(folder, proj=None, sino=None):
     """
     Read LNLS IMX standard data format.
@@ -792,6 +808,7 @@ def read_lnls_imx(folder, proj=None, sino=None):
     return tomo, flat, dark
 
 
+@deprecated
 def read_petraIII_p05(
         fname, ind_tomo, ind_flat, ind_dark, proj=None, sino=None):
     """
@@ -844,6 +861,7 @@ def read_petraIII_p05(
     return tomo, flat, dark
 
 
+@deprecated
 def read_sls_tomcat(fname, ind_tomo=None, proj=None, sino=None):
     """
     Read SLS TOMCAT standard data format.
