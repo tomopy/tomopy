@@ -87,6 +87,7 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
         Axis along which padding will be performed.
     mode : str or function
         One of the following string values or a user supplied function.
+
         'constant'
             Pads with a constant value.
         'edge'

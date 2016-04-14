@@ -1,3 +1,4 @@
+=============
 API reference
 =============
 
@@ -7,12 +8,9 @@ This section contains the API reference and usage information for TomoPy.
 
 .. toctree::
 
-   api/tomopy.io.reader
-   api/tomopy.io.writer
-   api/tomopy.io.phantom
-   api/tomopy.io.exchange
    api/tomopy.misc.corr
    api/tomopy.misc.morph
+   api/tomopy.misc.phantom
    api/tomopy.prep.normalize
    api/tomopy.prep.phase
    api/tomopy.prep.stripe
