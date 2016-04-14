@@ -1,7 +1,7 @@
-:mod:`tomopy.io.phantom`
-========================
+:mod:`tomopy.misc.phantom`
+==========================
 
-.. automodule:: tomopy.io.phantom
+.. automodule:: tomopy.misc.phantom
    :members:
    :show-inheritance:
    :undoc-members:
