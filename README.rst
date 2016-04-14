@@ -21,9 +21,34 @@ TomoPy
    :target: https://binstar.org/dgursoy/tomopy
    :alt: Binstar downloads
 
-**TomoPy** is an open-sourced Python toolbox to perform tomographic data 
-processing and image reconstruction tasks at the 
-`Advanced Photon Source <http://www.aps.anl.gov>`_.
+**TomoPy** is an open-source Python package for tomographic data 
+processing and image reconstruction.
 
-Project homepage:
-`http://tomopy.readthedocs.org <http://tomopy.readthedocs.org>`_
+Features
+========
+
+* Image reconstruction algorithms for tomography.
+* Various filters, ring removal algorithms, phase retrieval algorithms.
+* Forward projection operator for absorption and wave propagation.
+
+Installation
+============
+
+Have `Conda <http://continuum.io/downloads>`_ installed first,  
+then open a terminal or a command prompt window and run:
+
+    conda install -c dgursoy tomopy
+    
+Contribute
+==========
+
+* Issue Tracker: https://github.com/tomopy/tomopy/issues
+* Documentation: https://github.com/tomopy/tomopy/tree/master/doc
+* Source Code: https://github.com/tomopy/tomopy/tree/master/tomopy
+* Tests: https://github.com/tomopy/tomopy/tree/master/test
+
+License
+=======
+
+The project is licensed under the 
+`BSD-3 <https://github.com/tomopy/tomopy/blob/master/LICENSE.txt>`_ license.

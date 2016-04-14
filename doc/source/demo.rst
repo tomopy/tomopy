@@ -1,9 +1,11 @@
+========
 Examples
 ========
 
 This section contains code example for various TomoPy tasks.
 
 .. toctree::
+   :maxdepth: 1
 
    demo/doc.demo.anka
    demo/doc.demo.elettra
