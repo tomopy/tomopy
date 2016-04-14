@@ -7,8 +7,8 @@ This section covers the basics of how to download and install TomoPy.
 .. contents:: Contents:
    :local:
 
-Installing from Conda/Binstar
-=============================
+Installing from Conda
+=====================
 
 First you must have `Conda <http://continuum.io/downloads>`_ 
 installed, then open a terminal or a command prompt window and run::

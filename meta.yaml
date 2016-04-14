@@ -17,7 +17,6 @@ requirements:
     - python
     - numpy
     - h5py
-    - scipy <0.15 # [py26]
     - scipy
     - six
     - scikit-image
@@ -29,11 +28,10 @@ test:
   # Python imports
   imports:
     - tomopy
-    - tomopy.io
-    - tomopy.io.phantom
     - tomopy.misc
     - tomopy.misc.corr
     - tomopy.misc.morph
+    - tomopy.misc.phantom
     - tomopy.prep
     - tomopy.prep.normalize
     - tomopy.prep.phase
