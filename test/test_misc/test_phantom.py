@@ -49,7 +49,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from tomopy.io.phantom import *
+from tomopy.misc.phantom import *
 from nose.tools import assert_equals
 
 
