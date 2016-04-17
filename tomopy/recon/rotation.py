@@ -56,9 +56,9 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 from scipy import ndimage
 import pyfftw
+import dxchange
 from scipy.optimize import minimize
 from skimage.feature import register_translation
-from tomopy.io.writer import write_tiff
 from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
@@ -82,7 +82,7 @@ PI = 3.14159265359
 
 
 def find_center(
-        tomo, theta, ind=None, emission=True, init=None,
+        tomo, theta, ind=None, init=None,
         tol=0.5, mask=True, ratio=1., sinogram_order=False):
     """
     Find rotation axis location.
@@ -100,8 +100,6 @@ def find_center(
         Projection angles in radian.
     ind : int, optional
         Index of the slice to be used for reconstruction.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
     init : float
         Initial guess for the center.
     tol : scalar
@@ -141,22 +139,21 @@ def find_center(
         tomo_ind = tomo[:, ind:ind + 1, :]
 
     hmin, hmax = _adjust_hist_limits(
-        tomo_ind, theta, mask, emission, sinogram_order)
+        tomo_ind, theta, mask, sinogram_order)
 
     # Magic is ready to happen...
     res = minimize(
         _find_center_cost, init,
-        args=(tomo_ind, theta, hmin, hmax, mask, ratio, emission, sinogram_order),
+        args=(tomo_ind, theta, hmin, hmax, mask, ratio, sinogram_order),
         method='Nelder-Mead',
         tol=tol)
     return res.x
 
 
-def _adjust_hist_limits(tomo_ind, theta, mask, emission, sinogram_order):
+def _adjust_hist_limits(tomo_ind, theta, mask, sinogram_order):
     # Make an initial reconstruction to adjust histogram limits.
     rec = recon(tomo_ind, 
-                theta, 
-                emission=emission, 
+                theta,
                 sinogram_order=sinogram_order, 
                 algorithm='gridrec')
 
@@ -185,7 +182,7 @@ def _adjust_hist_max(val):
 
 
 def _find_center_cost(
-        center, tomo_ind, theta, hmin, hmax, mask, ratio, emission, 
+        center, tomo_ind, theta, hmin, hmax, mask, ratio, 
         sinogram_order=False):
     """
     Cost function used for the ``find_center`` routine.
@@ -194,7 +191,7 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
-        emission=emission, sinogram_order=sinogram_order, algorithm='gridrec')
+        sinogram_order=sinogram_order, algorithm='gridrec')
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
@@ -386,7 +383,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
 def write_center(
         tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
-        emission=True, mask=False, ratio=1., sinogram_order=False):
+        mask=False, ratio=1., sinogram_order=False):
     """
     Save images reconstructed with a range of rotation centers.
 
@@ -407,8 +404,6 @@ def write_center(
         [start, end, step] Range of center values.
     ind : int, optional
         Index of the slice to be used for reconstruction.
-    emission : bool, optional
-        Determines whether data is emission or transmission type.
     mask : bool, optional
         If ``True``, apply a circular mask to the reconstructed image to
         limit the analysis into a circular region.
@@ -445,7 +440,6 @@ def write_center(
     rec = recon(stack, 
                 theta, 
                 center=center, 
-                emission=emission, 
                 sinogram_order=True, 
                 algorithm='gridrec',
                 nchunk=1)
@@ -458,4 +452,4 @@ def write_center(
     for m in range(len(center)):
         fname = os.path.join(
             dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
-        write_tiff(rec[m], fname=fname, overwrite=True)
+        dxchange.write_tiff(rec[m], fname=fname, overwrite=True)

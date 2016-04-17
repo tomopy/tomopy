@@ -9,7 +9,6 @@ This section contains TomoPy scripts to reconstruct the APS 13-BM tomography dat
 
    doc.demo.rec_aps_13bm
 
-
 .. automodule:: doc.demo
    :members:
    :undoc-members:
