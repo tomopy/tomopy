@@ -47,7 +47,7 @@
 # #########################################################################
 
 """
-Module for internal utility functions.
+Module for external library wrappers.
 """
 
 from __future__ import (absolute_import, division, print_function,
@@ -69,7 +69,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
            'c_normalize_bg',
-           'c_remove_stripe_sf,'
+           'c_remove_stripe_sf',
            'c_sample',
            'c_art',
            'c_bart',

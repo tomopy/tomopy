@@ -9,7 +9,7 @@
    .. rubric:: **Functions:**
 
    .. autosummary::
-      
+   
       pad
       downsample
       upsample

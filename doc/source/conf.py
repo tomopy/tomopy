@@ -19,7 +19,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -74,7 +74,7 @@ copyright = u'2013-2015, ' + Argonne
 # built documents.
 #
 # The short X.Y version.
-version = open(os.path.join('..', 'VERSION')).read().strip()
+version = open(os.path.join('..', '..', 'VERSION')).read().strip()
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -321,7 +321,7 @@ MOCK_MODULES = [
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
     'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
     'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
-    'DM3lib', 'pyfftw', 'tomopy']
+    'DM3lib', 'pyfftw', 'dxchange']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
