@@ -46,22 +46,4 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-from tomopy.io.writer import *
-import numpy as np
-import h5py
-import os
-import shutil
-from nose.tools import assert_equals
-
-
-__author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+from __future__ import absolute_import, division, print_function
