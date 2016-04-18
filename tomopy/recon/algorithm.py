@@ -307,7 +307,7 @@ def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
         else:
             recon = np.full(shape, val, dtype=np.float32)
     else:
-        recon = np.require(recon, dtype=np.float32, requirements="AC")
+        recon = np.require(init_recon, dtype=np.float32, requirements="AC")
         if sharedmem:
             recon = dtype.as_sharedmem(recon)
     return recon
