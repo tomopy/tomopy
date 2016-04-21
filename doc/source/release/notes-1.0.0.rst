@@ -29,6 +29,7 @@ Contributors
 * Michael Sutherland (`@michael-sutherland`_)
 * Rafael Vescovi (`@ravescovi`_)
 * Thomas Caswell (`@tacaswell`_)
+* Pete R. Jemian (`@prjemian`_)
 
 .. _`@aglowacki`: https://github.com/aglowacki
 .. _`@dmpelt`: https://github.com/dmpelt
@@ -39,3 +40,4 @@ Contributors
 .. _`@michael-sutherland`: https://github.com/michael-sutherland
 .. _`@ravescovi`: https://github.com/ravescovi
 .. _`@tacaswell`: https://github.com/tacaswell
+.. _`@prjemian`: https://github.com/prjemian
