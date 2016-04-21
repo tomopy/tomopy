@@ -28,7 +28,7 @@ Contributors
 * Luis Barroso-Luque (`@lbluque`_)
 * Michael Sutherland (`@michael-sutherland`_)
 * Rafael Vescovi (`@ravescovi`_)
-* Thomas Caswell Vescovi (`@tacaswell`_)
+* Thomas Caswell (`@tacaswell`_)
 
 .. _`@aglowacki`: https://github.com/aglowacki
 .. _`@dmpelt`: https://github.com/dmpelt
