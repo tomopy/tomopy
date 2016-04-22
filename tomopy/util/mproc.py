@@ -202,8 +202,10 @@ def distribute_jobs(arr,
                     p.terminate()
                     raise
             else:
-                p.map_async(_arg_parser, map_args)
+                res = p.map_async(_arg_parser, map_args)
         try:
+            p.close()
+            res.get()
             p.join()
         except:
             p.terminate()
