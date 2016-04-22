@@ -89,6 +89,7 @@ def minus_log(arr):
     arr = dtype.as_float32(arr)
     np.log(arr, arr) # in-place
     np.negative(arr, arr) # in-place
+    return arr
 
 
 def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
