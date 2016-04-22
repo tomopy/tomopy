@@ -26,4 +26,3 @@ frequently. To update the installation run in your terminal::
 
 For some more information about using Conda, please refer to the 
 `docs <http://conda.pydata.org/docs>`__.
-    
