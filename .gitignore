@@ -64,7 +64,7 @@ dist
 doc/_build
 *egg-info
 .settings
-pip-log.txt
+.ipynb_checkpoints
 
 # Other byproducts #
 ####################
@@ -85,6 +85,7 @@ pip-log.txt
 tmp
 test.py
 main.py
+*.ipynb
 trunk
 
 # Installer logs
