@@ -84,11 +84,14 @@ def minus_log(arr):
 
     Returns
     -------
-    none
+    ndarray
+        Minus-log of the input data.
     """
     arr = dtype.as_float32(arr)
+    arr[arr <= 0] = 1e-12
     np.log(arr, arr) # in-place
     np.negative(arr, arr) # in-place
+    return arr
 
 
 def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
