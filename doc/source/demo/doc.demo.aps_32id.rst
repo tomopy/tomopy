@@ -11,7 +11,6 @@ This section contains TomoPy scripts to reconstruct the APS 2-BM and 32-ID tomog
    doc.demo.rec_aps_32id_chunk
    doc.demo.rec_aps_32id_blocked_projs
 
-
 .. automodule:: doc.demo
    :members:
    :undoc-members:

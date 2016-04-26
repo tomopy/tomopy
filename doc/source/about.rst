@@ -16,6 +16,5 @@ can degrade the quality of tomographs, unless corrections are applied.
 To address the needs for image correction and tomographic reconstruction 
 in an instrument independent manner, the TomoPy code was developed
 :cite:`Gursoy:14a`, which is a parallelizable high performance 
-reconstruction code. The code is in use or planned to be so at most 
-U.S. synchrotron facilities.
+reconstruction code.
 
