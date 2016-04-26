@@ -10,7 +10,6 @@ This section contains TomoPy scripts to reconstruct the Swiss Light Source tomca
    doc.demo.rec_tomcat
    doc.demo.rec_tomcat_logfile
 
-
 .. automodule:: doc.demo
    :members:
    :undoc-members:
