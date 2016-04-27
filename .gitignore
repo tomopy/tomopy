@@ -65,6 +65,7 @@ doc/_build
 *egg-info
 .settings
 pip-log.txt
+.ipynb_checkpoints
 
 # Other byproducts #
 ####################
