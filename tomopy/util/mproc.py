@@ -73,7 +73,19 @@ SHARED_ARRAYS = None
 SHARED_OUT = None
 SHARED_QUEUE = None
 ON_HOST = False
+DEBUG = False
 
+def set_debug(val=True):
+    """
+    Set the global DEBUG variable.
+
+    If DEBUG is True, all computations will be run on the host process instead
+    of distributing work over different processes. This can help to debug
+    functions that give errors or cause segmentation faults. If DEBUG is False
+    (the default value), work is distributed over different processes.
+    """
+    global DEBUG
+    DEBUG=val
 
 def distribute_jobs(arr,
                     func,
@@ -180,7 +192,7 @@ def distribute_jobs(arr,
 
     init_shared(shared_arrays, shared_out, queue, on_host=True)
 
-    if ncore > 1:
+    if ncore > 1 and DEBUG==False:
         with closing(mp.Pool(processes=ncore,
                              initializer=init_shared,
                              initargs=(shared_arrays, shared_out, queue))) as p:
@@ -198,8 +210,10 @@ def distribute_jobs(arr,
                     p.terminate()
                     raise
             else:
-                p.map_async(_arg_parser, map_args)
+                res = p.map_async(_arg_parser, map_args)
         try:
+            p.close()
+            res.get()
             p.join()
         except:
             p.terminate()
