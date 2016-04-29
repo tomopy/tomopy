@@ -2,21 +2,19 @@
 Examples
 ========
 
-This section contains code example for various TomoPy tasks.
+This section contains `Jupyter Notebooks <http://ipython.org/notebook.html>`_ 
+examples for various the tomoPy functions. 
+ 
+To run these examples on your computer download the `TomoPy Notebooks <https://github.com/tomopy/tomopy/tree/master/doc/source/ipynb>`_, `install <http://jupyter.readthedocs.org/en/latest/install.html>`_ and
+`run <http://jupyter.readthedocs.org/en/latest/running.html>`_
+`Jupyter Notebook <http://ipython.org/notebook.html>`_.
+
 
 .. toctree::
-   :maxdepth: 1
 
-   demo/doc.demo.anka
-   demo/doc.demo.elettra
-   demo/doc.demo.esrf
-   demo/doc.demo.aps_1id
-   demo/doc.demo.aps_13bm
-   demo/doc.demo.aps_32id
-   demo/doc.demo.petraIII_p05
-   demo/doc.demo.tomcat
+   ipynb/tomopy.ipynb
 
-.. automodule:: doc.demo
+.. automodule:: tomopy
    :members:
    :undoc-members:
    :show-inheritance: 

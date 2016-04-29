@@ -1,2 +1,4 @@
 sphinx
 sphinxcontrib-bibtex
+nbsphinx
+IPython
