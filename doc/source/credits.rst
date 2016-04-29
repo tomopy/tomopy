@@ -2,8 +2,9 @@
 Credits
 =======
 
-We kindly request that you cite the following article 
-:cite:`Gursoy:14a` if you use TomoPy.
+We kindly request that you cite the following article(s) 
+:cite:`Gursoy:14a` if you use TomoPy (and also cite
+:cite:`Pelt:16a` if you use ASTRA). 
 
 .. bibliography:: bibtex/cite.bib
    :style: plain
