@@ -72,7 +72,7 @@ def deprecated(func, msg=None):
     when the function is used.
     """
     def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning)
+        warnings.simplefilter('once', DeprecationWarning)
         warnings.warn(
             "Deprecated function {}.".format(func.__name__), category=DeprecationWarning)
         return func(*args, **kwargs)
