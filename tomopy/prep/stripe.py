@@ -129,6 +129,8 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
     xshift = int((nx - dx) // 2)
 
     num_jobs = tomo.shape[1]
+    fftw_effort = 'FFTW_MEASURE' if num_jobs > 10 else 'FFTW_ESTIMATE'
+
     for m in range(num_jobs):
         sli = np.zeros((nx, dz), dtype='float32')
         sli[xshift:dx + xshift] = tomo[:, m, :]
@@ -147,7 +149,7 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
         for n in range(level):
             # FFT
             fcV = np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft(
-                cV[n], axis=0, planner_effort=phase._plan_effort(num_jobs)))
+                cV[n], axis=0, planner_effort=fftw_effort))
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
@@ -158,7 +160,7 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
             # Inverse FFT.
             cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
                 np.fft.ifftshift(fcV), axis=0,
-                planner_effort=phase._plan_effort(num_jobs)))
+                planner_effort=fftw_effort))
 
         # Wavelet reconstruction.
         for n in range(level)[::-1]:
