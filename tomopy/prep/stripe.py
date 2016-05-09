@@ -109,6 +109,7 @@ def remove_stripe_fw(
 
     # Enable cache for FFTW.
     pyfftw.interfaces.cache.enable()
+    pyfftw.interfaces.cache.set_keepalive_time(5)
 
     arr = mproc.distribute_jobs(
         tomo,
