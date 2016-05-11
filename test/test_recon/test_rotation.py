@@ -51,7 +51,9 @@ from __future__ import (absolute_import, division, print_function,
 
 from test.util import read_file
 from tomopy.recon.rotation import *
+from tomopy.misc.phantom import lena
 import numpy as np
+from scipy.ndimage.interpolation import shift as image_shift
 import os.path
 import shutil
 from nose.tools import assert_equals
@@ -85,6 +87,12 @@ def test_find_center():
     ang = np.linspace(0, np.pi, sim.shape[0])
     cen = find_center(sim, ang)
     assert_allclose(cen, 45.28, rtol=1e-2)
+
+def test_find_center_pc():
+    proj_0 = read_file('projection.npy')
+    proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
+    cen = find_center_pc(proj_0, proj_180)
+    assert_allclose(cen, 73.375, rtol=0.25)
 
 
 if __name__ == '__main__':
