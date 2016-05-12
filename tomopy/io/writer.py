@@ -86,6 +86,7 @@ __all__ = ['write_dxf',
            'write_tiff_stack']
 
 
+@deprecated
 def get_body(fname, digit=None):
     """
     Get file name after extension removed.
@@ -96,6 +97,7 @@ def get_body(fname, digit=None):
     return body
 
 
+@deprecated
 def get_extension(fname):
     """
     Get file extension.
