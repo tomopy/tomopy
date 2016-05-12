@@ -59,6 +59,7 @@ import six
 import os
 import h5py
 from tomopy.util.dtype import empty_shared_array
+from tomopy.util.misc import deprecated
 import logging
 import re
 import math
@@ -103,6 +104,7 @@ def _check_read(fname):
     return os.path.abspath(fname)
 
 
+@deprecated
 def read_tiff(fname, slc=None):
     """
     Read data from tiff file.
@@ -133,6 +135,7 @@ def read_tiff(fname, slc=None):
     return arr
 
 
+@deprecated
 def read_tiff_stack(fname, ind, digit, slc=None):
     """
     Read data from stack of tiff files in a folder.
@@ -180,6 +183,7 @@ def _init_arr_from_stack(fname, nfile, slc):
     return np.zeros(size, dtype=_arr.dtype)
 
 
+@deprecated
 def read_edf(fname, slc=None):
     """
     Read data from edf file.
@@ -213,6 +217,7 @@ def read_edf(fname, slc=None):
     return arr
 
 
+@deprecated
 def read_hdf5(fname, dataset, slc=None, dtype=None, shared=True):
     """
     Read data from hdf5 file from a specific group.
@@ -260,6 +265,7 @@ def read_hdf5(fname, dataset, slc=None, dtype=None, shared=True):
     return arr
 
 
+@deprecated
 def read_netcdf4(fname, group, slc=None):
     """
     Read data from netcdf4 file from a specific group.
@@ -294,6 +300,7 @@ def read_netcdf4(fname, group, slc=None):
     return arr
 
 
+@deprecated
 def read_npy(fname, slc=None):
     """
     Read binary data from a ``.npy`` file.
@@ -319,6 +326,7 @@ def read_npy(fname, slc=None):
     return arr
 
 
+@deprecated
 def read_spe(fname, slc=None):
     """
     Read data from spe file.
@@ -523,6 +531,7 @@ def _map_loc(ind, loc):
     return np.ndarray.tolist(loc)
 
 
+@deprecated
 def read_hdf5_stack(h5group, dname, ind, digit=4, slc=None, out_ind=None):
     """
     Read data from stacked datasets in a hdf5 file
