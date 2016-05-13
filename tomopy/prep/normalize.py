@@ -73,7 +73,7 @@ __all__ = ['minus_log',
            'normalize_nf']
 
 
-def minus_log(arr):
+def minus_log(arr, out=None):
     """
     In-place computation of the minus log of a given array.
 
@@ -81,14 +81,16 @@ def minus_log(arr):
     ----------
     arr : ndarray
         3D stack of projections.
-
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
     Returns
     -------
     none
     """
     arr = dtype.as_float32(arr)
-    np.log(arr, arr) # in-place
-    np.negative(arr, arr) # in-place
+    arr = np.log(arr, out) # in-place
+    arr = np.negative(arr, out) # in-place
+    return arr
 
 
 def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):

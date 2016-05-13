@@ -78,15 +78,15 @@ __all__ = ['as_ndarray',
            'as_c_void_p']
 
 
-def as_ndarray(arr, dtype=None):
+def as_ndarray(arr, dtype=None, copy=False):
     if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype)
+        arr = np.array(arr, dtype=dtype, copy=copy)
     return arr
 
 
-def as_dtype(arr, dtype):
+def as_dtype(arr, dtype, copy=False):
     if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype)
+        arr = np.array(arr, dtype=dtype, copy=copy)
     return arr
 
 
@@ -170,6 +170,7 @@ def is_sharedmem(arr):
 
 def is_contiguous(arr):
     return arr.flags.c_contiguous
+
 
 def empty_shared_array(shape, dtype=np.float32):
     # create a shared ndarray with the provided shape and type
