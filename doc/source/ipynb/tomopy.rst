@@ -38,7 +38,7 @@ Set the path to the micro-CT data to reconstruct.
 
 .. code:: python
 
-    fname = '../../../tomopy/data/tooth.h5'
+    fname = '../../tomopy/data/tooth.h5'
 
 Select the sinogram range to reconstruct.
 
@@ -118,7 +118,7 @@ Calculate
 
 .. code:: python
 
-    tomopy.minus_log(proj)
+    proj = tomopy.minus_log(proj)
 
 Reconstruction using Gridrec algorithm.Tomopy provides various
 `reconstruction <http://tomopy.readthedocs.io/en/latest/api/tomopy.recon.algorithm.html>`__
