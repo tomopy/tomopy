@@ -16,10 +16,10 @@ if __name__ == '__main__':
 
     # Set data collection angles as equally spaced between 0-180 degrees.    rot_center = tomopy.find_center(proj, theta, init=290, ind=0, tol=0.5)
 
-    tomopy.minus_log(proj)
+    proj = tomopy.minus_log(proj)
 
     # Reconstruct object using Gridrec algorithm.    recon = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec')
 
     # Mask each reconstructed slice with a circle.    recon = tomopy.circ_mask(recon, axis=0, ratio=0.95)
 
-    # Write data as stack of TIFs.    dxchange.write_tiff_stack(rec, fname='recon_dir/recon')
+    # Write data as stack of TIFs.    dxchange.write_tiff_stack(recon, fname='recon_dir/recon')
