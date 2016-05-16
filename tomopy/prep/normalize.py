@@ -85,7 +85,8 @@ def minus_log(arr, out=None):
         Output array for result.  If same as arr, process will be done in-place.
     Returns
     -------
-    none
+    ndarray
+        Minus-log of the input data.
     """
     arr = dtype.as_float32(arr)
     arr = np.log(arr, out) # in-place
