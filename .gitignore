@@ -64,6 +64,7 @@ dist
 doc/_build
 *egg-info
 .settings
+pip-log.txt
 .ipynb_checkpoints
 
 # Other byproducts #
@@ -111,6 +112,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.idea
 
 # Private functions #
 #####################
