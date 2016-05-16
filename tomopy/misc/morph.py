@@ -64,10 +64,11 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['pad',
-           'downsample',
+__all__ = ['downsample',
            'upsample',
-           'sino_360_t0_180']
+           'pad',
+           'sino_360_t0_180',
+           'trim_sinogram']
 
 
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
@@ -203,6 +204,62 @@ def _init_out(arr, axis, dim, val=0.):
     return val * np.ones(shape, dtype='float32')
 
 
+def trim_sinogram(data, center, x, y, diameter):
+    """
+    Provide sinogram corresponding to a circular region of interest
+    by trimming the complete sinogram of a compact object.
+
+    Parameters
+    ----------
+    data : ndarray
+        Input 3D data.
+
+    center : float
+        Rotation center location.
+
+    x, y : int, int
+        x and y coordinates in pixels (image center is (0, 0))
+
+    diameter : float
+        Diameter of the circle of the region of interest.
+
+    Returns
+    -------
+    ndarray
+        Output 3D data.
+
+    """
+    data = dtype.as_float32(data.copy())
+    dx, dy, dz = data.shape
+
+    rad = np.sqrt(x * x + y * y)
+    alpha = np.arctan2(x, y)
+    l1 = center - diameter / 2
+    l2 = center - diameter / 2 + rad
+
+    roidata = np.ones((dx, dy, diameter), dtype='float32')
+
+    delphi = np.pi / dx
+    for m in range(dx):
+
+        # Calculate start end coordinates for each row of the sinogram.
+        ind1 = np.ceil(np.cos(alpha - m * delphi) * (l2 - l1) + l1)
+        ind2 = np.floor(np.cos(alpha - m * delphi) * (l2 - l1) + l1 + diameter)
+
+        # Make sure everythin is inside the frame.
+        if ind1 < 0:
+            ind1 = 0
+        if ind1 > dz:
+            ind1 = dz
+        if ind2 < 0:
+            ind2 = 0
+        if ind2 > dz:
+            ind2 = dz
+
+        roidata[m, :, 0:(ind2 - ind1)] = data[m:m+1, :, ind1:ind2]
+    return roidata
+
+
 def sino_360_t0_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
@@ -221,7 +278,7 @@ def sino_360_t0_180(data, overlap=0, rotation='left'):
 
     Returns
     -------
-    data : ndarray
+    ndarray
         Output 3D data.
     """
     dx, dy, dz = data.shape
