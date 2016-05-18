@@ -28,7 +28,7 @@ New features
 New functions
 -------------
 
-* `minus_log <http://tomopy.readthedocs.org/en/latest/api/tomopy.misc.prep.html#tomopy.misc.prep.minus_log>`_
+* `minus_log <http://tomopy.readthedocs.io/en/latest/api/tomopy.prep.normalize.html#tomopy.prep.normalize.minus_log>`_
 * `trim_sinogram <http://tomopy.readthedocs.org/en/latest/api/tomopy.misc.morph.html#tomopy.misc.morph.trim_sinogram>`_
 
 
