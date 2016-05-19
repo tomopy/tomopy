@@ -67,7 +67,7 @@ gridrec(
     int s, p, iu, iv;
     float *sine, *cose, *wtbl, *work, *winv;
 
-    float (* const filter)(float, float, float) = get_filter(fname);
+    float (* const filter)(float, int, const float*) = get_filter(fname);
     const float C = 7.0;
     const float nt = 20.0;
     const float lambda = 0.99998546;
@@ -347,7 +347,7 @@ gridrec(
 void 
 set_filter_tables(
     int dt, int pd, float center, 
-    float(* const pf)(float, float, float), const float *filter_par, float _Complex *A)
+    float(* const pf)(float, int, const float *), const float *filter_par, float _Complex *A)
 { 
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
@@ -362,7 +362,7 @@ set_filter_tables(
     for(j=0; j<pd/2; j++)
     {
         x = j*rtmp1;
-        rtmp2 = (*pf)((float)j/pd, (float)filter_par[0], (float)filter_par[1])*norm;
+        rtmp2 = (*pf)((float)j/pd, j, filter_par)*norm;
         A[j] = rtmp2 * (cosf(x) - I*sinf(x));
     }
 }
@@ -501,7 +501,7 @@ free_matrix_c(float _Complex** m)
 
 // No filter
 float 
-filter_none(float x, float y, float z)
+filter_none(float x, int i, const float* pars)
 {
     return 1;
 }
@@ -509,7 +509,7 @@ filter_none(float x, float y, float z)
 
 // Shepp-Logan filter
 float 
-filter_shepp(float x, float y, float z)
+filter_shepp(float x, int i, const float* pars)
 {
     return fabs(sinf(M_PI*x)/M_PI);
 }
@@ -517,7 +517,7 @@ filter_shepp(float x, float y, float z)
 
 // Cosine filter 
 float 
-filter_cosine(float x, float y, float z)
+filter_cosine(float x, int i, const float* pars)
 {
     return fabs(x)*(cosf(M_PI*x));
 }
@@ -525,47 +525,54 @@ filter_cosine(float x, float y, float z)
 
 // Hann filter 
 float 
-filter_hann(float x, float cutoff, float z)
+filter_hann(float x, int i, const float* pars)
 {
-    return fabs(x)*0.5*(1.+cosf(M_PI*x/cutoff));
+    return fabs(x)*0.5*(1.+cosf(M_PI*x/pars[0]));
 }
 
 
 // Hamming filter 
 float 
-filter_hamming(float x, float cutoff, float z)
+filter_hamming(float x, int i, const float* pars)
 {
-    return fabs(x)*(0.54+0.46*cosf(M_PI*x/cutoff));
+    return fabs(x)*(0.54+0.46*cosf(M_PI*x/pars[0]));
 }
 
 // Ramlak filter
 float 
-filter_ramlak(float x, float y, float z)
+filter_ramlak(float x, int i, const float* pars)
 {
     return fabs(x);
 }
 
 // Parzen filter
 float 
-filter_parzen(float x, float cutoff, float z)
+filter_parzen(float x, int i, const float* pars)
 {
-    return fabs(x)*pow(1-fabs(x)/cutoff, 3);
+    return fabs(x)*pow(1-fabs(x)/pars[0], 3);
 }
 
 // Butterworth filter
 float 
-filter_butterworth(float x, float cutoff, float order)
+filter_butterworth(float x, int i, const float* pars)
 {
-    return fabs(x)/(1+pow(x/cutoff, 2*order));
+    return fabs(x)/(1+pow(x/pars[0], 2*pars[1]));
+}
+
+// Custom filter
+float 
+filter_custom(float x, int i, const float* pars)
+{
+    return pars[i];
 }
 
 
-float (*get_filter(const char *name))(float, float, float) 
+float (*get_filter(const char *name))(float, int, const float*) 
 {
     struct 
     {
         const char* name; 
-        float (* const fp)(float, float, float);
+        float (* const fp)(float, int, const float*);
     } fltbl[] = {
         {"none", filter_none},
         {"shepp", filter_shepp}, // Default
@@ -574,9 +581,11 @@ float (*get_filter(const char *name))(float, float, float)
         {"hamming", filter_hamming},
         {"ramlak", filter_ramlak},
         {"parzen", filter_parzen},
-        {"butterworth", filter_butterworth}};
+        {"butterworth", filter_butterworth},
+        {"custom", filter_custom}
+    };
 
-    for(int i=0; i<8; i++)
+    for(int i=0; i<9; i++)
     {
         if(!strncmp(name, fltbl[i].name, 16))
         {
