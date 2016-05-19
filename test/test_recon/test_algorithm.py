@@ -52,6 +52,7 @@ from __future__ import (absolute_import, division, print_function,
 from test.util import read_file
 from tomopy.recon.algorithm import *
 from numpy.testing import assert_allclose
+import numpy as np
 
 
 __author__ = "Doga Gursoy"
@@ -79,6 +80,11 @@ class TestRecon(object):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
+
+    def test_gridrec_custom(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='custom', filter_par=np.ones(self.prj.shape[-1],dtype=np.float32)))
 
     # def test_gridrec(self):
     #     assert_allclose(
