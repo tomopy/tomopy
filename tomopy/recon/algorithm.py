@@ -247,7 +247,7 @@ def recon(
                     (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
-                if not isinstance(kwargs, (np.ndarray, np.generic)):
+                if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], str):
                     kwargs[key] = np.array(value)
 
                 # Make sure reg_par is float32.
@@ -363,7 +363,7 @@ def _get_algorithm_kwargs(shape):
     return {
         'num_gridx': dx,
         'num_gridy': dx,
-        'filter_name': np.array('shepp', dtype=(str, 16)),
+        'filter_name': 'shepp',
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),

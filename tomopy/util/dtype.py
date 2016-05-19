@@ -129,8 +129,7 @@ def as_c_float(arr):
 
 
 def as_c_char_p(arr):
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    return arr.ctypes.data_as(c_char_p)
+    return ctypes.c_char_p(str.encode(arr,"ascii"))
 
 
 def as_c_void_p():
