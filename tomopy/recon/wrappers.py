@@ -212,7 +212,7 @@ def astra_run(tomo, center, recon, theta, **kwargs):
                 if not shft==0:
                     sino[0,:,:] = np.roll(tomo[i], shft)
                     l = shft
-                    r = sino.shape[1] + shft
+                    r = sino.shape[2] + shft
                     if l < 0:
                         l = 0
                     if r > ndet:
