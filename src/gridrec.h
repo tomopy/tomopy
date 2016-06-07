@@ -85,34 +85,37 @@ void
 free_matrix_c(float _Complex** m);
 
 float 
-(*get_filter(const char *name))(float, float, float);
+(*get_filter(const char *name))(float, int, const float*);
 
 float 
-filter_none(float, float, float);
+filter_none(float, int, const float*);
 
 float 
-filter_shepp(float, float, float);
+filter_shepp(float, int, const float*);
 
 float 
-filter_hann(float, float, float);
+filter_hann(float, int, const float*);
 
 float 
-filter_hamming(float, float, float);
+filter_hamming(float, int, const float*);
 
 float 
-filter_ramlak(float, float, float);
+filter_ramlak(float, int, const float*);
 
 float 
-filter_parzen(float, float, float);
+filter_parzen(float, int, const float*);
 
 float 
-filter_butterworth(float, float, float);
+filter_butterworth(float, int, const float*);
+
+float
+filter_custom(float, int, const float*);
 
 void 
 set_filter_tables(
     int dt, int pd, 
     float fac, 
-    float(* const pf)(float, float, float), const float *filter_par,
+    float(* const pf)(float, int, const float*), const float *filter_par,
     float _Complex *A);
 
 void 
