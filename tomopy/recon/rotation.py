@@ -187,7 +187,7 @@ def _find_center_cost(
     """
     Cost function used for the ``find_center`` routine.
     """
-    logger.warn('Trying center: %s', center)
+    logger.info('Trying rotation center: %s', center)
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
@@ -199,7 +199,7 @@ def _find_center_cost(
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
     val = -np.dot(hist, np.log2(hist))
-    logger.warn("val = %f"%val)    
+    logger.info("Function value = %f"%val)    
     return val
 
 
