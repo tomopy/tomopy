@@ -73,6 +73,7 @@ Contributors
 .. _`@aglowacki`: https://github.com/aglowacki
 .. _`@dmpelt`: https://github.com/dmpelt
 .. _`@dgursoy`: https://github.com/dgursoy
+.. _`@dakefeng`: https://github.com/dakefeng
 .. _`@decarlof`: https://github.com/decarlof
 .. _`@lbluque`: https://github.com/lbluque
 .. _`@yxqd`: https://github.com/yxqd
@@ -80,3 +81,4 @@ Contributors
 .. _`@ravescovi`: https://github.com/ravescovi
 .. _`@tacaswell`: https://github.com/tacaswell
 .. _`@prjemian`: https://github.com/prjemian
+.. _`@celiafish`: https://github.com/celiafish
