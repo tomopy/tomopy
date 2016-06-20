@@ -250,15 +250,10 @@ def recon(
                 if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
                     kwargs[key] = np.array(value)
 
-                # Make sure reg_par is float32.
-                if key == 'reg_par':
-                    if not isinstance(kwargs['reg_par'], np.float32):
-                        kwargs['reg_par'] = np.array(value, dtype='float32')
-
-                # Make sure filter_par is float32.
-                if key == 'filter_par':
-                    if not isinstance(kwargs['filter_par'], np.float32):
-                        kwargs['filter_par'] = np.array(value, dtype='float32')
+                # Make sure reg_par and filter_par is float32.
+                if key == 'reg_par' or key == 'filter_par':
+                    if not isinstance(kwargs[key], np.float32):
+                        kwargs[key] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
