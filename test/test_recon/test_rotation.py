@@ -51,7 +51,6 @@ from __future__ import (absolute_import, division, print_function,
 
 from test.util import read_file
 from tomopy.recon.rotation import *
-from tomopy.misc.phantom import lena
 import numpy as np
 from scipy.ndimage.interpolation import shift as image_shift
 import os.path
