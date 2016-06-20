@@ -30,6 +30,7 @@ Table of Contents
    
    about
    install
+   data
    devguide
    releases
    api

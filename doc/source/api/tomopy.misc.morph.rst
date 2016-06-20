@@ -10,7 +10,8 @@
 
    .. autosummary::
    
-      pad
       downsample
       upsample
+      pad
       sino_360_t0_180
+      trim_sinogram
