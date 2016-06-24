@@ -107,9 +107,6 @@ def remove_stripe_fw(
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
-    # Enable cache for FFTW.
-    pyfftw.interfaces.cache.enable()
-
     arr = mproc.distribute_jobs(
         tomo,
         func=_remove_stripe_fw,
@@ -128,6 +125,7 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
     xshift = int((nx - dx) // 2)
 
     num_jobs = tomo.shape[1]
+
     for m in range(num_jobs):
         sli = np.zeros((nx, dz), dtype='float32')
         sli[xshift:dx + xshift] = tomo[:, m, :]
