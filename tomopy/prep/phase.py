@@ -141,7 +141,7 @@ def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
     for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
         fproj = pyfftw.interfaces.numpy_fft.fft2(
-                prj, planner_effort=fftw_effort)
+                prj, planner_effort=_plan_effort(num_jobs))
         filtproj = np.multiply(phase_filter, fproj)
         proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
             filtproj, planner_effort=_plan_effort(num_jobs))
