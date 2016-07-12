@@ -12,8 +12,10 @@ scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_
 
 
 .. toctree::
+   :titlesonly:
 
    ipynb/tomopy.rst
+   ipynb/astra.rst
 
 .. automodule:: tomopy
    :members:
