@@ -76,7 +76,7 @@ is incremented for API changes which are not backward-compatible. For
 example, software which relies on version 2.1.5 of an API is compatible
 with version 2.2.3, but not necessarily with 3.2.4.
 
-Commiting changes
+Committing changes
 =================
 
 After making some changes in the code, you may want to take a 
@@ -95,9 +95,10 @@ Contributing back
 =================
 
 Once you feel that the functionality you added would benefit the community, 
-then you should consider contributing back to the TomoPy project. For this, 
-go to your online GitHub repository of the project and click on the *green*
-button to compare, review and create a pull request.
+then you should consider contributing back to the TomoPy project. You will 
+need to push your local commits to GitHub, then go to your online GitHub 
+repository of the project and click on the *green* button to compare, review, 
+and create a pull request.
 
 .. image:: img/create-revision.png
 
