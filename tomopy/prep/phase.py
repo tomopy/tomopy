@@ -120,10 +120,6 @@ def retrieve_phase(
     phase_filter = np.fft.fftshift(
         _paganin_filter_factor(energy, dist, alpha, w2))
 
-    # Enable cache for FFTW.
-    pyfftw.interfaces.cache.enable()
-    pyfftw.interfaces.cache.set_keepalive_time(5)
-
     prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
     arr = mproc.distribute_jobs(
         tomo,
