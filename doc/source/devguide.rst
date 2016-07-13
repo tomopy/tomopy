@@ -20,7 +20,7 @@ clicking the **Fork** button in the header of the
 
 .. image:: img/fork-repo.png
 
-This successfully creates a copy of the project in your personal 
+This creates a copy of the project in your personal 
 GitHub space. The next thing you want to do is to clone it to your 
 local machine. You can do this by clicking the **Clone in Desktop** 
 button in the bottom of the right hand side bar:
@@ -32,6 +32,18 @@ This will launch the GitHub desktop application
 `Win <http://windows.github.com>`_) 
 and ask you where you want to save it. Select a location in your 
 computer and feel comfortable with making modifications in the code.
+
+Running the Tests
+=================
+Tomopy has a suite of python unit tests that live in the /test directory, 
+where they follow the same tree structure as the packages under /tomopy/
+These are automatically run by TravisCI when you make a pull request 
+(See below for how to do that) and you can run them manually using nose,
+or whichever python test runner you prefer.
+
+When writing tests, at minimun we try to check all function
+returns with synthetic data, together with some dimension, type, etc.  
+Writing tests for your code is highly encouraged!
 
 Coding conventions
 ==================
