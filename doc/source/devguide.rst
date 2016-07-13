@@ -20,7 +20,7 @@ clicking the **Fork** button in the header of the
 
 .. image:: img/fork-repo.png
 
-This successfully creates a copy of the project in your personal 
+This creates a copy of the project in your personal 
 GitHub space. The next thing you want to do is to clone it to your 
 local machine. You can do this by clicking the **Clone in Desktop** 
 button in the bottom of the right hand side bar:
@@ -33,10 +33,29 @@ This will launch the GitHub desktop application
 and ask you where you want to save it. Select a location in your 
 computer and feel comfortable with making modifications in the code.
 
+Running the Tests
+=================
+Tomopy has a suite of python unit tests that live in the ``/test`` directory, 
+where they follow the same tree structure as the packages under ``/tomopy``.
+These are automatically run by TravisCI when you make a pull request 
+(See below for how to do that) and you can run them manually using nose,
+or whichever python test runner you prefer.
+
+The nose test runner, <http://nose.readthedocs.io/en/latest/>, is available 
+through easy_install, pip, or anaconda.  
+To run the tests with nose, open terminal, navigate to the test directory,
+then run ``nosetests``.  To run sections of tests, pass nose a 
+directory or filepath, as in ``nosetests test_recon`` or 
+``nosetests test_recon/test_rotation.py``.
+
+When writing tests, at minimum we try to check all function
+returns with synthetic data, together with some dimension, type, etc.  
+Writing tests is highly encouraged!
+
 Coding conventions
 ==================
 
-We try to keep a consistent and readable code. So, please keep  
+We try to keep our code consistent and readable. So, please keep  
 in mind the following style and syntax guidance before you start
 coding. 
 
