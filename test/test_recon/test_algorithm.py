@@ -104,7 +104,7 @@ class TestRecon(object):
             read_file('gridrec_hamming.npy'), rtol=1e-2)
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='ramlak'),
-            read_file('gridrec_ramlak.npy'))
+            read_file('gridrec_ramlak.npy'), rtol=1e-2)
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
             read_file('gridrec_parzen.npy'), rtol=1e-2)
