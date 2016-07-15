@@ -59,6 +59,7 @@ import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -365,7 +366,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     return rec
 
 
-def circ_mask(arr, axis, ratio=1, val=0.):
+def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """
     Apply circular mask to a 3D array.
 
@@ -387,11 +388,19 @@ def circ_mask(arr, axis, ratio=1, val=0.):
         Masked array.
     """
     arr = dtype.as_float32(arr)
+    val = np.float32(val)
     _arr = arr.swapaxes(0, axis)
     dx, dy, dz = _arr.shape
     mask = _get_mask(dy, dz, ratio)
-    for m in range(dx):
-        _arr[m, ~mask] = val
+    
+    if ncore:
+        old_ncore = ne.set_num_threads(ncore)
+    
+    ne.evaluate('where(mask, _arr, val)', out=_arr)
+    
+    if ncore:
+        ne.set_num_threads(old_ncore)
+    
     return _arr.swapaxes(0, axis)
 
 
