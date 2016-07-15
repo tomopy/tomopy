@@ -276,3 +276,13 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         arr[tstart:tend] = _arr
 
     return arr
+
+# in-place normalization
+def _normalize(proj, flat, dark, cutoff):
+    denom = flat - dark
+    denom[denom < 1e-6] = 1e-6
+    proj -= dark
+    np.true_divide(proj, denom, proj)
+    if cutoff is not None:
+        proj[proj > cutoff] = cutoff
+    return proj
