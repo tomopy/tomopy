@@ -7,3 +7,4 @@ scikit-image
 pywavelets
 pyfftw
 dxchange
+numexpr

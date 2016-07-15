@@ -23,6 +23,7 @@ requirements:
     - pywavelets
     - pyfftw
     - dxchange
+    - numexpr
     
 test:
   # Python imports
