@@ -129,18 +129,20 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
         Normalized 3D tomographic data.
     """
     arr = dtype.as_float32(arr)
+    l = np.float32(1e-6)
     flat = np.mean(flat, axis=0, dtype=np.float32)
     dark = np.mean(dark, axis=0, dtype=np.float32)
     
     if ncore:
         old_ncore = ne.set_num_threads(ncore)
     
-    denom = ne.evaluate('flat-dark', local_dict={'flat':flat,'dark':dark})
-    ne.evaluate('where(denom<l,l,denom)', out=denom, local_dict={'denom':denom, 'l':np.float32(1e-6)})
-    out = ne.evaluate('arr-dark', out=out, local_dict={'arr':arr, 'dark':dark})
-    ne.evaluate('out/denom', out=out, local_dict={'out':out, 'denom':denom},truediv=True)
+    denom = ne.evaluate('flat-dark')
+    ne.evaluate('where(denom<l,l,denom)', out=denom)
+    out = ne.evaluate('arr-dark', out=out)
+    ne.evaluate('out/denom', out=out, truediv=True)
     if cutoff is not None:
-        ne.evaluate('where(out>cutoff,cutoff,out)', out=out, local_dict={'out':out, 'cutoff':np.float32(cutoff)})
+        cutoff = np.float32(cutoff)
+        ne.evaluate('where(out>cutoff,cutoff,out)', out=out)
         
     if ncore:
         ne.set_num_threads(old_ncore)
