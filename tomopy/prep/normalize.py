@@ -58,6 +58,7 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -119,32 +120,23 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
         Normalized 3D tomographic data.
     """
     arr = dtype.as_float32(arr)
-    flat = dtype.as_float32(flat)
-    dark = dtype.as_float32(dark)
-
-    flat = flat.mean(axis=0)
-    dark = dark.mean(axis=0)
-
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_normalize,
-        args=(flat, dark, cutoff),
-        axis=0,
-        ncore=ncore,
-        nchunk=0,
-        out=out)
-    return arr
-
-# in-place normalization
-def _normalize(proj, flat, dark, cutoff):
-    denom = flat - dark
-    denom[denom < 1e-6] = 1e-6
-    proj -= dark
-    np.true_divide(proj, denom, proj)
+    flat = np.mean(flat, axis=0, dtype=np.float32)
+    dark = np.mean(dark, axis=0, dtype=np.float32)
+    
+    if ncore:
+        old_ncore = ne.set_num_threads(ncore)
+    
+    denom = ne.evaluate('flat-dark', local_dict={'flat':flat,'dark':dark})
+    ne.evaluate('where(denom<l,l,denom)', out=denom, local_dict={'denom':denom, 'l':np.float32(1e-6)})
+    out = ne.evaluate('arr-dark', out=out, local_dict={'arr':arr, 'dark':dark})
+    ne.evaluate('out/denom', out=out, local_dict={'out':out, 'denom':denom},truediv=True)
     if cutoff is not None:
-        proj[proj > cutoff] = cutoff
-    return proj
-
+        ne.evaluate('where(out>cutoff,cutoff,out)', out=out, local_dict={'out':out, 'cutoff':np.float32(cutoff)})
+        
+    if ncore:
+        ne.set_num_threads(old_ncore)
+        
+    return out
 
 #TODO: replace roi indexes with slc object
 def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
