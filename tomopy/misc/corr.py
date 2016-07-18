@@ -60,6 +60,7 @@ import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
 import logging
 import numexpr as ne
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +249,7 @@ def remove_neg(arr, val=0.):
     return arr
 
 
-def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
+def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
     Remove high intensity bright spots from a 3D array along specified
     dimension.
@@ -266,6 +267,9 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
         Axis along which median filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
+
 
     Returns
     -------
@@ -273,39 +277,26 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_remove_outlier_from_img,
-        args=(dif, size),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
-
-
-def _remove_outlier_from_img(img, dif, size):
-    """
-    Remove high intensity bright spots from an image.
-
-    Parameters
-    ----------
-    img : ndarray
-        Input array.
-    dif : float
-        Expected difference value between outlier value and
-        the median value of the array.
-    size : int
-        Size of the median filter.
-
-    Returns
-    -------
-    ndarray
-       Corrected array.
-    """
-    img = dtype.as_float32(img)
-    tmp = filters.median_filter(img, (size, size))
-    mask = ((img - tmp) >= dif).astype(int)
-    return tmp * mask + img * (1 - mask)
+    dif = np.float32(dif)
+    
+    tmp = np.zeros_like(arr)
+    
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis]=i
+        e.submit(filters.median_filter,arr[slc],size=(size,size),output=tmp[slc])
+    e.shutdown()
+    
+    if ncore:
+        old_ncore = ne.set_num_threads(ncore)
+    
+    out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+    
+    if ncore:
+        ne.set_num_threads(old_ncore)
+        
+    return out
 
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
