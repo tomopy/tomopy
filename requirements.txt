@@ -8,3 +8,4 @@ pywavelets
 pyfftw
 dxchange
 numexpr
+futures
