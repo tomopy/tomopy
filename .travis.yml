@@ -28,6 +28,9 @@ before_install:
 
 install:
   - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw python-coveralls dxchange numexpr
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      conda install python=2.7 futures;
+    fi
   - conda info -a
   - python setup.py build_ext --inplace
 
