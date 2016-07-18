@@ -281,6 +281,9 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     
     tmp = np.zeros_like(arr)
     
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+    
     e = cf.ThreadPoolExecutor(ncore)
     slc = [slice(None)]*len(arr.shape)
     for i in range(arr.shape[axis]):
@@ -288,14 +291,8 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
         e.submit(filters.median_filter,arr[slc],size=(size,size),output=tmp[slc])
     e.shutdown()
     
-    if ncore:
-        old_ncore = ne.set_num_threads(ncore)
-    
     out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
     
-    if ncore:
-        ne.set_num_threads(old_ncore)
-        
     return out
 
 
