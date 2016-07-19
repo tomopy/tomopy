@@ -511,7 +511,8 @@ filter_none(float x, int i, const float* pars)
 float 
 filter_shepp(float x, int i, const float* pars)
 {
-    return fabs(sinf(M_PI*x)/M_PI);
+    if(i==0) return 0;
+    return fabs(2*x)*(sinf(M_PI*x)/(M_PI*x));
 }
 
 
@@ -519,7 +520,7 @@ filter_shepp(float x, int i, const float* pars)
 float 
 filter_cosine(float x, int i, const float* pars)
 {
-    return fabs(x)*(cosf(M_PI*x));
+    return fabs(2*x)*(cosf(M_PI*x));
 }
 
 
@@ -527,7 +528,7 @@ filter_cosine(float x, int i, const float* pars)
 float 
 filter_hann(float x, int i, const float* pars)
 {
-    return fabs(x)*0.5*(1.+cosf(M_PI*x/pars[0]));
+    return fabs(2*x)*0.5*(1.+cosf(2*M_PI*x/pars[0]));
 }
 
 
@@ -535,28 +536,28 @@ filter_hann(float x, int i, const float* pars)
 float 
 filter_hamming(float x, int i, const float* pars)
 {
-    return fabs(x)*(0.54+0.46*cosf(M_PI*x/pars[0]));
+    return fabs(2*x)*(0.54+0.46*cosf(2*M_PI*x/pars[0]));
 }
 
 // Ramlak filter
 float 
 filter_ramlak(float x, int i, const float* pars)
 {
-    return fabs(x);
+    return fabs(2*x);
 }
 
 // Parzen filter
 float 
 filter_parzen(float x, int i, const float* pars)
 {
-    return fabs(x)*pow(1-fabs(x)/pars[0], 3);
+    return fabs(2*x)*pow(1-fabs(x)/pars[0], 3);
 }
 
 // Butterworth filter
 float 
 filter_butterworth(float x, int i, const float* pars)
 {
-    return fabs(x)/(1+pow(x/pars[0], 2*pars[1]));
+    return fabs(2*x)/(1+pow(x/pars[0], 2*pars[1]));
 }
 
 // Custom filter
