@@ -226,7 +226,7 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
 
 
 def normalize_nf(tomo, flats, dark, flat_loc,
-                 cutoff=None, ncore=None):
+                 cutoff=None, ncore=None, out=None):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
@@ -244,6 +244,8 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         Indices of flat field data within tomography
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -254,10 +256,14 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     tomo = dtype.as_float32(tomo)
     flats = dtype.as_float32(flats)
     dark = dtype.as_float32(dark)
-
-    arr = np.zeros_like(tomo)
+    l = np.float32(1e-6)
+    if cutoff is not None:
+        cutoff = np.float32(cutoff)
+    if out is None:
+        out = np.empty_like(tomo)
 
     dark = np.median(dark, axis=0)
+    denom = np.empty_like(dark)
 
     num_flats = len(flat_loc)
     total_flats = flats.shape[0]
@@ -277,23 +283,14 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         tstart = 0 if m == 0 else tend
         tend = total_tomo if m >= num_flats-1 \
                           else int(np.round((flat_loc[m+1]-loc)/2)) + loc
-        _arr = mproc.distribute_jobs(tomo[tstart:tend],
-                                     func=_normalize,
-                                     args=(flat, dark, cutoff),
-                                     axis=0,
-                                     ncore=ncore,
-                                     nchunk=0)
+        tomo_l = tomo[tstart:tend]
+        out_l = out[tstart:tend]
+        
+        ne.evaluate('flat-dark', out=denom)
+        ne.evaluate('where(denom<l,l,denom)', out=denom)
+        
+        ne.evaluate('(tomo_l-dark)/denom', out=out_l, truediv=True)
+        if cutoff is not None:
+            ne.evaluate('where(out_l>cutoff,cutoff,out_l)', out=out_l)
 
-        arr[tstart:tend] = _arr
-
-    return arr
-
-# in-place normalization
-def _normalize(proj, flat, dark, cutoff):
-    denom = flat - dark
-    denom[denom < 1e-6] = 1e-6
-    proj -= dark
-    np.true_divide(proj, denom, proj)
-    if cutoff is not None:
-        proj[proj > cutoff] = cutoff
-    return proj
+    return out
