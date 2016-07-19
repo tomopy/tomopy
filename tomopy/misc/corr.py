@@ -138,14 +138,18 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
         3D array of same shape as input.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.gaussian_filter,
-        args=(sigma, order),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+    
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+    
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis]=i
+        e.submit(filters.gaussian_filter,arr[slc],sigma,order=order,output=out[slc])
+    e.shutdown()
+    return out
 
 
 def median_filter(arr, size=3, axis=0, ncore=None):
@@ -169,14 +173,18 @@ def median_filter(arr, size=3, axis=0, ncore=None):
         Median filtered 3D array.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.median_filter,
-        args=((size, size),),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+    
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+    
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis]=i
+        e.submit(filters.median_filter,arr[slc],size=(size,size),output=out[slc])
+    e.shutdown()
+    return out
 
 
 def sobel_filter(arr, axis=0, ncore=None):
@@ -198,13 +206,18 @@ def sobel_filter(arr, axis=0, ncore=None):
         3D array of same shape as input.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.sobel,
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+    
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+    
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis]=i
+        e.submit(filters.sobel,arr[slc],output=out[slc])
+    e.shutdown()
+    return out
 
 
 def remove_nan(arr, val=0.):
@@ -224,7 +237,8 @@ def remove_nan(arr, val=0.):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr[np.isnan(arr)] = val
+    val = np.float32(val)
+    ne.evaluate('where(arr!=arr, val, arr)', out=arr)
     return arr
 
 
@@ -245,7 +259,8 @@ def remove_neg(arr, val=0.):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr[arr < 0.0] = val
+    val = np.float32(val)
+    ne.evaluate('where(arr<0, val, arr)', out=arr)
     return arr
 
 
@@ -279,7 +294,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     arr = dtype.as_float32(arr)
     dif = np.float32(dif)
     
-    tmp = np.zeros_like(arr)
+    tmp = np.empty_like(arr)
     
     if ncore is None:
         ncore = mproc.mp.cpu_count()
