@@ -49,6 +49,14 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+# Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
+# to minimize chance of MKL overriding fftw functions
+import sys
+curFlags = sys.getdlopenflags()
+sys.setdlopenflags(10)  # 10=RTLD_NOW|RTLD_DEEPBIND
+import pyfftw
+sys.setdlopenflags(curFlags)
+
 from tomopy.io import *
 from tomopy.io.exchange import * # deprecated
 from tomopy.io.reader import *   # deprecated
