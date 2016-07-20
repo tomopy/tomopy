@@ -376,7 +376,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
     # Compute center of rotation as the center of first image and the
     # registered translation with the second image
-    center = (proj1.shape[1] + shift[0][1])/2.0
+    center = (proj1.shape[1] + shift[0][1] - 1.0)/2.0
 
     return center
 
