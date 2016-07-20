@@ -54,9 +54,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
+import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,7 @@ __all__ = ['downsample',
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, mode='constant', **kwargs):
+def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     """
     Pad an array along specified axis.
 
@@ -95,6 +97,8 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
             Pads with the edge values of array.
     constant_values : float, optional
         Used in 'constant'. Pad value
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -121,14 +125,55 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
     if npad is None:
         npad = _get_npad(arr.shape[axis])
 
-    pad_width = _get_pad_sequence(arr.shape, axis, npad)
+    newshape = list(arr.shape)
+    newshape[axis] += 2*npad
 
-    return np.pad(arr, pad_width, str(mode), **kwargs)
+    slc_in, slc_l, slc_r, slc_l_v, slc_r_v = _get_slices(arr.shape, axis, npad)
+
+    out = np.empty(newshape, dtype=arr.dtype)
+    if arr.dtype in [np.float32, np.float64, np.bool,
+                     np.int32, np.int64, np.complex128]:
+        # Datatype supported by numexpr
+        with mproc.set_numexpr_threads(ncore):
+            ne.evaluate("arr", out=out[slc_in])
+            if mode == 'constant':
+                np_cast = getattr(np, str(arr.dtype))
+                cval = np_cast(kwargs['constant_values'])
+                ne.evaluate("cval", out=out[slc_l])
+                ne.evaluate("cval", out=out[slc_r])
+            else:
+                ne.evaluate("vec", local_dict={'vec': arr[slc_l_v]},
+                            out=out[slc_l])
+                ne.evaluate("vec", local_dict={'vec': arr[slc_r_v]},
+                            out=out[slc_r])
+    else:
+        # Datatype not supported by numexpr, use numpy instead
+        out[slc_in] = arr
+        if mode == 'constant':
+            out[slc_l] = kwargs['constant_values']
+            out[slc_r] = kwargs['constant_values']
+        else:
+            out[slc_l] = arr[slc_l_v]
+            out[slc_r] = arr[slc_r_v]
+    return out
 
 
 def _get_npad(dim):
     return int(np.ceil((dim * np.sqrt(2) - dim) / 2))
 
+
+def _get_slices(shape, axis, npad):
+    slc_in = [slice(None)]*len(shape)
+    slc_in[axis] = slice(npad, npad+shape[axis])
+    slc_l = [slice(None)]*len(shape)
+    slc_l[axis] = slice(0, npad)
+    slc_r = [slice(None)]*len(shape)
+    slc_r[axis] = slice(npad+shape[axis], None)
+    slc_l_v = [slice(None)]*len(shape)
+    slc_l_v[axis] = slice(0, 1)
+    slc_r_v = [slice(None)]*len(shape)
+    slc_r_v[axis] = slice(shape[axis]-1, shape[axis])
+    return slc_in, slc_l, slc_r, slc_l_v, slc_r_v
 
 def _get_pad_sequence(shape, axis, npad):
     pad_seq = []
