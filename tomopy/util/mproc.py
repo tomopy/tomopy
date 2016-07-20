@@ -59,6 +59,7 @@ import math
 from contextlib import closing
 from .dtype import as_sharedmem
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -280,3 +281,19 @@ def clear_queue(queue, shared_arrays, shared_out):
 
 class RunOnHostException(Exception):
     pass
+
+
+class set_numexpr_threads(object):
+
+    def __init__(self, nthreads):
+        cpu_count = mp.cpu_count()
+        if nthreads is None or nthreads > cpu_count:
+            self.n = cpu_count
+        else:
+            self.n = nthreads
+
+    def __enter__(self):
+        self.oldn = ne.set_num_threads(self.n)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        ne.set_num_threads(self.oldn)

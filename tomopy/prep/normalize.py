@@ -92,15 +92,9 @@ def minus_log(arr, ncore=None, out=None):
         Minus-log of the input data.
     """
     arr = dtype.as_float32(arr)
-    
-    if ncore:
-        old_ncore = ne.set_num_threads(ncore)
-    
-    out = ne.evaluate('-log(arr)', out=out)
-    
-    if ncore:
-        ne.set_num_threads(old_ncore)
-    
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('-log(arr)', out=out)
     return out
 
 
@@ -132,21 +126,15 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     l = np.float32(1e-6)
     flat = np.mean(flat, axis=0, dtype=np.float32)
     dark = np.mean(dark, axis=0, dtype=np.float32)
-    
-    if ncore:
-        old_ncore = ne.set_num_threads(ncore)
-    
-    denom = ne.evaluate('flat-dark')
-    ne.evaluate('where(denom<l,l,denom)', out=denom)
-    out = ne.evaluate('arr-dark', out=out)
-    ne.evaluate('out/denom', out=out, truediv=True)
-    if cutoff is not None:
-        cutoff = np.float32(cutoff)
-        ne.evaluate('where(out>cutoff,cutoff,out)', out=out)
-        
-    if ncore:
-        ne.set_num_threads(old_ncore)
-        
+
+    with mproc.set_numexpr_threads(ncore):
+        denom = ne.evaluate('flat-dark')
+        ne.evaluate('where(denom<l,l,denom)', out=denom)
+        out = ne.evaluate('arr-dark', out=out)
+        ne.evaluate('out/denom', out=out, truediv=True)
+        if cutoff is not None:
+            cutoff = np.float32(cutoff)
+            ne.evaluate('where(out>cutoff,cutoff,out)', out=out)
     return out
 
 #TODO: replace roi indexes with slc object
@@ -285,12 +273,11 @@ def normalize_nf(tomo, flats, dark, flat_loc,
                           else int(np.round((flat_loc[m+1]-loc)/2)) + loc
         tomo_l = tomo[tstart:tend]
         out_l = out[tstart:tend]
-        
-        ne.evaluate('flat-dark', out=denom)
-        ne.evaluate('where(denom<l,l,denom)', out=denom)
-        
-        ne.evaluate('(tomo_l-dark)/denom', out=out_l, truediv=True)
-        if cutoff is not None:
-            ne.evaluate('where(out_l>cutoff,cutoff,out_l)', out=out_l)
+        with mproc.set_numexpr_threads(ncore):
+            ne.evaluate('flat-dark', out=denom)
+            ne.evaluate('where(denom<l,l,denom)', out=denom)
+            ne.evaluate('(tomo_l-dark)/denom', out=out_l, truediv=True)
+            if cutoff is not None:
+                ne.evaluate('where(out_l>cutoff,cutoff,out_l)', out=out_l)
 
     return out

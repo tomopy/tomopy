@@ -139,15 +139,16 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
     """
     arr = dtype.as_float32(arr)
     out = np.empty_like(arr)
-    
+
     if ncore is None:
         ncore = mproc.mp.cpu_count()
-    
+
     e = cf.ThreadPoolExecutor(ncore)
     slc = [slice(None)]*len(arr.shape)
     for i in range(arr.shape[axis]):
-        slc[axis]=i
-        e.submit(filters.gaussian_filter,arr[slc],sigma,order=order,output=out[slc])
+        slc[axis] = i
+        e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
+                 output=out[slc])
     e.shutdown()
     return out
 
@@ -174,15 +175,16 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     """
     arr = dtype.as_float32(arr)
     out = np.empty_like(arr)
-    
+
     if ncore is None:
         ncore = mproc.mp.cpu_count()
-    
+
     e = cf.ThreadPoolExecutor(ncore)
     slc = [slice(None)]*len(arr.shape)
     for i in range(arr.shape[axis]):
-        slc[axis]=i
-        e.submit(filters.median_filter,arr[slc],size=(size,size),output=out[slc])
+        slc[axis] = i
+        e.submit(filters.median_filter, arr[slc], size=(size, size),
+                 output=out[slc])
     e.shutdown()
     return out
 
@@ -207,20 +209,20 @@ def sobel_filter(arr, axis=0, ncore=None):
     """
     arr = dtype.as_float32(arr)
     out = np.empty_like(arr)
-    
+
     if ncore is None:
         ncore = mproc.mp.cpu_count()
-    
+
     e = cf.ThreadPoolExecutor(ncore)
     slc = [slice(None)]*len(arr.shape)
     for i in range(arr.shape[axis]):
-        slc[axis]=i
-        e.submit(filters.sobel,arr[slc],output=out[slc])
+        slc[axis] = i
+        e.submit(filters.sobel, arr[slc], output=out[slc])
     e.shutdown()
     return out
 
 
-def remove_nan(arr, val=0.):
+def remove_nan(arr, val=0., ncore=None):
     """
     Replace NaN values in array with a given value.
 
@@ -230,6 +232,8 @@ def remove_nan(arr, val=0.):
         Input array.
     val : float, optional
         Values to be replaced with NaN values in array.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -238,11 +242,14 @@ def remove_nan(arr, val=0.):
     """
     arr = dtype.as_float32(arr)
     val = np.float32(val)
-    ne.evaluate('where(arr!=arr, val, arr)', out=arr)
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(arr!=arr, val, arr)', out=arr)
+
     return arr
 
 
-def remove_neg(arr, val=0.):
+def remove_neg(arr, val=0., ncore=None):
     """
     Replace negative values in array with a given value.
 
@@ -252,6 +259,8 @@ def remove_neg(arr, val=0.):
         Input array.
     val : float, optional
         Values to be replaced with negative values in array.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -260,7 +269,9 @@ def remove_neg(arr, val=0.):
     """
     arr = dtype.as_float32(arr)
     val = np.float32(val)
-    ne.evaluate('where(arr<0, val, arr)', out=arr)
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(arr<0, val, arr)', out=arr)
     return arr
 
 
@@ -293,21 +304,23 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
     arr = dtype.as_float32(arr)
     dif = np.float32(dif)
-    
+
     tmp = np.empty_like(arr)
-    
+
     if ncore is None:
         ncore = mproc.mp.cpu_count()
-    
+
     e = cf.ThreadPoolExecutor(ncore)
     slc = [slice(None)]*len(arr.shape)
     for i in range(arr.shape[axis]):
-        slc[axis]=i
-        e.submit(filters.median_filter,arr[slc],size=(size,size),output=tmp[slc])
+        slc[axis] = i
+        e.submit(filters.median_filter, arr[slc], size=(size, size),
+                 output=tmp[slc])
     e.shutdown()
-    
-    out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
-    
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+
     return out
 
 
@@ -395,15 +408,10 @@ def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     _arr = arr.swapaxes(0, axis)
     dx, dy, dz = _arr.shape
     mask = _get_mask(dy, dz, ratio)
-    
-    if ncore:
-        old_ncore = ne.set_num_threads(ncore)
-    
-    ne.evaluate('where(mask, _arr, val)', out=_arr)
-    
-    if ncore:
-        ne.set_num_threads(old_ncore)
-    
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(mask, _arr, val)', out=_arr)
+
     return _arr.swapaxes(0, axis)
 
 
