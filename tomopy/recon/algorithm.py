@@ -360,9 +360,9 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
                        center[chnks[i]:chnks[i+1]], recon[chnks[i]:chnks[i+1]],
                        *args, **kwargs))
     e = cf.ThreadPoolExecutor(ncore)
-    for args in mulargs:
-        e.submit(args[0], *args[1:])
-    e.shutdown()
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
     return recon
 
 
