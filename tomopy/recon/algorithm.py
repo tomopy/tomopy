@@ -140,6 +140,12 @@ def recon(
             Parzen filter.
         'butterworth'
             Butterworth filter.
+        'custom'
+            A numpy array of size `next_power_of_2(num_detector_columns)/2`
+            specifying a custom filter in Fourier domain.
+        'custom2d'
+            A numpy array of size `num_projections*next_power_of_2(num_detector_columns)/2`
+            specifying a custom angle-dependent filter in Fourier domain.
 
     filter_par: list, optional
         Filter parameters as a list.
