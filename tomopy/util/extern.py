@@ -437,17 +437,17 @@ def c_remove_ring(rec, *args):
     istart = 0
     iend = rec.shape[0]
     LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.remove_ring(
-        dtype.as_c_float_p(rec),
-        dtype.as_c_float(args[0]),  # center_x
-        dtype.as_c_float(args[1]),  # center_y
-        dtype.as_c_int(args[2]),  # dx
-        dtype.as_c_int(args[3]),  # dy
-        dtype.as_c_int(args[4]),  # dz
-        dtype.as_c_float(args[5]),  # thresh_max
-        dtype.as_c_float(args[6]),  # thresh_min
-        dtype.as_c_float(args[7]),  # thresh
-        dtype.as_c_int(args[8]),  # theta_min
-        dtype.as_c_int(args[9]),  # rwidth
-        dtype.as_c_int(istart),  # istart
-        dtype.as_c_int(iend))  # iend
+    return (LIB_TOMOPY.remove_ring,
+            dtype.as_c_float_p(rec),
+            dtype.as_c_float(args[0]),  # center_x
+            dtype.as_c_float(args[1]),  # center_y
+            dtype.as_c_int(args[2]),  # dx
+            dtype.as_c_int(args[3]),  # dy
+            dtype.as_c_int(args[4]),  # dz
+            dtype.as_c_float(args[5]),  # thresh_max
+            dtype.as_c_float(args[6]),  # thresh_min
+            dtype.as_c_float(args[7]),  # thresh
+            dtype.as_c_int(args[8]),  # theta_min
+            dtype.as_c_int(args[9]),  # rwidth
+            dtype.as_c_int(istart),  # istart
+            dtype.as_c_int(iend))  # iend
