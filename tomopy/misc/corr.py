@@ -326,7 +326,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                rwidth=30, ncore=None, nchunk=None):
+                rwidth=30, ncore=None, nchunk=None, out=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
@@ -353,6 +353,8 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -361,6 +363,11 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     """
 
     rec = dtype.as_float32(rec)
+    
+    if out is None:
+        out = rec.copy()
+    else:
+        out = dtype.as_float32(out)
 
     dz, dy, dx = rec.shape
 
@@ -371,16 +378,20 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
 
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth)
-
-    rec = mproc.distribute_jobs(
-        rec,
-        func=extern.c_remove_ring,
-        args=args,
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return rec
-
+    
+    axis_size = rec.shape[0]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+    
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_remove_ring(out[chnks[i]:chnks[i+1]],
+                       *args))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+    return out
 
 def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """

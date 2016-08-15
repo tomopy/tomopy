@@ -340,18 +340,7 @@ def _get_func(algorithm):
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
-    # limit chunk size to size of array along axis
-    if nchunk and nchunk > axis_size:
-        nchunk = axis_size
-    # default ncore to max and limit number of cores to max number
-    if ncore is None or ncore > mproc.mp.cpu_count():
-        ncore = mproc.mp.cpu_count()
-    # limit number of cores based on nchunk so that all cores are used
-    if ncore > math.ceil(axis_size / (nchunk or 1)):
-        ncore = int(math.ceil(axis_size / (nchunk or 1)))
-    # default nchunk to only use each core for one call
-    if nchunk is None:
-        nchunk = int(math.ceil(axis_size / ncore))
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
 
     chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
     mulargs = []
