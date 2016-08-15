@@ -88,6 +88,21 @@ def set_debug(val=True):
     global DEBUG
     DEBUG=val
 
+def get_ncore_nchunk(axis_size, ncore=None, nchunk=None):
+    # limit chunk size to size of array along axis
+    if nchunk and nchunk > axis_size:
+        nchunk = axis_size
+    # default ncore to max and limit number of cores to max number
+    if ncore is None or ncore > mp.cpu_count():
+        ncore = mp.cpu_count()
+    # limit number of cores based on nchunk so that all cores are used
+    if ncore > math.ceil(axis_size / (nchunk or 1)):
+        ncore = int(math.ceil(axis_size / (nchunk or 1)))
+    # default nchunk to only use each core for one call
+    if nchunk is None:
+        nchunk = int(math.ceil(axis_size / ncore))
+    return ncore, nchunk
+
 def distribute_jobs(arr,
                     func,
                     axis,
@@ -134,18 +149,7 @@ def distribute_jobs(arr,
         arrs = list(arr)
 
     axis_size = arrs[0].shape[axis]
-    # limit chunk size to size of array along axis
-    if nchunk and nchunk > axis_size:
-        nchunk = axis_size
-    # default ncore to max and limit number of cores to max number
-    if ncore is None or ncore > mp.cpu_count():
-        ncore = mp.cpu_count()
-    # limit number of cores based on nchunk so that all cores are used
-    if ncore > math.ceil(axis_size / (nchunk or 1)):
-        ncore = int(math.ceil(axis_size / (nchunk or 1)))
-    # default nchunk to only use each core for one call
-    if nchunk is None:
-        nchunk = int(math.ceil(axis_size / ncore))
+    ncore, nchunk = get_ncore_nchunk(axis_size, ncore, nchunk)
 
     # prepare all args (func, args, kwargs)
     # NOTE: args will include shared_arr slice as first arg
