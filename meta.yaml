@@ -24,6 +24,7 @@ requirements:
     - pyfftw
     - dxchange
     - numexpr
+    - futures # [py2k]
     
 test:
   # Python imports
