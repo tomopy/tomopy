@@ -127,7 +127,7 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
 
     arr = mproc.distribute_jobs(
         arr,
-        func=_normalize,
+        func=_normalize_in_place,
         args=(flat, dark, cutoff),
         axis=0,
         ncore=ncore,
@@ -135,8 +135,7 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
         out=out)
     return arr
 
-# in-place normalization
-def _normalize(proj, flat, dark, cutoff):
+def _normalize_in_place(proj, flat, dark, cutoff):
     denom = flat - dark
     denom[denom < 1e-6] = 1e-6
     proj -= dark
@@ -269,13 +268,13 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         flat = np.median(flats[fstart:fend], axis=0)
 
         # Normalization can be parallelized much more efficiently outside this
-        # foor loop accounting for the nested parallelism arising from
+        # for loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
         tstart = 0 if m == 0 else tend
         tend = total_tomo if m >= num_flats-1 \
                           else int(np.round((flat_loc[m+1]-loc)/2)) + loc
         _arr = mproc.distribute_jobs(tomo[tstart:tend],
-                                     func=_normalize,
+                                     func=_normalize_in_place,
                                      args=(flat, dark, cutoff),
                                      axis=0,
                                      ncore=ncore,
