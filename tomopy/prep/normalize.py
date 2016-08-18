@@ -266,7 +266,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         flat = np.median(flats[fstart:fend], axis=0)
 
         # Normalization can be parallelized much more efficiently outside this
-        # foor loop accounting for the nested parallelism arising from
+        # for loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
         tstart = 0 if m == 0 else tend
         tend = total_tomo if m >= num_flats-1 \
