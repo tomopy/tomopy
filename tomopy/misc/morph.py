@@ -112,6 +112,8 @@ def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     kwdefaults = {'constant_values': 0, }
 
     if isinstance(mode, str):
+        if mode not in allowedkwargs:
+            raise ValueError("'mode' keyword value '{}' not in allowed values {}".format(mode, list(allowedkwargs.keys())))
         for key in kwargs:
             if key not in allowedkwargs[mode]:
                 raise ValueError('%s keyword not in allowed keywords %s' %
@@ -141,7 +143,7 @@ def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
                 cval = np_cast(kwargs['constant_values'])
                 ne.evaluate("cval", out=out[slc_l])
                 ne.evaluate("cval", out=out[slc_r])
-            else:
+            elif mode == 'edge':
                 ne.evaluate("vec", local_dict={'vec': arr[slc_l_v]},
                             out=out[slc_l])
                 ne.evaluate("vec", local_dict={'vec': arr[slc_r_v]},
@@ -152,7 +154,7 @@ def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
         if mode == 'constant':
             out[slc_l] = kwargs['constant_values']
             out[slc_r] = kwargs['constant_values']
-        else:
+        elif mode == 'edge':
             out[slc_l] = arr[slc_l_v]
             out[slc_r] = arr[slc_r_v]
     return out
