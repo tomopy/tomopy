@@ -142,10 +142,12 @@ def recon(
             Butterworth filter.
         'custom'
             A numpy array of size `next_power_of_2(num_detector_columns)/2`
-            specifying a custom filter in Fourier domain.
+            specifying a custom filter in Fourier domain. The first element
+            of the filter should be the zero-frequency component.
         'custom2d'
             A numpy array of size `num_projections*next_power_of_2(num_detector_columns)/2`
-            specifying a custom angle-dependent filter in Fourier domain.
+            specifying a custom angle-dependent filter in Fourier domain. The first element
+            of each filter should be the zero-frequency component.
 
     filter_par: list, optional
         Filter parameters as a list.
