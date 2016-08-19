@@ -68,6 +68,14 @@ def test_downsample():
 def test_upsample():
     loop_dim(upsample, read_file('obj.npy'))
 
+def test_sino_360_to_180():
+    test_im = np.random.random((32, 32, 128)).astype(np.float32)
+    ltest = sino_360_to_180(test_im, 32, 'left')
+    rtest = sino_360_to_180(test_im, 32, 'right')
+    assert_array_almost_equal(ltest[:, :, -112:], test_im[:16, :, 16:])
+    assert_array_almost_equal(ltest[:, :, :112], test_im[16:, :, 16:][:, :, ::-1])
+    assert_array_almost_equal(rtest[:, :, :112], test_im[:16, :, :-16])
+    assert_array_almost_equal(rtest[:, :, -112:], test_im[16:, :, :-16][:, :, ::-1])
 
 if __name__ == '__main__':
     import nose
