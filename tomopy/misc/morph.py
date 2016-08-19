@@ -67,7 +67,8 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['downsample',
            'upsample',
            'pad',
-           'sino_360_t0_180',
+           'sino_360_to_180',
+           'sino_360_t0_180',  # For backward compatibility
            'trim_sinogram']
 
 
@@ -259,8 +260,7 @@ def trim_sinogram(data, center, x, y, diameter):
         roidata[m, :, 0:(ind2 - ind1)] = data[m:m+1, :, ind1:ind2]
     return roidata
 
-
-def sino_360_t0_180(data, overlap=0, rotation='left'):
+def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
 
@@ -283,18 +283,20 @@ def sino_360_t0_180(data, overlap=0, rotation='left'):
     """
     dx, dy, dz = data.shape
 
+    lo = overlap//2
+    ro = overlap - lo
+    n = dx//2
+
+    out = np.zeros((n, dy, 2*dz-overlap), dtype=data.dtype)
+
     if rotation is 'left':
-        img1 = data[1:dx / 2 + 1, :, overlap:dz]
+        out[:, :, -(dz-lo):] = data[:n, :, lo:]
+        out[:, :, :-(dz-lo)] = data[n:2*n, :, ro:][:, :, ::-1]
     elif rotation is 'right':
-        img1 = data[1:dx / 2 + 1, :, 0:dz - overlap]
+        out[:, :, :dz-lo] = data[:n, :, :-lo]
+        out[:, :, dz-lo:] = data[n:2*n, :, :-ro][:, :, ::-1]
 
-    if dx % 2 != 0:  # if odd
-        img2 = data[dx / 2:dx - 1]
-    else:
-        img2 = data[dx / 2:dx]
+    return out
 
-    if rotation is 'right':
-        data = np.c_[img1, img2]
-    elif rotation is 'left':
-        data = np.c_[img2[:, :, ::-1], img1]
-    return data
+#For backward compatibility
+sino_360_t0_180 = sino_360_to_180
