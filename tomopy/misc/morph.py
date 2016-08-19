@@ -283,6 +283,8 @@ def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     dx, dy, dz = data.shape
 
+    overlap = int(np.round(overlap))
+
     lo = overlap//2
     ro = overlap - lo
     n = dx//2
