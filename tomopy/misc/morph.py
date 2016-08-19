@@ -289,10 +289,10 @@ def sino_360_to_180(data, overlap=0, rotation='left'):
 
     out = np.zeros((n, dy, 2*dz-overlap), dtype=data.dtype)
 
-    if rotation is 'left':
+    if rotation == 'left':
         out[:, :, -(dz-lo):] = data[:n, :, lo:]
         out[:, :, :-(dz-lo)] = data[n:2*n, :, ro:][:, :, ::-1]
-    elif rotation is 'right':
+    elif rotation == 'right':
         out[:, :, :dz-lo] = data[:n, :, :-lo]
         out[:, :, dz-lo:] = data[n:2*n, :, :-ro][:, :, ::-1]
 
