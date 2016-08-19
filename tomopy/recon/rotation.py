@@ -233,26 +233,25 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
         
     Notes
     -----
-    These are the cases which impact the performance:
+    The function may not yield a correct estimate, if:
     
-    - The sample is much bigger than the field of view of the camera. 
-    Sample here is anything that can be seen by the camera during the scan 
-    (wires, parts of the sample holder...). In this case the "ratio"
-    parameter need to be adjusted larger than the default of 2.0.
-    - There is the distortion problem of the imaging system (which can 
-    be confirmed by visual inspection of the artifacts between the top 
-    (or bottom) slice and the middle slice). A proper correction need to 
-    be done before find_center_vo() can be used. If there's no correction, 
-    we need to do calculation only for the area near the center of the
-    projection image (where it's supposed to be close to the center of distortion).
-    - The sample shows very week contrast (e.g sand, mud, clay...). 
-    Paganin's filter (1D) need to be applied in this case. 
-    - There are horizontal stripes. This happens to some types 
-    of detectors. We need to rotate the sinogram image 90 Degree, 
-    apply ring removal, and rotate it back before using find_center_vo().
-    - Samples are changing during the scan. There's no method of 
-    finding center can handle that. We need to use the traditional 
-    method of visual inspection.  
+    - the sample size is bigger than the field of view of the camera. 
+      In this case the ```ratio``` argument need to be set larger
+      than the default of 2.0.
+    
+    - there is distortion in the imaging hardware. If there's 
+      no correction applied, the center of the projection image may 
+      yield a better estimate.
+    
+    - the sample contrast is weak. Paganin's filter need to be applied 
+      to overcome this. 
+    
+    - there are horizontal stripes in sinogram, which may be induced by 
+      some types of detectors. We need to rotate the sinogram image by 
+      90 Degree, apply ring removal, and then rotate it back before 
+      calling the function.
+    
+    - the sample was changed during the scan. 
     """
     tomo = dtype.as_float32(tomo)
 
