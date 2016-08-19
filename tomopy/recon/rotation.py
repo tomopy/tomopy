@@ -236,7 +236,7 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     The function may not yield a correct estimate, if:
     
     - the sample size is bigger than the field of view of the camera. 
-      In this case the ```ratio``` argument need to be set larger
+      In this case the ``ratio`` argument need to be set larger
       than the default of 2.0.
     
     - there is distortion in the imaging hardware. If there's 
