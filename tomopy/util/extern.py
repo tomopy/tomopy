@@ -108,7 +108,7 @@ def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
 
     LIB_TOMOPY.normalize_bg.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.normalize_bg(
+    return (LIB_TOMOPY.normalize_bg,
         dtype.as_c_float_p(tomo),
         dtype.as_c_int(dt),
         dtype.as_c_int(dy),
