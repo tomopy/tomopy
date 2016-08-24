@@ -56,7 +56,10 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 import pyfftw
 import tomopy.util.mproc as mproc
+import tomopy.util.dtype as dtype
 import logging
+import concurrent.futures as cf
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +80,9 @@ PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 def _wavelength(energy):
     return 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
 
-
 def retrieve_phase(
         tomo, pixel_size=1e-4, dist=50, energy=20,
-        alpha=1e-3, pad=True, ncore=None, nchunk=None):
+        alpha=1e-3, pad=True, ncore=None, nchunk=None, out=None):
     """
     Perform single-step phase retrieval from phase-contrast measurements
     :cite:`Paganin:02`.
@@ -103,12 +105,20 @@ def retrieve_phase(
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
     ndarray
         Approximated 3D tomographic phase data.
     """
+    tomo = dtype.as_float32(tomo)
+    if out is None:
+        out = np.empty_like(tomo)
+    else:
+        out = dtype.as_float32(out)
+
     # New dimensions and pad value after padding.
     py, pz, val = _calc_pad(tomo, pixel_size, dist, energy, pad)
 
@@ -119,32 +129,48 @@ def retrieve_phase(
     # Filter in Fourier space.
     phase_filter = np.fft.fftshift(
         _paganin_filter_factor(energy, dist, alpha, w2))
+    mx = phase_filter.max()
 
-    prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_retrieve_phase,
-        args=(phase_filter, py, pz, prj, pad),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+    ncore, nchunk = mproc.get_ncore_nchunk(dx, ncore, nchunk)
 
+    chnks = np.round(np.linspace(0, dx, ncore+1)).astype(np.int)
 
-def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
-    dx, dy, dz = tomo.shape
-    num_jobs = tomo.shape[0]
-    for m in range(num_jobs):
-        prj[px:dy + px, py:dz + py] = tomo[m]
-        fproj = pyfftw.interfaces.numpy_fft.fft2(
-                prj, planner_effort=_plan_effort(num_jobs))
-        filtproj = np.multiply(phase_filter, fproj)
-        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
-            filtproj, planner_effort=_plan_effort(num_jobs))
-            ) / phase_filter.max()
-        if pad:
-            proj = proj[px:dy + px, py:dz + py]
-        tomo[m] = proj
+    prj = pyfftw.n_byte_align_empty((dx, dy + 2 * py, dz + 2 * pz), pyfftw.simd_alignment, dtype='complex64')
+    val = np.complex64(val)
+    e = cf.ThreadPoolExecutor(ncore)
+
+    def setv(a, b, c, l, r, u, d):
+        a[:] = b
+        a[:, l:r, u:d] = c
+
+    thrds = [e.submit(setv, prj[chnks[i]:chnks[i+1]], val, tomo[chnks[i]:chnks[i+1]], py, dy+py, pz, dz+pz) for i in range(ncore)]
+    for t in thrds:
+        t.result()
+
+    plan = pyfftw.FFTW(prj, prj, axes=(1, 2), flags=('FFTW_ESTIMATE', 'FFTW_DESTROY_INPUT'), threads=ncore)
+    plan.execute()
+
+    def mult(a, b):
+        a *= b
+
+    thrds = [e.submit(mult, prj[chnks[i]:chnks[i+1]], phase_filter) for i in range(ncore)]
+    for t in thrds:
+        t.result()
+
+    plan = pyfftw.FFTW(prj, prj, axes=(1, 2), flags=('FFTW_ESTIMATE', 'FFTW_DESTROY_INPUT'), direction='FFTW_BACKWARD', threads=ncore)
+    plan()
+
+    def setrs(a, b, c):
+        a[:] = np.real(b)/c
+
+    thrds = [e.submit(setrs, out[chnks[i]:chnks[i+1]], prj[chnks[i]:chnks[i+1],
+             py:dy + py, pz:dz + pz], mx) for i in range(ncore)]
+    for t in thrds:
+        t.result()
+
+    e.shutdown()
+    return out
+
 
 
 def _plan_effort(num_jobs):
