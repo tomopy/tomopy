@@ -264,6 +264,9 @@ def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
 
+    If the number of projections in the input data is odd, the last projection
+    will be discarded.
+
     Parameters
     ----------
     data : ndarray
