@@ -54,6 +54,8 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
+import numexpr as ne
+import concurrent.futures as cf
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import tomopy.util.mproc as mproc
@@ -213,17 +215,24 @@ def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=
     tomo[:] = 0.0
     center = get_center(shape, center)
 
-    tomo = mproc.distribute_jobs(
-        (obj, center, tomo),
-        func=extern.c_project,
-        args=(theta,),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
+    ncore, nchunk = mproc.get_ncore_nchunk(dy, ncore, nchunk)
+
+    chnks = np.round(np.linspace(0, dy, ncore+1)).astype(np.int)
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_project(obj[chnks[i]:chnks[i+1]],
+                       center[chnks[i]:chnks[i+1]], tomo[chnks[i]:chnks[i+1]],
+                       theta))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
-        np.exp(-tomo, tomo)
+        with mproc.set_numexpr_threads(ncore):
+            ne.evaluate('exp(-tomo)', out=tomo)
     if not sinogram_order:
         # rotate to radiograph order
         tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data

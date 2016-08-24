@@ -151,7 +151,7 @@ def c_project(obj, center, tomo, theta):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.project.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project(
+    return (LIB_TOMOPY.project,
         dtype.as_c_float_p(obj),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
