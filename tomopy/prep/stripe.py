@@ -61,6 +61,7 @@ import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import logging
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -312,7 +313,7 @@ def _ringb(sino, m, n, step):
     return np.transpose(newsino)
 
 
-def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
+def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None, out=None):
     """
     Normalize raw projection data using a smoothing filter approach.
 
@@ -326,6 +327,8 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as tomo, process will be done in-place.
 
     Returns
     -------
@@ -333,11 +336,22 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Corrected 3D tomographic data.
     """
     tomo = dtype.as_float32(tomo)
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=extern.c_remove_stripe_sf,
-        args=(size,),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+    axis_size = tomo.shape[1]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    c_cont = [tomo[:, chnks[i]:chnks[i+1]].copy('C')
+                for i in range(ncore)] # Suboptimal
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_remove_stripe_sf(c_cont[i], size))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+
+    if out is None:
+        out = np.empty_like(tomo)
+    for i in range(ncore):
+        out[:, chnks[i]:chnks[i+1]] = c_cont[i] # Suboptimal
+    return out
