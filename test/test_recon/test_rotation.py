@@ -63,6 +63,7 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+#np.set_printoptions(threshold=np.inf)
 
 def test_write_center():
     dpath = os.path.join('test', 'tmp')
@@ -85,6 +86,17 @@ def test_find_center():
     sim = read_file('sinogram.npy')
     ang = np.linspace(0, np.pi, sim.shape[0])
     cen = find_center(sim, ang)
+    assert_allclose(cen, 45.28, rtol=1e-2)
+
+def test_find_center_vo():
+    sim = read_file('sinogram.npy')
+    cen = find_center_vo(sim)
+    assert_allclose(cen, 45.28, rtol=1e-2)
+    
+def test_find_center_vo_with_downsampling():
+    sim = read_file('sinogram.npy')
+    np.pad(sim, ((1000,1000),(0,0),(1000,1000)), mode="constant", constant_values=0)
+    cen = find_center_vo(sim)
     assert_allclose(cen, 45.28, rtol=1e-2)
 
 def test_find_center_pc():
