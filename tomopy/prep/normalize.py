@@ -138,7 +138,7 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     return out
 
 #TODO: replace roi indexes with slc object
-def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
+def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None, out=None):
     """
     Normalize raw projection data using an average of a selected window
     on projection images.
@@ -151,6 +151,8 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
         [top-left, top-right, bottom-left, bottom-right] pixel coordinates.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -159,14 +161,13 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     """
     arr = dtype.as_float32(arr)
 
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_normalize_roi,
-        args=(roi, ),
-        axis=0,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    mns = np.mean(arr[:, roi[0]:roi[2], roi[1]:roi[3]], axis=(1, 2))
+    bg = mns[:, np.newaxis, np.newaxis]
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('arr/bg', out=out, truediv=True)
+
+    return out
 
 
 def _normalize_roi(proj, roi):
