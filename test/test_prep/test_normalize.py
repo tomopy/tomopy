@@ -73,8 +73,14 @@ def test_normalize_bg():
         normalize_bg(read_file('tomo.npy')),
         read_file('normalize_bg.npy'))
 
-# def test_normalize_nf():
-#   This needs to be implemented
+def test_normalize_nf():
+    assert_allclose(
+        normalize_nf(
+            read_file('tomo.npy'),
+            read_file('flat_1.npy'),
+            read_file('dark.npy'),
+            (0, 4, 8, 12, 16)),
+        read_file('normalize_nf.npy'))
 
 if __name__ == '__main__':
     import nose

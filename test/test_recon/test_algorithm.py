@@ -86,31 +86,31 @@ class TestRecon(object):
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='custom', filter_par=np.ones(self.prj.shape[-1],dtype=np.float32)))
 
-    # def test_gridrec(self):
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
-    #         read_file('gridrec_none.npy'), rtol=1e-2)
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='shepp'),
-    #         read_file('gridrec_shepp.npy'), rtol=1e-2)
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='cosine'),
-    #         read_file('gridrec_cosine.npy'), rtol=1e-2)
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='hann'),
-    #         read_file('gridrec_hann.npy'), rtol=1e-2)
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='hamming'),
-    #         read_file('gridrec_hamming.npy'), rtol=1e-2)
-    #     assert_almost_equal(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='ramlak'),
-    #         read_file('gridrec_ramlak.npy'))
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
-    #         read_file('gridrec_parzen.npy'), rtol=1e-2)
-    #     assert_allclose(
-    #         recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
-    #         read_file('gridrec_butterworth.npy'), rtol=1e-2)
+    def test_gridrec(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
+            read_file('gridrec_none.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='shepp'),
+            read_file('gridrec_shepp.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='cosine'),
+            read_file('gridrec_cosine.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='hann'),
+            read_file('gridrec_hann.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='hamming'),
+            read_file('gridrec_hamming.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='ramlak'),
+            read_file('gridrec_ramlak.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
+            read_file('gridrec_parzen.npy'), rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
+            read_file('gridrec_butterworth.npy'), rtol=1e-2)
         
     def test_mlem(self):
         assert_allclose(

@@ -17,9 +17,9 @@ TomoPy
    :target: https://codeclimate.com/github/tomopy/tomopy
    :alt: Code Climate
 
-.. image:: https://binstar.org/dgursoy/tomopy/badges/downloads.svg   
-   :target: https://binstar.org/dgursoy/tomopy
-   :alt: Binstar downloads
+.. image:: https://anaconda.org/dgursoy/tomopy/badges/downloads.svg
+   :target: https://anaconda.org/dgursoy/tomopy
+   :alt: Anaconda downloads
 
 **TomoPy** is an open-source Python package for tomographic data 
 processing and image reconstruction.
