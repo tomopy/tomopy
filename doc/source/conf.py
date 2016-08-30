@@ -324,7 +324,7 @@ MOCK_MODULES = [
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
     'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
     'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
-    'DM3lib', 'pyfftw', 'dxchange', 'numexpr', 'concurrent.futures']
+    'DM3lib', 'pyfftw', 'dxchange', 'numexpr', 'concurrent', 'concurrent.futures']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
