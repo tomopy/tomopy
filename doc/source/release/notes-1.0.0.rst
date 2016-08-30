@@ -61,6 +61,7 @@ Contributors
 
 * Arthur Glowacki (`@aglowacki`_)
 * Daniel Pelt (`@dmpelt`_)
+* Dake Feng (`@dakefeng`_)
 * Doga Gursoy (`@dgursoy`_)
 * Francesco De Carlo (`@decarlof`_)
 * Lin Jiao (`@yxqd`_)
@@ -69,9 +70,11 @@ Contributors
 * Rafael Vescovi (`@ravescovi`_)
 * Thomas Caswell (`@tacaswell`_)
 * Pete R. Jemian (`@prjemian`_)
+* Wei Xu (`@celiafish`_)
 
 .. _`@aglowacki`: https://github.com/aglowacki
 .. _`@dmpelt`: https://github.com/dmpelt
+.. _`@dakefeng`: https://github.com/dakefeng
 .. _`@dgursoy`: https://github.com/dgursoy
 .. _`@decarlof`: https://github.com/decarlof
 .. _`@lbluque`: https://github.com/lbluque
@@ -80,3 +83,4 @@ Contributors
 .. _`@ravescovi`: https://github.com/ravescovi
 .. _`@tacaswell`: https://github.com/tacaswell
 .. _`@prjemian`: https://github.com/prjemian
+.. _`@celiafish`: https://github.com/celiafish
