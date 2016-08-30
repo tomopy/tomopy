@@ -98,11 +98,15 @@ void remove_ring(
 				data[i+(j*dx)+s*dy*dx] = image[j][i];
 			}
 		}
+		
+		free(polar_image[0]);
+		free(polar_image);
+		
+		free(ring_image[0]);
+		free(ring_image);
 
 	}
 
-	free(ring_image);
-	free(polar_image);
 	free(image);
 
 	return;
@@ -123,6 +127,7 @@ int min_distance_to_edge(
 			min = dist[i];
 		}
 	}
+	free(dist);
 	return min;
 }
 

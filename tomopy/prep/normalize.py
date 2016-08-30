@@ -58,6 +58,7 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -73,14 +74,16 @@ __all__ = ['minus_log',
            'normalize_nf']
 
 
-def minus_log(arr, out=None):
+def minus_log(arr, ncore=None, out=None):
     """
-    In-place computation of the minus log of a given array.
+    Computation of the minus log of a given array.
 
     Parameters
     ----------
     arr : ndarray
         3D stack of projections.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
     out : ndarray, optional
         Output array for result.  If same as arr, process will be done in-place.
     Returns
@@ -89,9 +92,10 @@ def minus_log(arr, out=None):
         Minus-log of the input data.
     """
     arr = dtype.as_float32(arr)
-    arr = np.log(arr, out) # in-place
-    arr = np.negative(arr, out) # in-place
-    return arr
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('-log(arr)', out=out)
+    return out
 
 
 def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
@@ -119,32 +123,19 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
         Normalized 3D tomographic data.
     """
     arr = dtype.as_float32(arr)
-    flat = dtype.as_float32(flat)
-    dark = dtype.as_float32(dark)
+    l = np.float32(1e-6)
+    flat = np.mean(flat, axis=0, dtype=np.float32)
+    dark = np.mean(dark, axis=0, dtype=np.float32)
 
-    flat = flat.mean(axis=0)
-    dark = dark.mean(axis=0)
-
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_normalize,
-        args=(flat, dark, cutoff),
-        axis=0,
-        ncore=ncore,
-        nchunk=0,
-        out=out)
-    return arr
-
-# in-place normalization
-def _normalize(proj, flat, dark, cutoff):
-    denom = flat - dark
-    denom[denom < 1e-6] = 1e-6
-    proj -= dark
-    np.true_divide(proj, denom, proj)
-    if cutoff is not None:
-        proj[proj > cutoff] = cutoff
-    return proj
-
+    with mproc.set_numexpr_threads(ncore):
+        denom = ne.evaluate('flat-dark')
+        ne.evaluate('where(denom<l,l,denom)', out=denom)
+        out = ne.evaluate('arr-dark', out=out)
+        ne.evaluate('out/denom', out=out, truediv=True)
+        if cutoff is not None:
+            cutoff = np.float32(cutoff)
+            ne.evaluate('where(out>cutoff,cutoff,out)', out=out)
+    return out
 
 #TODO: replace roi indexes with slc object
 def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
@@ -223,7 +214,7 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
 
 
 def normalize_nf(tomo, flats, dark, flat_loc,
-                 cutoff=None, ncore=None):
+                 cutoff=None, ncore=None, out=None):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
@@ -241,6 +232,8 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         Indices of flat field data within tomography
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -251,10 +244,14 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     tomo = dtype.as_float32(tomo)
     flats = dtype.as_float32(flats)
     dark = dtype.as_float32(dark)
-
-    arr = np.zeros_like(tomo)
+    l = np.float32(1e-6)
+    if cutoff is not None:
+        cutoff = np.float32(cutoff)
+    if out is None:
+        out = np.empty_like(tomo)
 
     dark = np.median(dark, axis=0)
+    denom = np.empty_like(dark)
 
     num_flats = len(flat_loc)
     total_flats = flats.shape[0]
@@ -269,17 +266,18 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         flat = np.median(flats[fstart:fend], axis=0)
 
         # Normalization can be parallelized much more efficiently outside this
-        # foor loop accounting for the nested parallelism arising from
+        # for loop accounting for the nested parallelism arising from
         # chunking the total normalization and each chunked normalization
         tstart = 0 if m == 0 else tend
-        tend = total_tomo if m >= num_flats-1 else (flat_loc[m+1]-loc-1)//2 + loc
-        _arr = mproc.distribute_jobs(tomo[tstart:tend],
-                                     func=_normalize,
-                                     args=(flat, dark, cutoff),
-                                     axis=0,
-                                     ncore=ncore,
-                                     nchunk=0)
+        tend = total_tomo if m >= num_flats-1 \
+                          else int(np.round((flat_loc[m+1]-loc)/2)) + loc
+        tomo_l = tomo[tstart:tend]
+        out_l = out[tstart:tend]
+        with mproc.set_numexpr_threads(ncore):
+            ne.evaluate('flat-dark', out=denom)
+            ne.evaluate('where(denom<l,l,denom)', out=denom)
+            ne.evaluate('(tomo_l-dark)/denom', out=out_l, truediv=True)
+            if cutoff is not None:
+                ne.evaluate('where(out_l>cutoff,cutoff,out_l)', out=out_l)
 
-        arr[tstart:tend] = _arr
-
-    return arr
+    return out
