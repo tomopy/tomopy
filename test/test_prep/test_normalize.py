@@ -49,6 +49,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import unittest
 from tomopy.prep.normalize import *
 from test.util import read_file
 from numpy.testing import assert_allclose
@@ -58,30 +59,37 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+class normalization_test_case(unittest.TestCase):
+    def test_normalize(self):
+        assert_allclose(
+            normalize(
+                read_file('tomo.npy'),
+                read_file('flat.npy'),
+                read_file('dark.npy')),
+            read_file('normalize.npy'))
 
-def test_normalize():
-    assert_allclose(
-        normalize(
-            read_file('tomo.npy'),
-            read_file('flat.npy'),
-            read_file('dark.npy')),
-        read_file('normalize.npy'))
+    #def test_normalize_more_do():
+    #    thing
+    #    thing = normalize(
+    #        read_file('tomo.npy'),
+    #        read_file('flat.npy'),
+    #        read_file('dark.npy'))
+    #        
+    #    read_file('normalize.npy')
+            
+    def test_normalize_bg(self):
+        assert_allclose(
+            normalize_bg(read_file('tomo.npy')),
+            read_file('normalize_bg.npy'))
 
+    def test_normalize_nf(self):
+        assert_allclose(
+            normalize_nf(
+                read_file('tomo.npy'),
+                read_file('flat_1.npy'),
+                read_file('dark.npy'),
+                (0, 4, 8, 12, 16)),
+            read_file('normalize_nf.npy'))
 
-def test_normalize_bg():
-    assert_allclose(
-        normalize_bg(read_file('tomo.npy')),
-        read_file('normalize_bg.npy'))
-
-def test_normalize_nf():
-    assert_allclose(
-        normalize_nf(
-            read_file('tomo.npy'),
-            read_file('flat_1.npy'),
-            read_file('dark.npy'),
-            (0, 4, 8, 12, 16)),
-        read_file('normalize_nf.npy'))
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+if __name__ == "__main__":
+    unittest.main()

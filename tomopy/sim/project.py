@@ -188,7 +188,7 @@ def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=
     emission : bool, optional
         Determines whether output data is emission or transmission type.
     sinogram_order: bool, optional
-        Determins whether output data is a stack of sinograms (True, y-axis first axis) 
+        Determines whether output data is a stack of sinograms (True, y-axis first axis) 
         or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
