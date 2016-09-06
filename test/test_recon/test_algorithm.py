@@ -49,20 +49,18 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import unittest
 from test.util import read_file
 from tomopy.recon.algorithm import *
 from numpy.testing import assert_allclose
 import numpy as np
 
-
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-
-class TestRecon(object):
-
-    def __init__(self):
+class reconstruction_algorithm_test_case(unittest.TestCase):
+    def setUp(self):
         self.prj = read_file('proj.npy')
         self.ang = read_file('angle.npy').astype('float32')
 
@@ -147,7 +145,5 @@ class TestRecon(object):
             recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
             read_file('sirt.npy'), rtol=1e-2)
 
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+if __name__ == "__main__":
+    unittest.main()
