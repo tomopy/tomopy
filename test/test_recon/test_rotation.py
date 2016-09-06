@@ -49,6 +49,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import unittest
 from test.util import read_file
 from tomopy.recon.rotation import *
 import numpy as np
@@ -65,47 +66,46 @@ __docformat__ = 'restructuredtext en'
 
 #np.set_printoptions(threshold=np.inf)
 
-def test_write_center():
-    dpath = os.path.join('test', 'tmp')
-    cen_range = (5, 7, 0.5)
-    cen = np.arange(*cen_range)
-    write_center(
-        read_file('proj.npy'),
-        read_file('angle.npy'),
-        dpath, cen_range=cen_range)
-    for m in range(cen.size):
-        assert_equals(
-            os.path.isfile(
-                os.path.join(
-                    os.path.join('test', 'tmp'),
-                    str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
-    shutil.rmtree(dpath)
+class center_finding_test_case(unittest.TestCase):
+    def test_write_center(self):
+        dpath = os.path.join('test', 'tmp')
+        cen_range = (5, 7, 0.5)
+        cen = np.arange(*cen_range)
+        write_center(
+            read_file('proj.npy'),
+            read_file('angle.npy'),
+            dpath, cen_range=cen_range)
+        for m in range(cen.size):
+            assert_equals(
+                os.path.isfile(
+                    os.path.join(
+                        os.path.join('test', 'tmp'),
+                        str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
+        shutil.rmtree(dpath)
 
 
-def test_find_center():
-    sim = read_file('sinogram.npy')
-    ang = np.linspace(0, np.pi, sim.shape[0])
-    cen = find_center(sim, ang)
-    assert_allclose(cen, 45.28, rtol=1e-2)
+    def test_find_center(self):
+        sim = read_file('sinogram.npy')
+        ang = np.linspace(0, np.pi, sim.shape[0])
+        cen = find_center(sim, ang)
+        assert_allclose(cen, 45.28, rtol=1e-2)
 
-def test_find_center_vo():
-    sim = read_file('sinogram.npy')
-    cen = find_center_vo(sim)
-    assert_allclose(cen, 45.28, rtol=1e-2)
-    
-def test_find_center_vo_with_downsampling():
-    sim = read_file('sinogram.npy')
-    np.pad(sim, ((1000,1000),(0,0),(1000,1000)), mode="constant", constant_values=0)
-    cen = find_center_vo(sim)
-    assert_allclose(cen, 45.28, rtol=1e-2)
+    def test_find_center_vo(self):
+        sim = read_file('sinogram.npy')
+        cen = find_center_vo(sim)
+        assert_allclose(cen, 45.28, rtol=1e-2)
+        
+    def test_find_center_vo_with_downsampling(self):
+        sim = read_file('sinogram.npy')
+        np.pad(sim, ((1000,1000),(0,0),(1000,1000)), mode="constant", constant_values=0)
+        cen = find_center_vo(sim)
+        assert_allclose(cen, 45.28, rtol=1e-2)
 
-def test_find_center_pc():
-    proj_0 = read_file('projection.npy')
-    proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
-    cen = find_center_pc(proj_0, proj_180)
-    assert_allclose(cen, 73.375, rtol=0.25)
+    def test_find_center_pc(self):
+        proj_0 = read_file('projection.npy')
+        proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
+        cen = find_center_pc(proj_0, proj_180)
+        assert_allclose(cen, 73.375, rtol=0.25)
 
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+if __name__ == "__main__":
+    unittest.main()
