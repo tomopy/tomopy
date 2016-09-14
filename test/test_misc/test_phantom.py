@@ -50,12 +50,13 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.misc.phantom import *
+from tomopy.misc.phantom import baboon, barbara, cameraman, checkerboard, lena, peppers, shepp2d, shepp3d
 from nose.tools import assert_equals
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+
 
 class TestDistributeJobs(unittest.TestCase):
     def test_baboon(self):
@@ -105,6 +106,3 @@ class TestDistributeJobs(unittest.TestCase):
         assert_equals(shepp3d(size=(6, 8, 10)).shape, (6, 8, 10))
         assert_equals(shepp3d(size=(6, 8, 10)).min(), 0)
         assert_equals(shepp3d(size=6).shape, (6, 6, 6))
-
-if __name__ == "__main__":
-    unittest.main()
