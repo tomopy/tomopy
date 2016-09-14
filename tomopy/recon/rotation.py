@@ -230,6 +230,28 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     -------
     float
         Rotation axis location.
+        
+    Notes
+    -----
+    The function may not yield a correct estimate, if:
+    
+    - the sample size is bigger than the field of view of the camera. 
+      In this case the ``ratio`` argument need to be set larger
+      than the default of 2.0.
+    
+    - there is distortion in the imaging hardware. If there's 
+      no correction applied, the center of the projection image may 
+      yield a better estimate.
+    
+    - the sample contrast is weak. Paganin's filter need to be applied 
+      to overcome this. 
+    
+    - there are horizontal stripes in sinogram, which may be induced by 
+      some types of detectors. We need to rotate the sinogram image by 
+      90 Degree, apply ring removal, and then rotate it back before 
+      calling the function.
+    
+    - the sample was changed during the scan. 
     """
     tomo = dtype.as_float32(tomo)
 

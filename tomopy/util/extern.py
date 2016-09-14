@@ -187,17 +187,17 @@ def c_art(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.art.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.art(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']))
+    return (LIB_TOMOPY.art,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']))
 
 
 def c_bart(tomo, center, recon, theta, **kwargs):
@@ -209,19 +209,19 @@ def c_bart(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.bart.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.bart(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: I think this should be int_p
+    return (LIB_TOMOPY.bart,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: I think this should be int_p
 
 
 def c_fbp(tomo, center, recon, theta, **kwargs):
@@ -233,18 +233,18 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.fbp.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.fbp(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_char_p(kwargs['filter_name']),
-        dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
+    return (LIB_TOMOPY.fbp,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_char_p(kwargs['filter_name']),
+            dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
@@ -255,19 +255,18 @@ def c_gridrec(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.gridrec.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.gridrec(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_char_p(kwargs['filter_name']),
-        dtype.as_c_float_p(kwargs['filter_par']))
-    return recon
+    return (LIB_TOMOPY.gridrec,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_char_p(kwargs['filter_name']),
+            dtype.as_c_float_p(kwargs['filter_par']))
 
 
 def c_mlem(tomo, center, recon, theta, **kwargs):
@@ -279,17 +278,17 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.mlem.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.mlem(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']))
+    return (LIB_TOMOPY.mlem,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']))
 
 
 def c_osem(tomo, center, recon, theta, **kwargs):
@@ -301,19 +300,19 @@ def c_osem(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.osem.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.osem(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+    return (LIB_TOMOPY.osem,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
 def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
@@ -325,20 +324,20 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_hybrid.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.ospml_hybrid(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']),
-        dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+    return (LIB_TOMOPY.ospml_hybrid,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
 def c_ospml_quad(tomo, center, recon, theta, **kwargs):
@@ -350,20 +349,20 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_quad.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.ospml_quad(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']),
-        dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+    return (LIB_TOMOPY.ospml_quad,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
 
 
 def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
@@ -375,18 +374,18 @@ def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_hybrid.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.pml_hybrid(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']))
+    return (LIB_TOMOPY.pml_hybrid,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']))
 
 
 def c_pml_quad(tomo, center, recon, theta, **kwargs):
@@ -398,18 +397,18 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_quad.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.pml_quad(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']))
+    return (LIB_TOMOPY.pml_quad,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']))
 
 
 def c_sirt(tomo, center, recon, theta, **kwargs):
@@ -421,34 +420,34 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.sirt.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.sirt(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_int(kwargs['num_iter']))
+    return (LIB_TOMOPY.sirt,
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']))
 
 
 def c_remove_ring(rec, *args):
     istart = 0
     iend = rec.shape[0]
     LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.remove_ring(
-        dtype.as_c_float_p(rec),
-        dtype.as_c_float(args[0]),  # center_x
-        dtype.as_c_float(args[1]),  # center_y
-        dtype.as_c_int(args[2]),  # dx
-        dtype.as_c_int(args[3]),  # dy
-        dtype.as_c_int(args[4]),  # dz
-        dtype.as_c_float(args[5]),  # thresh_max
-        dtype.as_c_float(args[6]),  # thresh_min
-        dtype.as_c_float(args[7]),  # thresh
-        dtype.as_c_int(args[8]),  # theta_min
-        dtype.as_c_int(args[9]),  # rwidth
-        dtype.as_c_int(istart),  # istart
-        dtype.as_c_int(iend))  # iend
+    return (LIB_TOMOPY.remove_ring,
+            dtype.as_c_float_p(rec),
+            dtype.as_c_float(args[0]),  # center_x
+            dtype.as_c_float(args[1]),  # center_y
+            dtype.as_c_int(args[2]),  # dx
+            dtype.as_c_int(args[3]),  # dy
+            dtype.as_c_int(args[4]),  # dz
+            dtype.as_c_float(args[5]),  # thresh_max
+            dtype.as_c_float(args[6]),  # thresh_min
+            dtype.as_c_float(args[7]),  # thresh
+            dtype.as_c_int(args[8]),  # theta_min
+            dtype.as_c_int(args[9]),  # rwidth
+            dtype.as_c_int(istart),  # istart
+            dtype.as_c_int(iend))  # iend
