@@ -59,6 +59,8 @@ import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
 import logging
+import numexpr as ne
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -136,14 +138,19 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
         3D array of same shape as input.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.gaussian_filter,
-        args=(sigma, order),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis] = i
+        e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
+                 output=out[slc])
+    e.shutdown()
+    return out
 
 
 def median_filter(arr, size=3, axis=0, ncore=None):
@@ -167,14 +174,19 @@ def median_filter(arr, size=3, axis=0, ncore=None):
         Median filtered 3D array.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.median_filter,
-        args=((size, size),),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis] = i
+        e.submit(filters.median_filter, arr[slc], size=(size, size),
+                 output=out[slc])
+    e.shutdown()
+    return out
 
 
 def sobel_filter(arr, axis=0, ncore=None):
@@ -196,16 +208,21 @@ def sobel_filter(arr, axis=0, ncore=None):
         3D array of same shape as input.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=filters.sobel,
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    out = np.empty_like(arr)
+
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis] = i
+        e.submit(filters.sobel, arr[slc], output=out[slc])
+    e.shutdown()
+    return out
 
 
-def remove_nan(arr, val=0.):
+def remove_nan(arr, val=0., ncore=None):
     """
     Replace NaN values in array with a given value.
 
@@ -215,6 +232,8 @@ def remove_nan(arr, val=0.):
         Input array.
     val : float, optional
         Values to be replaced with NaN values in array.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -222,11 +241,15 @@ def remove_nan(arr, val=0.):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr[np.isnan(arr)] = val
+    val = np.float32(val)
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(arr!=arr, val, arr)', out=arr)
+
     return arr
 
 
-def remove_neg(arr, val=0.):
+def remove_neg(arr, val=0., ncore=None):
     """
     Replace negative values in array with a given value.
 
@@ -236,6 +259,8 @@ def remove_neg(arr, val=0.):
         Input array.
     val : float, optional
         Values to be replaced with negative values in array.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -243,11 +268,14 @@ def remove_neg(arr, val=0.):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr[arr < 0.0] = val
+    val = np.float32(val)
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(arr<0, val, arr)', out=arr)
     return arr
 
 
-def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
+def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
     Remove high intensity bright spots from a 3D array along specified
     dimension.
@@ -265,6 +293,9 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
         Axis along which median filtering is performed.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
+
 
     Returns
     -------
@@ -272,44 +303,30 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None):
        Corrected array.
     """
     arr = dtype.as_float32(arr)
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_remove_outlier_from_img,
-        args=(dif, size),
-        axis=axis,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    dif = np.float32(dif)
 
+    tmp = np.empty_like(arr)
 
-def _remove_outlier_from_img(img, dif, size):
-    """
-    Remove high intensity bright spots from an image.
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
 
-    Parameters
-    ----------
-    img : ndarray
-        Input array.
-    dif : float
-        Expected difference value between outlier value and
-        the median value of the array.
-    size : int
-        Size of the median filter.
+    e = cf.ThreadPoolExecutor(ncore)
+    slc = [slice(None)]*len(arr.shape)
+    for i in range(arr.shape[axis]):
+        slc[axis] = i
+        e.submit(filters.median_filter, arr[slc], size=(size, size),
+                 output=tmp[slc])
+    e.shutdown()
 
-    Returns
-    -------
-    ndarray
-       Corrected array.
-    """
-    img = dtype.as_float32(img)
-    tmp = filters.median_filter(img, (size, size))
-    mask = ((img - tmp) >= dif).astype(int)
-    return tmp * mask + img * (1 - mask)
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+
+    return out
 
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                rwidth=30, ncore=None, nchunk=None):
+                rwidth=30, ncore=None, nchunk=None, out=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
@@ -336,6 +353,8 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -344,6 +363,11 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     """
 
     rec = dtype.as_float32(rec)
+    
+    if out is None:
+        out = rec.copy()
+    else:
+        out = dtype.as_float32(out)
 
     dz, dy, dx = rec.shape
 
@@ -354,18 +378,22 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
 
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth)
+    
+    axis_size = rec.shape[0]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+    
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_remove_ring(out[chnks[i]:chnks[i+1]],
+                       *args))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+    return out
 
-    rec = mproc.distribute_jobs(
-        rec,
-        func=extern.c_remove_ring,
-        args=args,
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return rec
-
-
-def circ_mask(arr, axis, ratio=1, val=0.):
+def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """
     Apply circular mask to a 3D array.
 
@@ -387,11 +415,14 @@ def circ_mask(arr, axis, ratio=1, val=0.):
         Masked array.
     """
     arr = dtype.as_float32(arr)
+    val = np.float32(val)
     _arr = arr.swapaxes(0, axis)
     dx, dy, dz = _arr.shape
     mask = _get_mask(dy, dz, ratio)
-    for m in range(dx):
-        _arr[m, ~mask] = val
+
+    with mproc.set_numexpr_threads(ncore):
+        ne.evaluate('where(mask, _arr, val)', out=_arr)
+
     return _arr.swapaxes(0, axis)
 
 

@@ -59,7 +59,9 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 from tomopy.sim.project import get_center
+import math
 import logging
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +142,14 @@ def recon(
             Parzen filter.
         'butterworth'
             Butterworth filter.
+        'custom'
+            A numpy array of size `next_power_of_2(num_detector_columns)/2`
+            specifying a custom filter in Fourier domain. The first element
+            of the filter should be the zero-frequency component.
+        'custom2d'
+            A numpy array of size `num_projections*next_power_of_2(num_detector_columns)/2`
+            specifying a custom angle-dependent filter in Fourier domain. The first element
+            of each filter should be the zero-frequency component.
 
     filter_par: list, optional
         Filter parameters as a list.
@@ -206,7 +216,7 @@ def recon(
     """
 
     # Initialize tomography data.
-    tomo = init_tomo(tomo, sinogram_order)
+    tomo = init_tomo(tomo, sinogram_order, sharedmem=False)
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -274,7 +284,7 @@ def recon(
 
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
-    recon = _init_recon(recon_shape, init_recon)
+    recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(
         tomo, center_arr, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
 
@@ -337,15 +347,20 @@ def _get_func(algorithm):
 
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
-    #assert tomo.flags.aligned
-    return mproc.distribute_jobs(
-        (tomo, center, recon),
-        func=algorithm,
-        args=args,
-        kwargs=kwargs,
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
+    axis_size = recon.shape[0]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(algorithm(tomo[chnks[i]:chnks[i+1]],
+                       center[chnks[i]:chnks[i+1]], recon[chnks[i]:chnks[i+1]],
+                       *args, **kwargs))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+    return recon
 
 
 def _get_algorithm_args(theta):
