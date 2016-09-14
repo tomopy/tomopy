@@ -50,8 +50,8 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from test.util import read_file
-from tomopy.recon.rotation import *
+from ..util import read_file
+from tomopy.recon.rotation import write_center, find_center, find_center_vo, find_center_pc
 import numpy as np
 from scipy.ndimage.interpolation import shift as image_shift
 import os.path
@@ -59,14 +59,12 @@ import shutil
 from nose.tools import assert_equals
 from numpy.testing import assert_allclose
 
-
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-#np.set_printoptions(threshold=np.inf)
 
-class center_finding_test_case(unittest.TestCase):
+class CenterFindingTestCase(unittest.TestCase):
     def test_write_center(self):
         dpath = os.path.join('test', 'tmp')
         cen_range = (5, 7, 0.5)
@@ -83,7 +81,6 @@ class center_finding_test_case(unittest.TestCase):
                         str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
         shutil.rmtree(dpath)
 
-
     def test_find_center(self):
         sim = read_file('sinogram.npy')
         ang = np.linspace(0, np.pi, sim.shape[0])
@@ -94,10 +91,12 @@ class center_finding_test_case(unittest.TestCase):
         sim = read_file('sinogram.npy')
         cen = find_center_vo(sim)
         assert_allclose(cen, 45.28, rtol=1e-2)
-        
+
     def test_find_center_vo_with_downsampling(self):
         sim = read_file('sinogram.npy')
-        np.pad(sim, ((1000,1000),(0,0),(1000,1000)), mode="constant", constant_values=0)
+        np.pad(
+            sim, ((1000, 1000), (0, 0), (1000, 1000)),
+            mode="constant", constant_values=0)
         cen = find_center_vo(sim)
         assert_allclose(cen, 45.28, rtol=1e-2)
 
@@ -106,6 +105,3 @@ class center_finding_test_case(unittest.TestCase):
         proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
         cen = find_center_pc(proj_0, proj_180)
         assert_allclose(cen, 73.375, rtol=0.25)
-
-if __name__ == "__main__":
-    unittest.main()

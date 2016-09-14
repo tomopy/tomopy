@@ -50,16 +50,16 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.prep.normalize import *
-from test.util import read_file
+from tomopy.prep.normalize import normalize, normalize_bg, normalize_nf
+from ..util import read_file
 from numpy.testing import assert_allclose
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-class normalization_test_case(unittest.TestCase):
+
+class NormalizationTestCase(unittest.TestCase):
     def test_normalize(self):
         assert_allclose(
             normalize(
@@ -68,15 +68,6 @@ class normalization_test_case(unittest.TestCase):
                 read_file('dark.npy')),
             read_file('normalize.npy'))
 
-    #def test_normalize_more_do():
-    #    thing
-    #    thing = normalize(
-    #        read_file('tomo.npy'),
-    #        read_file('flat.npy'),
-    #        read_file('dark.npy'))
-    #        
-    #    read_file('normalize.npy')
-            
     def test_normalize_bg(self):
         assert_allclose(
             normalize_bg(read_file('tomo.npy')),
@@ -90,6 +81,3 @@ class normalization_test_case(unittest.TestCase):
                 read_file('dark.npy'),
                 (0, 4, 8, 12, 16)),
             read_file('normalize_nf.npy'))
-
-if __name__ == "__main__":
-    unittest.main()

@@ -49,28 +49,18 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
-#FIXME: inserting local tomopy copy for testing
-lib_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy/build/lib.linux-x86_64-2.7/tomopy"
-src_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy"
-sys.path.insert(0, lib_folder)
-sys.path.insert(0, src_folder)
-
 import unittest
-from test.util import read_file, write_file
+from ..util import read_file
 from tomopy.sim.project import *
 from numpy.testing import assert_allclose
-import numpy as np
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-class job_distribution_test_case(unittest.TestCase):
+
+class JobDistributionTestCase(unittest.TestCase):
     def test_project(self):
         assert_allclose(
             project(read_file('obj.npy'), read_file('angle.npy')),
             read_file('proj.npy'), rtol=1e-2)
-
-if __name__ == "__main__":
-    unittest.main()

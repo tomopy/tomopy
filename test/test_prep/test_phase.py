@@ -50,21 +50,17 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.prep.phase import *
-from test.util import read_file
+from tomopy.prep.phase import retrieve_phase
+from ..util import read_file
 from numpy.testing import assert_allclose
-import numpy as np
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+
 
 class TestDistributeJobs(unittest.TestCase):
     def test_retrieve_phase(self):
         assert_allclose(
             retrieve_phase(read_file('proj.npy')),
             read_file('retrieve_phase.npy'), rtol=1e-6)
-
-if __name__ == "__main__":
-    unittest.main()

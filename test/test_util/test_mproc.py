@@ -53,19 +53,21 @@ import tomopy.util.mproc as mproc
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import unittest
-import logging
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+
 def _synthetic_func(a, val):
     for m in range(a.shape[0]):
         a[m, :, :] = val
 
+
 def _test_shape(a, expected_shape):
     assert a.shape == expected_shape
     return a
+
 
 class TestDistributeJobs(unittest.TestCase):
 
@@ -107,6 +109,3 @@ class TestDistributeJobs(unittest.TestCase):
                 args=(1.,),
                 axis=0),
             np.ones((8, 8, 8)))
-
-if __name__ == "__main__":
-    unittest.main()
