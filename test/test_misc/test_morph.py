@@ -50,23 +50,17 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from test.util import read_file, loop_dim
-from tomopy.misc.morph import *
-import numpy as np
-from nose.tools import assert_equals
-from numpy.testing import assert_array_almost_equal
-
+from ..util import read_file, loop_dim
+from tomopy.misc.morph import downsample, upsample
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-class morphing_test_case(unittest.TestCase):
+
+class MorphingTestCase(unittest.TestCase):
     def test_downsample(self):
         loop_dim(downsample, read_file('obj.npy'))
 
     def test_upsample(self):
         loop_dim(upsample, read_file('obj.npy'))
-
-if __name__ == "__main__":
-    unittest.main()

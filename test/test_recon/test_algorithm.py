@@ -50,8 +50,8 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from test.util import read_file
-from tomopy.recon.algorithm import *
+from ..util import read_file
+from tomopy.recon.algorithm import recon
 from numpy.testing import assert_allclose
 import numpy as np
 
@@ -59,7 +59,8 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
-class reconstruction_algorithm_test_case(unittest.TestCase):
+
+class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def setUp(self):
         self.prj = read_file('proj.npy')
         self.ang = read_file('angle.npy').astype('float32')
@@ -82,7 +83,9 @@ class reconstruction_algorithm_test_case(unittest.TestCase):
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='custom', filter_par=np.ones(self.prj.shape[-1],dtype=np.float32)))
+            recon(
+                self.prj, self.ang, algorithm='gridrec', filter_name='custom',
+                filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
     def test_gridrec(self):
         assert_allclose(
@@ -109,7 +112,7 @@ class reconstruction_algorithm_test_case(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
-        
+
     def test_mlem(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
@@ -144,6 +147,3 @@ class reconstruction_algorithm_test_case(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
             read_file('sirt.npy'), rtol=1e-2)
-
-if __name__ == "__main__":
-    unittest.main()
