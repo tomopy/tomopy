@@ -207,6 +207,8 @@ def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
     import astra as astra_mod
     nslices, nang, ndet = tomo.shape
     cfg = astra_mod.astra_dict(opts['method'])
+    if 'extra_options' in opts:
+        cfg['option'] = opts['extra_options']
     proj_geom = astra_mod.create_proj_geom('parallel', 1.0, ndet, theta.astype(np.float64))
     pid = astra_mod.create_projector(proj_type, proj_geom, vol_geom)
     sino = np.zeros((nang, ndet), dtype=np.float32)
