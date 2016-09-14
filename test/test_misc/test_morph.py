@@ -51,7 +51,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import unittest
 from ..util import read_file, loop_dim
-from tomopy.misc.morph import downsample, upsample
+from tomopy.misc.morph import downsample, upsample, sino_360_to_180
+import numpy as np
+from numpy.testing import assert_array_almost_equal
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -64,3 +66,16 @@ class MorphingTestCase(unittest.TestCase):
 
     def test_upsample(self):
         loop_dim(upsample, read_file('obj.npy'))
+
+    def test_sino_360_to_180(self):
+        test_im = np.random.random((32, 32, 128)).astype(np.float32)
+        ltest = sino_360_to_180(test_im, 32, 'left')
+        rtest = sino_360_to_180(test_im, 32, 'right')
+        assert_array_almost_equal(
+            ltest[:, :, -112:], test_im[:16, :, 16:])
+        assert_array_almost_equal(
+            ltest[:, :, :112], test_im[16:, :, 16:][:, :, ::-1])
+        assert_array_almost_equal(
+            rtest[:, :, :112], test_im[:16, :, :-16])
+        assert_array_almost_equal(
+            rtest[:, :, -112:], test_im[16:, :, :-16][:, :, ::-1])
