@@ -56,7 +56,7 @@ are available at `DXchange <http://dxchange.readthedocs.io/en/latest/source/api/
 
 .. code:: python
 
-    proj, flat, dark = dxchange.read_aps_32id(fname, sino=(start, end))
+    proj, flat, dark, theta = dxchange.read_aps_32id(fname, sino=(start, end))
 
 Plot the sinogram:
 
@@ -76,7 +76,10 @@ spaced between 0-180 degrees.
 
 .. code:: python
 
-    theta = tomopy.angles(proj.shape[0])
+    if (theta is None):
+        theta = tomopy.angles(proj.shape[0])
+    else:
+        pass
 
 Perform the flat-field correction of raw data:
 
