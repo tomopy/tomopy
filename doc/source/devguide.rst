@@ -38,15 +38,20 @@ Running the Tests
 Tomopy has a suite of python unit tests that live in the ``/test`` directory, 
 where they follow the same tree structure as the packages under ``/tomopy``.
 These are automatically run by TravisCI when you make a pull request 
-(See below for how to do that) and you can run them manually using nose,
-or whichever python test runner you prefer.
+(See below for how to do that) and you can run them manually using pytest,
+or whichever python test runner you prefer.  To make it easier to run tests 
+on the changes you make to the code, it is recommended that you install TomoPy 
+in development mode.  (`python setup.py develop`)
 
-The nose test runner, <http://nose.readthedocs.io/en/latest/>, is available 
-through easy_install, pip, or anaconda.  
-To run the tests with nose, open terminal, navigate to the test directory,
-then run ``nosetests``.  To run sections of tests, pass nose a 
-directory or filepath, as in ``nosetests test_recon`` or 
-``nosetests test_recon/test_rotation.py``.
+The `pytest test runner <http://doc.pytest.org/en/latest/>`__, is available 
+through pip or anaconda.  
+
+To run the tests open a terminal, navigate to your project folder,
+then run ``py.test``.  
+
+To run sections of tests, pass nose a 
+directory or filepath, as in ``py.test test/test_recon`` or 
+``py.test test/test_recon/test_rotation.py``.
 
 When writing tests, at minimum we try to check all function
 returns with synthetic data, together with some dimension, type, etc.  
