@@ -18,8 +18,13 @@ need a local copy of the source code.  Clone from the
 
 then, inside your new cloned repo, run::
 
-    python setup.py build
-    sudo python setup.py install
+    sudo python setup.py develop
+    
+This puts a symlink to your development code in your python install directory, 
+so that the tests will always run against your development code.
+
+It is recommended that you use git to update your local code with changes from 
+the upstream branch frequently.
 
 Installing from Conda
 =====================
