@@ -73,7 +73,10 @@ spaced between 0-180 degrees.
 
 .. code:: python
 
-    theta = tomopy.angles(proj.shape[0])
+    if (theta is None):
+        theta = tomopy.angles(proj.shape[0])
+    else:
+        pass
 
 Perform the flat-field correction of raw data:
 
