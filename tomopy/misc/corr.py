@@ -61,6 +61,7 @@ import tomopy.util.extern as extern
 import logging
 import numexpr as ne
 import concurrent.futures as cf
+import tomocuda
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +74,12 @@ __all__ = ['adjust_range',
            'circ_mask',
            'gaussian_filter',
            'median_filter',
+           'median_filter_cuda',
            'sobel_filter',
            'remove_nan',
            'remove_neg',
            'remove_outlier',
+           'remove_outlier_cuda',
            'remove_ring']
 
 
@@ -188,6 +191,49 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     e.shutdown()
     return out
 
+def median_filter_cuda(arr, size=3):
+    """
+    Apply median filter to 3D array along 0 axis with GPU support.
+    The winAllow is for A6000, for Tian X support 3 to 8
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    size : int, optional
+        The size of the filter.
+
+    Returns
+    -------
+    ndarray
+        Median filtered 3D array.
+    """
+
+    winAllow = [2,3,4,5,6,7,8,9.10,11,12,13,14,15]
+
+    if size in winAllow:
+        prjsize = arr.shape[0]
+        loffset = int(size/2)
+        roffset = int((size-1)/2)
+        imsizex =arr.shape[2] # image size for the input
+        imsizey = arr.shape[1]
+
+        filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
+        out = np.zeros(shape=(prjsize,imsizey,imsizex), dtype=np.float32)
+
+        for step in range (prjsize):
+            im_noisecu=arr[step].astype(np.float32)
+            im_noisecu=np.lib.pad(im_noisecu, ((loffset, roffset),(loffset, roffset)), 'symmetric')
+            im_noisecu = im_noisecu.flatten()
+
+            filter.setCuImage(im_noisecu)
+            filter.run2DFilter(size)
+            results = filter.retreive()
+            results=results.reshape(imsizey,imsizex)
+            out[step]=results
+    else:
+        out = median_filter(arr, size)
+
+    return out
 
 def sobel_filter(arr, axis=0, ncore=None):
     """
@@ -277,7 +323,7 @@ def remove_neg(arr, val=0., ncore=None):
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
-    Remove high intensity bright spots from a 3D array along specified
+    Remove high intensity bright spots from a 3D array along 0 axis
     dimension.
 
     Parameters
@@ -320,6 +366,64 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+
+    return out
+
+def remove_outlier_cuda(arr, dif, size=3):
+    """
+    Remove high intensity bright spots from a 3D array along specified
+    dimension.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which median filtering is performed.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
+
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr = dtype.as_float32(arr)
+    dif = np.float32(dif)
+
+    winAllow = [2,3,4,5,6,7,8,9.10,11,12,13,14,15]
+
+    if size in winAllow:
+        prjsize = arr.shape[0]
+        loffset = int(size/2)
+        roffset = int((size-1)/2)
+        imsizex =arr.shape[2] # image size for the input
+        imsizey = arr.shape[1]
+
+        filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
+        out = np.zeros(shape=(prjsize,imsizey,imsizex), dtype=np.float32)
+
+        for step in range (prjsize):
+            im_noisecu=arr[step].astype(np.float32)
+            im_noisecu=np.lib.pad(im_noisecu, ((loffset, roffset),(loffset, roffset)), 'symmetric')
+            im_noisecu = im_noisecu.flatten()
+
+            filter.setCuImage(im_noisecu)
+            filter.run2DRemoveOutliner(size, dif)
+            results = filter.retreive()
+            results=results.reshape(imsizey,imsizex)
+            out[step]=results
+    else:
+        print("using cpu remove outlier")
+        out = remove_outlier(arr, dif, size)
 
     return out
 
