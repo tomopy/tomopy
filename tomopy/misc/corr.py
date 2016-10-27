@@ -323,7 +323,7 @@ def remove_neg(arr, val=0., ncore=None):
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
-    Remove high intensity bright spots from a 3D array along 0 axis
+    Remove high intensity bright spots from a 3D array along specified
     dimension.
 
     Parameters
