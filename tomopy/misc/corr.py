@@ -209,7 +209,7 @@ def median_filter_cuda(arr, size=3):
     """
 
     winAllow = range(2,16)
-    
+
     if size in winAllow:
         prjsize = arr.shape[0]
         loffset = int(size/2)
@@ -231,6 +231,7 @@ def median_filter_cuda(arr, size=3):
             results=results.reshape(imsizey,imsizex)
             out[step]=results
     else:
+        print("The window size is not support, please using cpu median filter")
         out = median_filter(arr, size)
 
     return out
@@ -422,7 +423,7 @@ def remove_outlier_cuda(arr, dif, size=3):
             results=results.reshape(imsizey,imsizex)
             out[step]=results
     else:
-        print("using cpu remove outlier")
+        print("The window size is not support, using cpu outlier removal")
         out = remove_outlier(arr, dif, size)
 
     return out
