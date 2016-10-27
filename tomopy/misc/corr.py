@@ -194,7 +194,7 @@ def median_filter(arr, size=3, axis=0, ncore=None):
 def median_filter_cuda(arr, size=3):
     """
     Apply median filter to 3D array along 0 axis with GPU support.
-    The winAllow is for A6000, for Tian X support 3 to 8
+    The winAllow is for A6000, Tian X support 3 to 8
     Parameters
     ----------
     arr : ndarray
@@ -208,8 +208,8 @@ def median_filter_cuda(arr, size=3):
         Median filtered 3D array.
     """
 
-    winAllow = [2,3,4,5,6,7,8,9.10,11,12,13,14,15]
-
+    winAllow = range(2,16)
+    
     if size in winAllow:
         prjsize = arr.shape[0]
         loffset = int(size/2)
@@ -399,7 +399,7 @@ def remove_outlier_cuda(arr, dif, size=3):
     arr = dtype.as_float32(arr)
     dif = np.float32(dif)
 
-    winAllow = [2,3,4,5,6,7,8,9.10,11,12,13,14,15]
+    winAllow = range(2,16)
 
     if size in winAllow:
         prjsize = arr.shape[0]
