@@ -2,7 +2,7 @@
 Reconstruction with UFO
 -----------------------
 
-`UFO <http://ufo-core.readthedocs.io/en/latest/` is a general-purpose image
+`UFO <http://ufo-core.readthedocs.io/en/latest/>`__ is a general-purpose image
 processing framework developed at the Karlsruhe Institute of Technology and uses
 OpenCL to execute processing tasks on multiple accelerator devices such as
 NVIDIA and AMD GPUs, AMD and Intel CPUs as well as Intel Xeon Phi cards.
@@ -73,7 +73,10 @@ spaced between 0-180 degrees.
 
 .. code:: python
 
-    theta = tomopy.angles(proj.shape[0])
+    if (theta is None):
+        theta = tomopy.angles(proj.shape[0])
+    else:
+        pass
 
 Perform the flat-field correction of raw data:
 
