@@ -192,6 +192,8 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
             proj_geom['option'] = {
                 'ExtraDetectorOffset':
                 (center[i] - ndet / 2.) * const_theta}
+        pid = astra_mod.create_projector(proj_type, proj_geom, vol_geom)
+        cfg['ProjectorId'] = pid
         sid = astra_mod.data2d.link('-sino', proj_geom, tomo[i])
         cfg['ProjectionDataId'] = sid
         vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
@@ -201,12 +203,15 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
         astra_mod.algorithm.delete(alg_id)
         astra_mod.data2d.delete(vid)
         astra_mod.data2d.delete(sid)
+        astra_mod.projector.delete(pid)
 
 def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
     # Lazy import ASTRA
     import astra as astra_mod
     nslices, nang, ndet = tomo.shape
     cfg = astra_mod.astra_dict(opts['method'])
+    if 'extra_options' in opts:
+        cfg['option'] = opts['extra_options']
     proj_geom = astra_mod.create_proj_geom('parallel', 1.0, ndet, theta.astype(np.float64))
     pid = astra_mod.create_projector(proj_type, proj_geom, vol_geom)
     sino = np.zeros((nang, ndet), dtype=np.float32)
