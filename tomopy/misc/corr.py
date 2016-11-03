@@ -59,13 +59,9 @@ import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
 import logging
+import warnings
 import numexpr as ne
 import concurrent.futures as cf
-
-try:
-    import tomocuda
-except ImportError:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +206,14 @@ def median_filter_cuda(arr, size=3):
     -------
     ndarray
         Median filtered 3D array.
+
+    Example
+    -------
+    >>> import tomocuda
+    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+
+    For more information regarding install and using tomocuda, check
+    https://github.com/kyuepublic/tomocuda for more information
     """
 
     try:
@@ -238,11 +242,11 @@ def median_filter_cuda(arr, size=3):
                 results=results.reshape(imsizey,imsizex)
                 out[step]=results
         else:
-            print("The window size is not support, using cpu median filter")
+            warnings.warn("The window size is not support, using cpu median filter")
             out = median_filter(arr, size)
 
     except ImportError:
-        print("The tomocuda is not installed, using cpu median filter")
+        warnings.warn("The tomocuda is not installed, using cpu median filter")
         out = median_filter(arr, size)
 
     return out
@@ -407,6 +411,15 @@ def remove_outlier_cuda(arr, dif, size=3):
     -------
     ndarray
        Corrected array.
+
+    Example
+    -------
+    >>> import tomocuda
+    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+
+    For more information regarding install and using tomocuda, check
+    https://github.com/kyuepublic/tomocuda for more information
+
     """
 
     arr = dtype.as_float32(arr)
@@ -438,11 +451,11 @@ def remove_outlier_cuda(arr, dif, size=3):
                 results=results.reshape(imsizey,imsizex)
                 out[step]=results
         else:
-            print("The window size is not support, using cpu outlier removal")
+            warnings.warn("The window size is not support, using cpu outlier removal")
             out = remove_outlier(arr, dif, size)
 
     except ImportError:
-        print("The tomocuda is not installed, using cpu outlier removal")
+        warnings.warn("The tomocuda is not installed, using cpu outlier removal")
         out = remove_outlier(arr, dif, size)
 
     return out
