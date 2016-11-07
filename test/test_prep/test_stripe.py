@@ -49,36 +49,23 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
-#FIXME: inserting local tomopy copy for testing
-lib_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy/build/lib.linux-x86_64-2.7/tomopy"
-src_folder = "/home/sutherland/git/xray/tomopy_aps/tomopy"
-sys.path.insert(0, lib_folder)
-sys.path.insert(0, src_folder)
-
-from tomopy.prep.stripe import *
-from test.util import read_file
+import unittest
+from tomopy.prep.stripe import remove_stripe_fw, remove_stripe_ti
+from ..util import read_file
 from numpy.testing import assert_allclose
-import numpy as np
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_remove_stripe_fw():
-    assert_allclose(
-        remove_stripe_fw(read_file('proj.npy')),
-        read_file('remove_stripe_fw.npy'), rtol=1e-2)
+class StripeRemovalTestCase(unittest.TestCase):
+    def test_remove_stripe_fw(self):
+        assert_allclose(
+            remove_stripe_fw(read_file('proj.npy')),
+            read_file('remove_stripe_fw.npy'), rtol=1e-2)
 
-
-def test_remove_stripe_ti():
-    assert_allclose(
-        remove_stripe_ti(read_file('proj.npy')),
-        read_file('remove_stripe_ti.npy'), rtol=1e-2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    def test_remove_stripe_ti(self):
+        assert_allclose(
+            remove_stripe_ti(read_file('proj.npy')),
+            read_file('remove_stripe_ti.npy'), rtol=1e-2)
