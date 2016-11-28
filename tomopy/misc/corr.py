@@ -219,34 +219,35 @@ def median_filter_cuda(arr, size=3):
     try:
         import tomocuda
 
-        winAllow = range(2,16)
+        winAllow = range(2, 16)
 
         if size in winAllow:
             prjsize = arr.shape[0]
             loffset = int(size/2)
             roffset = int((size-1)/2)
-            imsizex =arr.shape[2] # image size for the input
+            imsizex = arr.shape[2]
             imsizey = arr.shape[1]
 
             filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
-            out = np.zeros(shape=(prjsize,imsizey,imsizex), dtype=np.float32)
+            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
 
-            for step in range (prjsize):
-                im_noisecu=arr[step].astype(np.float32)
-                im_noisecu=np.lib.pad(im_noisecu, ((loffset, roffset),(loffset, roffset)), 'symmetric')
+            for step in range(prjsize):
+                im_noisecu = arr[step].astype(np.float32)
+                im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
+                                        (loffset, roffset)), 'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
                 filter.run2DFilter(size)
                 results = filter.retreive()
-                results=results.reshape(imsizey,imsizex)
-                out[step]=results
+                results = results.reshape(imsizey, imsizex)
+                out[step] = results
         else:
-            warnings.warn("The window size is not support, using cpu median filter")
+            warnings.warn("Window size not support, using cpu median filter")
             out = median_filter(arr, size)
 
     except ImportError:
-        warnings.warn("The tomocuda is not installed, using cpu median filter")
+        warnings.warn("The tomocuda is not support, using cpu median filter")
         out = median_filter(arr, size)
 
     return out
@@ -387,8 +388,8 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
 def remove_outlier_cuda(arr, dif, size=3):
     """
-    Remove high intensity bright spots from a 3D array along specified
-    dimension.
+    Remove high intensity bright spots from a 3D array along axis 0
+    dimension using GPU.
 
     Parameters
     ----------
@@ -399,12 +400,6 @@ def remove_outlier_cuda(arr, dif, size=3):
         the median value of the array.
     size : int
         Size of the median filter.
-    axis : int, optional
-        Axis along which median filtering is performed.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-    out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
 
 
     Returns
@@ -428,38 +423,38 @@ def remove_outlier_cuda(arr, dif, size=3):
     try:
         import tomocuda
 
-        winAllow = range(2,16)
+        winAllow = range(2, 16)
 
         if size in winAllow:
             prjsize = arr.shape[0]
             loffset = int(size/2)
             roffset = int((size-1)/2)
-            imsizex =arr.shape[2] # image size for the input
+            imsizex = arr.shape[2]
             imsizey = arr.shape[1]
 
             filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
-            out = np.zeros(shape=(prjsize,imsizey,imsizex), dtype=np.float32)
+            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
 
-            for step in range (prjsize):
-                im_noisecu=arr[step].astype(np.float32)
-                im_noisecu=np.lib.pad(im_noisecu, ((loffset, roffset),(loffset, roffset)), 'symmetric')
+            for step in range(prjsize):
+                im_noisecu = arr[step].astype(np.float32)
+                im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
+                                        (loffset, roffset)), 'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
                 filter.run2DRemoveOutliner(size, dif)
                 results = filter.retreive()
-                results=results.reshape(imsizey,imsizex)
-                out[step]=results
+                results = results.reshape(imsizey, imsizex)
+                out[step] = results
         else:
-            warnings.warn("The window size is not support, using cpu outlier removal")
+            warnings.warn("Window size not support, using cpu outlier removal")
             out = remove_outlier(arr, dif, size)
 
     except ImportError:
-        warnings.warn("The tomocuda is not installed, using cpu outlier removal")
+        warnings.warn("The tomocuda is not support, using cpu outlier removal")
         out = remove_outlier(arr, dif, size)
 
     return out
-
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
