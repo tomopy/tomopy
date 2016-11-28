@@ -173,7 +173,7 @@ def _round_to_even(num):
     return (np.ceil(num / 2.) * 2).astype('int')
 
 
-def project(obj, theta, center=None, emission=True, pad=False, sinogram_order=False, ncore=None, nchunk=None):
+def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
