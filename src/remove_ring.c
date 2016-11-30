@@ -1,44 +1,44 @@
 // Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.
 
-// Copyright 2015. UChicago Argonne, LLC. This software was produced 
-// under U.S. Government contract DE-AC02-06CH11357 for Argonne National 
-// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the 
-// U.S. Department of Energy. The U.S. Government has rights to use, 
-// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR 
-// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR 
-// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is 
-// modified to produce derivative works, such modified software should 
-// be clearly marked, so as not to confuse it with the version available 
+// Copyright 2015. UChicago Argonne, LLC. This software was produced
+// under U.S. Government contract DE-AC02-06CH11357 for Argonne National
+// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
+// U.S. Department of Energy. The U.S. Government has rights to use,
+// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
+// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
+// modified to produce derivative works, such modified software should
+// be clearly marked, so as not to confuse it with the version available
 // from ANL.
 
-// Additionally, redistribution and use in source and binary forms, with 
-// or without modification, are permitted provided that the following 
+// Additionally, redistribution and use in source and binary forms, with
+// or without modification, are permitted provided that the following
 // conditions are met:
 
-//     * Redistributions of source code must retain the above copyright 
-//       notice, this list of conditions and the following disclaimer. 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
 
-//     * Redistributions in binary form must reproduce the above copyright 
-//       notice, this list of conditions and the following disclaimer in 
-//       the documentation and/or other materials provided with the 
-//       distribution. 
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in
+//       the documentation and/or other materials provided with the
+//       distribution.
 
-//     * Neither the name of UChicago Argonne, LLC, Argonne National 
-//       Laboratory, ANL, the U.S. Government, nor the names of its 
-//       contributors may be used to endorse or promote products derived 
-//       from this software without specific prior written permission. 
+//     * Neither the name of UChicago Argonne, LLC, Argonne National
+//       Laboratory, ANL, the U.S. Government, nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
 
-// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago 
-// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
+// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
 //Original author: Justin Blair
@@ -47,7 +47,7 @@
 
 void remove_ring(
 	float* data, float center_x, float center_y, int dx, int dy,
-	int dz, float thresh_max, float thresh_min, float threshold, 
+	int dz, float thresh_max, float thresh_min, float threshold,
 	int angular_min, int ring_width, int istart, int iend)
 {
 	int pol_width=0;
@@ -98,10 +98,10 @@ void remove_ring(
 				data[i+(j*dx)+s*dy*dx] = image[j][i];
 			}
 		}
-		
+
 		free(polar_image[0]);
 		free(polar_image);
-		
+
 		free(ring_image[0]);
 		free(ring_image);
 
@@ -141,7 +141,7 @@ int iroundf(float x)
 float** polar_transform(
 	float** image, float center_x, float center_y,
 	int width, int height, int* p_pol_width,
-	int* p_pol_height, float thresh_max, float thresh_min, 
+	int* p_pol_height, float thresh_max, float thresh_min,
 	int r_scale, int ang_scale, int overhang)
 {
 	int max_r = min_distance_to_edge(center_x, center_y, width, height);
@@ -149,7 +149,7 @@ float** polar_transform(
 	int pol_height = iroundf((float)ang_scale*2.0*PI*(float)max_r);
 	*p_pol_width = pol_width;
 	*p_pol_height = pol_height;
-	
+
 	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float));
 	float** polar_image = (float **) calloc(pol_height, sizeof(float *));
 	polar_image[0] = image_block;
@@ -163,7 +163,7 @@ float** polar_transform(
 			float fl_y = (float)r*sin(theta + (PI/(float)pol_height))/(float)r_scale;
 			int x = iroundf(fl_x + center_x);
 			int y = iroundf(fl_y + center_y);
-			
+
 			polar_image[row][r] = image[y][x];
 			if(polar_image[row][r] > thresh_max){
 				polar_image[row][r] = thresh_max;
@@ -196,7 +196,7 @@ float** inverse_polar_transform(
 			if(theta < 0){
 				theta+= 2.0*PI;
 			}
-			int pol_row = iroundf(theta*(float)pol_height/(2.0*PI)); 
+			int pol_row = iroundf(theta*(float)pol_height/(2.0*PI));
 			int pol_col = iroundf((float)r_scale*sqrtf(((float)row-center_y) *
 								  ((float)row-center_y) + ((float)col-center_x)
 								  * ((float)col-center_x)));
@@ -356,7 +356,7 @@ void median_filter_fast_1D(
 			//Sort the array
 			quick_sort_2_arrays(median_array, position_array, 0, 2*kernel_rad);
 			filtered_image[0][row][col] = median_array[kernel_rad];
-			
+
 			//Roll filter along the rest of the row
 			for(col = start_col+1; col <= end_col; col++){
 				float next_value = 0.0;
@@ -364,7 +364,7 @@ void median_filter_fast_1D(
 				if (next_value_col < width){
 					next_value = image[0][row][next_value_col];
 				}
-				int last_value_index = 0; 
+				int last_value_index = 0;
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
@@ -384,7 +384,7 @@ void median_filter_fast_1D(
 				int adjusted_row = row + n;
 				int adjusted_col = col;
 				if(adjusted_row < 0){
-				// Handle edge cases 
+				// Handle edge cases
 					adjusted_row += height;
 					median_array[n+kernel_rad] = image[0][adjusted_row][adjusted_col];
 				}else{
@@ -395,7 +395,7 @@ void median_filter_fast_1D(
 			//Sort the array
 			quick_sort_2_arrays(median_array, position_array, 0, 2*kernel_rad);
 			filtered_image[0][row][col] = median_array[kernel_rad];
-			
+
 			//Roll filter along the rest of the col
 			for(row = start_row+1; row <= end_row; row++){
 				float next_value = 0.0;
@@ -403,7 +403,7 @@ void median_filter_fast_1D(
 				if (next_value_row < height){
 					next_value = image[0][next_value_row][col];
 				}
-				int last_value_index = 0; 
+				int last_value_index = 0;
 				for(int i = 0; i < 2*kernel_rad+1; i++){
 					position_array[i] -= 1;
 					if(position_array[i] < 0){
@@ -415,7 +415,7 @@ void median_filter_fast_1D(
 				bubble_2_arrays(median_array, position_array, last_value_index, 2*kernel_rad+1);
 				filtered_image[0][row][col] = median_array[kernel_rad];
 			}
-		}	
+		}
 	}
 	free(median_array);
 	free(position_array);
@@ -431,7 +431,7 @@ void mean_filter_fast_1D(
  	int start_row, int start_col, int end_row, int end_col,
 	char axis, int kernel_rad, int width, int height)
 {
-	float mean = 0, sum = 0, previous_sum = 0, num_elems = (float)(2*kernel_rad + 1);
+	long double mean = 0, sum = 0, previous_sum = 0, num_elems = (double)(2*kernel_rad + 1);
 	int row, col;
 	if(axis == 'x'){
 		//iterate over each row of the image subset
@@ -471,26 +471,26 @@ void mean_filter_fast_1D(
 			sum = 0;
 			//calculate average of first element of the column
 			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
-				row = n + start_row;
+				row = n;
 				if(row < 0){
-					row += height;
-				}else if(row >= height){
-					row -= height;
+					row = -row;
+				}else if(row >= height/2){
+					row = height/2 - (row - height/2) - 1;
 				}
 				sum += image[0][row][col];
 			}
 			mean = sum/num_elems;
-			filtered_image[0][start_row][col] = mean;
+			filtered_image[0][0][col] = mean;
 			previous_sum = sum;
 
-			for(row = start_row+1; row <= end_row; row++){
+			for(row = 1; row < height/2; row++){
 				int last_row = (row - 1) - (kernel_rad);
 				int next_row = row + (kernel_rad);
 				if(last_row < 0){
-					last_row += height;
+					last_row = -last_row - 1;
 				}
-				if(next_row >= height){
-					next_row -= height;
+				if(next_row >= height/2){
+					next_row = height/2 - (next_row - height/2) - 1;
 				}
 				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
 				if(image[0][row][col] != 0){
@@ -500,9 +500,44 @@ void mean_filter_fast_1D(
 				}
 				previous_sum = sum;
 			}
+
+			sum = 0;
+			//calculate average of first element of the column
+			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
+				row = n + height/2;
+				if(row < height/2){
+					row = height/2 + (height/2 - row) - 1;
+				}else if(row >= height){
+					row = height - (row - height) - 1;
+				}
+				sum += image[0][row][col];
+			}
+			mean = sum/num_elems;
+			filtered_image[0][height/2][col] = mean;
+			previous_sum = sum;
+
+			for(row = height/2+1; row < height; row++){
+				int last_row = (row - 1) - (kernel_rad);
+				int next_row = row + (kernel_rad);
+				if(last_row < height/2){
+					last_row = height/2 + (height/2 - last_row) - 1;
+				}
+				if(next_row >= height){
+					next_row = height - (next_row - height) - 1;
+				}
+				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
+				if(image[0][row][col] != 0){
+					filtered_image[0][row][col] = sum/num_elems;
+				}else{
+					filtered_image[0][row][col] = 0.0;
+				}
+				previous_sum = sum;
+
+			}
+
 		}
 	}
-	return;	
+	return;
 }
 
 
@@ -517,7 +552,7 @@ void ring_filter(
 	for(int i=1; i<pol_height; i++){
 		filtered_image[i] = filtered_image[i-1] + pol_width;
 	}
-		
+
 	median_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1,
 						  pol_width/3 -1, 'x', m_rad/3, ring_width, pol_width,
 						  pol_height);
@@ -538,7 +573,7 @@ void ring_filter(
 			}
 		}
 	}
-	
+
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image
 	 * (based on radius)
