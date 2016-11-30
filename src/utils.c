@@ -68,9 +68,10 @@ preprocessing(
     }
 
     *mov = ((float)num_pixels-1)/2.0-center;
-    if(*mov-floor(*mov) < 0.001) {
-        *mov += 0.001;
+    if(*mov-floor(*mov) < 0.01) {
+        *mov += 0.01;
     }
+    *mov += 0.5;
 }
 
 
