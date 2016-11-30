@@ -14,8 +14,10 @@
       circ_mask
       gaussian_filter
       median_filter
+      median_filter_cuda
       sobel_filter
       remove_nan
       remove_neg
       remove_outlier
+      remove_outlier_cuda
       remove_ring
