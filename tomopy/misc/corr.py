@@ -191,7 +191,7 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     e.shutdown()
     return out
 
-def median_filter_cuda(arr, size=3):
+def median_filter_cuda(arr, size=3, axis=0):
     """
     Apply median filter to 3D array along 0 axis with GPU support.
     The winAllow is for A6000, Tian X support 3 to 8
@@ -201,7 +201,8 @@ def median_filter_cuda(arr, size=3):
         Input array.
     size : int, optional
         The size of the filter.
-
+    axis : int, optional
+        Axis along which median filtering is performed.
     Returns
     -------
     ndarray
@@ -221,10 +222,13 @@ def median_filter_cuda(arr, size=3):
 
         winAllow = range(2, 16)
 
+        if(axis != 0):
+            arr = np.swapaxes(arr, 0, axis)
+
         if size in winAllow:
-            prjsize = arr.shape[0]
             loffset = int(size/2)
             roffset = int((size-1)/2)
+            prjsize = arr.shape[0]
             imsizex = arr.shape[2]
             imsizey = arr.shape[1]
 
@@ -232,6 +236,7 @@ def median_filter_cuda(arr, size=3):
             out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
 
             for step in range(prjsize):
+                # im_noisecu = arr[:][step][:].astype(np.float32)
                 im_noisecu = arr[step].astype(np.float32)
                 im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
                                         (loffset, roffset)), 'symmetric')
@@ -242,13 +247,16 @@ def median_filter_cuda(arr, size=3):
                 results = filter.retreive()
                 results = results.reshape(imsizey, imsizex)
                 out[step] = results
+
+            if(axis != 0):
+                out = np.swapaxes(out, 0, axis)
         else:
             warnings.warn("Window size not support, using cpu median filter")
-            out = median_filter(arr, size)
+            out = median_filter(arr, size, axis)
 
     except ImportError:
         warnings.warn("The tomocuda is not support, using cpu median filter")
-        out = median_filter(arr, size)
+        out = median_filter(arr, size, axis)
 
     return out
 
@@ -386,7 +394,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     return out
 
-def remove_outlier_cuda(arr, dif, size=3):
+def remove_outlier_cuda(arr, dif, size=3, axis=0):
     """
     Remove high intensity bright spots from a 3D array along axis 0
     dimension using GPU.
@@ -400,7 +408,8 @@ def remove_outlier_cuda(arr, dif, size=3):
         the median value of the array.
     size : int
         Size of the median filter.
-
+    axis : int, optional
+        Axis along which outlier removal is performed.
 
     Returns
     -------
@@ -425,6 +434,9 @@ def remove_outlier_cuda(arr, dif, size=3):
 
         winAllow = range(2, 16)
 
+        if(axis != 0):
+            arr = np.swapaxes(arr, 0, axis)
+
         if size in winAllow:
             prjsize = arr.shape[0]
             loffset = int(size/2)
@@ -446,6 +458,9 @@ def remove_outlier_cuda(arr, dif, size=3):
                 results = filter.retreive()
                 results = results.reshape(imsizey, imsizex)
                 out[step] = results
+
+            if(axis != 0):
+                out = np.swapaxes(out, 0, axis)
         else:
             warnings.warn("Window size not support, using cpu outlier removal")
             out = remove_outlier(arr, dif, size)
