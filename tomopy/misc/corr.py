@@ -146,13 +146,12 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
+                     output=out[slc])
     return out
 
 
@@ -182,13 +181,12 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.median_filter, arr[slc], size=(size, size),
+                     output=out[slc])
     return out
 
 def median_filter_cuda(arr, size=3, axis=0):
@@ -284,12 +282,11 @@ def sobel_filter(arr, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.sobel, arr[slc], output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.sobel, arr[slc], output=out[slc])
     return out
 
 
@@ -381,13 +378,12 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=tmp[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.median_filter, arr[slc], size=(size, size),
+                     output=tmp[slc])
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
@@ -529,16 +525,12 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     axis_size = rec.shape[0]
     ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
     
-    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
-    mulargs = []
-    for i in range(ncore):
-        mulargs.append(extern.c_remove_ring(out[chnks[i]:chnks[i+1]],
-                       *args))
-    e = cf.ThreadPoolExecutor(ncore)
-    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
-    for t in thrds:
-        t.result()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        for offset in xrange(0, axis_size, nchunk):
+            slc = np.s_[offset:offset+nchunk]
+            e.submit(extern.c_remove_ring, out[slc], *args)    
     return out
+
 
 def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """
