@@ -348,18 +348,16 @@ def _get_func(algorithm):
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
-    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
-
-    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
-    mulargs = []
-    for i in range(ncore):
-        mulargs.append(algorithm(tomo[chnks[i]:chnks[i+1]],
-                       center[chnks[i]:chnks[i+1]], recon[chnks[i]:chnks[i+1]],
-                       *args, **kwargs))
-    e = cf.ThreadPoolExecutor(ncore)
-    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
-    for t in thrds:
-        t.result()
+    ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
+    if ncore == 1:
+        for slc in slcs:
+            # run in this thread (useful for debugging)
+            algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
+    else:
+        # execute recon on ncore threads
+        with cf.ThreadPoolExecutor(ncore) as e:
+            for slc in slcs:
+                e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
     return recon
 
 
