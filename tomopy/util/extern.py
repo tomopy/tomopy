@@ -117,7 +117,7 @@ def c_normalize_bg(tomo, air):
 
 
 def c_remove_stripe_sf(tomo, size):
-    #TODO: we should fix this elsewhere... 
+    #TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
     contiguous_tomo = np.require(tomo, requirements="AC")
     dx, dy, dz = tomo.shape
@@ -449,5 +449,6 @@ def c_remove_ring(rec, *args):
             dtype.as_c_float(args[7]),  # thresh
             dtype.as_c_int(args[8]),  # theta_min
             dtype.as_c_int(args[9]),  # rwidth
+            dtype.as_c_int(args[10]),  # int_mode
             dtype.as_c_int(istart),  # istart
             dtype.as_c_int(iend))  # iend
