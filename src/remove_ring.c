@@ -45,10 +45,13 @@
 
 #include "remove_ring.h"
 
+#define INT_MODE_WRAP 0
+#define INT_MODE_REFLECT 1
+
 void remove_ring(
 	float* data, float center_x, float center_y, int dx, int dy,
 	int dz, float thresh_max, float thresh_min, float threshold,
-	int angular_min, int ring_width, int istart, int iend)
+	int angular_min, int ring_width, int int_mode, int istart, int iend)
 {
 	int pol_width=0;
 	int pol_height=0;
@@ -78,7 +81,7 @@ void remove_ring(
 
 		//Call Ring Algorithm
 		ring_filter(&polar_image, pol_height, pol_width,
-					threshold, m_rad, m_azi, ring_width);
+					threshold, m_rad, m_azi, ring_width, int_mode);
 
 		//Translate Ring-Image to Cartesian Coordinates
 		ring_image = inverse_polar_transform(polar_image, center_x, center_y,
@@ -429,43 +432,47 @@ void median_filter_fast_1D(
 void mean_filter_fast_1D(
 	float*** filtered_image, float*** image,
  	int start_row, int start_col, int end_row, int end_col,
-	char axis, int kernel_rad, int width, int height)
+	int int_mode, int kernel_rad, int width, int height)
 {
 	long double mean = 0, sum = 0, previous_sum = 0, num_elems = (double)(2*kernel_rad + 1);
 	int row, col;
-	if(axis == 'x'){
+	if(int_mode == INT_MODE_WRAP){
 		//iterate over each row of the image subset
-		for(row = start_row; row <= end_row; row++){
+		for(col = start_col; col <= end_col; col++){
 			sum = 0;
 			//calculate average of first element of the column
 			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
-				col = n + start_col;
-				if(col < 0){
-					//col += height;
-				}else if(col >= width){
-					//col -= height;
+				row = n + start_row;
+				if(row < 0){
+					row += height;
+				}else if(row >= height){
+					row -= height;
 				}
 				sum += image[0][row][col];
 			}
 			mean = sum/num_elems;
-			filtered_image[0][row][start_col] = mean;
+			filtered_image[0][start_row][col] = mean;
 			previous_sum = sum;
 
-			for(col = start_col+1; col <= end_col; col++){
-				int last_col = (col - 1) - (kernel_rad);
-				int next_col = col + (kernel_rad);
-				if(last_col < 0){
-					last_col += width;
+			for(row = start_row+1; row <= end_row; row++){
+				int last_row = (row - 1) - (kernel_rad);
+				int next_row = row + (kernel_rad);
+				if(last_row < 0){
+					last_row += height;
 				}
-				if(next_col >= width){
-					next_col -= width;
+				if(next_row >= height){
+					next_row -= height;
 				}
-				sum = previous_sum - image[0][row][last_col] + image[0][row][next_col];
-				filtered_image[0][row][col] = sum/num_elems;
+				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
+				if(image[0][row][col] != 0){
+					filtered_image[0][row][col] = sum/num_elems;
+				}else{
+					filtered_image[0][row][col] = 0.0;
+				}
 				previous_sum = sum;
 			}
 		}
-	}else if(axis == 'y'){
+	}else if(int_mode == INT_MODE_REFLECT){
 		//iterate over each column of the image subset
 		for(col = start_col; col <= end_col; col++){
 			sum = 0;
@@ -475,7 +482,7 @@ void mean_filter_fast_1D(
 				if(row < 0){
 					row = -row;
 				}else if(row >= height/2){
-					row = height/2 - (row - height/2) - 1;
+					row = height/2 - (row - height/2) - 2;
 				}
 				sum += image[0][row][col];
 			}
@@ -487,10 +494,10 @@ void mean_filter_fast_1D(
 				int last_row = (row - 1) - (kernel_rad);
 				int next_row = row + (kernel_rad);
 				if(last_row < 0){
-					last_row = -last_row - 1;
+					last_row = -last_row;
 				}
 				if(next_row >= height/2){
-					next_row = height/2 - (next_row - height/2) - 1;
+					next_row = height/2 - (next_row - height/2) - 2;
 				}
 				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
 				if(image[0][row][col] != 0){
@@ -506,9 +513,9 @@ void mean_filter_fast_1D(
 			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
 				row = n + height/2;
 				if(row < height/2){
-					row = height/2 + (height/2 - row) - 1;
+					row = height/2 + (height/2 - row);
 				}else if(row >= height){
-					row = height - (row - height) - 1;
+					row = height - (row - height) - 2;
 				}
 				sum += image[0][row][col];
 			}
@@ -520,10 +527,10 @@ void mean_filter_fast_1D(
 				int last_row = (row - 1) - (kernel_rad);
 				int next_row = row + (kernel_rad);
 				if(last_row < height/2){
-					last_row = height/2 + (height/2 - last_row) - 1;
+					last_row = height/2 + (height/2 - last_row);
 				}
 				if(next_row >= height){
-					next_row = height - (next_row - height) - 1;
+					next_row = height - (next_row - height) - 2;
 				}
 				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
 				if(image[0][row][col] != 0){
@@ -543,7 +550,7 @@ void mean_filter_fast_1D(
 
 void ring_filter(
 	float*** polar_image, int pol_height, int pol_width,
-	float threshold, int m_rad, int m_azi, int ring_width)
+	float threshold, int m_rad, int m_azi, int ring_width, int int_mode)
 {
 
 	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float ));
@@ -580,12 +587,12 @@ void ring_filter(
 	 */
 
 	mean_filter_fast_1D(&filtered_image, polar_image, 0, 0, pol_height-1,
-			    pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
+			    pol_width/3-1, int_mode, m_azi/3, pol_width, pol_height);
 	mean_filter_fast_1D(&filtered_image, polar_image, 0, pol_width/3,
-			    pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3,
+			    pol_height-1, 2*pol_width/3-1, int_mode, 2*m_azi/3,
 			    pol_width, pol_height);
 	mean_filter_fast_1D(&filtered_image, polar_image, 0, 2*pol_width/3,
-			    pol_height-1, pol_width-1, 'y', m_azi, pol_width,
+			    pol_height-1, pol_width-1, int_mode, m_azi, pol_width,
 			    pol_height);
 
 	//Set "polar_image" to the fully filtered data
