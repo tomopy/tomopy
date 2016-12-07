@@ -326,7 +326,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                rwidth=30, ncore=None, nchunk=None, out=None):
+                rwidth=30, int_mode='WRAP', ncore=None, nchunk=None, out=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
@@ -349,6 +349,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         minimum angle in degrees (int) to be considered ring artifact
     rwidth : int, optional
         Maximum width of the rings to be filtered in pixels
+    int_mode : str, optional
+        'WRAP' for wrapping at 0 and 360 degrees, 'REFLECT' for reflective
+        boundaries at 0 and 180 degrees.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -363,7 +366,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     """
 
     rec = dtype.as_float32(rec)
-    
+
     if out is None:
         out = rec.copy()
     else:
@@ -376,12 +379,19 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     if center_y is None:
         center_y = (dy - 1.0)/2.0
 
+    if int_mode.lower()=='wrap':
+        int_mode = 0
+    elif int_mode.lower()=='reflect':
+        int_mode = 1
+    else:
+        raise ValueError("int_mode should be WRAP or REFLECT")
+
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
-            thresh, theta_min, rwidth)
-    
+            thresh, theta_min, rwidth, int_mode)
+
     axis_size = rec.shape[0]
     ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
-    
+
     chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
     mulargs = []
     for i in range(ncore):
