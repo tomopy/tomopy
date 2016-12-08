@@ -59,6 +59,7 @@ import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
 import logging
+import warnings
 import numexpr as ne
 import concurrent.futures as cf
 
@@ -73,10 +74,12 @@ __all__ = ['adjust_range',
            'circ_mask',
            'gaussian_filter',
            'median_filter',
+           'median_filter_cuda',
            'sobel_filter',
            'remove_nan',
            'remove_neg',
            'remove_outlier',
+           'remove_outlier_cuda',
            'remove_ring']
 
 
@@ -143,13 +146,12 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
+                     output=out[slc])
     return out
 
 
@@ -179,15 +181,82 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.median_filter, arr[slc], size=(size, size),
+                     output=out[slc])
     return out
 
+def median_filter_cuda(arr, size=3, axis=0):
+    """
+    Apply median filter to 3D array along 0 axis with GPU support.
+    The winAllow is for A6000, Tian X support 3 to 8
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    size : int, optional
+        The size of the filter.
+    axis : int, optional
+        Axis along which median filtering is performed.
+    Returns
+    -------
+    ndarray
+        Median filtered 3D array.
+
+    Example
+    -------
+    >>> import tomocuda
+    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+
+    For more information regarding install and using tomocuda, check
+    https://github.com/kyuepublic/tomocuda for more information
+    """
+
+    try:
+        import tomocuda
+
+        winAllow = range(2, 16)
+
+        if(axis != 0):
+            arr = np.swapaxes(arr, 0, axis)
+
+        if size in winAllow:
+            loffset = int(size/2)
+            roffset = int((size-1)/2)
+            prjsize = arr.shape[0]
+            imsizex = arr.shape[2]
+            imsizey = arr.shape[1]
+
+            filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
+            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
+
+            for step in range(prjsize):
+                # im_noisecu = arr[:][step][:].astype(np.float32)
+                im_noisecu = arr[step].astype(np.float32)
+                im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
+                                        (loffset, roffset)), 'symmetric')
+                im_noisecu = im_noisecu.flatten()
+
+                filter.setCuImage(im_noisecu)
+                filter.run2DFilter(size)
+                results = filter.retreive()
+                results = results.reshape(imsizey, imsizex)
+                out[step] = results
+
+            if(axis != 0):
+                out = np.swapaxes(out, 0, axis)
+        else:
+            warnings.warn("Window size not support, using cpu median filter")
+            out = median_filter(arr, size, axis)
+
+    except ImportError:
+        warnings.warn("The tomocuda is not support, using cpu median filter")
+        out = median_filter(arr, size, axis)
+
+    return out
 
 def sobel_filter(arr, axis=0, ncore=None):
     """
@@ -213,12 +282,11 @@ def sobel_filter(arr, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.sobel, arr[slc], output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.sobel, arr[slc], output=out[slc])
     return out
 
 
@@ -310,19 +378,94 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=tmp[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.median_filter, arr[slc], size=(size, size),
+                     output=tmp[slc])
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
 
     return out
 
+def remove_outlier_cuda(arr, dif, size=3, axis=0):
+    """
+    Remove high intensity bright spots from a 3D array along axis 0
+    dimension using GPU.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which outlier removal is performed.
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+
+    Example
+    -------
+    >>> import tomocuda
+    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+
+    For more information regarding install and using tomocuda, check
+    https://github.com/kyuepublic/tomocuda for more information
+
+    """
+
+    arr = dtype.as_float32(arr)
+    dif = np.float32(dif)
+
+    try:
+        import tomocuda
+
+        winAllow = range(2, 16)
+
+        if(axis != 0):
+            arr = np.swapaxes(arr, 0, axis)
+
+        if size in winAllow:
+            prjsize = arr.shape[0]
+            loffset = int(size/2)
+            roffset = int((size-1)/2)
+            imsizex = arr.shape[2]
+            imsizey = arr.shape[1]
+
+            filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
+            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
+
+            for step in range(prjsize):
+                im_noisecu = arr[step].astype(np.float32)
+                im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
+                                        (loffset, roffset)), 'symmetric')
+                im_noisecu = im_noisecu.flatten()
+
+                filter.setCuImage(im_noisecu)
+                filter.run2DRemoveOutliner(size, dif)
+                results = filter.retreive()
+                results = results.reshape(imsizey, imsizex)
+                out[step] = results
+
+            if(axis != 0):
+                out = np.swapaxes(out, 0, axis)
+        else:
+            warnings.warn("Window size not support, using cpu outlier removal")
+            out = remove_outlier(arr, dif, size)
+
+    except ImportError:
+        warnings.warn("The tomocuda is not support, using cpu outlier removal")
+        out = remove_outlier(arr, dif, size)
+
+    return out
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
@@ -391,17 +534,12 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
 
     axis_size = rec.shape[0]
     ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
-
-    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
-    mulargs = []
-    for i in range(ncore):
-        mulargs.append(extern.c_remove_ring(out[chnks[i]:chnks[i+1]],
-                       *args))
-    e = cf.ThreadPoolExecutor(ncore)
-    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
-    for t in thrds:
-        t.result()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        for offset in range(0, axis_size, nchunk):
+            slc = np.s_[offset:offset+nchunk]
+            e.submit(extern.c_remove_ring, out[slc], *args)    
     return out
+
 
 def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """
