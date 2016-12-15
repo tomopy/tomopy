@@ -57,6 +57,7 @@ import logging
 from tomopy.util import mproc
 
 import numpy as np
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -149,9 +150,9 @@ def astra(tomo, center, recon, theta, **kwargs):
             _, slcs = mproc.get_ncore_slices(nslices, ngpu)
             # execute recon on a thread per GPU
             with cf.ThreadPoolExecutor(ngpu) as e:
-                for i, slc in enumerate(slcs):
+                for gpu, slc in zip(gpu_list, slcs):
                     e.submit(astra_rec_cuda, tomo[slc], center[slc], recon[slc], 
-                             theta, vol_geom, niter, proj_type, gpu_list[i], opts)
+                             theta, vol_geom, niter, proj_type, gpu, opts)
         else:
             astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter,
                            proj_type, None, opts)
@@ -166,10 +167,11 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
     nslices, nang, ndet = tomo.shape
     cfg = astra_mod.astra_dict(opts['method'])
     if 'extra_options' in opts:
-        cfg['option'] = opts['extra_options']
+        #NOTE: we are modifying 'extra_options' and so need to make a copy       
+        cfg['option'] = copy.deepcopy(opts['extra_options'])
     else:
         cfg['option'] = {}
-    if gpu_index:
+    if gpu_index is not None:
         cfg['option']['GPUindex'] = gpu_index
     oc = None
     const_theta = np.ones(nang)
