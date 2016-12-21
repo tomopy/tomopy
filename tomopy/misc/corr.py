@@ -394,7 +394,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
     Remove high intensity bright spots from an array, using a one-dimensional
-    median filter along specified axis.
+    median filter along the specified axis.
 
     Parameters
     ----------
@@ -423,25 +423,17 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     tmp = np.empty_like(arr)
 
-    if ncore is None:
-        ncore = mproc.mp.cpu_count()
-    
     other_axes = [i for i in range(arr.ndim) if i != axis]
     largest = np.argmax([arr.shape[i] for i in other_axes])
     lar_axis = other_axes[largest]
-    
-    if ncore > arr.shape[lar_axis]:
-        ncore = arr.shape[lar_axis]
-    
-    chnks = np.round(np.linspace(0, arr.shape[lar_axis], ncore+1)).astype(np.int)
-    
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[lar_axis], ncore=ncore)
     filt_size = [1]*arr.ndim
     filt_size[axis] = size
     
     with cf.ThreadPoolExecutor(ncore) as e:
         slc = [slice(None)]*arr.ndim
         for i in range(ncore):
-            slc[lar_axis] = slice(chnks[i], chnks[i+1])
+            slc[lar_axis] = chnk_slices[i]
             e.submit(filters.median_filter, arr[slc], size=filt_size,
                      output=tmp[slc], mode='mirror')
 
