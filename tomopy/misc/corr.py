@@ -79,6 +79,7 @@ __all__ = ['adjust_range',
            'remove_nan',
            'remove_neg',
            'remove_outlier',
+           'remove_outlier1d',
            'remove_outlier_cuda',
            'remove_ring']
 
@@ -345,8 +346,58 @@ def remove_neg(arr, val=0., ncore=None):
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
-    Remove high intensity bright spots from a 3D array along specified
-    dimension.
+    Remove high intensity bright spots from a N-dimensional array by chunking 
+    along the specified dimension, and performing (N-1)-dimensional median 
+    filtering along the other dimensions.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which to chunk.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
+
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr = dtype.as_float32(arr)
+    dif = np.float32(dif)
+
+    tmp = np.empty_like(arr)
+
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
+    
+    filt_size = [size]*arr.ndim
+    filt_size[axis] = 1
+
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(ncore):
+            slc[axis] = chnk_slices[i]
+            e.submit(filters.median_filter, arr[slc], size=filt_size,
+                     output=tmp[slc])
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+
+    return out
+
+def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
+    """
+    Remove high intensity bright spots from an array, using a one-dimensional
+    median filter along the specified axis.
 
     Parameters
     ----------
@@ -375,15 +426,19 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     tmp = np.empty_like(arr)
 
-    if ncore is None:
-        ncore = mproc.mp.cpu_count()
-
+    other_axes = [i for i in range(arr.ndim) if i != axis]
+    largest = np.argmax([arr.shape[i] for i in other_axes])
+    lar_axis = other_axes[largest]
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[lar_axis], ncore=ncore)
+    filt_size = [1]*arr.ndim
+    filt_size[axis] = size
+    
     with cf.ThreadPoolExecutor(ncore) as e:
         slc = [slice(None)]*arr.ndim
-        for i in range(arr.shape[axis]):
-            slc[axis] = i
-            e.submit(filters.median_filter, arr[slc], size=(size, size),
-                     output=tmp[slc])
+        for i in range(ncore):
+            slc[lar_axis] = chnk_slices[i]
+            e.submit(filters.median_filter, arr[slc], size=filt_size,
+                     output=tmp[slc], mode='mirror')
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
