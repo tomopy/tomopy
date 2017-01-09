@@ -49,17 +49,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from test.util import read_file
-from tomopy.sim.propagate import *
+import unittest
+from ..util import read_file
+# from tomopy.sim.propagate import ...
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
