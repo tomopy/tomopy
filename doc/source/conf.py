@@ -312,7 +312,12 @@ class Mock(object):
 
     @classmethod
     def __getattr__(cls, name):
-        return Mock()
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name == 'c_byte':
+            return 0
+        else:
+            return Mock()
     def __mul__(self, other):
         return Mock()
     def __rmul__(self, other):
