@@ -3,3 +3,4 @@ sphinxcontrib-bibtex
 nbsphinx
 IPython
 pandoc
+jupyter
