@@ -325,7 +325,9 @@ class Mock(object):
         return Mock()
     def __radd__(self, other):
         return Mock()
-
+    def __or__(self, other):
+        return Mock()
+    
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
