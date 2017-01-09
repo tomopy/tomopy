@@ -312,12 +312,19 @@ class Mock(object):
 
     @classmethod
     def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name == 'c_byte':
-            return 0
-        else:
-            return Mock()
+        return Mock()
+    def __mul__(self, other):
+        return Mock()
+    def __rmul__(self, other):
+        return Mock()
+    def __pow__(self, other):
+        return Mock()
+    def __div__(self, other):
+        return Mock()
+    def __add__(self, other):
+        return Mock()
+    def __radd__(self, other):
+        return Mock()
 
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
