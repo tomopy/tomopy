@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # #########################################################################
@@ -49,50 +48,40 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-
-from test.util import read_file, loop_dim
-from tomopy.misc.corr import *
+import unittest
+from tomopy.misc.corr import gaussian_filter, median_filter, remove_neg, remove_nan, remove_outlier, circ_mask
+from ..util import read_file, loop_dim
 import numpy as np
 from numpy.testing import assert_allclose
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_gaussian_filter():
-    loop_dim(gaussian_filter, read_file('cube.npy'))
+class ImageFilterTestCase(unittest.TestCase):
+    def test_gaussian_filter(self):
+        loop_dim(gaussian_filter, read_file('cube.npy'))
 
+    def test_median_filter(self):
+        loop_dim(median_filter, read_file('cube.npy'))
 
-def test_median_filter():
-    loop_dim(median_filter, read_file('cube.npy'))
+    def test_remove_neg(self):
+        assert_allclose(
+            remove_neg(
+                [-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
 
+    def test_remove_nan(self):
+        assert_allclose(
+            remove_nan(
+                [np.nan, 1.5, 2, np.nan, 1]), [0, 1.5, 2, 0, 1])
 
-def test_remove_neg():
-    assert_allclose(
-        remove_neg([-2, -1, 0, 1, 2]),
-        [0, 0, 0, 1, 2])
+    def test_remove_outlier(self):
+        proj = read_file('proj.npy')
+        proj[8][4][6] = 20
+        assert_allclose(
+            remove_outlier(proj, dif=10),
+            read_file('proj.npy'))
 
-
-def test_remove_nan():
-    assert_allclose(
-        remove_nan([np.nan, 1.5, 2, np.nan, 1]),
-        [0, 1.5, 2, 0, 1])
-
-
-def test_remove_outlier():
-    proj = read_file('proj.npy')
-    proj[8][4][6] = 20
-    assert_allclose(
-        remove_outlier(proj, dif=10),
-        read_file('proj.npy'))
-
-
-def test_circ_mask():
-    loop_dim(circ_mask, read_file('obj.npy'))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    def test_circ_mask(self):
+        loop_dim(circ_mask, read_file('obj.npy'))

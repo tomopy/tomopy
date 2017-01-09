@@ -103,6 +103,30 @@ def get_ncore_nchunk(axis_size, ncore=None, nchunk=None):
         nchunk = int(math.ceil(axis_size / ncore))
     return ncore, nchunk
 
+
+def get_ncore_slices(axis_size, ncore=None, nchunk=None):
+    # default ncore to max (also defaults ncore == 0)
+    if not ncore:
+        ncore = mp.cpu_count()
+    if nchunk is None:
+        # calculate number of slices to send to each GPU
+        chunk_size = axis_size // ncore
+        leftover = axis_size % ncore
+        sizes = np.ones(ncore, dtype=np.int) * chunk_size
+        # evenly distribute leftover across workers
+        sizes[:leftover] += 1
+        offsets = np.zeros(ncore+1, dtype=np.int)
+        offsets[1:] = np.cumsum(sizes)
+        slcs = [np.s_[offsets[i]:offsets[i+1]] for i in range(offsets.shape[0]-1)]
+    elif nchunk == 0:
+        # nchunk == 0 is a special case, we will collapse the dimension
+        slcs = [np.s_[i] for i in range(axis_size)]
+    else:
+        # calculate offsets based on chunk size
+        slcs = [np.s_[offset:offset+nchunk] for offset in range(0, axis_size, nchunk)]
+    return ncore, slcs
+
+
 def distribute_jobs(arr,
                     func,
                     axis,
