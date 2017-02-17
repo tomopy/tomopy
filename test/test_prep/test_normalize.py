@@ -49,33 +49,35 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from tomopy.prep.normalize import *
-from test.util import read_file
+import unittest
+from tomopy.prep.normalize import normalize, normalize_bg, normalize_nf
+from ..util import read_file
 from numpy.testing import assert_allclose
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_normalize():
-    assert_allclose(
-        normalize(
-            read_file('tomo.npy'),
-            read_file('flat.npy'),
-            read_file('dark.npy')),
-        read_file('normalize.npy'))
+class NormalizationTestCase(unittest.TestCase):
+    def test_normalize(self):
+        assert_allclose(
+            normalize(
+                read_file('tomo.npy'),
+                read_file('flat.npy'),
+                read_file('dark.npy')),
+            read_file('normalize.npy'))
 
+    def test_normalize_bg(self):
+        assert_allclose(
+            normalize_bg(read_file('tomo.npy')),
+            read_file('normalize_bg.npy'))
 
-def test_normalize_bg():
-    assert_allclose(
-        normalize_bg(read_file('tomo.npy')),
-        read_file('normalize_bg.npy'))
-
-# def test_normalize_nf():
-#   This needs to be implemented
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    def test_normalize_nf(self):
+        assert_allclose(
+            normalize_nf(
+                read_file('tomo.npy'),
+                read_file('flat_1.npy'),
+                read_file('dark.npy'),
+                (0, 4, 8, 12, 16)),
+            read_file('normalize_nf.npy'))

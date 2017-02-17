@@ -9,7 +9,9 @@
    .. rubric:: **Functions:**
 
    .. autosummary::
-   
+      
+      minus_log
       normalize
       normalize_bg
       normalize_nf
+      normalize_roi

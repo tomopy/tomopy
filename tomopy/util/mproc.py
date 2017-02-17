@@ -59,6 +59,7 @@ import math
 from contextlib import closing
 from .dtype import as_sharedmem
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,45 @@ def set_debug(val=True):
     """
     global DEBUG
     DEBUG=val
+
+def get_ncore_nchunk(axis_size, ncore=None, nchunk=None):
+    # limit chunk size to size of array along axis
+    if nchunk and nchunk > axis_size:
+        nchunk = axis_size
+    # default ncore to max and limit number of cores to max number
+    if ncore is None or ncore > mp.cpu_count():
+        ncore = mp.cpu_count()
+    # limit number of cores based on nchunk so that all cores are used
+    if ncore > math.ceil(axis_size / (nchunk or 1)):
+        ncore = int(math.ceil(axis_size / (nchunk or 1)))
+    # default nchunk to only use each core for one call
+    if nchunk is None:
+        nchunk = int(math.ceil(axis_size / ncore))
+    return ncore, nchunk
+
+
+def get_ncore_slices(axis_size, ncore=None, nchunk=None):
+    # default ncore to max (also defaults ncore == 0)
+    if not ncore:
+        ncore = mp.cpu_count()
+    if nchunk is None:
+        # calculate number of slices to send to each GPU
+        chunk_size = axis_size // ncore
+        leftover = axis_size % ncore
+        sizes = np.ones(ncore, dtype=np.int) * chunk_size
+        # evenly distribute leftover across workers
+        sizes[:leftover] += 1
+        offsets = np.zeros(ncore+1, dtype=np.int)
+        offsets[1:] = np.cumsum(sizes)
+        slcs = [np.s_[offsets[i]:offsets[i+1]] for i in range(offsets.shape[0]-1)]
+    elif nchunk == 0:
+        # nchunk == 0 is a special case, we will collapse the dimension
+        slcs = [np.s_[i] for i in range(axis_size)]
+    else:
+        # calculate offsets based on chunk size
+        slcs = [np.s_[offset:offset+nchunk] for offset in range(0, axis_size, nchunk)]
+    return ncore, slcs
+
 
 def distribute_jobs(arr,
                     func,
@@ -133,18 +173,7 @@ def distribute_jobs(arr,
         arrs = list(arr)
 
     axis_size = arrs[0].shape[axis]
-    # limit chunk size to size of array along axis
-    if nchunk and nchunk > axis_size:
-        nchunk = axis_size
-    # default ncore to max and limit number of cores to max number
-    if ncore is None or ncore > mp.cpu_count():
-        ncore = mp.cpu_count()
-    # limit number of cores based on nchunk so that all cores are used
-    if ncore > math.ceil(axis_size / (nchunk or 1)):
-        ncore = int(math.ceil(axis_size / (nchunk or 1)))
-    # default nchunk to only use each core for one call
-    if nchunk is None:
-        nchunk = int(math.ceil(axis_size / ncore))
+    ncore, nchunk = get_ncore_nchunk(axis_size, ncore, nchunk)
 
     # prepare all args (func, args, kwargs)
     # NOTE: args will include shared_arr slice as first arg
@@ -280,3 +309,19 @@ def clear_queue(queue, shared_arrays, shared_out):
 
 class RunOnHostException(Exception):
     pass
+
+
+class set_numexpr_threads(object):
+
+    def __init__(self, nthreads):
+        cpu_count = mp.cpu_count()
+        if nthreads is None or nthreads > cpu_count:
+            self.n = cpu_count
+        else:
+            self.n = nthreads
+
+    def __enter__(self):
+        self.oldn = ne.set_num_threads(self.n)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        ne.set_num_threads(self.oldn)

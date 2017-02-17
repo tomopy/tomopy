@@ -67,14 +67,14 @@ gridrec(
     int s, p, iu, iv;
     float *sine, *cose, *wtbl, *work, *winv;
 
-    float (* const filter)(float, float, float) = get_filter(fname);
+    float (* const filter)(float, int, int, int, const float*) = get_filter(fname);
     const float C = 7.0;
     const float nt = 20.0;
     const float lambda = 0.99998546;
     const unsigned int L = (int)(2*C/M_PI);
     const int ltbl = 512;         
     int pdim;
-    float _Complex *sino, *filphase, **H;
+    float _Complex *sino, *filphase, *filphase_iter, **H;
 
     const float coefs[11] = {
          0.5767616E+02, -0.8931343E+02,  0.4167596E+02,
@@ -87,9 +87,16 @@ gridrec(
 
     const int M02 = pdim/2-1;
 
+    unsigned char filter2d = filter_is_2d(fname);
+
     // Allocate storage for various arrays.
     sino = malloc_vector_c(pdim);
-    filphase = malloc_vector_c(pdim/2);
+    if(!filter2d){
+        filphase = malloc_vector_c(pdim/2);
+        filphase_iter = filphase;
+    }else{
+        filphase = malloc_vector_c(dt*(pdim/2));
+    }
     H = malloc_matrix_c(pdim, pdim);
     wtbl = malloc_vector_f(ltbl+1);
     winv = malloc_vector_f(pdim-1);
@@ -111,7 +118,7 @@ gridrec(
     for (s=0; s<dy; s+=2)
     {
         // Set up table of combined filter-phase factors.
-        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase);
+        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase, filter2d);
 
         // First clear the array H
         for(iu=0; iu<pdim; iu++) 
@@ -201,12 +208,14 @@ gridrec(
 
             // Take FFT of the projection array
             fftwf_execute(reverse_1d);
+            
+            if(filter2d) filphase_iter = filphase + pdim2*p;
 
             // For each FFT(projection)
             for(j=1; j<pdim2; j++)
             {    
-                Cdata1 = filphase[j] * sino[j];
-                Cdata2 = conjf(filphase[j]) * sino[pdim-j];
+                Cdata1 = filphase_iter[j] * sino[j];
+                Cdata2 = conjf(filphase_iter[j]) * sino[pdim-j];
 
                 U = j * cose[p] + M2;
                 V = j * sine[p] + M2;
@@ -347,7 +356,7 @@ gridrec(
 void 
 set_filter_tables(
     int dt, int pd, float center, 
-    float(* const pf)(float, float, float), const float *filter_par, float _Complex *A)
+    float(* const pf)(float, int, int, int, const float *), const float *filter_par, float _Complex *A, unsigned char filter2d)
 { 
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
@@ -356,14 +365,27 @@ set_filter_tables(
 
     const float norm = M_PI/pd/dt;
     const float rtmp1 = 2*M_PI*center/pd;
-    int j;
+    int j,i;
+    int pd2 = pd/2;
     float x, rtmp2;
-
-    for(j=0; j<pd/2; j++)
-    {
-        x = j*rtmp1;
-        rtmp2 = (*pf)((float)j/pd, (float)filter_par[0], (float)filter_par[1])*norm;
-        A[j] = rtmp2 * (cosf(x) - I*sinf(x));
+    
+    if(!filter2d){
+        for(j=0; j<pd2; j++)
+        {
+            x = j*rtmp1;
+            rtmp2 = (*pf)((float)j/pd, j, 0, pd2, filter_par)*norm;
+            A[j] = rtmp2 * (cosf(x) - I*sinf(x));
+        }
+    }else{
+        for(i=0;i<dt;i++)        
+        {
+            for(j=0; j<pd2; j++)
+            {
+                x = j*rtmp1;
+                rtmp2 = (*pf)((float)j/pd, j, i, pd2, filter_par)*norm;
+                A[i*pd2+j] = rtmp2 * (cosf(x) - I*sinf(x));
+            }
+        }
     }
 }
 
@@ -501,7 +523,7 @@ free_matrix_c(float _Complex** m)
 
 // No filter
 float 
-filter_none(float x, float y, float z)
+filter_none(float x, int i, int j, int fwidth, const float* pars)
 {
     return 1;
 }
@@ -509,63 +531,78 @@ filter_none(float x, float y, float z)
 
 // Shepp-Logan filter
 float 
-filter_shepp(float x, float y, float z)
+filter_shepp(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(sinf(M_PI*x)/M_PI);
+    if(i==0) return 0;
+    return fabs(2*x)*(sinf(M_PI*x)/(M_PI*x));
 }
 
 
 // Cosine filter 
 float 
-filter_cosine(float x, float y, float z)
+filter_cosine(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x)*(cosf(M_PI*x));
+    return fabs(2*x)*(cosf(M_PI*x));
 }
 
 
 // Hann filter 
 float 
-filter_hann(float x, float cutoff, float z)
+filter_hann(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x)*0.5*(1.+cosf(M_PI*x/cutoff));
+    return fabs(2*x)*0.5*(1.+cosf(2*M_PI*x/pars[0]));
 }
 
 
 // Hamming filter 
 float 
-filter_hamming(float x, float cutoff, float z)
+filter_hamming(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x)*(0.54+0.46*cosf(M_PI*x/cutoff));
+    return fabs(2*x)*(0.54+0.46*cosf(2*M_PI*x/pars[0]));
 }
 
 // Ramlak filter
 float 
-filter_ramlak(float x, float y, float z)
+filter_ramlak(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x);
+    return fabs(2*x);
 }
 
 // Parzen filter
 float 
-filter_parzen(float x, float cutoff, float z)
+filter_parzen(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x)*pow(1-fabs(x)/cutoff, 3);
+    return fabs(2*x)*pow(1-fabs(x)/pars[0], 3);
 }
 
 // Butterworth filter
 float 
-filter_butterworth(float x, float cutoff, float order)
+filter_butterworth(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabs(x)/(1+pow(x/cutoff, 2*order));
+    return fabs(2*x)/(1+pow(x/pars[0], 2*pars[1]));
+}
+
+// Custom filter
+float 
+filter_custom(float x, int i, int j, int fwidth, const float* pars)
+{
+    return pars[i];
+}
+
+// Custom 2D filter
+float 
+filter_custom2d(float x, int i, int j, int fwidth, const float* pars)
+{
+    return pars[j*fwidth+i];
 }
 
 
-float (*get_filter(const char *name))(float, float, float) 
+float (*get_filter(const char *name))(float, int, int, int, const float*) 
 {
     struct 
     {
         const char* name; 
-        float (* const fp)(float, float, float);
+        float (* const fp)(float, int, int, int, const float*);
     } fltbl[] = {
         {"none", filter_none},
         {"shepp", filter_shepp}, // Default
@@ -574,9 +611,12 @@ float (*get_filter(const char *name))(float, float, float)
         {"hamming", filter_hamming},
         {"ramlak", filter_ramlak},
         {"parzen", filter_parzen},
-        {"butterworth", filter_butterworth}};
+        {"butterworth", filter_butterworth},
+        {"custom", filter_custom},
+        {"custom2d", filter_custom2d}
+    };
 
-    for(int i=0; i<8; i++)
+    for(int i=0; i<10; i++)
     {
         if(!strncmp(name, fltbl[i].name, 16))
         {
@@ -584,4 +624,11 @@ float (*get_filter(const char *name))(float, float, float)
         }
     }
     return fltbl[1].fp;   
+}
+
+unsigned char
+filter_is_2d(const char *name)
+{
+    if(!strncmp(name, "custom2d", 16)) return 1;
+    return 0;
 }
