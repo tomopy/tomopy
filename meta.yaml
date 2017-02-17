@@ -8,10 +8,6 @@ source:
 build:
   number: 0
 
-  script_env:
-   - LD_LIBRARY_PATH
-   - C_INCLUDE_PATH
-
 requirements:
   build:
     - python
@@ -20,6 +16,7 @@ requirements:
   run:
     - python
     - numpy
+    - h5py
     - scipy
     - six
     - scikit-image
