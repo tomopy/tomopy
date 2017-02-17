@@ -59,7 +59,9 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 from tomopy.sim.project import get_center
+import math
 import logging
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +142,14 @@ def recon(
             Parzen filter.
         'butterworth'
             Butterworth filter.
+        'custom'
+            A numpy array of size `next_power_of_2(num_detector_columns)/2`
+            specifying a custom filter in Fourier domain. The first element
+            of the filter should be the zero-frequency component.
+        'custom2d'
+            A numpy array of size `num_projections*next_power_of_2(num_detector_columns)/2`
+            specifying a custom angle-dependent filter in Fourier domain. The first element
+            of each filter should be the zero-frequency component.
 
     filter_par: list, optional
         Filter parameters as a list.
@@ -206,7 +216,7 @@ def recon(
     """
 
     # Initialize tomography data.
-    tomo = init_tomo(tomo, sinogram_order)
+    tomo = init_tomo(tomo, sinogram_order, sharedmem=False)
 
     allowed_kwargs = {
         'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -247,18 +257,13 @@ def recon(
                     (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
-                if not isinstance(kwargs, (np.ndarray, np.generic)):
+                if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
                     kwargs[key] = np.array(value)
 
-                # Make sure reg_par is float32.
-                if key == 'reg_par':
-                    if not isinstance(kwargs['reg_par'], np.float32):
-                        kwargs['reg_par'] = np.array(value, dtype='float32')
-
-                # Make sure filter_par is float32.
-                if key == 'filter_par':
-                    if not isinstance(kwargs['filter_par'], np.float32):
-                        kwargs['filter_par'] = np.array(value, dtype='float32')
+                # Make sure reg_par and filter_par is float32.
+                if key == 'reg_par' or key == 'filter_par':
+                    if not isinstance(kwargs[key], np.float32):
+                        kwargs[key] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
         for kw in allowed_kwargs[algorithm]:
@@ -279,7 +284,7 @@ def recon(
 
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
-    recon = _init_recon(recon_shape, init_recon)
+    recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(
         tomo, center_arr, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
 
@@ -342,15 +347,18 @@ def _get_func(algorithm):
 
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
-    #assert tomo.flags.aligned
-    return mproc.distribute_jobs(
-        (tomo, center, recon),
-        func=algorithm,
-        args=args,
-        kwargs=kwargs,
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
+    axis_size = recon.shape[0]
+    ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
+    if ncore == 1:
+        for slc in slcs:
+            # run in this thread (useful for debugging)
+            algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
+    else:
+        # execute recon on ncore threads
+        with cf.ThreadPoolExecutor(ncore) as e:
+            for slc in slcs:
+                e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
+    return recon
 
 
 def _get_algorithm_args(theta):
@@ -363,7 +371,7 @@ def _get_algorithm_kwargs(shape):
     return {
         'num_gridx': dx,
         'num_gridy': dx,
-        'filter_name': np.array('shepp', dtype=(str, 16)),
+        'filter_name': 'shepp',
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),

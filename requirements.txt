@@ -1,5 +1,4 @@
 python
-nose
 six
 numpy
 scipy
@@ -7,3 +6,5 @@ scikit-image
 pywavelets
 pyfftw
 dxchange
+numexpr
+futures

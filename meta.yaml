@@ -26,9 +26,8 @@ requirements:
     - pywavelets
     - pyfftw
     - dxchange
-
-app:
-  own_environment: True
+    - numexpr
+    - futures # [py2k]
     
 test:
   # Python imports
