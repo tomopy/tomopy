@@ -57,6 +57,7 @@ import ctypes
 import numpy as np
 import multiprocessing as mp
 import logging
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -129,8 +130,7 @@ def as_c_float(arr):
 
 
 def as_c_char_p(arr):
-    c_char_p = ctypes.POINTER(ctypes.c_char)
-    return arr.ctypes.data_as(c_char_p)
+    return ctypes.c_char_p(six.b(arr))
 
 
 def as_c_void_p():

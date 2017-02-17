@@ -54,9 +54,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
+import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import logging
+import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +69,15 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['downsample',
            'upsample',
            'pad',
-           'sino_360_t0_180',
+           'sino_360_to_180',
+           'sino_360_t0_180',  # For backward compatibility
            'trim_sinogram']
 
 
 LIB_TOMOPY = extern.c_shared_lib('libtomopy')
 
 
-def pad(arr, axis, npad=None, mode='constant', **kwargs):
+def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     """
     Pad an array along specified axis.
 
@@ -95,6 +98,8 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
             Pads with the edge values of array.
     constant_values : float, optional
         Used in 'constant'. Pad value
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -108,6 +113,8 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
     kwdefaults = {'constant_values': 0, }
 
     if isinstance(mode, str):
+        if mode not in allowedkwargs:
+            raise ValueError("'mode' keyword value '{}' not in allowed values {}".format(mode, list(allowedkwargs.keys())))
         for key in kwargs:
             if key not in allowedkwargs[mode]:
                 raise ValueError('%s keyword not in allowed keywords %s' %
@@ -121,14 +128,55 @@ def pad(arr, axis, npad=None, mode='constant', **kwargs):
     if npad is None:
         npad = _get_npad(arr.shape[axis])
 
-    pad_width = _get_pad_sequence(arr.shape, axis, npad)
+    newshape = list(arr.shape)
+    newshape[axis] += 2*npad
 
-    return np.pad(arr, pad_width, str(mode), **kwargs)
+    slc_in, slc_l, slc_r, slc_l_v, slc_r_v = _get_slices(arr.shape, axis, npad)
+
+    out = np.empty(newshape, dtype=arr.dtype)
+    if arr.dtype in [np.float32, np.float64, np.bool,
+                     np.int32, np.int64, np.complex128]:
+        # Datatype supported by numexpr
+        with mproc.set_numexpr_threads(ncore):
+            ne.evaluate("arr", out=out[slc_in])
+            if mode == 'constant':
+                np_cast = getattr(np, str(arr.dtype))
+                cval = np_cast(kwargs['constant_values'])
+                ne.evaluate("cval", out=out[slc_l])
+                ne.evaluate("cval", out=out[slc_r])
+            elif mode == 'edge':
+                ne.evaluate("vec", local_dict={'vec': arr[slc_l_v]},
+                            out=out[slc_l])
+                ne.evaluate("vec", local_dict={'vec': arr[slc_r_v]},
+                            out=out[slc_r])
+    else:
+        # Datatype not supported by numexpr, use numpy instead
+        out[slc_in] = arr
+        if mode == 'constant':
+            out[slc_l] = kwargs['constant_values']
+            out[slc_r] = kwargs['constant_values']
+        elif mode == 'edge':
+            out[slc_l] = arr[slc_l_v]
+            out[slc_r] = arr[slc_r_v]
+    return out
 
 
 def _get_npad(dim):
     return int(np.ceil((dim * np.sqrt(2) - dim) / 2))
 
+
+def _get_slices(shape, axis, npad):
+    slc_in = [slice(None)]*len(shape)
+    slc_in[axis] = slice(npad, npad+shape[axis])
+    slc_l = [slice(None)]*len(shape)
+    slc_l[axis] = slice(0, npad)
+    slc_r = [slice(None)]*len(shape)
+    slc_r[axis] = slice(npad+shape[axis], None)
+    slc_l_v = [slice(None)]*len(shape)
+    slc_l_v[axis] = slice(0, 1)
+    slc_r_v = [slice(None)]*len(shape)
+    slc_r_v[axis] = slice(shape[axis]-1, shape[axis])
+    return slc_in, slc_l, slc_r, slc_l_v, slc_r_v
 
 def _get_pad_sequence(shape, axis, npad):
     pad_seq = []
@@ -259,10 +307,12 @@ def trim_sinogram(data, center, x, y, diameter):
         roidata[m, :, 0:(ind2 - ind1)] = data[m:m+1, :, ind1:ind2]
     return roidata
 
-
-def sino_360_t0_180(data, overlap=0, rotation='left'):
+def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
+
+    If the number of projections in the input data is odd, the last projection
+    will be discarded.
 
     Parameters
     ----------
@@ -283,18 +333,22 @@ def sino_360_t0_180(data, overlap=0, rotation='left'):
     """
     dx, dy, dz = data.shape
 
-    if rotation is 'left':
-        img1 = data[1:dx / 2 + 1, :, overlap:dz]
-    elif rotation is 'right':
-        img1 = data[1:dx / 2 + 1, :, 0:dz - overlap]
+    overlap = int(np.round(overlap))
 
-    if dx % 2 != 0:  # if odd
-        img2 = data[dx / 2:dx - 1]
-    else:
-        img2 = data[dx / 2:dx]
+    lo = overlap//2
+    ro = overlap - lo
+    n = dx//2
 
-    if rotation is 'right':
-        data = np.c_[img1, img2]
-    elif rotation is 'left':
-        data = np.c_[img2[:, :, ::-1], img1]
-    return data
+    out = np.zeros((n, dy, 2*dz-overlap), dtype=data.dtype)
+
+    if rotation == 'left':
+        out[:, :, -(dz-lo):] = data[:n, :, lo:]
+        out[:, :, :-(dz-lo)] = data[n:2*n, :, ro:][:, :, ::-1]
+    elif rotation == 'right':
+        out[:, :, :dz-lo] = data[:n, :, :-lo]
+        out[:, :, dz-lo:] = data[n:2*n, :, :-ro][:, :, ::-1]
+
+    return out
+
+#For backward compatibility
+sino_360_t0_180 = sino_360_to_180

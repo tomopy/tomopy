@@ -85,35 +85,44 @@ void
 free_matrix_c(float _Complex** m);
 
 float 
-(*get_filter(const char *name))(float, float, float);
+(*get_filter(const char *name))(float, int, int, int, const float*);
 
 float 
-filter_none(float, float, float);
+filter_none(float, int, int, int, const float*);
 
 float 
-filter_shepp(float, float, float);
+filter_shepp(float, int, int, int, const float*);
 
 float 
-filter_hann(float, float, float);
+filter_hann(float, int, int, int, const float*);
 
 float 
-filter_hamming(float, float, float);
+filter_hamming(float, int, int, int, const float*);
 
 float 
-filter_ramlak(float, float, float);
+filter_ramlak(float, int, int, int, const float*);
 
 float 
-filter_parzen(float, float, float);
+filter_parzen(float, int, int, int, const float*);
 
 float 
-filter_butterworth(float, float, float);
+filter_butterworth(float, int, int, int, const float*);
+
+float
+filter_custom(float, int, int, int, const float*);
+
+float
+filter_custom2d(float, int, int, int, const float*);
+
+unsigned char
+filter_is_2d(const char *name);
 
 void 
 set_filter_tables(
     int dt, int pd, 
     float fac, 
-    float(* const pf)(float, float, float), const float *filter_par,
-    float _Complex *A);
+    float(* const pf)(float, int, int, int, const float*), const float *filter_par,
+    float _Complex *A, unsigned char is2d);
 
 void 
 set_trig_tables(

@@ -230,6 +230,28 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     -------
     float
         Rotation axis location.
+        
+    Notes
+    -----
+    The function may not yield a correct estimate, if:
+    
+    - the sample size is bigger than the field of view of the camera. 
+      In this case the ``ratio`` argument need to be set larger
+      than the default of 2.0.
+    
+    - there is distortion in the imaging hardware. If there's 
+      no correction applied, the center of the projection image may 
+      yield a better estimate.
+    
+    - the sample contrast is weak. Paganin's filter need to be applied 
+      to overcome this. 
+    
+    - there are horizontal stripes in sinogram, which may be induced by 
+      some types of detectors. We need to rotate the sinogram image by 
+      90 Degree, apply ring removal, and then rotate it back before 
+      calling the function.
+    
+    - the sample was changed during the scan. 
     """
     tomo = dtype.as_float32(tomo)
 
@@ -243,15 +265,15 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=1,
     # Reduce noise by smooth filtering.
     _tomo = ndimage.filters.gaussian_filter(_tomo, sigma=(3, 1))
 
-    # Coarse search for finding the rotation center.
+    # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
         _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
         init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
+        fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
     else:
         init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
+        fine_cen = _search_fine(_tomo, srad, step, init_cen, ratio, drop)
 
-    # Fine search for finding the rotation center.
-    fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
     logger.debug('Rotation center search finished: %i', fine_cen)
     return fine_cen
 
@@ -294,12 +316,9 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     """
     Nrow, Ncol = sino.shape
     centerfliplr = (Ncol + 1.0) / 2.0 - 1.0
-
     # Use to shift the sinogram 2 to the raw CoR.
     shiftsino = np.int16(2 * (init_cen - centerfliplr))
     _copy_sino = np.roll(np.fliplr(sino[1:]), shiftsino, axis=1)
-    lefttake = 0
-    righttake = Ncol - 1
     if init_cen <= centerfliplr:
         lefttake = np.ceil(srad + 1)
         righttake = np.floor(2 * init_cen - srad - 1)
@@ -376,7 +395,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
     # Compute center of rotation as the center of first image and the
     # registered translation with the second image
-    center = (proj1.shape[1] + shift[0][1])/2.0
+    center = (proj1.shape[1] + shift[0][1] - 1.0)/2.0
 
     return center
 
