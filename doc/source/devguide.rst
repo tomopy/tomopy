@@ -101,7 +101,7 @@ example, software which relies on version 2.1.5 of an API is compatible
 with version 2.2.3, but not necessarily with 3.2.4.
 
 Committing changes
-=================
+==================
 
 After making some changes in the code, you may want to take a
 *snapshot* of the edits you made. That's when you make a *commit*.
