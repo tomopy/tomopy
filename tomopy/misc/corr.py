@@ -194,6 +194,7 @@ def median_filter_cuda(arr, size=3, axis=0):
     """
     Apply median filter to 3D array along 0 axis with GPU support.
     The winAllow is for A6000, Tian X support 3 to 8
+
     Parameters
     ----------
     arr : ndarray
@@ -202,6 +203,7 @@ def median_filter_cuda(arr, size=3, axis=0):
         The size of the filter.
     axis : int, optional
         Axis along which median filtering is performed.
+
     Returns
     -------
     ndarray
@@ -209,8 +211,8 @@ def median_filter_cuda(arr, size=3, axis=0):
 
     Example
     -------
-    >>> import tomocuda
-    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+    import tomocuda
+    tomocuda.remove_outlier_cuda(arr, dif, 5)
 
     For more information regarding install and using tomocuda, check
     https://github.com/kyuepublic/tomocuda for more information
