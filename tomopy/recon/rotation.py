@@ -257,17 +257,18 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
     # Enable cache for FFTW.
     pyfftw.interfaces.cache.enable()
 
-    # Reduce noise by smooth filtering.
-    _tomo = ndimage.filters.median_filter(_tomo, (2, 2))
+    # Reduce noise by smooth filters. Use different filters for coarse and fine search 
+    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
+    _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2))
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
-        _tomo_coarse = downsample(tomo, level=2)[:, ind, :]
+        _tomo_coarse = downsample(np.expand_dims(_tomo_cs,1), level=2)[:, 0, :]
         init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
-        fine_cen = _search_fine(_tomo, srad, step, init_cen*4, ratio, drop)
+        fine_cen = _search_fine(_tomo_fs, srad, step, init_cen*4, ratio, drop)
     else:
-        init_cen = _search_coarse(_tomo, smin, smax, ratio, drop)
-        fine_cen = _search_fine(_tomo, srad, step, init_cen, ratio, drop)
+        init_cen = _search_coarse(_tomo_cs, smin, smax, ratio, drop)
+        fine_cen = _search_fine(_tomo_fs, srad, step, init_cen, ratio, drop)
 
     logger.debug('Rotation center search finished: %i', fine_cen)
     return fine_cen
