@@ -137,7 +137,7 @@ trim_coords(
 
     *asize = 0;
     *bsize = 0;
-    for (n=0; n<=rz; n++) 
+    for (n=1; n<rz; n++) 
     {
         if (coordx[n] >= gridx[0]+1e-2) 
         {
@@ -149,7 +149,7 @@ trim_coords(
             }
         }
     }
-    for (n=0; n<=ry; n++) 
+    for (n=1; n<ry; n++) 
     {
         if (coordy[n] >= gridy[0]+1e-2) 
         {
