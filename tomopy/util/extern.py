@@ -117,7 +117,7 @@ def c_normalize_bg(tomo, air):
 
 
 def c_remove_stripe_sf(tomo, size):
-    #TODO: we should fix this elsewhere... 
+    #TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
     contiguous_tomo = np.require(tomo, requirements="AC")
     dx, dy, dz = tomo.shape
@@ -134,6 +134,7 @@ def c_remove_stripe_sf(tomo, size):
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
     tomo[:] = contiguous_tomo[:]
+
 
 def c_project(obj, center, tomo, theta):
     if len(obj.shape) == 2:
@@ -187,7 +188,7 @@ def c_art(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.art.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.art,
+    return LIB_TOMOPY.art(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -209,7 +210,7 @@ def c_bart(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.bart.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.bart,
+    return LIB_TOMOPY.bart(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -233,7 +234,7 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.fbp.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.fbp,
+    return LIB_TOMOPY.fbp(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -255,7 +256,7 @@ def c_gridrec(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.gridrec.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.gridrec,
+    return LIB_TOMOPY.gridrec(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -278,7 +279,7 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.mlem.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.mlem,
+    return LIB_TOMOPY.mlem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -300,7 +301,7 @@ def c_osem(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.osem.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.osem,
+    return LIB_TOMOPY.osem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -324,7 +325,7 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_hybrid.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.ospml_hybrid,
+    return LIB_TOMOPY.ospml_hybrid(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -349,7 +350,7 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.ospml_quad.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.ospml_quad,
+    return LIB_TOMOPY.ospml_quad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -374,7 +375,7 @@ def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_hybrid.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.pml_hybrid,
+    return LIB_TOMOPY.pml_hybrid(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -397,7 +398,7 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.pml_quad.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.pml_quad,
+    return LIB_TOMOPY.pml_quad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -420,7 +421,7 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.sirt.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.sirt,
+    return LIB_TOMOPY.sirt(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -437,7 +438,7 @@ def c_remove_ring(rec, *args):
     istart = 0
     iend = rec.shape[0]
     LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
-    return (LIB_TOMOPY.remove_ring,
+    return LIB_TOMOPY.remove_ring(
             dtype.as_c_float_p(rec),
             dtype.as_c_float(args[0]),  # center_x
             dtype.as_c_float(args[1]),  # center_y
@@ -449,5 +450,6 @@ def c_remove_ring(rec, *args):
             dtype.as_c_float(args[7]),  # thresh
             dtype.as_c_int(args[8]),  # theta_min
             dtype.as_c_int(args[9]),  # rwidth
+            dtype.as_c_int(args[10]),  # int_mode
             dtype.as_c_int(istart),  # istart
             dtype.as_c_int(iend))  # iend
