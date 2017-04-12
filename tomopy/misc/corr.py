@@ -79,6 +79,7 @@ __all__ = ['adjust_range',
            'remove_nan',
            'remove_neg',
            'remove_outlier',
+           'remove_outlier1d',
            'remove_outlier_cuda',
            'remove_ring']
 
@@ -146,13 +147,12 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
+                     output=out[slc])
     return out
 
 
@@ -182,19 +182,19 @@ def median_filter(arr, size=3, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.median_filter, arr[slc], size=(size, size),
+                     output=out[slc])
     return out
 
 def median_filter_cuda(arr, size=3, axis=0):
     """
     Apply median filter to 3D array along 0 axis with GPU support.
     The winAllow is for A6000, Tian X support 3 to 8
+
     Parameters
     ----------
     arr : ndarray
@@ -203,6 +203,7 @@ def median_filter_cuda(arr, size=3, axis=0):
         The size of the filter.
     axis : int, optional
         Axis along which median filtering is performed.
+
     Returns
     -------
     ndarray
@@ -210,8 +211,8 @@ def median_filter_cuda(arr, size=3, axis=0):
 
     Example
     -------
-    >>> import tomocuda
-    >>> tomocuda.remove_outlier_cuda(arr, dif, 5)
+    import tomocuda
+    tomocuda.remove_outlier_cuda(arr, dif, 5)
 
     For more information regarding install and using tomocuda, check
     https://github.com/kyuepublic/tomocuda for more information
@@ -284,12 +285,11 @@ def sobel_filter(arr, axis=0, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.sobel, arr[slc], output=out[slc])
-    e.shutdown()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(arr.shape[axis]):
+            slc[axis] = i
+            e.submit(filters.sobel, arr[slc], output=out[slc])
     return out
 
 
@@ -348,8 +348,58 @@ def remove_neg(arr, val=0., ncore=None):
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
-    Remove high intensity bright spots from a 3D array along specified
-    dimension.
+    Remove high intensity bright spots from a N-dimensional array by chunking 
+    along the specified dimension, and performing (N-1)-dimensional median 
+    filtering along the other dimensions.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    size : int
+        Size of the median filter.
+    axis : int, optional
+        Axis along which to chunk.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
+
+
+    Returns
+    -------
+    ndarray
+       Corrected array.
+    """
+    arr = dtype.as_float32(arr)
+    dif = np.float32(dif)
+
+    tmp = np.empty_like(arr)
+
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
+    
+    filt_size = [size]*arr.ndim
+    filt_size[axis] = 1
+
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(ncore):
+            slc[axis] = chnk_slices[i]
+            e.submit(filters.median_filter, arr[slc], size=filt_size,
+                     output=tmp[slc])
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
+
+    return out
+
+def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
+    """
+    Remove high intensity bright spots from an array, using a one-dimensional
+    median filter along the specified axis.
 
     Parameters
     ----------
@@ -378,16 +428,19 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     tmp = np.empty_like(arr)
 
-    if ncore is None:
-        ncore = mproc.mp.cpu_count()
-
-    e = cf.ThreadPoolExecutor(ncore)
-    slc = [slice(None)]*len(arr.shape)
-    for i in range(arr.shape[axis]):
-        slc[axis] = i
-        e.submit(filters.median_filter, arr[slc], size=(size, size),
-                 output=tmp[slc])
-    e.shutdown()
+    other_axes = [i for i in range(arr.ndim) if i != axis]
+    largest = np.argmax([arr.shape[i] for i in other_axes])
+    lar_axis = other_axes[largest]
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[lar_axis], ncore=ncore)
+    filt_size = [1]*arr.ndim
+    filt_size[axis] = size
+    
+    with cf.ThreadPoolExecutor(ncore) as e:
+        slc = [slice(None)]*arr.ndim
+        for i in range(ncore):
+            slc[lar_axis] = chnk_slices[i]
+            e.submit(filters.median_filter, arr[slc], size=filt_size,
+                     output=tmp[slc], mode='mirror')
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
@@ -473,7 +526,7 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
 
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                rwidth=30, ncore=None, nchunk=None, out=None):
+                rwidth=30, int_mode='WRAP', ncore=None, nchunk=None, out=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
@@ -496,6 +549,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         minimum angle in degrees (int) to be considered ring artifact
     rwidth : int, optional
         Maximum width of the rings to be filtered in pixels
+    int_mode : str, optional
+        'WRAP' for wrapping at 0 and 360 degrees, 'REFLECT' for reflective
+        boundaries at 0 and 180 degrees.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
@@ -510,7 +566,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     """
 
     rec = dtype.as_float32(rec)
-    
+
     if out is None:
         out = rec.copy()
     else:
@@ -523,22 +579,24 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     if center_y is None:
         center_y = (dy - 1.0)/2.0
 
+    if int_mode.lower()=='wrap':
+        int_mode = 0
+    elif int_mode.lower()=='reflect':
+        int_mode = 1
+    else:
+        raise ValueError("int_mode should be WRAP or REFLECT")
+
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
-            thresh, theta_min, rwidth)
-    
+            thresh, theta_min, rwidth, int_mode)
+
     axis_size = rec.shape[0]
     ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
-    
-    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
-    mulargs = []
-    for i in range(ncore):
-        mulargs.append(extern.c_remove_ring(out[chnks[i]:chnks[i+1]],
-                       *args))
-    e = cf.ThreadPoolExecutor(ncore)
-    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
-    for t in thrds:
-        t.result()
+    with cf.ThreadPoolExecutor(ncore) as e:
+        for offset in range(0, axis_size, nchunk):
+            slc = np.s_[offset:offset+nchunk]
+            e.submit(extern.c_remove_ring, out[slc], *args)    
     return out
+
 
 def circ_mask(arr, axis, ratio=1, val=0., ncore=None):
     """
