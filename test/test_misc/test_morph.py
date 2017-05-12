@@ -68,14 +68,17 @@ class MorphingTestCase(unittest.TestCase):
         loop_dim(upsample, read_file('obj.npy'))
 
     def test_sino_360_to_180(self):
-        test_im = np.random.random((32, 32, 128)).astype(np.float32)
-        ltest = sino_360_to_180(test_im, 32, 'left')
-        rtest = sino_360_to_180(test_im, 32, 'right')
+        ltest_im = np.random.random((32, 32, 128)).astype(np.float32)
+        ltest_im[16:, :, :32 ] = ltest_im[:16, :, :32][:,:,::-1]
+        ltest = sino_360_to_180(ltest_im, 32, 'left')
+        rtest_im = np.random.random((32, 32, 128)).astype(np.float32)
+        rtest_im[16:, :, -32:] = rtest_im[:16, :, -32:][:,:,::-1]
+        rtest = sino_360_to_180(rtest_im, 32, 'right')
         assert_array_almost_equal(
-            ltest[:, :, -112:], test_im[:16, :, 16:])
+            ltest[:, :, -128:], ltest_im[:16, :, :])
         assert_array_almost_equal(
-            ltest[:, :, :112], test_im[16:, :, 16:][:, :, ::-1])
+            ltest[:, :, :128], ltest_im[16:, :, :][:, :, ::-1])
         assert_array_almost_equal(
-            rtest[:, :, :112], test_im[:16, :, :-16])
+            rtest[:, :, :128], rtest_im[:16, :, :])
         assert_array_almost_equal(
-            rtest[:, :, -112:], test_im[16:, :, :-16][:, :, ::-1])
+            rtest[:, :, -128:], rtest_im[16:, :, :][:, :, ::-1])
