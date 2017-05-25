@@ -438,7 +438,7 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     with cf.ThreadPoolExecutor(ncore) as e:
         slc = [slice(None)]*arr.ndim
         for i in range(len(slc)):
-            slc[lar_axis] = chnk_slices[imin
+            slc[lar_axis] = chnk_slices[i]
             e.submit(filters.median_filter, arr[slc], size=filt_size,
                      output=tmp[slc], mode='mirror')
 
@@ -655,5 +655,4 @@ def _get_mask(dx, dy, ratio):
         r2 = rad1 * rad1
     else:
         r2 = rad2 * rad2
-    y, x = np.ogrid[0.5 - rad1:0.5 + rad1, 0.5 - rad2:0.5 + rad2]
     return x * x + y * y < ratio * ratio * r2
