@@ -386,7 +386,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     with cf.ThreadPoolExecutor(ncore) as e:
         slc = [slice(None)]*arr.ndim
-        for i in range(ncore):
+        for i in range(min(ncore,len(slc)):
             slc[axis] = chnk_slices[i]
             e.submit(filters.median_filter, arr[slc], size=filt_size,
                      output=tmp[slc])
