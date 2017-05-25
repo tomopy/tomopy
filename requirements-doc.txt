@@ -1,0 +1,5 @@
+sphinx
+sphinxcontrib-bibtex
+nbsphinx
+pandoc
+jupyter
