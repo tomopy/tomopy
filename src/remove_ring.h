@@ -51,7 +51,7 @@
 #include <stdio.h>
 
 #ifdef WIN32
-#define DLL_declspec(dllexport)
+#define DLL __declspec(dllexport)
 #else
 #define DLL
 #endif

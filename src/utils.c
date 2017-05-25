@@ -44,10 +44,13 @@
 #include "utils.h"
 
 //for windows build
-void initlibtomopy(void)
-{
-
-}
+#ifdef WIN32
+	#ifdef PY3K
+	void PyInit_libtomopy(void){}
+	#else
+	void initlibtomopy(void){}
+	#endif
+#endif
 
 void 
 preprocessing(

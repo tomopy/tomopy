@@ -118,6 +118,7 @@ def get_ncore_slices(axis_size, ncore=None, nchunk=None):
         offsets = np.zeros(ncore+1, dtype=np.int)
         offsets[1:] = np.cumsum(sizes)
         slcs = [np.s_[offsets[i]:offsets[i+1]] for i in range(offsets.shape[0]-1)]
+        slcs = slcs[:min(ncore, axis_size)]
     elif nchunk == 0:
         # nchunk == 0 is a special case, we will collapse the dimension
         slcs = [np.s_[i] for i in range(axis_size)]
