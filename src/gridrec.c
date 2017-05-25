@@ -53,6 +53,8 @@
 #include <fftw3.h>
 #include <math.h>
 #include <string.h>
+#include <pthread.h>
+pthread_mutex_t lock;
 
 #ifndef M_PI
     #define M_PI 3.14159265359
@@ -75,7 +77,7 @@ gridrec(
     const int ltbl = 512;         
     int pdim;
     float _Complex *sino, *filphase, *filphase_iter, **H;
-
+    pthread_mutex_lock(&lock);
     const float coefs[11] = {
          0.5767616E+02, -0.8931343E+02,  0.4167596E+02,
         -0.1053599E+02,  0.1662374E+01, -0.1780527E-00,
@@ -113,6 +115,7 @@ gridrec(
     fftwf_plan forward_2d;
     reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
     forward_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_MEASURE);
+    pthread_mutex_unlock(&lock);
 
     // For each slice.
     for (s=0; s<dy; s+=2)
@@ -255,7 +258,7 @@ gridrec(
         // space data is arranged in wrap-around order with the origin
         // (center of reconstructed images) situated at the start of the 
         // array.  The first (resp. second) half of the array contains the lower,
-        // Y<0 (resp, upper Y>0) part of the image, and within each row of the 
+        // Y<0 (resp, upper Y>0) part of the image, and within each row of the
         // array, the first (resp. second) half contains data for the right [X>0]
         // (resp. left [X<0]) half of the image.
 
