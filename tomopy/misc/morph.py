@@ -335,19 +335,20 @@ def sino_360_to_180(data, overlap=0, rotation='left'):
 
     overlap = int(np.round(overlap))
 
-    lo = overlap//2
-    ro = overlap - lo
     n = dx//2
 
-    out = np.zeros((n, dy, 2*dz-overlap), dtype=data.dtype)
+    out = np.empty((n, dy, 2*dz-overlap), dtype=data.dtype)
 
     if rotation == 'left':
-        out[:, :, -(dz-lo):] = data[:n, :, lo:]
-        out[:, :, :-(dz-lo)] = data[n:2*n, :, ro:][:, :, ::-1]
+        weights = np.linspace(0, 1.0, overlap)
+        out[:, :, -dz+overlap:] = data[:n, :, overlap:]
+        out[:, :, :dz-overlap] = data[n:2*n, :, overlap:][:, :, ::-1]
+        out[:, :, dz-overlap:dz] = weights*data[:n, :, :overlap] + (weights*data[n:2*n, :, :overlap])[:, :, ::-1]
     elif rotation == 'right':
-        out[:, :, :dz-lo] = data[:n, :, :-lo]
-        out[:, :, dz-lo:] = data[n:2*n, :, :-ro][:, :, ::-1]
-
+        weights = np.linspace(1.0, 0, overlap)
+        out[:, :, :dz-overlap] = data[:n, :, :-overlap]
+        out[:, :, -dz+overlap:] = data[n:2*n, :, :-overlap][:, :, ::-1]
+        out[:, :, dz-overlap:dz] = weights*data[:n, :, -overlap:] + (weights*data[n:2*n, :, -overlap:])[:, :, ::-1]
     return out
 
 #For backward compatibility
