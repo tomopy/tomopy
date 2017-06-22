@@ -16,6 +16,7 @@ scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_
 
    ipynb/tomopy.rst
    ipynb/astra.rst
+   ipynb/ufo.rst
 
 .. automodule:: tomopy
    :members:

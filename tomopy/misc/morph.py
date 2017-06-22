@@ -69,7 +69,8 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['downsample',
            'upsample',
            'pad',
-           'sino_360_t0_180',
+           'sino_360_to_180',
+           'sino_360_t0_180',  # For backward compatibility
            'trim_sinogram']
 
 
@@ -306,10 +307,12 @@ def trim_sinogram(data, center, x, y, diameter):
         roidata[m, :, 0:(ind2 - ind1)] = data[m:m+1, :, ind1:ind2]
     return roidata
 
-
-def sino_360_t0_180(data, overlap=0, rotation='left'):
+def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
+
+    If the number of projections in the input data is odd, the last projection
+    will be discarded.
 
     Parameters
     ----------
@@ -330,18 +333,23 @@ def sino_360_t0_180(data, overlap=0, rotation='left'):
     """
     dx, dy, dz = data.shape
 
-    if rotation is 'left':
-        img1 = data[1:dx / 2 + 1, :, overlap:dz]
-    elif rotation is 'right':
-        img1 = data[1:dx / 2 + 1, :, 0:dz - overlap]
+    overlap = int(np.round(overlap))
 
-    if dx % 2 != 0:  # if odd
-        img2 = data[dx / 2:dx - 1]
-    else:
-        img2 = data[dx / 2:dx]
+    n = dx//2
 
-    if rotation is 'right':
-        data = np.c_[img1, img2]
-    elif rotation is 'left':
-        data = np.c_[img2[:, :, ::-1], img1]
-    return data
+    out = np.empty((n, dy, 2*dz-overlap), dtype=data.dtype)
+
+    if rotation == 'left':
+        weights = np.linspace(0, 1.0, overlap)
+        out[:, :, -dz+overlap:] = data[:n, :, overlap:]
+        out[:, :, :dz-overlap] = data[n:2*n, :, overlap:][:, :, ::-1]
+        out[:, :, dz-overlap:dz] = weights*data[:n, :, :overlap] + (weights*data[n:2*n, :, :overlap])[:, :, ::-1]
+    elif rotation == 'right':
+        weights = np.linspace(1.0, 0, overlap)
+        out[:, :, :dz-overlap] = data[:n, :, :-overlap]
+        out[:, :, -dz+overlap:] = data[n:2*n, :, :-overlap][:, :, ::-1]
+        out[:, :, dz-overlap:dz] = weights*data[:n, :, -overlap:] + (weights*data[n:2*n, :, -overlap:])[:, :, ::-1]
+    return out
+
+#For backward compatibility
+sino_360_t0_180 = sino_360_to_180

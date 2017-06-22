@@ -172,7 +172,6 @@ def retrieve_phase(
     return out
 
 
-
 def _plan_effort(num_jobs):
     if num_jobs > 10:
         return 'FFTW_MEASURE'

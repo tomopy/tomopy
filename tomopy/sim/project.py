@@ -175,7 +175,7 @@ def _round_to_even(num):
     return (np.ceil(num / 2.) * 2).astype('int')
 
 
-def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=None, nchunk=None):
+def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
@@ -189,8 +189,12 @@ def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=
         Location of rotation axis.
     emission : bool, optional
         Determines whether output data is emission or transmission type.
+    pad : bool, optional
+        Determines if the projection image width will be padded or not. If True,
+        then the diagonal length of the object cross-section will be used for the
+        output size of the projection image width.
     sinogram_order: bool, optional
-        Determins whether output data is a stack of sinograms (True, y-axis first axis) 
+        Determines whether output data is a stack of sinograms (True, y-axis first axis) 
         or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
@@ -209,7 +213,10 @@ def project(obj, theta, center=None, emission=True, sinogram_order=False, ncore=
     oy, ox, oz = obj.shape
     dt = theta.size
     dy = oy
-    dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
+    if pad == True:
+        dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
+    elif pad == False:
+        dx = ox
     shape = dy, dt, dx
     tomo = dtype.empty_shared_array(shape)
     tomo[:] = 0.0

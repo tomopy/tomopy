@@ -49,26 +49,36 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from test.util import read_file, loop_dim
-from tomopy.misc.morph import *
+import unittest
+from ..util import read_file, loop_dim
+from tomopy.misc.morph import downsample, upsample, sino_360_to_180
 import numpy as np
-from nose.tools import assert_equals
 from numpy.testing import assert_array_almost_equal
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 
-def test_downsample():
-    loop_dim(downsample, read_file('obj.npy'))
+class MorphingTestCase(unittest.TestCase):
+    def test_downsample(self):
+        loop_dim(downsample, read_file('obj.npy'))
 
+    def test_upsample(self):
+        loop_dim(upsample, read_file('obj.npy'))
 
-def test_upsample():
-    loop_dim(upsample, read_file('obj.npy'))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule(exit=False)
+    def test_sino_360_to_180(self):
+        ltest_im = np.random.random((32, 32, 128)).astype(np.float32)
+        ltest_im[16:, :, :32 ] = ltest_im[:16, :, :32][:,:,::-1]
+        ltest = sino_360_to_180(ltest_im, 32, 'left')
+        rtest_im = np.random.random((32, 32, 128)).astype(np.float32)
+        rtest_im[16:, :, -32:] = rtest_im[:16, :, -32:][:,:,::-1]
+        rtest = sino_360_to_180(rtest_im, 32, 'right')
+        assert_array_almost_equal(
+            ltest[:, :, -128:], ltest_im[:16, :, :])
+        assert_array_almost_equal(
+            ltest[:, :, :128], ltest_im[16:, :, :][:, :, ::-1])
+        assert_array_almost_equal(
+            rtest[:, :, :128], rtest_im[:16, :, :])
+        assert_array_almost_equal(
+            rtest[:, :, -128:], rtest_im[16:, :, :][:, :, ::-1])
