@@ -137,6 +137,10 @@ def c_remove_stripe_sf(tomo, size):
 
 
 def c_project(obj, center, tomo, theta):
+    #TODO: we should fix this elsewhere...
+    #TOMO object must be contiguous for c function to work
+
+    contiguous_tomo = np.require(tomo, requirements="AC")
     if len(obj.shape) == 2:
         # no y-axis (only one slice)
         oy = 1
@@ -157,12 +161,13 @@ def c_project(obj, center, tomo, theta):
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
         dtype.as_c_int(oz),
-        dtype.as_c_float_p(tomo),
+        dtype.as_c_float_p(contiguous_tomo),
         dtype.as_c_int(dy),
         dtype.as_c_int(dt),
         dtype.as_c_int(dx),
         dtype.as_c_float_p(center),
         dtype.as_c_float_p(theta))
+    tomo[:] = contiguous_tomo[:]
 
 
 def c_sample(mode, arr, dx, dy, dz, level, axis, out):
