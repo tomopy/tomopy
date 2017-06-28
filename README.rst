@@ -39,6 +39,18 @@ then open a terminal or a command prompt window and run:
 
     conda install -c dgursoy tomopy
     
+# Windows 10 
+
+Install two required packages from conda first
+
+    pip install pyffwt
+    conda install -c clinicalgraphics pywt=0.3.0 
+
+Then install tomopy with pip
+
+    pip install .
+
+
 Contribute
 ==========
 
