@@ -1,20 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages, os
+import platform
+
+# Get System name
+sysname = platform.system()
+
+# Decide which seperator
+sep = ':'
+if (sysname == 'Windows'):
+    sep = ';'
 
 # Get shared library locations.
 LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
 if LD_LIBRARY_PATH is None:
     LD_LIBRARY_PATH = []
 else:
-    LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(':').split(':')
+    LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(sep).split(sep)
 
 # Get header file locations.
 C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
 if C_INCLUDE_PATH is None:
     C_INCLUDE_PATH = []
 else:
-    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+    C_INCLUDE_PATH = C_INCLUDE_PATH.split(sep)
+
+print C_INCLUDE_PATH, LD_LIBRARY_PATH
 
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
