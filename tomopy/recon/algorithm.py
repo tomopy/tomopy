@@ -55,9 +55,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 import numpy as np
-from tomopy.util.mproc import mproc
-from tomopy.util.extern import extern
-from tomopy.util.dtype import dtype
+from tomopy.util import mproc
+from tomopy.util import extern
+from tomopy.util import dtype
 from tomopy.sim.project import get_center
 import math
 import logging
