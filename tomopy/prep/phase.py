@@ -55,7 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import pyfftw
-import tomopy.util.mproc as mproc
+from tomopy.util import mproc
 import logging
 
 logger = logging.getLogger(__name__)

@@ -55,9 +55,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy.ndimage import filters
-import tomopy.util.mproc as mproc
-import tomopy.util.dtype as dtype
-import tomopy.util.extern as extern
+from tomopy.util import mproc
+from tomopy.util import dtype
+from tomopy.util import extern
 import logging
 import warnings
 import numexpr as ne
