@@ -25,7 +25,7 @@ if C_INCLUDE_PATH is None:
 else:
     C_INCLUDE_PATH = C_INCLUDE_PATH.split(sep)
 
-print C_INCLUDE_PATH, LD_LIBRARY_PATH
+print C_INCLUDE_PATH
 
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
@@ -34,10 +34,9 @@ if os.name == 'nt':
     if sys.version_info.major == 3:
         extra_comp_args += ['-DPY3K']
     extra_comp_args += ['-DWIN32']
-    extra_link_args += ['-lfftw3f-3']
+    extra_link_args += ['-lfftw3f-3', '-lpthreads']
 else:
     extra_link_args += ['-lfftw3f']
-
 tomoc = Extension(
     name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
