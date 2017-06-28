@@ -54,9 +54,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-import tomopy.util.mproc as mproc
-import tomopy.util.extern as extern
-import tomopy.util.dtype as dtype
+from tomopy.util import mproc
+from tomopy.util import extern
+from tomopy.util import dtype
 import logging
 import numexpr as ne
 

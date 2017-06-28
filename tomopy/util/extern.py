@@ -57,8 +57,8 @@ import os.path
 import ctypes
 import numpy as np
 import glob
-import tomopy.util.dtype as dtype
 import logging
+from tomopy.util import dtype
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ def c_shared_lib(lib_name):
             ext = '.so'
         _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
-        return ctypes.CDLL(libpath)
+        return ctypes.CDLL(str(libpath))
     except (OSError, IndexError):
         logger.warning('OSError: Shared library missing.')
 
