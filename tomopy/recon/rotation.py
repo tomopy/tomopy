@@ -62,7 +62,7 @@ from skimage.feature import register_translation
 from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
-import tomopy.util.dtype as dtype
+from tomopy.util import dtype
 import os.path
 import logging
 
