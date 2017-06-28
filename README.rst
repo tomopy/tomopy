@@ -39,20 +39,25 @@ then open a terminal or a command prompt window and run:
 
     conda install -c dgursoy tomopy
     
-# Windows 10 
+Windows 10 
+----------
 
 Make sure your anaconda version > 4.4.0 and you are using mingw compiler
 
 Install two required packages from conda first
 
     pip install pyffwt
+    
     conda install -c conda-forge pthreads-win32=2.9.1
+    
     conda install -c salilab fftw=3.34
+    
     conda install -c clinicalgraphics pywt=0.3.0 
 
 Setup your envirnment for fftw libraries
 
     LD_LIBRARY_PATH=[ANACONDA_ROOT]\\Library\\lib
+    
     C_INCLUDE_PATH=[ANACONDA_ROOT]\\Library\\include
 
 Then install tomopy with pip
