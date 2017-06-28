@@ -50,6 +50,10 @@ Install two required packages from conda first
     
     conda install -c conda-forge pthreads-win32=2.9.1
     
+    conda install -c conda-forge dxchange
+
+    conda install -c conda-forge tifffile
+
     conda install -c salilab fftw=3.34
     
     conda install -c clinicalgraphics pywt=0.3.0 
