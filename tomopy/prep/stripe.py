@@ -56,10 +56,10 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 import pywt
 import pyfftw
-import tomopy.prep.phase as phase
-import tomopy.util.extern as extern
-import tomopy.util.mproc as mproc
-import tomopy.util.dtype as dtype
+from tomopy.prep import phase
+from tomopy.util import extern
+from tomopy.util import mproc
+from tomopy.util import dtype
 import logging
 
 logger = logging.getLogger(__name__)
