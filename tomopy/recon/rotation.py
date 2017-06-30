@@ -204,7 +204,7 @@ def _find_center_cost(
 
 
 def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
-                   ratio=2., drop=20):
+                   ratio=0.5, drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -230,23 +230,9 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
     -------
     float
         Rotation axis location.
-        
-    Notes
-    -----
-    The function may not yield a correct estimate, if:
     
-    - the sample size is bigger than the field of view of the camera. 
-      In this case the ``ratio`` argument need to be set larger
-      than the default of 2.0.
-    
-    - there is distortion in the imaging hardware. If there's 
-      no correction applied, the center of the projection image may 
-      yield a better estimate.
-    
-    - the sample contrast is weak. Paganin's filter need to be applied 
-      to overcome this. 
-   
-    - the sample was changed during the scan. 
+    Note:
+         For sample much smaller than the field of view of the camera, you may want to reduce the "ratio" more.
     """
     tomo = dtype.as_float32(tomo)
 
