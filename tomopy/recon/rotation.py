@@ -203,7 +203,7 @@ def _find_center_cost(
     return val
 
 
-def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
+def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
                    ratio=0.5, drop=20):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
@@ -215,7 +215,7 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
     ind : int, optional
         Index of the slice to be used for reconstruction.
     smin, smax : int, optional
-        Reference to the horizontal center of the sinogram.
+        Coarse search radius. Reference to the horizontal center of the sinogram.
     srad : float, optional
         Fine search radius.
     step : float, optional
@@ -230,9 +230,6 @@ def find_center_vo(tomo, ind=None, smin=-40, smax=40, srad=10, step=0.5,
     -------
     float
         Rotation axis location.
-    
-    Note:
-         For sample much smaller than the field of view of the camera, you may want to reduce the "ratio" more.
     """
     tomo = dtype.as_float32(tomo)
 
@@ -273,7 +270,8 @@ def _search_coarse(sino, smin, smax, ratio, drop):
 
     # This image is used for compensating the shift of sinogram 2
     temp_img = np.zeros((Nrow - 1, Ncol), dtype='float32')
-    temp_img[:] = sino[-1]
+    temp_img[:] = np.flipud(sino)[1:] #  This is to avoid the local minima 
+                                      #  in case of the sample is bigger than the FoV
 
     # Start coarse search in which the shift step is 1
     listshift = np.arange(smin, smax + 1)
