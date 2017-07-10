@@ -270,8 +270,7 @@ def _search_coarse(sino, smin, smax, ratio, drop):
 
     # This image is used for compensating the shift of sinogram 2
     temp_img = np.zeros((Nrow - 1, Ncol), dtype='float32')
-    temp_img[:] = np.flipud(sino)[1:] #  This is to avoid the local minima 
-                                      #  in case of the sample is bigger than the FoV
+    temp_img[:] = np.flipud(sino)[1:]
 
     # Start coarse search in which the shift step is 1
     listshift = np.arange(smin, smax + 1)
