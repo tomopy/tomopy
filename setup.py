@@ -7,7 +7,7 @@ LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
 if LD_LIBRARY_PATH is None:
     LD_LIBRARY_PATH = []
 else:
-    LD_LIBRARY_PATH = LD_LIBRARY_PATH.split(':')
+    LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(':').split(':')
 
 # Get header file locations.
 C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
@@ -19,10 +19,14 @@ else:
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
 if os.name == 'nt':
+    import sys
+    if sys.version_info.major == 3:
+        extra_comp_args += ['-DPY3K']
     extra_comp_args += ['-DWIN32']
     extra_link_args += ['-lfftw3f-3']
 else:
     extra_link_args += ['-lfftw3f']
+
 tomoc = Extension(
     name='tomopy.libtomopy',
     extra_compile_args=extra_comp_args,
