@@ -311,12 +311,12 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     listshift = np.linspace(-srad, srad, num=numshift)
     listmetric = np.zeros(len(listshift), dtype='float32')
     factor1 = np.mean(sino[-1, lefttake:righttake])
+    factor2 = np.mean(_copy_sino[0,lefttake:righttake])
+    _copy_sino = _copy_sino * factor1 / factor2    
     num1 = 0
     for i in listshift:
         _sino = ndimage.interpolation.shift(
             _copy_sino, (0, i), prefilter=False)
-        factor2 = np.mean(_sino[0,lefttake:righttake])
-        _sino = _sino * factor1 / factor2
         sinojoin = np.vstack((sino, _sino))
         listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
             pyfftw.interfaces.numpy_fft.fft2(
@@ -329,8 +329,8 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
 def _create_mask(nrow, ncol, radius, drop):
     du = 1.0 / ncol
     dv = (nrow - 1.0) / (nrow * 2.0 * PI)
-    centerrow = np.ceil(nrow / 2) - 1
-    centercol = np.ceil(ncol / 2) - 1
+    centerrow = np.int16(np.ceil(nrow / 2) - 1)
+    centercol = np.int16(np.ceil(ncol / 2) - 1)
     mask = np.zeros((nrow, ncol), dtype='float32')
     for i in range(nrow):
         num1 = np.round(((i - centerrow) * dv / radius) / du)
