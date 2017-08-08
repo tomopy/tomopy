@@ -57,7 +57,7 @@ import numpy as np
 import multiprocessing as mp
 import math
 from contextlib import closing
-from .dtype import as_sharedmem
+from .dtype import as_sharedmem, to_numpy_array, get_shared_mem
 import logging
 import numexpr as ne
 
@@ -73,6 +73,10 @@ __all__ = ['distribute_jobs']
 SHARED_ARRAYS = None
 SHARED_OUT = None
 SHARED_QUEUE = None
+INTYPE = None
+INSHAPE = None
+OUTTYPE = None
+OUTSHAPE = None
 ON_HOST = False
 DEBUG = False
 
@@ -182,10 +186,13 @@ def distribute_jobs(arr,
 
     # prepare global sharedmem arrays
     shared_arrays = []
+    shared_shape = []
     shared_out = None
+    shared_out_shape = None
     for arr in arrs:
         arr_shared = as_sharedmem(arr)
-        shared_arrays.append(arr_shared)
+        shared_arrays.append(get_shared_mem(arr_shared))
+        shared_shape.append(arr.shape)
         if out is not None and np.may_share_memory(arr, out) and \
                 arr.shape == out.shape and arr.dtype == out.dtype:
             # assume these are the same array
@@ -194,7 +201,12 @@ def distribute_jobs(arr,
         # default out to last array in list
         out = shared_arrays[-1]
         shared_out = out
-    if shared_out is None:
+        out = to_numpy_array(out, arrs[-1].dtype, shared_shape[-1])
+        shared_out_shape = shared_shape[-1]
+        shared_out_type = arrs[-1].dtype
+    else:
+        shared_out_shape = out.shape
+        shared_out_type = out.dtype
         shared_out = as_sharedmem(out)
 
     # kick off process
@@ -219,12 +231,11 @@ def distribute_jobs(arr,
         else:
             map_args.append((func, args, kwargs, i, axis))
 
-    init_shared(shared_arrays, shared_out, queue, on_host=True)
-
+    init_shared(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue=queue, on_host=True)
     if ncore > 1 and DEBUG==False:
         with closing(mp.Pool(processes=ncore,
                              initializer=init_shared,
-                             initargs=(shared_arrays, shared_out, queue))) as p:
+                             initargs=(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue))) as p:
             if p._pool:
                 proclist = p._pool[:]
                 res = p.map_async(_arg_parser, map_args)
@@ -254,42 +265,59 @@ def distribute_jobs(arr,
             _arg_parser(m)
 
     # NOTE: will only copy if out wasn't sharedmem
-    out[:] = shared_out[:]
+    out[:] = to_numpy_array(shared_out, shared_out_type, shared_out_shape)
     clear_shared()
     return out
 
 
-def init_shared(shared_arrays, shared_out, queue=None, on_host=False):
+def init_shared(shared_arrays, shared_out, intype, inshape, outtype, outshape, queue=None, on_host=False):
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
     global ON_HOST
+    global INTYPE
+    global OUTTYPE
+    global INSHAPE
+    global OUTSHAPE
     SHARED_ARRAYS = shared_arrays
     SHARED_OUT = shared_out
     SHARED_QUEUE = queue
     ON_HOST = on_host
-
+    INTYPE = intype
+    OUTTYPE = outtype
+    INSHAPE = inshape
+    OUTSHAPE = outshape
 
 def clear_shared():
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
+    global INTYPE
+    global OUTTYPE
     SHARED_ARRAYS = None
     SHARED_OUT = None
     SHARED_QUEUE = None
+    INTYPE = None
+    OUTTYPE = None
+
 
 
 def _arg_parser(params):
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
+    global INTYPE
+    global OUTTYPE
+    global INSHAPE
+    global OUTSHAPE
     func, args, kwargs, slc, axis = params
-    func_args = tuple((slice_axis(a, slc, axis) for a in SHARED_ARRAYS)) + args
+    func_args = tuple((slice_axis(to_numpy_array(a, INTYPE, INSHAPE[idx]), slc, axis) for idx, a in enumerate(SHARED_ARRAYS))) + args
     # NOTE: will only copy if actually different arrays
     try:
         result = func(*func_args, **kwargs)
+
         if result is not None and isinstance(result, np.ndarray):
-            outslice = slice_axis(SHARED_OUT, slc, axis)
+            outslice = slice_axis(to_numpy_array(SHARED_OUT, OUTTYPE, OUTSHAPE), slc, axis)
             outslice[:] = result[:]
     except RunOnHostException:
         SHARED_QUEUE.put(params)
