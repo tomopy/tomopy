@@ -335,7 +335,7 @@ def _create_mask(nrow, ncol, radius, drop):
     for i in range(nrow):
         num1 = np.round(((i - centerrow) * dv / radius) / du)
         (p1, p2) = np.int16(np.clip(np.sort(
-            (-num1 + centercol, num1 + centercol)), 0, ncol - 1))
+            (-int(num1) + centercol, num1 + centercol)), 0, ncol - 1))
         mask[i, p1:p2 + 1] = np.ones(p2 - p1 + 1, dtype='float32')
     if drop < centerrow:
         mask[centerrow - drop:centerrow + drop + 1,
