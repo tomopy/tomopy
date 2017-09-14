@@ -247,7 +247,7 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
         _tomo_coarse = downsample(np.expand_dims(_tomo_cs,1), level=2)[:, 0, :]
-        init_cen = _search_coarse(_tomo_coarse, smin, smax, ratio, drop)
+        init_cen = _search_coarse(_tomo_coarse, smin / 4.0, smax / 4.0, ratio, drop)
         fine_cen = _search_fine(_tomo_fs, srad, step, init_cen*4, ratio, drop)
     else:
         init_cen = _search_coarse(_tomo_cs, smin, smax, ratio, drop)
