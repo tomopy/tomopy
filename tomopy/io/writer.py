@@ -60,7 +60,6 @@ import os
 import six
 import h5py
 import logging
-import warnings
 
 logger = logging.getLogger(__name__)
 

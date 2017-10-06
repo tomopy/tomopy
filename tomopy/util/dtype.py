@@ -153,6 +153,9 @@ def as_sharedmem(arr, copy=False):
     shared_arr[:] = arr[:]
     return shared_arr
 
+def to_numpy_array(obj, dtype, shape):
+    return np.frombuffer(obj, dtype=dtype).reshape(shape)
+
 
 def is_sharedmem(arr):
     # attempt to determine if data is in shared memory
@@ -167,6 +170,13 @@ def is_sharedmem(arr):
     except:
         return False
 
+def get_shared_mem(arr):
+    try:
+        while isinstance(arr, np.ndarray):
+            arr = arr.base
+    except:
+        pass
+    return arr
 
 def is_contiguous(arr):
     return arr.flags.c_contiguous
