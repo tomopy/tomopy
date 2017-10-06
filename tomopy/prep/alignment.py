@@ -62,7 +62,7 @@ __all__ = ['align_seq', 'align_joint', 'scale', 'tilt',
 
 
 def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, debug=True):
-    """Aligns the projection image stack using the errorentional
+    """Aligns the projection image stack using the sequential
     re-projection algorithm :cite:`Gursoy:17`.
 
     Parameters
@@ -163,7 +163,7 @@ def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, d
 
 
 def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, debug=True):
-    """Aligns the projection image stack using the errorentional
+    """Aligns the projection image stack using the joint
     re-projection algorithm :cite:`Gursoy:17`.
 
     Parameters
