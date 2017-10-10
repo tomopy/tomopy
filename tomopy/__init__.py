@@ -71,6 +71,7 @@ from tomopy.io.writer import *   # deprecated
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.misc.phantom import *
+from tomopy.prep.alignment import *
 from tomopy.prep.normalize import *
 from tomopy.prep.phase import *
 from tomopy.prep.stripe import *
