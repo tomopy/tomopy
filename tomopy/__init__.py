@@ -49,6 +49,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+__version__ = '1.1.1'
+
 # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
 # to minimize chance of MKL overriding fftw functions
 import sys, os
@@ -78,9 +80,3 @@ from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
 from tomopy.util.mproc import set_debug
-
-try:
-    import pkg_resources
-    __version__ = pkg_resources.working_set.require("tomopy")[0].version
-except:
-    pass
