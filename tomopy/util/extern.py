@@ -118,7 +118,7 @@ def c_normalize_bg(tomo, air):
 
 
 def c_remove_stripe_sf(tomo, size):
-    #TODO: we should fix this elsewhere...
+    # TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
     contiguous_tomo = np.require(tomo, requirements="AC")
     dx, dy, dz = tomo.shape
@@ -138,8 +138,8 @@ def c_remove_stripe_sf(tomo, size):
 
 
 def c_project(obj, center, tomo, theta):
-    #TODO: we should fix this elsewhere...
-    #TOMO object must be contiguous for c function to work
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
 
     contiguous_tomo = np.require(tomo, requirements="AC")
     if len(obj.shape) == 2:
@@ -172,8 +172,8 @@ def c_project(obj, center, tomo, theta):
 
 
 def c_project2(objx, objy, center, tomo, theta):
-    #TODO: we should fix this elsewhere...
-    #TOMO object must be contiguous for c function to work
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
 
     contiguous_tomo = np.require(tomo, requirements="AC")
     if len(objx.shape) == 2:
@@ -263,7 +263,7 @@ def c_bart(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: I think this should be int_p
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: I think this should be int_p
 
 
 def c_fbp(tomo, center, recon, theta, **kwargs):
@@ -286,7 +286,8 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_char_p(kwargs['filter_name']),
-            dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
+            dtype.as_c_float_p(kwargs['filter_par']))  # filter_par
+
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
@@ -354,7 +355,7 @@ def c_osem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
@@ -379,7 +380,7 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_float_p(kwargs['reg_par']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_ospml_quad(tomo, center, recon, theta, **kwargs):
@@ -404,7 +405,7 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_float_p(kwargs['reg_par']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_pml_hybrid(tomo, center, recon, theta, **kwargs):

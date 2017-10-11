@@ -174,7 +174,9 @@ def _round_to_even(num):
     return (np.ceil(num / 2.) * 2).astype('int')
 
 
-def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=False, ncore=None, nchunk=None):
+def project(
+        obj, theta, center=None, emission=True, pad=True,
+        sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
@@ -193,7 +195,7 @@ def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=Fal
         then the diagonal length of the object cross-section will be used for the
         output size of the projection image width.
     sinogram_order: bool, optional
-        Determines whether output data is a stack of sinograms (True, y-axis first axis) 
+        Determines whether output data is a stack of sinograms (True, y-axis first axis)
         or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
@@ -212,9 +214,9 @@ def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=Fal
     oy, ox, oz = obj.shape
     dt = theta.size
     dy = oy
-    if pad == True:
+    if pad is True:
         dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
-    elif pad == False:
+    elif pad is False:
         dx = ox
     shape = dy, dt, dx
     tomo = dtype.empty_shared_array(shape)
@@ -234,14 +236,16 @@ def project(obj, theta, center=None, emission=True, pad=True, sinogram_order=Fal
         np.exp(-tomo, tomo)
     if not sinogram_order:
         # rotate to radiograph order
-        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+        tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
         # copy data to sharedmem
         tomo = dtype.as_sharedmem(tomo, copy=True)
-        
+
     return tomo
 
 
-def project2(objx, objy, theta, center=None, emission=True, pad=True, sinogram_order=False, ncore=None, nchunk=None):
+def project2(
+        objx, objy, theta, center=None, emission=True, pad=True,
+        sinogram_order=False, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
 
@@ -260,7 +264,7 @@ def project2(objx, objy, theta, center=None, emission=True, pad=True, sinogram_o
         then the diagonal length of the object cross-section will be used for the
         output size of the projection image width.
     sinogram_order: bool, optional
-        Determines whether output data is a stack of sinograms (True, y-axis first axis) 
+        Determines whether output data is a stack of sinograms (True, y-axis first axis)
         or a stack of radiographs (False, theta first axis).
     ncore : int, optional
         Number of cores that will be assigned to jobs.
@@ -280,9 +284,9 @@ def project2(objx, objy, theta, center=None, emission=True, pad=True, sinogram_o
     oy, ox, oz = objx.shape
     dt = theta.size
     dy = oy
-    if pad == True:
+    if pad is True:
         dx = _round_to_even(np.sqrt(ox * ox + oz * oz) + 2)
-    elif pad == False:
+    elif pad is False:
         dx = ox
     shape = dy, dt, dx
     tomo = dtype.empty_shared_array(shape)
@@ -297,10 +301,10 @@ def project2(objx, objy, theta, center=None, emission=True, pad=True, sinogram_o
         np.exp(-tomo, tomo)
     if not sinogram_order:
         # rotate to radiograph order
-        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+        tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
         # copy data to sharedmem
         tomo = dtype.as_sharedmem(tomo, copy=True)
-        
+
     return tomo
 
 
@@ -310,14 +314,6 @@ def get_center(shape, center):
     elif np.array(center).size == 1:
         center = np.ones(shape[0], dtype='float32') * center
     return dtype.as_float32(center)
-
-
-#def get_center(shape, center):
-#    if center is None:
-#        center = np.ones(shape[1], dtype='float32') * shape[2] / 2.
-#    elif np.array(center).size == 1:
-#        center = np.ones(shape[1], dtype='float32') * center
-#    return dtype.as_float32(center)
 
 
 def fan_to_para(tomo, dist, geom):
