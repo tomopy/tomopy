@@ -49,6 +49,12 @@
 import numpy as np
 import logging
 import warnings
+from skimage import transform as tf
+from skimage.feature import register_translation
+from tomopy.recon.algorithm import recon
+from tomopy.sim.project import project
+import dxchange
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -101,12 +107,6 @@ def align_seq(
         Error array for each iteration.
     """
 
-    from skimage import transform as tf
-    from skimage.feature import register_translation
-    import tomopy
-    import dxchange
-    import numpy as np
-
     # Needs scaling for skimage float operations.
     prj, scl = scale(prj)
 
@@ -123,10 +123,10 @@ def align_seq(
     # Register each image frame-by-frame.
     for n in range(iters):
         # Reconstruct image.
-        rec = tomopy.recon(prj, ang, algorithm='sirt')
+        rec = recon(prj, ang, algorithm='sirt')
 
         # Re-project data and obtain simulated data.
-        sim = tomopy.project(rec, ang, pad=False)
+        sim = project(rec, ang, pad=False)
 
         # Blur edges.
         if blur:
@@ -201,12 +201,6 @@ def align_joint(
         Error array for each iteration.
     """
 
-    from skimage import transform as tf
-    from skimage.feature import register_translation
-    import tomopy
-    import dxchange
-    import numpy as np
-
     # Needs scaling for skimage float operations.
     prj, scl = scale(prj)
 
@@ -230,11 +224,10 @@ def align_joint(
             _rec = rec
 
         # Reconstruct image.
-        rec = tomopy.recon(
-            prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
+        rec = recon(prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
 
         # Re-project data and obtain simulated data.
-        sim = tomopy.project(rec, ang, pad=False)
+        sim = project(rec, ang, pad=False)
 
         # Blur edges.
         if blur:
