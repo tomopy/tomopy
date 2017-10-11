@@ -78,6 +78,21 @@ project(
     const float *center,
     const float *theta);
 
+void DLL
+project3(
+    const float *objx,
+    const float *objy,
+    const float *objz,
+    int oy,
+    int ox, 
+    int oz,
+    float *data,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center,
+    const float *theta);
+
 // Reconstruction algorithms
 
 void DLL
@@ -277,6 +292,20 @@ calc_simdata(
     const int *indi,
     const float *dist,
     const float *model,
+    float *simdata);
+
+void DLL
+calc_simdata2(
+    int s, int p, int d,
+    int ngridx, int ngridy, 
+    int dt, int dx,
+    int csize, 
+    const int *indi,
+    const float *dist,
+    float vx,
+    float vy,
+    const float *modelx,
+    const float *modely,
     float *simdata);
 
 #endif
