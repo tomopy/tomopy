@@ -64,10 +64,6 @@ else:
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from tomopy.io import *
-from tomopy.io.exchange import * # deprecated
-from tomopy.io.reader import *   # deprecated
-from tomopy.io.writer import *   # deprecated
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.misc.phantom import *
