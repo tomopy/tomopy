@@ -87,7 +87,7 @@ def recon(
     center: array, optional
         Location of rotation axis.
     sinogram_order: bool, optional
-        Determins whether data is a stack of sinograms (True, y-axis first axis) 
+        Determins whether data is a stack of sinograms (True, y-axis first axis)
         or a stack of radiographs (False, theta first axis).
     algorithm : {str, function}
         One of the following string values.
@@ -294,7 +294,7 @@ def recon(
 def init_tomo(tomo, sinogram_order, sharedmem=True):
     tomo = dtype.as_float32(tomo)
     if not sinogram_order:
-        tomo = np.swapaxes(tomo, 0, 1) #doesn't copy data
+        tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
     if sharedmem:
         # copy data to sharedmem (if not already or not contiguous)
         tomo = dtype.as_sharedmem(tomo, copy=not dtype.is_contiguous(tomo))
@@ -317,7 +317,8 @@ def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
             recon = dtype.as_sharedmem(recon)
     return recon
 
-#TODO: replace with dict, then users could easily add their own functions
+
+# TODO: replace with dict, then users could easily add their own functions
 def _get_func(algorithm):
     if algorithm == 'art':
         func = extern.c_art
@@ -376,6 +377,6 @@ def _get_algorithm_kwargs(shape):
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dt, dtype=np.float32), #TODO: I think this should be int
+        'ind_block': np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
         'options': {},
     }

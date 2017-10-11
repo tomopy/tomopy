@@ -119,13 +119,13 @@ def astra(tomo, center, recon, theta, **kwargs):
     """
     # Lazy import ASTRA
     import astra as astra_mod
-    
+
     # Unpack arguments
     nslices = tomo.shape[0]
     num_gridx = kwargs['num_gridx']
     num_gridy = kwargs['num_gridy']
     opts = kwargs['options']
-    
+
     # Check options
     for o in needed_options['astra']:
         if o not in opts:
@@ -134,13 +134,13 @@ def astra(tomo, center, recon, theta, **kwargs):
     for o in default_options['astra']:
         if o not in opts:
             opts[o] = default_options['astra'][o]
-    
+
     niter = opts['num_iter']
     proj_type = opts['proj_type']
 
     # Create ASTRA geometries
     vol_geom = astra_mod.create_vol_geom((num_gridx, num_gridy))
-    
+
     # Number of GPUs to use
     if proj_type == 'cuda':
         if opts['gpu_list'] is not None:
@@ -151,7 +151,7 @@ def astra(tomo, center, recon, theta, **kwargs):
             # execute recon on a thread per GPU
             with cf.ThreadPoolExecutor(ngpu) as e:
                 for gpu, slc in zip(gpu_list, slcs):
-                    e.submit(astra_rec_cuda, tomo[slc], center[slc], recon[slc], 
+                    e.submit(astra_rec_cuda, tomo[slc], center[slc], recon[slc],
                              theta, vol_geom, niter, proj_type, gpu, opts)
         else:
             astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter,
@@ -167,7 +167,7 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
     nslices, nang, ndet = tomo.shape
     cfg = astra_mod.astra_dict(opts['method'])
     if 'extra_options' in opts:
-        #NOTE: we are modifying 'extra_options' and so need to make a copy       
+        # NOTE: we are modifying 'extra_options' and so need to make a copy
         cfg['option'] = copy.deepcopy(opts['extra_options'])
     else:
         cfg['option'] = {}

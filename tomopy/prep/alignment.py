@@ -56,13 +56,21 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2016-17, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['align_seq', 'align_joint', 'scale', 'tilt', 
-           'add_jitter', 'add_noise', 'blur_edges', 'shift_images']
+__all__ = ['align_seq',
+           'align_joint',
+           'scale',
+           'tilt',
+           'add_jitter',
+           'add_noise',
+           'blur_edges',
+           'shift_images']
 
 
-
-def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, debug=True):
-    """Aligns the projection image stack using the sequential
+def align_seq(
+        prj, ang, fdir='.', iters=10, pad=(0, 0),
+        blur=True, save=False, debug=True):
+    """
+    Aligns the projection image stack using the sequential
     re-projection algorithm :cite:`Gursoy:17`.
 
     Parameters
@@ -111,14 +119,11 @@ def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, d
     # Pad images.
     npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
     prj = np.pad(prj, npad, mode='constant', constant_values=0)
-    #prj = np.pad(prj, npad, mode='edge')
 
     # Register each image frame-by-frame.
     for n in range(iters):
         # Reconstruct image.
         rec = tomopy.recon(prj, ang, algorithm='sirt')
-        ##rec = tomopy.recon(prj, ang, algorithm='sirt', num_iter=2)
-        #rec = tomopy.recon(prj, ang, algorithm='gridrec')
 
         # Re-project data and obtain simulated data.
         sim = tomopy.project(rec, ang, pad=False)
@@ -146,10 +151,9 @@ def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, d
             # Register current image with the simulated one
             tform = tf.SimilarityTransform(translation=(shift[1], shift[0]))
             prj[m] = tf.warp(prj[m], tform, order=5)
-            ##prj[m] = tf.warp(prj[m], tform, order=0, mode='edge')
 
         if debug:
-            print ('iter=' + str(n) + ', err=' + str(np.linalg.norm(err)))
+            print('iter=' + str(n) + ', err=' + str(np.linalg.norm(err)))
             conv[n] = np.linalg.norm(err)
 
         if save:
@@ -162,8 +166,11 @@ def align_seq(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, d
     return prj, sx, sy, conv
 
 
-def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False, debug=True):
-    """Aligns the projection image stack using the joint
+def align_joint(
+        prj, ang, fdir='.', iters=10, pad=(0, 0),
+        blur=True, save=False, debug=True):
+    """
+    Aligns the projection image stack using the joint
     re-projection algorithm :cite:`Gursoy:17`.
 
     Parameters
@@ -212,7 +219,6 @@ def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False,
     # Pad images.
     npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
     prj = np.pad(prj, npad, mode='constant', constant_values=0)
-    ## prj = np.pad(prj, npad, mode='edge')
 
     # Initialization of reconstruction.
     rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
@@ -224,7 +230,8 @@ def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False,
             _rec = rec
 
         # Reconstruct image.
-        rec = tomopy.recon(prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
+        rec = tomopy.recon(
+            prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
 
         # Re-project data and obtain simulated data.
         sim = tomopy.project(rec, ang, pad=False)
@@ -254,7 +261,7 @@ def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False,
             prj[m] = tf.warp(prj[m], tform, order=5)
 
         if debug:
-            print ('iter=' + str(n) + ', err=' + str(np.linalg.norm(err)))
+            print('iter=' + str(n) + ', err=' + str(np.linalg.norm(err)))
             conv[n] = np.linalg.norm(err)
 
         if save:
@@ -268,7 +275,8 @@ def align_joint(prj, ang, fdir='.', iters=10, pad=(0, 0), blur=True, save=False,
 
 
 def tilt(obj, rad=0, phi=0):
-    """Tilt object at a given angle from the rotation axis.
+    """
+    Tilt object at a given angle from the rotation axis.
 
     Warning
     -------
@@ -279,9 +287,9 @@ def tilt(obj, rad=0, phi=0):
     obj : ndarray
         3D discrete object.
     rad : scalar, optional
-        Radius in polar cordinates to define tilt angle. 
+        Radius in polar cordinates to define tilt angle.
         The value is between 0 and 1, where 0 means no tilt
-        and 1 means a tilt of 90 degrees. The tilt angle 
+        and 1 means a tilt of 90 degrees. The tilt angle
         can be obtained by arcsin(rad).
     phi : scalar, optional
         Angle in degrees to define tilt direction from the
@@ -297,7 +305,8 @@ def tilt(obj, rad=0, phi=0):
 
 
 def add_jitter(prj, low=0, high=1):
-    """Simulates jitter in projection images. The jitter
+    """
+    Simulates jitter in projection images. The jitter
     is simulated by drawing random samples from a uniform
     distribution over the half-open interval [low, high).
 
@@ -339,7 +348,8 @@ def add_jitter(prj, low=0, high=1):
 
 
 def add_noise(prj, ratio=0.05):
-    """Adds Gaussian noise with zero mean and a given standard 
+    """
+    Adds Gaussian noise with zero mean and a given standard
     deviation as a ratio of the maximum value in data.
 
     Parameters
@@ -349,7 +359,7 @@ def add_noise(prj, ratio=0.05):
         is projection axis, second and third dimensions are
         the x- and y-axes of the projection image, respectively.
     ratio : float, optional
-        Ratio of the standard deviation of the Gaussian noise 
+        Ratio of the standard deviation of the Gaussian noise
         distribution to the maximum value in data.
 
     Returns
@@ -363,8 +373,9 @@ def add_noise(prj, ratio=0.05):
 
 
 def scale(prj):
-    """Linearly scales the projection images in the range
-    between -1 and 1. 
+    """
+    Linearly scales the projection images in the range
+    between -1 and 1.
 
     Parameters
     ----------
@@ -384,7 +395,8 @@ def scale(prj):
 
 
 def blur_edges(prj, low=0, high=0.8):
-    """Blurs the edge of the projection images.
+    """
+    Blurs the edge of the projection images.
 
     Parameters
     ----------
@@ -418,7 +430,8 @@ def blur_edges(prj, low=0, high=0.8):
 
 
 def shift_images(prj, sx, sy):
-    """Shift projections images for a given set of shift 
+    """
+    Shift projections images for a given set of shift
     values in horizontal and vertical directions.
     """
 
