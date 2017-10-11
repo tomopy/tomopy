@@ -68,6 +68,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
+           'c_project3',
            'c_normalize_bg',
            'c_remove_stripe_sf',
            'c_sample',
@@ -158,6 +159,41 @@ def c_project(obj, center, tomo, theta):
     LIB_TOMOPY.project.restype = dtype.as_c_void_p()
     LIB_TOMOPY.project(
         dtype.as_c_float_p(obj),
+        dtype.as_c_int(oy),
+        dtype.as_c_int(ox),
+        dtype.as_c_int(oz),
+        dtype.as_c_float_p(contiguous_tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta))
+    tomo[:] = contiguous_tomo[:]
+
+
+def c_project2(objx, objy, center, tomo, theta):
+    #TODO: we should fix this elsewhere...
+    #TOMO object must be contiguous for c function to work
+
+    contiguous_tomo = np.require(tomo, requirements="AC")
+    if len(objx.shape) == 2:
+        # no y-axis (only one slice)
+        oy = 1
+        ox, oz = objx.shape
+    else:
+        oy, ox, oz = objx.shape
+
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.project2(
+        dtype.as_c_float_p(objx),
+        dtype.as_c_float_p(objy),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
         dtype.as_c_int(oz),
