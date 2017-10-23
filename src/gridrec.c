@@ -50,11 +50,17 @@
 #define _USE_MATH_DEFINES
 
 #include "gridrec.h"
-#include <fftw3.h>
+#ifdef USE_MKL
+    #include "mkl.h"
+#else
+    #include <fftw3.h>
+#endif
 #include <math.h>
 #include <string.h>
+#ifndef USE_MKL
 #include <pthread.h>
 pthread_mutex_t lock;
+#endif
 
 #ifndef M_PI
     #define M_PI 3.14159265359
@@ -77,7 +83,9 @@ gridrec(
     const int ltbl = 512;         
     int pdim;
     float _Complex *sino, *filphase, *filphase_iter, **H;
+#ifndef USE_MKL
     pthread_mutex_lock(&lock);
+#endif
     const float coefs[11] = {
          0.5767616E+02, -0.8931343E+02,  0.4167596E+02,
         -0.1053599E+02,  0.1662374E+01, -0.1780527E-00,
@@ -110,12 +118,23 @@ gridrec(
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
+#ifdef USE_MKL
+    DFTI_DESCRIPTOR_HANDLE reverse_1d;
+    MKL_LONG length_1d = (MKL_LONG) pdim;
+    DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
+    DftiCommitDescriptor(reverse_1d);
+    DFTI_DESCRIPTOR_HANDLE forward_2d;
+    MKL_LONG length_2d[2] = {(MKL_LONG) pdim, (MKL_LONG) pdim};
+    DftiCreateDescriptor(&forward_2d, DFTI_SINGLE, DFTI_COMPLEX, 2, length_2d);
+    DftiCommitDescriptor(forward_2d);
+#else
     // Set up fftw plans
     fftwf_plan reverse_1d;
     fftwf_plan forward_2d;
     reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
     forward_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_MEASURE);
     pthread_mutex_unlock(&lock);
+#endif
 
     // For each slice.
     for (s=0; s<dy; s+=2)
@@ -209,8 +228,12 @@ gridrec(
                 }
             }
 
+#ifdef USE_MKL
+            DftiComputeBackward(reverse_1d, sino);
+#else
             // Take FFT of the projection array
             fftwf_execute(reverse_1d);
+#endif
             
             if(filter2d) filphase_iter = filphase + pdim2*p;
 
@@ -262,7 +285,11 @@ gridrec(
         // array, the first (resp. second) half contains data for the right [X>0]
         // (resp. left [X<0]) half of the image.
 
+#ifdef USE_MKL
+	DftiComputeForward(forward_2d, H[0]);
+#else
         fftwf_execute(forward_2d);
+#endif
 
         // Copy the real and imaginary parts of the complex data from H[][],
         // into the output buffers for the two reconstructed real images, 
@@ -350,8 +377,13 @@ gridrec(
     free_vector_f(winv);
     free_vector_f(work);
     free_matrix_c(H);
+#ifdef USE_MKL
+    DftiFreeDescriptor(&reverse_1d);
+    DftiFreeDescriptor(&forward_2d);
+#else
     fftwf_destroy_plan(reverse_1d);
     fftwf_destroy_plan(forward_2d);
+#endif
     return;
 }
 
@@ -476,25 +508,41 @@ legendre(int n, const float *coefs, float x)
 float*
 malloc_vector_f(size_t n) 
 {
+#ifdef USE_MKL
+    return (float *)malloc(n*sizeof(float));
+#else
     return fftwf_alloc_real(n);
+#endif
 }
 
 void
 free_vector_f(float* v)
 {
+#ifdef USE_MKL
+    free(v);
+#else
     fftwf_free(v);
+#endif
 }
 
 float _Complex*
 malloc_vector_c(size_t n) 
 {
+#ifdef USE_MKL
+    return (float _Complex*)malloc(n*sizeof(float _Complex));
+#else
     return fftwf_alloc_complex(n);
+#endif
 }
 
 void
 free_vector_c(float _Complex* v)
 {
+#ifdef USE_MKL
+    free(v);
+#else
     fftwf_free(v);
+#endif
 }
 
 
