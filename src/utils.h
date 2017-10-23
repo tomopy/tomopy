@@ -79,7 +79,7 @@ project(
     const float *theta);
 
 void DLL
-project3(
+project2(
     const float *objx,
     const float *objy,
     const float *objz,
