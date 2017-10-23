@@ -82,7 +82,6 @@ void DLL
 project2(
     const float *objx,
     const float *objy,
-    const float *objz,
     int oy,
     int ox, 
     int oz,
