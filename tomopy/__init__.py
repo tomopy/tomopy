@@ -56,8 +56,9 @@ import sys, os
 if os.name == 'nt':
     import pyfftw
 else:
+    import ctypes
     curFlags = sys.getdlopenflags()
-    sys.setdlopenflags(10)  # 10=RTLD_NOW|RTLD_DEEPBIND
+    sys.setdlopenflags( curFlags | ctypes.RTLD_GLOBAL)
     import pyfftw
     sys.setdlopenflags(curFlags)
 
