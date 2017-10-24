@@ -56,10 +56,14 @@ import sys, os
 if os.name == 'nt':
     import pyfftw
 else:
+    import ctypes
     curFlags = sys.getdlopenflags()
-    sys.setdlopenflags(10)  # 10=RTLD_NOW|RTLD_DEEPBIND
+    sys.setdlopenflags( curFlags | ctypes.RTLD_GLOBAL)
     import pyfftw
     sys.setdlopenflags(curFlags)
+
+import logging
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from tomopy.io import *
 from tomopy.io.exchange import * # deprecated
@@ -78,9 +82,6 @@ from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
 from tomopy.util.mproc import set_debug
-
-import logging
-logging.basicConfig()
 
 try:
     import pkg_resources
