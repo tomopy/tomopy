@@ -16,6 +16,8 @@ if C_INCLUDE_PATH is None:
 else:
     C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
+use_mkl = True
+
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
 if os.name == 'nt':
@@ -23,9 +25,9 @@ if os.name == 'nt':
     if sys.version_info.major == 3:
         extra_comp_args += ['-DPY3K']
     extra_comp_args += ['-DWIN32']
-    extra_link_args += ['-lfftw3f-3']
+    extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f-3']
 else:
-    extra_link_args += ['-lfftw3f']
+    extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f']
 
 tomoc = Extension(
     name='tomopy.libtomopy',
@@ -50,7 +52,8 @@ tomoc = Extension(
         'src/sirt.c',
         'src/morph.c',
         'src/stripe.c',
-        'src/remove_ring.c'])
+        'src/remove_ring.c'],
+    define_macros=[('USE_MKL', None)] if use_mkl else [])
 
 ext_mods = [tomoc]
 
