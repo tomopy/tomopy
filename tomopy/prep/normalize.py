@@ -58,6 +58,7 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 import logging
+import concurrent.futures as cf
 import numexpr as ne
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,7 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     return out
 
 #TODO: replace roi indexes with slc object
-def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
+def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None, out=None):
     """
     Normalize raw projection data using an average of a selected window
     on projection images.
@@ -151,6 +152,8 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
         [top-left, top-right, bottom-left, bottom-right] pixel coordinates.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
+    out : ndarray, optional
+        Output array for result.  If same as arr, process will be done in-place.
 
     Returns
     -------
@@ -159,14 +162,13 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     """
     arr = dtype.as_float32(arr)
 
-    arr = mproc.distribute_jobs(
-        arr,
-        func=_normalize_roi,
-        args=(roi, ),
-        axis=0,
-        ncore=ncore,
-        nchunk=0)
-    return arr
+    mns = np.mean(arr[:, roi[0]:roi[2], roi[1]:roi[3]], axis=(1, 2))
+    bg = mns[:, np.newaxis, np.newaxis]
+
+    with mproc.set_numexpr_threads(ncore):
+        out = ne.evaluate('arr/bg', out=out, truediv=True)
+
+    return out
 
 
 def _normalize_roi(proj, roi):
@@ -176,7 +178,7 @@ def _normalize_roi(proj, roi):
         np.true_divide(proj, bg, proj)
 
 
-def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
+def normalize_bg(tomo, air=1, ncore=None, nchunk=None, out=None):
     """
     Normalize 3D tomgraphy data based on background intensity.
 
@@ -194,6 +196,8 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as tomo, process will be done in-place.
 
     Returns
     -------
@@ -202,15 +206,22 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     """
     tomo = dtype.as_float32(tomo)
     air = dtype.as_int32(air)
+    if out is None:
+        out = tomo.copy()
 
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=extern.c_normalize_bg,
-        args=(air,),
-        axis=0,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+    axis_size = out.shape[0]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_normalize_bg(out[chnks[i]:chnks[i+1]], air))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+
+    return out
 
 
 def normalize_nf(tomo, flats, dark, flat_loc,

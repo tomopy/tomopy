@@ -108,7 +108,7 @@ def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
 
     LIB_TOMOPY.normalize_bg.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.normalize_bg(
+    return (LIB_TOMOPY.normalize_bg,
         dtype.as_c_float_p(tomo),
         dtype.as_c_int(dt),
         dtype.as_c_int(dy),
@@ -119,21 +119,19 @@ def c_normalize_bg(tomo, air):
 def c_remove_stripe_sf(tomo, size):
     #TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
-    contiguous_tomo = np.require(tomo, requirements="AC")
     dx, dy, dz = tomo.shape
     istart = 0
     iend = dy
 
     LIB_TOMOPY.remove_stripe_sf.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.remove_stripe_sf(
-        dtype.as_c_float_p(contiguous_tomo),
+    return (LIB_TOMOPY.remove_stripe_sf,
+        dtype.as_c_float_p(tomo),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),
         dtype.as_c_int(dz),
         dtype.as_c_int(size),
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
-    tomo[:] = contiguous_tomo[:]
 
 
 def c_project(obj, center, tomo, theta):
@@ -156,7 +154,7 @@ def c_project(obj, center, tomo, theta):
         dy, dt, dx = tomo.shape
 
     LIB_TOMOPY.project.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project(
+    return (LIB_TOMOPY.project,
         dtype.as_c_float_p(obj),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),

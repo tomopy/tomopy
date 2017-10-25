@@ -61,6 +61,7 @@ import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import logging
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,6 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['remove_stripe_fw',
            'remove_stripe_ti',
            'remove_stripe_sf']
-
 
 def remove_stripe_fw(
         tomo, level=None, wname='db5', sigma=2,
@@ -106,16 +106,94 @@ def remove_stripe_fw(
     if level is None:
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
+    
+    tomo = dtype.as_float32(tomo)
+    
+    wname = pywt.Wavelet(wname)
+    m = pywt.Modes.from_object('symmetric')
+    def dwt(x, wname, m):
+        a, d = pywt._extensions._dwt.dwt_axis(x, wname, m, 0)
+        aa, ad = pywt._extensions._dwt.dwt_axis(a, wname, m, 1)
+        da, dd = pywt._extensions._dwt.dwt_axis(d, wname, m, 1)
+        return aa, da, ad, dd
+    
+    def idwt(aa, da, ad, dd, wname, m, out):
+        a = pywt._extensions._dwt.idwt_axis(aa, ad, wname, m, 1)
+        d = pywt._extensions._dwt.idwt_axis(da, dd, wname, m, 1)
+        return pywt._extensions._dwt.idwt_axis(a, d, wname, m, 0, output=out)
+    
+    def runlevel(cH, cV, cD, sli, oshp, wname):
+        for k in range(sli.shape[1]):
+            sli[:oshp[0], k, :oshp[1]], cH[k], cV[k], cD[k] = dwt(sli[:, k, :], wname, m)
+        
+    
+    dx, dy, dz = tomo.shape
+    nx = dx
+    if pad:
+        nx = dx + dx // 8
+    xshift = int((nx - dx) // 2)
+    
+    out = np.zeros((nx, dy, dz), dtype=np.float32)
+    out[xshift:dx+xshift] = tomo
+    
+    axis_size = out.shape[1]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    e = cf.ThreadPoolExecutor(ncore)
+    
+    cH = []
+    cV = []
+    cD = []
+    sli = out[:, 0, :]
+    slishp = np.zeros((level+1, 2), dtype=np.int)
+    slishp[0] = sli.shape
+    py, px = slishp[0]
+    for n in range(level):
+        my = pywt.dwt_coeff_len(py, wname.dec_len, m)
+        mx = pywt.dwt_coeff_len(px, wname.dec_len, m)
+        nm = np.array([my, mx])
+        nm[nm%2==1]+=1
+        slishp[n+1] = nm
+        chn = np.zeros((dy, my, mx), dtype=np.float32)
+        cvn = np.zeros((dy, my, mx), dtype=np.complex64)
+        cdn = np.zeros((dy, my, mx), dtype=np.float32)
+        y_hat = (np.arange(-my, my, 2, dtype='float32') + 1) / 2
+        damp = 1 - np.exp(-np.power(y_hat, 2) / (2 * np.power(sigma, 2)))
+        damp = np.fft.ifftshift(damp)
+        thrds = [e.submit(runlevel, 
+                chn[chnks[i]:chnks[i+1]], cvn[chnks[i]:chnks[i+1]], 
+                cdn[chnks[i]:chnks[i+1]], out[:py,chnks[i]:chnks[i+1],:px],
+                [my, mx], wname) for i in range(ncore)]
+        for t in thrds:
+            t.result()
+        plan = pyfftw.FFTW(cvn, cvn, axes=(1,), flags=('FFTW_ESTIMATE', 'FFTW_DESTROY_INPUT'), threads=ncore)
+        plan.execute()
+        cvn *= damp[np.newaxis, :, np.newaxis]
+        plan = pyfftw.FFTW(cvn, cvn, axes=(1,), flags=('FFTW_ESTIMATE', 'FFTW_DESTROY_INPUT'), direction='FFTW_BACKWARD', threads=ncore)
+        plan()
+        cH.append(chn)
+        cV.append(np.real(cvn))
+        cD.append(cdn)
+        py, px = my, mx
+    
+    def runleveli(cH, cV, cD, sli, oshp, wname):
+        for k in range(sli.shape[1]):
+             sli[:, k] = idwt(sli[:oshp[0], k, :oshp[1]], cH[k], cV[k], cD[k], wname, m)
 
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_fw,
-        args=(level, wname, sigma, pad),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+    for n in range(level)[::-1]:
+        chn = cH[n]
+        cvn = np.real(cV[n])
+        cdn = cD[n]
+        csh = chn[0].shape
+        my, mx = slishp[n]
+        thrds = [e.submit(runleveli, 
+                    chn[chnks[i]:chnks[i+1]], cvn[chnks[i]:chnks[i+1]],
+                    cdn[chnks[i]:chnks[i+1]], out[:my,chnks[i]:chnks[i+1],:mx],
+                    csh, wname) for i in range(ncore)]
+        for t in thrds:
+            t.result()
 
+    return out[xshift:dx+xshift]
 
 def _remove_stripe_fw(tomo, level, wname, sigma, pad):
     dx, dy, dz = tomo.shape
@@ -125,42 +203,48 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
     xshift = int((nx - dx) // 2)
 
     num_jobs = tomo.shape[1]
-
+    cH = []
+    cV = []
+    cD = []
+    damps = []
     for m in range(num_jobs):
         sli = np.zeros((nx, dz), dtype='float32')
         sli[xshift:dx + xshift] = tomo[:, m, :]
 
         # Wavelet decomposition.
-        cH = []
-        cV = []
-        cD = []
+
         for n in range(level):
             sli, (cHt, cVt, cDt) = pywt.dwt2(sli, wname)
-            cH.append(cHt)
-            cV.append(cVt)
-            cD.append(cDt)
-
-        # FFT transform of horizontal frequency bands.
-        for n in range(level):
-            # FFT
-            fcV = np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft(
-                cV[n], axis=0, planner_effort=phase._plan_effort(num_jobs)))
-            my, mx = fcV.shape
-
-            # Damping of ring artifact information.
-            y_hat = (np.arange(-my, my, 2, dtype='float32') + 1) / 2
-            damp = 1 - np.exp(-np.power(y_hat, 2) / (2 * np.power(sigma, 2)))
-            fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
-
-            # Inverse FFT.
-            cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
-                np.fft.ifftshift(fcV), axis=0,
-                planner_effort=phase._plan_effort(num_jobs)))
-
+            if m == 0:
+                cH.append(np.zeros((num_jobs, cHt.shape[0], cHt.shape[1]), dtype=cHt.dtype))
+                cV.append(np.zeros((num_jobs, cVt.shape[0], cVt.shape[1]), dtype=cVt.dtype))
+                cD.append(np.zeros((num_jobs, cDt.shape[0], cDt.shape[1]), dtype=cDt.dtype))
+                my, mx = cVt.shape
+                y_hat = (np.arange(-my, my, 2, dtype='float32') + 1) / 2
+                damp = 1 - np.exp(-np.power(y_hat, 2) / (2 * np.power(sigma, 2)))
+                damps.append(np.fft.ifftshift(damp))
+            k = cH[n]
+            k[m] = cHt
+            k = cV[n]
+            k[m] = cVt
+            k = cD[n]
+            k[m] = cDt
+        if m == 0:
+            slis = np.zeros((num_jobs, sli.shape[0], sli.shape[1]), dtype=sli.dtype)
+        slis[m] = sli
+    for n in range(level):
+        out = pyfftw.interfaces.numpy_fft.fft(
+                cV[n], axis=1, planner_effort='FFTW_ESTIMATE')
+        out *= damps[n][np.newaxis, :, np.newaxis]
+        cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
+                out, axis=1,
+                planner_effort='FFTW_ESTIMATE'))
+    for m in range(num_jobs):
         # Wavelet reconstruction.
+        sli = slis[m]
         for n in range(level)[::-1]:
-            sli = sli[0:cH[n].shape[0], 0:cH[n].shape[1]]
-            sli = pywt.idwt2((sli, (cH[n], cV[n], cD[n])), wname)
+            sli = sli[0:cH[n][m].shape[0], 0:cH[n][m].shape[1]]
+            sli = pywt.idwt2((sli, (cH[n][m], cV[n][m], cD[n][m])), wname)
         tomo[:, m, :] = sli[xshift:dx + xshift, 0:dz]
 
 
@@ -312,7 +396,7 @@ def _ringb(sino, m, n, step):
     return np.transpose(newsino)
 
 
-def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
+def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None, out=None):
     """
     Normalize raw projection data using a smoothing filter approach.
 
@@ -326,6 +410,8 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size for each core.
+    out : ndarray, optional
+        Output array for result.  If same as tomo, process will be done in-place.
 
     Returns
     -------
@@ -333,11 +419,22 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Corrected 3D tomographic data.
     """
     tomo = dtype.as_float32(tomo)
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=extern.c_remove_stripe_sf,
-        args=(size,),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
-    return arr
+    axis_size = tomo.shape[1]
+    ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
+
+    chnks = np.round(np.linspace(0, axis_size, ncore+1)).astype(np.int)
+    c_cont = [tomo[:, chnks[i]:chnks[i+1]].copy('C')
+                for i in range(ncore)] # Suboptimal
+    mulargs = []
+    for i in range(ncore):
+        mulargs.append(extern.c_remove_stripe_sf(c_cont[i], size))
+    e = cf.ThreadPoolExecutor(ncore)
+    thrds = [e.submit(args[0], *args[1:]) for args in mulargs]
+    for t in thrds:
+        t.result()
+
+    if out is None:
+        out = np.empty_like(tomo)
+    for i in range(ncore):
+        out[:, chnks[i]:chnks[i+1]] = c_cont[i] # Suboptimal
+    return out
