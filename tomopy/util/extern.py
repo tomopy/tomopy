@@ -68,6 +68,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
+           'c_project3',
            'c_normalize_bg',
            'c_remove_stripe_sf',
            'c_sample',
@@ -117,7 +118,7 @@ def c_normalize_bg(tomo, air):
 
 
 def c_remove_stripe_sf(tomo, size):
-    #TODO: we should fix this elsewhere...
+    # TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
     contiguous_tomo = np.require(tomo, requirements="AC")
     dx, dy, dz = tomo.shape
@@ -137,8 +138,8 @@ def c_remove_stripe_sf(tomo, size):
 
 
 def c_project(obj, center, tomo, theta):
-    #TODO: we should fix this elsewhere...
-    #TOMO object must be contiguous for c function to work
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
 
     contiguous_tomo = np.require(tomo, requirements="AC")
     if len(obj.shape) == 2:
@@ -158,6 +159,41 @@ def c_project(obj, center, tomo, theta):
     LIB_TOMOPY.project.restype = dtype.as_c_void_p()
     LIB_TOMOPY.project(
         dtype.as_c_float_p(obj),
+        dtype.as_c_int(oy),
+        dtype.as_c_int(ox),
+        dtype.as_c_int(oz),
+        dtype.as_c_float_p(contiguous_tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta))
+    tomo[:] = contiguous_tomo[:]
+
+
+def c_project2(objx, objy, center, tomo, theta):
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
+
+    contiguous_tomo = np.require(tomo, requirements="AC")
+    if len(objx.shape) == 2:
+        # no y-axis (only one slice)
+        oy = 1
+        ox, oz = objx.shape
+    else:
+        oy, ox, oz = objx.shape
+
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.project2(
+        dtype.as_c_float_p(objx),
+        dtype.as_c_float_p(objy),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
         dtype.as_c_int(oz),
@@ -227,7 +263,7 @@ def c_bart(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: I think this should be int_p
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: I think this should be int_p
 
 
 def c_fbp(tomo, center, recon, theta, **kwargs):
@@ -250,7 +286,8 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_char_p(kwargs['filter_name']),
-            dtype.as_c_float_p(kwargs['filter_par'])) # filter_par
+            dtype.as_c_float_p(kwargs['filter_par']))  # filter_par
+
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
@@ -318,7 +355,7 @@ def c_osem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
@@ -343,7 +380,7 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_float_p(kwargs['reg_par']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_ospml_quad(tomo, center, recon, theta, **kwargs):
@@ -368,7 +405,7 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_float_p(kwargs['reg_par']),
             dtype.as_c_int(kwargs['num_block']),
-            dtype.as_c_float_p(kwargs['ind_block'])) #TODO: should be int?
+            dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
 
 
 def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
