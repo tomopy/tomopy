@@ -74,14 +74,14 @@ pthread_mutex_t lock;
 #define __PRAGMA_SIMD _Pragma("simd assert")
 #define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
 #define __PRAGMA_SIMD_VECREMAINDER_VECLEN8 _Pragma("simd assert, vecremainder, vectorlength(8)")
-#define __PRAGMA_OMP_SIMD_COLLAPSE(var) _Pragma("omp simd collapse(2) private(##var)")
+#define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
 #define __PRAGMA_IVDEP _Pragma("ivdep")
 #define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
 #else
 #define __PRAGMA_SIMD
 #define __PRAGMA_SIMD_VECREMAINDER
 #define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#define __PRAGMA_OMP_SIMD_COLLAPSE(var)
+#define __PRAGMA_OMP_SIMD_COLLAPSE
 #define __PRAGMA_IVDEP
 #define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
@@ -213,7 +213,7 @@ gridrec(
         // an additional correction -- See Phase 3 below.
 
         float _Complex Cdata1, Cdata2;
-        float U, V, rtmp;
+        float U, V;
         const float L2 = (int)(C/M_PI);
         const float tblspcg = 2*ltbl/L;
 
@@ -287,9 +287,9 @@ gridrec(
                     work2[k] = wtbl[(int) roundf(fabsf(U-iu)*tblspcg)];
                 }
 
-                __PRAGMA_OMP_SIMD_COLLAPSE(rtmp)
+		__PRAGMA_OMP_SIMD_COLLAPSE
                 for (iu=iul, k2=0; iu <= iuh; iu++, k2++) {
-                    rtmp = work2[k2];
+                    const float rtmp = work2[k2];
                     for(iv=ivl, k=0; iv<=ivh; iv++, k++) {
                         const float convolv = rtmp*work[k];
                         H[iu][iv] += convolv*Cdata1;
