@@ -550,7 +550,7 @@ float _Complex**
 malloc_matrix_c(size_t nr, size_t nc)
 {
     float _Complex **m = NULL;
-    long i;
+    size_t i;
 
     // Allocate pointers to rows,
     m = (float _Complex **) malloc(nr * sizeof(float _Complex *));
