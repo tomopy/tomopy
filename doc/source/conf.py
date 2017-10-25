@@ -318,6 +318,7 @@ class Mock(object):
             return 0
         else:
             return Mock()
+    # https://docs.python.org/2/library/operator.html
     def __mul__(self, other):
         return Mock()
     def __rmul__(self, other):
@@ -333,8 +334,10 @@ class Mock(object):
     def __or__(self, other):
         return Mock()
     
+curFlags = Mock()
+   
 MOCK_MODULES = [
-    'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py', 'ctypes',
+    'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py',
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
     'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
     'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
