@@ -338,16 +338,13 @@ def _ellipsoid(params, shape=None, out=None, coords=None):
     coords = _transform(coords, params)
 
     # recast as ndarray
-    coords = [np.asarray(u) for u in coords]
-
-    # reshape coords
-    x, y, z = coords
-    x.resize(shape)
-    y.resize(shape)
-    z.resize(shape)
+    coords = np.asarray(coords)
+    np.square(coords, out=coords)
+    ellip_mask = coords.sum(axis=0) <= 1.
+    ellip_mask.resize(shape)
 
     # fill ellipsoid with value
-    out[(x ** 2 + y ** 2 + z ** 2) <= 1.] += params['A']
+    out[ ellip_mask ] += params['A']
     return out
 
 
@@ -388,13 +385,13 @@ def _transform(coords, p):
     Apply rotation, translation and rescaling to a 3-tuple of coords.
     """
     alpha = _rotation_matrix(p)
-    x, y, z = coords
-    ndim = len(coords)
-    out_coords = [sum([alpha[j, i] * coords[i] for i in range(ndim)])
-                  for j in range(ndim)]
-    M0 = [p['x0'], p['y0'], p['z0']]
-    sc = [p['a'], p['b'], p['c']]
-    out_coords = [(u - u0) / su for u, u0, su in zip(out_coords, M0, sc)]
+    out_coords = np.tensordot(alpha, coords, axes=1)
+    _shape = (3,) + (1,) * ( out_coords.ndim - 1 )
+    _dt = out_coords.dtype
+    M0 = np.array([p['x0'], p['y0'], p['z0']], dtype=_dt).reshape(_shape)
+    sc = np.array([p['a'], p['b'], p['c']], dtype=_dt).reshape(_shape)
+    out_coords -= M0
+    out_coords /= sc
     return out_coords
 
 
