@@ -146,12 +146,13 @@ def as_sharedmem(arr, copy=False):
     # create shared ctypes object with no lock
     shared_obj = mp.RawArray(ctype, arr.size)
     # create numpy array from shared object
-    #shared_arr = np.ctypeslib.as_array(shared_obj)
+    # shared_arr = np.ctypeslib.as_array(shared_obj)
     shared_arr = np.frombuffer(shared_obj, dtype=arr.dtype)
     shared_arr = np.reshape(shared_arr, arr.shape)
     # copy data to shared array
     shared_arr[:] = arr[:]
     return shared_arr
+
 
 def to_numpy_array(obj, dtype, shape):
     return np.frombuffer(obj, dtype=dtype).reshape(shape)
@@ -170,6 +171,7 @@ def is_sharedmem(arr):
     except:
         return False
 
+
 def get_shared_mem(arr):
     try:
         while isinstance(arr, np.ndarray):
@@ -177,6 +179,7 @@ def get_shared_mem(arr):
     except:
         pass
     return arr
+
 
 def is_contiguous(arr):
     return arr.flags.c_contiguous
@@ -194,5 +197,5 @@ def empty_shared_array(shape, dtype=np.float32):
     shared_obj = mp.RawArray(ctype, int(size))
     # create numpy array from shared object
     arr = np.frombuffer(shared_obj, dtype)
-    arr = arr.reshape(shape)    
+    arr = arr.reshape(shape)
     return arr

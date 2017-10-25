@@ -85,7 +85,9 @@ def minus_log(arr, ncore=None, out=None):
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
+        Output array for result. If same as arr, process
+        will be done in-place.
+
     Returns
     -------
     ndarray
@@ -115,7 +117,8 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
+        Output array for result. If same as arr,
+        process will be done in-place.
 
     Returns
     -------
@@ -137,7 +140,8 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
             ne.evaluate('where(out>cutoff,cutoff,out)', out=out)
     return out
 
-#TODO: replace roi indexes with slc object
+
+# TODO: replace roi indexes with slc object
 def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     """
     Normalize raw projection data using an average of a selected window
@@ -233,7 +237,8 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
+        Output array for result. If same as arr, process
+        will be done in-place.
 
     Returns
     -------
@@ -270,7 +275,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         # chunking the total normalization and each chunked normalization
         tstart = 0 if m == 0 else tend
         tend = total_tomo if m >= num_flats-1 \
-                          else int(np.round((flat_loc[m+1]-loc)/2)) + loc
+            else int(np.round((flat_loc[m+1]-loc)/2)) + loc
         tomo_l = tomo[tstart:tend]
         out_l = out[tstart:tend]
         with mproc.set_numexpr_threads(ncore):

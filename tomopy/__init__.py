@@ -49,6 +49,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+__version__ = '1.1.1'
+
 # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
 # to minimize chance of MKL overriding fftw functions
 import sys, os
@@ -65,13 +67,10 @@ else:
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from tomopy.io import *
-from tomopy.io.exchange import * # deprecated
-from tomopy.io.reader import *   # deprecated
-from tomopy.io.writer import *   # deprecated
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.misc.phantom import *
+from tomopy.prep.alignment import *
 from tomopy.prep.normalize import *
 from tomopy.prep.phase import *
 from tomopy.prep.stripe import *
@@ -82,9 +81,3 @@ from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
 from tomopy.util.mproc import set_debug
-
-try:
-    import pkg_resources
-    __version__ = pkg_resources.working_set.require("tomopy")[0].version
-except:
-    pass
