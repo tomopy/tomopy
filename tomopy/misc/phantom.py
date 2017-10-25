@@ -391,7 +391,7 @@ def _transform(coords, p):
     M0 = np.array([p['x0'], p['y0'], p['z0']], dtype=_dt).reshape(_shape)
     sc = np.array([p['a'], p['b'], p['c']], dtype=_dt).reshape(_shape)
     out_coords -= M0
-    out_coords /= cs
+    out_coords /= sc
     return out_coords
 
 
