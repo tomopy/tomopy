@@ -37,7 +37,7 @@ Installation
 Have `Conda <http://continuum.io/downloads>`_ installed first,  
 then open a terminal or a command prompt window and run:
 
-    conda install -c dgursoy tomopy
+    conda install -c conda-forge tomopy
     
 Contribute
 ==========
