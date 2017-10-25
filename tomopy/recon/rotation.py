@@ -155,7 +155,9 @@ def _adjust_hist_limits(tomo_ind, theta, mask, sinogram_order):
     rec = recon(tomo_ind, 
                 theta,
                 sinogram_order=sinogram_order, 
-                algorithm='gridrec')
+                algorithm=algorithm,
+                filter_name=filter_name,
+)
 
     # Apply circular mask.
     if mask is True:
@@ -191,7 +193,7 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
-        sinogram_order=sinogram_order, algorithm='gridrec')
+        sinogram_order=sinogram_order, algorithm=algorithm, filter_name=filter_name)
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
@@ -384,8 +386,8 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
 
 def write_center(
-        tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
-        mask=False, ratio=1., sinogram_order=False):
+        tomo, theta, dpath='tmp/center', cen_range=None, ind=None, 
+        mask=False, ratio=1., sinogram_order=False, algorithm='gridrec', filter_name='parzen'):
     """
     Save images reconstructed with a range of rotation centers.
 
@@ -418,7 +420,6 @@ def write_center(
     """
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
-
     if sinogram_order:
         dy, dt, dx = tomo.shape
     else:
@@ -443,7 +444,8 @@ def write_center(
                 theta, 
                 center=center, 
                 sinogram_order=True, 
-                algorithm='gridrec',
+                algorithm=algorithm,
+                filter_name=filter_name,
                 nchunk=1)
 
     # Apply circular mask.
