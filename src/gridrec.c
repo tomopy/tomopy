@@ -146,10 +146,12 @@ gridrec(
     DFTI_DESCRIPTOR_HANDLE reverse_1d;
     MKL_LONG length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
+    DftiSetValue(reverse_1d, DFTI_THREAD_LIMIT, 1); /* FFT should run sequentially to avoid oversubscription */
     DftiCommitDescriptor(reverse_1d);
     DFTI_DESCRIPTOR_HANDLE forward_2d;
     MKL_LONG length_2d[2] = {(MKL_LONG) pdim, (MKL_LONG) pdim};
     DftiCreateDescriptor(&forward_2d, DFTI_SINGLE, DFTI_COMPLEX, 2, length_2d);
+    DftiSetValue(forward_2d, DFTI_THREAD_LIMIT, 1); /* FFT should run sequentially to avoid oversubscription */
     DftiCommitDescriptor(forward_2d);
 #else
     // Set up fftw plans
