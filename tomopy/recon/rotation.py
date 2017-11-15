@@ -55,7 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy import ndimage
-import pyfftw
+from tomopy.util.misc import fft2
 import dxchange
 from scipy.optimize import minimize
 from skimage.feature import register_translation
@@ -237,9 +237,6 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
         ind = tomo.shape[1] // 2
     _tomo = tomo[:, ind, :]
 
-    # Enable cache for FFTW.
-    pyfftw.interfaces.cache.enable()
-
     # Reduce noise by smooth filters. Use different filters for coarse and fine search
     _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
     _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2))
@@ -276,15 +273,19 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     listshift = np.arange(smin, smax + 1)
     listmetric = np.zeros(len(listshift), dtype='float32')
     mask = _create_mask(2 * Nrow - 1, Ncol, 0.5 * ratio * Ncol, drop)
+    sino_sino = np.vstack((sino, _copy_sino))
+    abs_fft2_sino = np.empty_like(sino_sino)
     for i in listshift:
-        _sino = np.roll(_copy_sino, i, axis=1)
+        _sino = sino_sino[len(sino):]
+        _sino[...] = np.roll(_copy_sino, i, axis=1)
         if i >= 0:
             _sino[:, 0:i] = temp_img[:, 0:i]
         else:
             _sino[:, i:] = temp_img[:, i:]
-        listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
-            pyfftw.interfaces.numpy_fft.fft2(
-                np.vstack((sino, _sino))))) * mask)
+        fft2sino = np.fft.fftshift(fft2(sino_sino))
+        np.abs(fft2sino, out=abs_fft2_sino)
+        abs_fft2_sino *= mask
+        listmetric[i - smin] = abs_fft2_sino.sum()
     minpos = np.argmin(listmetric)
     return centerfliplr + listshift[minpos] / 2.0
 
@@ -319,7 +320,7 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
         listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
-            pyfftw.interfaces.numpy_fft.fft2(
+            fft2(
                 sinojoin[:, lefttake:righttake + 1]))) * mask)
         num1 = num1 + 1
     minpos = np.argmin(listmetric)
