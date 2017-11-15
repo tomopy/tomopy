@@ -21,6 +21,7 @@ requirements:
     - h5py
     - scipy
     - six
+    - mkl_fft
     - scikit-image
     - pywavelets
     - dxchange
