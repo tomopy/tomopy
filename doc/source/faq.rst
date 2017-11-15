@@ -124,8 +124,8 @@ The GPU algorithms are all implemented used nVidia CUDA. As a result,
 only nVidia CUDA­ enabled video cards can be used to run them.
 
 
-What is UFO
-===========
+What is UFO?
+============
 
 UFO is a general purpose image processing framework, optimized for heterogeneous
 compute systems and streams of data. Arbitrary data processing tasks are plugged
