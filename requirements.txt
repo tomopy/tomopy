@@ -4,7 +4,7 @@ numpy
 scipy
 scikit-image
 pywavelets
-pyfftw
+mkl-devel
 dxchange
 numexpr
 futures
