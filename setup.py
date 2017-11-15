@@ -16,7 +16,7 @@ if C_INCLUDE_PATH is None:
 else:
     C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
-use_mkl = True
+use_mkl = os.environ.get('DISABLE_MKL') is None
 
 extra_comp_args = ['-std=c99']
 extra_link_args = ['-lm']
