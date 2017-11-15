@@ -65,14 +65,9 @@ tomographic reconstruction algorithm, such as in the DART algorithm.
 Are there any tools for aligning projections?
 =============================================
 
-We wish we have! But currently neither TomoPy nor the ASTRA toolbox 
-currently provides any tools for automatically aligning projection
-images. Note that they might be included in TomoPy in the future. 
-There are multiple groups interested and working  on developing robust 
-methods for automatic alignment, and if they can justify their utility,
-the developed methods will be readily included in TomoPy. Also note 
-that the building blocks provided by the ASTRA toolbox could be used 
-to develop new alignment methods.
+Yes we have. Please check the 
+`Examples <http://tomopy.readthedocs.io/en/latest/demo.html#>`_ 
+section for details.
 
 
 What is ASTRA toolbox?
