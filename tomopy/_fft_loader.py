@@ -46,27 +46,44 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for internal utility functions.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-__version__ = '1.1.2'
-
-from ._fft_loader import fft_impl
-
 import logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.phantom import *
-from tomopy.prep.alignment import *
-from tomopy.prep.normalize import *
-from tomopy.prep.phase import *
-from tomopy.prep.stripe import *
-from tomopy.recon.wrappers import *
-from tomopy.recon.algorithm import *
-from tomopy.recon.rotation import *
-from tomopy.recon.acceleration import *
-from tomopy.sim.project import *
-from tomopy.sim.propagate import *
-from tomopy.util.mproc import set_debug
+logger = logging.getLogger(__name__)
+
+__author__ = "Oleksandr Pavlyk"
+__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['fft_impl']
+
+try:
+    import mkl_fft
+    fft_impl = 'mkl_fft'
+    logger.debug('FFT implementation is mkl_fft')
+except ImportError:
+    import os
+    try:
+        if os.name == 'nt':
+            import pyfftw
+        else:
+            # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
+            # to minimize chance of MKL overriding fftw functions
+            import ctypes, sys
+
+            curFlags = sys.getdlopenflags()
+            sys.setdlopenflags( curFlags | ctypes.RTLD_GLOBAL)
+            import pyfftw
+            sys.setdlopenflags(curFlags)
+            del curFlags
+        fft_impl = 'pyfftw'
+        logger.debug('FFT implementation is pyfftw')
+    except ImportError:
+        import np.fft
+        fft_impl = 'numpy.fft'
+        logger.debug('FFT implementation is numpy.fft')
