@@ -55,6 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import logging
 import warnings
+from .. import fft_impl
 
 
 
@@ -85,22 +86,8 @@ def deprecated(func, msg=None):
     return new_func
 
 
-try:
-    import mkl_fft
-    fft_impl = 'mkl_fft'
-    logger.debug('FFT implementation is mkl_fft')
-except ImportError:
-    try:
-        import pyfftw
-        fft_impl = 'pyfftw'
-        logger.debug('FFT implementation is pyfftw')
-    except ImportError:
-        import np.fft
-        fft_impl = 'numpy.fft'
-        logger.debug('FFT implementation is numpy.fft')
-
-
 if fft_impl == 'mkl_fft':
+    import mkl_fft
     def fft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
         return mkl_fft.fft(x, n=n, axis=axis, overwrite_x=overwrite_input)
 
@@ -117,6 +104,7 @@ if fft_impl == 'mkl_fft':
         return mkl_fft.ifft2(x, shape=s, axes=axes, overwrite_x=overwrite_input)
 
 elif fft_impl == 'pyfftw':
+    import pyfftw
     def _plan_effort(num_jobs):
         if not num_jobs:
             return 'FFTW_MEASURE'
@@ -149,6 +137,7 @@ elif fft_impl == 'pyfftw':
                                                  planner_effort=_plan_effort(extra_info))
 
 else:
+    import numpy as np
     def fft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
         return np.fft.fft(x, n=n, axis=axis)
 
