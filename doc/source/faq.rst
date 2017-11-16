@@ -117,3 +117,17 @@ Does ASTRA support all GPUs?
 
 The GPU algorithms are all implemented used nVidia CUDA. As a result, 
 only nVidia CUDA­ enabled video cards can be used to run them.
+
+
+What is UFO?
+============
+
+UFO is a general purpose image processing framework, optimized for heterogeneous
+compute systems and streams of data. Arbitrary data processing tasks are plugged
+together to form larger processing pipelines. These pipelines are then mapped to
+the hardware resources available at run-time, i.e. both multiple GPUs and CPUs.
+
+One specific use case that has been integrated into the TomoPy is fast
+reconstruction using the filtered backprojection and direct Fourier inversion
+methods although others for pre- and post-processing might be added in the
+future.
