@@ -65,8 +65,8 @@ install:
   - set PYTHONHOME=%MINICONDA%
   - conda config --set always_yes yes --set changeps1 no
   - conda config --add channels conda-forge 
-  - conda config --add channels intel 
   - if %PYTHON_MAJOR% == 2 conda install --yes futures nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr python # force update to python >=2.7.14 to avoid  bug with load library introduced in 2.7.13
+  - if %PYTHON_MAJOR% == 3 conda config --add channels intel 
   - if %PYTHON_MAJOR% == 3 conda install --yes nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr
   # - conda install --yes --file appveyor\\requirements.txt
   # - conda install --yes dxchnge
