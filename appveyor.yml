@@ -34,13 +34,13 @@ environment:
       PYTHON_ARCH: "64"
       MINGW_PATH: "C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64"
 
-    - MINICONDA: "C:\\Miniconda-x64"
-      C_INCLUDE_PATH: "C:\\Miniconda-x64\\Library\\include"
-      LD_LIBRARY_PTH: "C:\\Miniconda-x64\\Library\\lib"
-      PYTHON_MAJOR: "2"
-      PYTHON_VERSION: "2.7.13"
-      PYTHON_ARCH: "64"
-      MINGW_PATH: "C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64"
+#    - MINICONDA: "C:\\Miniconda-x64"
+#      C_INCLUDE_PATH: "C:\\Miniconda-x64\\Library\\include"
+#      LD_LIBRARY_PTH: "C:\\Miniconda-x64\\Library\\lib"
+#      PYTHON_MAJOR: "2"
+#      PYTHON_VERSION: "2.7.13"
+#      PYTHON_ARCH: "64"
+#      MINGW_PATH: "C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64"
 
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
