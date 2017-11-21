@@ -551,9 +551,13 @@ legendre(int n, const float *coefs, float x)
 static inline void* 
 malloc_64bytes_aligned(size_t sz)
 {
+    #ifdef __MINGW32__
+    return  __mingw_aligned_malloc(sz, 64);  
+    #else
     void *r = NULL;
     int err = posix_memalign(&r, 64, sz);
     return (err) ? NULL : r;
+    #endif
 }
 
 inline float*
@@ -619,8 +623,13 @@ malloc_matrix_c(size_t nr, size_t nc)
 inline void
 free_matrix_c(float _Complex** m)
 {
+
     free_vector_c(m[0]);
-    free(m);
+    #ifdef __MINGW32__
+        __mingw_aligned_free (m);
+    #else
+        free(m);
+    #endif
 }
 
 // No filter
