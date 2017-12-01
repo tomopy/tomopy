@@ -1,0 +1,43 @@
+language: python
+
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+
+os:
+  - linux
+#  - osx
+  
+sudo: false
+  
+env:
+  - PATH=$HOME/miniconda/bin:$PATH LD_LIBRARY_PATH=$HOME/miniconda/lib C_INCLUDE_PATH=$HOME/miniconda/include
+
+before_install:
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --add channels conda-forge
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update conda
+  - conda install anaconda-client
+
+install:
+  - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      conda install futures;
+    fi
+  - conda info -a
+  - conda list --explicit
+  - python setup.py build_ext --inplace
+
+script: 
+  - nosetests test --with-coverage
+
+after_success:
+  - coveralls
