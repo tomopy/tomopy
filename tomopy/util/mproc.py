@@ -80,6 +80,7 @@ OUTSHAPE = None
 ON_HOST = False
 DEBUG = False
 
+
 def set_debug(val=True):
     """
     Set the global DEBUG variable.
@@ -90,7 +91,8 @@ def set_debug(val=True):
     (the default value), work is distributed over different processes.
     """
     global DEBUG
-    DEBUG=val
+    DEBUG = val
+
 
 def get_ncore_nchunk(axis_size, ncore=None, nchunk=None):
     # limit chunk size to size of array along axis
@@ -159,7 +161,7 @@ def distribute_jobs(arr,
         Number of cores that will be assigned to jobs.
     nchunk : int, optional
         Chunk size to use when parallelizing data.  None will maximize the chunk
-        size for the number of cores used.  Zero will use a chunk size of one, 
+        size for the number of cores used.  Zero will use a chunk size of one,
         but will also remove the dimension from the array.
     out : ndarray, optional
         Output array.  Results of functions will be compiled into this array.
@@ -232,7 +234,7 @@ def distribute_jobs(arr,
             map_args.append((func, args, kwargs, i, axis))
 
     init_shared(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue=queue, on_host=True)
-    if ncore > 1 and DEBUG==False:
+    if ncore > 1 and DEBUG is False:
         with closing(mp.Pool(processes=ncore,
                              initializer=init_shared,
                              initargs=(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue))) as p:
@@ -270,7 +272,9 @@ def distribute_jobs(arr,
     return out
 
 
-def init_shared(shared_arrays, shared_out, intype, inshape, outtype, outshape, queue=None, on_host=False):
+def init_shared(
+        shared_arrays, shared_out, intype, inshape,
+        outtype, outshape, queue=None, on_host=False):
     global SHARED_ARRAYS
     global SHARED_OUT
     global SHARED_QUEUE
@@ -288,6 +292,7 @@ def init_shared(shared_arrays, shared_out, intype, inshape, outtype, outshape, q
     INSHAPE = inshape
     OUTSHAPE = outshape
 
+
 def clear_shared():
     global SHARED_ARRAYS
     global SHARED_OUT
@@ -299,7 +304,6 @@ def clear_shared():
     SHARED_QUEUE = None
     INTYPE = None
     OUTTYPE = None
-
 
 
 def _arg_parser(params):

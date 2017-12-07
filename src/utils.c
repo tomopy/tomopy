@@ -259,3 +259,24 @@ calc_simdata(
         simdata[index_data] += model[indi[n]+index_model]*dist[n];
     }
 }
+
+
+void 
+calc_simdata2(
+    int s, int p, int d,
+    int ry, int rz, 
+    int dt, int dx,
+    int csize, const int *indi, const float *dist,
+    float vx, float vy, 
+    const float *modelx, const float *modely, 
+    float *simdata)
+{
+    int n;
+
+    int index_model = s*ry*rz;
+    int index_data = d+p*dx+s*dt*dx;
+    for (n=0; n<csize-1; n++) 
+    {
+        simdata[index_data] += (modelx[indi[n]+index_model] * vx + modely[indi[n]+index_model] * vy) * dist[n];
+    }
+}

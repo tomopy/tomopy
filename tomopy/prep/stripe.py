@@ -55,11 +55,11 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import pywt
-import pyfftw
 import tomopy.prep.phase as phase
 import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
+from tomopy.util.misc import (fft, ifft)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -143,19 +143,16 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
         # FFT transform of horizontal frequency bands.
         for n in range(level):
             # FFT
-            fcV = np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft(
-                cV[n], axis=0, planner_effort=phase._plan_effort(num_jobs)))
+            fcV = np.fft.fftshift(fft(cV[n], axis=0, extra_info=num_jobs))
             my, mx = fcV.shape
 
             # Damping of ring artifact information.
             y_hat = (np.arange(-my, my, 2, dtype='float32') + 1) / 2
-            damp = 1 - np.exp(-np.power(y_hat, 2) / (2 * np.power(sigma, 2)))
-            fcV = np.multiply(fcV, np.transpose(np.tile(damp, (mx, 1))))
+            damp = -np.expm1(-np.square(y_hat) / (2 * np.square(sigma)))
+            fcV *= np.transpose(np.tile(damp, (mx, 1)))
 
             # Inverse FFT.
-            cV[n] = np.real(pyfftw.interfaces.numpy_fft.ifft(
-                np.fft.ifftshift(fcV), axis=0,
-                planner_effort=phase._plan_effort(num_jobs)))
+            cV[n] = np.real(ifft(np.fft.ifftshift(fcV), axis=0, extra_info=num_jobs))
 
         # Wavelet reconstruction.
         for n in range(level)[::-1]:
