@@ -65,14 +65,9 @@ tomographic reconstruction algorithm, such as in the DART algorithm.
 Are there any tools for aligning projections?
 =============================================
 
-We wish we have! But currently neither TomoPy nor the ASTRA toolbox 
-currently provides any tools for automatically aligning projection
-images. Note that they might be included in TomoPy in the future. 
-There are multiple groups interested and working  on developing robust 
-methods for automatic alignment, and if they can justify their utility,
-the developed methods will be readily included in TomoPy. Also note 
-that the building blocks provided by the ASTRA toolbox could be used 
-to develop new alignment methods.
+Yes we have. Please check the 
+`Examples <http://tomopy.readthedocs.io/en/latest/demo.html#>`_ 
+section for details.
 
 
 What is ASTRA toolbox?
@@ -122,3 +117,17 @@ Does ASTRA support all GPUs?
 
 The GPU algorithms are all implemented used nVidia CUDA. As a result, 
 only nVidia CUDA­ enabled video cards can be used to run them.
+
+
+What is UFO?
+============
+
+UFO is a general purpose image processing framework, optimized for heterogeneous
+compute systems and streams of data. Arbitrary data processing tasks are plugged
+together to form larger processing pipelines. These pipelines are then mapped to
+the hardware resources available at run-time, i.e. both multiple GPUs and CPUs.
+
+One specific use case that has been integrated into the TomoPy is fast
+reconstruction using the filtered backprojection and direct Fourier inversion
+methods although others for pre- and post-processing might be added in the
+future.

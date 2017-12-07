@@ -58,6 +58,7 @@ from tomopy.util import mproc
 
 import numpy as np
 import copy
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Daniel M. Pelt"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['astra']
+__all__ = ['astra', 'ufo_fbp', 'ufo_dfi']
 
 default_options = {
     'astra': {
@@ -119,13 +120,13 @@ def astra(tomo, center, recon, theta, **kwargs):
     """
     # Lazy import ASTRA
     import astra as astra_mod
-    
+
     # Unpack arguments
     nslices = tomo.shape[0]
     num_gridx = kwargs['num_gridx']
     num_gridy = kwargs['num_gridy']
     opts = kwargs['options']
-    
+
     # Check options
     for o in needed_options['astra']:
         if o not in opts:
@@ -134,13 +135,13 @@ def astra(tomo, center, recon, theta, **kwargs):
     for o in default_options['astra']:
         if o not in opts:
             opts[o] = default_options['astra'][o]
-    
+
     niter = opts['num_iter']
     proj_type = opts['proj_type']
 
     # Create ASTRA geometries
     vol_geom = astra_mod.create_vol_geom((num_gridx, num_gridy))
-    
+
     # Number of GPUs to use
     if proj_type == 'cuda':
         if opts['gpu_list'] is not None:
@@ -151,7 +152,7 @@ def astra(tomo, center, recon, theta, **kwargs):
             # execute recon on a thread per GPU
             with cf.ThreadPoolExecutor(ngpu) as e:
                 for gpu, slc in zip(gpu_list, slcs):
-                    e.submit(astra_rec_cuda, tomo[slc], center[slc], recon[slc], 
+                    e.submit(astra_rec_cuda, tomo[slc], center[slc], recon[slc],
                              theta, vol_geom, niter, proj_type, gpu, opts)
         else:
             astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter,
@@ -167,7 +168,7 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
     nslices, nang, ndet = tomo.shape
     cfg = astra_mod.astra_dict(opts['method'])
     if 'extra_options' in opts:
-        #NOTE: we are modifying 'extra_options' and so need to make a copy       
+        # NOTE: we are modifying 'extra_options' and so need to make a copy
         cfg['option'] = copy.deepcopy(opts['extra_options'])
     else:
         cfg['option'] = {}
@@ -231,3 +232,115 @@ def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
         astra_mod.data2d.delete(vid)
     astra_mod.data2d.delete(sid)
     astra_mod.projector.delete(pid)
+
+
+def _process_data(input_task, output_task, sinograms, slices):
+    import ufo.numpy as unp
+    num_sinograms, num_projections, width = sinograms.shape
+
+    for i in range(num_sinograms):
+        if i == 0:
+            data = unp.empty_like(sinograms[i,:,:])
+        else:
+            data = input_task.get_input_buffer()
+
+        # Set host array pointer and use that as first input
+        data.set_host_array(sinograms[i,:,:].__array_interface__['data'][0], False)
+        input_task.release_input_buffer(data)
+
+        # Get last output and copy result back into NumPy buffer
+        data = output_task.get_output_buffer()
+        array = unp.asarray(data)
+        frm = int(array.shape[0] / 2 - width / 2)
+        to = int(array.shape[0] / 2 + width / 2)
+        slices[i,:,:] = array[frm:to, frm:to]
+        output_task.release_output_buffer(data)
+
+    input_task.stop()
+
+
+def ufo_fbp(tomo, center, recon, theta, **kwargs):
+    """
+    Reconstruct object using UFO's FBP pipeline
+    """
+    import gi
+    gi.require_version('Ufo', '0.0')
+    from gi.repository import Ufo
+
+    width = tomo.shape[2]
+    theta = theta[1] - theta[0]
+    center = center[0]
+
+    g = Ufo.TaskGraph()
+    pm = Ufo.PluginManager()
+    sched = Ufo.Scheduler()
+
+    input_task = Ufo.InputTask()
+    output_task = Ufo.OutputTask()
+    fft = pm.get_task('fft')
+    ifft = pm.get_task('ifft')
+    fltr = pm.get_task('filter')
+    backproject = pm.get_task('backproject')
+
+    ifft.set_properties(crop_width=width)
+    backproject.set_properties(axis_pos=center, angle_step=theta, angle_offset=np.pi)
+
+    g.connect_nodes(input_task, fft)
+    g.connect_nodes(fft, fltr)
+    g.connect_nodes(fltr, ifft)
+    g.connect_nodes(ifft, backproject)
+    g.connect_nodes(backproject, output_task)
+
+    args = (input_task, output_task, tomo, recon)
+    thread = threading.Thread(target=_process_data, args=args)
+    thread.start()
+    sched.run(g)
+    thread.join()
+
+    logger.info("UFO+FBP run time: {}s".format(sched.props.time))
+
+
+def ufo_dfi(tomo, center, recon, theta, **kwargs):
+    """
+    Reconstruct object using UFO's Direct Fourier pipeline
+    """
+    import gi
+    gi.require_version('Ufo', '0.0')
+    from gi.repository import Ufo
+
+    theta = theta[1] - theta[0]
+    center = center[0]
+
+    g = Ufo.TaskGraph()
+    pm = Ufo.PluginManager()
+    sched = Ufo.Scheduler()
+
+    input_task = Ufo.InputTask()
+    output_task = Ufo.OutputTask()
+    pad = pm.get_task('zeropad')
+    fft = pm.get_task('fft')
+    ifft = pm.get_task('ifft')
+    dfi = pm.get_task('dfi-sinc')
+    swap_forward = pm.get_task('swap-quadrants')
+    swap_backward = pm.get_task('swap-quadrants')
+
+    pad.set_properties(oversampling=1, center_of_rotation=center)
+    fft.set_properties(dimensions=1, auto_zeropadding=False)
+    ifft.set_properties(dimensions=2)
+    dfi.set_properties(angle_step=theta)
+
+    g.connect_nodes(input_task, pad)
+    g.connect_nodes(pad, fft)
+    g.connect_nodes(fft, dfi)
+    g.connect_nodes(dfi, swap_forward)
+    g.connect_nodes(swap_forward, ifft)
+    g.connect_nodes(ifft, swap_backward)
+    g.connect_nodes(swap_backward, output_task)
+
+    args = (input_task, output_task, tomo, recon)
+    thread = threading.Thread(target=_process_data, args=args)
+    thread.start()
+    sched.run(g)
+    thread.join()
+
+    logger.info("UFO+DFI run time: {}s".format(sched.props.time))

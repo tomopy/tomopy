@@ -1,11 +1,7 @@
-python
 six
 numpy
 scipy
 scikit-image
 pywavelets
-mkl
-mkl_fft
 dxchange
 numexpr
-futures

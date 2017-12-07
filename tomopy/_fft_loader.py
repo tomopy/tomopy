@@ -46,5 +46,44 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for internal utility functions.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+__author__ = "Oleksandr Pavlyk"
+__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['fft_impl']
+
+try:
+    import mkl_fft
+    fft_impl = 'mkl_fft'
+    logger.debug('FFT implementation is mkl_fft')
+except ImportError:
+    import os
+    try:
+        if os.name == 'nt':
+            import pyfftw
+        else:
+            # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
+            # to minimize chance of MKL overriding fftw functions
+            import ctypes, sys
+
+            curFlags = sys.getdlopenflags()
+            sys.setdlopenflags( curFlags | ctypes.RTLD_GLOBAL)
+            import pyfftw
+            sys.setdlopenflags(curFlags)
+            del curFlags
+        fft_impl = 'pyfftw'
+        logger.debug('FFT implementation is pyfftw')
+    except ImportError:
+        import np.fft
+        fft_impl = 'numpy.fft'
+        logger.debug('FFT implementation is numpy.fft')
