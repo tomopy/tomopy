@@ -55,7 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy import ndimage
-import pyfftw
+from tomopy.util.misc import fft2
 import dxchange
 from scipy.optimize import minimize
 from skimage.feature import register_translation
@@ -111,7 +111,7 @@ def find_center(
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
     sinogram_order: bool, optional
-        Determins whether data is a stack of sinograms (True, y-axis first axis) 
+        Determins whether data is a stack of sinograms (True, y-axis first axis)
         or a stack of radiographs (False, theta first axis).
 
     Returns
@@ -125,7 +125,7 @@ def find_center(
     if sinogram_order:
         dy, dt, dx = tomo.shape
     else:
-        dt, dy, dx = tomo.shape    
+        dt, dy, dx = tomo.shape
 
     if ind is None:
         ind = dy // 2
@@ -152,9 +152,9 @@ def find_center(
 
 def _adjust_hist_limits(tomo_ind, theta, mask, sinogram_order):
     # Make an initial reconstruction to adjust histogram limits.
-    rec = recon(tomo_ind, 
+    rec = recon(tomo_ind,
                 theta,
-                sinogram_order=sinogram_order, 
+                sinogram_order=sinogram_order,
                 algorithm='gridrec')
 
     # Apply circular mask.
@@ -182,7 +182,7 @@ def _adjust_hist_max(val):
 
 
 def _find_center_cost(
-        center, tomo_ind, theta, hmin, hmax, mask, ratio, 
+        center, tomo_ind, theta, hmin, hmax, mask, ratio,
         sinogram_order=False):
     """
     Cost function used for the ``find_center`` routine.
@@ -199,7 +199,7 @@ def _find_center_cost(
     hist, e = np.histogram(rec, bins=64, range=[hmin, hmax])
     hist = hist.astype('float32') / rec.size + 1e-12
     val = -np.dot(hist, np.log2(hist))
-    logger.info("Function value = %f"%val)    
+    logger.info("Function value = %f" % val)
     return val
 
 
@@ -237,10 +237,7 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
         ind = tomo.shape[1] // 2
     _tomo = tomo[:, ind, :]
 
-    # Enable cache for FFTW.
-    pyfftw.interfaces.cache.enable()
-
-    # Reduce noise by smooth filters. Use different filters for coarse and fine search 
+    # Reduce noise by smooth filters. Use different filters for coarse and fine search
     _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
     _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2))
 
@@ -276,15 +273,19 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     listshift = np.arange(smin, smax + 1)
     listmetric = np.zeros(len(listshift), dtype='float32')
     mask = _create_mask(2 * Nrow - 1, Ncol, 0.5 * ratio * Ncol, drop)
+    sino_sino = np.vstack((sino, _copy_sino))
+    abs_fft2_sino = np.empty_like(sino_sino)
     for i in listshift:
-        _sino = np.roll(_copy_sino, i, axis=1)
+        _sino = sino_sino[len(sino):]
+        _sino[...] = np.roll(_copy_sino, i, axis=1)
         if i >= 0:
             _sino[:, 0:i] = temp_img[:, 0:i]
         else:
             _sino[:, i:] = temp_img[:, i:]
-        listmetric[i - smin] = np.sum(np.abs(np.fft.fftshift(
-            pyfftw.interfaces.numpy_fft.fft2(
-                np.vstack((sino, _sino))))) * mask)
+        fft2sino = np.fft.fftshift(fft2(sino_sino))
+        np.abs(fft2sino, out=abs_fft2_sino)
+        abs_fft2_sino *= mask
+        listmetric[i - smin] = abs_fft2_sino.sum()
     minpos = np.argmin(listmetric)
     return centerfliplr + listshift[minpos] / 2.0
 
@@ -311,15 +312,15 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     listshift = np.linspace(-srad, srad, num=numshift)
     listmetric = np.zeros(len(listshift), dtype='float32')
     factor1 = np.mean(sino[-1, lefttake:righttake])
-    factor2 = np.mean(_copy_sino[0,lefttake:righttake])
-    _copy_sino = _copy_sino * factor1 / factor2    
+    factor2 = np.mean(_copy_sino[0, lefttake:righttake])
+    _copy_sino = _copy_sino * factor1 / factor2
     num1 = 0
     for i in listshift:
         _sino = ndimage.interpolation.shift(
             _copy_sino, (0, i), prefilter=False)
         sinojoin = np.vstack((sino, _sino))
         listmetric[num1] = np.sum(np.abs(np.fft.fftshift(
-            pyfftw.interfaces.numpy_fft.fft2(
+            fft2(
                 sinojoin[:, lefttake:righttake + 1]))) * mask)
         num1 = num1 + 1
     minpos = np.argmin(listmetric)
@@ -340,7 +341,7 @@ def _create_mask(nrow, ncol, radius, drop):
     if drop < centerrow:
         mask[centerrow - drop:centerrow + drop + 1,
              :] = np.zeros((2 * drop + 1, ncol), dtype='float32')
-    mask[:,centercol-1:centercol+2] = np.zeros((nrow, 3), dtype='float32')
+    mask[:, centercol-1:centercol+2] = np.zeros((nrow, 3), dtype='float32')
     return mask
 
 
@@ -413,8 +414,8 @@ def write_center(
         The ratio of the radius of the circular mask to the edge of the
         reconstructed image.
     sinogram_order: bool, optional
-        Determins whether data is a stack of sinograms (True, y-axis first axis) 
-        or a stack of radiographs (False, theta first axis).        
+        Determins whether data is a stack of sinograms (True, y-axis first axis)
+        or a stack of radiographs (False, theta first axis).
     """
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
@@ -431,7 +432,7 @@ def write_center(
         center = np.arange(*cen_range)
 
     stack = dtype.empty_shared_array((len(center), dt, dx))
-        
+
     for m in range(center.size):
         if sinogram_order:
             stack[m] = tomo[ind]
@@ -439,10 +440,10 @@ def write_center(
             stack[m] = tomo[:, ind, :]
 
     # Reconstruct the same slice with a range of centers.
-    rec = recon(stack, 
-                theta, 
-                center=center, 
-                sinogram_order=True, 
+    rec = recon(stack,
+                theta,
+                center=center,
+                sinogram_order=True,
                 algorithm='gridrec',
                 nchunk=1)
 

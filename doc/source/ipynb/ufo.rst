@@ -14,13 +14,8 @@ reconstruction algorithms.
 Install
 `TomoPy <http://tomopy.readthedocs.io/en/latest/install.html>`__,
 `ufo-core <http://ufo-core.readthedocs.io/en/latest/>`__ and
-`ufo-filters <http://ufo-filters.readthedocs.io/en/master/>`__ and
-import TomoPy and the TomoPy wrapper for UFO:
-
-.. code:: python
-
-    import tomopy
-    import ufo.tomopy
+`ufo-filters <http://ufo-filters.readthedocs.io/en/master/>`__. Make sure to
+install the Python Numpy interfaces in the ``python`` subdirectory of ufo-core.
 
 `DXchange <http://dxchange.readthedocs.io>`__ is installed with tomopy
 to provide support for tomographic data loading. Various data format
@@ -108,7 +103,7 @@ than 1 will crash the reconstruction.
 
 .. code:: python
 
-    recon = tomopy.recon(proj, theta, center=center, algorithm=ufo.tomopy.fbp, ncore=1)
+    recon = tomopy.recon(proj, theta, center=center, algorithm=ufo_fbp, ncore=1)
 
 Mask each reconstructed slice with a circle.
 
@@ -120,7 +115,6 @@ Mask each reconstructed slice with a circle.
 
     plt.imshow(recon[0, :,:], cmap='Greys_r')
     plt.show()
-
 
 
 .. image:: ufo_files/ufo_26_0.png

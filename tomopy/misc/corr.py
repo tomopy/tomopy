@@ -190,6 +190,7 @@ def median_filter(arr, size=3, axis=0, ncore=None):
                      output=out[slc])
     return out
 
+
 def median_filter_cuda(arr, size=3, axis=0):
     """
     Apply median filter to 3D array along 0 axis with GPU support.
@@ -234,7 +235,8 @@ def median_filter_cuda(arr, size=3, axis=0):
             imsizey = arr.shape[1]
 
             filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
-            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
+            out = np.zeros(
+                shape=(prjsize, imsizey, imsizex), dtype=np.float32)
 
             for step in range(prjsize):
                 # im_noisecu = arr[:][step][:].astype(np.float32)
@@ -260,6 +262,7 @@ def median_filter_cuda(arr, size=3, axis=0):
         out = median_filter(arr, size, axis)
 
     return out
+
 
 def sobel_filter(arr, axis=0, ncore=None):
     """
@@ -348,8 +351,8 @@ def remove_neg(arr, val=0., ncore=None):
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
-    Remove high intensity bright spots from a N-dimensional array by chunking 
-    along the specified dimension, and performing (N-1)-dimensional median 
+    Remove high intensity bright spots from a N-dimensional array by chunking
+    along the specified dimension, and performing (N-1)-dimensional median
     filtering along the other dimensions.
 
     Parameters
@@ -366,8 +369,8 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
-
+        Output array for result. If same as arr, process
+        will be done in-place.
 
     Returns
     -------
@@ -380,7 +383,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     tmp = np.empty_like(arr)
 
     ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
-    
+
     filt_size = [size]*arr.ndim
     filt_size[axis] = 1
 
@@ -395,6 +398,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
 
     return out
+
 
 def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     """
@@ -415,8 +419,8 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
-
+        Output array for result. If same as arr, process
+        will be done in-place.
 
     Returns
     -------
@@ -431,10 +435,11 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     other_axes = [i for i in range(arr.ndim) if i != axis]
     largest = np.argmax([arr.shape[i] for i in other_axes])
     lar_axis = other_axes[largest]
-    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[lar_axis], ncore=ncore)
+    ncore, chnk_slices = mproc.get_ncore_slices(
+        arr.shape[lar_axis], ncore=ncore)
     filt_size = [1]*arr.ndim
     filt_size[axis] = size
-    
+
     with cf.ThreadPoolExecutor(ncore) as e:
         slc = [slice(None)]*arr.ndim
         for i in range(ncore):
@@ -446,6 +451,7 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
 
     return out
+
 
 def remove_outlier_cuda(arr, dif, size=3, axis=0):
     """
@@ -524,6 +530,7 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
 
     return out
 
+
 def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
                 thresh_max=300.0, thresh_min=-100.0, theta_min=30,
                 rwidth=30, int_mode='WRAP', ncore=None, nchunk=None, out=None):
@@ -557,7 +564,8 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     nchunk : int, optional
         Chunk size for each core.
     out : ndarray, optional
-        Output array for result.  If same as arr, process will be done in-place.
+        Output array for result. If same as arr, process
+        will be done in-place.
 
     Returns
     -------
@@ -579,9 +587,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     if center_y is None:
         center_y = (dy - 1.0)/2.0
 
-    if int_mode.lower()=='wrap':
+    if int_mode.lower() == 'wrap':
         int_mode = 0
-    elif int_mode.lower()=='reflect':
+    elif int_mode.lower() == 'reflect':
         int_mode = 1
     else:
         raise ValueError("int_mode should be WRAP or REFLECT")
@@ -594,7 +602,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     with cf.ThreadPoolExecutor(ncore) as e:
         for offset in range(0, axis_size, nchunk):
             slc = np.s_[offset:offset+nchunk]
-            e.submit(extern.c_remove_ring, out[slc], *args)    
+            e.submit(extern.c_remove_ring, out[slc], *args)
     return out
 
 
