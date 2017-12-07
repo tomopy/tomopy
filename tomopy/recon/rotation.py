@@ -418,6 +418,64 @@ def write_center(
     sinogram_order: bool, optional
         Determins whether data is a stack of sinograms (True, y-axis first axis)
         or a stack of radiographs (False, theta first axis).
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'bart'
+            Block algebraic reconstruction technique.
+        'fbp'
+            Filtered back-projection algorithm.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'osem'
+            Ordered-subset expectation maximization algorithm
+            :cite:`Hudson:94`.
+        'ospml_hybrid'
+            Ordered-subset penalized maximum likelihood algorithm with
+            weighted linear and quadratic penalties.
+        'ospml_quad'
+            Ordered-subset penalized maximum likelihood algorithm with
+            quadratic penalties.
+        'pml_hybrid'
+            Penalized maximum likelihood algorithm with weighted linear
+            and quadratic penalties :cite:`Chang:04`.
+        'pml_quad'
+            Penalized maximum likelihood algorithm with quadratic penalty.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+    filter_name : str, optional
+        Name of the filter for analytic reconstruction.
+
+        'none'
+            No filter.
+        'shepp'
+            Shepp-Logan filter (default).
+        'cosine'
+            Cosine filter.
+        'hann'
+            Cosine filter.
+        'hamming'
+            Hamming filter.
+        'ramlak'
+            Ram-Lak filter.
+        'parzen'
+            Parzen filter.
+        'butterworth'
+            Butterworth filter.
+        'custom'
+            A numpy array of size `next_power_of_2(num_detector_columns)/2`
+            specifying a custom filter in Fourier domain. The first element
+            of the filter should be the zero-frequency component.
+        'custom2d'
+            A numpy array of size `num_projections*next_power_of_2(num_detector_columns)/2`
+            specifying a custom angle-dependent filter in Fourier domain. The first element
+            of each filter should be the zero-frequency component.
     """
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
