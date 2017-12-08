@@ -388,7 +388,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
 
 def write_center(
         tomo, theta, dpath='tmp/center', cen_range=None, ind=None,
-        mask=False, ratio=1., sinogram_order=False, algorithm='gridrec', filter_name='parzen'):
+        mask=False, ratio=1., sinogram_order=False, algorithm='gridrec', filter_name='shepp'):
     """
     Save images reconstructed with a range of rotation centers.
 
