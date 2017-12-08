@@ -155,9 +155,7 @@ def _adjust_hist_limits(tomo_ind, theta, mask, sinogram_order):
     rec = recon(tomo_ind,
                 theta,
                 sinogram_order=sinogram_order,
-                algorithm='gridrec',
-                filter_name=filter_name
-                )
+                algorithm='gridrec')
 
     # Apply circular mask.
     if mask is True:
@@ -193,7 +191,8 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
-        sinogram_order=sinogram_order, algorithm='gridrec', filter_name=filter_name)
+        sinogram_order=sinogram_order, 
+        algorithm='gridrec')
 
     if mask is True:
         rec = circ_mask(rec, axis=0)
