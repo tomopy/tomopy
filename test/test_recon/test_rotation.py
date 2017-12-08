@@ -72,7 +72,8 @@ class CenterFindingTestCase(unittest.TestCase):
         write_center(
             read_file('proj.npy'),
             read_file('angle.npy'),
-            dpath, cen_range=cen_range)
+            dpath, cen_range=cen_range,
+            algorithm='gridrec', filter_name='shepp')
         for m in range(cen.size):
             assert_equals(
                 os.path.isfile(
