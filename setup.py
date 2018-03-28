@@ -32,7 +32,8 @@ if os.name == 'nt':
     from distutils import cygwinccompiler
     def get_msvcr140_hack():
         return ['vcruntime140']
-    cygwinccompiler.get_msvcr = get_msvcr140_hack
+    if sys.version_info[0] == 3:
+        cygwinccompiler.get_msvcr = get_msvcr140_hack
 
     extra_comp_args = []
     if sys.version_info.major == 3:
@@ -49,14 +50,18 @@ if os.name == 'nt':
     for envar in ('MINICONDA', 'PYTHONHOME'):
         if envar in os.environ:
             base = os.environ[envar]
-    mkl_pkgdir = None		
+    mkl_libdir = None
+   
     for pkg in os.listdir(os.path.join(base, "pkgs")):
-        fullname = os.path.join(base, pkg)
+        fullname = os.path.join(base, 'pkgs', pkg)
         if os.path.isdir(fullname) and pkg.startswith("mkl-20"):
-            mkl_pkgdir = fullname
-    if use_mkl and mkl_pkgdir is not None:
-        LD_LIBRARY_PATH.append(os.path.join(mkl_pkgdir, "Library", "lib"))
-
+            _ldir = os.path.join(fullname, "Library", "lib")
+            if os.path.isdir(_ldir) and 'mkl_rt.lib' in os.listdir(_ldir):
+                 mkl_libdir = _ldir
+			
+    if use_mkl and mkl_libdir is not None:
+        LD_LIBRARY_PATH.append(mkl_libdir)
+		
 else:
     extra_comp_args = ['-std=c99']
     extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f']
