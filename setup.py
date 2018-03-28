@@ -1,18 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-
-if os.name == 'nt':
-    # this is needed to trick the mingw compiler to link against msvcr100 instead of a non-existent msvcr140.
-    # when mingw will support UCRT, this code block will no longer be needed 
-    import sys
-    msc_pos = sys.version.find('MSC v.')
-    if msc_pos != -1:
-        msc_ver = sys.version[msc_pos+6:msc_pos+10]
-        if int(msc_ver) >= 1900:
-            sys.version = "".join([sys.version[:msc_pos+6], "1600",sys.version[msc_pos+10:]])
-
-
+import sys
 from setuptools import setup, Extension, find_packages
 
 # Get shared library locations.
@@ -34,24 +23,39 @@ else:
     else:
         C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
-print(C_INCLUDE_PATH)
 use_mkl = os.environ.get('DISABLE_MKL') is None
 
-
-
 extra_link_args = ['-lm']
+C_INCLUDE_PATH.append(os.path.join(sys.prefix, 'include'))
+LD_LIBRARY_PATH.append(os.path.join(sys.prefix, 'Library'))
 if os.name == 'nt':
-    import sys
+    from distutils import cygwinccompiler
+    def get_msvcr140_hack():
+        return ['vcruntime140']
+    cygwinccompiler.get_msvcr = get_msvcr140_hack
+
     extra_comp_args = []
     if sys.version_info.major == 3:
         extra_comp_args += ['-DPY3K']
     extra_comp_args += ['-DWIN32']
     extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f-3']
+     
+    C_INCLUDE_PATH.append(os.path.join(sys.prefix, 'Library', 'include'))
+    LD_LIBRARY_PATH.append(os.path.join(sys.prefix, 'Library', 'bin'))
 
-    # intel mkl .lib are not copied to %PYTHONHOME%\Library\lib. we need to add it to our link paths
-    base = os.path.join(os.environ.get("PYTHONHOME", os.environ.get("MINICONDA")), "pkgs")
-    last = [i for i in os.listdir(base) if i.startswith("mkl-20") and os.path.isdir(os.path.join(base, i))]
-    LD_LIBRARY_PATH.append(os.path.join(base, last[-1], "Library", "lib"))
+    # intel mkl .lib are not copied to %sys.prefix%\Library\lib. 
+    # we need to add link paths to these in the package directory
+    base = sys.prefix
+    for envar in ('MINICONDA', 'PYTHONHOME'):
+        if envar in os.environ:
+            base = os.environ[envar]
+    mkl_pkgdir = None		
+    for pkg in os.listdir(os.path.join(base, "pkgs")):
+        fullname = os.path.join(base, pkg)
+        if os.path.isdir(fullname) and pkg.startswith("mkl-20"):
+            mkl_pkgdir = fullname
+    if use_mkl and mkl_pkgdir is not None:
+        LD_LIBRARY_PATH.append(os.path.join(mkl_pkgdir, "Library", "lib"))
 
 else:
     extra_comp_args = ['-std=c99']
