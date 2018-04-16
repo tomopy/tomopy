@@ -66,6 +66,7 @@ from tomopy.prep.stripe import *
 from tomopy.recon.wrappers import *
 from tomopy.recon.algorithm import *
 from tomopy.recon.rotation import *
+from tomopy.recon.vector import *
 from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
