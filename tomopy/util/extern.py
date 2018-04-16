@@ -68,6 +68,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_shared_lib',
            'c_project',
+           'c_project2',
            'c_project3',
            'c_normalize_bg',
            'c_remove_stripe_sf',
@@ -83,6 +84,9 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
+           'c_vector',
+           'c_vector2',
+           'c_vector3',
            'c_remove_ring']
 
 
@@ -171,7 +175,42 @@ def c_project(obj, center, tomo, theta):
     tomo[:] = contiguous_tomo[:]
 
 
-def c_project2(objx, objy, center, tomo, theta):
+def c_project2(obj, center, tomo, theta, axis):
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
+
+    contiguous_tomo = np.require(tomo, requirements="AC")
+    if len(obj.shape) == 2:
+        # no y-axis (only one slice)
+        oy = 1
+        ox, oz = obj.shape
+    else:
+        oy, ox, oz = obj.shape
+
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.project2(
+        dtype.as_c_float_p(obj),
+        dtype.as_c_int(oy),
+        dtype.as_c_int(ox),
+        dtype.as_c_int(oz),
+        dtype.as_c_float_p(contiguous_tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
+        dtype.as_c_int(axis))
+    tomo[:] = contiguous_tomo[:]
+
+
+def c_project3(objx, objy, objz, center, tomo, theta, axis):
     # TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
 
@@ -190,10 +229,11 @@ def c_project2(objx, objy, center, tomo, theta):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project2(
+    LIB_TOMOPY.project3.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.project3(
         dtype.as_c_float_p(objx),
         dtype.as_c_float_p(objy),
+        dtype.as_c_float_p(objz),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
         dtype.as_c_int(oz),
@@ -202,7 +242,8 @@ def c_project2(objx, objy, center, tomo, theta):
         dtype.as_c_int(dt),
         dtype.as_c_int(dx),
         dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta))
+        dtype.as_c_float_p(theta),
+        dtype.as_c_int(axis))
     tomo[:] = contiguous_tomo[:]
 
 
@@ -474,6 +515,92 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
+
+
+def c_vector(tomo, center, recon, theta, axis, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.vector.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.vector(
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(axis))
+
+
+def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3, theta1, theta2, axis1, axis2, **kwargs):
+    if len(tomo1.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo1.shape
+    else:
+        dy, dt, dx = tomo1.shape
+
+    LIB_TOMOPY.vector2.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.vector2(
+            dtype.as_c_float_p(tomo1),
+            dtype.as_c_float_p(tomo2),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center1),
+            dtype.as_c_float_p(center2),
+            dtype.as_c_float_p(theta1),
+            dtype.as_c_float_p(theta2),
+            dtype.as_c_float_p(recon1),
+            dtype.as_c_float_p(recon2),
+            dtype.as_c_float_p(recon3),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(axis1),
+            dtype.as_c_int(axis2))
+
+
+def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1, recon2, recon3, theta1, theta2, theta3, axis1, axis2, axis3, **kwargs):
+    if len(tomo1.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo1.shape
+    else:
+        dy, dt, dx = tomo1.shape
+
+    LIB_TOMOPY.vector3.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.vector3(
+            dtype.as_c_float_p(tomo1),
+            dtype.as_c_float_p(tomo2),
+            dtype.as_c_float_p(tomo3),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center1),
+            dtype.as_c_float_p(center2),
+            dtype.as_c_float_p(center3),
+            dtype.as_c_float_p(theta1),
+            dtype.as_c_float_p(theta2),
+            dtype.as_c_float_p(theta3),
+            dtype.as_c_float_p(recon1),
+            dtype.as_c_float_p(recon2),
+            dtype.as_c_float_p(recon3),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(axis1),
+            dtype.as_c_int(axis2),
+            dtype.as_c_int(axis3))
+
 
 
 def c_remove_ring(rec, *args):
