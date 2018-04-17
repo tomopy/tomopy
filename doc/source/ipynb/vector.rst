@@ -6,20 +6,6 @@ The vector reconstruction algorithm can be used for instance, to reconstruct the
 Here is an example on how to use the vector reconstruction algorithm :cite:`Phatak:15` :cite:`Hierro-Rodriguez:18`
 with `TomoPy <http://tomopy.readthedocs.io/en/latest/>`__:cite:`Gursoy:14a`.  
 
-Three jupyter notebooks with examples as well as with some mathematical concepts related to the vector reconstruction,
-can be found in the tomopy/doc/demo folder:
-vectorrec_1.ipynb
-vectorrec_disk.ipynb
-vector_heterostructure.ipynb
-
-The Vector Reconstruction examples html slides can be build by applying (from the doc/demo folder) the following commands:
-
-``jupyter-nbconvert --to slides --post serve vectorrec_1.ipynb``
-
-``jupyter-nbconvert --to slides --post serve vectorrec_disk.ipynb``
-
-``jupyter-nbconvert --to slides --post serve vector_heterostructure.ipynb``
-
 
 **From a reconstructed 3D object to its projections and back**
 
@@ -149,4 +135,26 @@ Comparison of the third magnetization vector component against the input data ob
 
 
 
+**Other examples**
+
+Three jupyter notebooks with examples as well as with some mathematical concepts related to the vector reconstruction,
+can be found in the tomopy/doc/demo folder:
+
+Examples using vector3: input data projections from 3 orthogonal tilt angles:
+
+* vectorrec_1.ipynb
+
+* vectorrec_disk.ipynb
+
+Example using vector2: input data projections from 2 orthogonal tilt angles:
+
+* vector_heterostructure.ipynb
+
+The Vector Reconstruction examples html slides can be build by applying (from the doc/demo folder) the following commands:
+
+``jupyter-nbconvert --to slides --post serve vectorrec_1.ipynb``
+
+``jupyter-nbconvert --to slides --post serve vectorrec_disk.ipynb``
+
+``jupyter-nbconvert --to slides --post serve vector_heterostructure.ipynb``
 
