@@ -232,17 +232,16 @@ vector2(
     float mov, xi, yi;
     int asize, bsize, csize;
     float *simdata;
-    float upd1, upd2;
+    float upd;
     int ind_data;
     float srcx, srcy, detx, dety, dv, vx, vy;
-    float *sum_dist1, *sum_dist2;
-    float sum_dist21, sum_dist22;
+    float *sum_dist;
+    float sum_dist2;
     float *update1, *update2;
 
     for (i=0; i<num_iter; i++)
     {
         printf ("iter=%d\n", i);
-
 
         simdata = (float *)calloc((dt*dy*dx), sizeof(float));
 
@@ -252,8 +251,7 @@ vector2(
             preprocessing(ngridx, ngridy, dx, center1[s], 
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            sum_dist1 = (float *)calloc((ngridx*ngridy), sizeof(float));
-            sum_dist2 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
             update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
             
@@ -314,35 +312,22 @@ vector2(
                         simdata); // Output: simdata
 
                     // Calculate dist*dist
-                    sum_dist21 = 0.0;
-                    sum_dist22 = 0.0;
+                    sum_dist2 = 0.0;
                     for (n=0; n<csize-1; n++)
                     {
-                        sum_dist21 += dist[n]*dist[n];
-                        sum_dist22 += dist[n]*dist[n];
-                        sum_dist1[indy[n] + indx[n]*ngridy] += dist[n];
-                        sum_dist2[indy[n] + indx[n]*ngridy] += dist[n];
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indy[n] + indx[n]*ngridy] += dist[n];
                     }
 
                     // Update
-                    if (sum_dist21 != 0.0)
+                    if (sum_dist2 != 0.0)
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
-                        upd1 = (data1[ind_data]-simdata[ind_data])/sum_dist21;
+                        upd = (data1[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update1[indy[n] + indx[n]*ngridy] += upd1*dist[n]*vx;
-                        }
-                    }
-                    if (sum_dist22 != 0.0)
-                    {
-                        // ind_data = d + p*dx + s*dt*dx;
-                        ind_data = d + p*dx + s*dt*dx;
-                        upd2 = (data1[ind_data]-simdata[ind_data])/sum_dist22;
-                        for (n=0; n<csize-1; n++)
-                        {
-                            update2[indy[n] + indx[n]*ngridy] += upd2*dist[n]*vy;
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
                         }
                     }
                 }
@@ -350,19 +335,15 @@ vector2(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (sum_dist1[n + m*ngridy] != 0.0)
+                    if (sum_dist[n + m*ngridy] != 0.0)
                     {
-                        recon2[s + m*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist1[n + m*ngridy];
-                    }
-                    if (sum_dist2[n + m*ngridy] != 0.0)
-                    {
-                        recon3[s + m*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist2[n + m*ngridy];
+                        recon2[s + m*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                        recon3[s + m*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist[n + m*ngridy];
                     }
                 }
             }
 
-            free(sum_dist1);
-            free(sum_dist2);
+            free(sum_dist);
             free(update1);
             free(update2);
         }
@@ -377,8 +358,7 @@ vector2(
             preprocessing(ngridx, ngridy, dx, center1[s], 
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            sum_dist1 = (float *)calloc((ngridx*ngridy), sizeof(float));
-            sum_dist2 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
             update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
             
@@ -439,36 +419,22 @@ vector2(
                         simdata); // Output: simdata
 
                     // Calculate dist*dist
-                    sum_dist21 = 0.0;
-                    sum_dist22 = 0.0;
+                    sum_dist2 = 0.0;
                     for (n=0; n<csize-1; n++)
                     {
-                        sum_dist21 += dist[n]*dist[n];
-                        sum_dist22 += dist[n]*dist[n];
-                        sum_dist1[indy[n] + indx[n]*ngridy] += dist[n];
-                        sum_dist2[indy[n] + indx[n]*ngridy] += dist[n];
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indy[n] + indx[n]*ngridy] += dist[n];
                     }
 
                     // Update
-                    if (sum_dist21 != 0.0)
+                    if (sum_dist2 != 0.0)
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
-                        upd1 = (data2[ind_data]-simdata[ind_data])/sum_dist21;
+                        upd = (data2[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update1[indy[n] + indx[n]*ngridy] += upd1*dist[n]*vx;
-                        }
-                    }
-                    // Update
-                    if (sum_dist22 != 0.0)
-                    {
-                        // ind_data = d + p*dx + s*dt*dx;
-                        ind_data = d + p*dx + s*dt*dx;
-                        upd2 = (data2[ind_data]-simdata[ind_data])/sum_dist22;
-                        for (n=0; n<csize-1; n++)
-                        {
-                            update2[indy[n] + indx[n]*ngridy] += upd2*dist[n]*vy;
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
                         }
                     }
                 }
@@ -476,19 +442,15 @@ vector2(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (sum_dist1[n + m*ngridy] != 0.0)
+                    if (sum_dist[n + m*ngridy] != 0.0)
                     {
-                        recon1[m + s*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist1[n + m*ngridy];
-                    }
-                    if (sum_dist2[n + m*ngridy] != 0.0)
-                    {
-                        recon3[m + s*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist2[n + m*ngridy];
+                        recon1[m + s*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                        recon3[m + s*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist[n + m*ngridy];
                     }
                 }
             }
 
-            free(sum_dist1);
-            free(sum_dist2);
+            free(sum_dist);
             free(update1);
             free(update2);
         }
@@ -542,11 +504,11 @@ vector3(
     float mov, xi, yi;
     int asize, bsize, csize;
     float *simdata;
-    float upd1, upd2;
+    float upd;
     int ind_data;
     float srcx, srcy, detx, dety, dv, vx, vy;
-    float *sum_dist1, *sum_dist2;
-    float sum_dist21, sum_dist22;
+    float *sum_dist;
+    float sum_dist2;
     float *update1, *update2;
 
     for (i=0; i<num_iter; i++)
@@ -561,8 +523,7 @@ vector3(
             preprocessing(ngridx, ngridy, dx, center1[s],
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            sum_dist1 = (float *)calloc((ngridx*ngridy), sizeof(float));
-            sum_dist2 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
             update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
 
@@ -623,36 +584,23 @@ vector3(
                         simdata); // Output: simdata
 
                     // Calculate dist*dist
-                    sum_dist21 = 0.0;
-                    sum_dist22 = 0.0;
+                    sum_dist2 = 0.0;
                     for (n=0; n<csize-1; n++)
                     {
-                        sum_dist21 += dist[n]*dist[n];
-                        sum_dist22 += dist[n]*dist[n];
-                        sum_dist1[indy[n] + indx[n]*ngridy] += dist[n];
-                        sum_dist2[indy[n] + indx[n]*ngridy] += dist[n];
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indy[n] + indx[n]*ngridy] += dist[n];
                     }
 
                     // Update
-                    if (sum_dist21 != 0.0)
+                    if (sum_dist2 != 0.0)
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
-                        upd1 = (data1[ind_data]-simdata[ind_data])/sum_dist21;
+                        upd = (data1[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update1[indy[n] + indx[n]*ngridy] += upd1*dist[n]*vx;
-                        }
-                    }
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
 
-                    if (sum_dist22 != 0.0)
-                    {
-                        // ind_data = d + p*dx + s*dt*dx;
-                        ind_data = d + p*dx + s*dt*dx;
-                        upd2 = (data1[ind_data]-simdata[ind_data])/sum_dist22;
-                        for (n=0; n<csize-1; n++)
-                        {
-                            update2[indy[n] + indx[n]*ngridy] += upd2*dist[n]*vy;
                         }
                     }
                 }
@@ -660,19 +608,15 @@ vector3(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (sum_dist1[n + m*ngridy] != 0.0)
+                    if (sum_dist[n + m*ngridy] != 0.0)
                     {
-                        recon1[n + m*ngridy + s*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist1[n + m*ngridy];
-                    }
-                    if (sum_dist2[n + m*ngridy] != 0.0)
-                    {
-                        recon2[n + m*ngridy + s*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist2[n + m*ngridy];
+                        recon1[n + m*ngridy + s*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                        recon2[n + m*ngridy + s*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist[n + m*ngridy];
                     }
                 }
             }
 
-            free(sum_dist1);
-            free(sum_dist2);
+            free(sum_dist);
             free(update1);
             free(update2);
         }
@@ -687,8 +631,7 @@ vector3(
             preprocessing(ngridx, ngridy, dx, center1[s],
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            sum_dist1 = (float *)calloc((ngridx*ngridy), sizeof(float));
-            sum_dist2 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
             update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
 
@@ -749,35 +692,22 @@ vector3(
                         simdata); // Output: simdata
 
                     // Calculate dist*dist
-                    sum_dist21 = 0.0;
-                    sum_dist22 = 0.0;
+                    sum_dist2 = 0.0;
                     for (n=0; n<csize-1; n++)
                     {
-                        sum_dist21 += dist[n]*dist[n];
-                        sum_dist22 += dist[n]*dist[n];
-                        sum_dist1[indy[n] + indx[n]*ngridy] += dist[n];
-                        sum_dist2[indy[n] + indx[n]*ngridy] += dist[n];
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indy[n] + indx[n]*ngridy] += dist[n];
                     }
 
                     // Update
-                    if (sum_dist21 != 0.0)
+                    if (sum_dist2 != 0.0)
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
-                        upd1 = (data2[ind_data]-simdata[ind_data])/sum_dist21;
+                        upd = (data2[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update1[indy[n] + indx[n]*ngridy] += upd1*dist[n]*vx;
-                        }
-                    }
-                    if (sum_dist22 != 0.0)
-                    {
-                        // ind_data = d + p*dx + s*dt*dx;
-                        ind_data = d + p*dx + s*dt*dx;
-                        upd2 = (data2[ind_data]-simdata[ind_data])/sum_dist22;
-                        for (n=0; n<csize-1; n++)
-                        {
-                            update2[indy[n] + indx[n]*ngridy] += upd2*dist[n]*vy;
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
                         }
                     }
                 }
@@ -785,19 +715,15 @@ vector3(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (sum_dist1[n + m*ngridy] != 0.0)
+                    if (sum_dist[n + m*ngridy] != 0.0)
                     {
-                        recon2[s + m*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist1[n + m*ngridy];
-                    }
-                    if (sum_dist2[n + m*ngridy] != 0.0)
-                    {
-                        recon3[s + m*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist2[n + m*ngridy];
+                        recon2[s + m*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                        recon3[s + m*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist[n + m*ngridy];
                     }
                 }
             }
 
-            free(sum_dist1);
-            free(sum_dist2);
+            free(sum_dist);
             free(update1);
             free(update2);
         }
@@ -812,8 +738,7 @@ vector3(
             preprocessing(ngridx, ngridy, dx, center1[s],
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
-            sum_dist1 = (float *)calloc((ngridx*ngridy), sizeof(float));
-            sum_dist2 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
             update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
 
@@ -874,36 +799,22 @@ vector3(
                         simdata); // Output: simdata
 
                     // Calculate dist*dist
-                    sum_dist21 = 0.0;
-                    sum_dist22 = 0.0;
+                    sum_dist2 = 0.0;
                     for (n=0; n<csize-1; n++)
                     {
-                        sum_dist21 += dist[n]*dist[n];
-                        sum_dist22 += dist[n]*dist[n];
-                        sum_dist1[indy[n] + indx[n]*ngridy] += dist[n];
-                        sum_dist2[indy[n] + indx[n]*ngridy] += dist[n];
+                        sum_dist2 += dist[n]*dist[n];
+                        sum_dist[indy[n] + indx[n]*ngridy] += dist[n];
                     }
 
                     // Update
-                    if (sum_dist21 != 0.0)
+                    if (sum_dist2 != 0.0)
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
-                        upd1 = (data3[ind_data]-simdata[ind_data])/sum_dist21;
+                        upd = (data3[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update1[indy[n] + indx[n]*ngridy] += upd1*dist[n]*vx;
-                        }
-                    }
-                    // Update
-                    if (sum_dist22 != 0.0)
-                    {
-                        // ind_data = d + p*dx + s*dt*dx;
-                        ind_data = d + p*dx + s*dt*dx;
-                        upd2 = (data3[ind_data]-simdata[ind_data])/sum_dist22;
-                        for (n=0; n<csize-1; n++)
-                        {
-                            update2[indy[n] + indx[n]*ngridy] += upd2*dist[n]*vy;
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
                         }
                     }
                 }
@@ -911,19 +822,15 @@ vector3(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (sum_dist1[n + m*ngridy] != 0.0)
+                    if (sum_dist[n + m*ngridy] != 0.0)
                     {
-                        recon1[m + s*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist1[n + m*ngridy];
-                    }
-                    if (sum_dist2[n + m*ngridy] != 0.0)
-                    {
-                        recon3[m + s*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist2[n + m*ngridy];
+                        recon1[m + s*ngridy + n*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                        recon3[m + s*ngridy + n*ngridx*ngridy] += update2[n + m*ngridy]/sum_dist[n + m*ngridy];
                     }
                 }
             }
 
-            free(sum_dist1);
-            free(sum_dist2);
+            free(sum_dist);
             free(update1);
             free(update2);
         }
