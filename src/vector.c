@@ -48,7 +48,7 @@ void
 vector(
     const float *data, int dy, int dt, int dx,
     const float *center, const float *theta,
-    float *recon, int ngridx, int ngridy, int num_iter, int axis)
+    float *recon1, float *recon2, int ngridx, int ngridy, int num_iter)
 {
     float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
     float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
@@ -76,9 +76,10 @@ vector(
     float *simdata;
     float upd;
     int ind_data;
+    float srcx, srcy, detx, dety, dv, vx, vy;
     float *sum_dist;
     float sum_dist2;
-    float *update;
+    float *update1, *update2;
 
     for (i=0; i<num_iter; i++) 
     {
@@ -91,7 +92,8 @@ vector(
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
             sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
-            update = (float *)calloc((ngridx*ngridy), sizeof(float));
+            update1 = (float *)calloc((ngridx*ngridy), sizeof(float));
+            update2 = (float *)calloc((ngridx*ngridy), sizeof(float));
             
             // For each projection angle 
             for (p=0; p<dt; p++) 
@@ -110,13 +112,23 @@ vector(
                     // Calculate coordinates
                     xi = -ngridx-ngridy;
                     yi = (1-dx)/2.0+d+mov;
+
+                    srcx = xi*cos_p-yi*sin_p;
+                    srcy = xi*sin_p+yi*cos_p;
+                    detx = -xi*cos_p-yi*sin_p;
+                    dety = -xi*sin_p+yi*cos_p;
+
+                    dv = sqrt(pow(srcx-detx, 2)+pow(srcy-dety, 2));
+                    vx = (srcx-detx)/dv;
+                    vy = (srcy-dety)/dv;
+
                     calc_coords(
-                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
                         coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(
-                        ngridx, ngridy, coordx, coordy, gridx, gridy,
+                        ngridx, ngridy, coordx, coordy, gridx, gridy, 
                         &asize, ax, ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
@@ -124,21 +136,20 @@ vector(
                     // stored in (coorx, coory). Total number of points 
                     // are csize.
                     sort_intersections(
-                        quadrant, asize, ax, ay, bsize, bx, by,
+                        quadrant, asize, ax, ay, bsize, bx, by, 
                         &csize, coorx, coory);
 
-                    // Calculate the distances (dist) between the
-                    // intersection points (coorx, coory). Find the
+                    // Calculate the distances (dist) between the 
+                    // intersection points (coorx, coory). Find the 
                     // indices of the pixels on the reconstruction grid.
                     calc_dist2(
-                        ngridx, ngridy, csize, coorx, coory,
+                        ngridx, ngridy, csize, coorx, coory, 
                         indx, indy, dist);
 
                     // Calculate simdata 
                     calc_simdata2(s, p, d, ngridx, ngridy, dt, dx,
-                        csize, indx, indy, dist, recon, axis,
+                        csize, indx, indy, dist, vx, vy, recon1, recon2,
                         simdata); // Output: simdata
-
 
                     // Calculate dist*dist
                     sum_dist2 = 0.0;
@@ -151,12 +162,12 @@ vector(
                     // Update
                     if (sum_dist2 != 0.0) 
                     {
-                        // ind_data = d + p*dx + s*dt*dx;
                         ind_data = d + p*dx + s*dt*dx;
                         upd = (data[ind_data]-simdata[ind_data])/sum_dist2;
                         for (n=0; n<csize-1; n++)
                         {
-                            update[indy[n] + indx[n]*ngridy] += upd*dist[n];
+                            update1[indy[n] + indx[n]*ngridy] += upd*dist[n]*vx;
+                            update2[indy[n] + indx[n]*ngridy] += upd*dist[n]*vy;
                         }
                     }
                 }
@@ -164,23 +175,14 @@ vector(
 
             for (m = 0; m < ngridx; m++) {
                 for (n = 0; n < ngridy; n++) {
-                    if (axis == 0)
-                    {
-                        recon[n + m*ngridy + s*ngridx*ngridy] += update[n + m*ngridy]/sum_dist[n + m*ngridy];
-                    }
-                    else if (axis == 1)
-                    {
-                        recon[s + m*ngridy + n*ngridx*ngridy] += update[n + m*ngridy]/sum_dist[n + m*ngridy];
-                    }
-                    else if (axis == 2)
-                    {
-                        recon[m + s*ngridy + n*ngridx*ngridy] += update[n + m*ngridy]/sum_dist[n + m*ngridy];
-                    }
+                    recon1[n + m*ngridy + s*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
+                    recon2[n + m*ngridy + s*ngridx*ngridy] += update1[n + m*ngridy]/sum_dist[n + m*ngridy];
                 }
             }
 
             free(sum_dist);
-            free(update);
+            free(update1);
+            free(update2);
         }
 
         free(simdata);
