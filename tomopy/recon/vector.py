@@ -73,7 +73,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['vector', 'vector2', 'vector3']
 
 
-def vector(tomo, theta, center=None, num_iter=1, axis=0):
+def vector(tomo, theta, center=None, num_iter=1):
     tomo = dtype.as_float32(tomo)
     theta = dtype.as_float32(theta)
 
@@ -81,13 +81,14 @@ def vector(tomo, theta, center=None, num_iter=1, axis=0):
     tomo = init_tomo(tomo, sinogram_order=False, sharedmem=False)
 
     recon_shape = (tomo.shape[0], tomo.shape[2], tomo.shape[2])
-    recon = np.zeros(recon_shape, dtype=np.float32)
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
 
     center_arr = get_center(tomo.shape, center)
 
-    extern.c_vector(tomo, center_arr, recon, theta, 
-        num_gridx=tomo.shape[2], num_gridy=tomo.shape[2], num_iter=num_iter, axis=axis)
-    return recon
+    extern.c_vector(tomo, center_arr, recon1, recon2, theta, 
+        num_gridx=tomo.shape[2], num_gridy=tomo.shape[2], num_iter=num_iter)
+    return recon1, recon2
 
 
 def vector2(tomo1, tomo2, theta1, theta2, center1=None, center2=None, num_iter=1, axis1=1, axis2=2):

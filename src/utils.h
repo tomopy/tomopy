@@ -80,7 +80,8 @@ project(
 
 void DLL
 project2(
-    const float *obj,
+    const float *objx,
+    const float *objy,
     int oy,
     int ox, 
     int oz,
@@ -89,8 +90,7 @@ project2(
     int dt,
     int dx,
     const float *center,
-    const float *theta,
-    int axis);
+    const float *theta);
 
 void DLL
 project3(
@@ -262,11 +262,11 @@ vector(
     int dx,
     const float *center,
     const float *theta,
-    float *recon,
+    float *recon1,
+    float *recon2,
     int ngridx,
     int ngridy,
-    int num_iter,
-    int axis);
+    int num_iter);
 
 void DLL
 vector2(
@@ -386,8 +386,9 @@ calc_simdata2(
     const int *indx,
     const int *indy,
     const float *dist,
-    const float *model,
-    int axis,
+    float vx, float vy,
+    const float *modelx,
+    const float *modely,
     float *simdata);
 
 void DLL
@@ -405,19 +406,5 @@ calc_simdata3(
     const float *modelz,
     int axis,
     float *simdata);
-
-// void DLL
-// calc_simdata2(
-//     int s, int p, int d,
-//     int ngridx, int ngridy, 
-//     int dt, int dx,
-//     int csize, 
-//     const int *indi,
-//     const float *dist,
-//     float vx,
-//     float vy,
-//     const float *modelx,
-//     const float *modely,
-//     float *simdata);
 
 #endif

@@ -144,14 +144,10 @@ project(
 
 void 
 project2(
-    const float *obj, int oy, int ox, int oz, 
+    const float *objx, const float *objy, int oy, int ox, int oz, 
     float *data, int dy, int dt, int dx,
-    const float *center, const float *theta, int axis)
+    const float *center, const float *theta)
 {
-    // printf ("oy=%d, ox=%d, oz=%d\n", oy, ox, oz);
-    // printf ("dy=%d, dt=%d, dx=%d\n", dy, dt, dx);
-    // printf ("axis=%d\n", axis);
-
     float *gridx = (float *)malloc((ox+1)*sizeof(float));
     float *gridy = (float *)malloc((oz+1)*sizeof(float));
     float *coordx = (float *)malloc((oz+1)*sizeof(float));
@@ -174,6 +170,7 @@ project2(
     int s, p, d;
     int quadrant;
     float theta_p, sin_p, cos_p;
+    float srcx, srcy, detx, dety, dv, vx, vy;
     float mov, xi, yi;
     int asize, bsize, csize;
 
@@ -193,9 +190,20 @@ project2(
 
         for (d=0; d<dx; d++) 
         {
+            
             // Calculate coordinates
             xi = -ox-oz;
             yi = (1-dx)/2.0+d+mov;
+
+            srcx = xi*cos_p-yi*sin_p;
+            srcy = xi*sin_p+yi*cos_p;
+            detx = -xi*cos_p-yi*sin_p;
+            dety = -xi*sin_p+yi*cos_p;
+
+            dv = sqrt(pow(srcx-detx, 2)+pow(srcy-dety, 2));
+            vx = (srcx-detx)/dv;
+            vy = (srcy-dety)/dv;
+
             calc_coords(
                 ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, 
                 coordx, coordy);
@@ -225,7 +233,7 @@ project2(
             {
                 // Calculate simdata 
                 calc_simdata2(s, p, d, ox, oz, dt, dx,
-                    csize, indx, indy, dist, obj, axis,
+                    csize, indx, indy, dist, vx, vy, objx, objy,
                     data); // Output: simulated data
             }
         }
@@ -254,10 +262,6 @@ project3(
     float *data, int dy, int dt, int dx,
     const float *center, const float *theta, int axis)
 {
-    // printf ("oy=%d, ox=%d, oz=%d\n", oy, ox, oz);
-    // printf ("dy=%d, dt=%d, dx=%d\n", dy, dt, dx);
-    // printf ("axis=%d\n", axis);
-
     float *gridx = (float *)malloc((ox+1)*sizeof(float));
     float *gridy = (float *)malloc((oz+1)*sizeof(float));
     float *coordx = (float *)malloc((oz+1)*sizeof(float));
