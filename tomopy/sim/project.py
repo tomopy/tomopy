@@ -245,7 +245,7 @@ def project(
 
 
 def project2(
-        obj, theta, center=None, emission=True, pad=True,
+        objx, objy, theta, center=None, emission=True, pad=True,
         sinogram_order=False, axis=0, ncore=None, nchunk=None):
     """
     Project x-rays through a given 3D object.
@@ -277,11 +277,12 @@ def project2(
     ndarray
         3D tomographic data.
     """
-    obj = dtype.as_float32(obj)
+    objx = dtype.as_float32(objx)
+    objy = dtype.as_float32(objy)
     theta = dtype.as_float32(theta)
 
     # Estimate data dimensions.
-    oy, ox, oz = obj.shape
+    oy, ox, oz = objx.shape
     dt = theta.size
     dy = oy
     if pad is True:
@@ -293,7 +294,7 @@ def project2(
     tomo[:] = 0.0
     center = get_center(shape, center)
 
-    extern.c_project2(obj, center, tomo, theta, axis)
+    extern.c_project2(objx, objy, center, tomo, theta)
     
     # NOTE: returns sinogram order with emmission=True
     if not emission:
