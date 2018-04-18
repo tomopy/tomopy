@@ -175,17 +175,17 @@ def c_project(obj, center, tomo, theta):
     tomo[:] = contiguous_tomo[:]
 
 
-def c_project2(obj, center, tomo, theta, axis):
+def c_project2(objx, objy, center, tomo, theta):
     # TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
 
     contiguous_tomo = np.require(tomo, requirements="AC")
-    if len(obj.shape) == 2:
+    if len(objx.shape) == 2:
         # no y-axis (only one slice)
         oy = 1
-        ox, oz = obj.shape
+        ox, oz = objx.shape
     else:
-        oy, ox, oz = obj.shape
+        oy, ox, oz = objx.shape
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
@@ -196,7 +196,8 @@ def c_project2(obj, center, tomo, theta, axis):
 
     LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
     LIB_TOMOPY.project2(
-        dtype.as_c_float_p(obj),
+        dtype.as_c_float_p(objx),
+        dtype.as_c_float_p(objy),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
         dtype.as_c_int(oz),
@@ -205,8 +206,7 @@ def c_project2(obj, center, tomo, theta, axis):
         dtype.as_c_int(dt),
         dtype.as_c_int(dx),
         dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_int(axis))
+        dtype.as_c_float_p(theta))
     tomo[:] = contiguous_tomo[:]
 
 
@@ -517,7 +517,7 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_vector(tomo, center, recon, theta, axis, **kwargs):
+def c_vector(tomo, center, recon1, recon2, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
         dy = 1
@@ -533,11 +533,11 @@ def c_vector(tomo, center, recon, theta, axis, **kwargs):
             dtype.as_c_int(dx),
             dtype.as_c_float_p(center),
             dtype.as_c_float_p(theta),
-            dtype.as_c_float_p(recon),
+            dtype.as_c_float_p(recon1),
+            dtype.as_c_float_p(recon2),
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']),
-            dtype.as_c_int(axis))
+            dtype.as_c_int(kwargs['num_iter']))
 
 
 def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3, theta1, theta2, axis1, axis2, **kwargs):
