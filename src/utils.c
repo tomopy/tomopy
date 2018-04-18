@@ -295,30 +295,14 @@ calc_simdata2(
     int ry, int rz, 
     int dt, int dx,
     int csize, const int *indx, const int *indy, const float *dist,
-    const float *model, int axis, float *simdata)
+    float vx, float vy, 
+    const float *modelx, const float *modely, float *simdata)
 {
     int n;
 
-    if (axis==0)
+    for (n=0; n<csize-1; n++) 
     {
-        for (n=0; n<csize-1; n++) 
-        {
-            simdata[d + p*dx + s*dt*dx] += model[indy[n] + indx[n]*rz + s*ry*rz]*dist[n];
-        }
-    }
-    else if (axis==1)
-    {
-        for (n=0; n<csize-1; n++) 
-        {
-            simdata[d + p*dx + s*dt*dx] += model[s + indx[n]*rz + indy[n]*ry*rz]*dist[n];
-        }
-    }
-    else if (axis==2)
-    {
-        for (n=0; n<csize-1; n++) 
-        {
-            simdata[d + p*dx + s*dt*dx] += model[indx[n] + s*rz + indy[n]*ry*rz]*dist[n];
-        }
+        simdata[d + p*dx + s*dt*dx] += (modelx[indy[n] + indx[n]*rz + s*ry*rz] * vx + modely[indy[n] + indx[n]*rz + s*ry*rz] * vy) * dist[n];
     }
 }
 
@@ -356,23 +340,3 @@ calc_simdata3(
         }
     }
 }
-
-// void 
-// calc_simdata2(
-//     int s, int p, int d,
-//     int ry, int rz, 
-//     int dt, int dx,
-//     int csize, const int *indi, const float *dist,
-//     float vx, float vy, 
-//     const float *modelx, const float *modely, 
-//     float *simdata)
-// {
-//     int n;
-
-//     int index_model = s*ry*rz;
-//     int index_data = d+p*dx+s*dt*dx;
-//     for (n=0; n<csize-1; n++) 
-//     {
-//         simdata[index_data] += (modelx[indi[n]+index_model] * vx + modely[indi[n]+index_model] * vy) * dist[n];
-//     }
-// }
