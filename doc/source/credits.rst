@@ -4,7 +4,8 @@ Credits
 
 We kindly request that you cite the following article(s) :cite:`Gursoy:14a` if
 you use TomoPy (and also cite :cite:`Pelt:16a` if you use ASTRA or
-:cite:`Vogelgesang:12` if you use UFO).
+:cite:`Vogelgesang:12` if you use UFO). For vector reconstructions please 
+additionally cite :cite:`Hierro-Rodriguez:18`.
 
 .. bibliography:: bibtex/cite.bib
    :style: plain
