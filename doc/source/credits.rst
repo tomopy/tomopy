@@ -8,7 +8,7 @@ you use TomoPy (and also cite :cite:`Pelt:16a` if you use ASTRA or
 additionally cite :cite:`Hierro-Rodriguez:18`.
 
 .. bibliography:: bibtex/cite.bib
-   :style: plain
+   :style: unsrt
    :labelprefix: A
 
 Applications
