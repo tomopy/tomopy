@@ -84,6 +84,6 @@ except ImportError:
         fft_impl = 'pyfftw'
         logger.debug('FFT implementation is pyfftw')
     except ImportError:
-        import np.fft
+        import numpy.fft
         fft_impl = 'numpy.fft'
         logger.debug('FFT implementation is numpy.fft')
