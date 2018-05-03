@@ -234,7 +234,7 @@ def upsample(arr, level=1, axis=2):
 def _sample(arr, level, axis, mode):
     arr = dtype.as_float32(arr.copy())
     dx, dy, dz = arr.shape
-
+    # Determine the new size, dim, of the down-/up-sampled dimension
     if mode == 0:
         dim = int(arr.shape[axis] / np.power(2, level))
     if mode == 1:
