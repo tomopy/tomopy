@@ -93,9 +93,9 @@ gridrec(
 	const float *filter_par)
 {
     int s, p, iu, iv;
-	int j, jmin, jmax;
+   	int j, jmin, jmax;
     float *sine, *cose, *wtbl, *winv;
-	float _Complex **work, **work2;
+    float _Complex **work, **work2;
 
     float (* const filter)(float, int, int, int, const float*) = get_filter(fname);
     const float C = 7.0;
@@ -105,7 +105,7 @@ gridrec(
     const int ltbl = 512;         
     int pdim;
     float _Complex *sino, *filphase, *filphase_iter, **H;
-	float _Complex **U_d, **V_d;
+    float _Complex **U_d, **V_d;
     float *J_z,*P_z;
 #ifndef USE_MKL
     pthread_mutex_lock(&lock); // acquire global lock for set-up
@@ -122,7 +122,7 @@ gridrec(
 
     const int pdim2 = pdim >> 1;
     const int M02 = pdim2 - 1;
-	const int M2 = pdim2;
+    const int M2 = pdim2;
 
     unsigned char filter2d = filter_is_2d(fname);
 
@@ -138,7 +138,7 @@ gridrec(
     H = malloc_matrix_c(pdim, pdim); __ASSSUME_64BYTES_ALIGNED(H);
     wtbl = malloc_vector_f(ltbl+1);  __ASSSUME_64BYTES_ALIGNED(wtbl);
     winv = malloc_vector_f(pdim-1);  __ASSSUME_64BYTES_ALIGNED(winv);
-	work = malloc_matrix_c(pdim2*dt, L+1);  __ASSSUME_64BYTES_ALIGNED(work);
+    work = malloc_matrix_c(pdim2*dt, L+1);  __ASSSUME_64BYTES_ALIGNED(work);
     work2 = malloc_matrix_c(pdim2*dt, L+1); __ASSSUME_64BYTES_ALIGNED(work2);
     J_z = malloc_vector_f(pdim2*dt); __ASSSUME_64BYTES_ALIGNED(J_z);
     P_z = malloc_vector_f(pdim2*dt); __ASSSUME_64BYTES_ALIGNED(P_z);
@@ -171,7 +171,7 @@ gridrec(
     pthread_mutex_unlock(&lock); // release global lock
 #endif
 
-	for(p=0; p<dt; p++)
+    for(p=0; p<dt; p++)
     {
         for(j=1; j<pdim2; j++)
         {
@@ -182,7 +182,7 @@ gridrec(
 
     float U, V;
     int b;
-	// Tune block size depending on architecture
+    // Tune block size depending on architecture
     const int bh = 64;
     const int nb = pdim/bh;
     float wl,wh;
@@ -192,16 +192,16 @@ gridrec(
     int iul, iuh, ivl, ivh;
     int k, k2;
 
-	// Calculations below same for all slices so move outside of slice loop 
-	// Set up cache blocking to reduce irregular access
+    // Calculations below same for all slices so move outside of slice loop 
+    // Set up cache blocking to reduce irregular access
     for(b=0; b<nb; b++)
     {
         wl = bh*b;
         wh = bh*(b+1);
-			// Limit j to loop over jmin,jmax and reduce if condition overhead
+            // Limit j to loop over jmin,jmax and reduce if condition overhead
             for(p=0; p<dt; p++)
             {
-				if (cose[p]>0) {
+                if (cose[p]>0) {
                         jmin = ((wl-M2)/cose[p]);
                         jmax = ceil(((wh-M2)/cose[p]));
                     } else {
@@ -232,8 +232,8 @@ gridrec(
                         if(ivl<1) ivl = 1;
                         if(ivh>=pdim) ivh = pdim-1;
 
-						// Pre-compute work and work2
-						// Note aliasing value (at index=0) is forced to zero.
+                        // Pre-compute work and work2
+                        // Note aliasing value (at index=0) is forced to zero.
                         __PRAGMA_SIMD_VECREMAINDER_VECLEN8
                         for(iv=ivl, k=0; iv<=ivh; iv++, k++) {
                             work[z][k] = wtbl[(int) roundf(fabsf(V-iv)*tblspcg)];
@@ -335,22 +335,22 @@ gridrec(
             // Take FFT of the projection array
             fftwf_execute(reverse_1d);
 #endif
-		}
+        }
 
-			int zlimit = dt*(pdim2-1); 
+            int zlimit = dt*(pdim2-1); 
 
-			// Use re-ordered p,j,U,V from cache-blocking calculations
+            // Use re-ordered p,j,U,V from cache-blocking calculations
             // For each FFT(projection)
             for(z=0; z<zlimit ;z++)
             {
- 				p = P_z[z];
+                p = P_z[z];
                 j = J_z[z];
                 U = U_d[p][j];
                 V = V_d[p][j];            
 
-				if(filter2d) filphase_iter = filphase + pdim2*p;
+                if(filter2d) filphase_iter = filphase + pdim2*p;
                 
-				Cdata1 = filphase_iter[j] * sino[j];
+                Cdata1 = filphase_iter[j] * sino[j];
                 Cdata2 = conjf(filphase_iter[j]) * sino[pdim-j];
 
                 // Note freq space origin is at (M2,M2), but we
@@ -367,7 +367,7 @@ gridrec(
 		__PRAGMA_OMP_SIMD_COLLAPSE
                 for (iu=iul, k2=0; iu <= iuh; iu++, k2++) {
                     for(iv=ivl, k=0; iv<=ivh; iv++, k++) {
-						const float convolv = work2[z][k2]*work[z][k];                    
+                        const float convolv = work2[z][k2]*work[z][k];                    
                         H[iu][iv] += convolv*Cdata1;
                         H[pdim-iu][pdim-iv] += convolv*Cdata2;
                     }
@@ -475,10 +475,10 @@ gridrec(
     free_vector_f(wtbl);
     free_vector_c(filphase);
     free_vector_f(winv);
-	free_matrix_c(work);
+    free_matrix_c(work);
     free_matrix_c(work2);    
     free_matrix_c(H);
-	free_vector_f(J_z);
+    free_vector_f(J_z);
     free_vector_f(P_z);
     free_matrix_c(U_d);
     free_matrix_c(V_d);
