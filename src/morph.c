@@ -72,7 +72,7 @@ downsample(
 
     binsize = pow(2, level);
     // Ensure that largest array is small enough to be indexable
-    assert((unsigned long long)dx*dy*dz < ULLONG_MAX);
+    assert(ULLONG_MAX/dx/dy/dz > 0);
     // Ensure safe comparison between unsigned (ijk) and signed (xyz)
     assert(dx >= 0 && dy >= 0 && dz >= 0);
 
@@ -149,7 +149,7 @@ upsample(
     
     binsize = pow(2, level);
     // Ensure that largest array is small enough to be indexable
-    assert((unsigned long long)binsize*dy*dz*dx < ULLONG_MAX);
+    assert(ULLONG_MAX/binsize/dy/dz/dx > 0);
     // Ensure safe comparison between unsigned (ijk) and signed (xyz)
     assert(dx >= 0 && dy >= 0 && dz >= 0);
 
