@@ -180,7 +180,7 @@ gridrec(
     int n[1] = {pdim};
     // Set up fftw plans
     fftwf_plan reverse_1d;
-    fftw_plan reverse_1d_many;
+    fftwf_plan reverse_1d_many;
     fftwf_plan forward_2d;
     reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
     reverse_1d_many = fftwf_plan_many_dft(1, n, dt, sino, n, 1, pdim, sino, n, 1, pdim, FFTW_BACKWARD, FFTW_MEASURE);
@@ -424,11 +424,10 @@ gridrec(
                     //sino[j] = 0.0;
                     sino[j+(p*pdim)] = 0.0;
             }
-
+        }
             // Take FFT of the projection array
             //fftwf_execute(reverse_1d);
             fftwf_execute(reverse_1d_many);
-        }
 
 
             // Use re-ordered p,j,U,V from cache-blocking calculations
