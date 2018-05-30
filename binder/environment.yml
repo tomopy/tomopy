@@ -1,0 +1,6 @@
+name: tomopy
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - tomopy
