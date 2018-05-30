@@ -54,7 +54,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-import pyfftw
+from tomopy.util.misc import (fft2, ifft2)
+
+
 import tomopy.util.mproc as mproc
 import logging
 
@@ -120,7 +122,7 @@ def retrieve_phase(
     phase_filter = np.fft.fftshift(
         _paganin_filter_factor(energy, dist, alpha, w2))
 
-    prj = val * np.ones((dy + 2 * py, dz + 2 * pz), dtype='float32')
+    prj = np.full((dy + 2 * py, dz + 2 * pz), val, dtype='float32')
     arr = mproc.distribute_jobs(
         tomo,
         func=_retrieve_phase,
@@ -134,28 +136,20 @@ def retrieve_phase(
 def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
     dx, dy, dz = tomo.shape
     num_jobs = tomo.shape[0]
+    normalized_phase_filter = phase_filter / phase_filter.max()
     for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
         prj[:px] = prj[px]
         prj[-px:] = prj[-px-1]
-        prj[:,:py] = prj[:,py][:,np.newaxis]
-        prj[:,-py:] = prj[:,-py-1][:,np.newaxis]
-        fproj = pyfftw.interfaces.numpy_fft.fft2(
-                prj, planner_effort=_plan_effort(num_jobs))
-        filtproj = np.multiply(phase_filter, fproj)
-        proj = np.real(pyfftw.interfaces.numpy_fft.ifft2(
-            filtproj, planner_effort=_plan_effort(num_jobs))
-            ) / phase_filter.max()
+        prj[:, :py] = prj[:, py][:, np.newaxis]
+        prj[:, -py:] = prj[:, -py-1][:, np.newaxis]
+        fproj = fft2(prj, extra_info=num_jobs)
+        fproj *= normalized_phase_filter
+        proj = np.real(ifft2(fproj, extra_info=num_jobs, overwrite_input=True))
         if pad:
             proj = proj[px:dy + px, py:dz + py]
         tomo[m] = proj
 
-
-def _plan_effort(num_jobs):
-    if num_jobs > 10:
-        return 'FFTW_MEASURE'
-    else:
-        return 'FFTW_ESTIMATE'
 
 
 def _calc_pad(tomo, pixel_size, dist, energy, pad):
@@ -226,8 +220,9 @@ def _reciprocal_grid(pixel_size, nx, ny):
     # Sampling in reciprocal space.
     indx = _reciprocal_coord(pixel_size, nx)
     indy = _reciprocal_coord(pixel_size, ny)
-    du, dv = np.meshgrid(indy, indx)
-    return np.square(du) + np.square(dv)
+    np.square(indx, out=indx)
+    np.square(indy, out=indy)
+    return np.add.outer(indx, indy)
 
 
 def _reciprocal_coord(pixel_size, num_grid):
@@ -247,5 +242,7 @@ def _reciprocal_coord(pixel_size, num_grid):
     ndarray
         Grid coordinates.
     """
-    return (1 / ((num_grid - 1) * pixel_size)) * \
-        np.arange(-(num_grid - 1) * 0.5, num_grid * 0.5)
+    n = num_grid - 1
+    rc = np.arange(-n, num_grid, 2, dtype = np.float32)
+    rc *= 0.5 / (n * pixel_size)
+    return  rc

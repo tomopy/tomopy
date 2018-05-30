@@ -2,11 +2,12 @@ language: python
 
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
+  - "3.6"
 
 os:
   - linux
+#  - osx
   
 sudo: false
   
@@ -21,17 +22,18 @@ before_install:
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda config --add channels dgursoy
+  - conda config --add channels conda-forge
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
   - conda install anaconda-client
 
 install:
-  - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets fftw pyfftw python-coveralls dxchange numexpr
+  - conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install python=2.7 futures;
+      conda install futures;
     fi
   - conda info -a
+  - conda list --explicit
   - python setup.py build_ext --inplace
 
 script: 

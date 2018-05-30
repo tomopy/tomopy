@@ -178,6 +178,7 @@ def _get_slices(shape, axis, npad):
     slc_r_v[axis] = slice(shape[axis]-1, shape[axis])
     return slc_in, slc_l, slc_r, slc_l_v, slc_r_v
 
+
 def _get_pad_sequence(shape, axis, npad):
     pad_seq = []
     for m in range(len(shape)):
@@ -233,7 +234,7 @@ def upsample(arr, level=1, axis=2):
 def _sample(arr, level, axis, mode):
     arr = dtype.as_float32(arr.copy())
     dx, dy, dz = arr.shape
-
+    # Determine the new size, dim, of the down-/up-sampled dimension
     if mode == 0:
         dim = int(arr.shape[axis] / np.power(2, level))
     if mode == 1:
@@ -307,6 +308,7 @@ def trim_sinogram(data, center, x, y, diameter):
         roidata[m, :, 0:(ind2 - ind1)] = data[m:m+1, :, ind1:ind2]
     return roidata
 
+
 def sino_360_to_180(data, overlap=0, rotation='left'):
     """
     Converts 0-360 degrees sinogram to a 0-180 sinogram.
@@ -351,5 +353,5 @@ def sino_360_to_180(data, overlap=0, rotation='left'):
         out[:, :, dz-overlap:dz] = weights*data[:n, :, -overlap:] + (weights*data[n:2*n, :, -overlap:])[:, :, ::-1]
     return out
 
-#For backward compatibility
+# For backward compatibility
 sino_360_t0_180 = sino_360_to_180

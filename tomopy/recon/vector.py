@@ -47,17 +47,22 @@
 # #########################################################################
 
 """
-Module for internal utility functions.
+Module for reconstruction algorithms.
 """
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import ctypes
-import numpy as np
-import multiprocessing as mp
-import logging
 import six
+import numpy as np
+import tomopy.util.mproc as mproc
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
+from tomopy.sim.project import get_center
+from tomopy.recon.algorithm import init_tomo
+import math
+import logging
+import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -65,137 +70,72 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_ndarray',
-           'as_dtype',
-           'as_float32',
-           'as_int32',
-           'as_uint8',
-           'as_uint16',
-           'as_c_float_p',
-           'as_c_int',
-           'as_c_int_p',
-           'as_c_float',
-           'as_c_char_p',
-           'as_c_void_p']
+__all__ = ['vector', 'vector2', 'vector3']
 
 
-def as_ndarray(arr, dtype=None, copy=False):
-    if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype, copy=copy)
-    return arr
+def vector(tomo, theta, center=None, num_iter=1):
+    tomo = dtype.as_float32(tomo)
+    theta = dtype.as_float32(theta)
+
+    # Initialize tomography data.
+    tomo = init_tomo(tomo, sinogram_order=False, sharedmem=False)
+
+    recon_shape = (tomo.shape[0], tomo.shape[2], tomo.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+
+    center_arr = get_center(tomo.shape, center)
+
+    extern.c_vector(tomo, center_arr, recon1, recon2, theta, 
+        num_gridx=tomo.shape[2], num_gridy=tomo.shape[2], num_iter=num_iter)
+    return recon1, recon2
 
 
-def as_dtype(arr, dtype, copy=False):
-    if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype, copy=copy)
-    return arr
+def vector2(tomo1, tomo2, theta1, theta2, center1=None, center2=None, num_iter=1, axis1=1, axis2=2):
+    tomo1 = dtype.as_float32(tomo1)
+    tomo2 = dtype.as_float32(tomo2)
+    theta1 = dtype.as_float32(theta1)
+    theta2 = dtype.as_float32(theta2)
+
+    # Initialize tomography data.
+    tomo1 = init_tomo(tomo1, sinogram_order=False, sharedmem=False)
+    tomo2 = init_tomo(tomo2, sinogram_order=False, sharedmem=False)
+
+    recon_shape = (tomo1.shape[0], tomo1.shape[2], tomo1.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+    recon3 = np.zeros(recon_shape, dtype=np.float32)
+
+    center_arr1 = get_center(tomo1.shape, center1)
+    center_arr2 = get_center(tomo2.shape, center2)
+
+    extern.c_vector2(tomo1, tomo2, center_arr1, center_arr2, recon1, recon2, recon3, theta1, theta2, 
+        num_gridx=tomo1.shape[2], num_gridy=tomo1.shape[2], num_iter=num_iter, axis1=axis1, axis2=axis2)
+    return recon1, recon2, recon3
 
 
-def as_float32(arr):
-    arr = as_ndarray(arr, np.float32)
-    return as_dtype(arr, np.float32)
+def vector3(tomo1, tomo2, tomo3, theta1, theta2, theta3, center1=None, center2=None, center3=None, num_iter=1, axis1=0, axis2=1, axis3=2):
+    tomo1 = dtype.as_float32(tomo1)
+    tomo2 = dtype.as_float32(tomo2)
+    tomo3 = dtype.as_float32(tomo3)
+    theta1 = dtype.as_float32(theta1)
+    theta2 = dtype.as_float32(theta2)
+    theta3 = dtype.as_float32(theta3)
 
+    # Initialize tomography data.
+    tomo1 = init_tomo(tomo1, sinogram_order=False, sharedmem=False)
+    tomo2 = init_tomo(tomo2, sinogram_order=False, sharedmem=False)
+    tomo3 = init_tomo(tomo3, sinogram_order=False, sharedmem=False)
 
-def as_int32(arr):
-    arr = as_ndarray(arr, np.int32)
-    return as_dtype(arr, np.int32)
+    recon_shape = (tomo1.shape[0], tomo1.shape[2], tomo1.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+    recon3 = np.zeros(recon_shape, dtype=np.float32)
 
+    center_arr1 = get_center(tomo1.shape, center1)
+    center_arr2 = get_center(tomo2.shape, center2)
+    center_arr3 = get_center(tomo3.shape, center3)
 
-def as_uint16(arr):
-    arr = as_ndarray(arr, np.uint16)
-    return as_dtype(arr, np.uint16)
-
-
-def as_uint8(arr):
-    arr = as_ndarray(arr, np.uint8)
-    return as_dtype(arr, np.uint8)
-
-
-def as_c_float_p(arr):
-    c_float_p = ctypes.POINTER(ctypes.c_float)
-    return arr.ctypes.data_as(c_float_p)
-
-
-def as_c_int(arr):
-    return ctypes.c_int(arr)
-
-
-def as_c_int_p(arr):
-    c_int_p = ctypes.POINTER(ctypes.c_int)
-    return arr.ctypes.data_as(c_int_p)
-
-
-def as_c_float(arr):
-    return ctypes.c_float(arr)
-
-
-def as_c_char_p(arr):
-    return ctypes.c_char_p(six.b(arr))
-
-
-def as_c_void_p():
-    return ctypes.POINTER(ctypes.c_void_p)
-
-
-def as_sharedmem(arr, copy=False):
-    # first check to see if it already a shared array
-    if not copy and is_sharedmem(arr):
-        return arr
-    # get ctype from numpy array
-    ctype = np.ctypeslib._typecodes[arr.__array_interface__['typestr']]
-    # create shared ctypes object with no lock
-    shared_obj = mp.RawArray(ctype, arr.size)
-    # create numpy array from shared object
-    # shared_arr = np.ctypeslib.as_array(shared_obj)
-    shared_arr = np.frombuffer(shared_obj, dtype=arr.dtype)
-    shared_arr = np.reshape(shared_arr, arr.shape)
-    # copy data to shared array
-    shared_arr[:] = arr[:]
-    return shared_arr
-
-
-def to_numpy_array(obj, dtype, shape):
-    return np.frombuffer(obj, dtype=dtype).reshape(shape)
-
-
-def is_sharedmem(arr):
-    # attempt to determine if data is in shared memory
-    try:
-        base = arr.base
-        if base is None:
-            return False
-        elif type(base).__module__.startswith('multiprocessing.sharedctypes'):
-            return True
-        else:
-            return is_sharedmem(base)
-    except:
-        return False
-
-
-def get_shared_mem(arr):
-    try:
-        while isinstance(arr, np.ndarray):
-            arr = arr.base
-    except:
-        pass
-    return arr
-
-
-def is_contiguous(arr):
-    return arr.flags.c_contiguous
-
-
-def empty_shared_array(shape, dtype=np.float32):
-    # create a shared ndarray with the provided shape and type
-    # get ctype from np dtype
-    temp_arr = np.empty((1), dtype)
-    ctype = np.ctypeslib._typecodes[temp_arr.__array_interface__['typestr']]
-    # create shared ctypes object with no lock
-    size = 1
-    for dim in shape:
-        size *= dim
-    shared_obj = mp.RawArray(ctype, int(size))
-    # create numpy array from shared object
-    arr = np.frombuffer(shared_obj, dtype)
-    arr = arr.reshape(shape)
-    return arr
+    extern.c_vector3(tomo1, tomo2, tomo3, center_arr1, center_arr2, center_arr3, recon1, recon2, recon3, theta1, theta2, theta3,  
+        num_gridx=tomo1.shape[2], num_gridy=tomo1.shape[2], num_iter=num_iter, axis1=axis1, axis2=axis2, axis3=axis3)
+    return recon1, recon2, recon3

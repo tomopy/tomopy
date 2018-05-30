@@ -78,6 +78,37 @@ project(
     const float *center,
     const float *theta);
 
+void DLL
+project2(
+    const float *objx,
+    const float *objy,
+    int oy,
+    int ox, 
+    int oz,
+    float *data,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center,
+    const float *theta);
+
+void DLL
+project3(
+    const float *objx,
+    const float *objy,
+    const float *objz,
+    int oy,
+    int ox, 
+    int oz,
+    float *data,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center,
+    const float *theta,
+    int axis);
+
+
 // Reconstruction algorithms
 
 void DLL
@@ -223,6 +254,65 @@ sirt(
     int ngridy,
     int num_iter);
 
+void DLL
+vector(
+    const float *data,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center,
+    const float *theta,
+    float *recon1,
+    float *recon2,
+    int ngridx,
+    int ngridy,
+    int num_iter);
+
+void DLL
+vector2(
+    const float *data1,
+    const float *data2,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center1,
+    const float *center2,
+    const float *theta1,
+    const float *theta2,
+    float *recon1,
+    float *recon2,
+    float *recon3,
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    int axis1,
+    int axis2);
+
+void DLL
+vector3(
+    const float *data1,
+    const float *data2,
+    const float *data3,
+    int dy, 
+    int dt,
+    int dx,
+    const float *center1,
+    const float *center2,
+    const float *center3,
+    const float *theta1,
+    const float *theta2,
+    const float *theta3,
+    float *recon1,
+    float *recon2,
+    float *recon3,
+    int ngridx,
+    int ngridy,
+    int num_iter,
+    int axis1,
+    int axis2,
+    int axis3);
+
+
 // Utility functions for data simultation
 
 void DLL
@@ -269,6 +359,14 @@ calc_dist(
     float *dist);
 
 void DLL
+calc_dist2(
+    int ngridx, int ngridy, 
+    int csize, 
+    const float *coorx, const float *coory,
+    int *indx, int *indy,
+    float *dist);
+
+void DLL
 calc_simdata(
     int s, int p, int d,
     int ngridx, int ngridy, 
@@ -277,6 +375,36 @@ calc_simdata(
     const int *indi,
     const float *dist,
     const float *model,
+    float *simdata);
+
+void DLL
+calc_simdata2(
+    int s, int p, int d,
+    int ngridx, int ngridy, 
+    int dt, int dx,
+    int csize, 
+    const int *indx,
+    const int *indy,
+    const float *dist,
+    float vx, float vy,
+    const float *modelx,
+    const float *modely,
+    float *simdata);
+
+void DLL
+calc_simdata3(
+    int s, int p, int d,
+    int ngridx, int ngridy, 
+    int dt, int dx,
+    int csize, 
+    const int *indx,
+    const int *indy,
+    const float *dist,
+    float vx, float vy,
+    const float *modelx,
+    const float *modely,
+    const float *modelz,
+    int axis,
     float *simdata);
 
 #endif

@@ -1,31 +1,61 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from setuptools import setup, Extension, find_packages, os
+import os
+
+if os.name == 'nt':
+    # this is needed to trick the mingw compiler to link against msvcr100 instead of a non-existent msvcr140.
+    # when mingw will support UCRT, this code block will no longer be needed 
+    import sys
+    msc_pos = sys.version.find('MSC v.')
+    if msc_pos != -1:
+        msc_ver = sys.version[msc_pos+6:msc_pos+10]
+        if int(msc_ver) >= 1900:
+            sys.version = "".join([sys.version[:msc_pos+6], "1600",sys.version[msc_pos+10:]])
+
+
+from setuptools import setup, Extension, find_packages
 
 # Get shared library locations.
 LD_LIBRARY_PATH = os.environ.get('LD_LIBRARY_PATH', None)
 if LD_LIBRARY_PATH is None:
     LD_LIBRARY_PATH = []
 else:
-    LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(':').split(':')
-
+    if os.name == 'nt':
+        LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(';').split(';')
+    else:
+        LD_LIBRARY_PATH = LD_LIBRARY_PATH.strip(':').split(':')
 # Get header file locations.
 C_INCLUDE_PATH = os.environ.get('C_INCLUDE_PATH', None)
 if C_INCLUDE_PATH is None:
     C_INCLUDE_PATH = []
 else:
-    C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+    if os.name == 'nt':
+        C_INCLUDE_PATH = C_INCLUDE_PATH.split(';')
+    else:
+        C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
 
-extra_comp_args = ['-std=c99']
+print(C_INCLUDE_PATH)
+use_mkl = os.environ.get('DISABLE_MKL') is None
+
+
+
 extra_link_args = ['-lm']
 if os.name == 'nt':
     import sys
+    extra_comp_args = []
     if sys.version_info.major == 3:
         extra_comp_args += ['-DPY3K']
     extra_comp_args += ['-DWIN32']
-    extra_link_args += ['-lfftw3f-3']
+    extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f-3']
+
+    # intel mkl .lib are not copied to %PYTHONHOME%\Library\lib. we need to add it to our link paths
+    base = os.path.join(os.environ.get("PYTHONHOME", os.environ.get("MINICONDA")), "pkgs")
+    last = [i for i in os.listdir(base) if i.startswith("mkl-20") and os.path.isdir(os.path.join(base, i))]
+    LD_LIBRARY_PATH.append(os.path.join(base, last[-1], "Library", "lib"))
+
 else:
-    extra_link_args += ['-lfftw3f']
+    extra_comp_args = ['-std=c99']
+    extra_link_args += ['-lmkl_rt'] if use_mkl else ['-lfftw3f']
 
 tomoc = Extension(
     name='tomopy.libtomopy',
@@ -48,9 +78,11 @@ tomoc = Extension(
         'src/pml_quad.c',
         'src/prep.c',
         'src/sirt.c',
+        'src/vector.c',
         'src/morph.c',
         'src/stripe.c',
-        'src/remove_ring.c'])
+        'src/remove_ring.c'],
+    define_macros=[('USE_MKL', None)] if use_mkl else [])
 
 ext_mods = [tomoc]
 
@@ -82,9 +114,10 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: C']
 )
