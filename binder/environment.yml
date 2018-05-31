@@ -1,0 +1,8 @@
+name: tomopy
+channels:
+  - conda-forge
+  - defaults
+  - astra-toolbox
+dependencies:
+  - tomopy
+  - astra-toolbox
