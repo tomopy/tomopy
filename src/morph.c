@@ -42,7 +42,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "morph.h"
-
+#include "assert.h"
+#include <limits.h>
 
 DLL void 
 sample(
@@ -66,11 +67,15 @@ downsample(
     const float* data, int dx, int dy, int dz,
     int level, int axis, float* out) 
 {
-    int m, n, k, i, j, p, ind;
-    int binsize;
-    
+    unsigned m, n, p, binsize;
+    unsigned long long i, j, k, ind;
+
     binsize = pow(2, level);
-    
+    // Ensure that largest array is small enough to be indexable
+    assert(ULLONG_MAX/dx/dy/dz > 0);
+    // Ensure safe comparison between unsigned (ijk) and signed (xyz)
+    assert(dx >= 0 && dy >= 0 && dz >= 0);
+
     if (axis == 0)
     {
         dx /= binsize;
@@ -139,11 +144,15 @@ upsample(
     const float* data, int dx, int dy, int dz,
     int level, int axis, float* out) {
 
-    int m, n, k, i, j, p, ind;
-    int binsize;
+    unsigned m, n, p, binsize;
+    unsigned long long k, i, j, ind;
     
     binsize = pow(2, level);
-    
+    // Ensure that largest array is small enough to be indexable
+    assert(ULLONG_MAX/binsize/dy/dz/dx > 0);
+    // Ensure safe comparison between unsigned (ijk) and signed (xyz)
+    assert(dx >= 0 && dy >= 0 && dz >= 0);
+
     if (axis == 0)
     {
         for (m = 0, ind = 0; m < dx; m++) 
