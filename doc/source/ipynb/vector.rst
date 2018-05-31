@@ -11,7 +11,7 @@ with `TomoPy <http://tomopy.readthedocs.io/en/latest/>`__:cite:`Gursoy:14a`.
 
 In order to test the algorithm, the projections of a reconstructed oject can be computed, and from these projections we can come back to the reconstructed model object. Finally we will compare the results of the vector field reconstruction against the initial object.
 
-All datasets in this tutorial are available `here <https://www.globus.org/app/transfer?origin_id=e133a81a-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ftomobank%2Fphantom_00012%2F>`_, `here <https://www.globus.org/app/transfer?origin_id=e133a81a-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ftomobank%2Fphantom_00013%2F>`_ and `here <https://www.globus.org/app/transfer?origin_id=e133a81a-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ftomobank%2Fphantom_00014%2F>`_, and information about these data are available `here <https://tomobank.readthedocs.io/en/latest/source/phantom/docs.phantom.magnetic.html>`_.
+All datasets used in this tutorial are available in `tomoBank <https://tomobank.readthedocs.io/en/latest/source/phantom/docs.phantom.magnetic.html>`_.
 
 
 First, let's make the necessary imports
