@@ -52,6 +52,7 @@
 	#endif
 #endif
 
+
 void 
 preprocessing(
     int ry, int rz,
@@ -243,6 +244,33 @@ calc_dist(
 
 
 void 
+calc_dist2(
+    int ry, int rz, 
+    int csize, const float *coorx, const float *coory,
+    int *indx, int *indy, float *dist)
+{
+    int n, i1, i2;
+    float x1, x2;
+    float diffx, diffy, midx, midy;
+
+    for (n=0; n<csize-1; n++) 
+    {
+        diffx = coorx[n+1]-coorx[n];
+        diffy = coory[n+1]-coory[n];
+        dist[n] = sqrt(diffx*diffx+diffy*diffy);
+        midx = (coorx[n+1]+coorx[n])/2;
+        midy = (coory[n+1]+coory[n])/2;
+        x1 = midx+ry/2.;
+        x2 = midy+rz/2.;
+        i1 = (int)(midx+ry/2.);
+        i2 = (int)(midy+rz/2.);
+        indx[n] = i1-(i1>x1);
+        indy[n] = i2-(i2>x2);
+    }
+}
+
+
+void 
 calc_simdata(
     int s, int p, int d,
     int ry, int rz, 
@@ -266,17 +294,49 @@ calc_simdata2(
     int s, int p, int d,
     int ry, int rz, 
     int dt, int dx,
-    int csize, const int *indi, const float *dist,
+    int csize, const int *indx, const int *indy, const float *dist,
     float vx, float vy, 
-    const float *modelx, const float *modely, 
-    float *simdata)
+    const float *modelx, const float *modely, float *simdata)
 {
     int n;
 
-    int index_model = s*ry*rz;
-    int index_data = d+p*dx+s*dt*dx;
     for (n=0; n<csize-1; n++) 
     {
-        simdata[index_data] += (modelx[indi[n]+index_model] * vx + modely[indi[n]+index_model] * vy) * dist[n];
+        simdata[d + p*dx + s*dt*dx] += (modelx[indy[n] + indx[n]*rz + s*ry*rz] * vx + modely[indy[n] + indx[n]*rz + s*ry*rz] * vy) * dist[n];
+    }
+}
+
+
+void 
+calc_simdata3(
+    int s, int p, int d,
+    int ry, int rz, 
+    int dt, int dx,
+    int csize, const int *indx, const int *indy, const float *dist,
+    float vx, float vy, 
+    const float *modelx, const float *modely, const float *modelz, int axis, float *simdata)
+{
+    int n;
+
+    if (axis==0)
+    {
+        for (n=0; n<csize-1; n++) 
+        {
+            simdata[d + p*dx + s*dt*dx] += (modelx[indy[n] + indx[n]*rz + s*ry*rz] * vx + modely[indy[n] + indx[n]*rz + s*ry*rz] * vy) * dist[n];
+        }
+    }
+    else if (axis==1)
+    {
+        for (n=0; n<csize-1; n++) 
+        {
+            simdata[d + p*dx + s*dt*dx] += (modely[s + indx[n]*rz + indy[n]*ry*rz] * vx + modelz[s + indx[n]*rz + indy[n]*ry*rz] * vy) * dist[n];
+        }
+    }
+    else if (axis==2)
+    {
+        for (n=0; n<csize-1; n++) 
+        {
+            simdata[d + p*dx + s*dt*dx] += (modelx[indx[n] + s*rz + indy[n]*ry*rz] * vx + modelz[indx[n] + s*rz + indy[n]*ry*rz] * vy) * dist[n];
+        }
     }
 }

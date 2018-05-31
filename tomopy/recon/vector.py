@@ -46,28 +46,96 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
+"""
+Module for reconstruction algorithms.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-__version__ = '1.1.3'
-
-from ._fft_loader import fft_impl
-
+import six
+import numpy as np
+import tomopy.util.mproc as mproc
+import tomopy.util.extern as extern
+import tomopy.util.dtype as dtype
+from tomopy.sim.project import get_center
+from tomopy.recon.algorithm import init_tomo
+import math
 import logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+import concurrent.futures as cf
 
-from tomopy.misc.corr import *
-from tomopy.misc.morph import *
-from tomopy.misc.phantom import *
-from tomopy.prep.alignment import *
-from tomopy.prep.normalize import *
-from tomopy.prep.phase import *
-from tomopy.prep.stripe import *
-from tomopy.recon.wrappers import *
-from tomopy.recon.algorithm import *
-from tomopy.recon.rotation import *
-from tomopy.recon.vector import *
-from tomopy.recon.acceleration import *
-from tomopy.sim.project import *
-from tomopy.sim.propagate import *
-from tomopy.util.mproc import set_debug
+logger = logging.getLogger(__name__)
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['vector', 'vector2', 'vector3']
+
+
+def vector(tomo, theta, center=None, num_iter=1):
+    tomo = dtype.as_float32(tomo)
+    theta = dtype.as_float32(theta)
+
+    # Initialize tomography data.
+    tomo = init_tomo(tomo, sinogram_order=False, sharedmem=False)
+
+    recon_shape = (tomo.shape[0], tomo.shape[2], tomo.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+
+    center_arr = get_center(tomo.shape, center)
+
+    extern.c_vector(tomo, center_arr, recon1, recon2, theta, 
+        num_gridx=tomo.shape[2], num_gridy=tomo.shape[2], num_iter=num_iter)
+    return recon1, recon2
+
+
+def vector2(tomo1, tomo2, theta1, theta2, center1=None, center2=None, num_iter=1, axis1=1, axis2=2):
+    tomo1 = dtype.as_float32(tomo1)
+    tomo2 = dtype.as_float32(tomo2)
+    theta1 = dtype.as_float32(theta1)
+    theta2 = dtype.as_float32(theta2)
+
+    # Initialize tomography data.
+    tomo1 = init_tomo(tomo1, sinogram_order=False, sharedmem=False)
+    tomo2 = init_tomo(tomo2, sinogram_order=False, sharedmem=False)
+
+    recon_shape = (tomo1.shape[0], tomo1.shape[2], tomo1.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+    recon3 = np.zeros(recon_shape, dtype=np.float32)
+
+    center_arr1 = get_center(tomo1.shape, center1)
+    center_arr2 = get_center(tomo2.shape, center2)
+
+    extern.c_vector2(tomo1, tomo2, center_arr1, center_arr2, recon1, recon2, recon3, theta1, theta2, 
+        num_gridx=tomo1.shape[2], num_gridy=tomo1.shape[2], num_iter=num_iter, axis1=axis1, axis2=axis2)
+    return recon1, recon2, recon3
+
+
+def vector3(tomo1, tomo2, tomo3, theta1, theta2, theta3, center1=None, center2=None, center3=None, num_iter=1, axis1=0, axis2=1, axis3=2):
+    tomo1 = dtype.as_float32(tomo1)
+    tomo2 = dtype.as_float32(tomo2)
+    tomo3 = dtype.as_float32(tomo3)
+    theta1 = dtype.as_float32(theta1)
+    theta2 = dtype.as_float32(theta2)
+    theta3 = dtype.as_float32(theta3)
+
+    # Initialize tomography data.
+    tomo1 = init_tomo(tomo1, sinogram_order=False, sharedmem=False)
+    tomo2 = init_tomo(tomo2, sinogram_order=False, sharedmem=False)
+    tomo3 = init_tomo(tomo3, sinogram_order=False, sharedmem=False)
+
+    recon_shape = (tomo1.shape[0], tomo1.shape[2], tomo1.shape[2])
+    recon1 = np.zeros(recon_shape, dtype=np.float32)
+    recon2 = np.zeros(recon_shape, dtype=np.float32)
+    recon3 = np.zeros(recon_shape, dtype=np.float32)
+
+    center_arr1 = get_center(tomo1.shape, center1)
+    center_arr2 = get_center(tomo2.shape, center2)
+    center_arr3 = get_center(tomo3.shape, center3)
+
+    extern.c_vector3(tomo1, tomo2, tomo3, center_arr1, center_arr2, center_arr3, recon1, recon2, recon3, theta1, theta2, theta3,  
+        num_gridx=tomo1.shape[2], num_gridy=tomo1.shape[2], num_iter=num_iter, axis1=axis1, axis2=axis2, axis3=axis3)
+    return recon1, recon2, recon3
