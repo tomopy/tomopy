@@ -22,7 +22,7 @@ TomoPy
    :alt: Anaconda downloads
    
 .. image:: https://mybinder.org/badge.svg 
-   :target: https://mybinder.org/v2/gh/kmader/tomopy/master
+   :target: https://mybinder.org/v2/gh/tomopy/tomopy/master
    :alt: Use on Binder
 
 **TomoPy** is an open-source Python package for tomographic data 
@@ -48,8 +48,8 @@ Try Now
 
 You can try notebooks now using mybinder.org
 
-* GridRec: https://mybinder.org/v2/gh/kmader/tomopy/master?filepath=doc%2Fdemo%2Fgridrec.ipynb
-* Vector Heterostructure: https://mybinder.org/v2/gh/kmader/tomopy/master?filepath=doc%2Fdemo%2Fvector_heterostructure.ipynb
+* GridRec: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fgridrec.ipynb
+* Vector Heterostructure: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fvector_heterostructure.ipynb
     
 Contribute
 ==========
