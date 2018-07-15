@@ -14,6 +14,7 @@ requirements:
     - mkl-devel
     - python
     - setuptools
+    - m2w64-gcc # [win]
 
   run:
     - python
@@ -28,6 +29,7 @@ requirements:
     - dxchange
     - numexpr
     - futures # [py2k]
+    - m2w64-gcc-libs # [win]
     
 test:
   # Python imports
