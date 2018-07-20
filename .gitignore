@@ -120,3 +120,8 @@ script
 ptycho.py
 *.autotools
 *.cproject
+
+# Benchmarking #
+################
+/benchmarking/tomopy-source
+/benchmarking/tomopy-ctest
