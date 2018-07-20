@@ -150,8 +150,7 @@ def run_pyctest():
     # copy over files from os.getcwd() to pyctest.BINARY_DIR
     # (implicitly copies over PyCTest{Pre,Post}Init.cmake if they exist)
     #
-    pyctest.copy_files(
-        ["tomopy_test_utils.py", "tomopy_phantom.py", "tomopy_rec.py"])
+    pyctest.copy_files(["tomopy_phantom.py", "tomopy_rec.py"])
 
     #--------------------------------------------------------------------------#
     # find the CTEST_TOKEN_FILE
