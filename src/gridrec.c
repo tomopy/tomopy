@@ -1,44 +1,44 @@
 // Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.
 
-// Copyright 2015. UChicago Argonne, LLC. This software was produced 
-// under U.S. Government contract DE-AC02-06CH11357 for Argonne National 
-// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the 
-// U.S. Department of Energy. The U.S. Government has rights to use, 
-// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR 
-// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR 
-// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is 
-// modified to produce derivative works, such modified software should 
-// be clearly marked, so as not to confuse it with the version available 
+// Copyright 2015. UChicago Argonne, LLC. This software was produced
+// under U.S. Government contract DE-AC02-06CH11357 for Argonne National
+// Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
+// U.S. Department of Energy. The U.S. Government has rights to use,
+// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
+// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
+// modified to produce derivative works, such modified software should
+// be clearly marked, so as not to confuse it with the version available
 // from ANL.
 
-// Additionally, redistribution and use in source and binary forms, with 
-// or without modification, are permitted provided that the following 
+// Additionally, redistribution and use in source and binary forms, with
+// or without modification, are permitted provided that the following
 // conditions are met:
 
-//     * Redistributions of source code must retain the above copyright 
-//       notice, this list of conditions and the following disclaimer. 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
 
-//     * Redistributions in binary form must reproduce the above copyright 
-//       notice, this list of conditions and the following disclaimer in 
-//       the documentation and/or other materials provided with the 
-//       distribution. 
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in
+//       the documentation and/or other materials provided with the
+//       distribution.
 
-//     * Neither the name of UChicago Argonne, LLC, Argonne National 
-//       Laboratory, ANL, the U.S. Government, nor the names of its 
-//       contributors may be used to endorse or promote products derived 
-//       from this software without specific prior written permission. 
+//     * Neither the name of UChicago Argonne, LLC, Argonne National
+//       Laboratory, ANL, the U.S. Government, nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
 
-// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago 
-// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
+// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
 // Possible speedups:
@@ -86,17 +86,20 @@ pthread_mutex_t lock;
 #define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
 
-void 
+void
 gridrec(
-    const float *data, int dy, int dt, int dx, const float *center, 
+    const float *data, int dy, int dt, int dx, const float *center,
     const float *theta, float *recon, int ngridx, int ngridy, const char *fname,
 	const float *filter_par)
 {
+    if (dy == 0)
+        return;
+
     int s, p, iu, iv;
     int j, jmin, jmax;
     float *sine, *cose, *wtbl, *winv;
-   
-#ifdef USE_MKL 
+
+#ifdef USE_MKL
     float *work, *work2;
 #else
     float _Complex **work, **work2;
@@ -107,7 +110,7 @@ gridrec(
     const float nt = 20.0;
     const float lambda = 0.99998546;
     const unsigned int L = (int)(2*C/M_PI);
-    const int ltbl = 512;         
+    const int ltbl = 512;
     int pdim;
     float _Complex *sino, *filphase, *filphase_iter, **H;
     float _Complex **U_d, **V_d;
@@ -121,7 +124,7 @@ gridrec(
         -0.1053599E+02,  0.1662374E+01, -0.1780527E-00,
          0.1372983E-01, -0.7963169E-03,  0.3593372E-04,
         -0.1295941E-05,  0.3817796E-07};
-    
+
     // Compute pdim = next power of 2 >= dx
     for(pdim = 16; pdim < dx; pdim *= 2);
 
@@ -151,7 +154,7 @@ gridrec(
     P_z = malloc_vector_f(pdim2*dt); __ASSSUME_64BYTES_ALIGNED(P_z);
     U_d = malloc_matrix_c(dt, pdim); __ASSSUME_64BYTES_ALIGNED(U_d);
     V_d = malloc_matrix_c(dt, pdim); __ASSSUME_64BYTES_ALIGNED(V_d);
-#ifdef USE_MKL   
+#ifdef USE_MKL
     work = malloc_vector_f(L+1);     __ASSSUME_64BYTES_ALIGNED(work);
     work2 = malloc_vector_f(L+1);    __ASSSUME_64BYTES_ALIGNED(work2)
 #else
@@ -210,7 +213,7 @@ gridrec(
     int k, k2;
 
 #ifndef USE_MKL
-    // Calculations below same for all slices so move outside of slice loop 
+    // Calculations below same for all slices so move outside of slice loop
     // Set up cache blocking to reduce irregular access
     for(b=0; b<nb; b++)
     {
@@ -281,48 +284,48 @@ gridrec(
         // Loop over the dt projection angles. For each angle, do the following:
 
         //     1. Copy the real projection data from the two slices into the
-        //      real and imaginary parts of the first dx elements of the 
+        //      real and imaginary parts of the first dx elements of the
         //      complex array, sino[].  Set the remaining pdim-dx elements
         //      to zero (zero-padding).
 
         //     2. Carry out a (1D) Fourier transform on the complex data.
-        //      This results in transform data that is arranged in 
-        //      "wrap-around" order, with non-negative spatial frequencies 
-        //      occupying the first half, and negative frequencies the second 
+        //      This results in transform data that is arranged in
+        //      "wrap-around" order, with non-negative spatial frequencies
+        //      occupying the first half, and negative frequencies the second
         //      half, of the array, sino[].
-            
+
         //     3. Multiply each element of the 1-D transform by a complex,
         //      frequency dependent factor, filphase[].  These factors were
-        //      precomputed as part of recofour1((float*)sino-1,pdim,1);n_init() and combine the 
-        //      tomographic filtering with a phase factor which shifts the 
-        //      origin in configuration space to the projection of the 
-        //      rotation axis as defined by the parameter, "center".  If a 
-        //      region of interest (ROI) centered on a different origin has 
-        //      been specified [(X0,Y0)!=(0,0)], multiplication by an 
-        //      additional phase factor, dependent on angle as well as 
+        //      precomputed as part of recofour1((float*)sino-1,pdim,1);n_init() and combine the
+        //      tomographic filtering with a phase factor which shifts the
+        //      origin in configuration space to the projection of the
+        //      rotation axis as defined by the parameter, "center".  If a
+        //      region of interest (ROI) centered on a different origin has
+        //      been specified [(X0,Y0)!=(0,0)], multiplication by an
+        //      additional phase factor, dependent on angle as well as
         //      frequency, is required.
 
-        //     4. For each data element, find the Cartesian coordinates, 
-        //      <U,V>, of the corresponding point in the 2D frequency plane, 
-        //      in  units of the spacing in the MxM rectangular grid placed 
-        //      thereon; then calculate the upper and lower limits in each 
-        //      coordinate direction of the integer coordinates for the 
-        //      grid points contained in an LxL box centered on <U,V>.  
-        //      Using a precomputed table of the (1-D) convolving function, 
+        //     4. For each data element, find the Cartesian coordinates,
+        //      <U,V>, of the corresponding point in the 2D frequency plane,
+        //      in  units of the spacing in the MxM rectangular grid placed
+        //      thereon; then calculate the upper and lower limits in each
+        //      coordinate direction of the integer coordinates for the
+        //      grid points contained in an LxL box centered on <U,V>.
+        //      Using a precomputed table of the (1-D) convolving function,
         //      W, calculate the contribution of this data element to the
         //      (2-D) convolvent (the 2_D convolvent is the product of
         //      1_D convolvents in the X and Y directions) at each of these
-        //      grid points, and update the complex 2D array H accordingly.  
+        //      grid points, and update the complex 2D array H accordingly.
 
-        // At the end of Phase 1, the array H[][] contains data arranged in 
-        // "natural", rather than wrap-around order -- that is, the origin in 
-        // the spatial frequency plane is situated in the middle, rather than 
-        // at the beginning, of the array, H[][].  This simplifies the code 
-        // for carrying out the convolution (step 4 above), but necessitates 
+        // At the end of Phase 1, the array H[][] contains data arranged in
+        // "natural", rather than wrap-around order -- that is, the origin in
+        // the spatial frequency plane is situated in the middle, rather than
+        // at the beginning, of the array, H[][].  This simplifies the code
+        // for carrying out the convolution (step 4 above), but necessitates
         // an additional correction -- See Phase 3 below.
 
         float _Complex Cdata1, Cdata2;
-        int zlimit = dt*(pdim2-1); 
+        int zlimit = dt*(pdim2-1);
 
 #ifdef USE_MKL
         // For each projection
@@ -437,10 +440,10 @@ gridrec(
                 p = P_z[z];
                 j = J_z[z];
                 U = U_d[p][j];
-                V = V_d[p][j];            
+                V = V_d[p][j];
 
                 if(filter2d) filphase_iter = filphase + pdim2*p;
-                
+
                 Cdata1 = filphase_iter[j] * sino[j+(p*pdim)];
                 Cdata2 = conjf(filphase_iter[j]) * sino[pdim-j+(p*pdim)];
 
@@ -451,14 +454,14 @@ gridrec(
                 ivl = ceilf(V-L2);
                 ivh = floorf(V+L2);
                 if(iul<1) iul = 1;
-                if(iuh>=pdim) iuh = pdim-1; 
-                if(ivl<1) ivl = 1; 
-                if(ivh>=pdim) ivh = pdim-1; 
+                if(iuh>=pdim) iuh = pdim-1;
+                if(ivl<1) ivl = 1;
+                if(ivh>=pdim) ivh = pdim-1;
 
 		__PRAGMA_OMP_SIMD_COLLAPSE
                 for (iu=iul, k2=0; iu <= iuh; iu++, k2++) {
                     for(iv=ivl, k=0; iv<=ivh; iv++, k++) {
-                        const float convolv = work2[z][k2]*work[z][k];                    
+                        const float convolv = work2[z][k2]*work[z][k];
                         H[iu][iv] += convolv*Cdata1;
                         H[pdim-iu][pdim-iv] += convolv*Cdata2;
                     }
@@ -467,9 +470,9 @@ gridrec(
 #endif
         // Carry out a 2D inverse FFT on the array H.
 
-        // At the conclusion of this phase, the configuration 
+        // At the conclusion of this phase, the configuration
         // space data is arranged in wrap-around order with the origin
-        // (center of reconstructed images) situated at the start of the 
+        // (center of reconstructed images) situated at the start of the
         // array.  The first (resp. second) half of the array contains the lower,
         // Y<0 (resp, upper Y>0) part of the image, and within each row of the
         // array, the first (resp. second) half contains data for the right [X>0]
@@ -482,9 +485,9 @@ gridrec(
 #endif
 
         // Copy the real and imaginary parts of the complex data from H[][],
-        // into the output buffers for the two reconstructed real images, 
-        // simultaneously carrying out a final multiplicative correction.  
-        // The correction factors are taken from the array, winv[], previously 
+        // into the output buffers for the two reconstructed real images,
+        // simultaneously carrying out a final multiplicative correction.
+        // The correction factors are taken from the array, winv[], previously
         // computed in set_pswf_tables(), and consist logically of three parts, namely:
 
         //  1. A positive real factor, corresponding to the reciprocal
@@ -496,22 +499,22 @@ gridrec(
         //     out in Phase 2.  (Note that all quantities are expressed in
         //     units in which the detector spacing is one.)
 
-        //  3. A sign change for the "odd-numbered" elements (in a 
+        //  3. A sign change for the "odd-numbered" elements (in a
         //     checkerboard pattern) of the array.  This compensates
-        //     for the fact that the 2-D Fourier transform (Phase 2) 
-        //     started with a frequency array in which the zero frequency 
-        //     point appears in the middle of the array instead of at 
+        //     for the fact that the 2-D Fourier transform (Phase 2)
+        //     started with a frequency array in which the zero frequency
+        //     point appears in the middle of the array instead of at
         //     its start.
 
-        // Only the elements in the square M0xM0 subarray of H[][], centered 
+        // Only the elements in the square M0xM0 subarray of H[][], centered
         // about the origin, are utilized.  The other elements are not part of the
-        // actual region being reconstructed and are discarded.  Because of the 
+        // actual region being reconstructed and are discarded.  Because of the
         // wrap-around ordering, the subarray must actually be taken from the four
         // corners" of the 2D array, H[][] -- See Phase 2 description, above.
 
         // The final data corresponds physically to the linear X-ray absorption
-        // coefficient expressed in units of the inverse detector spacing -- to 
-        // convert to inverse cm (say), one must divide the data by the detector 
+        // coefficient expressed in units of the inverse detector spacing -- to
+        // convert to inverse cm (say), one must divide the data by the detector
         // spacing in cm.
 
         int ustart, vstart, ufin, vfin;
@@ -552,7 +555,7 @@ gridrec(
                     }
                 }
             }
-            if(j<ngridy) 
+            if(j<ngridy)
             {
                 ustart = 0;
                 ufin = ngridy-offsety;
@@ -570,7 +573,7 @@ gridrec(
     free_vector_f(work);
 #else
     free_matrix_c(work);
-    free_matrix_c(work2);    
+    free_matrix_c(work2);
 #endif
     free_matrix_c(H);
     free_vector_f(J_z);
@@ -589,11 +592,11 @@ gridrec(
 }
 
 
-void 
+void
 set_filter_tables(
-    int dt, int pd, float center, 
+    int dt, int pd, float center,
     float(* const pf)(float, int, int, int, const float *), const float *filter_par, float _Complex *A, unsigned char filter2d)
-{ 
+{
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
     // (*pf)()], multiplying a complex phase factor (derived from the
@@ -604,7 +607,7 @@ set_filter_tables(
     int j,i;
     int pd2 = pd/2;
     float x;
-    
+
     if(!filter2d){
         for(j=0; j<pd2; j++)
         {
@@ -618,7 +621,7 @@ set_filter_tables(
             A[j] *= (cosf(x) - I*sinf(x))*norm;
         }
     }else{
-        for(i=0;i<dt;i++)        
+        for(i=0;i<dt;i++)
         {
             int j0 = i * pd2;
 
@@ -638,13 +641,13 @@ set_filter_tables(
 }
 
 
-void 
+void
 set_pswf_tables(
-    float C, int nt, float lambda, const float *coefs, 
-    int ltbl, int linv, float* wtbl, float* winv)                                            
+    float C, int nt, float lambda, const float *coefs,
+    int ltbl, int linv, float* wtbl, float* winv)
 {
-    // Set up lookup tables for convolvent (used in Phase 1 of   
-    // do_recon()), and for the final correction factor (used in 
+    // Set up lookup tables for convolvent (used in Phase 1 of
+    // do_recon()), and for the final correction factor (used in
     // Phase 3).
 
     int i;
@@ -653,12 +656,12 @@ set_pswf_tables(
     const float polyz = legendre(nt, coefs, 0.);
 
     wtbl[0] = 1.0;
-    for(i=1; i<=ltbl; i++) 
-    {   
+    for(i=1; i<=ltbl; i++)
+    {
         wtbl[i] = legendre(nt, coefs, (float)i/ltbl) / polyz;
     }
 
-    // Note the final result at end of Phase 3 contains the factor, 
+    // Note the final result at end of Phase 3 contains the factor,
     // norm^2.  This incorporates the normalization of the 2D
     // inverse FFT in Phase 2 as well as scale factors involved
     // in the inverse Fourier transform of the convolvent.
@@ -671,13 +674,13 @@ set_pswf_tables(
         // Minus sign for alternate entries
         // corrects for "natural" data layout
         // in array H at end of Phase 1.
-        norm = -norm; 
+        norm = -norm;
         winv[linv+i] = winv[linv-i] = norm / wtbl[(int) roundf(i*fac)];
     }
 }
 
 
-void 
+void
 set_trig_tables(int dt, const float *theta, float **sine, float **cose)
 {
     // Set up tables of sines and cosines.
@@ -695,7 +698,7 @@ set_trig_tables(int dt, const float *theta, float **sine, float **cose)
 }
 
 
-float 
+float
 legendre(int n, const float *coefs, float x)
 {
     // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
@@ -714,7 +717,7 @@ legendre(int n, const float *coefs, float x)
         if(!(j&1)) // if j is even
         {
             y += cur*coefs[j >> 1];
-        } 
+        }
 
         penult = last;
         last = cur;
@@ -722,11 +725,11 @@ legendre(int n, const float *coefs, float x)
     return y;
 }
 
-static inline void* 
+static inline void*
 malloc_64bytes_aligned(size_t sz)
 {
     #ifdef __MINGW32__
-    return  __mingw_aligned_malloc(sz, 64);  
+    return  __mingw_aligned_malloc(sz, 64);
     #else
     void *r = NULL;
     int err = posix_memalign(&r, 64, sz);
@@ -735,7 +738,7 @@ malloc_64bytes_aligned(size_t sz)
 }
 
 inline float*
-malloc_vector_f(size_t n) 
+malloc_vector_f(size_t n)
 {
 #ifdef USE_MKL
     return (float *)malloc(n*sizeof(float));
@@ -755,7 +758,7 @@ free_vector_f(float* v)
 }
 
 inline float _Complex*
-malloc_vector_c(size_t n) 
+malloc_vector_c(size_t n)
 {
 #ifdef USE_MKL
     return (float _Complex*)malloc(n*sizeof(float _Complex));
@@ -787,7 +790,7 @@ malloc_matrix_c(size_t nr, size_t nc)
     /* Allocate rows and set the pointers to them */
     m[0] = malloc_vector_c(nr * nc);
 
-    for (i = 1; i < nr; i++) 
+    for (i = 1; i < nr; i++)
     {
         m[i] = m[i-1] + nc;
     }
@@ -823,7 +826,7 @@ filter_shepp(float x, int i, int j, int fwidth, const float* pars)
 }
 
 
-// Cosine filter 
+// Cosine filter
 float
 filter_cosine(float x, int i, int j, int fwidth, const float* pars)
 {
@@ -831,7 +834,7 @@ filter_cosine(float x, int i, int j, int fwidth, const float* pars)
 }
 
 
-// Hann filter 
+// Hann filter
 float
 filter_hann(float x, int i, int j, int fwidth, const float* pars)
 {
@@ -839,7 +842,7 @@ filter_hann(float x, int i, int j, int fwidth, const float* pars)
 }
 
 
-// Hamming filter 
+// Hamming filter
 float
 filter_hamming(float x, int i, int j, int fwidth, const float* pars)
 {
@@ -882,11 +885,11 @@ filter_custom2d(float x, int i, int j, int fwidth, const float* pars)
 }
 
 
-float (*get_filter(const char *name))(float, int, int, int, const float*) 
+float (*get_filter(const char *name))(float, int, int, int, const float*)
 {
-    struct 
+    struct
     {
-        const char* name; 
+        const char* name;
         float (* const fp)(float, int, int, int, const float*);
     } fltbl[] = {
         {"none", filter_none},
@@ -908,7 +911,7 @@ float (*get_filter(const char *name))(float, int, int, int, const float*)
             return fltbl[i].fp;
         }
     }
-    return fltbl[1].fp;   
+    return fltbl[1].fp;
 }
 
 unsigned char
