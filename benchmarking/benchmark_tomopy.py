@@ -78,7 +78,7 @@ def configure():
 
     args = parser.parse_args()
 
-    pyctest.git_checkout("https://github.com/tomopy/tomopy.git",
+    pyctest.git_checkout("https://github.com/jrmadsen/tomopy.git",
                          pyctest.SOURCE_DIRECTORY)
 
     #-----------------------------------#
