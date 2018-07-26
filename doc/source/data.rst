@@ -13,3 +13,5 @@ in a terminal::
     conda install -c conda-forge dxchange
 
 
+For a repository of experimental and simulated data sets please check 
+`TomoBank <http://tomobank.readthedocs.io/>`_ :cite:`DeCarlo:17`.
