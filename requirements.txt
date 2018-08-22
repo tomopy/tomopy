@@ -1,11 +1,11 @@
-python
-six
 numpy
+h5py
 scipy
+six
 scikit-image
 pywavelets
 mkl
 mkl_fft
 dxchange
 numexpr
-futures
+futures ; python_version < "3"
