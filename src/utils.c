@@ -340,3 +340,132 @@ calc_simdata3(
         }
     }
 }
+
+void
+compute_indices_and_lengths(
+    const float * const theta, const int dt, const int dx,
+    const float *gridx, const float *gridy, const float mov,
+    const int ngridx, const int ngridy,
+    int ** const ray_start, int ** const ray_stride,
+    int ** const indices, float ** const distances,
+    float ** const sum_distances2)
+{
+    int ** const indi_list = malloc(sizeof *indi_list * dx*dt);
+    float ** const dist_list = malloc(sizeof *dist_list * dx*dt);
+    *ray_start = malloc(sizeof **ray_start * dx*dt);
+    *ray_stride = malloc(sizeof **ray_stride * dx*dt);
+    assert(indi_list != NULL && dist_list != NULL &&
+           *ray_start != NULL && *ray_stride != NULL);
+    *sum_distances2 = calloc(dx*dt, sizeof **sum_distances2);
+    assert(*sum_distances2 != NULL);
+
+    #pragma omp parallel
+    {
+        int quadrant;
+        float theta_p, sin_p, cos_p;
+        float xi, yi;
+        int asize, bsize, csize;
+
+        float *coordx = (float *)malloc((ngridy+1)*sizeof(float));
+        float *coordy = (float *)malloc((ngridx+1)*sizeof(float));
+        float *ax = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        float *ay = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        float *bx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        float *by = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        float *coorx = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
+        assert(coordx != NULL && coordy != NULL &&
+            ax != NULL && ay != NULL && by != NULL && bx != NULL &&
+            coorx != NULL && coory != NULL);
+
+        // For each projection angle
+        #pragma omp for
+        for (int p=0; p<dt; p++)
+        {
+            // For each detector pixel
+            for (int d=0; d<dx; d++)
+            {
+                float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
+                int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
+                assert(dist != NULL && indi != NULL);
+                // Calculate the sin and cos values
+                // of the projection angle and find
+                // at which quadrant on the cartesian grid.
+                theta_p = fmod(theta[p], 2*M_PI);
+                quadrant = calc_quadrant(theta_p);
+                sin_p = sinf(theta_p);
+                cos_p = cosf(theta_p);
+                // Calculate coordinates
+                xi = -ngridx-ngridy;
+                yi = (1-dx)/2.0+d+mov;
+                calc_coords(
+                    ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                    coordx, coordy);
+                // Merge the (coordx, gridy) and (gridx, coordy)
+                trim_coords(
+                    ngridx, ngridy, coordx, coordy, gridx, gridy,
+                    &asize, ax, ay, &bsize, bx, by);
+                // Sort the array of intersection points (ax, ay) and
+                // (bx, by). The new sorted intersection points are
+                // stored in (coorx, coory). Total number of points
+                // are csize.
+                sort_intersections(
+                    quadrant, asize, ax, ay, bsize, bx, by,
+                    &csize, coorx, coory);
+                // Calculate the distances (dist) between the
+                // intersection points (coorx, coory). Find the
+                // indices of the pixels on the reconstruction grid.
+                calc_dist(
+                    ngridx, ngridy, csize, coorx, coory,
+                    indi, dist);
+                // Save the intersections and lengths from this ray
+                int ray = d + p*dx;
+                indi_list[ray] = indi;
+                dist_list[ray] = dist;
+                (*ray_stride)[ray] = csize - 1;
+            }
+        }
+        free(coordx);
+        free(coordy);
+        free(ax);
+        free(ay);
+        free(bx);
+        free(by);
+        free(coorx);
+        free(coory);
+        // Compute the total length of the combined arrays and the start of each
+        // block
+        #pragma omp single
+        {
+            int sum_ray_stride = 0;
+            for (int ray=0; ray<dx*dt; ray++)
+            {
+                (*ray_start)[ray] = sum_ray_stride;
+                sum_ray_stride += (*ray_stride)[ray];
+            }
+            *indices = malloc(sizeof **indices * sum_ray_stride);
+            *distances = malloc(sizeof **distances * sum_ray_stride);
+        }
+        #pragma omp barrier
+
+        #pragma omp for nowait
+        for (int ray=0; ray<dx*dt; ray++)
+        {
+            // Compute the squared sum of the distances for each ray
+            for (int n=0; n<(*ray_stride)[ray]; n++)
+            {
+                (*sum_distances2)[ray] += dist_list[ray][n]*dist_list[ray][n];
+            }
+            // Copy all of the intersections and distances into one array each
+            int j = (*ray_start)[ray];
+            memcpy(&(*indices)[j], indi_list[ray],
+                sizeof **indices * (*ray_stride)[ray]);
+            free(indi_list[ray]);
+            memcpy(&(*distances)[j], dist_list[ray],
+                sizeof **distances * (*ray_stride)[ray]);
+            free(dist_list[ray]);
+        }
+    }
+    free(indi_list);
+    free(dist_list);
+}

@@ -407,4 +407,13 @@ calc_simdata3(
     int axis,
     float *simdata);
 
+void DLL
+compute_indices_and_lengths(
+    const float * const theta, const int dt, const int dx,
+    const float *gridx, const float *gridy, const float mov,
+    const int ngridx, const int ngridy,
+    int ** const ray_start, int ** const ray_stride,
+    int ** const indices, float ** const distances,
+    float ** const sum_distances2);
+
 #endif
