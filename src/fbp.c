@@ -50,98 +50,48 @@ fbp(
     const float *center, const float *theta,
     float *recon, int ngridx, int ngridy, const char *fname, const float *filter_par)
 {
-    float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
-    float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
-    float *coordx = (float *)malloc((ngridy+1)*sizeof(float));
-    float *coordy = (float *)malloc((ngridx+1)*sizeof(float));
-    float *ax = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *ay = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *bx = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *by = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *coorx = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *coory = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    float *dist = (float *)malloc((ngridx+ngridy)*sizeof(float));
-    int *indi = (int *)malloc((ngridx+ngridy)*sizeof(int));
-
-    assert(coordx != NULL && coordy != NULL &&
-        ax != NULL && ay != NULL && by != NULL && bx != NULL &&
-        coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
-
-    int s, p, d, n;
-    int quadrant;
-    float theta_p, sin_p, cos_p;
-    float mov, xi, yi;
-    int asize, bsize, csize;
-    int ind_data, ind_recon;
-
+    // int i, s, p, d, n; // preferred loop order
     // For each slice
-    for (s=0; s<dy; s++)
+    for (int s=0; s<dy; s++)
     {
-        preprocessing(ngridx, ngridy, dx, center[s], 
-            &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-            
-        // For each projection angle 
-        for (p=0; p<dt; p++) 
+        int ind_slice = s*ngridx*ngridy;
+        float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
+        float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
+        assert(gridx != NULL && gridy != NULL);
+        float mov;
+        preprocessing(ngridx, ngridy, dx, center[s],
+            &mov, gridx, gridy);
+            // Outputs: mov, gridx, gridy
+        float *all_dist, *all_sum_dist2;
+        int *all_indi, *ray_start, *ray_stride;
+        compute_indices_and_lengths(theta, dt, dx, gridx, gridy, mov,
+            ngridx, ngridy, &ray_start, &ray_stride, &all_indi, &all_dist,
+            &all_sum_dist2);
+            // Outputs: ray_start, ray_stride, all_indi, all_dist
+        free(gridx);
+        free(gridy);
+        // For each projection angle
+        for (int p=0; p<dt; p++)
         {
-            // Calculate the sin and cos values 
-            // of the projection angle and find
-            // at which quadrant on the cartesian grid.
-            theta_p = fmod(theta[p], 2*M_PI);
-            quadrant = calc_quadrant(theta_p);
-            sin_p = sinf(theta_p);
-            cos_p = cosf(theta_p);
-
-            // For each detector pixel 
-            for (d=0; d<dx; d++) 
+            // For each detector pixel
+            for (int d=0; d<dx; d++)
             {
-                // Calculate coordinates
-                xi = -ngridx-ngridy;
-                yi = (1-dx)/2.0+d+mov;
-                calc_coords(
-                    ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
-                    coordx, coordy);
-
-                // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(
-                    ngridx, ngridy, coordx, coordy, gridx, gridy, 
-                    &asize, ax, ay, &bsize, bx, by);
-
-                // Sort the array of intersection points (ax, ay) and
-                // (bx, by). The new sorted intersection points are 
-                // stored in (coorx, coory). Total number of points 
-                // are csize.
-                sort_intersections(
-                    quadrant, asize, ax, ay, bsize, bx, by, 
-                    &csize, coorx, coory);
-
-                // Calculate the distances (dist) between the 
-                // intersection points (coorx, coory). Find the 
-                // indices of the pixels on the reconstruction grid.
-                calc_dist(
-                    ngridx, ngridy, csize, coorx, coory, 
-                    indi, dist);
-
                 // Update
-                ind_recon = s*ngridx*ngridy;
-                ind_data = d+p*dx+s*dt*dx;
-                for (n=0; n<csize-1; n++)
+                int ray = d + dx*p;
+                float *dist = all_dist + ray_start[ray];
+                int *indi = all_indi + ray_start[ray];
+                float sum_dist2 = all_sum_dist2[ray];
+                int ind_data = d + dx*(p + dt*s);
+                for (int n=0; n<ray_stride[ray]; n++)
                 {
-                	recon[indi[n]+ind_recon] += data[ind_data]*dist[n];
+                	recon[indi[n]+ind_slice] += data[ind_data]*dist[n];
                 }
             }
         }
+        free(all_dist);
+        free(all_sum_dist2);
+        free(all_indi);
+        free(ray_start);
+        free(ray_stride);
     }
-
-    free(gridx);
-    free(gridy);
-    free(coordx);
-    free(coordy);
-    free(ax);
-    free(ay);
-    free(bx);
-    free(by);
-    free(coorx);
-    free(coory);
-    free(dist);
-    free(indi);
 }
