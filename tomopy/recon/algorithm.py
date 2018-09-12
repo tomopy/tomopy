@@ -120,9 +120,9 @@ def recon(
             Penalized maximum likelihood algorithm with quadratic penalty.
         'sirt'
             Simultaneous algebraic reconstruction technique.
-	'tv'
+        'tv'
             Total Variation reconstruction technique
-	    :cite:`Chambolle:11`.
+            :cite:`Chambolle:11`.
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.

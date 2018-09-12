@@ -44,11 +44,11 @@
 #include "utils.h"
 
 
-	void 
+void 
 tv(
-		const float *data, int dy, int dt, int dx,
-		const float *center, const float *theta,
-		float *recon, int ngridx, int ngridy, int num_iter, const float *reg_pars)
+	const float *data, int dy, int dt, int dx,
+	const float *center, const float *theta,
+	float *recon, int ngridx, int ngridy, int num_iter, const float *reg_pars)
 {
 	float *gridx = (float *)malloc((ngridx+1)*sizeof(float));
 	float *gridy = (float *)malloc((ngridy+1)*sizeof(float));
