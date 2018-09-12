@@ -120,6 +120,9 @@ def recon(
             Penalized maximum likelihood algorithm with quadratic penalty.
         'sirt'
             Simultaneous algebraic reconstruction technique.
+	'tv'
+            Total Variation reconstruction technique
+	    :cite:`Chambolle:11`.
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
@@ -234,6 +237,7 @@ def recon(
         'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
         'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
         'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
+        'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     }
 
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
@@ -342,6 +346,8 @@ def _get_func(algorithm):
         func = extern.c_pml_quad
     elif algorithm == 'sirt':
         func = extern.c_sirt
+    elif algorithm == 'tv':
+        func = extern.c_tv
     else:
         func = algorithm
     return func

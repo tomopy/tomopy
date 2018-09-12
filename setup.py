@@ -78,6 +78,7 @@ tomoc = Extension(
         'src/pml_quad.c',
         'src/prep.c',
         'src/sirt.c',
+	'src/tv.c',
         'src/vector.c',
         'src/morph.c',
         'src/stripe.c',
