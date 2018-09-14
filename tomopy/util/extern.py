@@ -525,7 +525,7 @@ def c_tv(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.pml_quad.restype = dtype.as_c_void_p()
+    LIB_TOMOPY.tv.restype = dtype.as_c_void_p()
     return LIB_TOMOPY.tv(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
