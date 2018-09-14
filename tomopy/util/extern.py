@@ -85,6 +85,7 @@ __all__ = ['c_shared_lib',
            'c_pml_quad',
            'c_sirt',
            'c_tv',   
+           'c_grad',   
            'c_vector',
            'c_vector2',
            'c_vector3',
@@ -527,6 +528,28 @@ def c_tv(tomo, center, recon, theta, **kwargs):
 
     LIB_TOMOPY.tv.restype = dtype.as_c_void_p()
     return LIB_TOMOPY.tv(
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']))
+
+def c_grad(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.grad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.grad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),

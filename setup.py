@@ -79,6 +79,7 @@ tomoc = Extension(
         'src/prep.c',
         'src/sirt.c',
         'src/tv.c',
+        'src/grad.c',
         'src/vector.c',
         'src/morph.c',
         'src/stripe.c',

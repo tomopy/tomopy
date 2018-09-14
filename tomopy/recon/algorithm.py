@@ -123,6 +123,8 @@ def recon(
         'tv'
             Total Variation reconstruction technique
             :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
@@ -238,6 +240,7 @@ def recon(
         'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
         'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
         'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+        'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     }
 
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
@@ -348,6 +351,9 @@ def _get_func(algorithm):
         func = extern.c_sirt
     elif algorithm == 'tv':
         func = extern.c_tv
+    elif algorithm == 'grad':
+        func = extern.c_grad
+
     else:
         func = algorithm
     return func

@@ -451,6 +451,8 @@ def write_center(
         'tv'
             Total Variation reconstruction technique
             :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
     
     filter_name : str, optional
         Name of the filter for analytic reconstruction.

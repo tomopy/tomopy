@@ -151,4 +151,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='tv', num_iter=4),
             read_file('tv.npy'), rtol=1e-2)
-
+    def test_grad(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='grad', num_iter=4),
+            read_file('grad.npy'), rtol=1e-2)
