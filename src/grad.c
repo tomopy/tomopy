@@ -183,67 +183,6 @@ grad(
 				}
 			}
 		}
-
-		//show convergence
-		memset(simdata, 0, dy*dt*dx*sizeof(float));			
-		for (s=0; s<dy; s++)
-		{
-			ind_recon = s*ngridx*ngridy;
-			preprocessing(ngridx, ngridy, dx, center[s],
-					&mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
-			// initialize sum_dist and update to zero
-			memset(sum_dist, 0, (ngridx*ngridy)*sizeof(float));
-
-			// For each projection angle 
-			for (p=0; p<dt; p++)
-			{
-				// Calculate the sin and cos values 
-				// of the projection angle and find
-				// at which quadrant on the cartesian grid.
-				theta_p = fmod(theta[p], 2*M_PI);
-				quadrant = calc_quadrant(theta_p);
-				sin_p = sinf(theta_p);
-				cos_p = cosf(theta_p);
-
-				// For each detector pixel 
-				for (d=0; d<dx; d++)
-				{
-					// Calculate coordinates
-					xi = -ngridx-ngridy;
-					yi = (1-dx)/2.0+d+mov;
-					calc_coords(
-							ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
-							coordx, coordy);
-
-					// Merge the (coordx, gridy) and (gridx, coordy)
-					trim_coords(
-							ngridx, ngridy, coordx, coordy, gridx, gridy, 
-							&asize, ax, ay, &bsize, bx, by);
-
-					// Sort the array of intersection points (ax, ay) and
-					// (bx, by). The new sorted intersection points are 
-					// stored in (coorx, coory). Total number of points 
-					// are csize.
-					sort_intersections(
-							quadrant, asize, ax, ay, bsize, bx, by, 
-							&csize, coorx, coory);
-
-					// Calculate the distances (dist) between the 
-					// intersection points (coorx, coory). Find the 
-					// indices of the pixels on the reconstruction grid.
-					calc_dist(
-							ngridx, ngridy, csize, coorx, coory, 
-							indi, dist);
-
-					// Calculate simdata 
-					calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-							csize, indi, dist, recon,
-							simdata); // Output: simdata
-
-				}
-			}
-		}
 	}
 		    //scale result
         for (s=0; s<dy; s++)
