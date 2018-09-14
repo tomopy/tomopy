@@ -245,6 +245,15 @@ grad(
 			}
 		}
 	}
+		    //scale result
+        for (s=0; s<dy; s++)
+        {
+            ind_recon = s*ngridx*ngridy;
+            for (iy=0; iy<ngridy; iy++) 
+               for (ix=0; ix<ngridx; ix++) 
+                recon[ind_recon+iy*ngridx+ix] *= r;
+       }
+		
 	free(gridx);
 	free(gridy);
 	free(coordx);
