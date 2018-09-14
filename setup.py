@@ -4,7 +4,7 @@ import os
 
 if os.name == 'nt':
     # this is needed to trick the mingw compiler to link against msvcr100 instead of a non-existent msvcr140.
-    # when mingw will support UCRT, this code block will no longer be needed 
+    # when mingw will support UCRT, this code block will no longer be needed
     import sys
     msc_pos = sys.version.find('MSC v.')
     if msc_pos != -1:
@@ -33,11 +33,14 @@ else:
         C_INCLUDE_PATH = C_INCLUDE_PATH.split(';')
     else:
         C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
-
+CONDA_PREFIX = os.environ.get('CONDA_PREFIX', None)
+if CONDA_PREFIX is None:
+    pass
+else:
+    C_INCLUDE_PATH.append(CONDA_PREFIX + "/include")
+    LD_LIBRARY_PATH.append(CONDA_PREFIX + "/lib")
 print(C_INCLUDE_PATH)
 use_mkl = os.environ.get('DISABLE_MKL') is None
-
-
 
 extra_link_args = ['-lm']
 if os.name == 'nt':
