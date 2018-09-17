@@ -19,7 +19,7 @@ if __name__ == '__main__':
     end = 2
 
     # Read the APS 2-BM 0r 32-ID raw data.
-    proj, flat, dark = dxchange.read_aps_32id(fname, sino=(start, end))
+    proj, flat, dark, theta = dxchange.read_aps_32id(fname, sino=(start, end))
 
     # Set data collection angles as equally spaced between 0-180 degrees.
     theta = tomopy.angles(proj.shape[0])
