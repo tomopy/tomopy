@@ -448,6 +448,12 @@ def write_center(
             Penalized maximum likelihood algorithm with quadratic penalty.
         'sirt'
             Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+    
     filter_name : str, optional
         Name of the filter for analytic reconstruction.
 

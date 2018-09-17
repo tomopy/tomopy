@@ -33,14 +33,18 @@ else:
         C_INCLUDE_PATH = C_INCLUDE_PATH.split(';')
     else:
         C_INCLUDE_PATH = C_INCLUDE_PATH.split(':')
+
 CONDA_PREFIX = os.environ.get('CONDA_PREFIX', None)
 if CONDA_PREFIX is None:
     pass
 else:
     C_INCLUDE_PATH.append(CONDA_PREFIX + "/include")
     LD_LIBRARY_PATH.append(CONDA_PREFIX + "/lib")
+
 print(C_INCLUDE_PATH)
 use_mkl = os.environ.get('DISABLE_MKL') is None
+
+
 
 extra_link_args = ['-lm']
 if os.name == 'nt':
@@ -81,6 +85,8 @@ tomoc = Extension(
         'src/pml_quad.c',
         'src/prep.c',
         'src/sirt.c',
+        'src/tv.c',
+        'src/grad.c',
         'src/vector.c',
         'src/morph.c',
         'src/stripe.c',
