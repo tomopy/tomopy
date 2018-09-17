@@ -66,11 +66,16 @@ grad(
 	float *sum_dist = (float *)malloc((ngridx*ngridy)*sizeof(float));
 
 	float *prox1= (float *)malloc((dy*dt*dx)*sizeof(float));
+	float *grad= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
+	float *grad0= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
+	float *recon0= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
+
 
 	assert(coordx != NULL && coordy != NULL &&
 			ax != NULL && ay != NULL && by != NULL && bx != NULL &&
 			coorx != NULL && coory != NULL && dist != NULL &&
-			indi != NULL && simdata != NULL && sum_dist != NULL
+			indi != NULL && simdata != NULL && sum_dist != NULL &&
+			grad != NULL && grad0 != NULL && recon0 !=NULL
 			);
 
 	int s, p, d, i, n;
@@ -78,6 +83,7 @@ grad(
 	float theta_p, sin_p, cos_p;
 	float mov, xi, yi;
 	int asize, bsize, csize;	
+	double upd;
 	int ind_data, ind_recon;
 	float sum_dist2;
 	int ix,iy;
@@ -100,20 +106,23 @@ grad(
 				recon[ind_recon+iy*ngridx+ix] /= r;
 	}
 
+	memset(grad0, 0, dy*ngridx*ngridy*sizeof(float));
 	memset(prox1, 0, dy*dt*dx*sizeof(float));
+	memcpy(recon0, recon, dy*ngridx*ngridy*sizeof(float));
 
 	//Iterations	
 	for (i=0; i<num_iter; i++) 
 	{
-		// initialize simdata to 0
+		// initialize simdata and grad to 0
 		memset(simdata, 0, dy*dt*dx*sizeof(float));
+		memset(grad, 0, dy*ngridx*ngridy*sizeof(float));
 
+		// compute gradient, grad = 2*R^*(R(recon)-data)
 		// For each slice
 		for (s=0; s<dy; s++)
 		{
 			ind_recon = s*ngridx*ngridy;
 			//compute proximal of the projections
-			//recon = recon - 2*lambda*R*(R(recon)-data)
 			preprocessing(ngridx, ngridy, dx, center[s],
 					&mov, gridx, gridy); // Outputs: mov, gridx, gridy
 
@@ -179,20 +188,56 @@ grad(
 
 					if (sum_dist2 != 0.0) 
 						for (n=0; n<csize-1; n++) 
-							recon[ind_recon+indi[n]] -= lambda*2*r*prox1[ind_data]*dist[n];
+							grad[ind_recon+indi[n]] += 2*r*prox1[ind_data]*dist[n];
 				}
 			}
 		}
+
+		if (reg_pars[0] < 0)
+		{
+			if (i==0) 
+				//first gradient step (small)
+				lambda = 1e-3;
+			else
+			{
+				//compute the gradient step
+				upd = 0;
+				lambda = 0;
+				for (s=0; s<dy; s++)
+				{
+		        	ind_recon = s*ngridx*ngridy;
+	        		for (iy=0; iy<ngridy; iy++) 
+	            		for (ix=0; ix<ngridx; ix++) 
+						{
+							lambda += (recon[ind_recon+iy*ngridx+ix]-recon0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
+							upd += (grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
+						}
+				}
+				lambda/=upd;
+			}
+			//save previous iterations
+			memcpy(grad0,grad,dy*ngridx*ngridy*sizeof(float));
+			memcpy(recon0,recon,dy*ngridx*ngridy*sizeof(float));	
+		}
+
+		//update, recon = recon - lambda*grad
+		for (s=0; s<dy; s++)
+		{
+	        ind_recon = s*ngridx*ngridy;
+        	for (iy=0; iy<ngridy; iy++) 
+            	for (ix=0; ix<ngridx; ix++) 
+					recon[ind_recon+iy*ngridx+ix] -= lambda*grad[ind_recon+iy*ngridx+ix];				
+		}
 	}
-		    //scale result
-        for (s=0; s<dy; s++)
-        {
-            ind_recon = s*ngridx*ngridy;
-            for (iy=0; iy<ngridy; iy++) 
-               for (ix=0; ix<ngridx; ix++) 
-                recon[ind_recon+iy*ngridx+ix] *= r;
-       }
-		
+	
+	//scale result
+    for (s=0; s<dy; s++)
+    {
+        ind_recon = s*ngridx*ngridy;
+        for (iy=0; iy<ngridy; iy++) 
+            for (ix=0; ix<ngridx; ix++) 
+            	recon[ind_recon+iy*ngridx+ix] *= r;
+    }
 	free(gridx);
 	free(gridy);
 	free(coordx);
@@ -208,4 +253,7 @@ grad(
 	free(simdata);
 	free(sum_dist);
 	free(prox1);
+	free(recon0);
+	free(grad0);
+	free(grad);
 }
