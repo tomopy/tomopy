@@ -21,7 +21,6 @@ then open a terminal or a command prompt window and run::
 
 
 Updating the installation
-=========================
 
 TomoPy is an active project, so we suggest you update your installation
 frequently. To update the installation run::
@@ -33,26 +32,6 @@ For some more information about using Conda, please refer to the
 
 
 Installing from source
-======================
-
-Sometimes an adventurous user may want to get the source code, which is 
-always more up-to-date than the one provided by Conda 
-(with more bugs of course!).
-
-For this you need to get the source from the
-`TomoPy repository <https://github.com/tomopy/tomopy>`_ on GitHub. 
-You can get it to your local computer by opening a terminal and running::
-
-    git clone https://github.com/tomopy/tomopy.git
-
-Then in a terminal you need to run::
-
-    python setup.py install
-
-Keep in mind that you may need to install all dependencies listed in 
-``requirements.txt`` or ``meta.yaml`` files manually or
-as you please.
-
 
 Importing TomoPy
 ================
