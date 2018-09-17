@@ -84,11 +84,8 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
-<<<<<<< HEAD
            'c_tv',   
            'c_grad',   
-=======
->>>>>>> c874b5af2dbd9fdd0dee6acf044f9a4cec51411b
            'c_vector',
            'c_vector2',
            'c_vector3',
@@ -521,7 +518,6 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
 
-<<<<<<< HEAD
 def c_tv(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
@@ -565,8 +561,6 @@ def c_grad(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']),
             dtype.as_c_float_p(kwargs['reg_par']))
-=======
->>>>>>> c874b5af2dbd9fdd0dee6acf044f9a4cec51411b
 
 def c_vector(tomo, center, recon1, recon2, theta, **kwargs):
     if len(tomo.shape) == 2:

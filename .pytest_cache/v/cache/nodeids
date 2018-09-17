@@ -1,0 +1,16 @@
+[
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_art", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_bart", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_fbp", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_grad", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_gridrec", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_gridrec_custom", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_mlem", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_osem", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_ospml_hybrid", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_ospml_quad", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_pml_hybrid", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_pml_quad", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_sirt", 
+  "test/test_recon/test_algorithm.py::ReconstructionAlgorithmTestCase::test_tv"
+]
