@@ -12,15 +12,15 @@ TomoPy
 .. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
    :target: https://coveralls.io/r/tomopy/tomopy?branch=master
    :alt: Coveralls
-   
+
 .. image:: https://codeclimate.com/github/tomopy/tomopy/badges/gpa.svg
    :target: https://codeclimate.com/github/tomopy/tomopy
    :alt: Code Climate
-   
+
 .. image:: https://anaconda.org/dgursoy/tomopy/badges/downloads.svg
    :target: https://anaconda.org/dgursoy/tomopy
    :alt: Anaconda downloads
-   
+
 .. image:: https://mybinder.org/badge.svg 
    :target: https://mybinder.org/v2/gh/tomopy/tomopy/master
    :alt: Use on Binder
@@ -45,11 +45,12 @@ then open a terminal or a command prompt window and run:
     
 Try Now
 =======
+
 You can try notebooks now using mybinder.org
 
 * GridRec: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fgridrec.ipynb
 * Vector Heterostructure: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fvector_heterostructure.ipynb
-  
+
 Contribute
 ==========
 
