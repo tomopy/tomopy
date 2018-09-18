@@ -108,7 +108,7 @@ def c_shared_lib(lib_name):
         ext = '.so'
     sharedlibs = glob.glob(os.path.join(_fname, '%s*%s' % (lib_name, ext)))
     if len(sharedlibs) > 0:
-        return load_dll(sharelibs[0])
+        return load_dll(sharedlibs[0])
 
     # alternate -- shared lib built by 'make install' in src directory
     ext = '.so'
