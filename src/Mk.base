@@ -1,10 +1,6 @@
 ## base Makefile for tomopy and gcc
 
 INSTALLDIR   = ../tomopy/sharedlibs
-CC_WARNINGS  = -Wno-unused-result -Wsign-compare -Wunreachable-code -Wall -Wstrict-prototypes
-CC_OPTIMIZE  = -DNDEBUG -g -fwrapv -O3
-CC           = gcc $(CC_OPTIMIZE) $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99
-LINK         = gcc -bundle -undefined dynamic_lookup $(ARCH_TARGS) $(LINK_LIBS)
 LINK_CFLAGS  = -lm -lmkl_rt
 
 .PHONY: clean install default
@@ -26,7 +22,7 @@ pml_quad.oproject.o sirt.o tv.o utils.o vector.o: utils.h
 
 $(SHAREDLIB): $(OBJ)
 	@rm -f $@
-	$(LINK) -o $(SHAREDLIB) $(OBJ) $(LINK_CFLAGS) $(LINK_CFLAGS)
+	$(LINK) -o $(SHAREDLIB) $(OBJ) $(LINK_CFLAGS) 
 
 clean:
 	rm -f $(OBJ) $(SHAREDLIB)

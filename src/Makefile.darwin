@@ -2,4 +2,9 @@
 
 include Mk.config
 
+CC_WARNINGS  = -Wno-unused-result -Wsign-compare -Wunreachable-code -Wall -Wstrict-prototypes
+CC_OPTIMIZE  = -DNDEBUG -g -fwrapv -O3
+CC           = gcc $(CC_OPTIMIZE) $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99
+LINK         = gcc -bundle -undefined dynamic_lookup $(ARCH_TARGS) -L$(LINK_LIB)
+
 include Mk.base
