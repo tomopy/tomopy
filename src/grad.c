@@ -69,13 +69,13 @@ grad(
 	float *grad= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
 	float *grad0= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
 	float *recon0= (float *)malloc((dy*ngridx*ngridy)*sizeof(float));
-
+	float *lambda= (float *)malloc((dy)*sizeof(float));
 
 	assert(coordx != NULL && coordy != NULL &&
 			ax != NULL && ay != NULL && by != NULL && bx != NULL &&
 			coorx != NULL && coory != NULL && dist != NULL &&
 			indi != NULL && simdata != NULL && sum_dist != NULL &&
-			grad != NULL && grad0 != NULL && recon0 !=NULL
+			grad != NULL && grad0 != NULL && recon0 !=NULL && lambda!=NULL
 			);
 
 	int s, p, d, i, n;
@@ -88,13 +88,9 @@ grad(
 	float sum_dist2;
 	int ix,iy;
 
-	//regularization parameters
-	float lambda;
-
 	//scaling constant r such that r*R(r*R^*(data)) ~ data
 	float r;
 
-	lambda = reg_pars[0];	
 	r = 1/sqrt(dx*dt/2.0);
 
 	//scale initial guess
@@ -193,40 +189,41 @@ grad(
 			}
 		}
 
-		if (reg_pars[0] < 0)
+		//compute the gradient step
+		for (s=0; s<dy; s++)
 		{
-			if (i==0) 
-				//first gradient step (small)
-				lambda = 1e-3;
-			else
-			{
-				//compute the gradient step
-				upd = 0;
-				lambda = 0;
-				for (s=0; s<dy; s++)
-				{
+			if (reg_pars[0] < 0)
+			{	
+ 				if (i==0) 
+					//first gradient step (small)
+					lambda[s] = 1e-3;
+				else
+				{	
+					upd = 0;
+					lambda[s] = 0;			
 		        	ind_recon = s*ngridx*ngridy;
 	        		for (iy=0; iy<ngridy; iy++) 
 	            		for (ix=0; ix<ngridx; ix++) 
 						{
-							lambda += (recon[ind_recon+iy*ngridx+ix]-recon0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
+							lambda[s] += (recon[ind_recon+iy*ngridx+ix]-recon0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
 							upd += (grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
-						}
-				}
-				lambda/=upd;
+						}				
+					lambda[s]/=upd;
+				}			
 			}
-			//save previous iterations
-			memcpy(grad0,grad,dy*ngridx*ngridy*sizeof(float));
-			memcpy(recon0,recon,dy*ngridx*ngridy*sizeof(float));	
+			else
+				lambda[s] = reg_pars[0];
 		}
-
+		//save previous iterations
+		memcpy(grad0,grad,dy*ngridx*ngridy*sizeof(float));
+		memcpy(recon0,recon,dy*ngridx*ngridy*sizeof(float));	
 		//update, recon = recon - lambda*grad
 		for (s=0; s<dy; s++)
 		{
 	        ind_recon = s*ngridx*ngridy;
         	for (iy=0; iy<ngridy; iy++) 
             	for (ix=0; ix<ngridx; ix++) 
-					recon[ind_recon+iy*ngridx+ix] -= lambda*grad[ind_recon+iy*ngridx+ix];				
+					recon[ind_recon+iy*ngridx+ix] -= lambda[s]*grad[ind_recon+iy*ngridx+ix];				
 		}
 	}
 	
