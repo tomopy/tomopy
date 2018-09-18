@@ -53,6 +53,7 @@ Module for external library wrappers.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import os.path
 import ctypes
 import numpy as np
@@ -84,8 +85,8 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
-           'c_tv',   
-           'c_grad',   
+           'c_tv',
+           'c_grad',
            'c_vector',
            'c_vector2',
            'c_vector3',
@@ -96,17 +97,29 @@ def c_shared_lib(lib_name):
     """
     Get the path and import the C-shared library.
     """
+    libpath = None
+    _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     try:
         if os.name == 'nt':
             ext = '.pyd'
         else:
             ext = '.so'
-        _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
-        return ctypes.CDLL(libpath)
     except (OSError, IndexError):
         logger.warning('OSError: Shared library missing.')
 
+
+    if libpath is None:
+        lib_name = 'libtomopy.so'
+        load_dll = ctypes.cdll.LoadLibrary
+        if sys.platform == 'darwin':
+            lib_name = 'libtomopy.dylib'
+        if os.name == 'nt':
+            lib_name = 'tomopy.dll'
+            load_dll = ctypes.windll.LoadLibrary
+        libpath = os.path.join(_fname, 'sharedlibs', lib_name)
+
+        return load_dll(libpath)
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
 
