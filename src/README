@@ -1,0 +1,4 @@
+To build and install a precompiled libtomopy, use
+
+    python configure.py
+    make install

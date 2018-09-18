@@ -1,0 +1,5 @@
+# tomopy makefile for Windows
+
+include Mk.config
+
+include Mk.base

@@ -1,0 +1,5 @@
+# tomopy makefile for Linux
+
+include Mk.config
+
+include Mk.base

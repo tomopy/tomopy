@@ -1,0 +1,5 @@
+# tomopy makefile for Mac OS
+
+include Mk.config
+
+include Mk.base
