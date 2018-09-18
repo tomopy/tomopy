@@ -53,6 +53,7 @@ Module for external library wrappers.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import os.path
 import ctypes
 import numpy as np
@@ -84,8 +85,8 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
-           'c_tv',   
-           'c_grad',   
+           'c_tv',
+           'c_grad',
            'c_vector',
            'c_vector2',
            'c_vector3',
@@ -96,20 +97,34 @@ def c_shared_lib(lib_name):
     """
     Get the path and import the C-shared library.
     """
-    try:
-        if os.name == 'nt':
-            ext = '.pyd'
-        else:
-            ext = '.so'
-        _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
-        return ctypes.CDLL(libpath)
-    except (OSError, IndexError):
-        logger.warning('OSError: Shared library missing.')
+    libpath = None
+    _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    load_dll = ctypes.cdll.LoadLibrary
 
+    # original -- shared lib built by 'setup.py build_ext'
+    if os.name == 'nt':
+        ext = '.pyd'
+    else:
+        ext = '.so'
+    sharedlibs = glob.glob(os.path.join(_fname, '%s*%s' % (lib_name, ext)))
+    if len(sharedlibs) > 0:
+        return load_dll(sharedlibs[0])
+
+    # alternate -- shared lib built by 'make install' in src directory
+    ext = '.so'
+    if sys.platform == 'darwin':
+        ext = '.dylib'
+    if os.name == 'nt':
+        ext = '.dll'
+        load_dll = ctypes.windll.LoadLibrary
+    sharedlib = os.path.join(_fname, 'sharedlibs', '%s%s' % (lib_name, ext))
+    if os.path.exists(sharedlib):
+        return load_dll(sharedlib)
+
+    # cannot find shared lib:
+    logger.warning('OSError: Shared library missing.')
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
-
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
