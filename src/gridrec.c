@@ -268,7 +268,7 @@ gridrec(
             }
         }
 #endif
-
+    int zlimit = z; 
     // For each slice.
     for (s=0; s<dy; s+=2)
     {
@@ -322,7 +322,6 @@ gridrec(
         // an additional correction -- See Phase 3 below.
 
         float _Complex Cdata1, Cdata2;
-        int zlimit = dt*(pdim2-1); 
 
 #ifdef USE_MKL
         // For each projection
