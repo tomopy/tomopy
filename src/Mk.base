@@ -18,7 +18,7 @@ stripe.o: stripe.h
 remove_ring.o: remove_ring.h
 art.o bart.o fbp.o grad.o mlem.o osem.o: utils.h
 ospml_hybrid.o ospml_quad.o pml_hybrid.o: utils.h
-pml_quad.oproject.o sirt.o tv.o utils.o vector.o: utils.h
+pml_quad.o project.o sirt.o tv.o utils.o vector.o: utils.h
 
 $(SHAREDLIB): $(OBJ)
 	@rm -f $@
