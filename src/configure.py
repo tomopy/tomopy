@@ -66,13 +66,23 @@ def config_macos():
 
 def config_windows():
     """ config for Windows"""
-    """ config for Linux"""
     config = Config()
-    for pdir in os.environ['PATH'].split(';'):
-        gcc = pjoin(pdir, 'gcc.exe')
-        if pexists(gcc):
-            config.compilerdir = pdir
-            break
+    compilerdir = None
+
+    if 'Anaconda' in sys.version:
+        mingw_path = pjoin(sys.prefix, 'MinGW', 'bin')
+        mingw_gcc = pjoin(mingw_path, 'gcc.exe')
+        if os.path.exists(mingw_gcc):
+            compilerdir = mingw_path
+
+    if compilerdir is None:
+        for pdir in os.environ['PATH'].split(';'):
+            gcc = pjoin(pdir, 'gcc.exe')
+            if pexists(gcc):
+                compilerdir = pdir
+                break
+    if compilerdir is not None:
+        config.compilerdir = compilerdir            
     config.includes.append(pjoin(sys.prefix, 'Library', 'include'))
     config.sharedlib = 'libtomopy.dll'
     config.link_lib = '-L%s' % sys.prefix
