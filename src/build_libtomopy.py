@@ -47,7 +47,7 @@ class Config:
                 'INCLUDE       = %s' % include,
                 'CONDA_COMPAT  = %s' % self.conda_compat,
                 '####', '']
-        return '\n'.join(buff)
+        return '\n'.join(buff).replace('\\', '/')
 
 def config_linux():
     """ config for Linux"""
