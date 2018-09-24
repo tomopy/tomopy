@@ -5,3 +5,4 @@ recursive-include tomopy/data *.tif *.h5
 recursive-include tomopy/sharedlibs *
 recursive-include test *
 recursive-exclude * __pycache__
+exclude src/Mk.config
