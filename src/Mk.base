@@ -2,7 +2,6 @@
 
 INSTALLDIR   = ../tomopy/sharedlibs
 LINK_CFLAGS  = -lm -lmkl_rt
-LINK_CFLAGS  = -lm
 
 .PHONY: clean default
 
@@ -22,7 +21,6 @@ ospml_hybrid.o ospml_quad.o pml_hybrid.o: utils.h
 pml_quad.o project.o sirt.o tv.o utils.o vector.o: utils.h
 
 $(INSTALLDIR)/$(SHAREDLIB): $(OBJ)
-	@rm -f $@
 	$(LINK) -o $(INSTALLDIR)/$(SHAREDLIB) $(OBJ) $(LINK_CFLAGS)
 
 clean:
