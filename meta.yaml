@@ -5,7 +5,7 @@ package:
 source:
   git_url: https://github.com/tomopy/tomopy.git
 
-  
+
 build:
   number: 0
 
@@ -23,7 +23,7 @@ requirements:
     - h5py
     - scipy
     - six
-    - scikit-image
+    - "scikit-image>=0.14"
     - pywavelets
     - mkl
     - mkl_fft
@@ -31,7 +31,7 @@ requirements:
     - numexpr
     - futures # [py2k]
     - MinGW # [win]
-    
+
 test:
   # Python imports
   imports:
@@ -62,4 +62,3 @@ about:
 # See
 # http://docs.continuum.io/conda/build.html for
 # more information about meta.yaml
-
