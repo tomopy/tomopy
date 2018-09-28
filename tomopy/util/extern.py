@@ -94,37 +94,25 @@ __all__ = ['c_shared_lib',
 
 
 def c_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    libpath = None
-    _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    """Get the path and import the C-shared library."""
     load_dll = ctypes.cdll.LoadLibrary
-
-    # original -- shared lib built by 'setup.py build_ext'
-    if os.name == 'nt':
-        ext = '.pyd'
-    else:
-        ext = '.so'
-    sharedlibs = glob.glob(os.path.join(_fname, '%s*%s' % (lib_name, ext)))
-    if len(sharedlibs) > 0:
-        return load_dll(sharedlibs[0])
-
-    # alternate -- shared lib built by 'make install' in src directory
     ext = '.so'
     if sys.platform == 'darwin':
         ext = '.dylib'
     if os.name == 'nt':
         ext = '.dll'
         load_dll = ctypes.windll.LoadLibrary
-    sharedlib = os.path.join(_fname, 'sharedlibs', '%s%s' % (lib_name, ext))
+    base_path = os.path.abspath(os.path.dirname(os.path.dirname(
+                                os.path.dirname(__file__))))
+    sharedlib = os.path.join(base_path, 'lib', '%s%s' % (lib_name, ext))
     if os.path.exists(sharedlib):
         return load_dll(sharedlib)
-
     # cannot find shared lib:
-    logger.warning('OSError: Shared library missing.')
+    logger.warning('OSError: Shared library is missing!')
+
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
+
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape

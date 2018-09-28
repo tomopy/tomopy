@@ -53,7 +53,7 @@ class Config:
         self.sharedlib = ''
         self.arch_target = ''
         self.conda_compat = ''
-        self.includes = []
+        self.includes = [pjoin(os.path.dirname(os.getcwd()), 'include')]
         self.linklibs = ['%s' % pjoin(PREFIX, 'lib')]
         # anaconda compat?
         if 'conda' in sys.version:
@@ -67,7 +67,7 @@ class Config:
             tdir = pjoin(top_include, fname)
             if os.path.isdir(tdir) and 'python' in fname:
                 includes.append(tdir)
-        self.includes = includes
+        self.includes += includes
 
     def format(self):
         """Return the formatted string, replacing Windows \\ with Unix /."""
@@ -124,8 +124,8 @@ def config_windows():
                 break
     if compilerdir is not None:
         config.compilerdir = compilerdir
-    config.includes.append(pjoin(PREFIX, 'Library', 'include'))
     config.sharedlib = 'libtomopy.dll'
+    config.includes += [pjoin(PREFIX, 'Library', 'include')]
     config.linklibs = [PREFIX,
                        pjoin(PREFIX, 'Library', 'bin'),
                        os.path.dirname(os.path.dirname(PREFIX)),
@@ -136,6 +136,6 @@ def config_windows():
 
 if __name__ == '__main__':
     curpath = os.getcwd()
-    os.chdir('src')
+    os.chdir('config')
     build_libtomopy()
     os.chdir(curpath)

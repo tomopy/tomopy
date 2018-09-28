@@ -1,7 +1,11 @@
 ## base Makefile for tomopy and gcc
 
-INSTALLDIR   = ../tomopy/sharedlibs
+INSTALLDIR   = ../lib
 LINK_CFLAGS  = -lm -lmkl_rt
+
+vpath %.c ../src
+vpath %.h ../include
+vpath %.o ../build
 
 .PHONY: clean default
 

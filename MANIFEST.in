@@ -2,7 +2,7 @@ include README.rst
 include LICENSE.txt
 include VERSION
 recursive-include tomopy/data *.tif *.h5
-recursive-include tomopy/sharedlibs *
+recursive-include lib *
 recursive-include test *
 recursive-exclude * __pycache__
-exclude src/Mk.config
+recursive-exclude config *
