@@ -25,7 +25,8 @@ skip_commits:
  files:
    - docs/*
    - '**/*.html'
-# Including commits affecting specific files (GitHub only). More details here: /docs/appveyor-yml
+# Including commits affecting specific files (GitHub only).
+# More details here: /docs/appveyor-yml
 #only_commits:
 #  files:
 #    - Project-A/
@@ -90,10 +91,12 @@ before_build:
 build_script:
   - python build.py
   - python setup.py install
-# scripts to run after build (working directory and environment changes are persisted from the previous steps)
+# scripts to run after build (working directory and environment changes are
+# persisted from the previous steps)
 after_build:
 
-# scripts to run *after* solution is built and *before* automatic packaging occurs (web apps, NuGet packages, Azure Cloud Services)
+# scripts to run *after* solution is built and *before* automatic packaging
+# occurs (web apps, NuGet packages, Azure Cloud Services)
 before_package:
 
 # to disable automatic builds
@@ -101,7 +104,8 @@ before_package:
 #---------------------------------#
 #       tests configuration       #
 #---------------------------------#
-# scripts to run before tests (working directory and environment changes are persisted from the previous steps such as "before_build")
+# scripts to run before tests (working directory and environment changes are
+# persisted from the previous steps such as "before_build")
 before_test:
 
 # to run your custom scripts instead of automatic tests
