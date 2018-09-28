@@ -66,13 +66,18 @@ logger = logging.getLogger(__name__)
 __author__ = "Daniel M. Pelt"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['astra', 'ufo_fbp', 'ufo_dfi']
+__all__ = ['astra', 'ufo_fbp', 'ufo_dfi', 'lprec']
 
 default_options = {
     'astra': {
         'proj_type': 'linear',
         'num_iter': 1,
         'gpu_list': None,
+    },
+    'lprec': {
+        'lpmethod': 'fbp',
+        'interp_type': 'cubic',
+        'filter_name': 'shepp-logan',
     }
 }
 
@@ -344,3 +349,87 @@ def ufo_dfi(tomo, center, recon, theta, **kwargs):
     thread.join()
 
     logger.info("UFO+DFI run time: {}s".format(sched.props.time))
+
+def lprec(tomo, center, recon, theta, **kwargs):
+    """
+    Reconstruct object using the Log-polar based method
+    https://github.com/math-vrn/lprec
+
+    Extra options
+    ----------
+    lpmethod : str
+        LP reconsruction method to use
+            - 'fbp'
+    filter_type:
+        Filter for backprojection
+            - 'ramp'
+            - 'shepp-logan'
+            - 'cosine'
+            - 'cosine2'
+            - 'hamming'
+            - 'hann'
+            - 'parzen'
+    interp_type:
+        Type of interpolation between Cartesian, polar and log-polar coordinates
+            - 'linear'
+            - 'cubic'
+    Example
+    -------
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>>
+    >>> # Reconstruct object:
+    >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.lprec,
+    >>>       lpmethod='fbp', filter_name='parzen', interp_type='cubic', ncore=1)
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
+    """
+
+    from lprec import lpTransform 
+    from lprec.timing import tic,toc
+
+    Nslices, Nproj, N = tomo.shape
+    print(Nslices)
+    #set default options
+    opts = kwargs
+    for o in default_options['lprec']:
+        if o not in kwargs:
+            opts[o] = default_options['lprec'][o]
+
+    filter_name = opts['filter_name']
+    interp_type = opts['interp_type']
+    lpmethod = opts['lpmethod']
+
+    #Init lp method
+    tic()
+    #number of slices for simultanious processing by 1 gpu, chosen for 4GB gpus
+    Nslices0 = min(int(pow(2,25)/float(N*N)),Nslices)
+    clpthandle=lpTransform.lpTransform(N,Nproj,Nslices0,filter_name,int(center[0]+0.5),interp_type)
+    
+    if(lpmethod=='fbp'):
+        #precompute only for the adj transform
+        clpthandle.precompute(0)
+        clpthandle.initcmem(0)   
+    else:
+        print("method is not available")
+        #iterative schemes to do..
+    
+        #precompute for both fwd and adj transforms
+        #clpthandle.precompute(1)
+        #clpthandle.initcmem(1)   
+    print("LP Initialization time: %.3f seconds" % toc())
+
+   #run
+    tic()
+    if(lpmethod=='fbp'):
+        for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
+            ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
+            recon[ids] = clpthandle.adj(tomo[ids])
+    print("LP Execution time: %.3f seconds" % toc())
+
+
