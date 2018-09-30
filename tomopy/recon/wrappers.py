@@ -386,7 +386,7 @@ def lprec(tomo, center, recon, theta, **kwargs):
     >>>
     >>> # Reconstruct object:
     >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.lprec,
-    >>>       lpmethod='fbp', filter_name='parzen', interp_type='cubic', ncore=1)
+    >>>       lpmethod='lpfbp', filter_name='parzen', interp_type='cubic', ncore=1)
     >>>
     >>> # Show 64th slice of the reconstructed object.
     >>> import pylab
