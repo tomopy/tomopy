@@ -66,13 +66,20 @@ logger = logging.getLogger(__name__)
 __author__ = "Daniel M. Pelt"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['astra', 'ufo_fbp', 'ufo_dfi']
+__all__ = ['astra', 'ufo_fbp', 'ufo_dfi', 'lprec']
 
 default_options = {
     'astra': {
         'proj_type': 'linear',
         'num_iter': 1,
         'gpu_list': None,
+    },
+    'lprec': {
+        'lpmethod': 'lpfbp',
+        'interp_type': 'cubic',
+        'filter_name': 'shepp-logan',
+        'num_iter': '1',
+        'reg_par': '1',
     }
 }
 
@@ -344,3 +351,166 @@ def ufo_dfi(tomo, center, recon, theta, **kwargs):
     thread.join()
 
     logger.info("UFO+DFI run time: {}s".format(sched.props.time))
+
+def lprec(tomo, center, recon, theta, **kwargs):
+    """
+    Reconstruct object using the Log-polar based method
+    https://github.com/math-vrn/lprec
+
+    Extra options
+    ----------
+    lpmethod : str
+        LP reconsruction method to use
+            - 'lpfbp'
+            - 'lpgrad'
+            - 'lptv'
+    filter_type:
+        Filter for backprojection
+            - 'ramp'
+            - 'shepp-logan'
+            - 'cosine'
+            - 'cosine2'
+            - 'hamming'
+            - 'hann'
+            - 'parzen'
+    interp_type:
+        Type of interpolation between Cartesian, polar and log-polar coordinates
+            - 'linear'
+            - 'cubic'
+    Example
+    -------
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>>
+    >>> # Reconstruct object:
+    >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.lprec,
+    >>>       lpmethod='fbp', filter_name='parzen', interp_type='cubic', ncore=1)
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
+    """
+    lpmethods = {'lpfbp' : lpfbp,
+                 'lpgrad' : lpgrad,
+                 'lptv' : lptv}
+
+    from lprec import lpTransform 
+
+    #set default options
+    opts = kwargs
+    for o in default_options['lprec']:
+        if o not in kwargs:
+            opts[o] = default_options['lprec'][o]
+
+    filter_name = opts['filter_name']
+    interp_type = opts['interp_type']
+    lpmethod = opts['lpmethod']
+    num_iter = opts['num_iter']
+    reg_par = opts['reg_par']
+
+    #Init lp method
+    #number of slices for simultanious processing by 1 gpu, chosen for 4GB gpus
+    Nslices, Nproj, N = tomo.shape
+    Nslices0 = min(int(pow(2,25)/float(N*N)),Nslices)
+    lphandle=lpTransform.lpTransform(N,Nproj,Nslices0,filter_name,int(center[0]+0.5),interp_type)
+
+    if(lpmethod=='lpfbp'):
+        #precompute only for the adj transform
+        lphandle.precompute(0)
+        lphandle.initcmem(0)   
+        for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
+            ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
+            recon[ids] = lpmethods[lpmethod](lphandle,tomo)
+    else:
+        #precompute for both fwd and adj transforms
+        lphandle.precompute(1)
+        lphandle.initcmem(1)   
+        #run
+        for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
+            ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
+            recon[ids] = lpmethods[lpmethod](lphandle,recon,tomo,num_iter,reg_par)
+
+def lpfbp(lp,tomo):
+    return lp.adj(tomo)
+
+def lpgrad(lp,recon,tomo,num_iter,reg_par):
+
+    Nslices, Nproj, N = tomo.shape
+
+    recon0 = recon
+    grad = recon*0
+    grad0 = recon*0
+
+    for i in range(0,num_iter):
+        grad = 2*lp.adj(lp.fwd(recon)-tomo)
+        if(reg_par<0):
+            if(i==0):
+                lam = np.float32(1e-3*np.ones(Nslices))
+            else:
+                lam = np.sum(np.sum((recon-recon0)*(grad-grad0),1),1)/np.sum(np.sum((grad-grad0)*(grad-grad0),1),1)
+        else:
+            lam = np.float32(reg_par*np.ones(Nslices))
+        recon0 = recon
+        grad0 = grad
+        recon = recon - np.reshape(lam,[Nslices,1,1])*grad
+
+    return recon
+
+def lptv(lp,recon,tomo,num_iter,reg_par):
+
+    Nslices, Nproj, N = tomo.shape
+
+    lam = reg_par
+    c = 0.35 #1/power_method(lp,tomo,num_iter)
+
+    recon0 = recon
+    prox0x = recon*0
+    prox0y = recon*0
+    div0 = recon*0
+    prox1 = tomo*0
+
+
+    for i in range(0,num_iter):
+        #forward step
+        #compute proximal prox0
+        prox0x[:,:,:-1] +=  c*(recon[:,:,1:]-recon[:,:,:-1])
+        prox0y[:,:-1,:] +=  c*(recon[:,1:,:]-recon[:,:-1,:])
+        nprox = np.maximum(1,np.sqrt(prox0x*prox0x+prox0y*prox0y)/lam)
+        prox0x = prox0x/nprox
+        prox0y = prox0y/nprox
+        #compute proximal prox1        
+        prox1 = (prox1+c*lp.fwd(recon)-c*tomo)/(1+c)
+
+        #backward step
+        recon = recon0
+        div0[:,:,1:] = (prox0x[:,:,1:]-prox0x[:,:,:-1])
+        div0[:,:,0] = prox0x[:,:,0]
+        div0[:,1:,:] += (prox0y[:,1:,:]-prox0y[:,:-1,:])
+        div0[:,0,:] += prox0y[:,0,:]
+        recon0 = recon0-c*lp.adj(prox1)+c*div0
+
+        #update recon
+        recon = 2*recon0 - recon
+
+    return recon
+
+## power_method for estimate constant c in the lptv method
+# def power_method(lp,tomo,num_iter):
+#     x = lp.adj(tomo)
+#     for k in range(0,num_iter):
+#         prox0x = x*0
+#         prox0y = x*0
+#         div0 = x*0
+#         prox0x[:,:,:-1] =  x[:,:,1:]-x[:,:,:-1]
+#         prox0y[:,:-1,:] =  x[:,1:,:]-x[:,:-1,:]
+#         div0[:,:,1:] = (prox0x[:,:,1:]-prox0x[:,:,:-1])
+#         div0[:,:,0] = prox0x[:,:,0]
+#         div0[:,1:,:] += (prox0y[:,1:,:]-prox0y[:,:-1,:])
+#         div0[:,0,:] += prox0y[:,0,:]
+#         x = lp.adj(lp.fwd(x)) - div0
+#         s = np.linalg.norm(x)
+#         x = x/s
+#         return sqrt(s)
