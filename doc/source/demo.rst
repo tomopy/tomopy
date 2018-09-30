@@ -18,6 +18,8 @@ scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_
    ipynb/astra.rst
    ipynb/ufo.rst
    ipynb/vector.rst
+   ipynb/lprec.rst
+
 
 .. automodule:: tomopy
    :members:
