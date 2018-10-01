@@ -49,13 +49,11 @@ shallow_clone: true                 # default is "false"
 environment:
   # these variables are common to all jobs
   MINGW_PATH: "C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64"
-  MINICONDA: "C:\\Miniconda3-x64"
   matrix:
     - PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda35-x64"
     - PYTHON_VERSION: "3.6"
       MINICONDA: "C:\\Miniconda36-x64"
-    - PYTHON_VERSION: "3.7"
 matrix:
   # set this flag to immediately finish build once one of the jobs fails.
   fast_finish: false
