@@ -154,6 +154,15 @@ fbp(
     const float *filter_par);
 
 void DLL
+grad(
+    const float *data,
+    int dy, int dt, int dx,
+    const float *center, const float *theta,
+    float *recon, int ngridx, int ngridy,
+    int num_iter,
+    const float *reg_pars);
+
+void DLL
 mlem(
     const float *data,
     int dy, 
@@ -253,6 +262,14 @@ sirt(
     int ngridx,
     int ngridy,
     int num_iter);
+
+void DLL
+tv(
+    const float *data,
+    int dy, int dt, int dx,
+    const float *center, const float *theta,
+    float *recon, int ngridx, int ngridy,
+    int num_iter, const float *reg_pars);
 
 void DLL
 vector(
