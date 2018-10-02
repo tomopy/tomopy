@@ -54,7 +54,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-import scipy as sp
 import skimage
 import tifffile
 import os.path
@@ -101,7 +100,8 @@ def baboon(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'baboon.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
     return im
@@ -127,7 +127,8 @@ def barbara(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'barbara.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -152,7 +153,8 @@ def cameraman(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'cameraman.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -177,7 +179,8 @@ def checkerboard(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'checkerboard.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -202,7 +205,8 @@ def lena(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'lena.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -227,7 +231,8 @@ def peppers(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'peppers.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -252,7 +257,8 @@ def shepp2d(size=512, dtype='float32'):
     fname = os.path.join(DATA_PATH, 'shepp2d.tif')
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
-                                  preserve_range=True, mode='constant')
+                                  preserve_range=True, mode='constant',
+                                  anti_aliasing=False)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 

@@ -7,12 +7,11 @@ This section covers the basics of how to download and install TomoPy.
 .. contents:: Contents:
    :local:
 
-Supported Operating Systems
-===========================
+Supported Environments
+======================
 
-Since most of the developers use Unix systems (Linux and macOS), TomoPy is only
-tested and officially supported on Unix systems. Windows installation and
-functionality is not guaranteed.
+TomoPy is tested, built, and distributed for python 2.7 3.5 3.6 on Linux/macOS
+and python 3.5 3.6 on Windows 10.
 
 Installing from Conda (Recommended)
 ===================================
@@ -26,8 +25,7 @@ then open a terminal or a command prompt window and run::
 
     $ conda install -c conda-forge tomopy
 
-This will install TomoPy from the conda-forge channel. Conda should also handle
-installing all of the dependencies.
+This will install TomoPy and all the dependencies from the conda-forge channel.
 
 Updating the installation
 -------------------------
@@ -44,8 +42,8 @@ Installing from source with Conda
 =================================
 
 Sometimes an adventurous user may want to get the source code, which is
-always more up-to-date than the one provided by Conda
-(with more bugs of course!).
+always more up-to-date than the one provided by Conda (with more bugs of
+course!).
 
 For this you need to get the source from the
 `TomoPy repository <https://github.com/tomopy/tomopy>`_ on GitHub.
@@ -68,30 +66,15 @@ installed using Conda by running::
     $ conda install --file requirements.txt
 
 After navigating to inside the `tomopy` directory, you can install TomoPy by
-activating the Conda base environment and running the install script::
+building/compiling the shared libraries and running the install script::
 
-    $ source activate
-    (base) $ python setup.py install
-
-Activating the conda environment ensures that `setup.py` will know where to
-look for the mkl headers. If you didn't use Conda to install the mkl library,
-you may need to read the section below.
+    $ python build.py
+    $ pip install .
 
 Common issues
 -------------
 
-The following error from `gcc` states that it cannot find the `mkl` header file
-it needs to compile the c extensions of TomoPy::
-
-    src/gridrec.c:56:21: fatal error: mkl.h: No such file or directory
-
-You will need to add the
-location of your `mkl` header file to the `C_INCLUDE_PATH` by setting an
-environmental variable or changing line 30 of `setup.py <https://github.com/tomopy/tomopy/blob/29949bee02a1b620c6af247faded01cffa3d336f/setup.py#L28-L30>`_
-
-If you installed `mkl-devel` using conda, the header files should be located
-in the `foo/conda/include` directory where `foo` is the install location of
-conda on your computer. By default this folder is your Home directory.
+No issues with the current build system have been reported.
 
 Importing TomoPy
 ================

@@ -1,7 +1,0 @@
-six
-numpy
-scipy
-scikit-image
-pywavelets
-dxchange
-numexpr

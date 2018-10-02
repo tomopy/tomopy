@@ -5,7 +5,7 @@ package:
 source:
   git_url: https://github.com/tomopy/tomopy.git
 
-  
+
 build:
   number: 0
 
@@ -14,7 +14,8 @@ requirements:
     - mkl-devel
     - python
     - setuptools
-    - m2w64-gcc # [win]
+    - MinGW # [win]
+    - Make # [win]
 
   run:
     - python
@@ -22,15 +23,15 @@ requirements:
     - h5py
     - scipy
     - six
-    - scikit-image
+    - "scikit-image>=0.14"
     - pywavelets
     - mkl
     - mkl_fft
     - dxchange
     - numexpr
     - futures # [py2k]
-    - m2w64-gcc-libs # [win]
-    
+    - MinGW # [win]
+
 test:
   # Python imports
   imports:
@@ -61,4 +62,3 @@ about:
 # See
 # http://docs.continuum.io/conda/build.html for
 # more information about meta.yaml
-

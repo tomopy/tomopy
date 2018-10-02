@@ -151,8 +151,8 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
         slc = [slice(None)]*arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.gaussian_filter, arr[slc], sigma, order=order,
-                     output=out[slc])
+            e.submit(filters.gaussian_filter, arr[tuple(slc)], sigma,
+                     order=order, output=out[tuple(slc)])
     return out
 
 
@@ -186,8 +186,8 @@ def median_filter(arr, size=3, axis=0, ncore=None):
         slc = [slice(None)]*arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.median_filter, arr[slc], size=(size, size),
-                     output=out[slc])
+            e.submit(filters.median_filter, arr[tuple(slc)], size=(size, size),
+                     output=out[tuple(slc)])
     return out
 
 
@@ -391,8 +391,8 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
         slc = [slice(None)]*arr.ndim
         for i in range(ncore):
             slc[axis] = chnk_slices[i]
-            e.submit(filters.median_filter, arr[slc], size=filt_size,
-                     output=tmp[slc])
+            e.submit(filters.median_filter, arr[tuple(slc)], size=filt_size,
+                     output=tmp[tuple(slc)])
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)

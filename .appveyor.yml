@@ -1,0 +1,116 @@
+# AppVeyor is a continuous integration service to build and run tests under
+# Windows and Linux https://ci.appveyor.com/project/tomopy/tomopy
+# Notes:
+#   - Minimal appveyor.yml file is an empty file. All sections are optional.
+#   - Indent each level of configuration with 2 spaces. Do not use tabs!
+#   - All section names are case-sensitive.
+#   - Section names should be unique on each level.
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+# version format
+# you can use {branch} name in version format too
+version: 1.0.{build}
+# branches to build
+branches:
+  only:
+    - dev
+# Do not build on tags (GitHub and BitBucket)
+# skip_tags: true
+# Start builds on tags only (GitHub and BitBucket)
+# skip_non_tags: true
+# Skipping commits affecting specific files (GitHub only).
+# More details here: /docs/appveyor-yml
+skip_commits:
+ files:
+   - docs/*
+   - '**/*.html'
+# Including commits affecting specific files (GitHub only).
+# More details here: /docs/appveyor-yml
+#only_commits:
+#  files:
+#    - Project-A/
+#    - Project-B/
+# Do not build feature branch with open Pull Requests
+skip_branch_with_pr: true
+# Maximum number of concurrent jobs for the project
+max_jobs: 1
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+# Build worker image (VM template)
+image: Visual Studio 2015
+# scripts that are called at very beginning, before repo cloning
+init:
+  - git config --global core.autocrlf input
+# fetch repository as zip archive
+shallow_clone: true                 # default is "false"
+# environment variables
+environment:
+  # these variables are common to all jobs
+  MINGW_PATH: "C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64"
+  matrix:
+    - PYTHON_VERSION: "3.5"
+      MINICONDA: "C:\\Miniconda35-x64"
+    - PYTHON_VERSION: "3.6"
+      MINICONDA: "C:\\Miniconda36-x64"
+matrix:
+  # set this flag to immediately finish build once one of the jobs fails.
+  fast_finish: false
+# build cache to preserve files/folders between builds
+# cache:
+#   - projectA\libs
+# scripts that run after cloning repository
+install:
+  - "set PATH=%MINGW_PATH%\\bin;%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - conda config --set always_yes True
+  - conda config --add channels conda-forge
+  - conda update conda
+  - "conda install
+    python=%PYTHON_VERSION% mkl-devel mkl mingw make setuptools
+    nose dxchange h5py mkl_fft numexpr numpy pywavelets
+    scipy scikit-image six"
+  # Check that we have the expected version and architecture for Python
+  - conda info -a
+  - "python --version"
+  - "cd c:\\projects\\tomopy"
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+# build platform, i.e. x86, x64, Any CPU. This setting is optional.
+platform: x64
+# build Configuration, i.e. Debug, Release, etc.
+configuration: Debug
+
+# scripts to run before build
+before_build:
+
+# to run your custom scripts instead of automatic MSBuild
+build_script:
+  - python build.py
+  - python setup.py install
+# scripts to run after build (working directory and environment changes are
+# persisted from the previous steps)
+after_build:
+
+# scripts to run *after* solution is built and *before* automatic packaging
+# occurs (web apps, NuGet packages, Azure Cloud Services)
+before_package:
+
+# to disable automatic builds
+#build: off
+#---------------------------------#
+#       tests configuration       #
+#---------------------------------#
+# scripts to run before tests (working directory and environment changes are
+# persisted from the previous steps such as "before_build")
+before_test:
+
+# to run your custom scripts instead of automatic tests
+test_script:
+  - nosetests test
+# scripts to run after tests
+after_test:
+
+# to disable automatic tests
+#test: off
