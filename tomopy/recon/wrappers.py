@@ -77,7 +77,7 @@ default_options = {
     'lprec': {
         'lpmethod': 'lpfbp',
         'interp_type': 'cubic',
-        'filter_name': 'shepp-logan',
+        'filter_name': 'None',
         'num_iter': '1',
         'reg_par': '1',
     }
@@ -433,7 +433,6 @@ def lprec(tomo, center, recon, theta, **kwargs):
         #run
         for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
             ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
-
             recon[ids] = lpmethods[lpmethod](lphandle,recon[ids],tomo[ids],num_iter,reg_par)
 
 def lpfbp(lp,tomo):
