@@ -228,7 +228,7 @@ def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
             if r > ndet:
                 r = ndet
             sino[:, :l] = 0
-            sino[:,  r:] = 0
+            sino[:,  r:] = 1
         else:
             sino[:] = tomo[i]
         vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
@@ -425,7 +425,7 @@ def lprec(tomo, center, recon, theta, **kwargs):
         lphandle.initcmem(0)   
         for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
             ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
-            recon[ids] = lpmethods[lpmethod](lphandle,tomo)
+            recon[ids] = lpmethods[lpmethod](lphandle,tomo[ids])
     else:
         #precompute for both fwd and adj transforms
         lphandle.precompute(1)
@@ -433,14 +433,13 @@ def lprec(tomo, center, recon, theta, **kwargs):
         #run
         for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
             ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
-            recon[ids] = lpmethods[lpmethod](lphandle,recon,tomo,num_iter,reg_par)
+            print(ids)
+            recon[ids] = lpmethods[lpmethod](lphandle,recon,tomo[ids],num_iter,reg_par)
 
 def lpfbp(lp,tomo):
     return lp.adj(tomo)
 
 def lpgrad(lp,recon,tomo,num_iter,reg_par):
-
-    Nslices, Nproj, N = tomo.shape
 
     recon0 = recon
     grad = recon*0
@@ -450,14 +449,14 @@ def lpgrad(lp,recon,tomo,num_iter,reg_par):
         grad = 2*lp.adj(lp.fwd(recon)-tomo)
         if(reg_par<0):
             if(i==0):
-                lam = np.float32(1e-3*np.ones(Nslices))
+                lam = np.float32(1e-3*np.ones(tomo.shape[0]))
             else:
                 lam = np.sum(np.sum((recon-recon0)*(grad-grad0),1),1)/np.sum(np.sum((grad-grad0)*(grad-grad0),1),1)
         else:
-            lam = np.float32(reg_par*np.ones(Nslices))
+            lam = np.float32(reg_par*np.ones(tomo.shape[0]))
         recon0 = recon
         grad0 = grad
-        recon = recon - np.reshape(lam,[Nslices,1,1])*grad
+        recon = recon - np.reshape(lam,[tomo.shape[0],1,1])*grad
 
     return recon
 
@@ -499,17 +498,14 @@ def lptv(lp,recon,tomo,num_iter,reg_par):
 
 def lpem(lp,recon,tomo,num_iter,reg_par):
     xi = lp.adj(tomo*0+np.float32(1))
-    eps = reg_par[0]
-    xi = xi+np.float32(eps*np.max(xi)*(1-2*(xi<0)))
-    e = np.max(tomo)*eps
 
+    eps = reg_par
+    xi = xi+np.float32(eps*np.max(xi))
+    e = np.max(tomo)*eps
     for i in range(0,num_iter):
         g = lp.fwd(recon)
-        e = eps*np.max(g)
-        upd = lp.adj(tomo/(g+e*(1-2*(g<0))))
+        upd = lp.adj(tomo/(g+e))
         recon = recon*(upd/xi)
-        print([i,np.max(recon)])
-
     return recon
 
 
