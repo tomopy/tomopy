@@ -364,6 +364,7 @@ def lprec(tomo, center, recon, theta, **kwargs):
             - 'lpfbp'
             - 'lpgrad'
             - 'lptv'
+            - 'lpem'
     filter_type:
         Filter for backprojection
             - 'ramp'
@@ -395,7 +396,8 @@ def lprec(tomo, center, recon, theta, **kwargs):
     """
     lpmethods = {'lpfbp' : lpfbp,
                  'lpgrad' : lpgrad,
-                 'lptv' : lptv}
+                 'lptv' : lptv,
+                 'lpem' : lpem}
 
     from lprec import lpTransform 
 
@@ -461,8 +463,6 @@ def lpgrad(lp,recon,tomo,num_iter,reg_par):
 
 def lptv(lp,recon,tomo,num_iter,reg_par):
 
-    Nslices, Nproj, N = tomo.shape
-
     lam = reg_par
     c = 0.35 #1/power_method(lp,tomo,num_iter)
 
@@ -496,6 +496,22 @@ def lptv(lp,recon,tomo,num_iter,reg_par):
         recon = 2*recon0 - recon
 
     return recon
+
+def lpem(lp,recon,tomo,num_iter,reg_par):
+    xi = lp.adj(tomo*0+np.float32(1))
+    eps = reg_par[0]
+    xi = xi+np.float32(eps*np.max(xi)*(1-2*(xi<0)))
+    e = np.max(tomo)*eps
+
+    for i in range(0,num_iter):
+        g = lp.fwd(recon)
+        e = eps*np.max(g)
+        upd = lp.adj(tomo/(g+e*(1-2*(g<0))))
+        recon = recon*(upd/xi)
+        print([i,np.max(recon)])
+
+    return recon
+
 
 ## power_method for estimate constant c in the lptv method
 # def power_method(lp,tomo,num_iter):
