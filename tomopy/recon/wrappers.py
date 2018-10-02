@@ -228,7 +228,7 @@ def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
             if r > ndet:
                 r = ndet
             sino[:, :l] = 0
-            sino[:,  r:] = 1
+            sino[:,  r:] = 0
         else:
             sino[:] = tomo[i]
         vid = astra_mod.data2d.link('-vol', vol_geom, recon[i])
