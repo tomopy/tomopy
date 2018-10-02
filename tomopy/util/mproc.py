@@ -330,7 +330,7 @@ def _arg_parser(params):
 
 
 def slice_axis(arr, slc, axis):
-    return arr[[slice(None) if i != axis else slc for i in range(arr.ndim)]]
+    return arr[tuple(slice(None) if i != axis else slc for i in range(arr.ndim))]
 
 
 def clear_queue(queue, shared_arrays, shared_out):

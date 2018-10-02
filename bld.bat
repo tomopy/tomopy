@@ -1,5 +1,6 @@
 echo copy distutils.cfg %PREFIX%\LIB\distutils\distutils.cfg
 copy distutils.cfg %PREFIX%\LIB\distutils\distutils.cfg
+"%PYTHON%" build.py
 "%PYTHON%" setup.py install
 if errorlevel 1 exit 1
 
