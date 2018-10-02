@@ -433,8 +433,8 @@ def lprec(tomo, center, recon, theta, **kwargs):
         #run
         for k in range(0,int(np.ceil(Nslices/float(Nslices0)))):
             ids = range(k*Nslices0,min(Nslices,(k+1)*Nslices0))
-            print(ids)
-            recon[ids] = lpmethods[lpmethod](lphandle,recon,tomo[ids],num_iter,reg_par)
+
+            recon[ids] = lpmethods[lpmethod](lphandle,recon[ids],tomo[ids],num_iter,reg_par)
 
 def lpfbp(lp,tomo):
     return lp.adj(tomo)
@@ -498,7 +498,6 @@ def lptv(lp,recon,tomo,num_iter,reg_par):
 
 def lpem(lp,recon,tomo,num_iter,reg_par):
     xi = lp.adj(tomo*0+np.float32(1))
-
     eps = reg_par
     xi = xi+np.float32(eps*np.max(xi))
     e = np.max(tomo)*eps
