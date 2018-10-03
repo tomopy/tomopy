@@ -1,0 +1,4 @@
+# This file exists so that the sharedlibs folder can be added to the repository
+# but any shared libraries inside this folder will be ignored.
+*
+!.gitignore

@@ -14,6 +14,7 @@ version: 1.0.{build}
 # branches to build
 branches:
   only:
+    - master
     - dev
 # Do not build on tags (GitHub and BitBucket)
 # skip_tags: true

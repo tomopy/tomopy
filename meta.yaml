@@ -3,62 +3,60 @@ package:
   version: '1.1.4'
 
 source:
-  git_url: https://github.com/tomopy/tomopy.git
-
+  # git_url: https://github.com/tomopy/tomopy.git
+  path: .
 
 build:
-  number: 0
+  number: 1
+  script:
+    - "{{ PYTHON }} build.py"
+    - "{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv"
 
 requirements:
   build:
+    - {{ compiler('c') }}  # [not win]
+    - mkl-devel  # [not win]
+  host:
+    - Make  # [win]
+    - MinGW  # [win]
     - mkl-devel
-    - python
+    - pip
+    - python={{ python }}
     - setuptools
-    - MinGW # [win]
-    - Make # [win]
-
   run:
-    - python
-    - numpy
-    - h5py
-    - scipy
-    - six
-    - "scikit-image>=0.14"
-    - pywavelets
+    - dxchange
+    - futures  # [py2k]
+    - numexpr
     - mkl
     - mkl_fft
-    - dxchange
-    - numexpr
-    - futures # [py2k]
-    - MinGW # [win]
+    - python={{ python }}
+    - pywavelets
+    - numpy
+    - "scikit-image>=0.14"
+    - scipy
+    - six
 
 test:
-  # Python imports
+  requires:
+    - nose
   imports:
     - tomopy
     - tomopy.misc
-    - tomopy.misc.corr
-    - tomopy.misc.morph
-    - tomopy.misc.phantom
     - tomopy.prep
-    - tomopy.prep.alignment
-    - tomopy.prep.normalize
-    - tomopy.prep.phase
-    - tomopy.prep.stripe
     - tomopy.recon
-    - tomopy.recon.algorithm
-    - tomopy.recon.rotation
-    - tomopy.recon.vector
+    - tomopy.sim
     - tomopy.util
-    - tomopy.util.dtype
-    - tomopy.util.extern
-    - tomopy.util.mproc
+  source_files:
+    - test/*
+  commands:
+    - nosetests test
+
+app:
+    own_environment: True
 
 about:
-  home: http://tomopy.readthedocs.org
-  license: BSD-3
-  summary: 'Tomographic reconstruction in Python.'
-
-# See
-# http://docs.continuum.io/conda/build.html for
-# more information about meta.yaml
+    home: http://tomopy.readthedocs.io
+    license: BSD 3-Clause
+    license_family: BSD
+    license_file: LICENSE.txt
+    summary: 'Tomographic reconstruction in Python.'
