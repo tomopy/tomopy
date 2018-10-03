@@ -102,13 +102,14 @@ def c_shared_lib(lib_name):
     if os.name == 'nt':
         ext = '.dll'
         load_dll = ctypes.windll.LoadLibrary
-    base_path = os.path.abspath(os.path.dirname(os.path.dirname(
-                                os.path.dirname(__file__))))
-    sharedlib = os.path.join(base_path, 'lib', '%s%s' % (lib_name, ext))
+    base_path = os.path.abspath(os.path.dirname(
+                                os.path.dirname(__file__)))
+    sharedlib = os.path.join(base_path, 'sharedlibs', '%s%s' % (lib_name, ext))
     if os.path.exists(sharedlib):
         return load_dll(sharedlib)
     # cannot find shared lib:
-    logger.warning('OSError: Shared library is missing!')
+    logger.warning('OSError: The following shared lib is missing!\n{}'.format(
+                   sharedlib))
 
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
