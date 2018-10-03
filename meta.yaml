@@ -57,4 +57,6 @@ app:
 about:
     home: http://tomopy.readthedocs.io
     license: BSD 3-Clause
-    summary: Tomographic reconstruction in Python.
+    license_family: BSD
+    license_file: LICENSE.txt
+    summary: 'Tomographic reconstruction in Python.'
