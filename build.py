@@ -49,7 +49,7 @@ def build_libtomopy():
 class Config:
     """A string formatter for the Makefile"""
     def __init__(self):
-        self.compilerdir = ''
+        self.compilerdir = 'gcc'
         self.sharedlib = ''
         self.arch_target = ''
         self.conda_compat = ''
@@ -60,6 +60,8 @@ class Config:
             compat = pjoin(PREFIX, 'compiler_compat')
             if os.path.exists(compat) and os.path.isdir(compat):
                 self.conda_compat = '-B %s' % compat
+        if 'GCC' in os.environ:
+            self.compilerdir = os.environ["GCC"]
         # includes
         top_include = pjoin(PREFIX, 'include')
         includes = [top_include]
