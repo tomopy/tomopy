@@ -1,7 +1,7 @@
 ## base Makefile for tomopy and gcc
 
 INSTALLDIR   = ../tomopy/sharedlibs
-LINK_CFLAGS  = -lm -lmkl_rt
+LINK_CFLAGS  = -lm -lmkl_rt -lgomp
 
 vpath %.c ../src
 vpath %.h ../include
