@@ -2,7 +2,7 @@ numpy
 h5py
 scipy
 six
-"scikit-image>=0.14"
+scikit-image
 pywavelets
 mkl
 mkl_fft
