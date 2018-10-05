@@ -62,12 +62,14 @@ fbp(
         preprocessing(ngridx, ngridy, dx, center[s],
             &mov, gridx, gridy);
             // Outputs: mov, gridx, gridy
-        float *all_dist, *all_sum_dist2;
-        int *all_indi, *ray_start, *ray_stride;
+        short *nintersect;
+        int **indi_list;
+        float **dist_list;
+        float *sum_dist_squared;
         compute_indices_and_lengths(theta, dt, dx, gridx, gridy, mov,
-            ngridx, ngridy, &ray_start, &ray_stride, &all_indi, &all_dist,
-            &all_sum_dist2);
-            // Outputs: ray_start, ray_stride, all_indi, all_dist
+            ngridx, ngridy, &nintersect, &indi_list, &dist_list,
+            &sum_dist_squared);
+            // Outputs: ray_start, ray_stride, all_indi, all_dist, all_sum_dist2
         free(gridx);
         free(gridy);
         // For each projection angle
@@ -78,20 +80,29 @@ fbp(
             {
                 // Update
                 int ray = d + dx*p;
-                float *dist = all_dist + ray_start[ray];
-                int *indi = all_indi + ray_start[ray];
-                float sum_dist2 = all_sum_dist2[ray];
+                float *dist = dist_list[ray];
+                int *indi = indi_list[ray];
                 int ind_data = d + dx*(p + dt*s);
-                for (int n=0; n<ray_stride[ray]; n++)
+                for (int n=0; n<nintersect[ray]; n++)
                 {
                 	recon[indi[n]+ind_slice] += data[ind_data]*dist[n];
                 }
             }
         }
-        free(all_dist);
-        free(all_sum_dist2);
-        free(all_indi);
-        free(ray_start);
-        free(ray_stride);
+        free(nintersect);
+        free(sum_dist_squared);
+        // For each projection angle
+        for (int p=0; p<dt; p++)
+        {
+            // For each detector pixel
+            for (int d=0; d<dx; d++)
+            {
+                int ray = d + dx*p;
+                free(dist_list[ray]);
+                free(indi_list[ray]);
+            }
+        }
+        free(indi_list);
+        free(dist_list);
     }
 }
