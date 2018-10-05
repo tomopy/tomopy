@@ -3,7 +3,7 @@
 include Mk.config
 
 CC_WARNINGS  = -Wno-unused-result -Wsign-compare -Wunreachable-code -Wall -Wstrict-prototypes
-CC_OPTIMIZE  = -DNDEBUG -g -fwrapv -O3
+CC_OPTIMIZE  = -DNDEBUG -g -fwrapv -O3 -fopenmp
 CC           = $(COMPILER_DIR) $(CC_OPTIMIZE) $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99
 LINK         = $(COMPILER_DIR) -bundle -undefined dynamic_lookup $(ARCH_TARGS) $(LINK_LIB)
 

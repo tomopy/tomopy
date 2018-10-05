@@ -3,7 +3,7 @@
 include Mk.config
 
 CC_WARNINGS  = -Wall
-CC_OPTIMIZE  = -mdll -O -DMS_WIN64 -DUSE_MKL
+CC_OPTIMIZE  = -mdll -O -DMS_WIN64 -DUSE_MKL -fopenmp
 CC           = $(COMPILER_DIR)/gcc.exe $(CC_OPTIMIZE) $(CC_WARNINGS) $(INCLUDE)  -DPY3K -DWIN32 -std=c99
 LINK_LIBWIN  = $(LINK_LIB)/Library $(LINK_LIB)/Library/bin $(LINK_LIB)/libs $(LINK_LIB)/PCBuild/amd64
 LINK         = $(COMPILER_DIR)/gcc.exe -shared -s $(LINK_LIBWIN) -lvcruntime140

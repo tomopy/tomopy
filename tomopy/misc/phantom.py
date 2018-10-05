@@ -55,6 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import skimage
+import skimage.transform
 import tifffile
 import os.path
 import logging
@@ -79,6 +80,13 @@ __all__ = ['baboon',
 DATA_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'data'))
 
+try:
+    resize_kwargs = {'anti_aliasing': False}
+    ignore = skimage.transform.resize(np.zeros(5), 2, **resize_kwargs)
+except TypeError:
+    logger.debug("Determined that the anti_aliasing keyword is not needed.")
+    resize_kwargs = dict()
+
 
 def baboon(size=512, dtype='float32'):
     """
@@ -101,7 +109,7 @@ def baboon(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     im = im.astype(dtype)
     return im
@@ -128,7 +136,7 @@ def barbara(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -154,7 +162,7 @@ def cameraman(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -180,7 +188,7 @@ def checkerboard(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -206,7 +214,7 @@ def lena(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -232,7 +240,7 @@ def peppers(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
@@ -258,7 +266,7 @@ def shepp2d(size=512, dtype='float32'):
     im = tifffile.imread(fname)
     im = skimage.transform.resize(im, size, order=3,
                                   preserve_range=True, mode='constant',
-                                  anti_aliasing=False)
+                                  **resize_kwargs)
     im = np.expand_dims(im, 0)
     return im.astype(dtype)
 
