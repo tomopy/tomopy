@@ -24,7 +24,7 @@ before_install:
 install:
   - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy
     scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange
-    numexpr"
+    numexpr coverage"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install futures;
     fi
@@ -33,6 +33,6 @@ install:
   - python build.py
   - python setup.py install
 script:
-  - coverage3 run $(which nosetests)
+  - coverage run $(which nosetests)
 after_success:
   - coveralls
