@@ -51,12 +51,13 @@ from __future__ import (absolute_import, division, print_function,
 
 import unittest
 from ..util import read_file
-from tomopy.recon.rotation import write_center, find_center, find_center_vo, find_center_pc
+from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
+    find_center_pc
 import numpy as np
 from scipy.ndimage.interpolation import shift as image_shift
 import os.path
 import shutil
-from nose.tools import assert_equals
+from numpy.testing import assert_array_equal as assert_equals
 from numpy.testing import assert_allclose
 
 __author__ = "Doga Gursoy"

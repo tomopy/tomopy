@@ -50,8 +50,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.misc.phantom import baboon, barbara, cameraman, checkerboard, lena, peppers, shepp2d, shepp3d
-from nose.tools import assert_equals
+from tomopy.misc.phantom import baboon, barbara, cameraman, checkerboard, \
+    lena, peppers, shepp2d, shepp3d
+from numpy.testing import assert_array_equal as assert_equals
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."

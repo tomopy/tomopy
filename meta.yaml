@@ -32,7 +32,7 @@ requirements:
     - python={{ python }}
     - pywavelets
     - numpy
-    - "scikit-image>=0.14"
+    - scikit-image
     - scipy
     - six
 
