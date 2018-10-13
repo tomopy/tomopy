@@ -64,7 +64,7 @@ Plot the sinogram:
 
 
 
-.. image:: output_15_0.png
+.. image:: lprec_files/output_15_0.png
 
 
 If the angular information is not avaialable from the raw data you need
@@ -116,7 +116,7 @@ Mask each reconstructed slice with a circle.
 
 
 
-.. image:: output_28_0.png
+.. image:: lprec_files/output_28_0.png
 
 
 Reconstruction using the gradient descent method with the log-polar
@@ -131,7 +131,7 @@ coordinates
 
 
 
-.. image:: output_30_0.png
+.. image:: lprec_files/output_30_0.png
 
 
 Reconstruction using the conjugate gradient method with the log-polar
@@ -146,7 +146,7 @@ coordinates
 
 
 
-.. image:: output_32_0.png
+.. image:: lprec_files/output_32_0.png
 
 
 Reconstruction using the TV method with the log-polar coordinates
@@ -160,7 +160,7 @@ Reconstruction using the TV method with the log-polar coordinates
 
 
 
-.. image:: output_34_0.png
+.. image:: lprec_files/output_34_0.png
 
 
 Reconstruction using the MLEM method with the log-polar coordinates
@@ -174,5 +174,5 @@ Reconstruction using the MLEM method with the log-polar coordinates
 
 
 
-.. image:: output_36_0.png
+.. image:: lprec_files/output_36_0.png
 
