@@ -9,12 +9,6 @@ Here is an example on how to use the log-polar based method
 
     %pylab inline
 
-
-.. parsed-literal::
-
-    Populating the interactive namespace from numpy and matplotlib
-
-
 Install lprec from github, then
 
 .. code:: ipython3
@@ -70,7 +64,7 @@ Plot the sinogram:
 
 
 
-.. image:: lprec_files/output_15_0.png
+.. image:: output_15_0.png
 
 
 If the angular information is not avaialable from the raw data you need
@@ -122,7 +116,7 @@ Mask each reconstructed slice with a circle.
 
 
 
-.. image:: lprec_files/output_28_0.png
+.. image:: output_28_0.png
 
 
 Reconstruction using the gradient descent method with the log-polar
@@ -137,7 +131,7 @@ coordinates
 
 
 
-.. image:: lprec_files/output_30_0.png
+.. image:: output_30_0.png
 
 
 Reconstruction using the conjugate gradient method with the log-polar
@@ -152,7 +146,7 @@ coordinates
 
 
 
-.. image:: lprec_files/output_32_0.png
+.. image:: output_32_0.png
 
 
 Reconstruction using the TV method with the log-polar coordinates
@@ -166,7 +160,7 @@ Reconstruction using the TV method with the log-polar coordinates
 
 
 
-.. image:: lprec_files/output_34_0.png
+.. image:: output_34_0.png
 
 
 Reconstruction using the MLEM method with the log-polar coordinates
@@ -180,5 +174,5 @@ Reconstruction using the MLEM method with the log-polar coordinates
 
 
 
-.. image:: lprec_files/output_36_0.png
+.. image:: output_36_0.png
 
