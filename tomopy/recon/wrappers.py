@@ -439,10 +439,9 @@ def lprec(tomo, center, recon, theta, **kwargs):
                          'cg': iterative.cg,
                          'tv': iterative.tv,
                          'em': iterative.em
-                        }
+                         }
         # run
         for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
             ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
             recon[ids] = lpitermethods[lpmethod](
                 lphandle, recon[ids], tomo[ids], num_iter, reg_par)
-
