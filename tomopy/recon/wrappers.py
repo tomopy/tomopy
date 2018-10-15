@@ -78,8 +78,8 @@ default_options = {
         'lpmethod': 'fbp',
         'interp_type': 'cubic',
         'filter_name': 'None',
-        'num_iter': '1',
-        'reg_par': '1',
+        'num_iter': 1,
+        'reg_par': 1,
     }
 }
 
