@@ -42,7 +42,7 @@ $ export CONDA_ENV="tomopy-pyctest"
 
 $ conda install -n ${CONDA_ENV} -c conda-forge -c jrmadsen python=${PYTHON_VERSION} nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr coverage timemory pyctest
 
-$ source activate tomopy
+$ source activate ${CONDA_ENV}
 
 $ ./pyctest_tomopy.py --globus-path=${HOME}/devel/globus --num-iter=10 --pyctest-site="Cori-Haswell" --pyctest-token-file="${HOME}/.tokens/nersc-cdash"
 
