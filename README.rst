@@ -9,10 +9,13 @@ TomoPy
    :target: https://travis-ci.org/tomopy/tomopy
    :alt: Travis CI
 
-.. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
+.. image:: https://ci.appveyor.com/api/projects/status/t2ty4k5snkv9od0r/branch/master?svg=true
+   :target: https://ci.appveyor.com/project/tomopy/tomopy
+   :alt: Appyveyor
+
+.. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master
    :target: https://coveralls.io/r/tomopy/tomopy?branch=master
    :alt: Coveralls
-   
 .. image:: https://codeclimate.com/github/tomopy/tomopy/badges/gpa.svg
    :target: https://codeclimate.com/github/tomopy/tomopy
    :alt: Code Climate
@@ -20,12 +23,11 @@ TomoPy
 .. image:: https://anaconda.org/dgursoy/tomopy/badges/downloads.svg
    :target: https://anaconda.org/dgursoy/tomopy
    :alt: Anaconda downloads
-   
-.. image:: https://mybinder.org/badge.svg 
+.. image:: https://mybinder.org/badge.svg
    :target: https://mybinder.org/v2/gh/tomopy/tomopy/master
    :alt: Use on Binder
 
-**TomoPy** is an open-source Python package for tomographic data 
+**TomoPy** is an open-source Python package for tomographic data
 processing and image reconstruction.
 
 Features
@@ -38,11 +40,11 @@ Features
 Installation
 ============
 
-Have `Conda <http://continuum.io/downloads>`_ installed first,  
+Have `Conda <http://continuum.io/downloads>`_ installed first,
 then open a terminal or a command prompt window and run:
 
     conda install -c conda-forge tomopy
-    
+
 Try Now
 =======
 
@@ -50,7 +52,6 @@ You can try notebooks now using mybinder.org
 
 * GridRec: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fgridrec.ipynb
 * Vector Heterostructure: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fvector_heterostructure.ipynb
-    
 Contribute
 ==========
 
@@ -62,5 +63,5 @@ Contribute
 License
 =======
 
-The project is licensed under the 
+The project is licensed under the
 `BSD-3 <https://github.com/tomopy/tomopy/blob/master/LICENSE.txt>`_ license.

@@ -1,0 +1,31 @@
+## base Makefile for tomopy and gcc
+
+INSTALLDIR   = ../tomopy/sharedlibs
+LINK_CFLAGS  = -lm -lmkl_rt
+
+vpath %.c ../src
+vpath %.h ../include
+vpath %.o ../build
+
+.PHONY: clean default
+
+default: $(INSTALLDIR)/$(SHAREDLIB)
+
+OBJ = art.o bart.o fbp.o grad.o gridrec.o mlem.o morph.o osem.o \
+    ospml_hybrid.o ospml_quad.o pml_hybrid.o pml_quad.o prep.o project.o \
+    remove_ring.o sirt.o stripe.o tv.o utils.o vector.o
+
+gridrec.o: gridrec.h
+morph.o: morph.h
+prep.o: prep.h
+stripe.o: stripe.h
+remove_ring.o: remove_ring.h
+art.o bart.o fbp.o grad.o mlem.o osem.o: utils.h
+ospml_hybrid.o ospml_quad.o pml_hybrid.o: utils.h
+pml_quad.o project.o sirt.o tv.o utils.o vector.o: utils.h
+
+$(INSTALLDIR)/$(SHAREDLIB): $(OBJ)
+	$(LINK) -o $(INSTALLDIR)/$(SHAREDLIB) $(OBJ) $(LINK_CFLAGS)
+
+clean:
+	rm -f $(OBJ) $(SHAREDLIB)

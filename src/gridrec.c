@@ -124,7 +124,6 @@ gridrec(
         -0.1053599E+02,  0.1662374E+01, -0.1780527E-00,
          0.1372983E-01, -0.7963169E-03,  0.3593372E-04,
         -0.1295941E-05,  0.3817796E-07};
-
     // Compute pdim = next power of 2 >= dx
     for(pdim = 16; pdim < dx; pdim *= 2);
 
@@ -271,7 +270,7 @@ gridrec(
             }
         }
 #endif
-
+    int zlimit = z;
     // For each slice.
     for (s=0; s<dy; s+=2)
     {
@@ -325,7 +324,6 @@ gridrec(
         // an additional correction -- See Phase 3 below.
 
         float _Complex Cdata1, Cdata2;
-        int zlimit = dt*(pdim2-1);
 
 #ifdef USE_MKL
         // For each projection
@@ -607,7 +605,6 @@ set_filter_tables(
     int j,i;
     int pd2 = pd/2;
     float x;
-
     if(!filter2d){
         for(j=0; j<pd2; j++)
         {

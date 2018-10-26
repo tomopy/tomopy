@@ -47,12 +47,13 @@
 # #########################################################################
 
 """
-Module for internal utility functions.
+Tries the FFT implementation options in order until one imports without error.
 """
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -62,28 +63,48 @@ __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['fft_impl']
 
-try:
+fft_impl = 'unset'
+
+
+def import_mkl_fft():
     import mkl_fft
     fft_impl = 'mkl_fft'
-    logger.debug('FFT implementation is mkl_fft')
-except ImportError:
-    import os
-    try:
-        if os.name == 'nt':
-            import pyfftw
-        else:
-            # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
-            # to minimize chance of MKL overriding fftw functions
-            import ctypes, sys
 
-            curFlags = sys.getdlopenflags()
-            sys.setdlopenflags( curFlags | ctypes.RTLD_GLOBAL)
-            import pyfftw
-            sys.setdlopenflags(curFlags)
-            del curFlags
-        fft_impl = 'pyfftw'
-        logger.debug('FFT implementation is pyfftw')
-    except ImportError:
-        import numpy.fft
-        fft_impl = 'numpy.fft'
-        logger.debug('FFT implementation is numpy.fft')
+
+def import_pyfftw():
+    if os.name == 'nt':
+        import pyfftw
+    else:
+        # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
+        # to minimize chance of MKL overriding fftw functions
+        import ctypes
+        import sys
+        curFlags = sys.getdlopenflags()
+        sys.setdlopenflags(curFlags | ctypes.RTLD_GLOBAL)
+        import pyfftw
+        sys.setdlopenflags(curFlags)
+        del curFlags
+    fft_impl = 'pyfftw'
+
+
+def import_numpy_fft():
+    import numpy.fft
+    fft_impl = 'numpy.fft'
+
+
+fft_options = [import_mkl_fft, import_pyfftw, import_numpy_fft]
+if 'TOMOPY_FFT_IMPL' in os.environ:
+    # Let the user choose the implementation
+    fft_impl = os.environ['TOMOPY_FFT_IMPL']
+    logger.info('FFT implementation preference is {}'.format(fft_impl))
+else:
+    for fft in fft_options:
+        try:
+            fft()
+            # Succesfully imported an fft library
+            break
+        except ImportError:
+            # Try the next fft library
+            pass
+
+logger.debug('FFT implementation is {}'.format(fft_impl))

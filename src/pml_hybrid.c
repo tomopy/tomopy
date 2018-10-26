@@ -94,7 +94,6 @@ pml_hybrid(
         {
             preprocessing(ngridx, ngridy, dx, center[s],
                 &mov, gridx, gridy); // Outputs: mov, gridx, gridy
-
             sum_dist = (float *)calloc((ngridx*ngridy), sizeof(float));
             E = (float *)calloc((ngridx*ngridy), sizeof(float));
             F = (float *)calloc((ngridx*ngridy), sizeof(float));
@@ -185,7 +184,6 @@ pml_hybrid(
                 for (m = 1; m < ngridy-1; m++) {
                     ind0 = m + n*ngridy;
                     ind1 = ind0 + s*ngridx*ngridy;
-
                     indg[0] = ind1+1;
                     indg[1] = ind1-1;
                     indg[2] = ind1+ngridy;
@@ -213,7 +211,6 @@ pml_hybrid(
             wg[2] = 1/totalwg;
             wg[3] = 1/sqrt(2)/totalwg;
             wg[4] = 1/sqrt(2)/totalwg;
-
             // (top)
             for (m = 1; m < ngridy-1; m++) {
                 ind0 = m;
@@ -238,13 +235,11 @@ pml_hybrid(
             for (m = 1; m < ngridy-1; m++) {
                 ind0 = m + (ngridx-1)*ngridy;
                 ind1 = ind0 + s*ngridx*ngridy;
-
                 indg[0] = ind1+1;
                 indg[1] = ind1-1;
                 indg[2] = ind1-ngridy;
                 indg[3] = ind1-ngridy+1;
                 indg[4] = ind1-ngridy-1;
-
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
                     rg[q] = recon[ind1]-recon[indg[q]];
@@ -284,7 +279,6 @@ pml_hybrid(
                 indg[2] = ind1-ngridy;
                 indg[3] = ind1+ngridy-1;
                 indg[4] = ind1-ngridy-1;
-
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
                     rg[q] = recon[ind1]-recon[indg[q]];
@@ -293,7 +287,6 @@ pml_hybrid(
                     G[ind0] -= 2*reg_pars[0]*wg[q]*gammag[q]*mg[q];
                 }
             }
-
             // Weights for corners.
             totalwg = 2+1/sqrt(2);
             wg[0] = 1/totalwg;

@@ -184,7 +184,6 @@ pml_quad(
                 for (m = 1; m < ngridy-1; m++) {
                     ind0 = m + n*ngridy;
                     ind1 = ind0 + s*ngridx*ngridy;
-
                     indg[0] = ind1+1;
                     indg[1] = ind1-1;
                     indg[2] = ind1+ngridy;
@@ -210,7 +209,6 @@ pml_quad(
             wg[2] = 1/totalwg;
             wg[3] = 1/sqrt(2)/totalwg;
             wg[4] = 1/sqrt(2)/totalwg;
-
             // (top)
             for (m = 1; m < ngridy-1; m++) {
                 ind0 = m;
@@ -233,13 +231,11 @@ pml_quad(
             for (m = 1; m < ngridy-1; m++) {
                 ind0 = m + (ngridx-1)*ngridy;
                 ind1 = ind0 + s*ngridx*ngridy;
-
                 indg[0] = ind1+1;
                 indg[1] = ind1-1;
                 indg[2] = ind1-ngridy;
                 indg[3] = ind1-ngridy+1;
                 indg[4] = ind1-ngridy-1;
-
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
                     F[ind0] += 2*reg_pars[0]*wg[q];
@@ -275,14 +271,12 @@ pml_quad(
                 indg[2] = ind1-ngridy;
                 indg[3] = ind1+ngridy-1;
                 indg[4] = ind1-ngridy-1;
-
                 for (q = 0; q < 5; q++) {
                     mg[q] = recon[ind1]+recon[indg[q]];
                     F[ind0] += 2*reg_pars[0]*wg[q];
                     G[ind0] -= 2*reg_pars[0]*wg[q]*mg[q];
                 }
             }
-
             // Weights for corners.
             totalwg = 2+1/sqrt(2);
             wg[0] = 1/totalwg;

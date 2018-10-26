@@ -66,13 +66,20 @@ logger = logging.getLogger(__name__)
 __author__ = "Daniel M. Pelt"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['astra', 'ufo_fbp', 'ufo_dfi']
+__all__ = ['astra', 'ufo_fbp', 'ufo_dfi', 'lprec']
 
 default_options = {
     'astra': {
         'proj_type': 'linear',
         'num_iter': 1,
         'gpu_list': None,
+    },
+    'lprec': {
+        'lpmethod': 'fbp',
+        'interp_type': 'cubic',
+        'filter_name': 'None',
+        'num_iter': 1,
+        'reg_par': 1,
     }
 }
 
@@ -176,7 +183,8 @@ def astra_rec_cuda(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_i
         cfg['option']['GPUindex'] = gpu_index
     oc = None
     const_theta = np.ones(nang)
-    proj_geom = astra_mod.create_proj_geom('parallel', 1.0, ndet, theta.astype(np.float64))
+    proj_geom = astra_mod.create_proj_geom(
+        'parallel', 1.0, ndet, theta.astype(np.float64))
     for i in range(nslices):
         if center[i] != oc:
             oc = center[i]
@@ -204,7 +212,8 @@ def astra_rec_cpu(tomo, center, recon, theta, vol_geom, niter, proj_type, opts):
     cfg = astra_mod.astra_dict(opts['method'])
     if 'extra_options' in opts:
         cfg['option'] = opts['extra_options']
-    proj_geom = astra_mod.create_proj_geom('parallel', 1.0, ndet, theta.astype(np.float64))
+    proj_geom = astra_mod.create_proj_geom(
+        'parallel', 1.0, ndet, theta.astype(np.float64))
     pid = astra_mod.create_projector(proj_type, proj_geom, vol_geom)
     sino = np.zeros((nang, ndet), dtype=np.float32)
     sid = astra_mod.data2d.link('-sino', proj_geom, sino)
@@ -240,12 +249,13 @@ def _process_data(input_task, output_task, sinograms, slices):
 
     for i in range(num_sinograms):
         if i == 0:
-            data = unp.empty_like(sinograms[i,:,:])
+            data = unp.empty_like(sinograms[i, :, :])
         else:
             data = input_task.get_input_buffer()
 
         # Set host array pointer and use that as first input
-        data.set_host_array(sinograms[i,:,:].__array_interface__['data'][0], False)
+        data.set_host_array(
+            sinograms[i, :, :].__array_interface__['data'][0], False)
         input_task.release_input_buffer(data)
 
         # Get last output and copy result back into NumPy buffer
@@ -253,7 +263,7 @@ def _process_data(input_task, output_task, sinograms, slices):
         array = unp.asarray(data)
         frm = int(array.shape[0] / 2 - width / 2)
         to = int(array.shape[0] / 2 + width / 2)
-        slices[i,:,:] = array[frm:to, frm:to]
+        slices[i, :, :] = array[frm:to, frm:to]
         output_task.release_output_buffer(data)
 
     input_task.stop()
@@ -283,7 +293,8 @@ def ufo_fbp(tomo, center, recon, theta, **kwargs):
     backproject = pm.get_task('backproject')
 
     ifft.set_properties(crop_width=width)
-    backproject.set_properties(axis_pos=center, angle_step=theta, angle_offset=np.pi)
+    backproject.set_properties(
+        axis_pos=center, angle_step=theta, angle_offset=np.pi)
 
     g.connect_nodes(input_task, fft)
     g.connect_nodes(fft, fltr)
@@ -344,3 +355,93 @@ def ufo_dfi(tomo, center, recon, theta, **kwargs):
     thread.join()
 
     logger.info("UFO+DFI run time: {}s".format(sched.props.time))
+
+
+def lprec(tomo, center, recon, theta, **kwargs):
+    """
+    Reconstruct object using the Log-polar based method
+    https://github.com/math-vrn/lprec
+
+    Extra options
+    ----------
+    lpmethod : str
+        LP reconsruction method to use
+            - 'fbp'
+            - 'grad'
+            - 'cg'
+            - 'tv'
+            - 'em'
+    filter_type:
+        Filter for backprojection
+            - 'ramp'
+            - 'shepp-logan'
+            - 'cosine'
+            - 'cosine2'
+            - 'hamming'
+            - 'hann'
+            - 'parzen'
+    interp_type:
+        Type of interpolation between Cartesian, polar and log-polar coordinates
+            - 'linear'
+            - 'cubic'
+    Example
+    -------
+    >>> import tomopy
+    >>> obj = tomopy.shepp3d() # Generate an object.
+    >>> ang = tomopy.angles(180) # Generate uniformly spaced tilt angles.
+    >>> sim = tomopy.project(obj, ang) # Calculate projections.
+    >>>
+    >>> # Reconstruct object:
+    >>> rec = tomopy.recon(sim, ang, algorithm=tomopy.lprec,
+    >>>       lpmethod='lpfbp', filter_name='parzen', interp_type='cubic', ncore=1)
+    >>>
+    >>> # Show 64th slice of the reconstructed object.
+    >>> import pylab
+    >>> pylab.imshow(rec[64], cmap='gray')
+    >>> pylab.show()
+    """
+    from lprec import lpTransform
+
+    # set default options
+    opts = kwargs
+    for o in default_options['lprec']:
+        if o not in kwargs:
+            opts[o] = default_options['lprec'][o]
+
+    filter_name = opts['filter_name']
+    interp_type = opts['interp_type']
+    lpmethod = opts['lpmethod']
+    num_iter = opts['num_iter']
+    reg_par = opts['reg_par']
+
+    # Init lp method
+    # number of slices for simultanious processing by 1 gpu, chosen for 4GB gpus
+    Nslices, Nproj, N = tomo.shape
+    Nslices0 = min(int(pow(2, 23)/float(N*N)), Nslices)
+    lphandle = lpTransform.lpTransform(
+        N, Nproj, Nslices0, filter_name, int(center[0]+0.5), interp_type)
+
+    if(lpmethod == 'fbp'):
+        # precompute only for the adj transform
+        lphandle.precompute(0)
+        lphandle.initcmem(0)
+        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
+            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
+            recon[ids] = lphandle.adj(tomo[ids])
+    else:
+        # iterative schemes
+        # precompute for both fwd and adj transforms
+        lphandle.precompute(1)
+        lphandle.initcmem(1)
+
+        from lprec import iterative
+        lpitermethods = {'grad': iterative.grad,
+                         'cg': iterative.cg,
+                         'tv': iterative.tv,
+                         'em': iterative.em
+                         }
+        # run
+        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
+            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
+            recon[ids] = lpitermethods[lpmethod](
+                lphandle, recon[ids], tomo[ids], num_iter, reg_par)

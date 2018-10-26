@@ -1,3 +1,6 @@
+# temporary config file for build
+config/Mk.config
+
 # Compiled source #
 ###################
 *.com

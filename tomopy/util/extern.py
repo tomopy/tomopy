@@ -53,6 +53,7 @@ Module for external library wrappers.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import os.path
 import ctypes
 import numpy as np
@@ -84,6 +85,8 @@ __all__ = ['c_shared_lib',
            'c_pml_hybrid',
            'c_pml_quad',
            'c_sirt',
+           'c_tv',
+           'c_grad',
            'c_vector',
            'c_vector2',
            'c_vector3',
@@ -91,19 +94,22 @@ __all__ = ['c_shared_lib',
 
 
 def c_shared_lib(lib_name):
-    """
-    Get the path and import the C-shared library.
-    """
-    try:
-        if os.name == 'nt':
-            ext = '.pyd'
-        else:
-            ext = '.so'
-        _fname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        libpath = glob.glob(_fname + '/' + lib_name + '*' + ext)[0]
-        return ctypes.CDLL(libpath)
-    except (OSError, IndexError):
-        logger.warning('OSError: Shared library missing.')
+    """Get the path and import the C-shared library."""
+    load_dll = ctypes.cdll.LoadLibrary
+    ext = '.so'
+    if sys.platform == 'darwin':
+        ext = '.dylib'
+    if os.name == 'nt':
+        ext = '.dll'
+        load_dll = ctypes.windll.LoadLibrary
+    base_path = os.path.abspath(os.path.dirname(
+                                os.path.dirname(__file__)))
+    sharedlib = os.path.join(base_path, 'sharedlibs', '%s%s' % (lib_name, ext))
+    if os.path.exists(sharedlib):
+        return load_dll(sharedlib)
+    # cannot find shared lib:
+    logger.warning('OSError: The following shared lib is missing!\n{}'.format(
+                   sharedlib))
 
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
@@ -516,6 +522,49 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
 
+def c_tv(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.tv.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.tv(
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']))
+
+def c_grad(tomo, center, recon, theta, **kwargs):
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY.grad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY.grad(
+            dtype.as_c_float_p(tomo),
+            dtype.as_c_int(dy),
+            dtype.as_c_int(dt),
+            dtype.as_c_int(dx),
+            dtype.as_c_float_p(center),
+            dtype.as_c_float_p(theta),
+            dtype.as_c_float_p(recon),
+            dtype.as_c_int(kwargs['num_gridx']),
+            dtype.as_c_int(kwargs['num_gridy']),
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_float_p(kwargs['reg_par']))
 
 def c_vector(tomo, center, recon1, recon2, theta, **kwargs):
     if len(tomo.shape) == 2:

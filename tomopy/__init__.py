@@ -49,13 +49,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-__version__ = '1.1.3'
+__version__ = '1.2.1'
 
 from ._fft_loader import fft_impl
-
-import logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())
-
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.misc.phantom import *
@@ -71,3 +67,6 @@ from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
 from tomopy.util.mproc import set_debug
+
+import logging
+logging.getLogger(__name__).addHandler(logging.NullHandler())
