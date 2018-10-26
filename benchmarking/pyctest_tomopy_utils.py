@@ -1,19 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Utilities for TomoPy + PyCTest
+"""
 
 import os
 import sys
 import signal
 import argparse
 
+import tomopy
+import dxchange
 import tornado
 import matplotlib
-import pylab
+import timemory
+import timemory.options as options
 import numpy as np
+import pylab
 import scipy.ndimage as ndimage
 import matplotlib.pyplot as plt
 import numpy.linalg as LA
-
-import timemory
-import timemory.options as options
 
 
 #------------------------------------------------------------------------------#
@@ -28,7 +35,8 @@ def exit_action(errcode):
 
 #------------------------------------------------------------------------------#
 algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad']
+              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+              'tv', 'grad']
 
 
 #------------------------------------------------------------------------------#

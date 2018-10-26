@@ -126,5 +126,21 @@ ptycho.py
 
 # Benchmarking #
 ################
-/benchmarking/tomopy-source
-/benchmarking/tomopy-ctest
+/Build.cmake
+/CTestConfig.cmake
+/CTestCustom.cmake
+/CTestTestfile.cmake
+/Coverage.cmake
+/DartConfiguration.tcl
+/Glob.cmake
+/Init.cmake
+/Makefile
+/MemCheck.cmake
+/Stages.cmake
+/Submit.cmake
+/Test.cmake
+/Testing
+/Utilities.cmake
+/cmake_install.cmake
+/benchmarking/tomo_*
+/benchmarking/*_comparison*

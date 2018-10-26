@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+TomoPy script to reconstruct a built-in phantom
+"""
+
 import sys
 import os
 import argparse
@@ -16,7 +20,17 @@ import signal
 import numpy as np
 import time as t
 import pylab
-from tomopy.misc.benchmark import *
+try:
+    from pyctest_tomopy_utils import *
+except:
+    from benchmarking.pyctest_tomopy_utils import *
+
+
+#------------------------------------------------------------------------------#
+def get_basepath(args, algorithm, phantom):
+    return os.path.join(os.getcwd(),
+                        os.path.join(args.output_dir,
+                                     os.path.join(phantom, algorithm)))
 
 
 #------------------------------------------------------------------------------#
@@ -30,30 +44,22 @@ def generate(phantom="shepp3d", nsize=512, nangles=360):
     with timemory.util.auto_timer("[tomopy.project]"):
         prj = tomopy.project(obj, ang)
 
-    # np.save('projection.npy', prj)
-    # np.save('angles.npy', ang)
-
     return [prj, ang, obj]
 
 
 #------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
-def run(phantom, algorithm, size, nangles, ncores, format, scale, ncol, nitr, get_recon=False):
+def run(phantom, algorithm, args, get_recon=False):
 
     global image_quality
 
-    nitr = size
     imgs = []
-    bname = os.path.join(os.getcwd(), phantom)
-    bname = os.path.join(bname, algorithm)
+    bname = get_basepath(args, algorithm, phantom)
     oname = os.path.join(bname, "orig_{}_".format(algorithm))
     fname = os.path.join(bname, "stack_{}_".format(algorithm))
     dname = os.path.join(bname, "diff_{}_".format(algorithm))
 
-    prj, ang, obj = generate(phantom, size, nangles)
-
-    if nitr != prj.shape[0]:
-        nitr = prj.shape[0]
+    prj, ang, obj = generate(phantom, args.size, args.angles)
 
     # always add algorithm
     _kwargs = {"algorithm": algorithm}
@@ -63,8 +69,9 @@ def run(phantom, algorithm, size, nangles, ncores, format, scale, ncol, nitr, ge
 
     # don't assign "num_iter" if gridrec or fbp
     if not algorithm in ["fbp", "gridrec"]:
-        _kwargs["num_iter"] = nitr
+        _kwargs["num_iter"] = args.num_iter
 
+    print("kwargs: {}".format(_kwargs))
     with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
 
@@ -88,9 +95,10 @@ def run(phantom, algorithm, size, nangles, ncores, format, scale, ncol, nitr, ge
     if get_recon is True:
         return rec
 
-    imgs.extend(output_images(obj, oname, format, scale, ncol))
-    imgs.extend(output_images(rec, fname, format, scale, ncol))
-    imgs.extend(output_images(dif, dname, format, scale, ncol))
+    print("oname = {}, fname = {}, dname = {}".format(oname, fname, dname))
+    imgs.extend(output_images(obj, oname, args.format, args.scale, args.ncol))
+    imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
+    imgs.extend(output_images(dif, dname, args.format, args.scale, args.ncol))
 
     return imgs
 
@@ -125,17 +133,14 @@ def main(args):
         comparison = None
         for alg in args.compare:
             print("Reconstructing {} with {}...".format(args.phantom, alg))
-            tmp = run(args.phantom, alg, args.size, args.angles,
-                      args.ncores, args.format, args.scale, args.ncol,
-                      args.num_iter, get_recon=True)
+            tmp = run(args.phantom, alg, args, get_recon=True)
             tmp = rescale_image(tmp, args.size, args.scale, transform=False)
             if comparison is None:
                 comparison = image_comparison(len(
                     args.compare), tmp.shape[0], tmp[0].shape[0], tmp[0].shape[1], image_quality["orig"])
             comparison.assign(alg, nitr, tmp)
             nitr += 1
-        bname = os.path.join(os.getcwd(), args.phantom)
-        bname = os.path.join(bname, algorithm)
+        bname = get_basepath(args, algorithm, args.phantom)
         fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
         dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
         imgs = []
@@ -147,13 +152,12 @@ def main(args):
                           args.format, args.scale, args.ncol))
     else:
         print("Reconstructing with {}...".format(args.algorithm))
-        imgs = run(args.phantom, args.algorithm, args.size, args.angles,
-                   args.ncores, args.format, args.scale, args.ncol, args.num_iter)
+        imgs = run(args.phantom, args.algorithm, args)
 
     # timing report to stdout
     print('{}'.format(manager))
 
-    timemory.options.output_dir = "./{}".format(
+    timemory.options.output_dir = "{}/{}".format(args.output_dir,
         os.path.join(args.phantom, algorithm))
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
@@ -185,7 +189,7 @@ def main(args):
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
-            directory="{}/{}".format(args.phantom, algorithm))
+            directory="{}/{}/{}".format(args.output_dir, args.phantom, algorithm))
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception - {}".format(e))
@@ -196,13 +200,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
+    # phantom choices
+    phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
+                       "lena", "peppers", "shepp2d", "shepp3d"]
+
     import multiprocessing as mp
     ncores = mp.cpu_count()
 
     parser.add_argument("-p", "--phantom", help="Phantom to use",
-                        default="shepp3d", type=str)
+                        default="lena", choices=phantom_choices, type=str)
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="gridrec", choices=algorithms, type=str)
+                        default="art", choices=algorithms, type=str)
     parser.add_argument("-A", "--angles", help="number of angles",
                         default=360, type=int)
     parser.add_argument("-s", "--size", help="size of image",
@@ -222,12 +230,15 @@ if __name__ == "__main__":
 
     args = timemory.options.add_args_and_parse_known(parser)
 
+    if args.output_dir is None:
+        args.output_dir = "."
+
     if len(args.compare) == 1 and args.compare[0].lower() == "all":
         args.compare = list(algorithms)
     elif len(args.compare) == 1:
         args.compare = []
 
-    pdir = os.path.join(os.getcwd(), args.phantom)
+    pdir = os.path.join(os.getcwd(), os.path.join(args.output_dir, args.phantom))
     if not os.path.exists(pdir):
         os.makedirs(pdir)
 

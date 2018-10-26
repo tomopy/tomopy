@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+PyCTest driver for TomoPy
+"""
 
 import os
 import sys
@@ -14,39 +19,110 @@ import pyctest.helpers as helpers
 
 #------------------------------------------------------------------------------#
 
+def find_exe(name, path=None):
+    try:
+        from shutil import which
+        return which(name, path=path) is not None
+    except:
+        pass
+
+    try:
+        from distutils.spawn import find_executable
+        return find_executable(name, path=path)
+    except:
+        pass
+
+    return None
+
+
+#------------------------------------------------------------------------------#
+
+class Conda(object):
+
+    def __init__(self):
+        self.prefix = os.environ.get("CONDA_PREFIX")
+        self.environ = os.environ.get("CONDA_ENVIRONMENT")
+        self.python = os.environ.get("CONDA_PYTHON_EXE")
+        self.default_env = os.environ.get("CONDA_DEFAULT_ENV")
+        self.shlvl = os.environ.get("CONDA_SHLVL")
+
+    def __str__(self):
+        return "{}={};{}={};{}={};{}={};{}={}".format(
+            "CONDA_PREFIX", self.prefix,
+            "CONDA_ENVIRONMENT", self.environ,
+            "CONDA_PYTHON_EXE", self.python,
+            "CONDA_DEFAULT_ENV", self.default_env,
+            "CONDA_SHLVL", self.shlvl)
+
+
+#------------------------------------------------------------------------------#
+
+def cleanup(path=None):
+    for f in ["Build.cmake", "CTestConfig.cmake", "CTestCustom.cmake",
+              "CTestTestfile.cmake", "Coverage.cmake", "DartConfiguration.tcl",
+              "Glob.cmake", "Init.cmake", "Makefile", "MemCheck.cmake",
+              "PyCTestPreInit.cmake", "Stages.cmake", "Submit.cmake",
+              "Test.cmake", "Testing", "Utilities.cmake",
+              "cmake_install.cmake", "coverage.xml",
+              "CMakeFiles", "CMakeCache.txt", "__pycache__",
+              "pyctest_tomopy_rec.py", "pyctest_tomopy_phantom.py",
+              "pyctest_tomopy_utils.py",
+              "tomopy/sharedlibs/libtomopy.so",
+              "tomopy/sharedlibs/libtomopy.dll",
+              "tomopy/sharedlibs/libtomopy.dylib",
+              "tomopy.egg-info", "dist", "build"]:
+
+        if path is None:
+            path = pyctest.SOURCE_DIRECTORY
+
+        if path is not None and os.path.exists(path):
+            fname = os.path.join(path, f)
+            if os.path.exists(fname):
+                if os.path.isdir(fname):
+                    shutil.rmtree(fname)
+                else:
+                    os.remove(fname)
+
+
+#------------------------------------------------------------------------------#
+
 
 def configure():
 
+    #conda = Conda()
+
     helpers.ParseArgs(project_name="TomoPy",
-                      source_dir="tomopy-source",
-                      binary_dir="tomopy-ctest",
-                      python_exe="python")
+                      source_dir=os.getcwd(),
+                      binary_dir=os.getcwd(),
+                      python_exe=sys.executable)
 
     # default algorithm choices
     available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-                            'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad']
+                            'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+                            'tv', 'grad']
     # default phantom choices
     available_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
-                          "lena", "peppers", "shepp3d"]
+                          "lena", "peppers", "shepp2d", "shepp3d"]
 
     # choices for algorithms
     algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
                          'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-                         'none', 'all']
+                         'tv', 'grad', 'none', 'all']
     # phantom choices
     phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
-                       "lena", "peppers", "shepp3d", "none", "all"]
+                       "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
 
     # number of cores
     default_ncores = multiprocessing.cpu_count()
     # number of iterations
-    default_nitr = 1
+    default_nitr = 10
     # default algorithm choices
     default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-                          'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad']
+                          'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+                          'tv', 'grad']
     # default phantom choices
     default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
-                        "lena", "peppers", "shepp3d"]
+                        "lena", "peppers", "shepp2d", "shepp3d"]
 
     # argument parser
     parser = argparse.ArgumentParser()
@@ -75,11 +151,16 @@ def configure():
                         help="Path to tomobank datasets",
                         type=str,
                         default=None)
+    parser.add_argument("--cleanup",
+                        help="Cleanup pyctest files",
+                        type=str,
+                        default=None)
 
     args = parser.parse_args()
 
-    pyctest.git_checkout("https://github.com/jrmadsen/tomopy.git",
-                         pyctest.SOURCE_DIRECTORY)
+    if args.cleanup is not None:
+        cleanup(args.cleanup)
+        sys.exit(0)
 
     #-----------------------------------#
     def remove_entry(entry, container):
@@ -121,13 +202,25 @@ def run_pyctest():
     args = configure()
 
     #--------------------------------------------------------------------------#
+    # dist info
+    #
+    version_info = None
+    if platform.system() == 'Darwin':
+        version_info = "macOS {}".format(platform.mac_ver()[0])
+    elif platform.system() == 'Linux':
+        version_info = "{} {}".format(platform.linux_distribution()[0],
+                                      platform.linux_distribution()[1])
+    else:
+        version_info = "Windows {}".format(platform.version())
+
+    #--------------------------------------------------------------------------#
     # Change the build name to somthing other than default
     #
     pyctest.BUILD_NAME = "[{}] [{}] [{} {} {}] [Python ({}) {}]".format(
         pyctest.PROJECT_NAME,
         pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
         platform.uname()[0],
-        platform.mac_ver()[0],
+        version_info,
         platform.uname()[4],
         platform.python_implementation(),
         platform.python_version())
@@ -135,22 +228,25 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # how to checkout the code
     #
-    pyctest.CHECKOUT_COMMAND = "${} -E copy_directory {} {}/".format(
-        "{CTEST_CMAKE_COMMAND}",
-        pyctest.SOURCE_DIRECTORY,
-        pyctest.BINARY_DIRECTORY)
+    #pyctest.CHECKOUT_COMMAND = "${} -E copy_directory {} {}/".format(
+    #    "{CTEST_CMAKE_COMMAND}",
+    #    pyctest.SOURCE_DIRECTORY,
+    #    pyctest.BINARY_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # how to build the code
     #
-    pyctest.BUILD_COMMAND = "{} setup.py build_ext --inplace".format(
+    pyctest.BUILD_COMMAND = "{} setup.py install".format(
         pyctest.PYTHON_EXECUTABLE)
 
     #--------------------------------------------------------------------------#
     # copy over files from os.getcwd() to pyctest.BINARY_DIR
     # (implicitly copies over PyCTest{Pre,Post}Init.cmake if they exist)
     #
-    pyctest.copy_files(["tomopy_phantom.py", "tomopy_rec.py"])
+    copy_files = [os.path.join("benchmarking", "pyctest_tomopy_utils.py"),
+                  os.path.join("benchmarking", "pyctest_tomopy_phantom.py"),
+                  os.path.join("benchmarking", "pyctest_tomopy_rec.py")]
+    pyctest.copy_files(copy_files)
 
     #--------------------------------------------------------------------------#
     # find the CTEST_TOKEN_FILE
@@ -163,9 +259,21 @@ def run_pyctest():
             pyctest.set("CTEST_TOKEN_FILE", token_path)
 
     #--------------------------------------------------------------------------#
-    # run CMake to generate DartConfiguration.tcl
+    # run CMake to generate DartConfiguration.tcl if no CMakeLists.txt
     #
-    cm = pycmake.cmake(pyctest.BINARY_DIRECTORY, pyctest.PROJECT_NAME)
+    cmake_list_file = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeLists.txt")
+    if not os.path.exists(cmake_list_file):
+        cm = pycmake.cmake(pyctest.BINARY_DIRECTORY, pyctest.PROJECT_NAME)
+        #---------------------------------------------------------------------#
+        # remove temporary CMakeLists.txt, CMakeCache.txt, and CMakeFiles
+        cache_file = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
+        cache_folder = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeFiles")
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+        if os.path.exists(cache_folder):
+            shutil.rmtree(cache_folder)
+        if os.path.exists(cmake_list_file):
+            os.remove(cmake_list_file)
 
     #--------------------------------------------------------------------------#
     # create a CTest that checks we imported the correct module
@@ -219,13 +327,14 @@ def run_pyctest():
                                  phantom, phantom)])
         else:
             test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                             "./tomopy_rec.py",
+                             ".//benchmarking/pyctest_tomopy_rec.py",
                              h5file,
                              "-a", algorithm,
                              "--type", "slice",
                              "-f", "jpeg",
                              "-S", "1",
                              "-c", "4",
+                             "-o", "benchmarking/{}".format(name),
                              "-n", "{}".format(args.ncores),
                              "-i", "{}".format(args.num_iter)])
 
@@ -233,21 +342,23 @@ def run_pyctest():
     # loop over args.phantoms
     #
     for phantom in args.phantoms:
-        nsize = 128 if phantom != "shepp3d" else 64
+        nsize = 512 if phantom != "shepp3d" else 128
         if phantom == "shepp3d":
             # for shepp3d only
             # loop over args.algorithms and create tests for each
             for algorithm in args.algorithms:
+                #-------------------------------------------#
                 # SKIP FOR NOW -- TOO MUCH OUTPUT/INFORMATION
+                #-------------------------------------------#
                 continue
-                # SKIP FOR NOW -- TOO MUCH OUTPUT/INFORMATION
+                #-------------------------------------------#
                 # args.algorithms
                 test = pyctest.test()
                 name = "{}_{}".format(phantom, algorithm)
                 test.SetName(name)
                 test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
                 test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                 "./tomopy_phantom.py",
+                                 "./benchmarking/pyctest_tomopy_phantom.py",
                                  "-a", algorithm,
                                  "-p", phantom,
                                  "-s", "{}".format(nsize),
@@ -256,7 +367,8 @@ def run_pyctest():
                                  "-S", "2",
                                  "-c", "8",
                                  "-n", "{}".format(args.ncores),
-                                 "-i", "{}".format(args.num_iter)])
+                                 "-i", "{}".format(args.num_iter),
+                                 "--output-dir", "benchmarking/{}".format(name)])
 
         # create a test comparing all the args.algorithms
         test = pyctest.test()
@@ -270,9 +382,8 @@ def run_pyctest():
         if phantom == "shepp3d":
             test.SetProperty("RUN_SERIAL", "ON")
             ncores = multiprocessing.cpu_count()
-            niters = min([niters, 2])
         test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                         "./tomopy_phantom.py",
+                         "./benchmarking/pyctest_tomopy_phantom.py",
                          "-p", phantom,
                          "-s", "{}".format(nsize),
                          "-A", "360",
@@ -280,6 +391,7 @@ def run_pyctest():
                          "-S", "1",
                          "-n", "{}".format(ncores),
                          "-i", "{}".format(niters),
+                         "--output-dir", "benchmarking/{}".format(name),
                          "--compare"] + args.algorithms)
 
     #--------------------------------------------------------------------------#
@@ -315,7 +427,6 @@ def run_pyctest():
     ctest_args = pyctest.ARGUMENTS
     ctest_args.append("-V")
     pyctest.run(ctest_args, pyctest.BINARY_DIRECTORY)
-
 
 #------------------------------------------------------------------------------#
 if __name__ == "__main__":
