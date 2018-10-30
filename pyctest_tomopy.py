@@ -185,6 +185,10 @@ def run_pyctest():
         platform.python_implementation(),
         platform.python_version())
 
+    # remove any consecutive spaces
+    while "  " in pyctest.BUILD_NAME:
+        pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
+
     #--------------------------------------------------------------------------#
     # how to checkout the code
     #

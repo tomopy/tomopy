@@ -178,6 +178,8 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
         #dxchange.write_tiff_stack(rec, fname=fname, start=strt)
         strt += sino[1] - sino[0]
 
+    return imgs
+
 
 #------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
@@ -326,5 +328,13 @@ def main(arg):
         print("Exception [write_ctest_notes] - {}".format(e))
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    ret = 0
+    try:
+        main(sys.argv[1:])
+    except Exception as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5)
+        print('Exception - {}'.format(e))
+        ret = 1
 
+    sys.exit(ret)
