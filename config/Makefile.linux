@@ -5,8 +5,8 @@ include Mk.config
 CC_WARNINGS  = -Wsign-compare -Wall -Wstrict-prototypes
 CC_OPTIMIZE  = -DNDEBUG -g -fwrapv -O3 -fPIC
 CC           = $(COMPILER_DIR) -pthread $(CONDA_COMPAT) $(CC_OPTIMIZE) \
-               $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99
-LINK         = $(COMPILER_DIR) -pthread -shared $(CONDA_COMPAT) $(LINK_LIB) \
+               $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99 $(CFLAGS)
+LINK         = $(COMPILER_DIR) -pthread -shared $(CONDA_COMPAT) $(LINK_LIB) $(LD_FLAGS) \
                -Wl,-rpath=$(LINK_LIB),--no-as-needed
 
 include Mk.base

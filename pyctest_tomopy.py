@@ -17,84 +17,36 @@ import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
 
+
+
 #------------------------------------------------------------------------------#
+#
+def cleanup(path=None, exclude=[]):
+    files = [ "coverage.xml", "pyctest_tomopy_rec.py",
+               "pyctest_tomopy_phantom.py", "pyctest_tomopy_utils.py",
+               "tomopy/sharedlibs/libtomopy.so",
+               "tomopy/sharedlibs/libtomopy.dll",
+               "tomopy/sharedlibs/libtomopy.dylib",
+               "tomopy.egg-info", "dist", "build"]
 
-def find_exe(name, path=None):
-    try:
-        from shutil import which
-        return which(name, path=path) is not None
-    except:
-        pass
-
-    try:
-        from distutils.spawn import find_executable
-        return find_executable(name, path=path)
-    except:
-        pass
-
-    return None
+    helpers.Cleanup(path, extra=files, exclude=exclude)
 
 
 #------------------------------------------------------------------------------#
 
-class Conda(object):
-
-    def __init__(self):
-        self.prefix = os.environ.get("CONDA_PREFIX")
-        self.environ = os.environ.get("CONDA_ENVIRONMENT")
-        self.python = os.environ.get("CONDA_PYTHON_EXE")
-        self.default_env = os.environ.get("CONDA_DEFAULT_ENV")
-        self.shlvl = os.environ.get("CONDA_SHLVL")
-
-    def __str__(self):
-        return "{}={};{}={};{}={};{}={};{}={}".format(
-            "CONDA_PREFIX", self.prefix,
-            "CONDA_ENVIRONMENT", self.environ,
-            "CONDA_PYTHON_EXE", self.python,
-            "CONDA_DEFAULT_ENV", self.default_env,
-            "CONDA_SHLVL", self.shlvl)
-
-
-#------------------------------------------------------------------------------#
-
-def cleanup(path=None):
-    for f in ["Build.cmake", "CTestConfig.cmake", "CTestCustom.cmake",
-              "CTestTestfile.cmake", "Coverage.cmake", "DartConfiguration.tcl",
-              "Glob.cmake", "Init.cmake", "Makefile", "MemCheck.cmake",
-              "PyCTestPreInit.cmake", "Stages.cmake", "Submit.cmake",
-              "Test.cmake", "Testing", "Utilities.cmake",
-              "cmake_install.cmake", "coverage.xml",
-              "CMakeFiles", "CMakeCache.txt", "__pycache__",
-              "pyctest_tomopy_rec.py", "pyctest_tomopy_phantom.py",
-              "pyctest_tomopy_utils.py",
-              "tomopy/sharedlibs/libtomopy.so",
-              "tomopy/sharedlibs/libtomopy.dll",
-              "tomopy/sharedlibs/libtomopy.dylib",
-              "tomopy.egg-info", "dist", "build"]:
-
-        if path is None:
-            path = pyctest.SOURCE_DIRECTORY
-
-        if path is not None and os.path.exists(path):
-            fname = os.path.join(path, f)
-            if os.path.exists(fname):
-                if os.path.isdir(fname):
-                    shutil.rmtree(fname)
-                else:
-                    os.remove(fname)
-
-
-#------------------------------------------------------------------------------#
+#
 
 
 def configure():
 
-    #conda = Conda()
-
-    helpers.ParseArgs(project_name="TomoPy",
-                      source_dir=os.getcwd(),
-                      binary_dir=os.getcwd(),
-                      python_exe=sys.executable)
+    # Get pyctest argument parser that include PyCTest arguments
+    parser = helpers.ArgumentParser(project_name="TomoPy",
+                                    source_dir=os.getcwd(),
+                                    binary_dir=os.getcwd(),
+                                    python_exe=sys.executable,
+                                    stages=["Build", "Test", "Coverage"],
+                                    trigger="Coverage",
+                                    submit=True)
 
     # default algorithm choices
     available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
@@ -124,9 +76,6 @@ def configure():
     default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                         "lena", "peppers", "shepp2d", "shepp3d"]
 
-    # argument parser
-    parser = argparse.ArgumentParser()
-
     parser.add_argument("-n", "--ncores",
                         help="number of cores",
                         type=int,
@@ -155,7 +104,12 @@ def configure():
                         help="Cleanup pyctest files",
                         type=str,
                         default=None)
+    parser.add_argument("--coverage",
+                        help="Enable coverage for compiled code",
+                        action='store_true',
+                        default=False)
 
+    # calls PyCTest.helpers.ArgumentParser.parse_args()
     args = parser.parse_args()
 
     if args.cleanup is not None:
@@ -169,6 +123,7 @@ def configure():
                 del itr
     #-----------------------------------#
 
+    #-----------------------------------#
     def remove_duplicates(container):
         container = list(set(container))
     #-----------------------------------#
@@ -189,6 +144,11 @@ def configure():
 
     remove_duplicates(args.algorithms)
     remove_duplicates(args.phantoms)
+
+    if args.coverage:
+        # read by Makefile.linux and Makefile.darwin
+        pyctest.set("ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage")
+        pyctest.set("ENV{LD_FLAGS}", "-fprofile-arcs -lgcov")
 
     return args
 
@@ -238,6 +198,20 @@ def run_pyctest():
     #
     pyctest.BUILD_COMMAND = "{} setup.py install".format(
         pyctest.PYTHON_EXECUTABLE)
+
+    #--------------------------------------------------------------------------#
+    # generate the code coverage
+    #
+    if platform.system() != "Windows":
+        cover_cmd = os.path.join(pyctest.SOURCE_DIRECTORY,
+                        os.path.join("benchmarking", "generate_coverage.sh"))
+        cover_arg = pyctest.SOURCE_DIRECTORY
+        pyctest.COVERAGE_COMMAND = "{};{}".format(cover_cmd, cover_arg)
+    else:
+        # don't attempt GCov on Windows
+        cover_cmd = helpers.FindExePath("coverage")
+        pyctest.COVERAGE_COMMAND = "{};xml".format(cover_cmd)
+
 
     #--------------------------------------------------------------------------#
     # copy over files from os.getcwd() to pyctest.BINARY_DIR
@@ -294,105 +268,107 @@ def run_pyctest():
     #
     test = pyctest.test()
     test.SetName("nosetests")
-    test.SetCommand(["nosetests", "test", "--cover-xml",
-                     "--cover-xml-file=coverage.xml"])
+    nosetest_exe = helpers.FindExePath("nosetests")
+    coverage_exe = helpers.FindExePath("coverage")
+    # python $(which coverage) run $(which nosetests)
+    test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run", nosetest_exe])
     # set directory to run test
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
 
     #--------------------------------------------------------------------------#
     #
-    h5file = None
-    phantom = "tomo_00001"
-    if args.globus_path is not None:
+    if not args.coverage and args.globus_path is not None:
+        phantom = "tomo_00001"
         h5file = os.path.join(
             args.globus_path, os.path.join(phantom, phantom + ".h5"))
         if not os.path.exists(h5file):
-            print(
-                "Warning! HDF5 file '{}' does not exists! Skipping test...".format(h5file))
+            print("Warning! HDF5 file '{}' does not exists! Skipping test...".format(h5file))
+            h5file = None
 
-    # loop over args.algorithms and create tests for each
-    for algorithm in args.algorithms:
-        # args.algorithms
-        test = pyctest.test()
-        name = "{}_{}".format(phantom, algorithm)
-        test.SetName(name)
-        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-        test.SetProperty("TIMEOUT", "3600")  # 1 hour
-        test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-        if h5file is None:
-            test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                             "-c",
-                             "print(\"Path to Globus file '{}/{}.h5' not specified\")".format(
-                                 phantom, phantom)])
-        else:
-            test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                             ".//benchmarking/pyctest_tomopy_rec.py",
-                             h5file,
-                             "-a", algorithm,
-                             "--type", "slice",
-                             "-f", "jpeg",
-                             "-S", "1",
-                             "-c", "4",
-                             "-o", "benchmarking/{}".format(name),
-                             "-n", "{}".format(args.ncores),
-                             "-i", "{}".format(args.num_iter)])
+        # loop over args.algorithms and create tests for each
+        for algorithm in args.algorithms:
+            # args.algorithms
+            test = pyctest.test()
+            name = "{}_{}".format(phantom, algorithm)
+            test.SetName(name)
+            test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+            test.SetProperty("TIMEOUT", "3600")  # 1 hour
+            test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
+            if h5file is None:
+                test.SetCommand([pyctest.PYTHON_EXECUTABLE,
+                                "-c",
+                                "print(\"Path to Globus file '{}/{}.h5' not specified\")".format(
+                                    phantom, phantom)])
+            else:
+                test.SetCommand([pyctest.PYTHON_EXECUTABLE,
+                                ".//benchmarking/pyctest_tomopy_rec.py",
+                                h5file,
+                                "-a", algorithm,
+                                "--type", "slice",
+                                "-f", "jpeg",
+                                "-S", "1",
+                                "-c", "4",
+                                "-o", "benchmarking/{}".format(name),
+                                "-n", "{}".format(args.ncores),
+                                "-i", "{}".format(args.num_iter)])
 
     #--------------------------------------------------------------------------#
     # loop over args.phantoms
     #
-    for phantom in args.phantoms:
-        nsize = 512 if phantom != "shepp3d" else 128
-        if phantom == "shepp3d":
-            # for shepp3d only
-            # loop over args.algorithms and create tests for each
-            for algorithm in args.algorithms:
-                #-------------------------------------------#
-                # SKIP FOR NOW -- TOO MUCH OUTPUT/INFORMATION
-                #-------------------------------------------#
-                continue
-                #-------------------------------------------#
-                # args.algorithms
-                test = pyctest.test()
-                name = "{}_{}".format(phantom, algorithm)
-                test.SetName(name)
-                test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-                test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                 "./benchmarking/pyctest_tomopy_phantom.py",
-                                 "-a", algorithm,
-                                 "-p", phantom,
-                                 "-s", "{}".format(nsize),
-                                 "-A", "360",
-                                 "-f", "jpeg",
-                                 "-S", "2",
-                                 "-c", "8",
-                                 "-n", "{}".format(args.ncores),
-                                 "-i", "{}".format(args.num_iter),
-                                 "--output-dir", "benchmarking/{}".format(name)])
+    if not args.coverage:
+        for phantom in args.phantoms:
+            nsize = 512 if phantom != "shepp3d" else 128
+            if phantom == "shepp3d":
+                # for shepp3d only
+                # loop over args.algorithms and create tests for each
+                for algorithm in args.algorithms:
+                    #-------------------------------------------#
+                    # SKIP FOR NOW -- TOO MUCH OUTPUT/INFORMATION
+                    #-------------------------------------------#
+                    continue
+                    #-------------------------------------------#
+                    # args.algorithms
+                    test = pyctest.test()
+                    name = "{}_{}".format(phantom, algorithm)
+                    test.SetName(name)
+                    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+                    test.SetCommand([pyctest.PYTHON_EXECUTABLE,
+                                    "./benchmarking/pyctest_tomopy_phantom.py",
+                                    "-a", algorithm,
+                                    "-p", phantom,
+                                    "-s", "{}".format(nsize),
+                                    "-A", "360",
+                                    "-f", "jpeg",
+                                    "-S", "2",
+                                    "-c", "8",
+                                    "-n", "{}".format(args.ncores),
+                                    "-i", "{}".format(args.num_iter),
+                                    "--output-dir", "benchmarking/{}".format(name)])
 
-        # create a test comparing all the args.algorithms
-        test = pyctest.test()
-        name = "{}_{}".format(phantom, "comparison")
-        test.SetName(name)
-        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-        test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-        test.SetProperty("TIMEOUT", "10800")  # 3 hours
-        ncores = args.ncores
-        niters = args.num_iter
-        if phantom == "shepp3d":
-            test.SetProperty("RUN_SERIAL", "ON")
-            ncores = multiprocessing.cpu_count()
-        test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                         "./benchmarking/pyctest_tomopy_phantom.py",
-                         "-p", phantom,
-                         "-s", "{}".format(nsize),
-                         "-A", "360",
-                         "-f", "jpeg",
-                         "-S", "1",
-                         "-n", "{}".format(ncores),
-                         "-i", "{}".format(niters),
-                         "--output-dir", "benchmarking/{}".format(name),
-                         "--compare"] + args.algorithms)
+            # create a test comparing all the args.algorithms
+            test = pyctest.test()
+            name = "{}_{}".format(phantom, "comparison")
+            test.SetName(name)
+            test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+            test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
+            test.SetProperty("TIMEOUT", "10800")  # 3 hours
+            ncores = args.ncores
+            niters = args.num_iter
+            if phantom == "shepp3d":
+                test.SetProperty("RUN_SERIAL", "ON")
+                ncores = multiprocessing.cpu_count()
+            test.SetCommand([pyctest.PYTHON_EXECUTABLE,
+                            "./benchmarking/pyctest_tomopy_phantom.py",
+                            "-p", phantom,
+                            "-s", "{}".format(nsize),
+                            "-A", "360",
+                            "-f", "jpeg",
+                            "-S", "1",
+                            "-n", "{}".format(ncores),
+                            "-i", "{}".format(niters),
+                            "--output-dir", "benchmarking/{}".format(name),
+                            "--compare"] + args.algorithms)
 
     #--------------------------------------------------------------------------#
     # generate the CTestConfig.cmake and CTestCustom.cmake

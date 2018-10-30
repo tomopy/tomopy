@@ -144,3 +144,7 @@ ptycho.py
 /cmake_install.cmake
 /benchmarking/tomo_*
 /benchmarking/*_comparison*
+*.gcov
+*.gcda
+*.gcno
+/coverage.xml
