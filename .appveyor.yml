@@ -71,7 +71,8 @@ install:
   - "conda install
     python=%PYTHON_VERSION% mkl-devel mkl mingw make setuptools
     nose dxchange h5py mkl_fft numexpr numpy pywavelets
-    scipy scikit-image six pyctest timemory"
+    scipy scikit-image six"
+  # later install pyctest and timemory
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
@@ -90,8 +91,8 @@ before_build:
 # to run your custom scripts instead of automatic MSBuild
 build_script:
   #- python build.py
-  #- python setup.py install
-  - ./pyctest_tomopy.py --num-iter=10 --pyctest-site=AppVeyor --pyctest-jobs=1 --pyctest-submit
+  - python setup.py install
+  #- ./pyctest_tomopy.py --num-iter=10 --pyctest-site=AppVeyor --pyctest-jobs=1 --pyctest-submit
 # scripts to run after build (working directory and environment changes are
 # persisted from the previous steps)
 after_build:
