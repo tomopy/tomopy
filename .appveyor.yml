@@ -91,7 +91,7 @@ before_build:
 build_script:
   #- python build.py
   #- python setup.py install
-  - ./pyctest_tomopy.py --num-iter=10 --pyctest-site=AppVeyor --pyctest-jobs=1 --pyctest-trigger=Coverage
+  - ./pyctest_tomopy.py --num-iter=10 --pyctest-site=AppVeyor --pyctest-jobs=1 --pyctest-submit
 # scripts to run after build (working directory and environment changes are
 # persisted from the previous steps)
 after_build:

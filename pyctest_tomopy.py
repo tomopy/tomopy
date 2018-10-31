@@ -33,10 +33,7 @@ def cleanup(path=None, exclude=[]):
 
 
 #------------------------------------------------------------------------------#
-
 #
-
-
 def configure():
 
     # Get pyctest argument parser that include PyCTest arguments
@@ -44,9 +41,7 @@ def configure():
                                     source_dir=os.getcwd(),
                                     binary_dir=os.getcwd(),
                                     python_exe=sys.executable,
-                                    stages=["Build", "Test", "Coverage"],
-                                    trigger="Coverage",
-                                    submit=True)
+                                    submit=False)
 
     # default algorithm choices
     available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',

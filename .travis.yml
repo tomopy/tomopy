@@ -31,7 +31,7 @@ install:
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py -i 10 -n $(nproc) --pyctest-site=Travis --pyctest-trigger=Coverage
+  - ./pyctest_tomopy.py -i 10 -n $(nproc) --pyctest-site=Travis --pyctest-submit
 script:
   - coverage run $(which nosetests)
 after_success:
