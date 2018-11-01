@@ -25,15 +25,14 @@ before_install:
 install:
   - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy
     scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange
-    numexpr coverage"
-  # later, install timemory and pyctest
+    numexpr coverage timemory pyctest"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install futures;
     fi
   - conda info -a
   - conda list --explicit
-  - python setup.py install
-  #- ./pyctest_tomopy.py -i 1 -n $(nproc) --pyctest-site=Travis --pyctest-submit
+  #- python setup.py install
+  - ./pyctest_tomopy.py -i 1 -n 2 --pyctest-site=Travis --pyctest-submit --disable-phantom-tests
 script:
   - coverage run $(which nosetests)
 after_success:

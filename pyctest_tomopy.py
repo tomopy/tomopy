@@ -103,6 +103,10 @@ def configure():
                         help="Enable coverage for compiled code",
                         action='store_true',
                         default=False)
+    parser.add_argument("--disable-phantom-tests",
+                        help="Disable running phantom tests",
+                        action='store_true',
+                        default=False)
 
     # calls PyCTest.helpers.ArgumentParser.parse_args()
     args = parser.parse_args()
@@ -142,7 +146,8 @@ def configure():
 
     if args.coverage:
         # read by Makefile.linux and Makefile.darwin
-        pyctest.set("ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage")
+        pyctest.set(
+            "ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage -fprofile-dir={}".format(pyctest.BINARY_DIRECTORY))
         pyctest.set("ENV{LD_FLAGS}", "-fprofile-arcs -lgcov")
 
     return args
@@ -157,25 +162,12 @@ def run_pyctest():
     args = configure()
 
     #--------------------------------------------------------------------------#
-    # dist info
-    #
-    version_info = None
-    if platform.system() == 'Darwin':
-        version_info = "macOS {}".format(platform.mac_ver()[0])
-    elif platform.system() == 'Linux':
-        version_info = "{} {}".format(platform.linux_distribution()[0],
-                                      platform.linux_distribution()[1])
-    else:
-        version_info = "Windows {}".format(platform.version())
-
-    #--------------------------------------------------------------------------#
     # Change the build name to somthing other than default
     #
-    pyctest.BUILD_NAME = "[{}] [{}] [{} {} {}] [Python ({}) {}]".format(
-        pyctest.PROJECT_NAME,
+    pyctest.BUILD_NAME = "[{}] [{} {} {}] [Python ({}) {}]".format(
         pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
         platform.uname()[0],
-        version_info,
+        helpers.GetSystemVersionInfo(),
         platform.uname()[4],
         platform.python_implementation(),
         platform.python_version())
@@ -183,14 +175,6 @@ def run_pyctest():
     # remove any consecutive spaces
     while "  " in pyctest.BUILD_NAME:
         pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
-
-    #--------------------------------------------------------------------------#
-    # how to checkout the code
-    #
-    #pyctest.CHECKOUT_COMMAND = "${} -E copy_directory {} {}/".format(
-    #    "{CTEST_CMAKE_COMMAND}",
-    #    pyctest.SOURCE_DIRECTORY,
-    #    pyctest.BINARY_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # how to build the code
@@ -201,6 +185,7 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # generate the code coverage
     #
+    python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
     if platform.system() != "Windows":
         cover_cmd = os.path.join(pyctest.SOURCE_DIRECTORY,
                         os.path.join("benchmarking", "generate_coverage.sh"))
@@ -208,7 +193,9 @@ def run_pyctest():
         pyctest.COVERAGE_COMMAND = "{};{}".format(cover_cmd, cover_arg)
     else:
         # don't attempt GCov on Windows
-        cover_cmd = helpers.FindExePath("coverage")
+        cover_cmd = helpers.FindExePath("coverage", path=python_path)
+        if cover_cmd is None:
+            helpers.FindExePath("coverage")
         pyctest.COVERAGE_COMMAND = "{};xml".format(cover_cmd)
 
 
@@ -232,23 +219,6 @@ def run_pyctest():
             pyctest.set("CTEST_TOKEN_FILE", token_path)
 
     #--------------------------------------------------------------------------#
-    # run CMake to generate DartConfiguration.tcl if no CMakeLists.txt
-    #
-    cmake_list_file = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeLists.txt")
-    if not os.path.exists(cmake_list_file):
-        cm = pycmake.cmake(pyctest.BINARY_DIRECTORY, pyctest.PROJECT_NAME)
-        #---------------------------------------------------------------------#
-        # remove temporary CMakeLists.txt, CMakeCache.txt, and CMakeFiles
-        cache_file = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
-        cache_folder = os.path.join(pyctest.BINARY_DIRECTORY, "CMakeFiles")
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
-        if os.path.exists(cache_folder):
-            shutil.rmtree(cache_folder)
-        if os.path.exists(cmake_list_file):
-            os.remove(cmake_list_file)
-
-    #--------------------------------------------------------------------------#
     # create a CTest that checks we imported the correct module
     #
     test = pyctest.test()
@@ -267,8 +237,12 @@ def run_pyctest():
     #
     test = pyctest.test()
     test.SetName("nosetests")
-    nosetest_exe = helpers.FindExePath("nosetests")
-    coverage_exe = helpers.FindExePath("coverage")
+    nosetest_exe = helpers.FindExePath("nosetests", path=python_path)
+    if nosetest_exe is None:
+        nosetest_exe = helpers.FindExePath("nosetests")
+    coverage_exe = helpers.FindExePath("coverage", path=python_path)
+    if coverage_exe is None:
+        coverage_exe = helpers.FindExePath("coverage")
     # python $(which coverage) run $(which nosetests)
     test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run", nosetest_exe])
     # set directory to run test
@@ -287,7 +261,6 @@ def run_pyctest():
 
         # loop over args.algorithms and create tests for each
         for algorithm in args.algorithms:
-            # args.algorithms
             test = pyctest.test()
             name = "{}_{}".format(phantom, algorithm)
             test.SetName(name)
@@ -315,36 +288,9 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # loop over args.phantoms
     #
-    if not args.coverage:
+    if not args.coverage and not args.disable_phantom_tests:
         for phantom in args.phantoms:
             nsize = 512 if phantom != "shepp3d" else 128
-            if phantom == "shepp3d":
-                # for shepp3d only
-                # loop over args.algorithms and create tests for each
-                for algorithm in args.algorithms:
-                    #-------------------------------------------#
-                    # SKIP FOR NOW -- TOO MUCH OUTPUT/INFORMATION
-                    #-------------------------------------------#
-                    continue
-                    #-------------------------------------------#
-                    # args.algorithms
-                    test = pyctest.test()
-                    name = "{}_{}".format(phantom, algorithm)
-                    test.SetName(name)
-                    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-                    test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                    "./benchmarking/pyctest_tomopy_phantom.py",
-                                    "-a", algorithm,
-                                    "-p", phantom,
-                                    "-s", "{}".format(nsize),
-                                    "-A", "360",
-                                    "-f", "jpeg",
-                                    "-S", "2",
-                                    "-c", "8",
-                                    "-n", "{}".format(args.ncores),
-                                    "-i", "{}".format(args.num_iter),
-                                    "--output-dir", "benchmarking/{}".format(name)])
-
             # create a test comparing all the args.algorithms
             test = pyctest.test()
             name = "{}_{}".format(phantom, "comparison")
@@ -371,18 +317,11 @@ def run_pyctest():
 
     #--------------------------------------------------------------------------#
     # generate the CTestConfig.cmake and CTestCustom.cmake
-    # configuration files, copy over
-    # {Build,Coverage,Glob,Init,Memcheck,Stages,Submit,Test}.cmake
-    # files located in the pyctest installation directory
-    # - These are helpers for the workflow
     #
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # generate the CTestTestfile.cmake file
-    # CRITICAL:
-    #   call after creating/running dummy CMake as the cmake call will
-    #   generate an empty CTestTestfile.cmake file that this package overwrites
     #
     pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
 
@@ -397,10 +336,15 @@ def run_pyctest():
     #   os.path.join(pyctest.BINARY_DIRECTORY, "cover.xml"), clobber=True)
 
     #--------------------------------------------------------------------------#
-    # run CTest -- e.g. ctest -VV -S Test.cmake <binary_dir>
+    # run CTest -- e.g.
+    #   ctest -V
+    #         -DSTAGES="Start;Build;Test;Coverage"
+    #         -S Stages.cmake
+    #         <binary_dir>
     #
     ctest_args = pyctest.ARGUMENTS
-    ctest_args.append("-V")
+    if not "-V" in ctest_args:
+        ctest_args.append("-V")
     pyctest.run(ctest_args, pyctest.BINARY_DIRECTORY)
 
 #------------------------------------------------------------------------------#

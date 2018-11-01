@@ -76,7 +76,7 @@ install:
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
-  - "cd c:\\projects\\tomopy"
+  #- "cd c:\\projects\\tomopy"
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
