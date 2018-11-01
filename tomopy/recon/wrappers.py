@@ -80,6 +80,7 @@ default_options = {
         'filter_name': 'None',
         'num_iter': 1,
         'reg_par': 1,
+        'gpu_list': [0],
     }
 }
 
@@ -401,6 +402,9 @@ def lprec(tomo, center, recon, theta, **kwargs):
     >>> pylab.show()
     """
     from lprec import lpTransform
+    from lprec import lpmethods
+    import concurrent.futures as cf
+    from functools import partial
 
     # set default options
     opts = kwargs
@@ -413,35 +417,59 @@ def lprec(tomo, center, recon, theta, **kwargs):
     lpmethod = opts['lpmethod']
     num_iter = opts['num_iter']
     reg_par = opts['reg_par']
+    gpu_list = opts['gpu_list']
 
-    # Init lp method
-    # number of slices for simultanious processing by 1 gpu, chosen for 4GB gpus
-    Nslices, Nproj, N = tomo.shape
-    Nslices0 = min(int(pow(2, 23)/float(N*N)), Nslices)
-    lphandle = lpTransform.lpTransform(
-        N, Nproj, Nslices0, filter_name, int(center[0]+0.5), interp_type)
+    # list of available methods for reconstruction
+    lpmethods_list = {
+        'fbp': lpmethods.fbp,
+        'grad': lpmethods.grad,
+        'cg': lpmethods.cg,
+        'tv': lpmethods.tv,
+        'em': lpmethods.em
+    }
 
-    if(lpmethod == 'fbp'):
-        # precompute only for the adj transform
-        lphandle.precompute(0)
-        lphandle.initcmem(0)
-        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
-            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
-            recon[ids] = lphandle.adj(tomo[ids])
-    else:
-        # iterative schemes
-        # precompute for both fwd and adj transforms
-        lphandle.precompute(1)
-        lphandle.initcmem(1)
+    [Ns, Nproj, N] = tomo.shape
+    ngpus = len(gpu_list)
 
-        from lprec import iterative
-        lpitermethods = {'grad': iterative.grad,
-                         'cg': iterative.cg,
-                         'tv': iterative.tv,
-                         'em': iterative.em
-                         }
-        # run
-        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
-            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
-            recon[ids] = lpitermethods[lpmethod](
-                lphandle, recon[ids], tomo[ids], num_iter, reg_par)
+    # number of slices for simultaneous processing by 1 gpu
+    # (depends on gpu memory size, chosen for gpus with >= 4GB memory)
+    Nssimgpu = min(int(pow(2, 24)/float(N*N)), int(np.ceil(Ns/float(ngpus))))
+
+    # class lprec
+    lp = lpTransform.lpTransform(
+        N, Nproj, Nssimgpu, filter_name, int(center[0]), interp_type)
+    # if not fbp, precompute for the forward transform
+    lp.precompute(lpmethod != 'fbp')
+
+    # list of slices sets for simultaneous processing b gpus
+    ids_list = [None]*int(np.ceil(Ns/float(Nssimgpu)))
+    for k in range(0, len(ids_list)):
+        ids_list[k] = range(k*Nssimgpu, min(Ns, (k+1)*Nssimgpu))
+
+    # init memory for each gpu
+    for igpu in range(0, ngpus):
+        gpu = gpu_list[igpu]
+        # if not fbp, allocate memory for the forward transform arrays
+        lp.initcmem(lpmethod != 'fbp', gpu)
+
+    # run reconstruciton on many gpus
+    with cf.ThreadPoolExecutor(ngpus) as e:
+        shift = 0
+        for reconi in e.map(partial(lpmultigpu, lp, lpmethods_list[lpmethod], recon, tomo, num_iter, reg_par, gpu_list), ids_list):
+            recon[np.arange(0, reconi.shape[0])+shift] = reconi
+            shift += reconi.shape[0]
+
+    return recon
+
+
+def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, ids):
+    """
+    Reconstruction Nssimgpu slices simultaneously on 1 GPU
+    """
+    # take gpu number with respect to the current thread
+    gpu = gpu_list[int(threading.current_thread().name.split("_", 1)[1])]
+    print([gpu, ids])
+    # reconstruct
+    recon[ids] = lpmethod(lp, recon[ids], tomo[ids], num_iter, reg_par, gpu)
+
+    return recon[ids]
