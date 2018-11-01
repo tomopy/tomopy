@@ -191,7 +191,7 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
-        sinogram_order=sinogram_order,
+        sinogram_order=sinogram_order, 
         algorithm='gridrec')
 
     if mask is True:
@@ -454,6 +454,7 @@ def write_center(
         'grad'
             Gradient descent method with a constant step size
 
+    
     filter_name : str, optional
         Name of the filter for analytic reconstruction.
 

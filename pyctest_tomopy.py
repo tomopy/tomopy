@@ -148,7 +148,7 @@ def configure():
         # read by Makefile.linux and Makefile.darwin
         pyctest.set(
             "ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage -fprofile-dir={}".format(pyctest.BINARY_DIRECTORY))
-        pyctest.set("ENV{LD_FLAGS}", "-fprofile-arcs -lgcov")
+        pyctest.set("ENV{LDFLAGS}", "-fprofile-arcs -lgcov")
 
     return args
 

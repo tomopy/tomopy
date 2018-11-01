@@ -26,7 +26,6 @@ config/Mk.config
 *.egg
 *.egg-info
 dist
-include
 share
 build
 eggs
@@ -36,8 +35,6 @@ var
 sdist
 develop-eggs
 .installed.cfg
-lib
-lib64
 __pycache__
 
 # Logs and databases #
@@ -120,7 +117,6 @@ nosetests.xml
 # Private functions #
 #####################
 script
-ptycho.py
 *.autotools
 *.cproject
 
