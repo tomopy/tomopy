@@ -28,9 +28,7 @@ except:
 
 #------------------------------------------------------------------------------#
 def get_basepath(args, algorithm, phantom):
-    return os.path.join(os.getcwd(),
-                        os.path.join(args.output_dir,
-                                     os.path.join(phantom, algorithm)))
+    return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
 
 
 #------------------------------------------------------------------------------#
@@ -157,8 +155,8 @@ def main(args):
     # timing report to stdout
     print('{}'.format(manager))
 
-    timemory.options.output_dir = "{}/{}".format(args.output_dir,
-        os.path.join(args.phantom, algorithm))
+    timemory.options.output_dir = "{}/{}/{}".format(
+        args.output_dir, args.phantom, algorithm)
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
@@ -175,7 +173,7 @@ def main(args):
     # provide results to dashboard
     try:
         for i in range(0, len(imgs)):
-            img_base = "{}_{}_stack_".format(args.phantom, algorithm, i)
+            img_base = "{}_{}_stack_{}".format(args.phantom, algorithm, i)
             img_name = os.path.basename(imgs[i]).replace(
                 ".{}".format(args.format), "").replace(
                 "stack_{}_".format(algorithm), img_base)
@@ -230,6 +228,8 @@ if __name__ == "__main__":
 
     args = timemory.options.add_args_and_parse_known(parser)
 
+    print("\nargs: {}\n".format(args))
+
     if args.output_dir is None:
         args.output_dir = "."
 
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     elif len(args.compare) == 1:
         args.compare = []
 
-    pdir = os.path.join(os.getcwd(), os.path.join(args.output_dir, args.phantom))
+    pdir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
     if not os.path.exists(pdir):
         os.makedirs(pdir)
 

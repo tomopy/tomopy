@@ -16,7 +16,12 @@ import timemory
 import timemory.options as options
 
 
-#------------------------------------------------------------------------------#
+algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
+              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+              'tv', 'grad']
+image_quality = {}
+
+
 def exit_action(errcode):
     man = timemory.manager()
     timemory.report(ign_cutoff=True)
@@ -26,19 +31,10 @@ def exit_action(errcode):
     f.close()
 
 
-#------------------------------------------------------------------------------#
-algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad']
-
-
-#------------------------------------------------------------------------------#
-image_quality = {}
-
-
-#------------------------------------------------------------------------------#
+@timemory.util.auto_timer()
 def output_image(image, fname):
 
-    img = pylab.imsave(fname, image, cmap='gray')
+    pylab.imsave(fname, image, cmap='gray')
 
     if os.path.exists(fname):
         print("  --> Image file found @ '{}'...".format(fname))
@@ -47,7 +43,6 @@ def output_image(image, fname):
         print("  --> No image file at @ '{}' (expected) ...".format(fname))
 
 
-#------------------------------------------------------------------------------#
 def print_size(rec, msg=""):
     print("{} Image size: {} x {} x {}".format(
         msg,
@@ -56,14 +51,13 @@ def print_size(rec, msg=""):
         rec.shape[0]))
 
 
-#------------------------------------------------------------------------------#
+@timemory.util.auto_timer()
 def convert_image(fname, current_format, new_format):
 
     _fext = new_format
     _success = True
 
     try:
-
         from PIL import Image
         _cur_img = "{}.{}".format(fname, current_format)
         img = Image.open(_cur_img)
@@ -84,7 +78,6 @@ def convert_image(fname, current_format, new_format):
     return [_fname, _success, _fext]
 
 
-#------------------------------------------------------------------------------#
 def normalize(rec):
     rec_n = rec.copy()
     try:
@@ -101,7 +94,6 @@ def normalize(rec):
     return rec_n
 
 
-#------------------------------------------------------------------------------#
 def trim_border(rec, nimages, drow, dcol):
 
     rec_n = rec.copy()
@@ -124,7 +116,6 @@ def trim_border(rec, nimages, drow, dcol):
     return rec_n
 
 
-#------------------------------------------------------------------------------#
 def fill_border(rec, nimages, drow, dcol):
 
     rec_n = rec.copy()
@@ -147,7 +138,7 @@ def fill_border(rec, nimages, drow, dcol):
     return rec_n
 
 
-#------------------------------------------------------------------------------#
+@timemory.util.auto_timer()
 def rescale_image(rec, nimages, scale, transform=True):
 
     rec_n = normalize(rec.copy())
@@ -169,7 +160,6 @@ def rescale_image(rec, nimages, scale, transform=True):
     return rec_n
 
 
-#------------------------------------------------------------------------------#
 def quantify_difference(label, img, rec):
 
     _img = normalize(img)
@@ -209,7 +199,6 @@ def quantify_difference(label, img, rec):
     return [[_l1_pix, _l2_pix], [_l1_grad, _l2_grad]]
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def output_images(rec, fpath, format="jpeg", scale=1, ncol=1):
 
@@ -259,7 +248,6 @@ def output_images(rec, fpath, format="jpeg", scale=1, ncol=1):
     return imgs
 
 
-#------------------------------------------------------------------------------#
 class image_comparison(object):
     """
     A class for combining image slices into a column comparison

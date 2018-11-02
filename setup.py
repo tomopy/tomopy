@@ -3,22 +3,13 @@
 
 import os
 import sys
+import glob
+import shutil
+import subprocess as sp
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command.build_ext import build_ext
 
 
-# ---------------------------------------------------------------------------- #
-#
-def join_path_list(path_list):
-    path = path_list[0]
-    path_list.remove(path)
-    for _path in path_list:
-        path = os.path.join(path, _path)
-    return path
-
-
-# ---------------------------------------------------------------------------- #
-#
 def TomoPyLibraryFile():
     """
     Determines the library output file
@@ -32,22 +23,19 @@ def TomoPyLibraryFile():
     else:
         libname = 'libtomopy.so'
 
-    path = join_path_list([os.getcwd(), "tomopy", "sharedlibs", libname])
+    path = os.path.join(os.getcwd(), "tomopy", "sharedlibs", libname)
     if os.path.exists(path):
         return path
     else:
-        path = join_path_list([os.getcwd(), "tomopy", "sharedlibs", "libtomopy"])
-        for ext in ["so", "dylib", "dll"]:
-            tmp = "{}.{}".format(path, ext)
-            if os.path.exists(tmp):
-                return tmp
+        paths = glob.glob(os.path.join(
+            os.getcwd(), "tomopy", "sharedlibs", "libtomopy.*"))
+        if len(paths) > 0:
+            return paths[0]
 
     # return best guess
-    return join_path_list([os.getcwd(), "tomopy", "sharedlibs", libname])
+    return os.path.join(os.getcwd(), "tomopy", "sharedlibs", libname)
 
 
-# ---------------------------------------------------------------------------- #
-#
 class TomoPyExtension(Extension):
 
     def __init__(self, name, sourcedir=''):
@@ -55,42 +43,26 @@ class TomoPyExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 
 
-# ---------------------------------------------------------------------------- #
-#
 class TomoPyBuild(build_ext, Command):
 
-    #--------------------------------------------------------------------------#
-    # run
     def run(self):
         for ext in self.extensions:
             self.build_extension(ext)
 
-    #--------------------------------------------------------------------------#
-    # build extension
     def build_extension(self, ext):
-        import build as builder
-        curpath = os.getcwd()
-        os.chdir('config')
-        builder.build_libtomopy()
-        os.chdir(curpath)
+        sp.check_call((sys.executable, 'build.py'))
         extdir = os.path.abspath(
             os.path.dirname(self.get_ext_fullpath(ext.name)))
         src = TomoPyLibraryFile()
         src_base = os.path.basename(src)
-        dst = join_path_list([extdir, "tomopy", "sharedlibs", src_base])
-        print("")
-        print('Library: {}'.format(src))
-        print('Destination: {}'.format(dst))
-        print("")
+        dst = os.path.join(extdir, "tomopy", "sharedlibs", src_base)
         try:
-            import shutil
             shutil.copy2(src, dst)
         except Exception as e:
-            print("Exception occurred copying '{}' to '{}'... {}".format(src, dst, e))
+            print("Exception occurred copying '{}' to '{}'...".format(src, dst))
+            raise e
 
 
-# ---------------------------------------------------------------------------- #
-#
 setup(
     name='tomopy',
     packages=find_packages(exclude=['test*']),

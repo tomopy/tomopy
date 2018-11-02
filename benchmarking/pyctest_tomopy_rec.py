@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import argparse
+import traceback
 import numpy as np
 import collections
 
@@ -77,6 +78,7 @@ def read_rot_centers(fname):
     except Exception as error:
         print("ERROR: the json file containing the rotation axis locations is missing")
         print("ERROR: run: python find_center.py to create one first")
+        print("Error: {}".format(error))
         exit()
 
 
@@ -244,6 +246,8 @@ def main(arg):
                         default=16, type=int)
 
     args = parser.parse_args()
+
+    print("\nargs: {}\n".format(args))
 
     if args.output_dir is None:
         fpath = os.path.basename(os.path.dirname(args.fname))
