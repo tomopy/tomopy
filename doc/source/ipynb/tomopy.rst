@@ -4,7 +4,7 @@ Gridrec
 Here is an example on how to use the gridrec :cite:`Dowd:99`
 reconstruction algorithm with `TomoPy <http://tomopy.readthedocs.io/en/latest/>`__
 :cite:`Gursoy:14a`.  
-You can download the python scritp :download:`here<../../../doc/demo/gridrec.py>`
+You can download the python script :download:`here<../../../doc/demo/gridrec.py>`
 or the Jupyter notebook :download:`here<../../../doc/demo/gridrec.ipynb>`
 
 .. code:: python
