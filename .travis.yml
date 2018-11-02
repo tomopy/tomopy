@@ -21,7 +21,6 @@ before_install:
   - conda config --add channels jrmadsen
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
-  # - conda install anaconda-client
 install:
   - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy
     scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange
@@ -31,8 +30,7 @@ install:
     fi
   - conda info -a
   - conda list --explicit
-  #- python setup.py install
-  - ./pyctest_tomopy.py -i 1 -n 2 --pyctest-site=Travis --pyctest-submit --disable-phantom-tests
+  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests
 script:
   - coverage run $(which nosetests)
 after_success:
