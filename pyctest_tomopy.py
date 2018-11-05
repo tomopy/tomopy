@@ -41,16 +41,16 @@ def configure():
                                     submit=False,
                                     ctest_args=["-V"])
     # default algorithm choices
-    available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-                            'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-                            'tv', 'grad']
+    available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
+                            'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
+                            'pml_quad', 'tv', 'grad']
     # default phantom choices
     available_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                           "lena", "peppers", "shepp2d", "shepp3d"]
     # choices for algorithms
-    algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-                         'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-                         'tv', 'grad', 'none', 'all']
+    algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
+                         'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
+                         'pml_quad', 'tv', 'grad', 'none', 'all']
     # phantom choices
     phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
                        "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
@@ -59,9 +59,9 @@ def configure():
     # number of cores
     default_ncores = multiprocessing.cpu_count()
     # default algorithm choices
-    default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-                          'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-                          'tv', 'grad']
+    default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
+                          'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
+                          'pml_quad', 'tv', 'grad']
     # default phantom choices
     default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                         "lena", "peppers", "shepp2d", "shepp3d"]
@@ -188,7 +188,8 @@ def run_pyctest():
         if gcov_cmd is not None:
             pyctest.COVERAGE_COMMAND = "{}".format(gcov_cmd)
             pyctest.set("CTEST_COVERAGE_EXTRA_FLAGS", "-m")
-            pyctest.set("CTEST_EXTRA_COVERAGE_GLOB", "{}/*.gcno".format(pyctest.SOURCE_DIRECTORY))
+            pyctest.set("CTEST_EXTRA_COVERAGE_GLOB", "{}/*.gcno".format(
+                pyctest.SOURCE_DIRECTORY))
     else:
         # assign to just generate python coverage
         pyctest.COVERAGE_COMMAND = "{};xml".format(cover_exe)
@@ -225,7 +226,8 @@ def run_pyctest():
     if coverage_exe is None:
         coverage_exe = helpers.FindExePath("coverage")
     # python $(which coverage) run $(which nosetests)
-    test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run", nosetest_exe])
+    test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run",
+                    nosetest_exe])
     # set directory to run test
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
@@ -253,7 +255,8 @@ def run_pyctest():
         phantom = "tomo_00001"
         h5file = os.path.join(args.globus_path, phantom, phantom + ".h5")
         if not os.path.exists(h5file):
-            print("Warning! HDF5 file '{}' does not exists! Skipping test...".format(h5file))
+            print("Warning! HDF5 file '{}' does not exists! "
+                  "Skipping test...".format(h5file))
             h5file = None
         # loop over args.algorithms and create tests for each
         for algorithm in args.algorithms:
@@ -271,6 +274,7 @@ def run_pyctest():
                                 "-c",
                                 "print(\"Path to Globus file '{}/{}.h5' not specified\")".format(
                                     phantom, phantom)])
+
             else:
                 test.SetCommand([pyctest.PYTHON_EXECUTABLE,
                                 ".//benchmarking/pyctest_tomopy_rec.py",

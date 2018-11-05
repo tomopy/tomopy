@@ -71,13 +71,13 @@ def convert_image(fname, current_format, new_format):
         img = Image.open(_cur_img)
         out = img.convert("RGB")
         out.save(fname, "jpeg", quality=95)
-        print("  --> Converted '{}' to {} format...".format(fname, new_format.upper()))
+        print("  --> Converted '{}' to {} format...".format(fname,
+                                                            new_format.upper()))
 
     except Exception as e:
-
         print("  --> ##### {}...".format(e))
-        print("  --> ##### Exception occurred converting '{}' to {} format...".format(
-            fname, new_format.upper()))
+        print("  --> ##### Exception occurred converting "
+              "'{}' to {} format...".format(fname, new_format.upper()))
 
         _fext = current_format
         _success = False
@@ -156,8 +156,10 @@ def rescale_image(rec, nimages, scale, transform=True):
             _ncols = rec[0].shape[1] * scale
             rec_tmp = np.ndarray([nimages, _nrows, _ncols])
             for i in range(nimages):
-                rec_tmp[i] = skimage.transform.resize(rec_n[i],
-                                                      (rec_n[i].shape[0] * scale, rec_n[i].shape[1] * scale))
+                rec_tmp[i] = skimage.transform.resize(
+                    rec_n[i],
+                    (rec_n[i].shape[0] * scale, rec_n[i].shape[1] * scale)
+                    )
             rec_n = rec_tmp
 
     except Exception as e:
@@ -260,7 +262,8 @@ class image_comparison(object):
     A class for combining image slices into a column comparison
     """
 
-    def __init__(self, ncompare, nslice, nrows, ncols, solution=None, dtype=float):
+    def __init__(self, ncompare, nslice, nrows, ncols, solution=None,
+                 dtype=float):
         self.input_dims = [nslice, nrows, ncols]
         self.store_dims = [nslice, nrows, ncols * (ncompare + 1)]
         self.tags = ["soln"]

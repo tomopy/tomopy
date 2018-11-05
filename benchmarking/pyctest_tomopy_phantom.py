@@ -68,7 +68,8 @@ def run(phantom, algorithm, args, get_recon=False):
         _kwargs["num_iter"] = args.num_iter
 
     print("kwargs: {}".format(_kwargs))
-    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(algorithm)):
+    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
+                                  algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
 
     obj = normalize(obj)
@@ -109,17 +110,18 @@ def main(args):
     if len(args.compare) > 0:
         algorithm = "comparison"
 
-    print('\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n'.format(
-        "\tPhantom", args.phantom,
-        "\tAlgorithm", algorithm,
-        "\tSize", args.size,
-        "\tAngles", args.angles,
-        "\tFormat", args.format,
-        "\tScale", args.scale,
-        "\tcomparison", args.compare,
-        "\tnumber of cores", args.ncores,
-        "\tnumber of columns", args.ncol,
-        "\tnumber iterations", args.num_iter))
+    print(("\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n"
+          "{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n").format(
+          "\tPhantom", args.phantom,
+          "\tAlgorithm", algorithm,
+          "\tSize", args.size,
+          "\tAngles", args.angles,
+          "\tFormat", args.format,
+          "\tScale", args.scale,
+          "\tcomparison", args.compare,
+          "\tnumber of cores", args.ncores,
+          "\tnumber of columns", args.ncol,
+          "\tnumber iterations", args.num_iter))
 
     if len(args.compare) > 0:
         args.ncol = 1
@@ -131,8 +133,10 @@ def main(args):
             tmp = run(args.phantom, alg, args, get_recon=True)
             tmp = rescale_image(tmp, args.size, args.scale, transform=False)
             if comparison is None:
-                comparison = image_comparison(len(
-                    args.compare), tmp.shape[0], tmp[0].shape[0], tmp[0].shape[1], image_quality["orig"])
+                comparison = image_comparison(
+                    len(args.compare), tmp.shape[0], tmp[0].shape[0],
+                    tmp[0].shape[1], image_quality["orig"]
+                    )
             comparison.assign(alg, nitr, tmp)
             nitr += 1
         bname = get_basepath(args, algorithm, args.phantom)
@@ -160,7 +164,8 @@ def main(args):
 
     # provide timing plots
     try:
-        timemory.plotting.plot(files=[timemory.options.serial_filename], echo_dart=True,
+        timemory.plotting.plot(files=[timemory.options.serial_filename],
+                               echo_dart=True,
                                output_dir=timemory.options.output_dir)
     except Exception as e:
         print("Exception - {}".format(e))
@@ -181,7 +186,8 @@ def main(args):
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
-            directory="{}/{}/{}".format(args.output_dir, args.phantom, algorithm))
+            directory="{}/{}/{}".format(args.output_dir, args.phantom,
+                                        algorithm))
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception - {}".format(e))
@@ -210,7 +216,8 @@ if __name__ == "__main__":
                         default=ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
                         default="jpeg", type=str)
-    parser.add_argument("-S", "--scale", help="scale image by a positive factor",
+    parser.add_argument("-S", "--scale",
+                        help="scale image by a positive factor",
                         default=1, type=int)
     parser.add_argument("-c", "--ncol", help="Number of images per row",
                         default=1, type=int)
