@@ -20,18 +20,17 @@ import signal
 import numpy as np
 import time as t
 import pylab
+
 try:
     from pyctest_tomopy_utils import *
 except:
     from benchmarking.pyctest_tomopy_utils import *
 
 
-#------------------------------------------------------------------------------#
 def get_basepath(args, algorithm, phantom):
     return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def generate(phantom="shepp3d", nsize=512, nangles=360):
 
@@ -45,7 +44,6 @@ def generate(phantom="shepp3d", nsize=512, nangles=360):
     return [prj, ang, obj]
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def run(phantom, algorithm, args, get_recon=False):
 
@@ -101,7 +99,6 @@ def run(phantom, algorithm, args, get_recon=False):
     return imgs
 
 
-#------------------------------------------------------------------------------#
 def main(args):
 
     global image_quality
@@ -161,7 +158,6 @@ def main(args):
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
 
-    #------------------------------------------------------------------#
     # provide timing plots
     try:
         timemory.plotting.plot(files=[timemory.options.serial_filename], echo_dart=True,
@@ -169,7 +165,6 @@ def main(args):
     except Exception as e:
         print("Exception - {}".format(e))
 
-    #------------------------------------------------------------------#
     # provide results to dashboard
     try:
         for i in range(0, len(imgs)):
@@ -183,7 +178,6 @@ def main(args):
     except Exception as e:
         print("Exception - {}".format(e))
 
-    #------------------------------------------------------------------#
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
@@ -193,7 +187,6 @@ def main(args):
         print("Exception - {}".format(e))
 
 
-#------------------------------------------------------------------------------#
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

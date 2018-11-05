@@ -25,7 +25,6 @@ except:
     from benchmarking.pyctest_tomopy_utils import *
 
 
-#------------------------------------------------------------------------------#
 def get_dx_dims(fname, dataset):
     """
     Read array size of a specific group of Data Exchange file.
@@ -56,7 +55,6 @@ def get_dx_dims(fname, dataset):
     return shape
 
 
-#------------------------------------------------------------------------------#
 def restricted_float(x):
 
     x = float(x)
@@ -65,7 +63,6 @@ def restricted_float(x):
     return x
 
 
-#------------------------------------------------------------------------------#
 def read_rot_centers(fname):
 
     try:
@@ -82,7 +79,6 @@ def read_rot_centers(fname):
         exit()
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
 
@@ -134,7 +130,6 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     return rec
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
 
@@ -183,7 +178,6 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
     return imgs
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
 
@@ -213,7 +207,7 @@ def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
     imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
     return imgs
 
-#------------------------------------------------------------------------------#
+
 def main(arg):
 
     import multiprocessing as mp
@@ -285,7 +279,6 @@ def main(arg):
     else:
         print("File Name does not exist: ", fname)
 
-    #
     # timing report to stdout
     print('{}'.format(manager))
 
@@ -294,8 +287,6 @@ def main(arg):
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
-
-    #------------------------------------------------------------------#
     # provide timing plots
     try:
         print("\nPlotting TiMemory results...\n")
@@ -304,8 +295,6 @@ def main(arg):
                                output_dir=timemory.options.output_dir)
     except Exception as e:
         print("Exception [timemory.plotting] - {}".format(e))
-
-    #------------------------------------------------------------------#
     # provide results to dashboard
     try:
         print("\nEchoing dart tags...\n")
@@ -321,8 +310,6 @@ def main(arg):
             timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
     except Exception as e:
         print("Exception [echo_dart_tag] - {}".format(e))
-
-    #------------------------------------------------------------------#
     # provide ASCII results
     try:
         print("\nWriting notes...\n")
@@ -330,6 +317,7 @@ def main(arg):
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception [write_ctest_notes] - {}".format(e))
+
 
 if __name__ == "__main__":
     ret = 0
@@ -340,5 +328,4 @@ if __name__ == "__main__":
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5)
         print('Exception - {}'.format(e))
         ret = 1
-
     sys.exit(ret)
