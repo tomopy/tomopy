@@ -74,7 +74,9 @@ __all__ = ['align_seq',
 
 def align_seq(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, save=False, debug=True):
+        blur=True, center=None, algorithm='sirt',
+        upsample_factor=10, rin=0.5, rout=0.8,
+        save=False, debug=True):
     """
     Aligns the projection image stack using the sequential
     re-projection algorithm :cite:`Gursoy:17`.
@@ -93,6 +95,36 @@ def align_seq(
         Padding for projection images in x and y-axes.
     blur : bool, optional
         Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor. 
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
         for each algorithm iteration.
@@ -123,15 +155,15 @@ def align_seq(
     # Register each image frame-by-frame.
     for n in range(iters):
         # Reconstruct image.
-        rec = recon(prj, ang, algorithm='sirt')
+        rec = recon(prj, ang, center=center, algorithm=algorithm)
 
         # Re-project data and obtain simulated data.
-        sim = project(rec, ang, pad=False)
+        sim = project(rec, ang, center=center, pad=False)
 
         # Blur edges.
         if blur:
-            _prj = blur_edges(prj, 0.1, 0.5)
-            _sim = blur_edges(sim, 0.1, 0.5)
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
         else:
             _prj = prj
             _sim = sim
@@ -143,7 +175,8 @@ def align_seq(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(_prj[m], _sim[m], 2)
+            shift, error, diffphase = register_translation(
+                _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -168,7 +201,9 @@ def align_seq(
 
 def align_joint(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, save=False, debug=True):
+        blur=True, center=None, algorithm='sirt', 
+        upsample_factor=10, rin=0.5, rout=0.8, 
+        save=False, debug=True):
     """
     Aligns the projection image stack using the joint
     re-projection algorithm :cite:`Gursoy:17`.
@@ -187,6 +222,36 @@ def align_joint(
         Padding for projection images in x and y-axes.
     blur : bool, optional
         Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor.
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
         for each algorithm iteration.
@@ -224,15 +289,16 @@ def align_joint(
             _rec = rec
 
         # Reconstruct image.
-        rec = recon(prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
+        rec = recon(prj, ang, center=center, algorithm=algorithm,
+                    num_iter=1, init_recon=_rec)
 
         # Re-project data and obtain simulated data.
-        sim = project(rec, ang, pad=False)
+        sim = project(rec, ang, center=center, pad=False)
 
         # Blur edges.
         if blur:
-            _prj = blur_edges(prj, 0.0, 0.5)
-            _sim = blur_edges(sim, 0.0, 0.5)
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
         else:
             _prj = prj
             _sim = sim
@@ -244,7 +310,8 @@ def align_joint(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(_prj[m], _sim[m], 2)
+            shift, error, diffphase = register_translation(
+                _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
