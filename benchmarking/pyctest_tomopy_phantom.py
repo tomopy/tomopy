@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-TomoPy script to reconstruct a built-in phantom
-"""
+"""TomoPy script to reconstruct a built-in phantom."""
 
 import sys
 import os
@@ -64,7 +62,7 @@ def run(phantom, algorithm, args, get_recon=False):
     _kwargs["ncore"] = ncores
 
     # don't assign "num_iter" if gridrec or fbp
-    if not algorithm in ["fbp", "gridrec"]:
+    if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = args.num_iter
 
     print("kwargs: {}".format(_kwargs))
@@ -83,7 +81,7 @@ def run(phantom, algorithm, args, get_recon=False):
 
     quantify_difference(label, obj, rec)
 
-    if not "orig" in image_quality:
+    if "orig" not in image_quality:
         image_quality["orig"] = obj
 
     dif = obj - rec

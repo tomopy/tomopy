@@ -121,7 +121,7 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     _kwargs["ncore"] = ncores
 
     # don't assign "num_iter" if gridrec or fbp
-    if not algorithm in ["fbp", "gridrec"]:
+    if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = nitr
 
     # Reconstruct object.
