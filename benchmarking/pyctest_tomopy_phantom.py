@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-TomoPy script to reconstruct a built-in phantom
-"""
+"""TomoPy script to reconstruct a built-in phantom."""
 
 import sys
 import os
@@ -20,18 +18,17 @@ import signal
 import numpy as np
 import time as t
 import pylab
+
 try:
     from pyctest_tomopy_utils import *
 except:
     from benchmarking.pyctest_tomopy_utils import *
 
 
-#------------------------------------------------------------------------------#
 def get_basepath(args, algorithm, phantom):
     return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def generate(phantom="shepp3d", nsize=512, nangles=360):
 
@@ -45,7 +42,6 @@ def generate(phantom="shepp3d", nsize=512, nangles=360):
     return [prj, ang, obj]
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def run(phantom, algorithm, args, get_recon=False):
 
@@ -66,11 +62,12 @@ def run(phantom, algorithm, args, get_recon=False):
     _kwargs["ncore"] = ncores
 
     # don't assign "num_iter" if gridrec or fbp
-    if not algorithm in ["fbp", "gridrec"]:
+    if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = args.num_iter
 
     print("kwargs: {}".format(_kwargs))
-    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(algorithm)):
+    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
+                                  algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
 
     obj = normalize(obj)
@@ -84,7 +81,7 @@ def run(phantom, algorithm, args, get_recon=False):
 
     quantify_difference(label, obj, rec)
 
-    if not "orig" in image_quality:
+    if "orig" not in image_quality:
         image_quality["orig"] = obj
 
     dif = obj - rec
@@ -101,7 +98,6 @@ def run(phantom, algorithm, args, get_recon=False):
     return imgs
 
 
-#------------------------------------------------------------------------------#
 def main(args):
 
     global image_quality
@@ -112,17 +108,18 @@ def main(args):
     if len(args.compare) > 0:
         algorithm = "comparison"
 
-    print('\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n'.format(
-        "\tPhantom", args.phantom,
-        "\tAlgorithm", algorithm,
-        "\tSize", args.size,
-        "\tAngles", args.angles,
-        "\tFormat", args.format,
-        "\tScale", args.scale,
-        "\tcomparison", args.compare,
-        "\tnumber of cores", args.ncores,
-        "\tnumber of columns", args.ncol,
-        "\tnumber iterations", args.num_iter))
+    print(("\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n"
+          "{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n").format(
+          "\tPhantom", args.phantom,
+          "\tAlgorithm", algorithm,
+          "\tSize", args.size,
+          "\tAngles", args.angles,
+          "\tFormat", args.format,
+          "\tScale", args.scale,
+          "\tcomparison", args.compare,
+          "\tnumber of cores", args.ncores,
+          "\tnumber of columns", args.ncol,
+          "\tnumber iterations", args.num_iter))
 
     if len(args.compare) > 0:
         args.ncol = 1
@@ -134,8 +131,10 @@ def main(args):
             tmp = run(args.phantom, alg, args, get_recon=True)
             tmp = rescale_image(tmp, args.size, args.scale, transform=False)
             if comparison is None:
-                comparison = image_comparison(len(
-                    args.compare), tmp.shape[0], tmp[0].shape[0], tmp[0].shape[1], image_quality["orig"])
+                comparison = image_comparison(
+                    len(args.compare), tmp.shape[0], tmp[0].shape[0],
+                    tmp[0].shape[1], image_quality["orig"]
+                    )
             comparison.assign(alg, nitr, tmp)
             nitr += 1
         bname = get_basepath(args, algorithm, args.phantom)
@@ -161,15 +160,14 @@ def main(args):
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
 
-    #------------------------------------------------------------------#
     # provide timing plots
     try:
-        timemory.plotting.plot(files=[timemory.options.serial_filename], echo_dart=True,
+        timemory.plotting.plot(files=[timemory.options.serial_filename],
+                               echo_dart=True,
                                output_dir=timemory.options.output_dir)
     except Exception as e:
         print("Exception - {}".format(e))
 
-    #------------------------------------------------------------------#
     # provide results to dashboard
     try:
         for i in range(0, len(imgs)):
@@ -183,17 +181,16 @@ def main(args):
     except Exception as e:
         print("Exception - {}".format(e))
 
-    #------------------------------------------------------------------#
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
-            directory="{}/{}/{}".format(args.output_dir, args.phantom, algorithm))
+            directory="{}/{}/{}".format(args.output_dir, args.phantom,
+                                        algorithm))
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception - {}".format(e))
 
 
-#------------------------------------------------------------------------------#
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -217,7 +214,8 @@ if __name__ == "__main__":
                         default=ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
                         default="jpeg", type=str)
-    parser.add_argument("-S", "--scale", help="scale image by a positive factor",
+    parser.add_argument("-S", "--scale",
+                        help="scale image by a positive factor",
                         default=1, type=int)
     parser.add_argument("-c", "--ncol", help="Number of images per row",
                         default=1, type=int)

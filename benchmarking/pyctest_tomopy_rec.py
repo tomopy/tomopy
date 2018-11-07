@@ -25,7 +25,6 @@ except:
     from benchmarking.pyctest_tomopy_utils import *
 
 
-#------------------------------------------------------------------------------#
 def get_dx_dims(fname, dataset):
     """
     Read array size of a specific group of Data Exchange file.
@@ -56,16 +55,14 @@ def get_dx_dims(fname, dataset):
     return shape
 
 
-#------------------------------------------------------------------------------#
 def restricted_float(x):
 
     x = float(x)
     if x < 0.0 or x >= 1.0:
-        raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
+        raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]" % (x,))
     return x
 
 
-#------------------------------------------------------------------------------#
 def read_rot_centers(fname):
 
     try:
@@ -76,13 +73,13 @@ def read_rot_centers(fname):
         return collections.OrderedDict(sorted(dictionary.items()))
 
     except Exception as error:
-        print("ERROR: the json file containing the rotation axis locations is missing")
+        print("ERROR: the json file containing the rotation axis locations "
+              "is missing")
         print("ERROR: run: python find_center.py to create one first")
         print("Error: {}".format(error))
         exit()
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
 
@@ -92,14 +89,17 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     # Manage the missing angles:
     if blocked_views is not None:
         print("Blocked Views: ", blocked_views)
-        proj = np.concatenate((proj[0:blocked_views[0],:,:], proj[blocked_views[1]+1:-1,:,:]), axis=0)
-        theta = np.concatenate((theta[0:blocked_views[0]], theta[blocked_views[1]+1:-1]))
+        proj = np.concatenate((proj[0:blocked_views[0], :, :],
+                               proj[blocked_views[1]+1:-1, :, :]), axis=0)
+        theta = np.concatenate((theta[0:blocked_views[0]],
+                                theta[blocked_views[1]+1: -1]))
 
     # Flat-field correction of raw data.
     data = tomopy.normalize(proj, flat, dark, cutoff=1.4)
 
     # remove stripes
-    data = tomopy.remove_stripe_fw(data,level=7,wname='sym16',sigma=1,pad=True)
+    data = tomopy.remove_stripe_fw(data, level=7, wname='sym16', sigma=1,
+                                   pad=True)
 
     print("Raw data: ", h5fname)
     print("Center: ", rot_center)
@@ -121,11 +121,12 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     _kwargs["ncore"] = ncores
 
     # don't assign "num_iter" if gridrec or fbp
-    if not algorithm in ["fbp", "gridrec"]:
+    if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = nitr
 
     # Reconstruct object.
-    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(algorithm)):
+    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
+                                  algorithm)):
         rec = tomopy.recon(proj, theta, **_kwargs)
 
     # Mask each reconstructed slice with a circle.
@@ -134,7 +135,6 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     return rec
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
 
@@ -148,13 +148,16 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
     sino_start = 0
     sino_end = data_size[1]
 
-    chunks = nchunks    # number of sinogram chunks to reconstruct
-                        # only one chunk at the time is reconstructed
-                        # allowing for limited RAM machines to complete a full reconstruction
+    # The number of sinogram chunks to reconstruct. Only one chunk at the time
+    # is reconstructed allowing for limited RAM machines to complete a full
+    # reconstruction.
+    chunks = nchunks
 
     nSino_per_chunk = (sino_end - sino_start)/chunks
-    print("Reconstructing [%d] slices from slice [%d] to [%d] in [%d] chunks of [%d] slices each" %
-        ((sino_end - sino_start), sino_start, sino_end, chunks, nSino_per_chunk))
+    print("Reconstructing [%d] slices from slice [%d] to [%d] "
+          "in [%d] chunks of [%d] slices each" %
+          ((sino_end - sino_start), sino_start, sino_end,
+           chunks, nSino_per_chunk))
 
     imgs = []
     strt = 0
@@ -173,17 +176,17 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
         rec = reconstruct(h5fname, sino, rot_center, args, blocked_views)
 
         # Write data as stack of TIFs.
-        fname = os.path.join(output_dir,'recon_{}_'.format(args.algorithm))
+        fname = os.path.join(output_dir, 'recon_{}_'.format(args.algorithm))
         print("Reconstructions: ", fname)
 
-        imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
-        #dxchange.write_tiff_stack(rec, fname=fname, start=strt)
+        imgs.extend(output_images(rec, fname, args.format, args.scale,
+                                  args.ncol))
+        # dxchange.write_tiff_stack(rec, fname=fname, start=strt)
         strt += sino[1] - sino[0]
 
     return imgs
 
 
-#------------------------------------------------------------------------------#
 @timemory.util.auto_timer()
 def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
 
@@ -205,15 +208,15 @@ def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
     # Reconstruct
     rec = reconstruct(h5fname, sino, rot_center, args, blocked_views)
 
-    fname = os.path.join(output_dir,'recon_{}_'.format(args.algorithm))
+    fname = os.path.join(output_dir, 'recon_{}_'.format(args.algorithm))
 
-    #dxchange.write_tiff_stack(rec, fname=fname)
+    # dxchange.write_tiff_stack(rec, fname=fname)
     print("Rec: ", fname)
     print("Slice: ", start)
     imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
     return imgs
 
-#------------------------------------------------------------------------------#
+
 def main(arg):
 
     import multiprocessing as mp
@@ -221,20 +224,29 @@ def main(arg):
 
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",
-        help="file name of a tmographic dataset: /data/sample.h5")
+                        help=("file name of a tmographic dataset: "
+                              "/data/sample.h5")
+                        )
     parser.add_argument("--axis", nargs='?', type=str, default="0",
-        help="rotation axis location: 1024.0 (default 1/2 image horizontal size)")
+                        help=("rotation axis location: 1024.0 "
+                              "(default 1/2 image horizontal size)")
+                        )
     parser.add_argument("--type", nargs='?', type=str, default="slice",
-        help="reconstruction type: full (default slice)")
-    parser.add_argument("--nsino", nargs='?', type=restricted_float, default=0.5,
-        help="location of the sinogram used by slice reconstruction (0 top, 1 bottom): 0.5 (default 0.5)")
+                        help="reconstruction type: full (default slice)")
+    parser.add_argument("--nsino", nargs='?', type=restricted_float,
+                        default=0.5,
+                        help=("location of the sinogram used by slice "
+                              "reconstruction (0 top, 1 bottom): 0.5 "
+                              "(default 0.5)")
+                        )
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
                         default="gridrec", choices=algorithms, type=str)
     parser.add_argument("-n", "--ncores", help="number of cores",
                         default=default_ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
                         default="jpeg", type=str)
-    parser.add_argument("-S", "--scale", help="scale image by a positive factor",
+    parser.add_argument("-S", "--scale",
+                        help="scale image by a positive factor",
                         default=1, type=int)
     parser.add_argument("-c", "--ncol", help="Number of images per row",
                         default=1, type=int)
@@ -242,7 +254,8 @@ def main(arg):
                         default=1, type=int)
     parser.add_argument("-o", "--output-dir", help="Output directory",
                         default=None, type=str)
-    parser.add_argument("-g", "--grainsize", help="Granularity of slices to compute",
+    parser.add_argument("-g", "--grainsize",
+                        help="Granularity of slices to compute",
                         default=16, type=int)
 
     args = parser.parse_args()
@@ -280,12 +293,12 @@ def main(arg):
         if slice:
             imgs = rec_slice(fname, nsino, rot_center, args, blocked_views)
         else:
-            imgs = rec_full(fname, rot_center, args, blocked_views, args.grainsize)
+            imgs = rec_full(fname, rot_center, args, blocked_views,
+                            args.grainsize)
 
     else:
         print("File Name does not exist: ", fname)
 
-    #
     # timing report to stdout
     print('{}'.format(manager))
 
@@ -294,8 +307,6 @@ def main(arg):
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
-
-    #------------------------------------------------------------------#
     # provide timing plots
     try:
         print("\nPlotting TiMemory results...\n")
@@ -304,8 +315,6 @@ def main(arg):
                                output_dir=timemory.options.output_dir)
     except Exception as e:
         print("Exception [timemory.plotting] - {}".format(e))
-
-    #------------------------------------------------------------------#
     # provide results to dashboard
     try:
         print("\nEchoing dart tags...\n")
@@ -317,12 +326,11 @@ def main(arg):
                 ".{}".format(args.format), "")
             print("Image name: {}".format(img_name))
             img_path = imgs[i]
-            print("name: {}, type: {}, path: {}".format(img_name, img_type, img_path))
+            print("name: {}, type: {}, path: {}".format(img_name, img_type,
+                                                        img_path))
             timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
     except Exception as e:
         print("Exception [echo_dart_tag] - {}".format(e))
-
-    #------------------------------------------------------------------#
     # provide ASCII results
     try:
         print("\nWriting notes...\n")
@@ -330,6 +338,7 @@ def main(arg):
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception [write_ctest_notes] - {}".format(e))
+
 
 if __name__ == "__main__":
     ret = 0
@@ -340,5 +349,4 @@ if __name__ == "__main__":
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5)
         print('Exception - {}'.format(e))
         ret = 1
-
     sys.exit(ret)
