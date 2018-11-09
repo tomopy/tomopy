@@ -7,11 +7,13 @@ PyCTest driver for TomoPy
 
 import os
 import sys
+import glob
 import shutil
 import platform
 import argparse
 import traceback
-import multiprocessing
+import subprocess as sp
+import multiprocessing as mp
 
 import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
@@ -21,14 +23,9 @@ import pyctest.helpers as helpers
 def cleanup(path=None, exclude=[]):
     files = [ "coverage.xml", "pyctest_tomopy_rec.py",
                "pyctest_tomopy_phantom.py", "pyctest_tomopy_utils.py",
-               "tomopy/sharedlibs/libtomopy.so",
-               "tomopy/sharedlibs/libtomopy.dll",
-               "tomopy/sharedlibs/libtomopy.dylib",
-               "tomopy.egg-info", "dist", "build",
                "config/Mk.config" ]
-    import glob
-    files += glob.glob(os.path.join(os.getcwd(), "config", "*.o"))
-    files += glob.glob(os.path.join(os.getcwd(), "config", "*.gc*"))
+
+    sp.call((sys.executable, os.path.join(os.getcwd(), "setup.py"), "clean"))
     helpers.Cleanup(path, extra=files, exclude=exclude)
 
 
@@ -57,7 +54,7 @@ def configure():
     # number of iterations
     default_nitr = 10
     # number of cores
-    default_ncores = multiprocessing.cpu_count()
+    default_ncores = mp.cpu_count()
     # default algorithm choices
     default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
                           'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',

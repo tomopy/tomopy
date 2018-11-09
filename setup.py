@@ -6,61 +6,31 @@ import sys
 import glob
 import shutil
 import subprocess as sp
-from setuptools import setup, find_packages, Extension, Command
-from setuptools.command.build_ext import build_ext
+from setuptools import setup, find_packages, Extension
+from distutils.command.clean import clean
+from distutils.command.build_ext import build_ext
 
 
-def TomoPyLibraryFile():
-    """
-    Determines the library output file
-    """
-
-    libname = None
-    if sys.platform.lower().startswith('win'):
-        libname = 'libtomopy.dll'
-    elif sys.platform == 'darwin':
-        libname = 'libtomopy.dylib'
-    else:
-        libname = 'libtomopy.so'
-
-    path = os.path.join(os.getcwd(), "tomopy", "sharedlibs", libname)
-    if os.path.exists(path):
-        return path
-    else:
-        paths = glob.glob(os.path.join(
-            os.getcwd(), "tomopy", "sharedlibs", "libtomopy.*"))
-        if len(paths) > 0:
-            return paths[0]
-
-    # return best guess
-    return os.path.join(os.getcwd(), "tomopy", "sharedlibs", libname)
-
-
-class TomoPyExtension(Extension):
-
-    def __init__(self, name, sourcedir=''):
-        Extension.__init__(self, name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
-
-
-class TomoPyBuild(build_ext, Command):
+class TomoPyBuild(build_ext):
 
     def run(self):
         for ext in self.extensions:
             self.build_extension(ext)
 
     def build_extension(self, ext):
-        sp.check_call((sys.executable, 'build.py'))
         extdir = os.path.abspath(
             os.path.dirname(self.get_ext_fullpath(ext.name)))
-        src = TomoPyLibraryFile()
-        src_base = os.path.basename(src)
-        dst = os.path.join(extdir, "tomopy", "sharedlibs", src_base)
-        try:
-            shutil.copy2(src, dst)
-        except Exception as e:
-            print("Exception occurred copying '{}' to '{}'...".format(src, dst))
-            raise e
+        sp.check_call((sys.executable, 'build.py',
+            '--prefix={}'.format(extdir)))
+
+
+class TomoPyClean(clean):
+
+    def run(self):
+        sp.check_call((sys.executable, 'build.py', '--clean'))
+        for d in [ "build", "tomopy.egg-info", "dist" ]:
+            d = os.path.join(os.getcwd(), d)
+            shutil.rmtree(d, ignore_errors=True)
 
 
 setup(
@@ -78,9 +48,9 @@ setup(
     license='BSD-3',
     platforms='Any',
     # add extension module
-    ext_modules=[TomoPyExtension('libtomopy')],
+    ext_modules=[Extension('libtomopy', sources=[])],
     # add custom build_ext command
-    cmdclass=dict(build_ext=TomoPyBuild),
+    cmdclass=dict(build_ext=TomoPyBuild,clean=TomoPyClean),
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',

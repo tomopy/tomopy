@@ -113,6 +113,7 @@ nosetests.xml
 .project
 .pydevproject
 .idea
+.vscode
 
 # Private functions #
 #####################
