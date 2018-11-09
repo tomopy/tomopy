@@ -62,7 +62,10 @@ def build_libtomopy():
 
 def clean_libtomopy():
     """Clean libtomopy shared library for the current system."""
-    subprocess.check_call(('make', 'clean', '-f', get_makefile()))
+    if os.path.exists("Mk.config"):
+        subprocess.check_call(('make', 'clean', '-f', get_makefile()))
+    else:
+        print("Mk.config does not exist. Assuming nothing to clean...")
 
 
 class Config:
