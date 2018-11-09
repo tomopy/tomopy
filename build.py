@@ -53,7 +53,9 @@ def build_libtomopy():
     with open('Mk.config', 'w') as fout:
         fout.write(conf)
     cmd = ['make', '-j4', '-f', get_makefile()]
-    if INSTALL_PREFIX is not None:
+    _PREFIX_PATH = os.path.abspath(INSTALL_PREFIX)
+    _BINARY_PATH = os.path.abspath(os.path.join(os.getcwd(), ".."))
+    if INSTALL_PREFIX is not None and _PREFIX_PATH != _BINARY_PATH:
         cmd.append('install')
     subprocess.check_call(tuple(cmd))
 
