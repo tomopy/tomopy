@@ -49,17 +49,23 @@
 import numpy as np
 import logging
 import warnings
-from skimage import transform as tf
-from skimage.feature import register_translation
+
+from skimage                import transform              as tf
+from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
-from tomopy.sim.project import project
+from tomopy.sim.project     import project
+from tomopy.misc.npmath     import gauss
+from scipy.signal           import medfilt2d
+from scipy.optimize         import curve_fit
+from collections            import namedtuple
+
 import dxchange
-import numpy as np
+
 
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, Chen Zhang"
 __copyright__ = "Copyright (c) 2016-17, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['align_seq',
@@ -69,7 +75,9 @@ __all__ = ['align_seq',
            'add_jitter',
            'add_noise',
            'blur_edges',
-           'shift_images']
+           'shift_images',
+           'find_slits_corners_aps_1id',
+           ]
 
 
 def align_seq(
@@ -443,3 +451,127 @@ def shift_images(prj, sx, sy):
     prj *= scl
 
     return prj
+
+
+def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
+    """
+    Automatically locate the slit box location by its four corners.
+
+    Parameters
+    ----------
+    img          :  np.2darray
+        input 2D images
+    method       :  str,  ['simple', 'quadrant', 'quadrant+'], optional
+        method for auto detecting slit corners
+    autoClipPix  :  int,  optional
+        clip out the outer rim to prevent artifacts
+    
+    Returns
+    -------
+    typlue
+        autodetected slit corners 
+    """
+
+    # NOTE: 
+    #   The outter rim of some images has really strong fluctuations within a 
+    #   relatively small range, which breaks std based corner detection.  
+    #   The current workaround is to use a relatively larger initial clip 
+    #   (autoClipPix>=20) to remove the really noise outter rim.  
+    #   However, this also means the image of interest has to be really in the 
+    #   center, and the slit box corner cannot over reach to the acutal 
+    #   image corner.
+    img = medfilt2d(np.log(img[autoClipPix:-autoClipPix, 
+                               autoClipPix:-autoClipPix].astype(np.float64)),
+                    kernel_size=3)
+    rows, cols = img.shape
+    
+    # offset due to image clipping
+    offset = np.zeros((4, 2)) + np.array([autoClipPix, autoClipPix])
+    
+    # simple method is simple, therefore it stands out
+    if method.lower() == 'simple':        
+        # assuming a rectangle type slit box 
+        col_std = np.std(img, axis=0)
+        row_std = np.std(img, axis=1)
+        # NOTE: in the tiff img
+        #  x is col index, y is the row index  ==> key point here !!!
+        #  img slicing is doen with img[row_idx, col_idx]
+        #  ==> so the image idx and corner position are FLIPPED!
+        _left   = np.argmax(np.gradient(col_std))
+        _right  = np.argmin(np.gradient(col_std))
+        _top    = np.argmax(np.gradient(row_std))
+        _bottom = np.argmin(np.gradient(row_std))
+
+        cnrs = np.array([[_left , _top    ],
+                         [_left , _bottom ],
+                         [_right, _bottom ],
+                         [_right, _top    ],
+                        ])
+    else:
+        # predefine all quadrants
+        # Here let's assume that the four corners of the slit box are in the 
+        # four quadrant defined by the center of the image
+        # i.e.
+        #  uppper left quadrant: img[0     :cnt[1], 0     :cnt[0]]  => quadarnt origin =  (0,           0)
+        #  lower  left quadrant: img[cnt[1]:      , 0     :cnt[0]]  => quadarnt origin =  (cnt[0],      0)
+        #  lower right quadrant: img[cnt[1]:      , cnt[0]:      ]  => quadarnt origin =  (cnt[0], cnt[1])
+        #  upper right quadrant: img[0     :cnt[1], cnt[0]:      ]  => quadarnt origin =  (0,      cnt[1])
+        cnt = [int(cols/2), int(rows/2)]  # center of image that defines FOUR quadrants
+        Quadrant  = namedtuple('Quadrant', 'img col_func, row_func')
+        quadrants = [Quadrant(img=img[0:cnt[1], 0:cnt[0]], col_func=np.argmax, row_func=np.argmax),  # upper left,  1st quadrant
+                     Quadrant(img=img[cnt[1]: , 0:cnt[0]], col_func=np.argmax, row_func=np.argmin),  # lower left,  2nd quadrant
+                     Quadrant(img=img[cnt[1]: , cnt[0]: ], col_func=np.argmin, row_func=np.argmin),  # lower right, 3rd quadrant
+                     Quadrant(img=img[0:cnt[0], cnt[1]: ], col_func=np.argmin, row_func=np.argmax),  # upper right, 4th quadrant
+                    ]
+        # the origin in each quadrants ==> easier to set it here
+        quadrantOrigins = np.array([[0,           0],  # upper left,  1st quadrant
+                                    [0,      cnt[1]],  # lower left,  2nd quadrant
+                                    [cnt[0], cnt[1]],  # lower right, 3rd quadrant
+                                    [cnt[1],      0],  # upper right, 4th quadrant
+                                   ])
+        # init four corners
+        cnrs = np.zeros((4, 2))
+        if method.lower() == 'quadrant':
+            # the standard quadrant method
+            for i, q in enumerate(quadrants):
+                cnrs[i,:] = np.array([q.col_func(np.gradient(np.std(q.img, axis=0))),  # x is col_idx
+                                      q.row_func(np.gradient(np.std(q.img, axis=1))),  # y is row_idx
+                                     ])
+            # add the origin offset back
+            cnrs = cnrs + quadrantOrigins
+        elif method.lower() == 'quadrant+':
+            # use Gaussian curve fitting to achive subpixel precision 
+            # TODO:
+            #   improve the curve fitting with Lorentz and Voigt fitting function
+            for i, q in enumerate(quadrants):
+                # -- find x subpixel position
+                cnr_x_guess = q.col_func(np.gradient(np.std(q.img, axis=0)))
+                # isolate the strongest peak to fit
+                tmpx = np.arange(cnr_x_guess-10, cnr_x_guess+11)
+                tmpy = np.gradient(np.std(q.img, axis=0))[tmpx]
+                # tmpy[0] is the value from the highest/lowest pixle
+                # tmpx[0] is basically cnr_x_guess
+                # 5.0 is the guessted std, 
+                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                                     p0=[tmpy[0], tmpx[0], 5.0],
+                                     maxfev=int(1e6),
+                                    )
+                cnrs[i, 0] = coeff[1]  # x position
+                # -- find y subpixel positoin
+                cnr_y_guess = q.row_func(np.gradient(np.std(q.img, axis=1)))
+                # isolate the peak (x, y here is only associated with the peak)
+                tmpx = np.arange(cnr_y_guess-10, cnr_y_guess+11)
+                tmpy = np.gradient(np.std(q.img, axis=1))[tmpx]
+                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                                     p0=[tmpy[0], tmpx[0], 5.0],
+                                     maxfev=int(1e6),
+                                    )
+                cnrs[i, 1] = coeff[1]  # y posiiton
+            # add the quadrant shift back 
+            cnrs = cnrs + quadrantOrigins
+                
+        else:
+            raise NotImplementedError
+    
+    # return the slit corner detected
+    return cnrs+offset
