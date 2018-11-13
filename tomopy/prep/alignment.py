@@ -55,11 +55,17 @@ from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project     import project
 from tomopy.misc.npmath     import gauss
+from tomopy.misc.npmath     import calc_affine_transform
+from tomopy.misc.npmath     import calc_cummulative_dist
 from scipy.signal           import medfilt2d
 from scipy.optimize         import curve_fit
+from scipy.ndimage          import affine_transform
+from scipy.ndimage          import shift
 from collections            import namedtuple
 
 import dxchange
+
+import matplotlib.pyplot as plt
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +83,8 @@ __all__ = ['align_seq',
            'blur_edges',
            'shift_images',
            'find_slits_corners_aps_1id',
+           'calc_slit_box_aps_1id',
+           'remove_slits_aps_1id',
            ]
 
 
@@ -575,3 +583,160 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
     
     # return the slit corner detected
     return cnrs+offset
+
+
+def calc_slit_box_aps_1id(slit_box_corners, inclip=(1,10,1,10)):
+    """
+    Calculate the clip box based on given slip corners
+
+    Parameters
+    ----------
+    slit_box_corners  :  np.2darray
+        Four corners of the slit box as a 4x2 matrix
+    inclip            :  tuple, optional
+        Extra inclipping to avoid clipping artifacts
+    
+    Returns
+    -------
+    Tuple:
+        Cliping indices as a tuple of four
+    """
+    return (
+        np.floor(slit_box_corners[:, 0].min()).astype(int) + inclip[0],  # clip top    row
+        np.ceil (slit_box_corners[:, 0].max()).astype(int) - inclip[1],  # clip bottom row
+        np.floor(slit_box_corners[:, 1].min()).astype(int) + inclip[2],  # clip left   col
+        np.ceil (slit_box_corners[:, 1].max()).astype(int) - inclip[3],  # clip right  col
+    )
+
+
+def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1,10,1,10)):
+    """ 
+    Remove the slits from still images
+
+    Parameters
+    ----------
+    imgstacks         :  np.3darray
+        tomopy images stacks (axis_0 is the oemga direction) 
+    slit_box_corners  :  np.2darray
+        four corners of the slit box 
+    inclip            :  tuple, optional
+        Extra inclipping to avoid clipping artifacts
+
+    Returns 
+    -------
+    np.3darray
+        tomopy images stacks without regions outside slits
+    """
+    xl,xu,yl,yu = calc_slit_box_aps_1id(slit_box_corners, inclip=inclip)
+    return imgstacks[:,yl:yu,xl:xu]
+
+
+def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref, reportfn=None):
+    """
+    Adjust each still image based on the slit corners and generate report fig
+
+    Parameters
+    ----------
+    imgstacks         :  np.3darray
+        tomopy images stacks (axis_0 is the oemga direction) 
+    slit_cnr_ref      :  np.2darray
+        reference slit corners from white field images
+    reportfn          :  [str,None]
+        detector drift report name, skip reporting if None
+
+    Returns
+    np.3darray
+        adjusted imgstacks
+    np.3darray
+        detected corners on each still image
+    np.3darray
+        transformation matrices used to adjust each image
+    """
+    # -- init slit corners for still images
+    proj_cnrs = []
+
+    # -- init affine transformation matrix
+    img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+
+    # -- work throgh each image 
+    for n_img in range(imgstacks.shape[0]):
+        # detect the corners
+        proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img,:,:],
+                                              method='quadrant+',
+                                              )
+        proj_cnrs.append(proj_cnr)
+
+        # calcualte the affine transfomration required
+        img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, 
+                                                         slit_cnr_ref,
+                                                        )
+
+        # adjust the image
+        if np.linalg.norm(img_correct_F[n_img,0:2,0:2] - np.eye(2)) < 1e-4:
+            # shift only when rotation is small
+            imgstacks[n_img,:,:] = shift(imgstacks[n_img,:,:], 
+                                         img_correct_F[n_img,0:2, 2],
+                                        )  
+        else:
+            # perform full affine transformation
+            # NOTE:
+            #  This is particular slow, need optimization
+            imgstacks[n_img,:,:] = affine_transform(imgstacks[n_img,:,:],                # input image
+                                                    img_correct_F[n_img,0:2,0:2],        # rotation matrix
+                                                    offset=img_correct_F[n_img,0:2,  2], # offset vector
+                                                   )
+    # convert proj_cnrs to np.array
+    proj_cnrs = np.stack(proj_cnrs, axis=0)
+
+    # -- generate detector drift report
+    if reportfn is not None:
+        detector_drift_report_aps_1id(img_correct_F, reportfn)
+
+    return imgstacks, proj_cnrs, img_correct_F
+
+
+def detector_drift_report_aps_1id(img_correct_F, reportfn):
+    """
+    Generate report based on given affine transformation matrices
+
+    Parameters
+    ----------
+    img_correct_F  :  np.3darray
+        transformation matrices used to adjust each image
+    reportfn       :  str
+        report file/fig name base
+
+    Returns
+    -------
+    None
+    """
+    dRminusI = [np.linalg.norm(img_correct_F[n,0:2,0:2] - np.eye(2)) 
+                for n in range(img_correct_F.shape[0])]
+    txs = img_correct_F[:,0,2]
+    tys = img_correct_F[:,1,2]
+    
+    fig, axes = plt.subplots(1, 2, sharey=False, figsize=(10,5))
+
+    # statistics of rotation
+    xx, yy = calc_cummulative_dist(dRminusI)
+    axes[0].plot(xx, yy)
+    axes[0].set_yscale('log')
+    axes[0].set_xscale('log')
+    axes[0].set_xlabel('$|R_i - I|$')
+    axes[0].set_ylabel(r'$\rho$')
+
+    # statistics of translation
+    axes[1].plot(np.arange(img_correct_F.shape[0]), txs, label='$t_x$')
+    axes[1].plot(np.arange(img_correct_F.shape[0]), tys, label='$t_y$')
+    axes[1].set_xlabel('n')
+    axes[1].set_ylabel('$t_{x,y}$ / px')
+    axes[1].legend()
+
+    fig.savefig(f"report/{reportfn}.pdf", 
+                transparent=True, 
+                bbox_inches='tight', 
+                pad_inches=0.1,
+                dpi=120,
+               )
+    
+    plt.close()  # close all to prevent memory leak
