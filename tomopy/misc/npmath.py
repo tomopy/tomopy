@@ -114,4 +114,4 @@ def calc_affine_transform(pts_src, pts_tgt):
     
     # A, res, rank, s = np.linalg.lstsq(pad(pts_src), pad(pts_tgt))
     # return A.T  
-    return np.linalg.lstsq(pad(pts_src), pad(pts_tgt))[0].T
+    return np.linalg.lstsq(pad(pts_src), pad(pts_tgt), rcond=-1)[0].T
