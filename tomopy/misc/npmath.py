@@ -99,9 +99,9 @@ def calc_affine_transform(pts_src, pts_tgt):
     -------
     np.2darray
         A 3x3 2D affine transformation matrix
-                  | r_11  r_12  tx |
-                  | r_21  r_22  ty |
-                  |  0     0     1 |
+          | r_11  r_12  tx |    | x1 x2 ...xn |   | x1' x2' ...xn' |
+          | r_21  r_22  ty | *  | y1 y2 ...yn | = | y1' y2' ...yn' |
+          |  0     0     1 |    |  1  1 ... 1 |   |  1   1  ... 1  |
         where r_ij represents the rotation and t_k represents the translation
     """
     # augment data with padding to include translation
