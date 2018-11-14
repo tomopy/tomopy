@@ -55,18 +55,13 @@ from skimage                import transform              as tf
 from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project     import project
-from tomopy.misc.npmath     import gauss
-from tomopy.misc.npmath     import calc_affine_transform
-from tomopy.misc.npmath     import calc_cummulative_dist
+from tomopy.misc.npmath     import gauss, calc_affine_transform, calc_cummulative_dist
 from scipy.signal           import medfilt2d
 from scipy.optimize         import curve_fit
-from scipy.ndimage          import affine_transform
-from scipy.ndimage          import shift
+from scipy.ndimage          import affine_transform, shift
 from collections            import namedtuple
 
 import dxchange
-
-import matplotlib.pyplot as plt
 
 
 logger = logging.getLogger(__name__)
