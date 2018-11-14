@@ -474,16 +474,18 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
     -------
     typlue
         autodetected slit corners 
+    
+    .. note:: 
+    The outter rim of some images has really strong fluctuations within a 
+    relatively small range, which breaks std based corner detection.  
+    The current workaround is to use a relatively larger initial clip 
+    (autoClipPix>=20) to remove the really noise outter rim.  
+    However, this also means the image of interest has to be really in the 
+    center, and the slit box corner cannot over reach to the acutal 
+    image corner.
     """
 
-    # NOTE: 
-    #   The outter rim of some images has really strong fluctuations within a 
-    #   relatively small range, which breaks std based corner detection.  
-    #   The current workaround is to use a relatively larger initial clip 
-    #   (autoClipPix>=20) to remove the really noise outter rim.  
-    #   However, this also means the image of interest has to be really in the 
-    #   center, and the slit box corner cannot over reach to the acutal 
-    #   image corner.
+
     img = medfilt2d(np.log(img[autoClipPix:-autoClipPix, 
                                autoClipPix:-autoClipPix].astype(np.float64)),
                     kernel_size=3)
