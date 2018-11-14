@@ -474,7 +474,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
     -------
     tuple
         autodetected slit corners (counter-clockwise order)
-        [upperLeft, lowerLeft, lowerRight, upperRight]
+        (upperLeft, lowerLeft, lowerRight, upperRight)
     
     .. note:: 
     The outter rim of some images has really strong fluctuations within a 
@@ -599,6 +599,17 @@ def calc_slit_box_aps_1id(slit_box_corners, inclip=(1,10,1,10)):
     -------
     Tuple:
         Cliping indices as a tuple of four
+        (clipFromTop, clipToBottom, clipFromLeft, clipToRight)
+        ------------------------------------------------------
+                             | clipFromTop      |
+            ==============================================
+                                                |
+                                                | clipToBottom
+                                                | 
+            ==============================================
+
+        ------------------------------------------------------
+
     """
     return (
         np.floor(slit_box_corners[:, 0].min()).astype(int) + inclip[0],  # clip top    row
