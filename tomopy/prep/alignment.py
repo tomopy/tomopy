@@ -472,7 +472,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
     
     Returns
     -------
-    typlue
+    tuple
         autodetected slit corners 
     
     .. note:: 
