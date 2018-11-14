@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy  as np
-import pandas as pd
 import logging
 import warnings
 
@@ -36,7 +35,7 @@ def gauss(x, *p):
     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
 
-def calc_cummulative_dist(data, label=None, steps=None):
+def calc_cummulative_dist(data, steps=None):
     """
     Calculated the cumulative distribution from a data array without using
     binning.  
@@ -45,10 +44,8 @@ def calc_cummulative_dist(data, label=None, steps=None):
 
     Parameters
     ----------
-    data  :  1D np.array | full pd.DataFrame
-        1-D numpy array or dataFrame (when label is provided)
-    label :  [ None | str ], optional
-        column label for analyzed data
+    data  :  1D np.array
+        1-D numpy array 
     steps :  [ None | int ], optional
         Number of elements in the returning array
 
@@ -59,10 +56,7 @@ def calc_cummulative_dist(data, label=None, steps=None):
     pltY  : 1D np.array
         plt data long y (density direction)
     """
-    if isinstance(data, pd.DataFrame):
-        x = np.sort(data[label])
-    else:
-        x = np.sort(data)
+    x = np.sort(data)
 
     # check if list empty
     if len(x) < 1:
