@@ -577,7 +577,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
             cnrs = cnrs + quadrantOrigins
                 
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Available methods are: simple, quadrant, quadrant+")
     
     # return the slit corner detected
     return cnrs+offset
