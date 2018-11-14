@@ -732,7 +732,14 @@ def detector_drift_report_aps_1id(img_correct_F, reportfn):
     axes[1].set_ylabel('$t_{x,y}$ / px')
     axes[1].legend()
 
-    fig.savefig(f"report/{reportfn}.pdf", 
+    # fig.savefig(f"report/{reportfn}.pdf", 
+    #             transparent=True, 
+    #             bbox_inches='tight', 
+    #             pad_inches=0.1,
+    #             dpi=120,
+    #            )
+    
+    fig.savefig("report/{}.pdf".format(reportfn), 
                 transparent=True, 
                 bbox_inches='tight', 
                 pad_inches=0.1,
