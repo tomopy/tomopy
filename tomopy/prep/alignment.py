@@ -473,7 +473,8 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
     Returns
     -------
     tuple
-        autodetected slit corners 
+        autodetected slit corners (counter-clockwise order)
+        [upperLeft, lowerLeft, lowerRight, upperRight]
     
     .. note:: 
     The outter rim of some images has really strong fluctuations within a 
