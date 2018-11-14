@@ -19,7 +19,6 @@ import timemory.options as options
 import numpy as np
 import pylab
 import scipy.ndimage as ndimage
-import matplotlib.pyplot as plt
 import numpy.linalg as LA
 
 
