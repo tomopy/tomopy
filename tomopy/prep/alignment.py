@@ -56,7 +56,7 @@ from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project     import project
 from tomopy.misc.npmath     import gauss, calc_affine_transform, calc_cummulative_dist
-from scipy.signal           import medfilt2d
+from scipy.signal           import medfilt, medfilt2d
 from scipy.optimize         import curve_fit
 from scipy.ndimage          import affine_transform, shift
 from collections            import namedtuple
@@ -457,49 +457,43 @@ def shift_images(prj, sx, sy):
     return prj
 
 
-def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
+def find_slits_corners_aps_1id(img, 
+                               method='quadrant+', 
+                               medfilt2_kernel_size=3,
+                               medfilt_kernel_size=23,
+                               ):
     """
     Automatically locate the slit box location by its four corners.
 
     Parameters
     ----------
-    img          :  np.2darray
+    img                   :  np.2darray
         input 2D images
-    method       :  str,  ['simple', 'quadrant', 'quadrant+'], optional
+    method                :  str,  ['simple', 'quadrant', 'quadrant+'], optional
         method for auto detecting slit corners
-    autoClipPix  :  int,  optional
-        clip out the outer rim to prevent artifacts
+    medfilt2_kernel_size  :  int, optional 
+        2D median filter kernel size for noise reduction
+    medfilt_kernel_size   :  int, optional 
+        1D median filter kernel size for noise reduction
     
     Returns
     -------
     tuple
         autodetected slit corners (counter-clockwise order)
         (upperLeft, lowerLeft, lowerRight, upperRight)
-    
-    .. note:: 
-    The outter rim of some images has really strong fluctuations within a 
-    relatively small range, which breaks std based corner detection.  
-    The current workaround is to use a relatively larger initial clip 
-    (autoClipPix>=20) to remove the really noise outter rim.  
-    However, this also means the image of interest has to be really in the 
-    center, and the slit box corner cannot over reach to the acutal 
-    image corner.
     """
 
 
-    img = medfilt2d(np.log(img[autoClipPix:-autoClipPix, 
-                               autoClipPix:-autoClipPix].astype(np.float64)),
-                    kernel_size=3)
+    img = medfilt2d(np.log(img.astype(np.float64)),
+                    kernel_size=medfilt2_kernel_size,
+                    )
     rows, cols = img.shape
-    
-    # offset due to image clipping
-    offset = np.zeros((4, 2)) + np.array([autoClipPix, autoClipPix])
     
     # simple method is simple, therefore it stands out
     if method.lower() == 'simple':        
         # assuming a rectangle type slit box 
-        col_std = np.std(img, axis=0)
-        row_std = np.std(img, axis=1)
+        col_std = medfilt(np.std(img, axis=0), kernel_size=medfilt_kernel_size)
+        row_std = medfilt(np.std(img, axis=1), kernel_size=medfilt_kernel_size)
         # NOTE: in the tiff img
         #  x is col index, y is the row index  ==> key point here !!!
         #  img slicing is doen with img[row_idx, col_idx]
@@ -541,9 +535,9 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
         if method.lower() == 'quadrant':
             # the standard quadrant method
             for i, q in enumerate(quadrants):
-                cnrs[i,:] = np.array([q.col_func(np.gradient(np.std(q.img, axis=0))),  # x is col_idx
-                                      q.row_func(np.gradient(np.std(q.img, axis=1))),  # y is row_idx
-                                     ])
+                cnrs[i,:] = np.array([q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size))),  # x is col_idx
+                                      q.row_func(np.gradient(medfilt(np.std(q.img, axis=1), kernel_size=medfilt_kernel_size))),  # y is row_idx
+                                    ])
             # add the origin offset back
             cnrs = cnrs + quadrantOrigins
         elif method.lower() == 'quadrant+':
@@ -552,7 +546,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
             #   improve the curve fitting with Lorentz and Voigt fitting function
             for i, q in enumerate(quadrants):
                 # -- find x subpixel position
-                cnr_x_guess = q.col_func(np.gradient(np.std(q.img, axis=0)))
+                cnr_x_guess = q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size)))
                 # isolate the strongest peak to fit
                 tmpx = np.arange(cnr_x_guess-10, cnr_x_guess+11)
                 tmpy = np.gradient(np.std(q.img, axis=0))[tmpx]
@@ -565,7 +559,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
                                     )
                 cnrs[i, 0] = coeff[1]  # x position
                 # -- find y subpixel positoin
-                cnr_y_guess = q.row_func(np.gradient(np.std(q.img, axis=1)))
+                cnr_y_guess = q.row_func(np.gradient(medfilt(np.std(q.img, axis=1), kernel_size=medfilt_kernel_size)))
                 # isolate the peak (x, y here is only associated with the peak)
                 tmpx = np.arange(cnr_y_guess-10, cnr_y_guess+11)
                 tmpy = np.gradient(np.std(q.img, axis=1))[tmpx]
@@ -581,7 +575,7 @@ def find_slits_corners_aps_1id(img, method='quadrant+', autoClipPix=64):
             raise NotImplementedError("Available methods are: simple, quadrant, quadrant+")
     
     # return the slit corner detected
-    return cnrs+offset
+    return cnrs
 
 
 def calc_slit_box_aps_1id(slit_box_corners, inclip=(1,10,1,10)):
