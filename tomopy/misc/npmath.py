@@ -105,7 +105,5 @@ def calc_affine_transform(pts_src, pts_tgt):
     #   scipy affine_transform performs as np.dot(m, vec), 
     #   therefore we need to transpose the matrix here 
     #   to get the correct rotation
-    
-    # A, res, rank, s = np.linalg.lstsq(pad(pts_src), pad(pts_tgt))
-    # return A.T  
+      
     return np.linalg.lstsq(pad(pts_src), pad(pts_tgt), rcond=-1)[0].T
