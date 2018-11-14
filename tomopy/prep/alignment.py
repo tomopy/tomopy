@@ -632,7 +632,7 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1,10,1,10)):
     return imgstacks[:,yl:yu,xl:xu]
 
 
-def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref, reportfn=None):
+def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
     """
     Adjust each still image based on the slit corners and generate report fig
 
@@ -642,10 +642,9 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref, reportfn=None):
         tomopy images stacks (axis_0 is the oemga direction) 
     slit_cnr_ref      :  np.2darray
         reference slit corners from white field images
-    reportfn          :  [str,None]
-        detector drift report name, skip reporting if None
 
     Returns
+    -------
     np.3darray
         adjusted imgstacks
     np.3darray
@@ -689,62 +688,4 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref, reportfn=None):
     # convert proj_cnrs to np.array
     proj_cnrs = np.stack(proj_cnrs, axis=0)
 
-    # -- generate detector drift report
-    if reportfn is not None:
-        detector_drift_report_aps_1id(img_correct_F, reportfn)
-
     return imgstacks, proj_cnrs, img_correct_F
-
-
-def detector_drift_report_aps_1id(img_correct_F, reportfn):
-    """
-    Generate report based on given affine transformation matrices
-
-    Parameters
-    ----------
-    img_correct_F  :  np.3darray
-        transformation matrices used to adjust each image
-    reportfn       :  str
-        report file/fig name base
-
-    Returns
-    -------
-    None
-    """
-    dRminusI = [np.linalg.norm(img_correct_F[n,0:2,0:2] - np.eye(2)) 
-                for n in range(img_correct_F.shape[0])]
-    txs = img_correct_F[:,0,2]
-    tys = img_correct_F[:,1,2]
-    
-    fig, axes = plt.subplots(1, 2, sharey=False, figsize=(10,5))
-
-    # statistics of rotation
-    xx, yy = calc_cummulative_dist(dRminusI)
-    axes[0].plot(xx, yy)
-    axes[0].set_yscale('log')
-    axes[0].set_xscale('log')
-    axes[0].set_xlabel('$|R_i - I|$')
-    axes[0].set_ylabel(r'$\rho$')
-
-    # statistics of translation
-    axes[1].plot(np.arange(img_correct_F.shape[0]), txs, label='$t_x$')
-    axes[1].plot(np.arange(img_correct_F.shape[0]), tys, label='$t_y$')
-    axes[1].set_xlabel('n')
-    axes[1].set_ylabel('$t_{x,y}$ / px')
-    axes[1].legend()
-
-    # fig.savefig(f"report/{reportfn}.pdf", 
-    #             transparent=True, 
-    #             bbox_inches='tight', 
-    #             pad_inches=0.1,
-    #             dpi=120,
-    #            )
-    
-    fig.savefig(os.path.join("report", "{}.pdf".format(reportfn)), 
-                transparent=True, 
-                bbox_inches='tight', 
-                pad_inches=0.1,
-                dpi=120,
-               )
-    
-    plt.close()  # close all to prevent memory leak
