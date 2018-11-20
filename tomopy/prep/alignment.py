@@ -635,16 +635,26 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1,10,1,10)):
     return imgstacks[:,yl:yu,xl:xu]
 
 
-def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
+def detector_drift_adjust_aps_1id(imgstacks, 
+                                  slit_cnr_ref, 
+                                  medfilt2_kernel_size=23,
+                                  medfilt_kernel_size=23,
+                                  ):
     """
     Adjust each still image based on the slit corners and generate report fig
 
     Parameters
     ----------
-    imgstacks         :  np.3darray
+    imgstacks            :  np.3darray
         tomopy images stacks (axis_0 is the oemga direction) 
-    slit_cnr_ref      :  np.2darray
+    slit_cnr_ref         :  np.2darray
         reference slit corners from white field images
+    medfilt2_kernel_size :  int
+        2D median filter kernel size for slit conner detection, larger is better, 
+        but also significantly slower
+    medfilt_kernel_size  :  int
+        1D median filter kernel size for slit conner detection, larger is better, 
+        but also significantly slower
 
     Returns
     -------
@@ -666,6 +676,8 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
         # detect the corners
         proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img,:,:],
                                               method='quadrant+',
+                                              medfilt2_kernel_size=medfilt2_kernel_size,
+                                              medfilt_kernel_size=medfilt_kernel_size,
                                               )
         proj_cnrs.append(proj_cnr)
 
