@@ -46,10 +46,13 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-import numpy as np
+import numpy              as np
+import concurrent.futures as cf
+import tomopy.util.mproc  as mproc
 import logging
 import warnings
 import os
+import dxchange
 
 from skimage                import transform              as tf
 from skimage.feature        import register_translation
@@ -61,7 +64,8 @@ from scipy.optimize         import curve_fit
 from scipy.ndimage          import affine_transform, shift
 from collections            import namedtuple
 
-import dxchange
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -639,6 +643,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
                                   slit_cnr_ref, 
                                   medfilt2_kernel_size=23,
                                   medfilt_kernel_size=23,
+                                  ncore=None,
                                   ):
     """
     Adjust each still image based on the slit corners and generate report fig
@@ -655,6 +660,8 @@ def detector_drift_adjust_aps_1id(imgstacks,
     medfilt_kernel_size  :  int
         1D median filter kernel size for slit conner detection, larger is better, 
         but also significantly slower
+    ncore                :  int
+        number of cores used for speed up
 
     Returns
     -------
@@ -665,42 +672,67 @@ def detector_drift_adjust_aps_1id(imgstacks,
     np.3darray
         transformation matrices used to adjust each image
     """
-    # -- init slit corners for still images
-    proj_cnrs = []
 
-    # -- init affine transformation matrix
-    img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+    ncore  = mproc.mp.cpu_count() if ncore is None else ncore
 
-    # -- work throgh each image 
-    for n_img in range(imgstacks.shape[0]):
-        # detect the corners
-        proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img,:,:],
-                                              method='quadrant+',
-                                              medfilt2_kernel_size=medfilt2_kernel_size,
-                                              medfilt_kernel_size=medfilt_kernel_size,
-                                              )
-        proj_cnrs.append(proj_cnr)
-
-        # calcualte the affine transfomration required
-        img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, 
-                                                         slit_cnr_ref,
-                                                        )
-
-        # adjust the image
-        if np.linalg.norm(img_correct_F[n_img,0:2,0:2] - np.eye(2)) < 1e-4:
-            # shift only when rotation is small
-            imgstacks[n_img,:,:] = shift(imgstacks[n_img,:,:], 
-                                         img_correct_F[n_img,0:2, 2],
-                                        )  
-        else:
-            # perform full affine transformation
-            # NOTE:
-            #  This is particular slow, need optimization
-            imgstacks[n_img,:,:] = affine_transform(imgstacks[n_img,:,:],                # input image
-                                                    img_correct_F[n_img,0:2,0:2],        # rotation matrix
-                                                    offset=img_correct_F[n_img,0:2,  2], # offset vector
-                                                   )
-    # convert proj_cnrs to np.array
+    # -- find all projection corners (slow)
+    with cf.ProcessPoolExecutor(ncore) as e:
+        args = [[imgstacks[n_img,:,:],'quadrant+',23, 23] 
+                  for n_img in range(imgstacks.shape[0]) ] 
+        proj_cnrs = e.map(find_slits_corners_aps_1id, args)
     proj_cnrs = np.stack(proj_cnrs, axis=0)
+
+    # -- calculate affine transformation (fast)
+    img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+    for n_img in range(imgstacks.shape[0]):
+        img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, slit_cnr_ref)
+
+    # -- apply affine transformation (slow)
+    with cf.ProcessPoolExecutor(ncore) as e:
+        args = [[imgstacks[n_img,:,:],                       # input image
+                 img_correct_F[n_img,0:2,0:2],               # rotation matrix
+                 img_correct_F[n_img,0:2,  2],               # offset vector
+                ] for n_img in range(imgstacks.shape[0])
+               ]
+        imgstacks_adjusted = e.map(affine_transform, args)
+    imgstacks = np.stack(imgstacks_adjusted, axis=0)
+
+    # # -- init slit corners for still images
+    # proj_cnrs = []
+
+    # # -- init affine transformation matrix
+    # img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+
+    # # -- work throgh each image 
+    # for n_img in range(imgstacks.shape[0]):
+    #     # detect the corners
+    #     proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img,:,:],
+    #                                           method='quadrant+',
+    #                                           medfilt2_kernel_size=medfilt2_kernel_size,
+    #                                           medfilt_kernel_size=medfilt_kernel_size,
+    #                                           )
+    #     proj_cnrs.append(proj_cnr)
+
+    #     # calcualte the affine transfomration required
+    #     img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, 
+    #                                                      slit_cnr_ref,
+    #                                                     )
+
+    #     # adjust the image
+    #     if np.linalg.norm(img_correct_F[n_img,0:2,0:2] - np.eye(2)) < 1e-4:
+    #         # shift only when rotation is small
+    #         imgstacks[n_img,:,:] = shift(imgstacks[n_img,:,:], 
+    #                                      img_correct_F[n_img,0:2, 2],
+    #                                     )  
+    #     else:
+    #         # perform full affine transformation
+    #         # NOTE:
+    #         #  This is particular slow, need optimization
+    #         imgstacks[n_img,:,:] = affine_transform(imgstacks[n_img,:,:],                # input image
+    #                                                 img_correct_F[n_img,0:2,0:2],        # rotation matrix
+    #                                                 offset=img_correct_F[n_img,0:2,  2], # offset vector
+    #                                                )
+    # # convert proj_cnrs to np.array
+    # proj_cnrs = np.stack(proj_cnrs, axis=0)
 
     return imgstacks, proj_cnrs, img_correct_F
