@@ -706,42 +706,4 @@ def detector_drift_adjust_aps_1id(imgstacks,
                       )
     imgstacks = np.stack([me.result() for me in tmp], axis=0)
 
-    # # -- init slit corners for still images
-    # proj_cnrs = []
-
-    # # -- init affine transformation matrix
-    # img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
-
-    # # -- work throgh each image 
-    # for n_img in range(imgstacks.shape[0]):
-    #     # detect the corners
-    #     proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img,:,:],
-    #                                           method='quadrant+',
-    #                                           medfilt2_kernel_size=medfilt2_kernel_size,
-    #                                           medfilt_kernel_size=medfilt_kernel_size,
-    #                                           )
-    #     proj_cnrs.append(proj_cnr)
-
-    #     # calcualte the affine transfomration required
-    #     img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, 
-    #                                                      slit_cnr_ref,
-    #                                                     )
-
-    #     # adjust the image
-    #     if np.linalg.norm(img_correct_F[n_img,0:2,0:2] - np.eye(2)) < 1e-4:
-    #         # shift only when rotation is small
-    #         imgstacks[n_img,:,:] = shift(imgstacks[n_img,:,:], 
-    #                                      img_correct_F[n_img,0:2, 2],
-    #                                     )  
-    #     else:
-    #         # perform full affine transformation
-    #         # NOTE:
-    #         #  This is particular slow, need optimization
-    #         imgstacks[n_img,:,:] = affine_transform(imgstacks[n_img,:,:],                # input image
-    #                                                 img_correct_F[n_img,0:2,0:2],        # rotation matrix
-    #                                                 offset=img_correct_F[n_img,0:2,  2], # offset vector
-    #                                                )
-    # # convert proj_cnrs to np.array
-    # proj_cnrs = np.stack(proj_cnrs, axis=0)
-
     return imgstacks, proj_cnrs, img_correct_F
