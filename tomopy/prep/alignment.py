@@ -676,10 +676,14 @@ def detector_drift_adjust_aps_1id(imgstacks,
     ncore  = mproc.mp.cpu_count() if ncore is None else ncore
 
     # -- find all projection corners (slow)
+    def _call_find_slits_corners_aps_1id(n):
+        return find_slits_corners_aps_1id(imgstacks[n,:,:],
+                                          method='quadrant+',
+                                          medfilt2_kernel_size=medfilt2_kernel_size,
+                                          medfilt_kernel_size=medfilt_kernel_size,
+                                         )
     with cf.ProcessPoolExecutor(ncore) as e:
-        args = [[imgstacks[n_img,:,:],'quadrant+',23, 23] 
-                  for n_img in range(imgstacks.shape[0]) ] 
-        proj_cnrs = e.map(find_slits_corners_aps_1id, args)
+        proj_cnrs = e.map(_call_find_slits_corners_aps_1id, range(imgstacks.shape[0]))
     proj_cnrs = np.stack(proj_cnrs, axis=0)
 
     # -- calculate affine transformation (fast)
@@ -688,13 +692,13 @@ def detector_drift_adjust_aps_1id(imgstacks,
         img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, slit_cnr_ref)
 
     # -- apply affine transformation (slow)
+    def _call_affine_transform(n):
+        return affine_transform(imgstacks[n,:,:],                # input image
+                                img_correct_F[n,0:2,0:2],        # rotation matrix
+                                offset=img_correct_F[n,0:2,2], # offset vector
+                               )
     with cf.ProcessPoolExecutor(ncore) as e:
-        args = [[imgstacks[n_img,:,:],                       # input image
-                 img_correct_F[n_img,0:2,0:2],               # rotation matrix
-                 img_correct_F[n_img,0:2,  2],               # offset vector
-                ] for n_img in range(imgstacks.shape[0])
-               ]
-        imgstacks_adjusted = e.map(affine_transform, args)
+        imgstacks_adjusted = e.map(_call_affine_transform, range(imgstacks.shape[0]))
     imgstacks = np.stack(imgstacks_adjusted, axis=0)
 
     # # -- init slit corners for still images
