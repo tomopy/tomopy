@@ -692,7 +692,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     # -- calculate affine transformation (fast)
     img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
     for n_img in range(imgstacks.shape[0]):
-        img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnr, slit_cnr_ref)
+        img_correct_F[n_img,:,:] = calc_affine_transform(proj_cnrs[n_img,:,:], slit_cnr_ref)
 
     # -- apply affine transformation (slow)
     tmp = []
