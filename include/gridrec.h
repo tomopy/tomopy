@@ -48,23 +48,16 @@
 #include <stdlib.h>
 
 #ifdef WIN32
-#define DLL __declspec(dllexport)
+#    define DLL __declspec(dllexport)
 #else
-#define DLL
+#    define DLL
 #endif
 #define ANSI
 
-
 void DLL
-gridrec(
-    const float *data,
-    int dy, int dt, int dx,
-    const float *center,
-    const float *theta,
-    float *recon,
-    int ngridx, int ngridy,
-    const char fname[16],
-    const float *filter_par);
+     gridrec(const float* data, int dy, int dt, int dx, const float* center,
+             const float* theta, float* recon, int ngridx, int ngridy,
+             const char fname[16], const float* filter_par);
 
 float*
 malloc_vector_f(size_t n);
@@ -84,8 +77,7 @@ malloc_matrix_c(size_t nr, size_t nc);
 void
 free_matrix_c(float _Complex** m);
 
-float
-(*get_filter(const char *name))(float, int, int, int, const float*);
+float (*get_filter(const char* name))(float, int, int, int, const float*);
 
 float
 filter_none(float, int, int, int, const float*);
@@ -115,26 +107,22 @@ float
 filter_custom2d(float, int, int, int, const float*);
 
 unsigned char
-filter_is_2d(const char *name);
+filter_is_2d(const char* name);
 
 void
-set_filter_tables(
-    int dt, int pd,
-    float fac,
-    float(* const pf)(float, int, int, int, const float*), const float *filter_par,
-    float _Complex *A, unsigned char is2d);
+set_filter_tables(int dt, int pd, float fac,
+                  float (*const pf)(float, int, int, int, const float*),
+                  const float* filter_par, float _Complex* A,
+                  unsigned char is2d);
 
 void
-set_trig_tables(
-    int dt, const float *theta,
-    float **SP, float **CP);
+set_trig_tables(int dt, const float* theta, float** SP, float** CP);
 
 void
-set_pswf_tables(
-    float C, int nt, float lmbda, const float *coefs,
-    int ltbl, int linv, float* wtbl, float* winv);
+set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl,
+                int linv, float* wtbl, float* winv);
 
 float
-legendre(int n, const float *coefs, float x);
+legendre(int n, const float* coefs, float x);
 
 #endif

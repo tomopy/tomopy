@@ -53,14 +53,17 @@ def build_libtomopy():
     with open('Mk.config', 'w') as fout:
         fout.write(conf)
     cmd = ['make', '-j4', '-f', get_makefile()]
-    if INSTALL_PREFIX is not None:
+    _PREFIX_PATH = os.path.abspath(INSTALL_PREFIX)
+    _BINARY_PATH = os.path.abspath(os.path.join(os.getcwd(), ".."))
+    if INSTALL_PREFIX is not None and _PREFIX_PATH != _BINARY_PATH:
         cmd.append('install')
     subprocess.check_call(tuple(cmd))
 
 
 def clean_libtomopy():
     """Clean libtomopy shared library for the current system."""
-    subprocess.check_call(('make', 'clean', '-f', get_makefile()))
+    if os.path.exists(os.path.join(os.getcwd(), "config", "Mk.config")):
+        subprocess.check_call(('make', 'clean', '-f', get_makefile()))
 
 
 class Config:
@@ -79,6 +82,11 @@ class Config:
                 self.conda_compat = '-B %s' % compat
         if 'GCC' in os.environ:
             self.compilerdir = os.environ["GCC"]
+        # CC environment variable is standard, not GCC
+        if 'CC' in os.environ:
+            self.compilerdir = os.environ["CC"]
+            print("### Compiler set via CC environment variable: '{}'".format(
+                self.compilerdir))
         # includes
         top_include = pjoin(PREFIX, 'include')
         includes = [top_include]

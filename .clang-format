@@ -1,0 +1,60 @@
+---
+# requires clang-tidy version 6.0+
+BasedOnStyle: Mozilla
+Language: Cpp
+AlignOperands: true
+AccessModifierOffset: -4
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+AlignAfterOpenBracket: Align
+AlignEscapedNewlinesLeft: false
+AllowShortFunctionsOnASingleLine: All
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+AlwaysBreakAfterReturnType: TopLevel
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: false
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeInheritanceComma: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:       true
+  AfterEnum:        true
+  AfterFunction:    true
+  AfterStruct:      true
+  AfterUnion:       true
+  AfterExternBlock: true
+  BeforeCatch:      false
+  BeforeElse:       false
+  IndentBraces:     false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+ColumnLimit: 80
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 0
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: true
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: false
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SortIncludes: true
+SortUsingDeclarations: true
+SpacesInContainerLiterals: true
+Standard: Cpp11
+TabWidth: 4
+IndentWidth: 4
+UseTab: Never
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+BreakBeforeBraces: Allman
+...

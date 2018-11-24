@@ -362,6 +362,7 @@ def _get_func(algorithm):
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
     ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
+
     if ncore == 1:
         for slc in slcs:
             # run in this thread (useful for debugging)
