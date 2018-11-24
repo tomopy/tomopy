@@ -79,15 +79,15 @@ downsample(
     if (axis == 0)
     {
         dx /= binsize;
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
             for (p = 0; p < binsize; p++) 
             {
-                for (n = 0; n < dy; n++) 
+                for (n = 0; n < (unsigned) dy; n++)
                 {
                     j = n * dz;
-                    for (k = 0; k < dz; k++)
+                    for (k = 0; k < (unsigned) dz; k++)
                     {
                         out[i+j+k] += data[ind]/binsize;
                         ind++;
@@ -99,15 +99,15 @@ downsample(
     else if (axis == 1)
     {
         dy /= binsize;
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
-            for (n = 0; n < dy; n++) 
+            for (n = 0; n < (unsigned) dy; n++)
             {
                 j = n * dz;
                 for (p = 0; p < binsize; p++) 
                 {
-                    for (k = 0; k < dz; k++)
+                    for (k = 0; k < (unsigned) dz; k++)
                     {
                         out[i+j+k] += data[ind]/binsize;
                         ind++;
@@ -119,13 +119,13 @@ downsample(
     else if (axis == 2)
     {
         dz /= binsize;
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
-            for (n = 0; n < dy; n++) 
+            for (n = 0; n < (unsigned) dy; n++)
             {
                 j = n * dz;
-                for (k = 0; k < dz; k++) 
+                for (k = 0; k < (unsigned) dz; k++)
                 {
                     for (p = 0; p < binsize; p++) 
                     {
@@ -155,15 +155,15 @@ upsample(
 
     if (axis == 0)
     {
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
             for (p = 0; p < binsize; p++) 
             {
-                for (n = 0; n < dy; n++) 
+                for (n = 0; n < (unsigned) dy; n++)
                 {
                     j = n * dz;
-                    for (k = 0; k < dz; k++)
+                    for (k = 0; k < (unsigned) dz; k++)
                     {
                         out[ind] = data[i+j+k];
                         ind++;
@@ -174,15 +174,15 @@ upsample(
     }
     else if (axis == 1)
     {
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
-            for (n = 0; n < dy; n++) 
+            for (n = 0; n < (unsigned) dy; n++)
             {
                 j = n * dz;
                 for (p = 0; p < binsize; p++) 
                 {
-                    for (k = 0; k < dz; k++)
+                    for (k = 0; k < (unsigned) dz; k++)
                     {
                         out[ind] = data[i+j+k];
                         ind++;
@@ -193,13 +193,13 @@ upsample(
     }
     else if (axis == 2)
     {
-        for (m = 0, ind = 0; m < dx; m++) 
+        for (m = 0, ind = 0; m < (unsigned) dx; m++)
         {
             i = m * (dy * dz);
-            for (n = 0; n < dy; n++) 
+            for (n = 0; n < (unsigned) dy; n++)
             {
                 j = n * dz;
-                for (k = 0; k < dz; k++) 
+                for (k = 0; k < (unsigned) dz; k++)
                 {
                     for (p = 0; p < binsize; p++) 
                     {
