@@ -1,50 +1,50 @@
 // Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.
 
-// Copyright 2015. UChicago Argonne, LLC. This software was produced 
-// under U.S. Government contract DE-AC02-06CH11357 for Argonne National 
-// Laboratongridx (ANL), which is operated by UChicago Argonne, LLC for the 
-// U.S. Department of Energy. The U.S. Government has rights to use, 
-// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR 
-// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR 
-// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is 
-// modified to produce derivative works, such modified software should 
-// be clearly marked, so as not to confuse it with the version available 
+// Copyright 2015. UChicago Argonne, LLC. This software was produced
+// under U.S. Government contract DE-AC02-06CH11357 for Argonne National
+// Laboratongridx (ANL), which is operated by UChicago Argonne, LLC for the
+// U.S. Department of Energy. The U.S. Government has rights to use,
+// reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
+// UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+// ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
+// modified to produce derivative works, such modified software should
+// be clearly marked, so as not to confuse it with the version available
 // from ANL.
 
-// Additionally, redistribution and use in source and binangridx forms, with 
-// or without modification, are permitted provided that the following 
+// Additionally, redistribution and use in source and binangridx forms, with
+// or without modification, are permitted provided that the following
 // conditions are met:
 
-//     * Redistributions of source code must retain the above copyright 
-//       notice, this list of conditions and the following disclaimer. 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
 
-//     * Redistributions in binangridx form must reproduce the above copyright 
-//       notice, this list of conditions and the following disclaimer in 
-//       the documentation and/or other materials provided with the 
-//       distribution. 
+//     * Redistributions in binangridx form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in
+//       the documentation and/or other materials provided with the
+//       distribution.
 
-//     * Neither the name of UChicago Argonne, LLC, Argonne National 
-//       Laboratongridx, ANL, the U.S. Government, nor the names of its 
-//       contributors may be used to endorse or promote products derived 
-//       from this software without specific prior written permission. 
+//     * Neither the name of UChicago Argonne, LLC, Argonne National
+//       Laboratongridx, ANL, the U.S. Government, nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
 
-// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago 
-// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLAngridx, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEOngridx OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
+// Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLAngridx, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEOngridx OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
 
-    void 
+    void
 grad(
         const float *data, int dy, int dt, int dx,
         const float *center, const float *theta,
@@ -82,7 +82,7 @@ grad(
     int quadrant;
     float theta_p, sin_p, cos_p;
     float mov, xi, yi;
-    int asize, bsize, csize;    
+    int asize, bsize, csize;
     double upd;
     int ind_data, ind_recon;
     float sum_dist2;
@@ -97,8 +97,8 @@ grad(
     for (s=0; s<dy; s++)
     {
         ind_recon = s*ngridx*ngridy;
-        for (iy=0; iy<ngridy; iy++) 
-            for (ix=0; ix<ngridx; ix++) 
+        for (iy=0; iy<ngridy; iy++)
+            for (ix=0; ix<ngridx; ix++)
                 recon[ind_recon+iy*ngridx+ix] /= r;
     }
 
@@ -106,8 +106,8 @@ grad(
     memset(prox1, 0, dy*dt*dx*sizeof(float));
     memcpy(recon0, recon, dy*ngridx*ngridy*sizeof(float));
 
-    //Iterations    
-    for (i=0; i<num_iter; i++) 
+    //Iterations
+    for (i=0; i<num_iter; i++)
     {
         // initialize simdata and grad to 0
         memset(simdata, 0, dy*dt*dx*sizeof(float));
@@ -125,48 +125,48 @@ grad(
             // initialize sum_dist and update to zero
             memset(sum_dist, 0, (ngridx*ngridy)*sizeof(float));
 
-            // For each projection angle 
+            // For each projection angle
             for (p=0; p<dt; p++)
             {
-                // Calculate the sin and cos values 
+                // Calculate the sin and cos values
                 // of the projection angle and find
                 // at which quadrant on the cartesian grid.
-                theta_p = fmod(theta[p], 2*M_PI);
+                theta_p = fmodf(theta[p], 2.0f * (float)M_PI);
                 quadrant = calc_quadrant(theta_p);
                 sin_p = sinf(theta_p);
                 cos_p = cosf(theta_p);
 
-                // For each detector pixel 
+                // For each detector pixel
                 for (d=0; d<dx; d++)
                 {
                     // Calculate coordinates
                     xi = -ngridx-ngridy;
-                    yi = (1-dx)/2.0+d+mov;
+                    yi = 0.5f * (1 - dx) + d + mov;
                     calc_coords(
-                            ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, 
-                            coordx, coordy);
+                        ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                        coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(
-                            ngridx, ngridy, coordx, coordy, gridx, gridy, 
+                            ngridx, ngridy, coordx, coordy, gridx, gridy,
                             &asize, ax, ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
-                    // (bx, by). The new sorted intersection points are 
-                    // stored in (coorx, coory). Total number of points 
+                    // (bx, by). The new sorted intersection points are
+                    // stored in (coorx, coory). Total number of points
                     // are csize.
                     sort_intersections(
-                            quadrant, asize, ax, ay, bsize, bx, by, 
+                            quadrant, asize, ax, ay, bsize, bx, by,
                             &csize, coorx, coory);
 
-                    // Calculate the distances (dist) between the 
-                    // intersection points (coorx, coory). Find the 
+                    // Calculate the distances (dist) between the
+                    // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
                     calc_dist(
-                            ngridx, ngridy, csize, coorx, coory, 
+                            ngridx, ngridy, csize, coorx, coory,
                             indi, dist);
 
-                    // Calculate simdata 
+                    // Calculate simdata
                     calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
                             csize, indi, dist, recon,
                             simdata); // Output: simdata
@@ -175,15 +175,15 @@ grad(
                     prox1[ind_data] = simdata[ind_data]*r - data[ind_data];
 
                     // Calculate dist*dist
-                    sum_dist2 = 0.0;
-                    for (n=0; n<csize-1; n++) 
+                    sum_dist2 = 0.0f;
+                    for (n=0; n<csize-1; n++)
                     {
                         sum_dist2 += dist[n]*dist[n];
                         sum_dist[indi[n]] += dist[n];
                     }
 
-                    if (sum_dist2 != 0.0) 
-                        for (n=0; n<csize-1; n++) 
+                    if (sum_dist2 != 0.0f)
+                        for (n=0; n<csize-1; n++)
                             grad[ind_recon+indi[n]] += 2*r*prox1[ind_data]*dist[n];
                 }
             }
@@ -193,46 +193,46 @@ grad(
         for (s=0; s<dy; s++)
         {
             if (reg_pars[0] < 0)
-            {    
-                 if (i==0) 
+            {
+                 if (i==0)
                     //first gradient step (small)
                     lambda[s] = 1e-3;
                 else
-                {    
+                {
                     upd = 0;
-                    lambda[s] = 0;            
+                    lambda[s] = 0;
                     ind_recon = s*ngridx*ngridy;
-                    for (iy=0; iy<ngridy; iy++) 
-                        for (ix=0; ix<ngridx; ix++) 
+                    for (iy=0; iy<ngridy; iy++)
+                        for (ix=0; ix<ngridx; ix++)
                         {
                             lambda[s] += (recon[ind_recon+iy*ngridx+ix]-recon0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
                             upd += (grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix])*(grad[ind_recon+iy*ngridx+ix]-grad0[ind_recon+iy*ngridx+ix]);
-                        }                
+                        }
                     lambda[s]/=upd;
-                }            
+                }
             }
             else
                 lambda[s] = reg_pars[0];
         }
         //save previous iterations
         memcpy(grad0,grad,dy*ngridx*ngridy*sizeof(float));
-        memcpy(recon0,recon,dy*ngridx*ngridy*sizeof(float));    
+        memcpy(recon0,recon,dy*ngridx*ngridy*sizeof(float));
         //update, recon = recon - lambda*grad
         for (s=0; s<dy; s++)
         {
             ind_recon = s*ngridx*ngridy;
-            for (iy=0; iy<ngridy; iy++) 
-                for (ix=0; ix<ngridx; ix++) 
-                    recon[ind_recon+iy*ngridx+ix] -= lambda[s]*grad[ind_recon+iy*ngridx+ix];                
+            for (iy=0; iy<ngridy; iy++)
+                for (ix=0; ix<ngridx; ix++)
+                    recon[ind_recon+iy*ngridx+ix] -= lambda[s]*grad[ind_recon+iy*ngridx+ix];
         }
     }
-    
+
     //scale result
     for (s=0; s<dy; s++)
     {
         ind_recon = s*ngridx*ngridy;
-        for (iy=0; iy<ngridy; iy++) 
-            for (ix=0; ix<ngridx; ix++) 
+        for (iy=0; iy<ngridy; iy++)
+            for (ix=0; ix<ngridx; ix++)
                 recon[ind_recon+iy*ngridx+ix] *= r;
     }
     free(gridx);
