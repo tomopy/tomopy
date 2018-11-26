@@ -709,11 +709,12 @@ def detector_drift_adjust_aps_1id(imgstacks,
     print(cnrs_found.all())
     while not cnrs_found.all():
         tmp = []
-        medfilt2_kernel_size *= 2+1
+        medfilt2_kernel_size += 2  # use smaller steps
         n_imgList = [idx for idx, cnr_found in enumerate(cnrs_found) 
                          if not cnr_found]
         # debug output
-        print("# of imgs to re-process: {}".format(len(n_imgList)))
+        print(f"kernel size = {medfilt2_kernel_size}")
+        print(f"# of imgs to re-process: {len(n_imgList)}")
         with cf.ProcessPoolExecutor(ncore) as e:
             for n_img in n_imgList:
                 # relative difference in detected slit corners
@@ -752,7 +753,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         # increase counter
         coutner += 1
-        if coutner > 10:
+        if coutner > 11:
             break
 
 
