@@ -641,7 +641,7 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1,10,1,10)):
 
 def detector_drift_adjust_aps_1id(imgstacks, 
                                   slit_cnr_ref, 
-                                  medfilt2_kernel_size=23,
+                                  medfilt2_kernel_size=3,
                                   medfilt_kernel_size=23,
                                   ncore=None,
                                   ):
@@ -676,9 +676,21 @@ def detector_drift_adjust_aps_1id(imgstacks,
     ncore  = mproc.mp.cpu_count() if ncore is None else ncore
 
     # -- find all projection corners (slow)
+    # NOTE:
+    #  Here we are using an iterative approach to find stable slit corners 
+    #  from each image
+    #  1. calculate all slit corners with the given kernel size, preferably 
+    #     a small one for speed.
+    #  2. double the kernel size and calculate again, but this time we are 
+    #     checking whether the slit corners are stable.  
+    #  3. find the ids (n_imgs) for those that are difficult, continue 
+    #     increasing the kernel size until all slit corners are found, or max
+    #     number of iterations.
+    #  4. move on to next step.
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
         for n_img in range(imgstacks.shape[0]):
+            # relative difference in detected slit corners
             tmp.append(e.submit(find_slits_corners_aps_1id, 
                                 imgstacks[n_img,:,:],
                                 method='quadrant+',
@@ -688,6 +700,44 @@ def detector_drift_adjust_aps_1id(imgstacks,
                       )
     # expand results
     proj_cnrs = np.stack([me.result() for me in tmp], axis=0)
+    # start pruning through the results
+    cnrs_found = np.zeros(proj_cnrs.shape[0], dtype=np.bool) 
+    coutner = 0
+    while cnrs_found.all():
+        tmp = []
+        medfilt2_kernel_size *= 2
+        n_imgList = [idx for idx, cnr_found in enumerate(cnrs_found) 
+                         if not cnr_found]
+        # debug output
+        print(n_imgList)
+        with cf.ProcessPoolExecutor(ncore) as e:
+            for n_img in n_imgList:
+                # relative difference in detected slit corners
+                tmp.append(e.submit(find_slits_corners_aps_1id, 
+                                    imgstacks[n_img,:,:],
+                                    method='quadrant+',
+                                    medfilt2_kernel_size=medfilt2_kernel_size,
+                                    medfilt_kernel_size=medfilt_kernel_size,
+                                    )
+                          )
+        # check if the resulting slit is close to the previous one
+        for idx, n_img in enumerate(n_imgList):
+            _cnr = tmp[idx].result()     # new results
+            cnr  = proj_cnrs[n_img,:,:]  # previous results
+            if np.amax(np.absolute((cnr-_cnr)/_cnr)) < 1e-2:
+                cnrs_found[n_img,:,:] = True
+            else:
+                proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
+                print("*"*5 + ":{}".format(coutner))
+                print(cnr)
+                print("-"*5)
+                print(_cnr)
+                print()
+        # increase counter
+        coutner += 1
+        if coutner > 1e4:
+            break
+
 
     # -- calculate affine transformation (fast)
     img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
