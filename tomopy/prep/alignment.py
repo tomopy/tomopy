@@ -704,6 +704,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     # expand results
     proj_cnrs = np.stack([me.result() for me in tmp], axis=0)
     # start pruning through the results
+    quickDiff = lambda x: np.amax(np.absolute(x))
     cnrs_found = np.zeros(proj_cnrs.shape[0], dtype=np.bool) 
     coutner = 0
     print(cnrs_found.all())
@@ -716,7 +717,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
         # NOTE:
         #  so for images we really can't figure out automatically, just give
         #  up for now...
-        if coutner > 11:
+        if coutner > 31:
             # use reference one as we cannot detect the corner...
             for idx, n_img in enumerate(n_imgList):
                 proj_cnrs[n_img,:,:] = slit_cnr_ref
@@ -740,10 +741,9 @@ def detector_drift_adjust_aps_1id(imgstacks,
             cnr  = proj_cnrs[n_img,:,:]  # previous results
             # NOTE:
             #  The detector corner should not be far away from reference
-            #  >> adiff < 10
+            #  >> adiff < 20
             #  The detected corner should be stable
-            #  >> rdiff < 1 (pixel)
-            quickDiff = lambda x: np.amax(np.absolute(x))
+            #  >> rdiff < 1 (pixel)s
             adiff = quickDiff(_cnr - slit_cnr_ref)
             rdiff = quickDiff(_cnr - cnr) 
             if rdiff < 1 and adiff < 20:
