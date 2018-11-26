@@ -709,7 +709,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     print(cnrs_found.all())
     while not cnrs_found.all():
         tmp = []
-        medfilt2_kernel_size *= 2
+        medfilt2_kernel_size *= 2+1
         n_imgList = [idx for idx, cnr_found in enumerate(cnrs_found) 
                          if not cnr_found]
         # debug output
@@ -728,7 +728,16 @@ def detector_drift_adjust_aps_1id(imgstacks,
         for idx, n_img in enumerate(n_imgList):
             _cnr = tmp[idx].result()     # new results
             cnr  = proj_cnrs[n_img,:,:]  # previous results
-            if np.amax(np.absolute((cnr-_cnr)/_cnr)) < 1e-2:
+            # NOTE:
+            #  The detector corner should not be far away from reference
+            #  >> adiff < 10
+            #  The detected corner should be stable
+            #  >> rdiff < 1e-2
+            quickDiff = lambda x: np.amax(np.absolute(x))
+            adiff = quickDiff(_cnr + cnr - slit_cnr_ref*2)
+            rdiff = quickDiff((cnr-_cnr)/_cnr) 
+            
+            if rdiff < 1e-2 and adiff < 10:
                 cnrs_found[n_img,:,:] = True
             else:
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
