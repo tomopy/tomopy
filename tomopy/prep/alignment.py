@@ -712,6 +712,15 @@ def detector_drift_adjust_aps_1id(imgstacks,
         medfilt2_kernel_size += 2  # use smaller steps
         n_imgList = [idx for idx, cnr_found in enumerate(cnrs_found) 
                          if not cnr_found]
+        # check if we are wasting too much time here
+        # NOTE:
+        #  so for images we really can't figure out automatically, just give
+        #  up for now...
+        if coutner > 11:
+            # use reference one as we cannot detect the corner...
+            for idx, n_img in enumerate(n_imgList):
+                proj_cnrs[n_img,:,:] = slit_cnr_ref
+            break
         # debug output
         print(f"kernel size = {medfilt2_kernel_size}")
         print(f"# of imgs to re-process: {len(n_imgList)}")
@@ -753,9 +762,6 @@ def detector_drift_adjust_aps_1id(imgstacks,
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         # increase counter
         coutner += 1
-        if coutner > 11:
-            break
-
 
     # -- calculate affine transformation (fast)
     img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
