@@ -735,20 +735,20 @@ def detector_drift_adjust_aps_1id(imgstacks,
             #  >> rdiff < 1 (pixel)
             quickDiff = lambda x: np.amax(np.absolute(x))
             adiff = quickDiff(_cnr - slit_cnr_ref)
-            rdiff = quickDiff(cnr-_cnr) 
+            rdiff = quickDiff(_cnr - cnr) 
             if rdiff < 1 and adiff < 20:
                 cnrs_found[n_img] = True
             else:
-                print("*"*5 + ":{}@iter_{}with{}/pix&{}/pix".format(n_img,
-                                                                    coutner,
-                                                                    adiff,
-                                                                    rdiff,
-                                                                    )
-                     )
                 _tmpar = np.zeros((4, 5))
-                _tmpar[:,0:2] = cnr
-                _tmpar[:,3:5] = _cnr
+                print("*"*5 + f":{n_img}@iter_{coutner}")
+                print(f"-reference: {adiff}")
+                _tmpar[:,0:2] = _cnr
+                _tmpar[:,3:5] = slit_cnr_ref
                 print(_tmpar)
+                print(f"-previous: {rdiff}")
+                _tmpar[:,3:5] = cnr
+                print(_tmpar)
+                # update results
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         # increase counter
         coutner += 1
