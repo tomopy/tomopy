@@ -732,14 +732,19 @@ def detector_drift_adjust_aps_1id(imgstacks,
             #  The detector corner should not be far away from reference
             #  >> adiff < 10
             #  The detected corner should be stable
-            #  >> rdiff < 1e-2
+            #  >> rdiff < 1 (pixel)
             quickDiff = lambda x: np.amax(np.absolute(x))
             adiff = quickDiff(_cnr - slit_cnr_ref)
-            rdiff = quickDiff((cnr-_cnr)/_cnr) 
-            if rdiff < 1e-2 and adiff < 10:
+            rdiff = quickDiff(cnr-_cnr) 
+            if rdiff < 1 and adiff < 20:
                 cnrs_found[n_img] = True
             else:
-                print("*"*5 + ":{}@{}with{}".format(n_img,coutner,rdiff))
+                print("*"*5 + ":{}@iter_{}with{}/pix&{}/pix".format(n_img,
+                                                                    coutner,
+                                                                    adiff,
+                                                                    rdiff,
+                                                                    )
+                     )
                 _tmpar = np.zeros((4, 5))
                 _tmpar[:,0:2] = cnr
                 _tmpar[:,3:5] = _cnr
@@ -747,7 +752,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         # increase counter
         coutner += 1
-        if coutner > 1e4:
+        if coutner > 10:
             break
 
 
