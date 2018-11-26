@@ -675,6 +675,9 @@ def detector_drift_adjust_aps_1id(imgstacks,
 
     ncore  = mproc.mp.cpu_count() if ncore is None else ncore
 
+    print(imgstacks.shape)
+    print(medfilt2_kernel_size)
+
     # -- find all projection corners (slow)
     # NOTE:
     #  Here we are using an iterative approach to find stable slit corners 
@@ -703,6 +706,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     # start pruning through the results
     cnrs_found = np.zeros(proj_cnrs.shape[0], dtype=np.bool) 
     coutner = 0
+    print(cnrs_found.all())
     while cnrs_found.all():
         tmp = []
         medfilt2_kernel_size *= 2
