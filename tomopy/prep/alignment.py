@@ -738,7 +738,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
             rdiff = quickDiff((cnr-_cnr)/_cnr) 
             
             if rdiff < 1e-2 and adiff < 10:
-                cnrs_found[n_img,:,:] = True
+                cnrs_found[n_img] = True
             else:
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
                 print("*"*5 + ":{}".format(coutner))
