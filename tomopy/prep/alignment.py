@@ -739,14 +739,11 @@ def detector_drift_adjust_aps_1id(imgstacks,
             if rdiff < 1e-2 and adiff < 10:
                 cnrs_found[n_img] = True
             else:
-                print("*"*5 + ":{}@{}".format(n_img,coutner))
-                _tmpar = np.zeros((4, 8))
+                print("*"*5 + ":{}@{}with{}".format(n_img,coutner,rdiff))
+                _tmpar = np.zeros((4, 5))
                 _tmpar[:,0:2] = cnr
-                _tmpar[:,6:8] = _cnr
+                _tmpar[:,3:5] = _cnr
                 print(_tmpar)
-                # print("-"*5)
-                # print(_cnr)
-                # print()
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         # increase counter
         coutner += 1
