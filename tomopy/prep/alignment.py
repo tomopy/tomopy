@@ -696,8 +696,8 @@ def detector_drift_adjust_aps_1id(imgstacks,
                                 medfilt2_kernel_size, 
                                 medfilt_kernel_size,
                                )
-    cnrs_found = [quickDiff(proj_cnrs[n,:,:] - slit_cnr_ref) < 15 
-                    for n in nlist]
+    cnrs_found = np.array([quickDiff(proj_cnrs[n,:,:] - slit_cnr_ref) < 15 
+                            for n in nlist])
     kernels = [(medfilt2_kernel_size+2*i, medfilt_kernel_size+2*j)
                     for i in range(15)
                     for j in range(15)]
