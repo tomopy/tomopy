@@ -53,16 +53,12 @@ Module for reconstruction algorithms.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
 import numpy as np
-import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 from tomopy.sim.project import get_center
 from tomopy.recon.algorithm import init_tomo
-import math
 import logging
-import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 

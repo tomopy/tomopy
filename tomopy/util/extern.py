@@ -57,7 +57,6 @@ import sys
 import os.path
 import ctypes
 import numpy as np
-import glob
 import tomopy.util.dtype as dtype
 import logging
 
