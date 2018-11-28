@@ -48,7 +48,6 @@
 
 import numpy as np
 import logging
-import warnings
 from skimage import transform as tf
 from skimage.feature import register_translation
 from tomopy.recon.algorithm import recon
