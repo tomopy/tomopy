@@ -125,8 +125,8 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
         _kwargs["num_iter"] = nitr
 
     # Reconstruct object.
-    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
-                                  algorithm)):
+    with timemory.util.auto_timer(
+        "[tomopy.recon(algorithm='{}')]".format(algorithm)):
         rec = tomopy.recon(proj, theta, **_kwargs)
 
     # Mask each reconstructed slice with a circle.
@@ -217,6 +217,43 @@ def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
     return imgs
 
 
+def output_analysis(manager, args):
+    # timing report to stdout
+    print('{}\n'.format(manager))
+
+    fpath = args.output_dir
+    timemory.options.output_dir = fpath
+    timemory.options.set_report("run_tomopy.out")
+    timemory.options.set_serial("run_tomopy.json")
+    manager.report()
+    # provide timing plots
+    try:
+        print("\nPlotting TiMemory results...\n")
+        timemory.plotting.plot(files=[timemory.options.serial_filename],
+                               echo_dart=True,
+                               output_dir=timemory.options.output_dir)
+    except Exception as e:
+        print("Exception [timemory.plotting] - {}".format(e))
+    # provide results to dashboard
+    try:
+        print("\nEchoing dart tags...\n")
+        for i in range(0, len(imgs)):
+            img_type = args.format
+            img_name = os.path.basename(imgs[i]).replace(
+                ".{}".format(args.format), "")
+            img_path = imgs[i]
+            timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
+    except Exception as e:
+        print("Exception [echo_dart_tag] - {}".format(e))
+    # provide ASCII results
+    try:
+        print("\nWriting notes...\n")
+        notes = manager.write_ctest_notes(directory=fpath)
+        print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
+    except Exception as e:
+        print("Exception [write_ctest_notes] - {}".format(e))
+
+
 def main(arg):
 
     import multiprocessing as mp
@@ -265,7 +302,7 @@ def main(arg):
     if args.output_dir is None:
         fpath = os.path.basename(os.path.dirname(args.fname))
         args.output_dir = os.path.join(fpath + "_output", args.algorithm)
-        if not os.path.exists(args.output_dir):
+        if tomopy.util.mproc.get_rank() == 0 and not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
 
     manager = timemory.manager()
@@ -297,48 +334,9 @@ def main(arg):
                             args.grainsize)
 
     else:
-        print("File Name does not exist: ", fname)
+        print("File name does not exist: ", fname)
 
-    # timing report to stdout
-    print('{}'.format(manager))
-
-    fpath = args.output_dir
-    timemory.options.output_dir = fpath
-    timemory.options.set_report("run_tomopy.out")
-    timemory.options.set_serial("run_tomopy.json")
-    manager.report()
-    # provide timing plots
-    try:
-        print("\nPlotting TiMemory results...\n")
-        timemory.plotting.plot(files=[timemory.options.serial_filename],
-                               echo_dart=True,
-                               output_dir=timemory.options.output_dir)
-    except Exception as e:
-        print("Exception [timemory.plotting] - {}".format(e))
-    # provide results to dashboard
-    try:
-        print("\nEchoing dart tags...\n")
-        for i in range(0, len(imgs)):
-            print("imgs[{}] = {}".format(i, imgs[i]))
-            img_type = args.format
-            print("Image name: {}".format(img_type))
-            img_name = os.path.basename(imgs[i]).replace(
-                ".{}".format(args.format), "")
-            print("Image name: {}".format(img_name))
-            img_path = imgs[i]
-            print("name: {}, type: {}, path: {}".format(img_name, img_type,
-                                                        img_path))
-            timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
-    except Exception as e:
-        print("Exception [echo_dart_tag] - {}".format(e))
-    # provide ASCII results
-    try:
-        print("\nWriting notes...\n")
-        notes = manager.write_ctest_notes(directory=fpath)
-        print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
-    except Exception as e:
-        print("Exception [write_ctest_notes] - {}".format(e))
-
+    output_analysis(manager, args)
 
 if __name__ == "__main__":
     ret = 0

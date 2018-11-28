@@ -62,6 +62,7 @@ from tomopy.sim.project import get_center
 import math
 import logging
 import concurrent.futures as cf
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -361,7 +362,17 @@ def _get_func(algorithm):
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
-    ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
+    ncore, slcs = mproc.get_worker_ncore_slices(axis_size, ncore, nchunk)
+    all_ncore, all_slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
+    psize = mproc.get_nproc()
+    local_recon = recon
+    #if psize > 1:
+    #    local_recon = np.zeros(recon.shape, dtype=np.float32)
+
+    for slc in all_slcs:
+        if slc not in slcs:
+            recon[slc] = np.zeros(recon[slc].shape, dtype=np.float)
+
     if ncore == 1:
         for slc in slcs:
             # run in this thread (useful for debugging)
@@ -371,7 +382,22 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         with cf.ThreadPoolExecutor(ncore) as e:
             for slc in slcs:
                 e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
-    return recon
+
+
+    # create a barrier
+    if psize > 1:
+        try:
+            from mpi4py import MPI
+            comm_w = MPI.COMM_WORLD
+            local_recon = np.zeros(recon.shape, dtype=np.float32)
+            rank = mproc.get_rank()
+            for slc in all_slcs:
+                comm_w.Allreduce(recon[slc], local_recon[slc])
+        except:
+            print(e)
+            raise
+
+    return local_recon
 
 
 def _get_algorithm_args(theta):

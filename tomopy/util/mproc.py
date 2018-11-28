@@ -81,6 +81,35 @@ ON_HOST = False
 DEBUG = False
 
 
+def get_rank():
+    """ Get the rank of the process """
+    try:
+        from mpi4py import MPI
+        comm_w = MPI.COMM_WORLD
+        return comm_w.Get_rank()
+    except:
+        return 0
+
+
+def get_nproc():
+    """ Get the number of processes """
+    try:
+        from mpi4py import MPI
+        comm_w = MPI.COMM_WORLD
+        return comm_w.Get_size()
+    except:
+        return 1
+
+def barrier():
+    """ Barrier for MPI processes """
+    try:
+        from mpi4py import MPI
+        comm_w = MPI.COMM_WORLD
+        comm_w.Barrier()
+    except:
+        pass
+
+
 def set_debug(val=True):
     """
     Set the global DEBUG variable.
@@ -130,6 +159,46 @@ def get_ncore_slices(axis_size, ncore=None, nchunk=None):
     else:
         # calculate offsets based on chunk size
         slcs = [np.s_[offset:offset+nchunk] for offset in range(0, axis_size, nchunk)]
+    return ncore, slcs
+
+
+def get_worker_ncore_slices(axis_size, ncore=None, nchunk=None):
+    # default ncore to max (also defaults ncore == 0)
+    if not ncore:
+        ncore = mp.cpu_count()
+    if nchunk is None:
+        # calculate number of slices to send to each GPU
+        chunk_size = axis_size // ncore
+        leftover = axis_size % ncore
+        sizes = np.ones(ncore, dtype=np.int) * chunk_size
+        # evenly distribute leftover across workers
+        sizes[:leftover] += 1
+        offsets = np.zeros(ncore+1, dtype=np.int)
+        offsets[1:] = np.cumsum(sizes)
+        slcs = [np.s_[offsets[i]:offsets[i+1]]
+                for i in range(offsets.shape[0]-1)]
+    elif nchunk == 0:
+        # nchunk == 0 is a special case, we will collapse the dimension
+        slcs = [np.s_[i] for i in range(axis_size)]
+    else:
+        # calculate offsets based on chunk size
+        slcs = [np.s_[offset:offset+nchunk]
+                for offset in range(0, axis_size, nchunk)]
+
+    # create a barrier
+    barrier()
+    _size = get_nproc()
+    if _size > 1:
+        _nrank = get_rank()
+        _nsplit = len(slcs) // _size
+        _nmodulo = len(slcs) % _size
+        _offset = _nsplit * _nrank
+        if _nrank == 0:
+            _nsplit += _nmodulo
+        else:
+            _offset += _nmodulo
+        slcs = slcs[_offset:(_offset+_nsplit)]
+
     return ncore, slcs
 
 
@@ -211,16 +280,6 @@ def distribute_jobs(arr,
         shared_out_type = out.dtype
         shared_out = as_sharedmem(out)
 
-    # kick off process
-    # testing single threaded
-#    init_shared(shared_arrays, shared_out)
-#    for i in xrange(0, axis_size, nchunk or 1):
-#        logger.warning("loop %d of %d"%(i+1, axis_size))
-#        if nchunk:
-#            _arg_parser((func, args, kwargs, np.s_[i:i+nchunk], axis))
-#        else:
-#            _arg_parser((func, args, kwargs, i, axis))
-
     # Set up queue
     man = mp.Manager()
     queue = man.Queue()
@@ -233,11 +292,15 @@ def distribute_jobs(arr,
         else:
             map_args.append((func, args, kwargs, i, axis))
 
-    init_shared(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue=queue, on_host=True)
+    init_shared(shared_arrays, shared_out, arr.dtype, shared_shape,
+                shared_out_type, shared_out_shape, queue=queue, on_host=True)
+
     if ncore > 1 and DEBUG is False:
         with closing(mp.Pool(processes=ncore,
                              initializer=init_shared,
-                             initargs=(shared_arrays, shared_out, arr.dtype, shared_shape, shared_out_type, shared_out_shape, queue))) as p:
+                             initargs=(shared_arrays, shared_out, arr.dtype,
+                                       shared_shape, shared_out_type,
+                                       shared_out_shape, queue))) as p:
             if p._pool:
                 proclist = p._pool[:]
                 res = p.map_async(_arg_parser, map_args)

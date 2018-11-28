@@ -44,35 +44,42 @@
 #include "utils.h"
 #include <stdint.h>
 
-//for windows build
+// for windows build
 #ifdef WIN32
-	#ifdef PY3K
-	void PyInit_libtomopy(void){}
-	#else
-	void initlibtomopy(void){}
-	#endif
+#    ifdef PY3K
+void
+PyInit_libtomopy(void)
+{
+}
+#    else
+void
+initlibtomopy(void)
+{
+}
+#    endif
 #endif
 
 //============================================================================//
 
 void
-preprocessing(
-    int ry, int rz,
-    int num_pixels, float center,
-    float *mov, float *gridx, float *gridy)
+preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
+              float* gridx, float* gridy)
 {
     for(int i = 0; i <= ry; ++i)
     {
-        gridx[i] = -ry*0.5f+i;
+        gridx[i] = -ry * 0.5f + i;
     }
 
     for(int i = 0; i <= rz; ++i)
     {
-        gridy[i] = -rz*0.5f+i;
+        gridy[i] = -rz * 0.5f + i;
     }
 
-    *mov = ((float)num_pixels-1)*0.50f-center;
-    if(*mov-floor(*mov) < 0.01f) { *mov += 0.01f; }
+    *mov = ((float) num_pixels - 1) * 0.50f - center;
+    if(*mov - floor(*mov) < 0.01f)
+    {
+        *mov += 0.01f;
+    }
     *mov += 0.5;
 }
 
@@ -93,58 +100,56 @@ calc_quadrant(float theta_p)
     //
     // with a 0.0% incorrect quadrant determination rate
     //
-    const int32_t ipi_c = 340870420;
-    int32_t theta_i = (int32_t) (theta_p * ipi_c);
-    theta_i += (theta_i < 0) ? (2.0f*M_PI*ipi_c) : 0;
+    const int32_t ipi_c   = 340870420;
+    int32_t       theta_i = (int32_t)(theta_p * ipi_c);
+    theta_i += (theta_i < 0) ? (2.0f * M_PI * ipi_c) : 0;
 
-    return ((theta_i >=                0 && theta_i <  0.5f*M_PI*ipi_c) ||
-            (theta_i >=  1.0f*M_PI*ipi_c && theta_i <  1.5f*M_PI*ipi_c))
-            ? 1 : 0;
+    return ((theta_i >= 0 && theta_i < 0.5f * M_PI * ipi_c) ||
+            (theta_i >= 1.0f * M_PI * ipi_c && theta_i < 1.5f * M_PI * ipi_c))
+               ? 1
+               : 0;
 }
 
 //============================================================================//
 
-void calc_coords(int ry, int rz, float xi, float yi,
-                 float sin_p, float cos_p,
-                 const float *gridx, const float *gridy,
-                 float *coordx, float *coordy)
+void
+calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
+            const float* gridx, const float* gridy, float* coordx,
+            float* coordy)
 {
     float srcx, srcy, detx, dety;
     float slope, islope;
-    int n;
+    int   n;
 
-    srcx = xi*cos_p-yi*sin_p;
-    srcy = xi*sin_p+yi*cos_p;
-    detx = -xi*cos_p-yi*sin_p;
-    dety = -xi*sin_p+yi*cos_p;
+    srcx = xi * cos_p - yi * sin_p;
+    srcy = xi * sin_p + yi * cos_p;
+    detx = -xi * cos_p - yi * sin_p;
+    dety = -xi * sin_p + yi * cos_p;
 
-    slope = (srcy-dety)/(srcx-detx);
-    islope = (srcx-detx)/(srcy-dety);
+    slope  = (srcy - dety) / (srcx - detx);
+    islope = (srcx - detx) / (srcy - dety);
 
-    #pragma omp simd
-    for (n=0; n<=ry; n++)
+#pragma omp simd
+    for(n = 0; n <= ry; n++)
     {
-        coordy[n] = slope*(gridx[n]-srcx)+srcy;
+        coordy[n] = slope * (gridx[n] - srcx) + srcy;
     }
-    #pragma omp simd
-    for (n=0; n<=rz; n++)
+#pragma omp simd
+    for(n = 0; n <= rz; n++)
     {
-        coordx[n] = islope*(gridy[n]-srcy)+srcx;
+        coordx[n] = islope * (gridy[n] - srcy) + srcx;
     }
 }
 
 //============================================================================//
 
 void
-trim_coords(
-    int ry, int rz,
-    const float *coordx, const float *coordy,
-    const float *gridx, const float* gridy,
-    int *asize, float *ax, float *ay,
-    int *bsize, float *bx, float *by)
+trim_coords(int ry, int rz, const float* coordx, const float* coordy,
+            const float* gridx, const float* gridy, int* asize, float* ax,
+            float* ay, int* bsize, float* bx, float* by)
 {
-    *asize = 0;
-    *bsize = 0;
+    *asize         = 0;
+    *bsize         = 0;
     float gridx_gt = gridx[0] + 0.01f;
     float gridx_le = gridx[ry] - 0.01f;
 
@@ -175,21 +180,19 @@ trim_coords(
 //============================================================================//
 
 void
-sort_intersections(
-    int ind_condition,
-    int asize, const float *ax, const float *ay,
-    int bsize, const float *bx, const float *by,
-    int *csize, float *coorx, float *coory)
+sort_intersections(int ind_condition, int asize, const float* ax,
+                   const float* ay, int bsize, const float* bx, const float* by,
+                   int* csize, float* coorx, float* coory)
 {
-    int i=0, j=0, k=0;
+    int i = 0, j = 0, k = 0;
     if(ind_condition == 0)
     {
-        while(i<asize && j<bsize)
+        while(i < asize && j < bsize)
         {
-            if (ax[asize-1-i] < bx[j])
+            if(ax[asize - 1 - i] < bx[j])
             {
-                coorx[k] = ax[asize-1-i];
-                coory[k] = ay[asize-1-i];
+                coorx[k] = ax[asize - 1 - i];
+                coory[k] = ay[asize - 1 - i];
                 ++i;
             }
             else
@@ -201,14 +204,14 @@ sort_intersections(
             ++k;
         }
 
-        while (i < asize)
+        while(i < asize)
         {
-            coorx[k] = ax[asize-1-i];
-            coory[k] = ay[asize-1-i];
+            coorx[k] = ax[asize - 1 - i];
+            coory[k] = ay[asize - 1 - i];
             ++i;
             ++k;
         }
-        while (j < bsize)
+        while(j < bsize)
         {
             coorx[k] = bx[j];
             coory[k] = by[j];
@@ -220,9 +223,9 @@ sort_intersections(
     }
     else
     {
-        while (i<asize && j<bsize)
+        while(i < asize && j < bsize)
         {
-            if (ax[i] < bx[j])
+            if(ax[i] < bx[j])
             {
                 coorx[k] = ax[i];
                 coory[k] = ay[i];
@@ -244,7 +247,7 @@ sort_intersections(
             ++i;
             ++k;
         }
-        while (j < bsize)
+        while(j < bsize)
         {
             coorx[k] = bx[j];
             coory[k] = by[j];
@@ -258,9 +261,8 @@ sort_intersections(
 //============================================================================//
 
 void
-calc_dist(int ry, int rz, int csize,
-          const float *coorx, const float *coory,
-          int *indi, float *dist)
+calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
+          int* indi, float* dist)
 {
     const int _size = csize - 1;
 
@@ -271,17 +273,23 @@ calc_dist(int ry, int rz, int csize,
         float _diffx[_size];
         float _diffy[_size];
 
-        #pragma omp simd
-        for(int n = 0; n < _size; ++n) {
-            _diffx[n] = (coorx[n+1] - coorx[n]) * (coorx[n+1] - coorx[n]); }
+#pragma omp simd
+        for(int n = 0; n < _size; ++n)
+        {
+            _diffx[n] = (coorx[n + 1] - coorx[n]) * (coorx[n + 1] - coorx[n]);
+        }
 
-        #pragma omp simd
-        for (int n = 0; n < _size; ++n) {
-            _diffy[n] = (coory[n + 1] - coory[n]) * (coory[n + 1] - coory[n]); }
+#pragma omp simd
+        for(int n = 0; n < _size; ++n)
+        {
+            _diffy[n] = (coory[n + 1] - coory[n]) * (coory[n + 1] - coory[n]);
+        }
 
-        #pragma omp simd
-        for(int n = 0; n < _size; ++n) {
-            dist[n] = sqrtf(_diffx[n] + _diffy[n]); }
+#pragma omp simd
+        for(int n = 0; n < _size; ++n)
+        {
+            dist[n] = sqrtf(_diffx[n] + _diffy[n]);
+        }
     }
 
     //------------------------------------------------------------------------//
@@ -292,138 +300,160 @@ calc_dist(int ry, int rz, int csize,
     float _midy[_size];
     float _x1[_size];
     float _x2[_size];
-    int _i1[_size];
-    int _i2[_size];
-    int _indx[_size];
-    int _indy[_size];
+    int   _i1[_size];
+    int   _i2[_size];
+    int   _indx[_size];
+    int   _indy[_size];
 
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _midx[n] = 0.5f*(coorx[n+1] + coorx[n]); }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _midy[n] = 0.5f*(coory[n+1] + coory[n]); }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _x1[n] = _midx[n] + 0.5f*ry; }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _x2[n] = _midy[n] + 0.5f*rz; }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _i1[n] = (int)(_midx[n] + 0.5f*ry); }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _i2[n] = (int)(_midy[n] + 0.5f*rz); }
-    #pragma omp simd
-    for(int n = 0; n < _size; ++n) { _indx[n] = _i1[n] - (_i1[n] > _x1[n]); }
-    #pragma omp simd
-    for (int n = 0; n < _size; ++n) { _indy[n] = _i2[n] - (_i2[n] > _x2[n]); }
-    #pragma omp simd
-    for (int n = 0; n < _size; ++n) { indi[n] = _indy[n] + (_indx[n] * rz); }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _midx[n] = 0.5f * (coorx[n + 1] + coorx[n]);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _midy[n] = 0.5f * (coory[n + 1] + coory[n]);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _x1[n] = _midx[n] + 0.5f * ry;
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _x2[n] = _midy[n] + 0.5f * rz;
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _i1[n] = (int) (_midx[n] + 0.5f * ry);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _i2[n] = (int) (_midy[n] + 0.5f * rz);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _indx[n] = _i1[n] - (_i1[n] > _x1[n]);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        _indy[n] = _i2[n] - (_i2[n] > _x2[n]);
+    }
+#pragma omp simd
+    for(int n = 0; n < _size; ++n)
+    {
+        indi[n] = _indy[n] + (_indx[n] * rz);
+    }
 }
 
 //============================================================================//
 
 void
-calc_dist2(
-    int ry, int rz,
-    int csize, const float *coorx, const float *coory,
-    int *indx, int *indy, float *dist)
+calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory,
+           int* indx, int* indy, float* dist)
 {
-
-    #pragma omp simd
-    for(int n = 0; n < csize-1; ++n)
+#pragma omp simd
+    for(int n = 0; n < csize - 1; ++n)
     {
-        float diffx = coorx[n+1]-coorx[n];
-        float diffy = coory[n+1]-coory[n];
-        dist[n] = sqrt(diffx*diffx+diffy*diffy);
+        float diffx = coorx[n + 1] - coorx[n];
+        float diffy = coory[n + 1] - coory[n];
+        dist[n]     = sqrt(diffx * diffx + diffy * diffy);
     }
 
-    #pragma omp simd
-    for(int n = 0; n < csize-1; ++n)
+#pragma omp simd
+    for(int n = 0; n < csize - 1; ++n)
     {
-        float midx = (coorx[n+1]+coorx[n])*0.5f;
-        float midy = (coory[n+1]+coory[n])*0.5f;
-        float x1 = midx+ry*0.5f;
-        float x2 = midy+rz*0.5f;
-        int i1 = (int)(midx+ry*0.5f);
-        int i2 = (int)(midy+rz*0.5f);
-        indx[n] = i1-(i1>x1);
-        indy[n] = i2-(i2>x2);
+        float midx = (coorx[n + 1] + coorx[n]) * 0.5f;
+        float midy = (coory[n + 1] + coory[n]) * 0.5f;
+        float x1   = midx + ry * 0.5f;
+        float x2   = midy + rz * 0.5f;
+        int   i1   = (int) (midx + ry * 0.5f);
+        int   i2   = (int) (midy + rz * 0.5f);
+        indx[n]    = i1 - (i1 > x1);
+        indy[n]    = i2 - (i2 > x2);
     }
 }
 
 //============================================================================//
 
 void
-calc_simdata(
-    int s, int p, int d,
-    int ry, int rz,
-    int dt, int dx,
-    int csize, const int *indi, const float *dist,
-    const float *model, float *simdata)
+calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+             const int* indi, const float* dist, const float* model,
+             float* simdata)
 {
-    int index_model = s*ry*rz;
-    int index_data = d + p*dx + s*dt*dx;
-    for(int n = 0; n < csize-1; ++n)
+    int index_model = s * ry * rz;
+    int index_data  = d + p * dx + s * dt * dx;
+    for(int n = 0; n < csize - 1; ++n)
     {
-        simdata[index_data] += model[indi[n]+index_model]*dist[n];
+        simdata[index_data] += model[indi[n] + index_model] * dist[n];
     }
 }
 
 //============================================================================//
 
 void
-calc_simdata2(
-    int s, int p, int d,
-    int ry, int rz,
-    int dt, int dx,
-    int csize, const int *indx, const int *indy, const float *dist,
-    float vx, float vy,
-    const float *modelx, const float *modely, float *simdata)
-{
-    int n;
-
-    for (n=0; n<csize-1; n++)
-    {
-        simdata[d + p*dx + s*dt*dx] += (modelx[indy[n] + indx[n]*rz + s*ry*rz] * vx +
-                                        modely[indy[n] + indx[n]*rz + s*ry*rz] * vy) * dist[n];
-    }
-}
-
-//============================================================================//
-
-void
-calc_simdata3(
-    int s, int p, int d,
-    int ry, int rz,
-    int dt, int dx,
-    int csize, const int *indx, const int *indy, const float *dist,
-    float vx, float vy,
-    const float *modelx, const float *modely, const float *modelz, int axis, float *simdata)
+calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+              const int* indx, const int* indy, const float* dist, float vx,
+              float vy, const float* modelx, const float* modely,
+              float* simdata)
 {
     int n;
 
-    if (axis==0)
+    for(n = 0; n < csize - 1; n++)
     {
-        for (n=0; n<csize-1; n++)
-        {
-            simdata[d + p*dx + s*dt*dx] += (modelx[indy[n] + indx[n]*rz + s*ry*rz] * vx +
-                                            modely[indy[n] + indx[n]*rz + s*ry*rz] * vy) * dist[n];
-        }
-    }
-    else if (axis==1)
-    {
-        for (n=0; n<csize-1; n++)
-        {
-            simdata[d + p*dx + s*dt*dx] += (modely[s + indx[n]*rz + indy[n]*ry*rz] * vx +
-                                            modelz[s + indx[n]*rz + indy[n]*ry*rz] * vy) * dist[n];
-        }
-    }
-    else if (axis==2)
-    {
-        for (n=0; n<csize-1; n++)
-        {
-            simdata[d + p*dx + s*dt*dx] += (modelx[indx[n] + s*rz + indy[n]*ry*rz] * vx +
-                                            modelz[indx[n] + s*rz + indy[n]*ry*rz] * vy) * dist[n];
-        }
+        simdata[d + p * dx + s * dt * dx] +=
+            (modelx[indy[n] + indx[n] * rz + s * ry * rz] * vx +
+             modely[indy[n] + indx[n] * rz + s * ry * rz] * vy) *
+            dist[n];
     }
 }
 
 //============================================================================//
 
+void
+calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+              const int* indx, const int* indy, const float* dist, float vx,
+              float vy, const float* modelx, const float* modely,
+              const float* modelz, int axis, float* simdata)
+{
+    int n;
+
+    if(axis == 0)
+    {
+        for(n = 0; n < csize - 1; n++)
+        {
+            simdata[d + p * dx + s * dt * dx] +=
+                (modelx[indy[n] + indx[n] * rz + s * ry * rz] * vx +
+                 modely[indy[n] + indx[n] * rz + s * ry * rz] * vy) *
+                dist[n];
+        }
+    }
+    else if(axis == 1)
+    {
+        for(n = 0; n < csize - 1; n++)
+        {
+            simdata[d + p * dx + s * dt * dx] +=
+                (modely[s + indx[n] * rz + indy[n] * ry * rz] * vx +
+                 modelz[s + indx[n] * rz + indy[n] * ry * rz] * vy) *
+                dist[n];
+        }
+    }
+    else if(axis == 2)
+    {
+        for(n = 0; n < csize - 1; n++)
+        {
+            simdata[d + p * dx + s * dt * dx] +=
+                (modelx[indx[n] + s * rz + indy[n] * ry * rz] * vx +
+                 modelz[indx[n] + s * rz + indy[n] * ry * rz] * vy) *
+                dist[n];
+        }
+    }
+}
+
+//============================================================================//

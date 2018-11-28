@@ -53,6 +53,7 @@ import unittest
 from ..util import read_file
 from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
     find_center_pc
+from tomopy.util.mproc import get_rank, get_nproc, barrier
 import numpy as np
 from scipy.ndimage.interpolation import shift as image_shift
 import os.path
@@ -68,6 +69,8 @@ __docformat__ = 'restructuredtext en'
 class CenterFindingTestCase(unittest.TestCase):
     def test_write_center(self):
         dpath = os.path.join('test', 'tmp')
+        if get_nproc() > 1 and get_rank() > 0:
+            dpath += "_{}".format(get_rank())
         cen_range = (5, 7, 0.5)
         cen = np.arange(*cen_range)
         write_center(
