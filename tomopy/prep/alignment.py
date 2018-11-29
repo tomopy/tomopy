@@ -467,13 +467,21 @@ def find_slits_corners_aps_1id(img,
 
     Parameters
     ----------
-    img                   :  np.2darray
-        input 2D images
-    method                :  str,  ['simple', 'quadrant', 'quadrant+'], optional
+    img : np.ndarray
+        2D images
+    method : str,  ['simple', 'quadrant', 'quadrant+'], optional
         method for auto detecting slit corners
-    medfilt2_kernel_size  :  int, optional
+            - simple    :: assume a rectange slit box, fast but less accurate
+                           (1 pixel precision)
+            - quadrant  :: subdivide the image into four quandrant, then use 
+                           an explicit method to find the corner
+                           (1 pixel precision)
+            - quadrant+ :: similar to quadrant, but use curve_fit (gauss1d) to 
+                           find the corner
+                           (0.1 pixel precision)
+    medfilt2_kernel_size : int, optional
         2D median filter kernel size for noise reduction
-    medfilt_kernel_size   :  int, optional
+    medfilt_kernel_size : int, optional
         1D median filter kernel size for noise reduction
 
     Returns
@@ -612,9 +620,9 @@ def calc_slit_box_aps_1id(slit_box_corners, inclip=(1, 10, 1, 10)):
 
     Parameters
     ----------
-    slit_box_corners  :  np.2darray
+    slit_box_corners : np.ndarray
         Four corners of the slit box as a 4x2 matrix
-    inclip            :  tuple, optional
+    inclip : tuple, optional
         Extra inclipping to avoid clipping artifacts
 
     Returns
@@ -651,16 +659,16 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1, 10, 1, 10)):
 
     Parameters
     ----------
-    imgstacks         :  np.3darray
+    imgstacks : np.ndarray
         tomopy images stacks (axis_0 is the oemga direction)
-    slit_box_corners  :  np.2darray
+    slit_box_corners : np.ndarray
         four corners of the slit box
-    inclip            :  tuple, optional
+    inclip : tuple, optional
         Extra inclipping to avoid clipping artifacts
 
     Returns
     -------
-    np.3darray
+    np.ndarray
         tomopy images stacks without regions outside slits
     """
     xl, xu, yl, yu = calc_slit_box_aps_1id(slit_box_corners, inclip=inclip)
@@ -673,18 +681,18 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
 
     Parameters
     ----------
-    imgstacks         :  np.3darray
+    imgstacks : np.ndarray
         tomopy images stacks (axis_0 is the oemga direction)
-    slit_cnr_ref      :  np.2darray
+    slit_cnr_ref : np.ndarray
         reference slit corners from white field images
 
     Returns
     -------
-    np.3darray
+    np.ndarray
         adjusted imgstacks
-    np.3darray
+    np.ndarray
         detected corners on each still image
-    np.3darray
+    np.ndarray
         transformation matrices used to adjust each image
     """
     # -- init slit corners for still images
