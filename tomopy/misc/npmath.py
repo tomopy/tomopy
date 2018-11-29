@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import scipy
 import logging
 import warnings
 
@@ -103,4 +104,4 @@ def calc_affine_transform(pts_source, pts_target):
     #   therefore we need to transpose the matrix here
     #   to get the correct rotation
 
-    return np.linalg.lstsq(pad(pts_source), pad(pts_target), rcond=-1)[0].T
+    return scipy.linalg.lstsq(pad(pts_source), pad(pts_target), rcond=-1)[0].T
