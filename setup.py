@@ -1,7 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+import os
+import sys
+import glob
+import shutil
+import subprocess as sp
+from setuptools import setup, find_packages, Extension
+from distutils.command.clean import clean
+from distutils.command.build_ext import build_ext
+
+
+class TomoPyBuild(build_ext):
+
+    def run(self):
+        for ext in self.extensions:
+            self.build_extension(ext)
+
+    def build_extension(self, ext):
+        extdir = os.path.abspath(
+            os.path.dirname(self.get_ext_fullpath(ext.name)))
+        sp.check_call((sys.executable, 'build.py',
+            '--prefix={}'.format(extdir)))
+
+
+class TomoPyClean(clean):
+
+    def run(self):
+        sp.check_call((sys.executable, 'build.py', '--clean'))
+        for d in [ "build", "tomopy.egg-info", "dist" ]:
+            d = os.path.join(os.getcwd(), d)
+            shutil.rmtree(d, ignore_errors=True)
+
 
 setup(
     name='tomopy',
@@ -17,6 +47,10 @@ setup(
     download_url='http://github.com/tomopy/tomopy.git',
     license='BSD-3',
     platforms='Any',
+    # add extension module
+    ext_modules=[Extension('libtomopy', sources=[])],
+    # add custom build_ext command
+    cmdclass=dict(build_ext=TomoPyBuild,clean=TomoPyClean),
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',

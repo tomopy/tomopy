@@ -75,11 +75,12 @@ default_options = {
         'gpu_list': None,
     },
     'lprec': {
-        'lpmethod': 'lpfbp',
+        'lpmethod': 'fbp',
         'interp_type': 'cubic',
         'filter_name': 'None',
-        'num_iter': '1',
-        'reg_par': '1',
+        'num_iter': 1,
+        'reg_par': 1,
+        'gpu_list': [0],
     }
 }
 
@@ -366,10 +367,11 @@ def lprec(tomo, center, recon, theta, **kwargs):
     ----------
     lpmethod : str
         LP reconsruction method to use
-            - 'lpfbp'
-            - 'lpgrad'
-            - 'lptv'
-            - 'lpem'
+            - 'fbp'
+            - 'grad'
+            - 'cg'
+            - 'tv'
+            - 'em'
     filter_type:
         Filter for backprojection
             - 'ramp'
@@ -399,12 +401,10 @@ def lprec(tomo, center, recon, theta, **kwargs):
     >>> pylab.imshow(rec[64], cmap='gray')
     >>> pylab.show()
     """
-    lpmethods = {'lpfbp': lpfbp,
-                 'lpgrad': lpgrad,
-                 'lptv': lptv,
-                 'lpem': lpem}
-
     from lprec import lpTransform
+    from lprec import lpmethods
+    import concurrent.futures as cf
+    from functools import partial
 
     # set default options
     opts = kwargs
@@ -417,148 +417,59 @@ def lprec(tomo, center, recon, theta, **kwargs):
     lpmethod = opts['lpmethod']
     num_iter = opts['num_iter']
     reg_par = opts['reg_par']
+    gpu_list = opts['gpu_list']
 
-    # Init lp method
-    # number of slices for simultanious processing by 1 gpu, chosen for 4GB gpus
-    Nslices, Nproj, N = tomo.shape
-    Nslices0 = min(int(pow(2, 23)/float(N*N)), Nslices)
-    lphandle = lpTransform.lpTransform(
-        N, Nproj, Nslices0, filter_name, int(center[0]+0.5), interp_type)
+    # list of available methods for reconstruction
+    lpmethods_list = {
+        'fbp': lpmethods.fbp,
+        'grad': lpmethods.grad,
+        'cg': lpmethods.cg,
+        'tv': lpmethods.tv,
+        'em': lpmethods.em
+    }
 
-    if(lpmethod == 'lpfbp'):
-        # precompute only for the adj transform
-        lphandle.precompute(0)
-        lphandle.initcmem(0)
-        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
-            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
-            recon[ids] = lpmethods[lpmethod](lphandle, tomo[ids])
-    else:
-        # precompute for both fwd and adj transforms
-        lphandle.precompute(1)
-        lphandle.initcmem(1)
-        # run
-        for k in range(0, int(np.ceil(Nslices/float(Nslices0)))):
-            ids = range(k*Nslices0, min(Nslices, (k+1)*Nslices0))
-            recon[ids] = lpmethods[lpmethod](
-                lphandle, recon[ids], tomo[ids], num_iter, reg_par)
+    [Ns, Nproj, N] = tomo.shape
+    ngpus = len(gpu_list)
 
+    # number of slices for simultaneous processing by 1 gpu
+    # (depends on gpu memory size, chosen for gpus with >= 4GB memory)
+    Nssimgpu = min(int(pow(2, 24)/float(N*N)), int(np.ceil(Ns/float(ngpus))))
 
-def lpfbp(lp, tomo):
-    """
-    Reconstruction with Filtered backprojection
-    """
+    # class lprec
+    lp = lpTransform.lpTransform(
+        N, Nproj, Nssimgpu, filter_name, int(center[0]), interp_type)
+    # if not fbp, precompute for the forward transform
+    lp.precompute(lpmethod != 'fbp')
 
-    return lp.adj(tomo)
+    # list of slices sets for simultaneous processing b gpus
+    ids_list = [None]*int(np.ceil(Ns/float(Nssimgpu)))
+    for k in range(0, len(ids_list)):
+        ids_list[k] = range(k*Nssimgpu, min(Ns, (k+1)*Nssimgpu))
 
+    # init memory for each gpu
+    for igpu in range(0, ngpus):
+        gpu = gpu_list[igpu]
+        # if not fbp, allocate memory for the forward transform arrays
+        lp.initcmem(lpmethod != 'fbp', gpu)
 
-def lpgrad(lp, recon, tomo, num_iter, reg_par):
-    """
-    Reconstruction with the gradient descent method
-    with the regularization parameter reg_par,
-    if reg_par<0, then reg_par is computed on each iteration
-    Solving the problem 1/2||R(recon)-tomo||^2_2 -> min
-    """
-
-    recon0 = recon
-    grad = recon*0
-    grad0 = recon*0
-
-    for i in range(0, num_iter):
-        grad = 2*lp.adj(lp.fwd(recon)-tomo)
-        if(reg_par < 0):
-            if(i == 0):
-                lam = np.float32(1e-3*np.ones(tomo.shape[0]))
-            else:
-                lam = np.sum(np.sum((recon-recon0)*(grad-grad0), 1), 1) / \
-                    np.sum(np.sum((grad-grad0)*(grad-grad0), 1), 1)
-        else:
-            lam = np.float32(reg_par*np.ones(tomo.shape[0]))
-        recon0 = recon
-        grad0 = grad
-        recon = recon - np.reshape(lam, [tomo.shape[0], 1, 1])*grad
+    # run reconstruciton on many gpus
+    with cf.ThreadPoolExecutor(ngpus) as e:
+        shift = 0
+        for reconi in e.map(partial(lpmultigpu, lp, lpmethods_list[lpmethod], recon, tomo, num_iter, reg_par, gpu_list), ids_list):
+            recon[np.arange(0, reconi.shape[0])+shift] = reconi
+            shift += reconi.shape[0]
 
     return recon
 
 
-def lptv(lp, recon, tomo, num_iter, reg_par):
+def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, ids):
     """
-    Reconstruction with the total variation method
-    with the regularization parameter reg_par.
-    Solving the problem 1/2||R(recon)-tomo||^2_2 + reg_par*TV(recon) -> min
+    Reconstruction Nssimgpu slices simultaneously on 1 GPU
     """
+    # take gpu number with respect to the current thread
+    gpu = gpu_list[int(threading.current_thread().name.split("_", 1)[1])]
+    print([gpu, ids])
+    # reconstruct
+    recon[ids] = lpmethod(lp, recon[ids], tomo[ids], num_iter, reg_par, gpu)
 
-    lam = reg_par
-    c = 0.35  # 1/power_method(lp,tomo,num_iter)
-
-    recon0 = recon
-    prox0x = recon*0
-    prox0y = recon*0
-    div0 = recon*0
-    prox1 = tomo*0
-
-    for i in range(0, num_iter):
-        # forward step
-        # compute proximal prox0
-        prox0x[:, :, :-1] += c*(recon[:, :, 1:]-recon[:, :, :-1])
-        prox0y[:, :-1, :] += c*(recon[:, 1:, :]-recon[:, :-1, :])
-        nprox = np.maximum(1, np.sqrt(prox0x*prox0x+prox0y*prox0y)/lam)
-        prox0x = prox0x/nprox
-        prox0y = prox0y/nprox
-        # compute proximal prox1
-        prox1 = (prox1+c*lp.fwd(recon)-c*tomo)/(1+c)
-
-        # backward step
-        recon = recon0
-        div0[:, :, 1:] = (prox0x[:, :, 1:]-prox0x[:, :, :-1])
-        div0[:, :, 0] = prox0x[:, :, 0]
-        div0[:, 1:, :] += (prox0y[:, 1:, :]-prox0y[:, :-1, :])
-        div0[:, 0, :] += prox0y[:, 0, :]
-        recon0 = recon0-c*lp.adj(prox1)+c*div0
-
-        # update recon
-        recon = 2*recon0 - recon
-
-    return recon
-
-
-def lpem(lp, recon, tomo, num_iter, reg_par):
-    """
-    Reconstruction with the Expectation Maximization algorithm for denoising
-    with parameter reg_par manually chosen for avoiding division by 0.
-    Maximization of the likelihood function L(tomo,rho) 
-    """
-
-    eps = reg_par
-    # R^*(ones)
-    xi = lp.adj(tomo*0+1)
-    # modification for avoiing division by 0
-    xi = xi+eps*np.max(xi)
-    e = np.max(tomo)*eps
-
-    for i in range(0, num_iter):
-        g = lp.fwd(recon)
-        upd = lp.adj(tomo/(g+e))
-        recon = recon*(upd/xi)
-    return recon
-
-
-def power_method(lp, tomo, num_iter):
-    """
-    Power_method for estimating constant c in the lptv method
-    """
-
-    x = lp.adj(tomo)
-    for k in range(0, num_iter):
-        prox0x = x*0
-        prox0y = x*0
-        div0 = x*0
-        prox0x[:, :, :-1] = x[:, :, 1:]-x[:, :, :-1]
-        prox0y[:, :-1, :] = x[:, 1:, :]-x[:, :-1, :]
-        div0[:, :, 1:] = (prox0x[:, :, 1:]-prox0x[:, :, :-1])
-        div0[:, :, 0] = prox0x[:, :, 0]
-        div0[:, 1:, :] += (prox0y[:, 1:, :]-prox0y[:, :-1, :])
-        div0[:, 0, :] += prox0y[:, 0, :]
-        x = lp.adj(lp.fwd(x)) - div0
-        s = np.linalg.norm(x)
-        x = x/s
-    return np.sqrt(s)
+    return recon[ids]
