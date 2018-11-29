@@ -539,7 +539,7 @@ def find_slits_corners_aps_1id(img,
                               col_func=np.argmin, row_func=np.argmax),
                      ]
         # the origin in each quadrants ==> easier to set it here
-        quadrantOrigins = np.array([[0, 0],  # upper left,  1st quadrant
+        quadrantorigins = np.array([[0, 0],  # upper left,  1st quadrant
                                     [0, cnt[1]],  # lower left,  2nd quadrant
                                     # lower right, 3rd quadrant
                                     [cnt[0], cnt[1]],
@@ -561,7 +561,7 @@ def find_slits_corners_aps_1id(img,
                     # y is row_idx
                 ])
             # add the origin offset back
-            cnrs = cnrs + quadrantOrigins
+            cnrs = cnrs + quadrantorigins
         elif method.lower() == 'quadrant+':
             # use Gaussian curve fitting to achive subpixel precision
             # TODO:
@@ -603,7 +603,7 @@ def find_slits_corners_aps_1id(img,
                                      )
                 cnrs[i, 1] = coeff[1]  # y posiiton
             # add the quadrant shift back
-            cnrs = cnrs + quadrantOrigins
+            cnrs = cnrs + quadrantorigins
 
         else:
             raise NotImplementedError(
@@ -615,7 +615,7 @@ def find_slits_corners_aps_1id(img,
 
 def calc_slit_box_aps_1id(slit_box_corners, inclip=(1, 10, 1, 10)):
     """
-    Calculate the clip box based on given slip corners
+    Calculate the clip box based on given slip corners.
 
     Parameters
     ----------
