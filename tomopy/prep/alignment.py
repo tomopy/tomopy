@@ -490,7 +490,6 @@ def find_slits_corners_aps_1id(img,
         autodetected slit corners (counter-clockwise order)
         (upperLeft, lowerLeft, lowerRight, upperRight)
     """
-
     img = medfilt2d(np.log(img.astype(np.float64)),
                     kernel_size=medfilt2_kernel_size,
                     )
