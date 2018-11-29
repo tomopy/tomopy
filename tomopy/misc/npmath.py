@@ -21,7 +21,7 @@ def gauss1d(x, *p):
 
     Parameters
     ----------
-    x  :  np.1ndarray
+    x  :  np.ndarray
         1D array for curve fitting
     p  :  parameter lis t
         magnitude, center, std = p
@@ -36,10 +36,8 @@ def gauss1d(x, *p):
 
 def discrete_cdf(data, steps=None):
     """
-    Calculated the cumulative distribution from a data array without using
-    binning.
-    This provides a more robust way to representing the statistics of the
-    incoming data without worrying about the binning/samping effect.
+    Calculate CDF of given data without discrete binning to avoid unnecessary
+    skew of distribution.
 
     Parameters
     ----------
