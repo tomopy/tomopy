@@ -41,16 +41,16 @@ def discrete_cdf(data, steps=None):
 
     Parameters
     ----------
-    data  :  1D np.array
+    data  :  np.ndarray
         1-D numpy array
     steps :  [ None | int ], optional
         Number of elements in the returning array
 
     Returns
     -------
-    pltX  : 1D np.array
+    pltX  : np.ndarray
         plt data along x (data direction)
-    pltY  : 1D np.array
+    pltY  : np.ndarray
         plt data long y (density direction)
     """
     x = np.sort(data)
