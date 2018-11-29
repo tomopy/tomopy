@@ -7,13 +7,25 @@ This section covers the basics of how to download and install TomoPy.
 .. contents:: Contents:
    :local:
 
+
 Supported Environments
-======================
+----------------------
 
 TomoPy is tested, built, and distributed for python 2.7 3.5 3.6 on Linux/macOS
 and python 3.5 3.6 on Windows 10.
 
-Installing from Conda (Recommended)
+Common issues
+-------------
+
+No issues with the current build system have been reported.
+
+Importing TomoPy
+----------------
+
+When importing, it is best to import TomoPy before importing numpy.
+See `this thread <https://github.com/tomopy/tomopy/issues/178>`_ for details.
+
+OPTION 1: Installing from Conda (Recommended)
 ===================================
 
 If you only want to run TomoPy, not develop it, then you should install through
@@ -38,7 +50,7 @@ frequently. To update the installation run::
 For some more information about using Conda, please refer to the
 `docs <http://conda.pydata.org/docs>`__.
 
-Installing from source with Conda
+OPTION 2: Installing from source with Conda
 =================================
 
 Sometimes an adventurous user may want to get the source code, which is
@@ -66,18 +78,6 @@ installed using Conda by running::
     $ conda install --file requirements.txt
 
 After navigating to inside the `tomopy` directory, you can install TomoPy by
-building/compiling the shared libraries and running the install script::
+running the install script::
 
-    $ python build.py
     $ pip install .
-
-Common issues
--------------
-
-No issues with the current build system have been reported.
-
-Importing TomoPy
-================
-
-When importing, it is best to import TomoPy before importing numpy.
-See `this thread <https://github.com/tomopy/tomopy/issues/178>`_ for details.
