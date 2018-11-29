@@ -55,7 +55,7 @@ from skimage                import transform              as tf
 from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project     import project
-from tomopy.misc.npmath     import gauss1d, calc_affine_transform, calc_cummulative_dist
+from tomopy.misc.npmath     import gauss1d, calc_affine_transform
 from scipy.signal           import medfilt, medfilt2d
 from scipy.optimize         import curve_fit
 from scipy.ndimage          import affine_transform, shift
