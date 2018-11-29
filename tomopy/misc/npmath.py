@@ -72,20 +72,20 @@ def discrete_cdf(data, steps=None):
     return xx, yy
 
 
-def calc_affine_transform(pts_src, pts_tgt):
+def calc_affine_transform(pts_source, pts_target):
     """
     Use least square regression to calculate the 2D affine transformation
     matrix (3x3, rot&trans) based on given set of (marker) points.
-                            pts_src -> pts_tgt
+                            pts_source -> pts_target
 
     Parameters
     ----------
-    pts_src  :  np.2darray
+    pts_source  :  np.2darray
         source points with dimension of (n, 2) where n is the number of
         marker points
-    pts_tgt  :  np.2darray
+    pts_target  :  np.2darray
         target points where
-                F(pts_src) = pts_tgt
+                F(pts_source) = pts_target
     Returns
     -------
     np.2darray
@@ -103,4 +103,4 @@ def calc_affine_transform(pts_src, pts_tgt):
     #   therefore we need to transpose the matrix here
     #   to get the correct rotation
 
-    return np.linalg.lstsq(pad(pts_src), pad(pts_tgt), rcond=-1)[0].T
+    return np.linalg.lstsq(pad(pts_source), pad(pts_target), rcond=-1)[0].T
