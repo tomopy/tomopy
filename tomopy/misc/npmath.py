@@ -15,7 +15,7 @@ __all__    = [ 'gauss',
 ]
 
 
-def gauss(x, *p):
+def gauss1d(x, *p):
     """
     simple Guassian func used for quick curve fit
 

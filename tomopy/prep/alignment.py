@@ -55,7 +55,7 @@ from skimage                import transform              as tf
 from skimage.feature        import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project     import project
-from tomopy.misc.npmath     import gauss, calc_affine_transform, calc_cummulative_dist
+from tomopy.misc.npmath     import gauss1d, calc_affine_transform, calc_cummulative_dist
 from scipy.signal           import medfilt, medfilt2d
 from scipy.optimize         import curve_fit
 from scipy.ndimage          import affine_transform, shift
@@ -553,7 +553,7 @@ def find_slits_corners_aps_1id(img,
                 # tmpy[0] is the value from the highest/lowest pixle
                 # tmpx[0] is basically cnr_x_guess
                 # 5.0 is the guessted std, 
-                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                coeff, _ = curve_fit(gauss1d, tmpx, tmpy, 
                                      p0=[tmpy[0], tmpx[0], 5.0],
                                      maxfev=int(1e6),
                                     )
@@ -563,7 +563,7 @@ def find_slits_corners_aps_1id(img,
                 # isolate the peak (x, y here is only associated with the peak)
                 tmpx = np.arange(cnr_y_guess-10, cnr_y_guess+11)
                 tmpy = np.gradient(np.std(q.img, axis=1))[tmpx]
-                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                coeff, _ = curve_fit(gauss1d, tmpx, tmpy, 
                                      p0=[tmpy[0], tmpx[0], 5.0],
                                      maxfev=int(1e6),
                                     )
