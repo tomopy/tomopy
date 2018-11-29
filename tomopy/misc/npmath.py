@@ -49,17 +49,17 @@ def discrete_cdf(data, steps=None):
     Returns
     -------
     pltX  : np.ndarray
-        plt data along x (data direction)
+        Data along x (data) direction
     pltY  : np.ndarray
-        plt data long y (density direction)
+        Data along y (density) direction
     """
     x = np.sort(data)
 
-    # check if list empty
-    if len(x) < 1:
+    # check if list is empty
+    if len(x) == 0:
         return [], []
 
-    # subsamping if steps is speficiied and the number is smaller than the
+    # subsamping if steps is specified and the number is smaller than the
     # total lenght of x
     if (steps is not None) and len(x) > steps:
         x = x[np.arange(0, len(x), int(np.ceil(len(x) / steps)))]
@@ -74,7 +74,7 @@ def discrete_cdf(data, steps=None):
 
 def calc_affine_transform(pts_src, pts_tgt):
     """
-    Use least square regression to calculate  the 2D affine transformation
+    Use least square regression to calculate the 2D affine transformation
     matrix (3x3, rot&trans) based on given set of (marker) points.
                             pts_src -> pts_tgt
 
