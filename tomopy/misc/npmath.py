@@ -28,7 +28,7 @@ def gauss1d(x, *p):
 
     Returns
     -------
-    1d Gaussian distrobution evaluted at x with p
+    1d Gaussian distribution evaluted at x with p
     """
     A, mu, sigma = p
     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
