@@ -26,9 +26,7 @@ def output_image(image, fname):
 
     pylab.imsave(fname, image, cmap='gray')
 
-    if os.path.exists(fname):
-        print("  --> Image file found @ '{}'...".format(fname))
-    else:
+    if not os.path.exists(fname):
         print("  ##################### WARNING #####################")
         print("  --> No image file at @ '{}' (expected) ...".format(fname))
 

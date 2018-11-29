@@ -152,7 +152,7 @@ def main(args):
         imgs = run(args.phantom, args.algorithm, args)
 
     # timing report to stdout
-    print('{}'.format(manager))
+    print('{}\n'.format(manager))
 
     timemory.options.output_dir = "{}/{}/{}".format(
         args.output_dir, args.phantom, algorithm)

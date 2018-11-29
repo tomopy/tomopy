@@ -62,7 +62,7 @@ def build_libtomopy():
 
 def clean_libtomopy():
     """Clean libtomopy shared library for the current system."""
-    if os.path.exists("Mk.config"):
+    if os.path.exists(os.path.join(os.getcwd(), "config", "Mk.config")):
         subprocess.check_call(('make', 'clean', '-f', get_makefile()))
     else:
         print("Mk.config does not exist. Assuming nothing to clean...")
@@ -84,6 +84,11 @@ class Config:
                 self.conda_compat = '-B %s' % compat
         if 'GCC' in os.environ:
             self.compilerdir = os.environ["GCC"]
+        # CC environment variable is standard, not GCC
+        if 'CC' in os.environ:
+            self.compilerdir = os.environ["CC"]
+            print("### Compiler set via CC environment variable: '{}'".format(
+                self.compilerdir))
         # includes
         top_include = pjoin(PREFIX, 'include')
         includes = [top_include]
