@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 __author__ = "Chen Zhang"
 __all__ = ['gauss1d',
-           'calc_cummulative_dist',
+           'discrete_cdf',
            'calc_affine_transform',
            ]
 
@@ -34,7 +34,7 @@ def gauss1d(x, *p):
     return A * np.exp(-(x - mu)**2 / (2. * sigma**2))
 
 
-def calc_cummulative_dist(data, steps=None):
+def discrete_cdf(data, steps=None):
     """
     Calculated the cumulative distribution from a data array without using
     binning.
