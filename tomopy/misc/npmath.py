@@ -24,8 +24,7 @@ def gauss1d(x, *p):
     x  :  np.1ndarray
         1D array for curve fitting
     p  :  parameter lis t
-        A,          mu,      sigma  =   p
-        magnitude  center     std
+        magnitude, center, std = p
 
     Returns
     -------
