@@ -529,6 +529,16 @@ def find_slits_corners_aps_1id(img,
     """
     Automatically locate the slit box location by its four corners.
 
+    NOTE:
+    The four slits that form a binding box is the current setup at aps_1id, 
+    which reduce the illuminated region on the detector. Since the slits are 
+    stationary, they can serve as a reference to check detector drifting 
+    during the scan. Technically, the four slits should be used to find 
+    the transformation matrix (not necessarily affine) to correct the image. 
+    However, since we are dealing with 2D images with very little distortion, 
+    affine transformation matrices were used for approximation. Therefore 
+    the "four corners" are used instead of all four slits.
+
     Parameters
     ----------
     img : np.ndarray
