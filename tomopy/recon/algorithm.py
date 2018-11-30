@@ -373,21 +373,7 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             for slc in slcs:
                 e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
 
-
-    # create a barrier
-    if psize > 1:
-        try:
-            from mpi4py import MPI
-            comm_w = MPI.COMM_WORLD
-            local_recon = np.zeros(recon.shape, dtype=np.float32)
-            rank = mproc.get_rank()
-            for slc in all_slcs:
-                comm_w.Allreduce(recon[slc], local_recon[slc])
-        except:
-            print(e)
-            raise
-
-    return local_recon
+    return recon
 
 
 def _get_algorithm_args(theta):
