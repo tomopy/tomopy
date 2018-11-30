@@ -3,7 +3,6 @@ h5py
 scipy
 six
 scikit-image
-pywavelets
 mkl
 mkl_fft
 dxchange

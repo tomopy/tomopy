@@ -70,7 +70,7 @@ install:
   - conda update conda
   - "conda install
     python=%PYTHON_VERSION% mkl-devel mkl mingw make setuptools
-    nose dxchange h5py mkl_fft numexpr numpy pywavelets
+    nose dxchange mkl_fft numexpr numpy
     scipy scikit-image six"
   # Check that we have the expected version and architecture for Python
   - conda info -a
