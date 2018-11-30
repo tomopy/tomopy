@@ -40,6 +40,9 @@ def discrete_cdf(data, steps=None):
     Calculate CDF of given data without discrete binning to avoid unnecessary
     skew of distribution.
 
+    The default steps (None) will use the whole data. In other words, it is 
+    close to considering using bin_size=1 or bins=len(data).
+
     Parameters
     ----------
     data  :  np.ndarray
