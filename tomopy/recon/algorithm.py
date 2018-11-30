@@ -59,7 +59,6 @@ import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
 from tomopy.sim.project import get_center
-import math
 import logging
 import concurrent.futures as cf
 import copy
@@ -362,16 +361,7 @@ def _get_func(algorithm):
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
-    ncore, slcs = mproc.get_worker_ncore_slices(axis_size, ncore, nchunk)
-    all_ncore, all_slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
-    psize = mproc.get_nproc()
-    local_recon = recon
-    #if psize > 1:
-    #    local_recon = np.zeros(recon.shape, dtype=np.float32)
-
-    for slc in all_slcs:
-        if slc not in slcs:
-            recon[slc] = np.zeros(recon[slc].shape, dtype=np.float)
+    ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
 
     if ncore == 1:
         for slc in slcs:

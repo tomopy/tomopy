@@ -167,7 +167,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     work = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);
     work2 = malloc_vector_f(L + 1);
-    __ASSSUME_64BYTES_ALIGNED(work2)
+    __ASSSUME_64BYTES_ALIGNED(work2);
 #else
     work = malloc_matrix_c(pdim2 * dt, L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);

@@ -75,7 +75,7 @@ preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
         gridy[i] = -rz * 0.5f + i;
     }
 
-    *mov = ((float) num_pixels - 1) * 0.50f - center;
+    *mov = ((float) num_pixels - 1) * 0.5f - center;
     if(*mov - floor(*mov) < 0.01f)
     {
         *mov += 0.01f;
