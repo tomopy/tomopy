@@ -17,12 +17,7 @@ and python 3.5 3.6 on Windows 10.
 Common issues
 -------------
 
-No issues with the current build system have been reported.
-
-Importing TomoPy
-----------------
-
-When importing, it is best to import TomoPy before importing numpy.
+When using pyFFTW instead of MKL-FFT, it is best to import TomoPy before importing NumPy.
 See `this thread <https://github.com/tomopy/tomopy/issues/178>`_ for details.
 
 OPTION 1: Installing from Conda (Recommended)
