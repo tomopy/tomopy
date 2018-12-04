@@ -92,7 +92,7 @@ __all__ = ['c_shared_lib',
            'c_remove_ring']
 
 
-def c_shared_lib(lib_name):
+def c_shared_lib(lib_name, do_warn=True):
     """Get the path and import the C-shared library."""
     load_dll = ctypes.cdll.LoadLibrary
     ext = '.so'
@@ -107,10 +107,12 @@ def c_shared_lib(lib_name):
     if os.path.exists(sharedlib):
         return load_dll(sharedlib)
     # cannot find shared lib:
-    logger.warning('OSError: The following shared lib is missing!\n{}'.format(
-                   sharedlib))
+    if do_warn is True:
+        logger.warning('OSError: The following shared lib is missing!\n{}'.format(
+                       sharedlib))
 
 
+LIB_PTL = c_shared_lib('libptl', do_warn=False)
 LIB_TOMOPY = c_shared_lib('libtomopy')
 
 

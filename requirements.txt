@@ -3,6 +3,7 @@ h5py
 scipy
 six
 scikit-image
+scikit-build
 pywavelets
 mkl
 mkl_fft

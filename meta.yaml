@@ -14,6 +14,7 @@ build:
 requirements:
   build:
     - {{ compiler('c') }}  # [not win]
+    - {{ compiler('cxx') }}
     - mkl-devel  # [not win]
   host:
     - Make  # [win]
@@ -22,6 +23,7 @@ requirements:
     - pip
     - python={{ python }}
     - setuptools
+    - scikit-build
   run:
     - dxchange
     - futures  # [py2k]

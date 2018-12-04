@@ -111,7 +111,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     const unsigned int L      = (int) (2 * C / M_PI);
     const int          ltbl   = 512;
     int                pdim;
-    float _Complex *   sino, *filphase, *filphase_iter, **H;
+    float _Complex *   sino, *filphase, *filphase_iter = NULL, **H;
     float _Complex **  U_d, **V_d;
     float *            J_z, *P_z;
 #ifndef USE_MKL
