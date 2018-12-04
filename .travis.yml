@@ -22,8 +22,8 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
 install:
-  - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy
-    scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange
+  - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy scipy
+    scikit-image mkl-devel mkl_fft python-coveralls dxchange
     numexpr coverage timemory pyctest"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install futures;
