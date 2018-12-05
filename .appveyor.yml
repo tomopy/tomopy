@@ -76,7 +76,7 @@ platform: x64
 configuration: Debug
 
 before_build:
-  - conda activate
+  - where install
 
 build_script:
   - conda build meta.yaml
