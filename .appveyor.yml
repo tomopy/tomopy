@@ -35,7 +35,7 @@ skip_commits:
 # Do not build feature branch with open Pull Requests
 skip_branch_with_pr: true
 # Maximum number of concurrent jobs for the project
-max_jobs: 1
+max_jobs: 2
 #---------------------------------#
 #    environment configuration    #
 #---------------------------------#
@@ -66,6 +66,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels jrmadsen
   - conda install python=%PYTHON_VERSION% conda conda-build conda-verify
+
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
@@ -73,6 +74,9 @@ install:
 platform: x64
 # build Configuration, i.e. Debug, Release, etc.
 configuration: Debug
+
+before_build:
+  - conda activate
 
 build_script:
   - conda build meta.yaml
