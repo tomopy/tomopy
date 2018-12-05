@@ -522,3 +522,34 @@ def write_center(
         fname = os.path.join(
             dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
         dxchange.write_tiff(rec[m], fname=fname, overwrite=True)
+
+
+def mask_empty_slice(tomo, threshold=0.25):
+    """
+    Generate a mask to indicate whether current slice contains sample
+
+    At APS 1ID, some of the projection images contains large empty area above
+    the sample, resulting in empty layers.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    threshold : float, optional
+        determine whether a layer is considered to be empty
+
+    Returns
+    -------
+    nparray:
+        a mask indicate the emptyness of each layer
+    """
+    projs_sum = np.sum(tomo, axis=0)
+    projs_sum /= projs_sum.max()
+
+    projs_sumsum = np.sum(projs_sum, axis=0)
+    projs_sumsum /= projs_sumsum.max()
+    
+    stds = np.array([np.std(projs_sum[i,:]) for i in range(projs_sum.shape[0])])
+    std_ref = np.std(projs_sumsum)*threshold
+    
+    return np.array([std<std_ref for std in stds])
