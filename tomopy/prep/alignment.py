@@ -895,6 +895,18 @@ def _calc_proj_cnrs(imgs,
 
     Parameters
     ----------
+    imgs : ndarray
+        tomopy images stacks (axis_0 is the oemga direction)
+    ncore : int
+        number of cores to use
+    nlist : list of int
+        index of images to be processed
+    method : str
+        slit corner detection method name
+    medfilt2_kernel_size : int
+        2D median filter kernel size, must be odd
+    medfilt_kernel_size : int
+        1D median filter kernel size, must be odd
 
     Returns
     -------
