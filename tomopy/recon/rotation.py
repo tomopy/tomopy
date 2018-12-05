@@ -75,7 +75,9 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['find_center',
            'find_center_vo',
            'find_center_pc',
-           'write_center']
+           'write_center',
+           'mask_empty_slice',
+          ]
 
 
 PI = 3.14159265359
