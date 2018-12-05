@@ -82,7 +82,9 @@ __all__ = ['adjust_range',
            'remove_outlier',
            'remove_outlier1d',
            'remove_outlier_cuda',
-           'remove_ring']
+           'remove_ring',
+           'enhance_projs_aps_1id',
+           ]
 
 
 def adjust_range(arr, dmin=None, dmax=None):
