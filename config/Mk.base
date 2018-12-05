@@ -28,7 +28,7 @@ $(INSTALLDIR)/$(SHAREDLIB): $(OBJ)
 	$(LINK) -o $(INSTALLDIR)/$(SHAREDLIB) $(OBJ) $(LINK_CFLAGS)
 
 install: $(INSTALLDIR)/$(SHAREDLIB)
-	install -m 755 $(INSTALLDIR)/$(SHAREDLIB) $(INSTALL_PREFIX)/tomopy/sharedlibs/
+	$(INSTALL) $(INSTALLDIR)/$(SHAREDLIB) $(INSTALL_PREFIX)/tomopy/sharedlibs/
 
 clean:
-	rm -f $(OBJ) $(INSTALLDIR)/$(SHAREDLIB) *.gcda *.gcno *.gcov
+	$(REMOVE) $(OBJ) $(INSTALLDIR)/$(SHAREDLIB) *.gcda *.gcno *.gcov
