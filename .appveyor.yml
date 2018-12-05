@@ -63,7 +63,7 @@ matrix:
 #   - projectA\libs
 # scripts that run after cloning repository
 install:
-  - "set PATH=%MINGW_PATH%\\bin;%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes True
   - conda config --add channels conda-forge
   - conda config --add channels jrmadsen
