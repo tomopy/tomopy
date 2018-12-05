@@ -52,6 +52,8 @@ if(COMPILER_IS_PGI)
     add_option(TOMOPY_PGI_INFO "Enable -Minfo=\${PGI_INFO_TYPE} for PGI compilers" ON)
 endif()
 
+set(PTL_USE_TBB OFF CACHE BOOL "Enable TBB backend for PTL")
+
 #if(TOMOPY_USE_GPU)
 #    set(PTL_USE_GPU ON CACHE BOOL "Enable GPU preprocessor")
 #endif()
