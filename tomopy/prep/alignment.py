@@ -54,18 +54,15 @@ import warnings
 import os
 import dxchange
 
-from skimage                import transform              as tf
-from skimage.feature        import register_translation
+from skimage import transform as tf
+from skimage.feature import register_translation
 from tomopy.recon.algorithm import recon
-from tomopy.sim.project     import project
-from tomopy.misc.npmath     import gauss, calc_affine_transform, calc_cummulative_dist
-from scipy.signal           import medfilt, medfilt2d
-from scipy.optimize         import curve_fit
-from scipy.ndimage          import affine_transform, shift
-from collections            import namedtuple
-
-
-
+from tomopy.sim.project import project
+from tomopy.misc.npmath import gauss1d, calc_affine_transform
+from scipy.signal import medfilt, medfilt2d
+from scipy.optimize import curve_fit
+from scipy.ndimage import affine_transform, shift
+from collections import namedtuple
 
 
 logger = logging.getLogger(__name__)
@@ -90,7 +87,9 @@ __all__ = ['align_seq',
 
 def align_seq(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, save=False, debug=True):
+        blur=True, center=None, algorithm='sirt',
+        upsample_factor=10, rin=0.5, rout=0.8,
+        save=False, debug=True):
     """
     Aligns the projection image stack using the sequential
     re-projection algorithm :cite:`Gursoy:17`.
@@ -109,6 +108,36 @@ def align_seq(
         Padding for projection images in x and y-axes.
     blur : bool, optional
         Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor. 
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
         for each algorithm iteration.
@@ -139,15 +168,15 @@ def align_seq(
     # Register each image frame-by-frame.
     for n in range(iters):
         # Reconstruct image.
-        rec = recon(prj, ang, algorithm='sirt')
+        rec = recon(prj, ang, center=center, algorithm=algorithm)
 
         # Re-project data and obtain simulated data.
-        sim = project(rec, ang, pad=False)
+        sim = project(rec, ang, center=center, pad=False)
 
         # Blur edges.
         if blur:
-            _prj = blur_edges(prj, 0.1, 0.5)
-            _sim = blur_edges(sim, 0.1, 0.5)
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
         else:
             _prj = prj
             _sim = sim
@@ -159,7 +188,8 @@ def align_seq(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(_prj[m], _sim[m], 2)
+            shift, error, diffphase = register_translation(
+                _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -184,7 +214,9 @@ def align_seq(
 
 def align_joint(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, save=False, debug=True):
+        blur=True, center=None, algorithm='sirt', 
+        upsample_factor=10, rin=0.5, rout=0.8, 
+        save=False, debug=True):
     """
     Aligns the projection image stack using the joint
     re-projection algorithm :cite:`Gursoy:17`.
@@ -203,6 +235,36 @@ def align_joint(
         Padding for projection images in x and y-axes.
     blur : bool, optional
         Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor.
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
         for each algorithm iteration.
@@ -240,15 +302,16 @@ def align_joint(
             _rec = rec
 
         # Reconstruct image.
-        rec = recon(prj, ang, algorithm='sirt', num_iter=2, init_recon=_rec)
+        rec = recon(prj, ang, center=center, algorithm=algorithm,
+                    num_iter=1, init_recon=_rec)
 
         # Re-project data and obtain simulated data.
-        sim = project(rec, ang, pad=False)
+        sim = project(rec, ang, center=center, pad=False)
 
         # Blur edges.
         if blur:
-            _prj = blur_edges(prj, 0.0, 0.5)
-            _sim = blur_edges(sim, 0.0, 0.5)
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
         else:
             _prj = prj
             _sim = sim
@@ -260,7 +323,8 @@ def align_joint(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(_prj[m], _sim[m], 2)
+            shift, error, diffphase = register_translation(
+                _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -426,7 +490,7 @@ def blur_edges(prj, low=0, high=0.8):
     _prj = prj.copy()
     dx, dy, dz = _prj.shape
     rows, cols = np.mgrid[:dy, :dz]
-    rad = np.sqrt((rows - dy/2)**2 + (cols - dz/2)**2)
+    rad = np.sqrt((rows - dy / 2)**2 + (cols - dz / 2)**2)
     mask = np.zeros((dy, dz))
     rmin, rmax = low * rad.max(), high * rad.max()
     mask[rad < rmin] = 1
@@ -461,138 +525,183 @@ def shift_images(prj, sx, sy):
     return prj
 
 
-def find_slits_corners_aps_1id(img, 
-                               method='quadrant+', 
+def find_slits_corners_aps_1id(img,
+                               method='quadrant+',
                                medfilt2_kernel_size=3,
                                medfilt_kernel_size=23,
                                ):
     """
     Automatically locate the slit box location by its four corners.
 
+    NOTE:
+    The four slits that form a binding box is the current setup at aps_1id, 
+    which reduce the illuminated region on the detector. Since the slits are 
+    stationary, they can serve as a reference to check detector drifting 
+    during the scan. Technically, the four slits should be used to find 
+    the transformation matrix (not necessarily affine) to correct the image. 
+    However, since we are dealing with 2D images with very little distortion, 
+    affine transformation matrices were used for approximation. Therefore 
+    the "four corners" are used instead of all four slits.
+
     Parameters
     ----------
-    img                   :  np.2darray
-        input 2D images
-    method                :  str,  ['simple', 'quadrant', 'quadrant+'], optional
+    img : np.ndarray
+        2D images
+    method : str,  ['simple', 'quadrant', 'quadrant+'], optional
         method for auto detecting slit corners
-    medfilt2_kernel_size  :  int, optional 
+            - simple    :: assume a rectange slit box, fast but less accurate
+                           (1 pixel precision)
+            - quadrant  :: subdivide the image into four quandrant, then use 
+                           an explicit method to find the corner
+                           (1 pixel precision)
+            - quadrant+ :: similar to quadrant, but use curve_fit (gauss1d) to 
+                           find the corner
+                           (0.1 pixel precision)
+    medfilt2_kernel_size : int, optional
         2D median filter kernel size for noise reduction
-    medfilt_kernel_size   :  int, optional 
+    medfilt_kernel_size : int, optional
         1D median filter kernel size for noise reduction
-    
+
     Returns
     -------
     tuple
         autodetected slit corners (counter-clockwise order)
         (upperLeft, lowerLeft, lowerRight, upperRight)
     """
-
-
     img = medfilt2d(np.log(img.astype(np.float64)),
                     kernel_size=medfilt2_kernel_size,
                     )
     rows, cols = img.shape
-    
+
     # simple method is simple, therefore it stands out
-    if method.lower() == 'simple':        
-        # assuming a rectangle type slit box 
+    if method.lower() == 'simple':
+        # assuming a rectangle type slit box
         col_std = medfilt(np.std(img, axis=0), kernel_size=medfilt_kernel_size)
         row_std = medfilt(np.std(img, axis=1), kernel_size=medfilt_kernel_size)
         # NOTE: in the tiff img
         #  x is col index, y is the row index  ==> key point here !!!
         #  img slicing is doen with img[row_idx, col_idx]
         #  ==> so the image idx and corner position are FLIPPED!
-        _left   = np.argmax(np.gradient(col_std))
-        _right  = np.argmin(np.gradient(col_std))
-        _top    = np.argmax(np.gradient(row_std))
+        _left = np.argmax(np.gradient(col_std))
+        _right = np.argmin(np.gradient(col_std))
+        _top = np.argmax(np.gradient(row_std))
         _bottom = np.argmin(np.gradient(row_std))
 
-        cnrs = np.array([[_left , _top    ],
-                         [_left , _bottom ],
-                         [_right, _bottom ],
-                         [_right, _top    ],
-                        ])
+        cnrs = np.array([[_left, _top],
+                         [_left, _bottom],
+                         [_right, _bottom],
+                         [_right, _top],
+                         ])
     else:
         # predefine all quadrants
-        # Here let's assume that the four corners of the slit box are in the 
+        # Here let's assume that the four corners of the slit box are in the
         # four quadrant defined by the center of the image
         # i.e.
         #  uppper left quadrant: img[0     :cnt[1], 0     :cnt[0]]  => quadarnt origin =  (0,           0)
         #  lower  left quadrant: img[cnt[1]:      , 0     :cnt[0]]  => quadarnt origin =  (cnt[0],      0)
         #  lower right quadrant: img[cnt[1]:      , cnt[0]:      ]  => quadarnt origin =  (cnt[0], cnt[1])
-        #  upper right quadrant: img[0     :cnt[1], cnt[0]:      ]  => quadarnt origin =  (0,      cnt[1])
-        cnt = [int(cols/2), int(rows/2)]  # center of image that defines FOUR quadrants
-        Quadrant  = namedtuple('Quadrant', 'img col_func, row_func')
+        # upper right quadrant: img[0     :cnt[1], cnt[0]:      ]  => quadarnt
+        # origin =  (0,      cnt[1])
+        # center of image that defines FOUR quadrants
+        cnt = [int(cols / 2), int(rows / 2)]
+        Quadrant = namedtuple('Quadrant', 'img col_func, row_func')
         quadrants = [Quadrant(img=img[0:cnt[1], 0:cnt[0]], col_func=np.argmax, row_func=np.argmax),  # upper left,  1st quadrant
-                     Quadrant(img=img[cnt[1]: , 0:cnt[0]], col_func=np.argmax, row_func=np.argmin),  # lower left,  2nd quadrant
-                     Quadrant(img=img[cnt[1]: , cnt[0]: ], col_func=np.argmin, row_func=np.argmin),  # lower right, 3rd quadrant
-                     Quadrant(img=img[0:cnt[0], cnt[1]: ], col_func=np.argmin, row_func=np.argmax),  # upper right, 4th quadrant
-                    ]
+                     # lower left,  2nd quadrant
+                     Quadrant(img=img[cnt[1]:, 0:cnt[0]],
+                              col_func=np.argmax, row_func=np.argmin),
+                     # lower right, 3rd quadrant
+                     Quadrant(img=img[cnt[1]:, cnt[0]:],
+                              col_func=np.argmin, row_func=np.argmin),
+                     # upper right, 4th quadrant
+                     Quadrant(img=img[0:cnt[0], cnt[1]:],
+                              col_func=np.argmin, row_func=np.argmax),
+                     ]
         # the origin in each quadrants ==> easier to set it here
-        quadrantOrigins = np.array([[0,           0],  # upper left,  1st quadrant
-                                    [0,      cnt[1]],  # lower left,  2nd quadrant
-                                    [cnt[0], cnt[1]],  # lower right, 3rd quadrant
-                                    [cnt[1],      0],  # upper right, 4th quadrant
-                                   ])
+        quadrantorigins = np.array([[0, 0],  # upper left,  1st quadrant
+                                    [0, cnt[1]],  # lower left,  2nd quadrant
+                                    # lower right, 3rd quadrant
+                                    [cnt[0], cnt[1]],
+                                    [cnt[1], 0],  # upper right, 4th quadrant
+                                    ])
         # init four corners
         cnrs = np.zeros((4, 2))
         if method.lower() == 'quadrant':
             # the standard quadrant method
             for i, q in enumerate(quadrants):
-                cnrs[i,:] = np.array([q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size))),  # x is col_idx
-                                      q.row_func(np.gradient(medfilt(np.std(q.img, axis=1), kernel_size=medfilt_kernel_size))),  # y is row_idx
-                                    ])
+                cnrs[i, :] = np.array([q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size))),  # x is col_idx
+                                       q.row_func(
+                    np.gradient(
+                        medfilt(
+                            np.std(
+                                q.img,
+                                axis=1),
+                            kernel_size=medfilt_kernel_size))),
+                    # y is row_idx
+                ])
             # add the origin offset back
-            cnrs = cnrs + quadrantOrigins
+            cnrs = cnrs + quadrantorigins
         elif method.lower() == 'quadrant+':
-            # use Gaussian curve fitting to achive subpixel precision 
+            # use Gaussian curve fitting to achive subpixel precision
             # TODO:
-            #   improve the curve fitting with Lorentz and Voigt fitting function
+            # improve the curve fitting with Lorentz and Voigt fitting function
             for i, q in enumerate(quadrants):
                 # -- find x subpixel position
-                cnr_x_guess = q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size)))
+                cnr_x_guess = q.col_func(
+                    np.gradient(
+                        medfilt(
+                            np.std(
+                                q.img,
+                                axis=0),
+                            kernel_size=medfilt_kernel_size)))
                 # isolate the strongest peak to fit
-                tmpx = np.arange(cnr_x_guess-10, cnr_x_guess+11)
+                tmpx = np.arange(cnr_x_guess - 10, cnr_x_guess + 11)
                 tmpy = np.gradient(np.std(q.img, axis=0))[tmpx]
                 # tmpy[0] is the value from the highest/lowest pixle
                 # tmpx[0] is basically cnr_x_guess
-                # 5.0 is the guessted std, 
-                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                # 5.0 is the guessted std,
+                coeff, _ = curve_fit(gauss1d, tmpx, tmpy,
                                      p0=[tmpy[0], tmpx[0], 5.0],
                                      maxfev=int(1e6),
-                                    )
+                                     )
                 cnrs[i, 0] = coeff[1]  # x position
                 # -- find y subpixel positoin
-                cnr_y_guess = q.row_func(np.gradient(medfilt(np.std(q.img, axis=1), kernel_size=medfilt_kernel_size)))
+                cnr_y_guess = q.row_func(
+                    np.gradient(
+                        medfilt(
+                            np.std(
+                                q.img,
+                                axis=1),
+                            kernel_size=medfilt_kernel_size)))
                 # isolate the peak (x, y here is only associated with the peak)
-                tmpx = np.arange(cnr_y_guess-10, cnr_y_guess+11)
+                tmpx = np.arange(cnr_y_guess - 10, cnr_y_guess + 11)
                 tmpy = np.gradient(np.std(q.img, axis=1))[tmpx]
-                coeff, _ = curve_fit(gauss, tmpx, tmpy, 
+                coeff, _ = curve_fit(gauss1d, tmpx, tmpy,
                                      p0=[tmpy[0], tmpx[0], 5.0],
                                      maxfev=int(1e6),
-                                    )
+                                     )
                 cnrs[i, 1] = coeff[1]  # y posiiton
-            # add the quadrant shift back 
-            cnrs = cnrs + quadrantOrigins
-                
+            # add the quadrant shift back
+            cnrs = cnrs + quadrantorigins
+
         else:
-            raise NotImplementedError("Available methods are: simple, quadrant, quadrant+")
-    
+            raise NotImplementedError(
+                "Available methods are: simple, quadrant, quadrant+")
+
     # return the slit corner detected
     return cnrs
 
 
-def calc_slit_box_aps_1id(slit_box_corners, inclip=(1,10,1,10)):
+def calc_slit_box_aps_1id(slit_box_corners, inclip=(1, 10, 1, 10)):
     """
-    Calculate the clip box based on given slip corners
+    Calculate the clip box based on given slip corners.
 
     Parameters
     ----------
-    slit_box_corners  :  np.2darray
+    slit_box_corners : np.ndarray
         Four corners of the slit box as a 4x2 matrix
-    inclip            :  tuple, optional
+    inclip : tuple, optional
         Extra inclipping to avoid clipping artifacts
-    
+
     Returns
     -------
     Tuple:
@@ -603,40 +712,44 @@ def calc_slit_box_aps_1id(slit_box_corners, inclip=(1,10,1,10)):
             ==============================================
                                                 |
                                                 | clipToBottom
-                                                | 
+                                                |
             ==============================================
 
         ------------------------------------------------------
 
     """
     return (
-        np.floor(slit_box_corners[:, 0].min()).astype(int) + inclip[0],  # clip top    row
-        np.ceil (slit_box_corners[:, 0].max()).astype(int) - inclip[1],  # clip bottom row
-        np.floor(slit_box_corners[:, 1].min()).astype(int) + inclip[2],  # clip left   col
-        np.ceil (slit_box_corners[:, 1].max()).astype(int) - inclip[3],  # clip right  col
+        np.floor(slit_box_corners[:, 0].min()).astype(
+            int) + inclip[0],  # clip top    row
+        np.ceil(slit_box_corners[:, 0].max()).astype(
+            int) - inclip[1],  # clip bottom row
+        np.floor(slit_box_corners[:, 1].min()).astype(
+            int) + inclip[2],  # clip left   col
+        np.ceil(slit_box_corners[:, 1].max()).astype(
+            int) - inclip[3],  # clip right  col
     )
 
 
-def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1,10,1,10)):
-    """ 
+def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1, 10, 1, 10)):
+    """
     Remove the slits from still images
 
     Parameters
     ----------
-    imgstacks         :  np.3darray
-        tomopy images stacks (axis_0 is the oemga direction) 
-    slit_box_corners  :  np.2darray
-        four corners of the slit box 
-    inclip            :  tuple, optional
+    imgstacks : np.ndarray
+        tomopy images stacks (axis_0 is the oemga direction)
+    slit_box_corners : np.ndarray
+        four corners of the slit box
+    inclip : tuple, optional
         Extra inclipping to avoid clipping artifacts
 
-    Returns 
+    Returns
     -------
-    np.3darray
+    np.ndarray
         tomopy images stacks without regions outside slits
     """
-    xl,xu,yl,yu = calc_slit_box_aps_1id(slit_box_corners, inclip=inclip)
-    return imgstacks[:,yl:yu,xl:xu]
+    xl, xu, yl, yu = calc_slit_box_aps_1id(slit_box_corners, inclip=inclip)
+    return imgstacks[:, yl:yu, xl:xu]
 
 
 def detector_drift_adjust_aps_1id(imgstacks, 
@@ -650,9 +763,9 @@ def detector_drift_adjust_aps_1id(imgstacks,
 
     Parameters
     ----------
-    imgstacks            :  np.3darray
-        tomopy images stacks (axis_0 is the oemga direction) 
-    slit_cnr_ref         :  np.2darray
+    imgstacks : np.ndarray
+        tomopy images stacks (axis_0 is the oemga direction)
+    slit_cnr_ref : np.ndarray
         reference slit corners from white field images
     medfilt2_kernel_size :  int
         2D median filter kernel size for slit conner detection
@@ -663,14 +776,13 @@ def detector_drift_adjust_aps_1id(imgstacks,
 
     Returns
     -------
-    np.3darray
+    np.ndarray
         adjusted imgstacks
-    np.3darray
+    np.ndarray
         detected corners on each still image
-    np.3darray
+    np.ndarray
         transformation matrices used to adjust each image
     """
-
     ncore  = mproc.mp.cpu_count() if ncore is None else ncore
 
     quickDiff = lambda x: np.amax(np.absolute(x))
