@@ -62,6 +62,7 @@ import logging
 import warnings
 import numexpr as ne
 import concurrent.futures as cf
+from scipy.signal import medfilt2d
 
 logger = logging.getLogger(__name__)
 
@@ -665,3 +666,80 @@ def _get_mask(dx, dy, ratio):
         r2 = rad2 * rad2
     y, x = np.ogrid[0.5 - rad1:0.5 + rad1, 0.5 - rad2:0.5 + rad2]
     return x * x + y * y < ratio * ratio * r2
+
+
+def enhance_projs_aps_1id(imgstacks, median_ks=5, ncore=None,):
+    """
+    Enhance the projection images with weak contrast collected at APS 1ID
+
+    Parameters
+    ----------
+    imgstacks : np.ndarray
+        tomopy images stacks (axis_0 is the oemga direction)
+    median_ks : int, optional
+        2D median filter kernel size for local noise suppresion
+    ncore : int, optional
+        number of cores used for speed up
+
+    Returns
+    -------
+    ndarray
+        3D enhanced image stacks.
+    """
+    ncore  = mproc.mp.cpu_count()-1 if ncore is None else ncore
+
+    # need to use multiprocessing to speed up the process
+    tmp = []
+    with cf.ProcessPoolExecutor(ncore) as e:
+        for n_img in range(imgstacks.shape[0]):
+            tmp.append(e.submit(_enhance_img,
+                                imgstacks[n_img,:,:],
+                                median_ks,
+                               )
+                      )
+
+    return np.stack([me.result() for me in tmp], axis=0)
+
+
+def _enhance_img(img, median_ks, normalized=True):
+    """
+    Enhance the projection image from aps 1ID to counter its weak contrast 
+    nature
+
+    Parameters
+    ----------
+    img : ndarray
+        original projection image collected at APS 1ID
+    median_ks: int
+        kernel size of the 2D median filter, must be odd
+    normalized: bool, optional
+        specify whether the enhanced image is normalized between 0 and 1,
+        default is True
+
+    Returns 
+    -------
+    ndarray
+        enhanced projection image
+    """
+    wgt = _calc_histequal_wgt(img)
+    img = medfilt2d(img, kernel_size=median_ks).astype(np.float64)
+    img = ne.evaluate('(img**2)*wgt', out=img)
+    return img/img.max() if normalized else img
+
+
+def _calc_histequal_wgt(img):
+    """
+    Calculate the histogram equalization weight for a given image
+
+    Parameters
+    ----------
+    img : ndarray
+        2D images
+
+    Returns
+    -------
+    ndarray
+        histogram euqalization weights (0-1) in the same shape as original 
+        image
+    """
+    return (np.sort(img.flatten()).searchsorted(img) + 1)/np.prod(img.shape)
