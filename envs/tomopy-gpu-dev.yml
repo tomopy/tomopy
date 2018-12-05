@@ -1,0 +1,24 @@
+name: tomopy-gpu-dev
+channels:
+  - conda-forge
+  - jrmadsen
+  - defaults
+dependencies:
+  - python=3.6
+  - coverage
+  - dxchange
+  - h5py
+  - mkl
+  - mkl-devel
+  - mkl_fft
+  - nose
+  - numexpr
+  - numpy
+  - pyctest
+  - python-coveralls
+  - pywavelets
+  - scikit-build
+  - scikit-image
+  - scipy
+  - six
+  - timemory

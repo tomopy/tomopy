@@ -1,28 +1,23 @@
 language: python
 python:
   - "2.7"
-  - "3.5"
   - "3.6"
+  - "3.7"
 os:
   - linux
-#  - osx
 sudo: false
 env:
-  - PATH=$HOME/miniconda/bin:$PATH LD_LIBRARY_PATH=$HOME/miniconda/lib C_INCLUDE_PATH=$HOME/miniconda/include
+  - PATH=${HOME}/miniconda/bin:${PATH} LD_LIBRARY_PATH=${HOME}/miniconda/lib
 before_install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - export PATH="${HOME}/miniconda/bin:${PATH}"
   - conda config --add channels conda-forge
   - conda config --add channels jrmadsen
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
 install:
-  - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy h5py scipy
+  - "conda install python=${TRAVIS_PYTHON_VERSION} nose six numpy h5py scipy
     scikit-image scikit-build pywavelets mkl-devel mkl_fft python-coveralls
     dxchange numexpr coverage timemory pyctest"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -30,7 +25,7 @@ install:
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests
+  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --pyctest-ctest-args="-VV" --disable-phantom-tests
 script:
   - coverage run $(which nosetests)
 after_success:

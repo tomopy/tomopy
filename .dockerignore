@@ -1,0 +1,4 @@
+/.git
+/.vscode
+*__pycache__*
+/_skbuild

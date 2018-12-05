@@ -45,12 +45,12 @@ RUN ./apt.sh && \
 #------------------------------------------------------------------------------#
 #   PGI compiler
 #------------------------------------------------------------------------------#
-#COPY ./.docker/pgilinux-2018-184-x86-64.tar.gz /work/pgi/
-#ENV PGI_ACCEPT_EULA accept
-#ENV PGI_SILENT true
-#RUN cd /work/pgi && \
-#    tar -xzf pgilinux-2018-184-x86-64.tar.gz && \
-#    ./install
+COPY ./.docker/pgilinux-2018-1810-x86-64.tar.gz /work/pgi/
+ENV PGI_ACCEPT_EULA accept
+ENV PGI_SILENT true
+RUN cd /work/pgi && \
+    tar -xzf pgilinux-2018-184-x86-64.tar.gz && \
+    ./install
 
 #------------------------------------------------------------------------------#
 #   copy files for runtime
