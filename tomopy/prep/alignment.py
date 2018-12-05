@@ -783,7 +783,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     np.ndarray
         transformation matrices used to adjust each image
     """
-    ncore  = mproc.mp.cpu_count() if ncore is None else ncore
+    ncore  = mproc.mp.cpu_count() - 1 if ncore is None else ncore
 
     quickDiff = lambda x: np.amax(np.absolute(x))
 
