@@ -350,7 +350,7 @@ def _create_mask(nrow, ncol, radius, drop):
     return mask
 
 
-def find_center_pc(proj1, proj2, tol=0.5):
+def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     """
     Find rotation axis location by finding the offset between the first
     projection and a mirrored projection 180 degrees apart using
@@ -370,11 +370,21 @@ def find_center_pc(proj1, proj2, tol=0.5):
     tol : scalar, optional
         Subpixel accuracy
 
+    rotc_guess : float, optional 
+        Initual guess value for the rotation center
+
     Returns
     -------
     float
         Rotation axis location.
     """
+
+    if rotc_guess is not None:
+        proj1 = ndimage.shift(proj1, -rotc_guess, mode='constant', cval=0)
+        proj2 = ndimage.shift(proj2, -rotc_guess, mode='constant', cval=0)
+    else:
+        rotc_guess = 0.0
+
 
     # create reflection of second projection
     proj2 = np.fliplr(proj2)
@@ -386,7 +396,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
     # registered translation with the second image
     center = (proj1.shape[1] + shift[0][1] - 1.0)/2.0
 
-    return center
+    return center + rotc_guess
 
 
 def write_center(
