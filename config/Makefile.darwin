@@ -8,7 +8,4 @@ CC           = $(COMPILER_DIR) $(CC_OPTIMIZE) $(CC_WARNINGS) $(ARCH_TARGET) $(IN
                 -DUSE_MKL -std=c99 $(CFLAGS)
 LINK         = $(COMPILER_DIR) -bundle -undefined dynamic_lookup $(ARCH_TARGS) $(LINK_LIB) $(LDFLAGS)
 
-INSTALL      = install -m 755
-REMOVE       = rm -f
-
 include Mk.base

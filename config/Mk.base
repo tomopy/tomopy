@@ -27,8 +27,3 @@ pml_quad.o project.o sirt.o tv.o utils.o vector.o: utils.h
 $(INSTALLDIR)/$(SHAREDLIB): $(OBJ)
 	$(LINK) -o $(INSTALLDIR)/$(SHAREDLIB) $(OBJ) $(LINK_CFLAGS)
 
-install: $(INSTALLDIR)/$(SHAREDLIB)
-	$(INSTALL) $(INSTALLDIR)/$(SHAREDLIB) $(INSTALL_PREFIX)/tomopy/sharedlibs/
-
-clean:
-	$(REMOVE) $(OBJ) $(INSTALLDIR)/$(SHAREDLIB) *.gcda *.gcno *.gcov

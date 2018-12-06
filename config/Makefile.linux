@@ -8,8 +8,4 @@ CC           = $(COMPILER_DIR) -pthread $(CONDA_COMPAT) $(CC_OPTIMIZE) \
                $(CC_WARNINGS) $(ARCH_TARGET) $(INCLUDE) -DUSE_MKL -std=c99 $(CFLAGS)
 LINK         = $(COMPILER_DIR) -pthread -shared $(CONDA_COMPAT) $(LINK_LIB) $(LDFLAGS) \
                -Wl,-rpath=$(LINK_LIB),--no-as-needed
-
-INSTALL      = install -m 755
-REMOVE       = rm -f
-
 include Mk.base
