@@ -788,9 +788,6 @@ def detector_drift_adjust_aps_1id(imgstacks,
 
     quickDiff = lambda x: np.amax(np.absolute(x))
 
-    print(imgstacks.shape)
-    print(medfilt2_kernel_size)
-
     # -- find all projection corners (slow)
     # NOTE:
     #  Here we are using an iterative approach to find stable slit corners 
@@ -815,7 +812,6 @@ def detector_drift_adjust_aps_1id(imgstacks,
                     for i in range(15)
                     for j in range(15)]
     counter = 0
-    print(cnrs_found.all())
 
     while not cnrs_found.all():
         nlist = [idx for idx, cnr_found in enumerate(cnrs_found) 
@@ -831,10 +827,6 @@ def detector_drift_adjust_aps_1id(imgstacks,
             # test with differnt 2D and 1D kernels
             ks2d, ks1d = kernels[counter]
 
-        # debug output
-        print(f"kernel size = {ks2d},{ks1d}")
-        print(f"# of imgs to re-process: {len(nlist)}")
-
         _cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist, 'quadrant+',ks2d, ks1d)
         for idx, _cnr in enumerate(_cnrs):
             n_img = nlist[idx]
@@ -849,15 +841,6 @@ def detector_drift_adjust_aps_1id(imgstacks,
             if rdiff < 0.1 and adiff < 15:
                 cnrs_found[n_img] = True
             else:
-                _tmpar = np.zeros((4, 5))
-                print("*"*5 + f":{n_img}@iter_{counter}")
-                print(f"->reference: {adiff}")
-                _tmpar[:,0:2] = _cnr
-                _tmpar[:,3:5] = slit_cnr_ref
-                print(_tmpar)
-                print(f"->previous: {rdiff}")
-                _tmpar[:,3:5] = cnr
-                print(_tmpar)
                 # update results
                 proj_cnrs[n_img,:,:] = _cnr  # update results for next iter
         
