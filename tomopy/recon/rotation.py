@@ -207,7 +207,7 @@ def _find_center_cost(
 
 
 def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
-                   ratio=0.5, drop=20):
+                   ratio=0.5, drop=20, smooth=True):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -228,6 +228,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
+    smooth : bool, optional
+        Whether to apply additional smoothing or not.
 
     Returns
     -------
@@ -241,8 +243,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
     _tomo = tomo[:, ind, :]
 
     # Reduce noise by smooth filters. Use different filters for coarse and fine search
-    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
-    _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2))
+    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1)) if smooth else _tomo
+    _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2)) if smooth else _tomo
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
