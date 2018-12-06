@@ -29,6 +29,7 @@ add_feature(CMAKE_BUILD_TYPE "Build type (Debug, Release, RelWithDebInfo, MinSiz
 add_feature(CMAKE_INSTALL_PREFIX "Installation prefix")
 add_feature(${PROJECT_NAME}_C_FLAGS "C compiler flags")
 add_feature(${PROJECT_NAME}_CXX_FLAGS "C++ compiler flags")
+add_feature(CMAKE_C_STANDARD "C languae standard")
 add_feature(CMAKE_CXX_STANDARD "C++11 STL standard")
 if(COMPILER_IS_PGI)
     add_feature(PGI_INFO_TYPE "PGI -Minfo=<type>")
@@ -108,5 +109,6 @@ endif(TOMOPY_USE_GPU)
 unset(COMPILER_IS_PGI)
 
 if(APPLE)
-    add_option(CMAKE_INSTALL_RPATH_USE_LINK_PATH "Hardcode installation rpath based on link path" ON)
+    add_option(CMAKE_INSTALL_RPATH_USE_LINK_PATH
+        "Hardcode installation rpath based on link path" ON NO_FEATURE)
 endif()

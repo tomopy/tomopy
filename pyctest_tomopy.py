@@ -213,11 +213,13 @@ def run_pyctest():
     # set directory to run test
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
+    test.SetProperty("LABEL", "unit")
     # create a CTest that wraps "nosetest"
     test = pyctest.test()
     test.SetName("nosetests")
     test.SetProperty("DEPENDS", "correct_module")
     test.SetProperty("RUN_SERIAL", "ON")
+    test.SetProperty("LABEL", "unit")
     nosetest_exe = helpers.FindExePath("nosetests", path=python_path)
     if nosetest_exe is None:
         nosetest_exe = helpers.FindExePath("nosetests")
@@ -292,7 +294,12 @@ def run_pyctest():
         for phantom in args.phantoms:
             # create a test comparing all the args.algorithms
             test = pyctest.test()
-            name = "{}_{}".format(phantom, "comparison")
+            if len(args.algorithms) == 1:
+                test_args = ["-a"]
+                name = "{}_{}".format(phantom, "".join(args.algorithms))
+            else:
+                test_args = ["--compare"]
+                name = "{}_{}".format(phantom, "comparison")
 
             nsize = 512 if phantom != "shepp3d" else 128
             # if size customized, create unique test-name
@@ -322,8 +329,8 @@ def run_pyctest():
                             "-S", "1",
                             "-n", "{}".format(ncores),
                             "-i", "{}".format(niters),
-                            "--output-dir", "benchmarking/{}".format(name),
-                            "--compare"] + args.algorithms)
+                            "--output-dir", "benchmarking/{}".format(name)]
+                            + test_args + args.algorithms)
     # generate the CTestConfig.cmake and CTestCustom.cmake
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
     # generate the CTestTestfile.cmake file

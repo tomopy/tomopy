@@ -10,14 +10,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" _CONFIG)
 
-if(WIN32)
-    set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard")
-else(WIN32)
-    set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
-endif(WIN32)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(${PROJECT_NAME}_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "${PROJECT_NAME} installation prefix")
+set(${PROJECT_NAME}_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH 
+    "${PROJECT_NAME} installation prefix")
 
 add_feature(CMAKE_C_FLAGS_${_CONFIG} "C compiler build-specific flags")
 add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
@@ -75,3 +70,4 @@ foreach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)
     set(PROJECT_INSTALL_FULL_${_TYPE}DIR ${${PROJECT_NAME}_INSTALL_FULL_${TYPE}DIR})
 
 endforeach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)
+

@@ -4,6 +4,24 @@
 
 include(FindPackageHandleStandardArgs)
 
+
+################################################################################
+#
+#                               Threading
+#
+################################################################################
+
+if(NOT WIN32)
+    set(CMAKE_THREAD_PREFER_PTHREAD ON)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+endif()
+
+find_package(Threads)
+if(Threads_FOUND)
+    list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
+endif()
+
+
 ################################################################################
 #
 #                               TiMemory

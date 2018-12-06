@@ -5,55 +5,20 @@
 ################################################################################
 
 include(GNUInstallDirs)
-include(CheckCCompilerFlag)
-include(CheckCXXCompilerFlag)
-
-# ---------------------------------------------------------------------------- #
-# check C flag
-macro(ADD_C_FLAG_IF_AVAIL FLAG)
-    if(NOT "${FLAG}" STREQUAL "")
-        string(REGEX REPLACE "^-" "c_" FLAG_NAME "${FLAG}")
-        string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE " " "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE "=" "_" FLAG_NAME "${FLAG_NAME}")
-        check_c_compiler_flag("${FLAG}" ${FLAG_NAME})
-        if(${FLAG_NAME})
-            add(${PROJECT_NAME}_C_FLAGS "${FLAG}")
-        endif()
-    endif()
-endmacro()
-
-
-# ---------------------------------------------------------------------------- #
-# check CXX flag
-macro(ADD_CXX_FLAG_IF_AVAIL FLAG)
-    if(NOT "${FLAG}" STREQUAL "")
-        string(REGEX REPLACE "^-" "cxx_" FLAG_NAME "${FLAG}")
-        string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE " " "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE "=" "_" FLAG_NAME "${FLAG_NAME}")
-        check_cxx_compiler_flag("${FLAG}" ${FLAG_NAME})
-        if(${FLAG_NAME})
-            add(${PROJECT_NAME}_CXX_FLAGS "${FLAG}")
-        endif()
-    endif()
-endmacro()
-
+include(Compilers)
 
 # ---------------------------------------------------------------------------- #
 #
-set(SANITIZE_TYPE leak CACHE STRING "-fsantitize=<TYPE>")
 set(CMAKE_INSTALL_MESSAGE LAZY)
-if(WIN32)
-    set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard")
-else(WIN32)
-    set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
-endif(WIN32)
-
+set(CMAKE_C_STANDARD 11 CACHE STRING "C language standard")
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "CXX language standard")
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "Require the CXX language standard")
+# TODO: determine why failing for Max
+add_cxx_flag_if_avail("-std=c++11")
 
 # ---------------------------------------------------------------------------- #
-# set the output directory (critical on Windows
-
+# set the output directory (critical on Windows)
+#
 foreach(_TYPE ARCHIVE LIBRARY RUNTIME)
     # if ${PROJECT_NAME}_OUTPUT_DIR is not defined, set to CMAKE_BINARY_DIR
     if(NOT DEFINED ${PROJECT_NAME}_OUTPUT_DIR OR "${${PROJECT_NAME}_OUTPUT_DIR}" STREQUAL "")
@@ -100,8 +65,24 @@ if(NOT c_std_c11)
     add_c_flag_if_avail("-std=c99")
 endif()
 
-add_c_flag_if_avail("-pthread")
-add_cxx_flag_if_avail("-pthread")
+# SIMD OpenMP
+add_c_flag_if_avail("-fopenmp-simd")
+add_cxx_flag_if_avail("-fopenmp-simd")
+
+# OpenMP (non-SIMD)
+if(TOMOPY_USE_OPENMP)
+    add_c_flag_if_avail("-mp=nonuma")
+    add_cxx_flag_if_avail("-mp=nonuma")
+endif(TOMOPY_USE_OPENMP)
+
+if(TOMOPY_PGI_INFO)
+    add_c_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
+    add_cxx_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
+endif(TOMOPY_PGI_INFO)
+
+# Intel floating-point model
+add_c_flag_if_avail("-fp-model=precise")
+add_cxx_flag_if_avail("-fp-model=precise")
 
 # OpenACC
 if(TOMOPY_USE_OPENACC)
@@ -125,25 +106,11 @@ if(TOMOPY_USE_OPENACC)
 
     # sometimes OpenACC is not found, this adds the
     # definition in case it does
-    if((c_fopenacc OR c_acc OR c_h_acc) AND (cxx_fopenacc OR cxx_acc OR cxx_h_acc))
+    if((c_fopenacc OR c_acc OR c_h_acc) AND
+       (cxx_fopenacc OR cxx_acc OR cxx_h_acc))
         add_definitions(-DTOMOPY_USE_OPENACC)
     endif()
 endif(TOMOPY_USE_OPENACC)
-
-# SIMD OpenMP
-add_c_flag_if_avail("-fopenmp-simd")
-add_cxx_flag_if_avail("-fopenmp-simd")
-
-# OpenMP (non-SIMD)
-if(TOMOPY_USE_OPENMP)
-    add_c_flag_if_avail("-mp=nonuma")
-    add_cxx_flag_if_avail("-mp=nonuma")
-endif(TOMOPY_USE_OPENMP)
-
-if(TOMOPY_PGI_INFO)
-    add_c_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
-    add_cxx_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
-endif(TOMOPY_PGI_INFO)
 
 add_cxx_flag_if_avail("-W")
 add_cxx_flag_if_avail("-Wall")
@@ -156,43 +123,53 @@ add_cxx_flag_if_avail("-Wno-implicit-fallthrough")
 add_cxx_flag_if_avail("-Wno-unused-value")
 add_cxx_flag_if_avail("-faligned-new")
 
-if(USE_ARCH)
-    add_c_flag_if_avail("-march")
-    add_c_flag_if_avail("-msse2")
-    add_c_flag_if_avail("-msse3")
-    add_c_flag_if_avail("-msse4")
-    add_c_flag_if_avail("-mavx")
-    add_c_flag_if_avail("-mavx2")
-    add_c_flag_if_avail("-xHOST")
-
-    add_cxx_flag_if_avail("-march")
-    add_cxx_flag_if_avail("-msse2")
-    add_cxx_flag_if_avail("-msse3")
-    add_cxx_flag_if_avail("-msse4")
-    add_cxx_flag_if_avail("-mavx")
-    add_cxx_flag_if_avail("-mavx2")
-    add_cxx_flag_if_avail("-xHOST")
-
-    if(TOMOPY_USE_AVX512)
-        add_c_flag_if_avail("-mavx512f")
-        add_c_flag_if_avail("-mavx512pf")
-        add_c_flag_if_avail("-mavx512er")
-        add_c_flag_if_avail("-mavx512cd")
-        add_c_flag_if_avail("-axMIC-AVX512")
-
-        add_cxx_flag_if_avail("-mavx512f")
-        add_cxx_flag_if_avail("-mavx512pf")
-        add_cxx_flag_if_avail("-mavx512er")
-        add_cxx_flag_if_avail("-mavx512cd")
-        add_cxx_flag_if_avail("-axMIC-AVX512")
+if(TOMOPY_USE_ARCH)
+    if(CMAKE_C_COMPILER_IS_INTEL)
+        add_c_flag_if_avail("-xHOST")
+        if(TOMOPY_USE_AVX512)
+            add_c_flag_if_avail("-axMIC-AVX512")
+        endif()
+    else()
+        add_c_flag_if_avail("-march")
+        add_c_flag_if_avail("-msse2")
+        add_c_flag_if_avail("-msse3")
+        add_c_flag_if_avail("-msse4")
+        add_c_flag_if_avail("-mavx")
+        add_c_flag_if_avail("-mavx2")
+        if(TOMOPY_USE_AVX512)
+            add_c_flag_if_avail("-mavx512f")
+            add_c_flag_if_avail("-mavx512pf")
+            add_c_flag_if_avail("-mavx512er")
+            add_c_flag_if_avail("-mavx512cd")
+        endif()
     endif()
 
+    if(CMAKE_CXX_COMPILER_IS_INTEL)
+        add_cxx_flag_if_avail("-xHOST")
+        if(TOMOPY_USE_AVX512)
+            add_cxx_flag_if_avail("-axMIC-AVX512")
+        endif()
+    else()
+        add_cxx_flag_if_avail("-march")
+        add_cxx_flag_if_avail("-msse2")
+        add_cxx_flag_if_avail("-msse3")
+        add_cxx_flag_if_avail("-msse4")
+        add_cxx_flag_if_avail("-mavx")
+        add_cxx_flag_if_avail("-mavx2")
+        if(TOMOPY_USE_AVX512)
+            add_cxx_flag_if_avail("-mavx512f")
+            add_cxx_flag_if_avail("-mavx512pf")
+            add_cxx_flag_if_avail("-mavx512er")
+            add_cxx_flag_if_avail("-mavx512cd")
+        endif()
+    endif()
 endif()
 
 
 # ---------------------------------------------------------------------------- #
 # user customization
-add_c_flag_if_avail("${CFLAGS}")
-add_c_flag_if_avail("$ENV{CFLAGS}")
-add_cxx_flag_if_avail("${CXXFLAGS}")
-add_cxx_flag_if_avail("$ENV{CXXFLAGS}")
+add(${PROJECT_NAME}_C_FLAGS "${CFLAGS}")
+add(${PROJECT_NAME}_C_FLAGS "$ENV{CFLAGS}")
+add(${PROJECT_NAME}_CXX_FLAGS "${CXXFLAGS}")
+add(${PROJECT_NAME}_CXX_FLAGS "$ENV{CXXFLAGS}")
+

@@ -16,13 +16,16 @@ export PATH="/opt/conda/bin:${PATH}"
 mkdir -p /etc/bashrc.d
 cat << EOF > /etc/profile.d/conda.sh
 #!/bin/bash
-PATH="/opt/conda/bin:${PATH}"
+
+if [ -z "$(which conda)" ]; then PATH="/opt/conda/bin:${PATH}"; fi
 export PATH
+source deactivate
+source activate tomopy
 EOF
 
 conda config --add channels conda-forge
 conda config --add channels jrmadsen
-conda config --set always_yes yes --set changeps1 no
+conda config --set always_yes yes --set changeps1 yes
 conda update conda
 
 conda create -n tomopy python=${PYTHON_VERSION} nose six numpy h5py scipy \

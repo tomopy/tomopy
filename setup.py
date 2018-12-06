@@ -80,6 +80,7 @@ setup(
     download_url='http://github.com/tomopy/tomopy.git',
     license='BSD-3',
     cmake_args=cmake_args,
+    cmake_languages=('C', 'CXX'),
     platforms='Any',
     classifiers=[
         'Development Status :: 4 - Beta',

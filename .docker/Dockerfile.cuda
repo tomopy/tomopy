@@ -25,7 +25,6 @@ WORKDIR /work
 COPY ./.docker/config-path.sh /work/config-path.sh
 COPY ./.docker/apt.sh /work/apt.sh
 COPY ./.docker/conda.sh /work/conda.sh
-COPY ./.docker/cleanup.sh /work/cleanup.sh
 
 #------------------------------------------------------------------------------#
 #   environment
@@ -38,8 +37,10 @@ ENV PYTHON_VERSION ${PYTHON_VERSION}
 RUN ./apt.sh && \
     ./conda.sh && \
     ./config-path.sh && \
-    ./cleanup.sh && \
-    cd /work && \
+    apt-get -y autoclean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/* && \
+    /opt/conda/bin/conda clean -a -y && \
     rm -rf /work/*
 
 #------------------------------------------------------------------------------#
@@ -49,8 +50,9 @@ COPY ./.docker/pgilinux-2018-1810-x86-64.tar.gz /work/pgi/
 ENV PGI_ACCEPT_EULA accept
 ENV PGI_SILENT true
 RUN cd /work/pgi && \
-    tar -xzf pgilinux-2018-184-x86-64.tar.gz && \
-    ./install
+    tar -xzf pgilinux-2018-1810-x86-64.tar.gz && \
+    ./install && \
+    rm -rf /work/pgi
 
 #------------------------------------------------------------------------------#
 #   copy files for runtime
@@ -65,6 +67,8 @@ COPY ./.docker/bashrc /root/.bashrc
 ################################################################################
 FROM scratch
 
+ARG REQUIRE_CUDA_VERSION=9.2
+
 COPY --from=builder / /
 
 ENV HOME /root
@@ -76,7 +80,7 @@ ENV BASH_ENV /etc/bash.bashrc
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV CUDA_HOME "/usr/local/cuda"
-ENV NVIDIA_REQUIRE_CUDA "cuda>=10.0"
+ENV NVIDIA_REQUIRE_CUDA "cuda>=${REQUIRE_CUDA_VERSION}"
 ENV NVIDIA_VISIBLE_DEVICES "all"
 ENV NVIDIA_DRIVER_CAPABILITIES "compute,utility"
 

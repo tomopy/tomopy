@@ -1,60 +1,61 @@
----
 # requires clang-tidy version 6.0+
-BasedOnStyle: Mozilla
-Language: Cpp
-AlignOperands: true
+---
 AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-AlignTrailingComments: true
-AlignAfterOpenBracket: Align
 AlignEscapedNewlinesLeft: false
+AlignOperands: true
+AlignTrailingComments: true
 AllowShortFunctionsOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: TopLevel
 AlwaysBreakAfterReturnType: TopLevel
-AllowShortLoopsOnASingleLine: true
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: false
+BasedOnStyle: Mozilla
 BinPackArguments: true
 BinPackParameters: true
-BreakBeforeInheritanceComma: true
-BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterClass:       true
-  AfterEnum:        true
-  AfterFunction:    true
-  AfterStruct:      true
-  AfterUnion:       true
-  AfterExternBlock: true
-  BeforeCatch:      false
-  BeforeElse:       false
-  IndentBraces:     false
-  SplitEmptyFunction: false
-  SplitEmptyRecord: false
-  SplitEmptyNamespace: false
+    AfterClass:             true
+    AfterControlStatement:  true
+    AfterEnum:              true
+    AfterFunction:          true
+    AfterNamespace:         true
+    AfterStruct:            true
+    AfterUnion:             true
+    AfterExternBlock:       true
+    BeforeCatch:            false
+    BeforeElse:             false
+    IndentBraces:           false
+    SplitEmptyFunction:     false
+    SplitEmptyRecord:       false
+    SplitEmptyNamespace:    false
+BreakBeforeBraces: AllMan
+BreakBeforeInheritanceComma: true
 ColumnLimit: 80
-ContinuationIndentWidth: 4
-ConstructorInitializerIndentWidth: 0
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
-KeepEmptyLinesAtTheStartOfBlocks: false
-PointerAlignment: Left
-SpaceAfterTemplateKeyword: true
-SpaceAfterCStyleCast: true
-SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens: false
-SpacesInAngles: false
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 2
-SortIncludes: true
-SortUsingDeclarations: true
-SpacesInContainerLiterals: true
-Standard: Cpp11
-TabWidth: 4
-IndentWidth: 4
-UseTab: Never
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 4
 IndentCaseLabels: true
 IndentPPDirectives: AfterHash
-BreakBeforeBraces: Allman
+IndentWidth: 4
+KeepEmptyLinesAtTheStartOfBlocks: false
+Language: Cpp
+PointerAlignment: Left
+SortIncludes: true
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: true
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInContainerLiterals: true
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Cpp11
+TabWidth: 4
+UseTab: Never
 ...

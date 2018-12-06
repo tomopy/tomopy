@@ -34,24 +34,20 @@ export HISTFILESIZE=5000000
 
 #------------------------------------------------------------------------------#
 remove-static-libs()
-#------------------------------------------------------------------------------#
 {
     for i in $@
     do
         find ${i} -type f -regex ".*\.a$" -exec rm -v {} \;
     done
 }
-
 #------------------------------------------------------------------------------#
 remove-broken-links()
-#------------------------------------------------------------------------------#
 {
     for i in $@
     do
         find ${i} -type l ! -exec test -e {} \; -exec echo "  - Removing {}..." \; -exec rm {} \;
     done
 }
-
 #------------------------------------------------------------------------------#
 #   environment module config
 #------------------------------------------------------------------------------#
@@ -70,12 +66,3 @@ export MODULES_USE_COMPAT_VERSION=1
 if [ -d /opt/pgi ]; then
    command -v module &> /dev/null && module use /opt/pgi/modulefiles
 fi
-
-#------------------------------------------------------------------------------#
-#   tomopy
-#------------------------------------------------------------------------------#
-export PATH=/opt/conda/bin:${PATH}
-
-source activate tomopy
-
-export C_INCLUDE_PATH="$(dirname $(dirname $(which python)))/include:${C_INCLUDE_PATH}"

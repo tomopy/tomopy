@@ -1,22 +1,10 @@
-
-include(CheckCXXCompilerFlag)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL
-    "Position independent code" FORCE)
-
 ################################################################################
 #                                                                              #
 #                               General                                        #
 #                                                                              #
 ################################################################################
-
-if(TOMOPY_USE_TIMEMORY)
-    add_definitions(-DTOMOPY_USE_TIMEMORY)
-endif(TOMOPY_USE_TIMEMORY)
-
-# libraries to install
-set(INSTALL_LIBRARIES )
-
+# ensure PIC flag is set
+set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code" FORCE)
 set(PYTHON_SITE_DIR ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs CACHE PATH
     "Installation directory of libraries" FORCE)
@@ -29,7 +17,7 @@ set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs CACHE PATH
 if(TOMOPY_USE_PYBIND11)
     # ensure the submodule is checked out
     checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH pybind11 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     add_subdirectory(pybind11)
 endif()
 
@@ -39,7 +27,7 @@ endif()
 #
 #------------------------------------------------------------------------------#
 checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-    RELATIVE_PATH PTL WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    RELATIVE_PATH src/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 add_subdirectory(PTL)
 
 if(BUILD_STATIC_LIBS)
@@ -48,9 +36,7 @@ else()
     list(APPEND EXTERNAL_LIBRARIES ptl-shared)
 endif()
 
-#------------------------------------------------------------------------------#
-# Locate sources and headers for this project
-# - headers are included so they will show up in IDEs
+# Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers ${PROJECT_SOURCE_DIR}/include/*.h)
 file(GLOB tomo_sources ${CMAKE_CURRENT_LIST_DIR}/*.c)
 file(GLOB tomo_cxxhdrs ${CMAKE_CURRENT_LIST_DIR}/cxx/*.hh)
@@ -62,15 +48,14 @@ set_source_files_properties(${tomo_cxxsrcs} PROPERTIES LANGUAGE CXX
 set_source_files_properties(${tomo_sources} PROPERTIES LANGUAGE C
     COMPILE_FLAGS ${${PROJECT_NAME}_C_FLAGS})
 
-
-#------------------------------------------------------------------------------#
-# tasking library
-include_directories(
+# include dirs
+set(TARGET_INCLUDE_DIRECTORIES
     ${PROJECT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_LIST_DIR}/PTL/source
     ${CMAKE_CURRENT_LIST_DIR}/cxx
-    ${CMAKE_CURRENT_LIST_DIR}/gpu)
-include_directories(${TiMemory_INCLUDE_DIRS})
+    ${CMAKE_CURRENT_LIST_DIR}/gpu
+    ${TiMemory_INCLUDE_DIRS}
+    ${EXTERNAL_INCLUDE_DIRS})
 
 
 ################################################################################
@@ -79,9 +64,7 @@ include_directories(${TiMemory_INCLUDE_DIRS})
 #                                                                              #
 ################################################################################
 
-#------------------------------------------------------------------------------#
-#   Copy over pure python module, python testing, and setup files
-#
+# helper macro
 macro(CONFIG_INSTALL RELATIVE_PATH)
     foreach(_SOURCE_FILE ${ARGN})
         string(REPLACE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" _BINARY_FILE
@@ -93,6 +76,7 @@ macro(CONFIG_INSTALL RELATIVE_PATH)
     endforeach(_SOURCE_FILE ${ARGN})
 endmacro()
 
+# Copy over pure python module, python testing, and setup files
 file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
 file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
                    "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
@@ -110,16 +94,17 @@ config_install("recon" ${_RECON})
 config_install("sim"   ${_SIM})
 config_install("util"  ${_UTIL})
 
+# copy of test directory to build directory
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/test ${PROJECT_BINARY_DIR}/test
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+
+# copy over setup.* files to build directory
 file(GLOB PYSETUP "${PROJECT_SOURCE_DIR}/setup.*")
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${PYSETUP} ${PROJECT_BINARY_DIR}/
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
-#------------------------------------------------------------------------------#
-#
 # core sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources}
                     ${tomo_cxxhdrs} ${tomo_cxxsrcs})
@@ -161,43 +146,20 @@ target_link_libraries(libtomopy ${EXTERNAL_LIBRARIES} ${EXTERNAL_CUDA_LIBRARIES}
 set_target_properties(libtomopy
     PROPERTIES
     PREFIX ""
-    #SUFFIX ${PYTHON_MODULE_EXTENSION}
     RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
     LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
     ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
     LANGUAGE                    CXX
     LINKER_LANGUAGE             CXX
+    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
 )
 
-#------------------------------------------------------------------------------#
-# add the module
-#if(TOMOPY_USE_PYBIND11)
-#    set(LIBRARY_SOURCES libtomopy.cpp libtomopy.hpp)
-#
-#    pybind11_add_module(libtomopy ${LIBRARY_SOURCES})
-#
-#    set_target_properties(libtomopy
-#        PROPERTIES
-#        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-#        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-#        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-#        LANGUAGE CXX
-#        LINKER_LANGUAGE CXX)
-#
-#    target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES})
-#endif()
-
-list(APPEND INSTALL_LIBRARIES libtomopy)
-
-#------------------------------------------------------------------------------#
-# Install the targets and export
-#
-# compiled library
-install(TARGETS ${INSTALL_LIBRARIES}
+# Install the compiled library
+install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT development)
 
+# make sure the generated target gets put into the source tree for testing
 add_custom_command(TARGET libtomopy POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
-        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/
-)
+        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)

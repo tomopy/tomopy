@@ -55,21 +55,21 @@ include(CMakeParseArguments)
 # macro set_ifnot(<var> <value>)
 #       If variable var is not set, set its value to that provided
 #
-macro(set_ifnot _var _value)
+MACRO(set_ifnot _var _value)
     if(NOT DEFINED ${_var})
         set(${_var} ${_value} ${ARGN})
     endif()
-endmacro()
+ENDMACRO()
 
 #-----------------------------------------------------------------------
 # macro safe_remove_duplicates(<list>)
 #       ensures remove_duplicates is only called if list has values
 #
-macro(safe_remove_duplicates _list)
+MACRO(safe_remove_duplicates _list)
     if(NOT "${${_list}}" STREQUAL "")
         list(REMOVE_DUPLICATES ${_list})
     endif(NOT "${${_list}}" STREQUAL "")
-endmacro()
+ENDMACRO()
 
 #-----------------------------------------------------------------------
 # function - capitalize - make a string capitalized (first letter is capital)
@@ -77,7 +77,7 @@ endmacro()
 #       capitalize("SHARED" CShared)
 #   message(STATUS "-- CShared is \"${CShared}\"")
 #   $ -- CShared is "Shared"
-function(capitalize str var)
+FUNCTION(capitalize str var)
     # make string lower
     string(TOLOWER "${str}" str)
     string(SUBSTRING "${str}" 0 1 _first)
@@ -89,30 +89,30 @@ function(capitalize str var)
         set(str "${_first}${_remainder}")
     endif(GOOD_CMAKE)
     set(${var} "${str}" PARENT_SCOPE)
-endfunction()
+ENDFUNCTION()
 
 #-----------------------------------------------------------------------
 # macro set_ifnot_match(<var> <value>)
 #       If variable var is not set, set its value to that provided
 #
-macro(SET_IFNOT_MATCH VAR APPEND)
+MACRO(SET_IFNOT_MATCH VAR APPEND)
     if(NOT "${APPEND}" STREQUAL "")
         STRING(REGEX MATCH "${APPEND}" _MATCH "${${VAR}}")
         if(NOT "${_MATCH}" STREQUAL "")
             SET(${VAR} "${${VAR}} ${APPEND}")
         endif()
     endif()
-endmacro()
+ENDMACRO()
 
 #-----------------------------------------------------------------------
 # macro cache_ifnot(<var> <value>)
 #       If variable var is not set, set its value to that provided and cache it
 #
-macro(cache_ifnot _var _value _type _doc)
+MACRO(cache_ifnot _var _value _type _doc)
   if(NOT ${_var} OR NOT ${CACHE_VARIABLES} MATCHES ${_var})
     set(${_var} ${_value} CACHE ${_type} "${_doc}")
   endif()
-endmacro()
+ENDMACRO()
 
 #-----------------------------------------------------------------------
 # function enum_option(<option>
@@ -132,340 +132,51 @@ endmacro()
 #          checks of the value of <option> against the allowed values
 #          will ignore the case when performing string comparison.
 #
-function(enum_option _var)
-  set(options CASE_INSENSITIVE)
-  set(oneValueArgs DOC TYPE DEFAULT)
-  set(multiValueArgs VALUES)
-  cmake_parse_arguments(_ENUMOP "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+FUNCTION(enum_option _var)
+    set(options CASE_INSENSITIVE)
+    set(oneValueArgs DOC TYPE DEFAULT)
+    set(multiValueArgs VALUES)
+    cmake_parse_arguments(_ENUMOP "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-  # - Validation as needed arguments
-  if(NOT _ENUMOP_VALUES)
-    message(FATAL_ERROR "enum_option must be called with non-empty VALUES\n(Called for enum_option '${_var}')")
-  endif()
+    # - Validation as needed arguments
+    if(NOT _ENUMOP_VALUES)
+        message(FATAL_ERROR "enum_option must be called with non-empty VALUES\n(Called for enum_option '${_var}')")
+    endif()
 
-  # - Set argument defaults as needed
-  if(_ENUMOP_CASE_INSENSITIVE)
-    set(_ci_values )
-    foreach(_elem ${_ENUMOP_VALUES})
-      string(TOLOWER "${_elem}" _ci_elem)
-      list(APPEND _ci_values "${_ci_elem}")
-    endforeach()
-    set(_ENUMOP_VALUES ${_ci_values})
-  endif()
-
-  set_ifnot(_ENUMOP_TYPE STRING)
-  set_ifnot(_ENUMOP_DEFAULT 0)
-  list(GET _ENUMOP_VALUES ${_ENUMOP_DEFAULT} _default)
-
-  if(NOT DEFINED ${_var})
-    set(${_var} ${_default} CACHE ${_ENUMOP_TYPE} "${_ENUMOP_DOC} (${_ENUMOP_VALUES})")
-  else()
-    set(_var_tmp ${${_var}})
+    # - Set argument defaults as needed
     if(_ENUMOP_CASE_INSENSITIVE)
-      string(TOLOWER ${_var_tmp} _var_tmp)
+        set(_ci_values )
+        foreach(_elem ${_ENUMOP_VALUES})
+        string(TOLOWER "${_elem}" _ci_elem)
+        list(APPEND _ci_values "${_ci_elem}")
+        endforeach()
+        set(_ENUMOP_VALUES ${_ci_values})
     endif()
 
-    list(FIND _ENUMOP_VALUES ${_var_tmp} _elem)
-    if(_elem LESS 0)
-      message(FATAL_ERROR "Value '${${_var}}' for variable ${_var} is not allowed\nIt must be selected from the set: ${_ENUMOP_VALUES} (DEFAULT: ${_default})\n")
+    set_ifnot(_ENUMOP_TYPE STRING)
+    set_ifnot(_ENUMOP_DEFAULT 0)
+    list(GET _ENUMOP_VALUES ${_ENUMOP_DEFAULT} _default)
+
+    if(NOT DEFINED ${_var})
+        set(${_var} ${_default} CACHE ${_ENUMOP_TYPE} "${_ENUMOP_DOC} (${_ENUMOP_VALUES})")
     else()
-      # - convert to lowercase
-      if(_ENUMOP_CASE_INSENSITIVE)
-        set(${_var} ${_var_tmp} CACHE ${_ENUMOP_TYPE} "${_ENUMOP_DOC} (${_ENUMOP_VALUES})" FORCE)
-      endif()
-    endif()
-  endif()
-endfunction()
-
-#-----------------------------------------------------------------------
-# from
-#   http://www.cmake.org/pipermail/cmake/2008-April/021345.html
-#-----------------------------------------------------------------------
-#
-#
-# Adds a file or directory to the FILES_TO_DELETE var so that it is removed
-# when "make distclean" is run
-#
-# Prototype:
-#    ADD_TO_DISTCLEAN(file)
-# Parameters:
-#    file    A file or dir
-#
-
-MACRO(ADD_TO_DISTCLEAN TARGET_TO_DELETE)
-     SET( FILES_TO_DELETE ${FILES_TO_DELETE} ${TARGET_TO_DELETE} )
-ENDMACRO(ADD_TO_DISTCLEAN)
-
-#-----------------------------------------------------------------------
-# from
-#   http://www.cmake.org/pipermail/cmake/2008-April/021345.html
-#-----------------------------------------------------------------------
-#
-# Create a "make distclean" target
-#
-# Prototype:
-#    GENERATE_DISTCLEAN_TARGET()
-# Parameters:
-#    (none)
-#
-
-MACRO(GENERATE_DISTCLEAN_TARGET)
-    IF( EXISTS ${PROJECT_BINARY_DIR}/distclean_manifest.txt )
-        FILE( REMOVE ${PROJECT_BINARY_DIR}/distclean_manifest.txt )
-    ENDIF( EXISTS ${PROJECT_BINARY_DIR}/distclean_manifest.txt )
-
-    IF(MSVC)
-        SET( FILES_TO_DELETE ${FILES_TO_DELETE} ${PROJECT_BINARY_DIR}/*.dir )
-        ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/*.vcproj )
-        ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/*.vcproj.cmake )
-        ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.sln )
-    ENDIF(MSVC)
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/distclean.dir )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/CMakeCache.txt )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/install_manifest.txt )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/CPackConfig.cmake )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/CPackSourceConfig.cmake )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/_CPack_Packages )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/PACKAGE.dir )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/cmake_install.cmake )
-
-    # This code does not work yet. I don't know why CPACK_GENERATOR is null.
-    IF(CPACK_GENERATOR)
-        FOREACH(gen ${CPACK_GENERATOR})
-            MESSAGE("Adding file ${PROJECT_BINARY_DIR}/${CPACK_SOURCE_PACKAGE_FILE_NAME}.${gen} to distclean")
-            ADD_TO_DISTCLEAN(${PROJECT_BINARY_DIR}/${CPACK_SOURCE_PACKAGE_FILE_NAME}.${gen} )
-        ENDFOREACH(gen)
-    ELSE(CPACK_GENERATOR)
-        MESSAGE("CPACK_GENERATOR was not defined (value: ${CPACK_GENERATOR})")
-    ENDIF(CPACK_GENERATOR)
-
-
-
-    IF(EXECUTABLE_OUTPUT_PATH)
-        ADD_TO_DISTCLEAN( ${EXECUTABLE_OUTPUT_PATH} )
-    ENDIF(EXECUTABLE_OUTPUT_PATH)
-    IF(LIBRARY_OUTPUT_PATH)
-        ADD_TO_DISTCLEAN( ${LIBRARY_OUTPUT_PATH} )
-    ENDIF(LIBRARY_OUTPUT_PATH)
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY} )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/Makefile )
-    ADD_TO_DISTCLEAN( ${PROJECT_BINARY_DIR}/distclean_manifest.txt )
-
-    FOREACH(f ${FILES_TO_DELETE})
-        FILE(TO_NATIVE_PATH ${f} ff)
-        FILE(APPEND ${PROJECT_BINARY_DIR}/distclean_manifest.txt ${ff})
-        FILE(APPEND ${PROJECT_BINARY_DIR}/distclean_manifest.txt "\n")
-    ENDFOREACH(f)
-
-    IF(WIN32)
-        FILE( TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_BINARY_DIR_WIN32 )
-        ADD_CUSTOM_TARGET(distclean
-                          FOR /F \"tokens=1* delims= \" %%f IN
-                            \(${PROJECT_BINARY_DIR_WIN32}\\distclean_manifest.txt\) DO \(
-                            IF EXIST %%f\\nul \(
-                                rd /q /s %%f
-                            \) ELSE \(
-                                IF EXIST %%f \(
-                                    del /q /f %%f
-                                \) ELSE \(
-                                    echo Warning: Problem when removing %%f. - Probable causes: File already removed or not enough permissions
-                                \)
-                            \)
-                        \)
-        )
-    ELSE(WIN32)
-        # Unix
-        ADD_CUSTOM_TARGET(distclean cat
-                          "${PROJECT_BINARY_DIR}/distclean_manifest.txt" | while read f \; do if
-                            \[ -e \"\$\${f}\" \]; then rm -rf \"\$\${f}\" \; else echo \"Warning:
-                            Problem when removing \"\$\${f}\" - Probable causes: File already
-                            removed or not enough permissions\" \; fi\; done COMMENT Cleaning all
-                            generated files...
-        )
-    ENDIF(WIN32)
-ENDMACRO(GENERATE_DISTCLEAN_TARGET)
-
-
-#-----------------------------------------------------------------------
-# Determine if two paths are the same
-#
-#-----------------------------------------------------------------------
-function(equal_paths VAR PATH1 PATH2)
-    get_filename_component(PATH1 ${PATH1} ABSOLUTE)
-    get_filename_component(PATH2 ${PATH2} ABSOLUTE)
-
-    if ("${PATH1}" STREQUAL "${PATH2}")
-        set(${VAR} ON PARENT_SCOPE)
-    else()
-        set(${VAR} OFF PARENT_SCOPE)
-    endif()
-endfunction(equal_paths VAR PATH1 PATH2)
-
-
-#-----------------------------------------------------------------------
-# Resolve symbolic links, remove duplicates, and remove system paths
-#   in CMAKE_PREFIX_PATH
-#
-#-----------------------------------------------------------------------
-function(clean_prefix_path)
-    set(_prefix_path )
-    foreach(_path ${CMAKE_PREFIX_PATH})
-        get_filename_component(_path ${_path} REALPATH)
-        set(IS_SYS_PATH OFF)
-        # loop over system path types
-        foreach(_type PREFIX INCLUDE LIBRARY APPBUNDLE FRAMEWORK PROGRAM)
-            # loop over system paths
-            foreach(_syspath ${CMAKE_SYSTEM_${_type}_PATH})
-                # check if equal
-                equal_paths(IS_SYS_PATH ${_path} ${_syspath})
-                # exit loop if equal
-                if(IS_SYS_PATH)
-                    break()
-                endif(IS_SYS_PATH)
-            endforeach(_syspath ${CMAKE_SYSTEM_${_type}_PATH})
-            # exit loop if equal
-            if(IS_SYS_PATH)
-                break()
-            endif(IS_SYS_PATH)
-        endforeach(_type PREFIX INCLUDE LIBRARY APPBUNDLE FRAMEWORK PROGRAM)
-        # if not a system path
-        if(NOT IS_SYS_PATH)
-            list(APPEND _prefix_path ${_path})
-        endif(NOT IS_SYS_PATH)
-    endforeach()
-    # remove any duplicates
-    if(NOT "${_prefix_path}" STREQUAL "")
-        list(REMOVE_DUPLICATES _prefix_path)
-    endif()
-    # force the new prefix path
-    set(CMAKE_PREFIX_PATH ${_prefix_path} CACHE PATH
-        "Prefix path for finding packages" FORCE)
-endfunction()
-
-
-#-----------------------------------------------------------------------
-# Add a defined ${PACKAGE_NAME}_ROOT variable defined via CMake or in
-# environment to the CMAKE_PREFIX_PATH
-#
-# This macro should NOT be called directly, instead call
-# ConfigureRootSearchPath (i.e. with "_" prefix)
-#-----------------------------------------------------------------------
-function(subConfigureRootSearchPath _package_name _search_other)
-
-    mark_as_advanced(PREVIOUS_${_package_name}_ROOT)
-
-    # if ROOT not already defined and ENV variable defines it
-    if(NOT ${_package_name}_ROOT_DIR AND
-       NOT "$ENV{${_package_name}_ROOT}" STREQUAL "")
-        cache_ifnot(${_package_name}_ROOT_DIR $ENV{${_package_name}_ROOT}
-                    FILEPATH "ROOT search path for ${_package_name}")
-    endif()
-
-    # if ROOT is still not defined, check upper case and capitalize version
-    # and return
-    if(NOT ${_package_name}_ROOT_DIR)
-        if(_search_other)
-            string(TOUPPER "${_package_name}" ALT_PACKAGE_NAME)
-            if("${ALT_PACKAGE_NAME}" STREQUAL "${_package_name}")
-                capitalize("${_package_name}" ALT_PACKAGE_NAME)
-                subConfigureRootSearchPath(${ALT_PACKAGE_NAME} OFF)
-            else()
-                subConfigureRootSearchPath(${ALT_PACKAGE_NAME} OFF)
-            endif()
+        set(_var_tmp ${${_var}})
+        if(_ENUMOP_CASE_INSENSITIVE)
+        string(TOLOWER ${_var_tmp} _var_tmp)
         endif()
-        return()
-    endif()
 
-    # if ROOT is defined and has changed
-    if(${_package_name}_ROOT_DIR AND PREVIOUS_${_package_name}_ROOT_DIR AND
-       NOT "${PREVIOUS_${_package_name}_ROOT_DIR}" STREQUAL "${${_package_name}_ROOT_DIR}")
-        if(NOT "${PREVIOUS_${_package_name}_ROOT_DIR}" STREQUAL "${${_package_name}_ROOT_DIR}")
-            set(UNCACHE_PACKAGE_VARS ON)
-        endif()
-        # make sure it exists and is a directory
-        if(EXISTS "${${_package_name}_ROOT_DIR}" AND
-           IS_DIRECTORY "${${_package_name}_ROOT_DIR}")
-            set(CMAKE_PREFIX_PATH ${${_package_name}_ROOT_DIR} ${CMAKE_PREFIX_PATH}
-                CACHE PATH "CMake prefix paths" FORCE)
-            # store previous root to see if it changed
-            set(PREVIOUS_${_package_name}_ROOT_DIR ${${_package_name}_ROOT_DIR}
-                CACHE FILEPATH "Previous root search path for ${_package_name}" FORCE)
-            clean_prefix_path()
+        list(FIND _ENUMOP_VALUES ${_var_tmp} _elem)
+        if(_elem LESS 0)
+        message(FATAL_ERROR "Value '${${_var}}' for variable ${_var} is not allowed\nIt must be selected from the set: ${_ENUMOP_VALUES} (DEFAULT: ${_default})\n")
         else()
-            message(WARNING "${_package_name}_ROOT_DIR specified an invalid directory")
-            unset(${_package_name}_ROOT_DIR CACHE)
+        # - convert to lowercase
+        if(_ENUMOP_CASE_INSENSITIVE)
+            set(${_var} ${_var_tmp} CACHE ${_ENUMOP_TYPE} "${_ENUMOP_DOC} (${_ENUMOP_VALUES})" FORCE)
         endif()
-        # root changed so we want to refind the package
-        if(UNCACHE_PACKAGE_VARS)
-            string(TOLOWER "${_package_name}" CAP_PACKAGE_NAME)
-            string(SUBSTRING "${CAP_PACKAGE_NAME}" 0 1 FIRST)
-            string(SUBSTRING "${CAP_PACKAGE_NAME}" 1 -1 REST)
-            string(TOUPPER "${FIRST}" FIRST)
-            string(CONCAT CAP_PACKAGE_NAME "${FIRST}" "${REST}")
-            string(TOUPPER "${_package_name}" UPP_PACKAGE_NAME)
-            string(TOLOWER "${_package_name}" LOW_PACKAGE_NAME)
-
-            get_cmake_property(CACHED_VARIABLES CACHE_VARIABLES)
-            foreach(_name ${_package_name} ${CAP_PACKAGE_NAME}
-                    ${UPP_PACKAGE_NAME} ${LOW_PACKAGE_NAME})
-                # skip maintain
-                if(NOT MAINTAIN_${_name}_CACHE)
-                    # loop over cached variables
-                    foreach(_var ${CACHED_VARIABLES})
-                        if("${_var}_" MATCHES "${_name}")
-                            if(NOT "${_var}" STREQUAL "${_name}_ROOT_DIR" AND
-                                    NOT "${_var}" STREQUAL "PREVIOUS_${_name}_ROOT_DIR" AND
-                                    NOT "${_var}" STREQUAL "MAINTAIN_${_name}_CACHE")
-                                unset(${_var} CACHE)
-                                list(REMOVE_ITEM CACHED_VARIABLES "${_var}")
-                            endif()
-                        endif()
-                    endforeach(_var ${CACHE_VARIABLES})
-                endif()
-            endforeach()
-        endif()
-    else()
-        if(EXISTS "${${_package_name}_ROOT_DIR}" AND
-                IS_DIRECTORY "${${_package_name}_ROOT_DIR}")
-            set(_add ON)
-            foreach(_path ${CMAKE_PREFIX_PATH})
-                if("${_path}" STREQUAL "${${_package_name}_ROOT_DIR}")
-                    set(_add OFF)
-                    break()
-                endif()
-            endforeach()
-            if(_add)
-                set(CMAKE_PREFIX_PATH ${${_package_name}_ROOT_DIR} ${CMAKE_PREFIX_PATH}
-                    CACHE PATH "CMake prefix paths" FORCE)
-                clean_prefix_path()
-            endif()
-            # store previous root to see if it changed
-            set(PREVIOUS_${_package_name}_ROOT_DIR ${${_package_name}_ROOT_DIR}
-                CACHE FILEPATH "Previous root search path for ${_package_name}" FORCE)
-        else()
-            message(WARNING "${_package_name}_ROOT_DIR specified an invalid directory")
-            unset(${_package_name}_ROOT_DIR CACHE)
         endif()
     endif()
+ENDFUNCTION()
 
-endfunction()
-
-
-#-----------------------------------------------------------------------
-# Add a defined ${PACKAGE_NAME}_ROOT_DIR variable defined via CMake or in
-# environment to the CMAKE_PREFIX_PATH
-#
-# Different from _ConfigureRootSearchPath
-#-----------------------------------------------------------------------
-macro(ConfigureRootSearchPath)
-    foreach(_package_name ${ARGN})
-        subConfigureRootSearchPath(${_package_name} ON)
-        if($ENV{${_package_name}_DIR})
-            set(${_package_name}_DIR "$ENV{${_package_name}_DIR}" CACHE PATH
-                "CMake config directory for ${_package_name}")
-        endif()
-    endforeach()
-endmacro()
 
 #-----------------------------------------------------------------------
 # GENERAL
@@ -490,6 +201,7 @@ FUNCTION(ADD_FEATURE _var _description)
   set_property(GLOBAL PROPERTY ${_var}_DESCRIPTION "${_description}${EXTRA_DESC}")
 ENDFUNCTION()
 
+
 #------------------------------------------------------------------------------#
 # function add_subfeature(<ROOT_OPTION> <NAME> <DOCSTRING>)
 #          Add a subfeature, whose activation is specified by the
@@ -508,6 +220,7 @@ FUNCTION(ADD_SUBFEATURE _root _var _description)
     set_property(GLOBAL APPEND PROPERTY ${_root}_FEATURES ${_var})
     set_property(GLOBAL PROPERTY ${_root}_${_var}_DESCRIPTION "${_description}${EXTRA_DESC}")
 ENDFUNCTION()
+
 
 #------------------------------------------------------------------------------#
 # function add_option(<OPTION_NAME> <DOCSRING> <DEFAULT_SETTING> [NO_FEATURE])
@@ -548,10 +261,81 @@ ENDFUNCTION(ADD_DEPENDENT_OPTION _NAME _MESSAGE _DEFAULT _COND _COND_SETTING)
 
 
 #------------------------------------------------------------------------------#
+# macro CHECKOUT_GIT_SUBMODULE()
+#
+#   Run "git submodule update" if a file in a submodule does not exist
+#
+#   ARGS:
+#       RECURSIVE (option) -- add "--recursive" flag
+#       RELATIVE_PATH (one value) -- typically the relative path to submodule
+#                                    from PROJECT_SOURCE_DIR
+#       WORKING_DIRECTORY (one value) -- (default: PROJECT_SOURCE_DIR)
+#       TEST_FILE (one value) -- file to check for (default: CMakeLists.txt)
+#       ADDITIONAL_CMDS (many value) -- any addition commands to pass
+#
+MACRO(CHECKOUT_GIT_SUBMODULE)
+    # parse args
+    cmake_parse_arguments(
+        CHECKOUT
+        "RECURSIVE"
+        "RELATIVE_PATH;WORKING_DIRECTORY;TEST_FILE"
+        "ADDITIONAL_CMDS"
+        ${ARGN})
+
+    if(NOT CHECKOUT_WORKING_DIRECTORY)
+        set(CHECKOUT_WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    endif(NOT CHECKOUT_WORKING_DIRECTORY)
+
+    if(NOT CHECKOUT_TEST_FILE)
+        set(CHECKOUT_TEST_FILE "CMakeLists.txt")
+    endif(NOT CHECKOUT_TEST_FILE)
+
+    set(_DIR "${CHECKOUT_WORKING_DIRECTORY}/${CHECKOUT_RELATIVE_PATH}")
+    # ensure the (possibly empty) directory exists
+    if(NOT EXISTS "${_DIR}")
+        message(FATAL_ERROR "submodule directory does not exist")
+    endif(NOT EXISTS "${_DIR}")
+
+    # if this file exists --> project has been checked out
+    # if not exists --> not been checked out
+    set(_TEST_FILE "${_DIR}/${CHECKOUT_TEST_FILE}")
+
+    # if the module has not been checked out
+    if(NOT EXISTS "${_TEST_FILE}")
+        find_package(Git REQUIRED)
+
+        set(_RECURSE )
+        if(CHECKOUT_RECURSIVE)
+            set(_RECURSE --recursive)
+        endif(CHECKOUT_RECURSIVE)
+
+        # perform the checkout
+        execute_process(
+            COMMAND
+                ${GIT_EXECUTABLE} submodule update --init ${_RECURSE}
+                    ${CHECKOUT_ADDITIONAL_CMDS} ${CHECKOUT_RELATIVE_PATH}
+            WORKING_DIRECTORY
+                ${CHECKOUT_WORKING_DIRECTORY}
+            RESULT_VARIABLE RET)
+
+        # check the return code
+        if(RET GREATER 0)
+            set(_CMD "${GIT_EXECUTABLE} submodule update --init ${_RECURSE}
+                ${CHECKOUT_ADDITIONAL_CMDS} ${CHECKOUT_RELATIVE_PATH}")
+            message(STATUS "macro(CHECKOUT_SUBMODULE) failed.")
+            message(FATAL_ERROR "Command: \"${_CMD}\"")
+        endif()
+
+    endif()
+
+ENDMACRO()
+
+
+#------------------------------------------------------------------------------#
 # function print_enabled_features()
 #          Print enabled  features plus their docstrings.
 #
-function(print_enabled_features)
+FUNCTION(print_enabled_features)
     set(_basemsg "The following features are defined/enabled (+):")
     set(_currentFeatureText "${_basemsg}")
     get_property(_features GLOBAL PROPERTY PROJECT_FEATURES)
@@ -643,14 +427,14 @@ function(print_enabled_features)
     if(NOT "${_currentFeatureText}" STREQUAL "${_basemsg}")
         message(STATUS "${_currentFeatureText}\n")
     endif()
-endfunction()
+ENDFUNCTION()
 
 
 #------------------------------------------------------------------------------#
 # function print_disabled_features()
 #          Print disabled features plus their docstrings.
 #
-function(print_disabled_features)
+FUNCTION(print_disabled_features)
     set(_basemsg "The following features are NOT defined/enabled (-):")
     set(_currentFeatureText "${_basemsg}")
     get_property(_features GLOBAL PROPERTY PROJECT_FEATURES)
@@ -674,21 +458,21 @@ function(print_disabled_features)
     if(NOT "${_currentFeatureText}" STREQUAL "${_basemsg}")
         message(STATUS "${_currentFeatureText}\n")
     endif()
-endfunction()
+ENDFUNCTION()
 
 #------------------------------------------------------------------------------#
 # function print_features()
 #          Print all features plus their docstrings.
 #
-function(print_features)
+FUNCTION(print_features)
     message(STATUS "")
     print_enabled_features()
     print_disabled_features()
-endfunction()
+ENDFUNCTION()
 
 
 #------------------------------------------------------------------------------#
-macro(DETERMINE_LIBDIR_DEFAULT VAR)
+MACRO(DETERMINE_LIBDIR_DEFAULT VAR)
     set(_LIBDIR_DEFAULT "lib")
     # Override this default 'lib' with 'lib64' iff:
     #  - we are on Linux system but NOT cross-compiling
@@ -750,136 +534,22 @@ macro(DETERMINE_LIBDIR_DEFAULT VAR)
             AND "${__LAST_LIBDIR_DEFAULT}" STREQUAL "${LIBDIR_DEFAULT}")
         set_property(CACHE LIBDIR_DEFAULT PROPERTY VALUE "${_LIBDIR_DEFAULT}")
     endif()
-endmacro()
-
-
-#------------------------------------------------------------------------------#
-# macro CACHE_VARIABLES_FOR_REFERENCE(...)
-#           Provide a list of variables that will be stored in the cache
-#               as {variable_name}_REF for later reference
-#           This version does not force the cache to be updated
-macro(CACHE_VARIABLES_FOR_REFERENCE)
-    foreach(_var ${ARGN})
-        set(${_var}_REF ${${_var}} CACHE STRING
-            "Cached reference of ${_var} under ${_var}_REF for later comparison")
-    endforeach()
-endmacro()
-
-
-#------------------------------------------------------------------------------#
-# macro CACHE_VARIABLES_FOR_REFERENCE(...)
-#           Provide a list of variables that will be stored in the cache
-#              as {variable_name}_REF for later reference
-#           This version forces the cache to be updated
-macro(UPDATE_REFERENCE_CACHE_VARIABLES)
-    foreach(_var ${ARGN})
-        set(${_var}_REF ${${_var}} CACHE STRING
-            "Cached reference of ${_var} under ${_var}_REF for later comparison"
-            FORCE)
-    endforeach()
-endmacro()
-
-
-#------------------------------------------------------------------------------#
-# macro GET_HOSTNAME(<VAR>)
-#
-function(GET_HOSTNAME VAR)
-    find_program(HOSTNAME_CMD hostname)
-    execute_process(COMMAND ${HOSTNAME_CMD}
-        OUTPUT_VARIABLE _HOSTNAME
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(${VAR} "${_HOSTNAME}" PARENT_SCOPE)
-endfunction(GET_HOSTNAME VAR)
-
-
-#------------------------------------------------------------------------------#
-# macro CHECKOUT_GIT_SUBMODULE()
-#
-#   Run "git submodule update" if a file in a submodule does not exist
-#
-#   ARGS:
-#       RECURSIVE (option) -- add "--recursive" flag
-#       RELATIVE_PATH (one value) -- typically the relative path to submodule
-#                                    from PROJECT_SOURCE_DIR
-#       WORKING_DIRECTORY (one value) -- (default: PROJECT_SOURCE_DIR)
-#       TEST_FILE (one value) -- file to check for (default: CMakeLists.txt)
-#       ADDITIONAL_CMDS (many value) -- any addition commands to pass
-#
-macro(CHECKOUT_GIT_SUBMODULE)
-
-    # parse args
-    cmake_parse_arguments(
-        CHECKOUT
-        "RECURSIVE"
-        "RELATIVE_PATH;WORKING_DIRECTORY;TEST_FILE"
-        "ADDITIONAL_CMDS"
-        ${ARGN})
-
-    if(NOT CHECKOUT_WORKING_DIRECTORY)
-        set(CHECKOUT_WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    endif(NOT CHECKOUT_WORKING_DIRECTORY)
-
-    if(NOT CHECKOUT_TEST_FILE)
-        set(CHECKOUT_TEST_FILE "CMakeLists.txt")
-    endif(NOT CHECKOUT_TEST_FILE)
-
-    set(_DIR "${CHECKOUT_WORKING_DIRECTORY}/${CHECKOUT_RELATIVE_PATH}")
-    # ensure the (possibly empty) directory exists
-    if(NOT EXISTS "${_DIR}")
-        message(FATAL_ERROR "submodule directory does not exist")
-    endif(NOT EXISTS "${_DIR}")
-
-    # if this file exists --> project has been checked out
-    # if not exists --> not been checked out
-    set(_TEST_FILE "${_DIR}/${CHECKOUT_TEST_FILE}")
-
-    # if the module has not been checked out
-    if(NOT EXISTS "${_TEST_FILE}")
-        find_package(Git REQUIRED)
-
-        set(_RECURSE )
-        if(CHECKOUT_RECURSIVE)
-            set(_RECURSE --recursive)
-        endif(CHECKOUT_RECURSIVE)
-
-        # perform the checkout
-        execute_process(
-            COMMAND
-                ${GIT_EXECUTABLE} submodule update --init ${_RECURSE}
-                    ${CHECKOUT_ADDITIONAL_CMDS} ${CHECKOUT_RELATIVE_PATH}
-            WORKING_DIRECTORY
-                ${CHECKOUT_WORKING_DIRECTORY}
-            RESULT_VARIABLE RET)
-
-        # check the return code
-        if(RET GREATER 0)
-
-            set(_CMD "${GIT_EXECUTABLE} submodule update --init ${_RECURSE}
-                ${CHECKOUT_ADDITIONAL_CMDS} ${CHECKOUT_RELATIVE_PATH}")
-            message(STATUS "macro(CHECKOUT_SUBMODULE) failed.")
-            message(FATAL_ERROR "Command: \"${_CMD}\"")
-
-        endif(RET GREATER 0)
-
-    endif(NOT EXISTS "${_TEST_FILE}")
-
-endmacro(CHECKOUT_GIT_SUBMODULE)
+ENDMACRO()
 
 
 #----------------------------------------------------------------------------
 # Macro for building library
 #
-macro(BUILD_LIBRARY)
+MACRO(BUILD_LIBRARY)
     cmake_parse_arguments(LIB
     "VERSION" "TYPE;TARGET_NAME;OUTPUT_NAME;EXTENSION" "LINK_LIBRARIES;SOURCES;EXTRA_ARGS"
     ${ARGN})
 
-    macro(setifnot VAR)
+    MACRO(setifnot VAR)
         if(NOT ${VAR} OR "${${VAR}}" STREQUAL "")
             set(${VAR} ${ARGN})
         endif()
-    endmacro()
+    ENDMACRO()
 
     setifnot(LIB_EXTENSION  ${PYTHON_MODULE_EXTENSION})
     setifnot(LIB_OUTPUT_NAME ${LIB_TARGET_NAME})
@@ -898,19 +568,11 @@ macro(BUILD_LIBRARY)
             ${LIB_EXTRA_ARGS})
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})
-endmacro(BUILD_LIBRARY)
+ENDMACRO(BUILD_LIBRARY)
 
 
 #------------------------------------------------------------------------------#
 # always determine the default lib directory
 DETERMINE_LIBDIR_DEFAULT(LIBDIR_DEFAULT)
 
-
-#------------------------------------------------------------------------------#
-# get the hostname
-get_hostname(HOSTNAME)
-string(REPLACE ".local" "" HOSTNAME "${HOSTNAME}")
-
-
 cmake_policy(POP)
-

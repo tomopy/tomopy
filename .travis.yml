@@ -1,8 +1,8 @@
 language: python
 python:
   - "2.7"
+  - "3.5"
   - "3.6"
-  - "3.7"
 os:
   - linux
 sudo: false
@@ -17,15 +17,15 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
 install:
-  - "conda install python=${TRAVIS_PYTHON_VERSION} nose six numpy h5py scipy
-    scikit-image scikit-build pywavelets mkl-devel mkl_fft python-coveralls
+  - "conda install python=${TRAVIS_PYTHON_VERSION} nose six numpy scipy
+    scikit-image scikit-build mkl-devel mkl_fft python-coveralls
     dxchange numexpr coverage timemory pyctest"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install futures;
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --pyctest-ctest-args="-VV" --disable-phantom-tests
+  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests -- -VV
 script:
   - coverage run $(which nosetests)
 after_success:

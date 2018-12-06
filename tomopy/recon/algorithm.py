@@ -61,7 +61,6 @@ import tomopy.util.dtype as dtype
 from tomopy.sim.project import get_center
 import logging
 import concurrent.futures as cf
-import copy
 
 logger = logging.getLogger(__name__)
 
@@ -372,7 +371,6 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         with cf.ThreadPoolExecutor(ncore) as e:
             for slc in slcs:
                 e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
-
     return recon
 
 

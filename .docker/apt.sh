@@ -20,7 +20,7 @@ apt-get install -y --reinstall \
     environment-modules libnetcdf-dev \
     gcc-${GCC_VERSION} gcc-${GCC_VERSION}-doc g++-${GCC_VERSION} \
     gcc-${GCC_VERSION}-multilib gcc-${GCC_VERSION}-offload-nvptx \
-    clang-5.0 clang-${CLANG_VERSION}.0 libc++-dev libc++abi-dev \
+    clang-${CLANG_VERSION}.0 libc++-dev libc++abi-dev \
     google-perftools libgoogle-perftools-dev
     #valgrind kcachegrind gdb
     #gcc-6 gcc-6-doc g++-6 gcc-6-multilib \
