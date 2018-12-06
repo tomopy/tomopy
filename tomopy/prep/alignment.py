@@ -64,6 +64,7 @@ from scipy.optimize import curve_fit
 from scipy.ndimage import affine_transform, shift
 from collections import namedtuple
 
+import dxchange
 
 logger = logging.getLogger(__name__)
 
