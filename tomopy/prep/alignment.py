@@ -768,11 +768,11 @@ def detector_drift_adjust_aps_1id(imgstacks,
         tomopy images stacks (axis_0 is the oemga direction)
     slit_cnr_ref : np.ndarray
         reference slit corners from white field images
-    medfilt2_kernel_size :  int
+    medfilt2_kernel_size : int, optional
         2D median filter kernel size for slit conner detection
-    medfilt_kernel_size  :  int
+    medfilt_kernel_size  : int, optional
         1D median filter kernel size for slit conner detection
-    ncore                :  int
+    ncore : int, optional
         number of cores used for speed up
 
     Returns
