@@ -380,8 +380,8 @@ def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     """
     imgshift = 0.0 if rotc_guess is None else rotc_guess - (proj1.shape[1]-1.0)/2.0
 
-    proj1 = ndimage.shift(proj1, -imgshift, mode='constant', cval=0)
-    proj2 = ndimage.shift(proj2, -imgshift, mode='constant', cval=0)
+    proj1 = ndimage.shift(proj1, [0,-imgshift], mode='constant', cval=0)
+    proj2 = ndimage.shift(proj2, [0,-imgshift], mode='constant', cval=0)
 
 
     # create reflection of second projection
