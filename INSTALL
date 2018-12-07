@@ -1,12 +1,3 @@
-
-To build the libtomopy shared library, use
-
-    python build.py
-
-This will compile a shared library:
-libtomopy.so, libtomopy.dylib, or libtomopy.dll (Linux, MacOS, Windows)
-and install it to ./lib
-
 For Windows, both MinGW-64 and `make` need to be installed and placed in the
 PATH, so that the appropriate 'gcc.exe' (that is, one that supports C99) and
 'make.exe' can be found. For Anaconda Python on Windows, adding the conda

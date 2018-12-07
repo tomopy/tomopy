@@ -55,7 +55,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 import pywt
-import tomopy.prep.phase as phase
 import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
