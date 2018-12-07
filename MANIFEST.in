@@ -3,7 +3,9 @@ include LICENSE.txt
 include VERSION
 include build.py
 include config/Mk.base
+include CMakeLists.txt
 recursive-include config *
+recursive-include cmake *
 recursive-include tomopy/data *.tif *.h5
 recursive-include tomopy/sharedlibs *
 recursive-include test *
