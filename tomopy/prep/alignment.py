@@ -703,15 +703,6 @@ def calc_slit_box_aps_1id(slit_box_corners, inclip=(1, 10, 1, 10)):
     Tuple:
         Cliping indices as a tuple of four
         (clipFromTop, clipToBottom, clipFromLeft, clipToRight)
-        ------------------------------------------------------
-                             | clipFromTop      |
-            ==============================================
-                                                |
-                                                | clipToBottom
-                                                |
-            ==============================================
-
-        ------------------------------------------------------
 
     """
     return (
