@@ -786,7 +786,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
     """
     ncore = mproc.mp.cpu_count() - 1 if ncore is None else ncore
 
-    def quickDiff(x): return np.amax(np.absolute(x))
+    def quick_diff(x): return np.amax(np.absolute(x))
 
     # -- find all projection corners (slow)
     # NOTE:
@@ -806,7 +806,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
                                 medfilt2_kernel_size,
                                 medfilt_kernel_size,
                                 )
-    cnrs_found = np.array([quickDiff(proj_cnrs[n, :, :] - slit_cnr_ref) < 15
+    cnrs_found = np.array([quick_diff(proj_cnrs[n, :, :] - slit_cnr_ref) < 15
                            for n in nlist])
     kernels = [(medfilt2_kernel_size+2*i, medfilt_kernel_size+2*j)
                for i in range(15)
@@ -837,8 +837,8 @@ def detector_drift_adjust_aps_1id(imgstacks,
             #  -> adiff < 15
             #  The detected corner should be stable
             #  -> rdiff < 0.1 (pixel)s
-            adiff = quickDiff(_cnr - slit_cnr_ref)
-            rdiff = quickDiff(_cnr - cnr)
+            adiff = quick_diff(_cnr - slit_cnr_ref)
+            rdiff = quick_diff(_cnr - cnr)
             if rdiff < 0.1 and adiff < 15:
                 cnrs_found[n_img] = True
             else:
