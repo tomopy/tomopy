@@ -674,6 +674,10 @@ def enhance_projs_aps_1id(imgstacks, median_ks=5, ncore=None):
     """
     Enhance the projection images with weak contrast collected at APS 1ID
 
+    This filter uses a median fileter (will be switched to enhanced recursive 
+    median fileter, ERMF, in the future) for denoising, and a histogram 
+    equalization for dynamic range adjustment to bring out the details.
+
     Parameters
     ----------
     imgstacks : np.ndarray
