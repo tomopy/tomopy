@@ -245,7 +245,7 @@ def median_filter_cuda(arr, size=3, axis=0):
                 # im_noisecu = arr[:][step][:].astype(np.float32)
                 im_noisecu = arr[step].astype(np.float32)
                 im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
-                                        (loffset, roffset)), 'symmetric')
+                                                     (loffset, roffset)), 'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
@@ -512,7 +512,7 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
             for step in range(prjsize):
                 im_noisecu = arr[step].astype(np.float32)
                 im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
-                                        (loffset, roffset)), 'symmetric')
+                                                     (loffset, roffset)), 'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
@@ -692,17 +692,17 @@ def enhance_projs_aps_1id(imgstack, median_ks=5, ncore=None):
     ndarray
         3D enhanced image stacks.
     """
-    ncore  = mproc.mp.cpu_count()-1 if ncore is None else ncore
+    ncore = mproc.mp.cpu_count()-1 if ncore is None else ncore
 
     # need to use multiprocessing to speed up the process
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
         for n_img in range(imgstack.shape[0]):
             tmp.append(e.submit(_enhance_img,
-                                imgstack[n_img,:,:],
+                                imgstack[n_img, :, :],
                                 median_ks,
-                               )
-                      )
+                                )
+                       )
 
     return np.stack([me.result() for me in tmp], axis=0)
 
