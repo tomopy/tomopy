@@ -670,7 +670,7 @@ def _get_mask(dx, dy, ratio):
     return x * x + y * y < ratio * ratio * r2
 
 
-def enhance_projs_aps_1id(imgstacks, median_ks=5, ncore=None):
+def enhance_projs_aps_1id(imgstack, median_ks=5, ncore=None):
     """
     Enhance the projection images with weak contrast collected at APS 1ID
 
@@ -680,7 +680,7 @@ def enhance_projs_aps_1id(imgstacks, median_ks=5, ncore=None):
 
     Parameters
     ----------
-    imgstacks : np.ndarray
+    imgstack : np.ndarray
         tomopy images stacks (axis_0 is the oemga direction)
     median_ks : int, optional
         2D median filter kernel size for local noise suppresion
@@ -697,9 +697,9 @@ def enhance_projs_aps_1id(imgstacks, median_ks=5, ncore=None):
     # need to use multiprocessing to speed up the process
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
-        for n_img in range(imgstacks.shape[0]):
+        for n_img in range(imgstack.shape[0]):
             tmp.append(e.submit(_enhance_img,
-                                imgstacks[n_img,:,:],
+                                imgstack[n_img,:,:],
                                 median_ks,
                                )
                       )
