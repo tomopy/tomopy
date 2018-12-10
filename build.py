@@ -60,12 +60,12 @@ def build_libtomopy(install_prefix='.'):
         fout.write(conf.format())
     cmd = ['make', '-j4', '-f', get_makefile()]
     subprocess.check_call(tuple(cmd))
-    
+
     src  = os.path.abspath(os.path.join("..", 'tomopy', 'sharedlibs', conf.sharedlib))
-    dest = os.path.join(install_prefix, conf.sharedlib)
+    dest = os.path.join(install_prefix, 'tomopy', 'sharedlibs', conf.sharedlib)
     shutil.copy(src, dest)
     os.chmod(dest, 493) # chmod 755
-        
+
 def clean_libtomopy(install_prefix='.'):
     """Clean libtomopy shared library for the current system."""
     install_prefix = os.path.abspath(install_prefix)
