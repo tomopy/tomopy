@@ -21,7 +21,7 @@ When using pyFFTW instead of MKL-FFT, it is best to import TomoPy before importi
 See `this thread <https://github.com/tomopy/tomopy/issues/178>`_ for details.
 
 OPTION 1: Installing from Conda (Recommended)
-===================================
+=============================================
 
 If you only want to run TomoPy, not develop it, then you should install through
 a package manager. Conda, our supported package manager, can install TomoPy and
@@ -46,7 +46,7 @@ For some more information about using Conda, please refer to the
 `docs <http://conda.pydata.org/docs>`__.
 
 OPTION 2: Installing from source with Conda
-=================================
+===========================================
 
 Sometimes an adventurous user may want to get the source code, which is
 always more up-to-date than the one provided by Conda (with more bugs of
