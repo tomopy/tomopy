@@ -363,11 +363,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         cudaStream_t* streams  = _dataset->streams;
         auto          nstreams = _dataset->nstreams;
 
-        //#if defined(DEBUG)
+#if defined(DEBUG)
         PRINT_HERE(std::string(std::string("|_slice: ") + std::to_string(s) +
                                std::string(" of ") + std::to_string(dy))
                        .c_str());
-        //#endif
+#endif
 
         uintmax_t recon_offset = s * (ngridx * ngridy);
         float*    _recon       = recon + recon_offset;
@@ -375,12 +375,12 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         // For each projection angle
         for(int p = 0; p < dt; ++p)
         {
-            //#if defined(DEBUG)
+#if defined(DEBUG)
             PRINT_HERE(std::string(std::string("  |_angle: ") +
                                    std::to_string(p) + std::string(" of ") +
                                    std::to_string(dt))
                            .c_str());
-            //#endif
+#endif
 
             // Calculate the sin and cos values
             // of the projection angle and find
@@ -393,11 +393,12 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
             // For each detector pixel
             for(int d = 0; d < dx; ++d)
             {
-                // PRINT_HERE(std::string(std::string("    |_pixel: ") +
-                //                       std::to_string(d) +
-                //                       std::string(" of ") +
-                //                       std::to_string(dx)).c_str());
-
+#if defined(DEBUG)
+                PRINT_HERE(std::string(std::string("    |_pixel: ") +
+                                       std::to_string(d) +
+                                       std::string(" of ") +
+                                       std::to_string(dx)).c_str());
+#endif
                 int stream_offset = (d % (nstreams - 2)) + (d % 2);
 
                 if(stream_offset + 1 >= nstreams)
@@ -422,8 +423,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                                  gpu_data->coordx, gpu_data->coordy,
                                  streams + stream_offset);
 
-                static Mutex m;
-                m.lock();
+                //static Mutex m;
+                //m.lock();
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
                 //
@@ -519,7 +520,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i,
                                     s, p, d, "model");
                 }
-                m.unlock();
+                //m.unlock();
             }
         }
 

@@ -745,9 +745,9 @@ cuda_calc_sum_sqr(const int* csize, const float* dist, float* sum_sqr,
     // cuda_calc_sum_sqr_global<<< nb, nt, smem, streams[0] >>>(csize, dist,
     // sum_sqr); CUDA_CHECK_LAST_ERROR();
 
-    std::stringstream ss;
-    ss << "csize: " << csize << ", dist: " << dist << ", sum_sqr: " << sum_sqr;
-    PRINT_HERE(ss.str().c_str());
+    //std::stringstream ss;
+    //ss << "csize: " << csize << ", dist: " << dist << ", sum_sqr: " << sum_sqr;
+    //PRINT_HERE(ss.str().c_str());
 
     static thread_local int    size      = 0;
     static thread_local int    last_size = -1;
