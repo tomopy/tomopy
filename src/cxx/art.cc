@@ -423,9 +423,6 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                                  gpu_data->coordx, gpu_data->coordy,
                                  streams + stream_offset);
 
-                static Mutex m;
-                m.lock();
-
                 // Merge the (coordx, gridy) and (gridx, coordy)
                 //
                 // inputs: gridx, gridy, coordx, coordy
@@ -504,13 +501,15 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     gpu_data->indi, gpu_data->dist, gpu_data->model,
                     gpu_data->sum, gpu_data->simdata, streams + stream_offset);
 
+                static Mutex m;
+		m.lock();
+
                 // PRINT_HERE(std::to_string(d).c_str());
                 cuda_art_update(s, p, d, ngridx, ngridy, dt, dx,
                                 gpu_data->csize, gpu_data->data,
                                 gpu_data->simdata, gpu_data->indi,
                                 gpu_data->dist, gpu_data->sum, gpu_data->model,
                                 streams + stream_offset);
-                // }
 
                 if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE &&
                    p < PRINT_MAX_ANGLE && d < PRINT_MAX_PIXEL)
@@ -520,6 +519,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i,
                                     s, p, d, "model");
                 }
+		
                 m.unlock();
             }
         }
