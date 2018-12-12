@@ -43,6 +43,7 @@
 
 #include "utils.h"
 #include <stdint.h>
+#include <float.h>
 
 // for windows build
 #ifdef WIN32
