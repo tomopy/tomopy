@@ -2,7 +2,7 @@
 //  Copyright 2015. UChicago Argonne, LLC. This software was produced
 //  under U.S. Government contract DE-AC02-06CH11357 for Argonne National
 //  Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-//  U.S. Department of Energy. The U.S. Government has rights to use,
+//  U.S. Depsirtment of Energy. The U.S. Government has rights to use,
 //  reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
 //  UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
 //  ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
@@ -25,7 +25,7 @@
 //  THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
 //  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 //  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
+//  FOR A PSIRTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
 //  Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 //  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -37,8 +37,8 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
-#ifndef bart_h_
-#define bart_h_
+#ifndef sirt_h_
+#define sirt_h_
 
 #include "common.h"
 
@@ -49,43 +49,47 @@ BEGIN_EXTERN_C
 //============================================================================//
 
 void
-cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-         int num_block, const float* ind_block);
+cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
+        const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
-bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-         int num_block, const float* ind_block);
+sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
+        const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
-bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy,
-          int num_iter, int num_block, const float* ind_block);
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy,
+         int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
-bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter, int num_block, const float* ind_block);
-
-//----------------------------------------------------------------------------//
-
-void
-bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
+sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter, int num_block, const float* ind_block);
+            int num_iter);
+
+//----------------------------------------------------------------------------//
+
+void
+sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
+           const float* theta, float* recon, int ngridx, int ngridy,
+           int num_iter);
 
 //============================================================================//
 //
-//      Specific utils functions for BART
+//      Specific utils functions for SIRT
 //
 //============================================================================//
+
+void
+cuda_sirt_update(int s, int p, int d, int ry, int rz, int dt, int dx,
+                const int* csize, const float* data, const float* simdata,
+                const int* indi, const float* dist, const float* sum,
+                float* model, cudaStream_t* streams);
 
 //============================================================================//
 

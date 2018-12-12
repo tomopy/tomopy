@@ -52,6 +52,7 @@ from __future__ import (absolute_import, division, print_function,
 __version__ = '1.3.0'
 
 from ._fft_loader import fft_impl
+from tomopy.allocator import *
 from tomopy.misc.corr import *
 from tomopy.misc.morph import *
 from tomopy.misc.phantom import *

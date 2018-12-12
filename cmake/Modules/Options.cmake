@@ -38,6 +38,7 @@ endif()
 
 # options (always available)
 add_option(TOMOPY_USE_MKL "Enable MKL" ON)
+add_option(TOMOPY_USE_TBB "Enable TBB" OFF)
 add_option(TOMOPY_USE_GPU "Enable GPU preprocessor" ON)
 add_option(TOMOPY_USE_GPERF "Enable Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)

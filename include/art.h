@@ -61,12 +61,6 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
 //----------------------------------------------------------------------------//
 
 void
-art_gpu(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//----------------------------------------------------------------------------//
-
-void
 art_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy,
          int num_iter);

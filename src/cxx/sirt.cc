@@ -40,7 +40,7 @@
 #include "utils.hh"
 
 BEGIN_EXTERN_C
-#include "art.h"
+#include "sirt.h"
 #include "utils.h"
 #include "utils_cuda.h"
 #include "utils_openacc.h"
@@ -55,7 +55,7 @@ END_EXTERN_C
 //============================================================================//
 
 void
-cxx_art(const float* data, int dy, int dt, int dx, const float* center,
+cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     auto tid = ThreadPool::GetThisThreadID();
@@ -73,14 +73,14 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
     // TODO: select based on memory
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
-        art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
+        sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                 num_iter);
     else
-        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_openmp,
-        data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                num_iter);
+        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp,
+                          data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
+                    num_iter);
 #else
-    art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
+    sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
 
 #if defined(TOMOPY_USE_TIMEMORY)
@@ -92,7 +92,90 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
 //============================================================================//
 
 void
-art_cpu(const float* data, int dy, int dt, int dx, const float* center,
+sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+
+{
+    farray_t gridx(ngridx + 1, 0.0f);
+    farray_t gridy(ngridy + 1, 0.0f);
+    farray_t coordx(ngridy + 1, 0.0f);
+    farray_t coordy(ngridx + 1, 0.0f);
+    farray_t ax(ngridx + ngridy, 0.0f);
+    farray_t ay(ngridx + ngridy, 0.0f);
+    farray_t bx(ngridx + ngridy, 0.0f);
+    farray_t by(ngridx + ngridy, 0.0f);
+    farray_t coorx(ngridx + ngridy, 0.0f);
+    farray_t coory(ngridx + ngridy, 0.0f);
+    farray_t dist(ngridx + ngridy, 0.0f);
+    iarray_t indi(ngridx + ngridy, 0);
+
+    int      s, p, d, i, n;
+    float    theta_p;
+    float    mov;
+    float    upd;
+    int      ind_data, ind_recon;
+    float    sum_dist2;
+    farray_t sum_dist(ngridx + ngridy, 0.0f);
+    farray_t simdata(dy * dt * dx, 0.0f);
+    farray_t update(ngridx + ngridy, 0.0f);
+    farray_t rec(dy * ngridx * ngridy, 0.0f);
+
+    for(i = 0; i < num_iter; i++)
+    {
+        memset(simdata.data(), 0, simdata.size() * sizeof(float));
+        // For each slice
+        for(s = 0; s < dy; s++)
+        {
+            memset(sum_dist.data(), 0, sum_dist.size() * sizeof(float));
+            memset(update.data(), 0, update.size() * sizeof(float));
+            memset(rec.data(), 0, rec.size() * sizeof(float));
+
+            // For each projection angle
+            for(p = 0; p < dt; p++)
+            {
+                theta_p = fmodf(theta[p], 2.0f * (float) M_PI);
+                // Rotate object - 2D slices
+                recon = rotate(recon, -theta_p, ngridx, ngridy, ngridx, ngridy);
+                // Calculate simulated data by summing up along x-axis
+                for(d = 0; d < dx; d++)
+                {
+                    ind_data = d + p * dx + s * dt * dx;
+                    for(n = 0; n < ngridx; n++)
+                    {
+                        simdata[ind_data] +=
+                            recon[n + d * ngridx + s * ngridx * ngridy];
+                    }
+                }
+                // Make update by backprojecting error along x-axis
+                for(d = 0; d < dx; d++)
+                {
+                    sum_dist2 = ngridx;
+                    ind_data  = d + p * dx + s * dt * dx;
+                    upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                    for(n = 0; n < ngridx; n++)
+                    {
+                        update[n + d * ngridx + s * ngridx * ngridy] += upd;
+                    }
+                }
+
+                // Update recon
+                for(n = 0; n < ngridx * ngridy; n++)
+                {
+                    ind_recon = s * ngridx * ngridy;
+                    recon[n + ind_recon] += update[n] / ngridx;
+                }
+                // Back-Rotate object
+                recon = rotate(recon, theta_p, ngridx, ngridy, ngridx, ngridy);
+            }
+        }
+    }
+}
+
+
+//============================================================================//
+/*
+void
+sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
@@ -217,11 +300,11 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
 
     tim::disable_signal_detection();
 }
-
+*/
 //============================================================================//
 
 void
-art_cuda(const float* data, int dy, int dt, int dx, const float* center,
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
@@ -488,7 +571,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                                     "data");
                 }
 
-                // calc_simdata_gpu and art_update_gpu do this check to
+                // calc_simdata_gpu and sirt_update_gpu do this check to
                 // avoid the memory synchronization
                 // if(sum_cpu != 0.0f)
                 // {
@@ -504,7 +587,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     gpu_data->sum, gpu_data->simdata, streams + stream_offset);
 
                 // PRINT_HERE(std::to_string(d).c_str());
-                cuda_art_update(s, p, d, ngridx, ngridy, dt, dx,
+                cuda_sirt_update(s, p, d, ngridx, ngridy, dt, dx,
                                 gpu_data->csize, gpu_data->data,
                                 gpu_data->simdata, gpu_data->indi,
                                 gpu_data->dist, gpu_data->sum, gpu_data->model,
@@ -570,7 +653,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 //============================================================================//
 
 void
-art_openacc(const float* data, int dy, int dt, int dx, const float* center,
+sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy,
             int num_iter)
 {
@@ -699,7 +782,7 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
 //============================================================================//
 
 void
-art_openmp(const float* data, int dy, int dt, int dx, const float* center,
+sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
            const float* theta, float* recon, int ngridx, int ngridy,
            int num_iter)
 {

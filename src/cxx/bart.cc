@@ -76,7 +76,8 @@ cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
         bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                  num_iter, num_block, ind_block);
     else
-        bart_gpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
+        run_gpu_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp,
+        data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                  num_iter, num_block, ind_block);
 #else
     bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
@@ -288,122 +289,6 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
     }
 
     tim::disable_signal_detection();
-}
-
-//============================================================================//
-
-void
-bart_gpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-         int num_block, const float* ind_block)
-{
-    if(dy == 0 || dt == 0 || dx == 0)
-        return;
-
-    std::deque<GpuOption> options;
-    int                   default_idx = 0;
-    std::string           default_key = "cpu";
-
-#if defined(TOMOPY_USE_CUDA)
-    options.push_back(GpuOption({ 1, "cuda", "Run with CUDA" }));
-#endif
-
-#if defined(TOMOPY_USE_OPENACC)
-    options.push_back(GpuOption({ 2, "openacc", "Run with OpenACC" }));
-#endif
-
-#if defined(TOMOPY_USE_OPENMP)
-    options.push_back(GpuOption({ 3, "openmp", "Run with OpenMP" }));
-#endif
-
-    //------------------------------------------------------------------------//
-    auto print_options = [&]() {
-        static bool first = true;
-        if(!first)
-            return;
-        else
-            first = false;
-
-        std::stringstream ss;
-        GpuOption::header(ss);
-        for(const auto& itr : options) ss << itr << "\n";
-        GpuOption::footer(ss);
-
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << "\n" << ss.str() << std::endl;
-    };
-    //------------------------------------------------------------------------//
-    auto print_selection = [&](GpuOption& selected_opt) {
-        static bool first = true;
-        if(!first)
-            return;
-        else
-            first = false;
-
-        std::stringstream ss;
-        GpuOption::spacer(ss, '-');
-        ss << "Selected device: " << selected_opt << "\n";
-        GpuOption::spacer(ss, '-');
-
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << ss.str() << std::endl;
-    };
-    //------------------------------------------------------------------------//
-
-    // Run on CPU if nothing available
-    if(options.size() == 0)
-    {
-        bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                 num_iter, num_block, ind_block);
-        return;
-    }
-
-    // print the GPU execution type options
-    print_options();
-
-    default_idx = options.front().index;
-    default_key = options.front().key;
-    auto key =
-        GetEnv("TOMOPY_GPU_TYPE", default_key, "Tomopy GPU execution type");
-
-    int selection = default_idx;
-    for(auto itr : options)
-    {
-        if(key == tolower(itr.key) || from_string<int>(key) == itr.index)
-        {
-            selection = itr.index;
-            print_selection(itr);
-        }
-    }
-
-    try
-    {
-        if(selection == 1)
-        {
-            bart_cuda(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                      num_iter, num_block, ind_block);
-        }
-        else if(selection == 2)
-        {
-            bart_openacc(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                         num_iter, num_block, ind_block);
-        }
-        else if(selection == 3)
-        {
-            bart_openmp(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                        num_iter, num_block, ind_block);
-        }
-    }
-    catch(std::exception& e)
-    {
-        {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] "
-                      << e.what() << std::endl;
-        }
-        bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                 num_iter, num_block, ind_block);
-    }
 }
 
 //============================================================================//

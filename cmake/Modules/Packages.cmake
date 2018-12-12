@@ -105,6 +105,24 @@ endif(TOMOPY_USE_OPENACC AND TOMOPY_USE_GPU)
 
 ################################################################################
 #
+#        TBB
+#
+################################################################################
+
+if(TOMOPY_USE_TBB)
+    find_package(TBB COMPONENTS malloc malloc_proxy)
+
+    if(TBB_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${TBB_LIBRARIES})
+        add_definitions(-DTOMOPY_USE_TBB)
+    endif(TBB_FOUND)
+
+endif(TOMOPY_USE_TBB)
+
+
+################################################################################
+#
 #        MKL
 #
 ################################################################################
@@ -238,4 +256,11 @@ foreach(_DIR ${EXTERNAL_INCLUDE_DIRS})
     include_directories(SYSTEM ${_DIR})
 endforeach(_DIR ${EXTERNAL_INCLUDE_DIRS})
 
+# configure package files
+configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
+    ${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py
+    @ONLY)
 
+configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
+    ${PROJECT_BINARY_DIR}/tomopy/allocator/__init__.py
+    @ONLY)

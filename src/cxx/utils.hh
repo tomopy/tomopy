@@ -49,6 +49,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <utility>
+#include <memory>
+#include <thread>
+#include <algorithm>
+#include <functional>
 
 #ifdef TOMOPY_USE_TIMEMORY
 #    include <timemory/timemory.hpp>
@@ -379,6 +384,130 @@ void DLL
                        const farray_t& dist, float vx, float vy,
                        const farray_t& modelx, const farray_t& modely,
                        const farray_t& modelz, int axis, farray_t& simdata);
+
+//============================================================================//
+
+float DLL
+      cxx_rotate_x(const float x, const float y, const float theta);
+
+//============================================================================//
+
+float DLL
+      cxx_rotate_y(const float x, const float y, const float theta);
+
+//============================================================================//
+
+farray_t DLL
+         cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny,
+                    const int dx, const int dy);
+
+//============================================================================//
+#define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
+
+template <typename _Func, typename... _Args>
+void
+run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
+                  _Args... args)
+{
+    std::deque<GpuOption> options;
+    int                   default_idx = 0;
+    std::string           default_key = "cpu";
+
+#if defined(TOMOPY_USE_CUDA)
+    options.push_back(GpuOption({ 1, "cuda", "Run with CUDA" }));
+#endif
+
+#if defined(TOMOPY_USE_OPENACC)
+    options.push_back(GpuOption({ 2, "openacc", "Run with OpenACC" }));
+#endif
+
+#if defined(TOMOPY_USE_OPENMP)
+    options.push_back(GpuOption({ 3, "openmp", "Run with OpenMP" }));
+#endif
+
+    //------------------------------------------------------------------------//
+    auto print_options = [&]() {
+        static bool first = true;
+        if(!first)
+            return;
+        else
+            first = false;
+
+        std::stringstream ss;
+        GpuOption::header(ss);
+        for(const auto& itr : options) ss << itr << "\n";
+        GpuOption::footer(ss);
+
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cout << "\n" << ss.str() << std::endl;
+    };
+    //------------------------------------------------------------------------//
+    auto print_selection = [&](GpuOption& selected_opt) {
+        static bool first = true;
+        if(!first)
+            return;
+        else
+            first = false;
+
+        std::stringstream ss;
+        GpuOption::spacer(ss, '-');
+        ss << "Selected device: " << selected_opt << "\n";
+        GpuOption::spacer(ss, '-');
+
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cout << ss.str() << std::endl;
+    };
+    //------------------------------------------------------------------------//
+
+    // Run on CPU if nothing available
+    if(options.size() == 0)
+    {
+        cpu_func(_forward_args_t(_Args, args));
+        return;
+    }
+
+    // print the GPU execution type options
+    print_options();
+
+    default_idx = options.front().index;
+    default_key = options.front().key;
+    auto key    = GetEnv("TOMOPY_GPU_TYPE", default_key);
+
+    int selection = default_idx;
+    for(auto itr : options)
+    {
+        if(key == tolower(itr.key) || from_string<int>(key) == itr.index)
+        {
+            selection = itr.index;
+            print_selection(itr);
+        }
+    }
+
+    try
+    {
+        if(selection == 1)
+        {
+            cuda_func(_forward_args_t(_Args, args));
+        }
+        else if(selection == 2)
+        {
+            acc_func(_forward_args_t(_Args, args));
+        }
+        else if(selection == 3)
+        {
+            omp_func(_forward_args_t(_Args, args));
+        }
+    }
+    catch(std::exception& e)
+    {
+        {
+            AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] "
+                      << e.what() << std::endl;
+        }
+        cpu_func(_forward_args_t(_Args, args));
+    }
+}
 
 //============================================================================//
 

@@ -270,4 +270,14 @@ void DLL
                    float vx, float vy, const float* modelx, const float* modely,
                    const float* modelz, int axis, float* simdata);
 
+float DLL
+      rotate_x(const float x, const float y, const float theta);
+
+float DLL
+      rotate_y(const float x, const float y, const float theta);
+
+float* DLL
+       rotate(const float* obj, const float theta, const int nx, const int ny,
+              const int dx, const int dy);
+
 #endif

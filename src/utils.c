@@ -457,3 +457,119 @@ calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
 }
 
 //============================================================================//
+
+float
+rotate_x(const float x, const float y, const float theta)
+{
+    return x * cos(theta) - y * sin(theta);
+}
+
+//============================================================================//
+
+float
+rotate_y(const float x, const float y, const float theta)
+{
+    return x * sin(theta) + y * cos(theta);
+}
+
+//============================================================================//
+
+float*
+rotate(const float* obj, const float theta, const int nx, const int ny,
+       const int dx, const int dy)
+{
+#define COMPUTE_MAX(a, b) (a < b) ? b : a
+#define COMPUTE_MIN(a, b) (a < b) ? a : b
+
+    int    nr     = sqrt(nx * nx + ny * ny);
+    int    off_dx = dx / 2;
+    int    off_dy = dy / 2;
+    int    off_rx = nr / 2;
+    int    off_ry = nr / 2;
+    float* rot    = (float*) malloc(nr * nr * sizeof(float));
+
+    float obj_max = -1.0 * MAXFLOAT;
+    float obj_min = 1.0 * MAXFLOAT;
+    for(int i = 0; i < dx * dy; ++i)
+    {
+        obj_max = COMPUTE_MAX(obj_max, obj[i]);
+        obj_min = COMPUTE_MIN(obj_max, obj[i]);
+    }
+    float obj_mid = 0.5 * (obj_min + obj_max);
+
+    for(int i = 0; i < nr; ++i)
+    {
+        for(int j = 0; j < nr; ++j)
+        {
+            // rotation x index in 2D
+            int rot_idx = i - off_rx;
+            // rotation y index in 2D
+            int rot_idy = i - off_ry;
+            // index in 1D array
+            int id_rot = j * nr + i;
+            // transformation
+            int obj_idx = round(rotate_x(rot_idx, rot_idy, theta)) + off_dx;
+            int obj_idy = round(rotate_y(rot_idx, rot_idy, theta)) + off_dy;
+            // index in 1D array
+            int id_obj = obj_idy * dx + obj_idx;
+            // within bounds
+            if(obj_idx >= 0 && obj_idx < dx && obj_idy >= 0 && obj_idy <= dy)
+            {
+                rot[id_rot] += obj[id_obj];
+            }
+            else
+            {
+                rot[id_rot] += obj_mid;
+            }
+        }
+    }
+
+    float obj_sum = 0.0f;
+    float rot_max = -1.0 * MAXFLOAT;
+    float rot_min = 1.0 * MAXFLOAT;
+    float rot_sum = 0.0f;
+
+// compute sum
+#pragma omp simd
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        obj_sum += obj[i];
+    }
+    // compute min/max
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        rot_max = COMPUTE_MAX(rot_max, rot[i]);
+        rot_min = COMPUTE_MIN(rot_max, rot[i]);
+    }
+    // translate so bottom is zero
+    rot_max -= rot_min;
+#pragma omp simd
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        rot[i] -= rot_min;
+    }
+// rescale to max is 1
+#pragma omp simd
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        rot[i] /= rot_max;
+    }
+// compute sum
+#pragma omp simd
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        rot_sum += rot[i];
+    }
+#pragma omp simd
+    for(int i = 0; i < nr * nr; ++i)
+    {
+        rot[i] *= (obj_sum / rot_sum);
+    }
+
+#undef COMPUTE_MAX
+#undef COMPUTE_MIN
+
+    return rot;
+}
+
+//============================================================================//

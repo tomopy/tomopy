@@ -31,7 +31,7 @@ BraceWrapping:
     SplitEmptyFunction:     false
     SplitEmptyRecord:       false
     SplitEmptyNamespace:    false
-BreakBeforeBraces: AllMan
+BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: true
 ColumnLimit: 80
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
