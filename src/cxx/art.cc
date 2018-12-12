@@ -423,8 +423,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                                  gpu_data->coordx, gpu_data->coordy,
                                  streams + stream_offset);
 
-                //static Mutex m;
-                //m.lock();
+                static Mutex m;
+                m.lock();
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
                 //
@@ -520,7 +520,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i,
                                     s, p, d, "model");
                 }
-                //m.unlock();
+                m.unlock();
             }
         }
 
@@ -542,10 +542,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
     for(int i = 0; i < num_iter; ++i)
     {
+#if defined(DEBUG)
         PRINT_HERE(std::string(std::string("iteration: ") + std::to_string(i) +
                                std::string(" of ") + std::to_string(num_iter))
                        .c_str());
-
+#endif
         // initialize simdata to zero
         cudaMemset(master_gpu_data->simdata, 0, _nd * sizeof(float));
 

@@ -90,10 +90,10 @@
 #    define PRINT_MAX_ANGLE 1
 #    define PRINT_MAX_PIXEL 5
 #else
-#    define PRINT_MAX_ITER 1
-#    define PRINT_MAX_SLICE 1
-#    define PRINT_MAX_ANGLE 1
-#    define PRINT_MAX_PIXEL 5
+#    define PRINT_MAX_ITER 0
+#    define PRINT_MAX_SLICE 0
+#    define PRINT_MAX_ANGLE 0
+#    define PRINT_MAX_PIXEL 0
 #endif
 
 //============================================================================//
