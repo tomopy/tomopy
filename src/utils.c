@@ -489,8 +489,8 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     int    off_ry = nr / 2;
     float* rot    = (float*) malloc(nr * nr * sizeof(float));
 
-    float obj_max = -1.0 * MAXFLOAT;
-    float obj_min = 1.0 * MAXFLOAT;
+    float obj_max = -1.0 * FLT_MAX;
+    float obj_min = 1.0 * FLT_MAX;
     for(int i = 0; i < dx * dy; ++i)
     {
         obj_max = COMPUTE_MAX(obj_max, obj[i]);
@@ -526,8 +526,8 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     }
 
     float obj_sum = 0.0f;
-    float rot_max = -1.0 * MAXFLOAT;
-    float rot_min = 1.0 * MAXFLOAT;
+    float rot_max = -1.0 * FLT_MAX;
+    float rot_min = 1.0 * FLT_MAX;
     float rot_sum = 0.0f;
 
 // compute sum
