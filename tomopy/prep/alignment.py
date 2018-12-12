@@ -47,7 +47,13 @@
 # #########################################################################
 
 import numpy as np
+import concurrent.futures as cf
+import tomopy.util.mproc as mproc
 import logging
+import warnings
+import os
+import dxchange
+
 from skimage import transform as tf
 from skimage.feature import register_translation
 from tomopy.recon.algorithm import recon
@@ -59,7 +65,6 @@ from scipy.ndimage import affine_transform, shift
 from collections import namedtuple
 
 import dxchange
-
 
 logger = logging.getLogger(__name__)
 
@@ -210,8 +215,8 @@ def align_seq(
 
 def align_joint(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, center=None, algorithm='sirt', 
-        upsample_factor=10, rin=0.5, rout=0.8, 
+        blur=True, center=None, algorithm='sirt',
+        upsample_factor=10, rin=0.5, rout=0.8,
         save=False, debug=True):
     """
     Aligns the projection image stack using the joint
@@ -739,7 +744,12 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1, 10, 1, 10)):
     return imgstacks[:, yl:yu, xl:xu]
 
 
-def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
+def detector_drift_adjust_aps_1id(imgstacks,
+                                  slit_cnr_ref,
+                                  medfilt2_kernel_size=3,
+                                  medfilt_kernel_size=3,
+                                  ncore=None,
+                                  ):
     """
     Adjust each still image based on the slit corners and generate report fig
 
@@ -749,6 +759,12 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
         tomopy images stacks (axis_0 is the oemga direction)
     slit_cnr_ref : np.ndarray
         reference slit corners from white field images
+    medfilt2_kernel_size : int, optional
+        2D median filter kernel size for slit conner detection
+    medfilt_kernel_size  : int, optional
+        1D median filter kernel size for slit conner detection
+    ncore : int, optional
+        number of cores used for speed up
 
     Returns
     -------
@@ -759,44 +775,132 @@ def detector_drift_adjust_aps_1id(imgstacks, slit_cnr_ref):
     np.ndarray
         transformation matrices used to adjust each image
     """
-    # -- init slit corners for still images
-    proj_cnrs = []
+    ncore = mproc.mp.cpu_count() - 1 if ncore is None else ncore
 
-    # -- init affine transformation matrix
-    img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+    def quick_diff(x): return np.amax(np.absolute(x))
 
-    # -- work throgh each image
-    for n_img in range(imgstacks.shape[0]):
-        # detect the corners
-        proj_cnr = find_slits_corners_aps_1id(imgstacks[n_img, :, :],
-                                              method='quadrant+',
-                                              )
-        proj_cnrs.append(proj_cnr)
+    # -- find all projection corners (slow)
+    # NOTE:
+    #  Here we are using an iterative approach to find stable slit corners
+    #  from each image
+    #  1. calculate all slit corners with the given kernel size, preferably
+    #     a small one for speed.
+    #  2. double the kernel size and calculate again, but this time we are
+    #     checking whether the slit corners are stable.
+    #  3. find the ids (n_imgs) for those that are difficult, continue
+    #     increasing the kernel size until all slit corners are found, or max
+    #     number of iterations.
+    #  4. move on to next step.
+    nlist = range(imgstacks.shape[0])
+    proj_cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist,
+                                'quadrant+',
+                                medfilt2_kernel_size,
+                                medfilt_kernel_size,
+                                )
+    cnrs_found = np.array([quick_diff(proj_cnrs[n, :, :] - slit_cnr_ref) < 15
+                           for n in nlist])
+    kernels = [(medfilt2_kernel_size+2*i, medfilt_kernel_size+2*j)
+               for i in range(15)
+               for j in range(15)]
+    counter = 0
 
-        # calcualte the affine transfomration required
-        img_correct_F[n_img, :, :] = calc_affine_transform(proj_cnr,
-                                                           slit_cnr_ref,
-                                                           )
-
-        # adjust the image
-        if np.linalg.norm(img_correct_F[n_img, 0:2, 0:2] - np.eye(2)) < 1e-4:
-            # shift only when rotation is small
-            imgstacks[n_img, :, :] = shift(imgstacks[n_img, :, :],
-                                           img_correct_F[n_img, 0:2, 2],
-                                           )
+    while not cnrs_found.all():
+        nlist = [idx for idx, cnr_found in enumerate(cnrs_found)
+                 if not cnr_found]
+        # NOTE:
+        #   Check to see if we run out of candidate kernels:
+        if counter > len(kernels):
+            # we are giving up here...
+            for idx, n_img in enumerate(nlist):
+                proj_cnrs[n_img, :, :] = slit_cnr_ref
+            break
         else:
-            # perform full affine transformation
+            # test with differnt 2D and 1D kernels
+            ks2d, ks1d = kernels[counter]
+
+        _cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist,
+                                'quadrant+', ks2d, ks1d)
+        for idx, _cnr in enumerate(_cnrs):
+            n_img = nlist[idx]
+            cnr = proj_cnrs[n_img, :, :]  # previous results
             # NOTE:
-            #  This is particular slow, need optimization
-            imgstacks[n_img, :, :] = affine_transform(imgstacks[n_img, :, :],                # input image
-                                                      # rotation matrix
-                                                      img_correct_F[n_img,
-                                                                    0:2, 0:2],
-                                                      # offset vector
-                                                      offset=img_correct_F[n_img,
-                                                                           0:2, 2],
-                                                      )
-    # convert proj_cnrs to np.array
-    proj_cnrs = np.stack(proj_cnrs, axis=0)
+            #  The detector corner should not be far away from reference
+            #  -> adiff < 15
+            #  The detected corner should be stable
+            #  -> rdiff < 0.1 (pixel)s
+            adiff = quick_diff(_cnr - slit_cnr_ref)
+            rdiff = quick_diff(_cnr - cnr)
+            if rdiff < 0.1 and adiff < 15:
+                cnrs_found[n_img] = True
+            else:
+                # update results
+                proj_cnrs[n_img, :, :] = _cnr  # update results for next iter
+
+        # next
+        counter += 1
+
+    # -- calculate affine transformation (fast)
+    img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
+    for n_img in range(imgstacks.shape[0]):
+        img_correct_F[n_img, :, :] = calc_affine_transform(
+            proj_cnrs[n_img, :, :], slit_cnr_ref)
+
+    # -- apply affine transformation (slow)
+    tmp = []
+    with cf.ProcessPoolExecutor(ncore) as e:
+        for n_img in range(imgstacks.shape[0]):
+            tmp.append(e.submit(affine_transform,
+                                # input image
+                                imgstacks[n_img, :, :],
+                                # rotation matrix
+                                img_correct_F[n_img, 0:2, 0:2],
+                                # offset vector
+                                offset=img_correct_F[n_img, 0:2,  2],
+                                )
+                       )
+    imgstacks = np.stack([me.result() for me in tmp], axis=0)
 
     return imgstacks, proj_cnrs, img_correct_F
+
+
+def _calc_proj_cnrs(imgs,
+                    ncore,
+                    nlist,
+                    method,
+                    medfilt2_kernel_size,
+                    medfilt_kernel_size,
+                    ):
+    """
+    Private function calculate slit corners concurrently
+
+    Parameters
+    ----------
+    imgs : ndarray
+        tomopy images stacks (axis_0 is the oemga direction)
+    ncore : int
+        number of cores to use
+    nlist : list of int
+        index of images to be processed
+    method : str
+        slit corner detection method name
+    medfilt2_kernel_size : int
+        2D median filter kernel size, must be odd
+    medfilt_kernel_size : int
+        1D median filter kernel size, must be odd
+
+    Returns
+    -------
+    np.3darray
+        detected corners on each still image
+    """
+    tmp = []
+    with cf.ProcessPoolExecutor(ncore) as e:
+        for n_img in nlist:
+            tmp.append(e.submit(find_slits_corners_aps_1id,
+                                imgs[n_img, :, :],
+                                method=method,
+                                medfilt2_kernel_size=medfilt2_kernel_size,
+                                medfilt_kernel_size=medfilt_kernel_size,
+                                )
+                       )
+    return np.stack([me.result() for me in tmp], axis=0)
