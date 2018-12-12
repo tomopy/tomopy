@@ -49,9 +49,6 @@ extern "C"
 #    define cast static_cast
 #endif
 
-#define PRINT_HERE(extra)                                                      \
-    printf("> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
-
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_update;
 #endif

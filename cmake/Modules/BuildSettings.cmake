@@ -7,14 +7,15 @@
 include(GNUInstallDirs)
 include(Compilers)
 
+
 # ---------------------------------------------------------------------------- #
 #
 set(CMAKE_INSTALL_MESSAGE LAZY)
 set(CMAKE_C_STANDARD 11 CACHE STRING "C language standard")
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "CXX language standard")
+set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "Require the C language standard")
 set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "Require the CXX language standard")
-# TODO: determine why failing for Max
-add_cxx_flag_if_avail("-std=c++11")
+
 
 # ---------------------------------------------------------------------------- #
 # set the output directory (critical on Windows)
@@ -59,11 +60,7 @@ add_c_flag_if_avail("-Wextra")
 add_c_flag_if_avail("-Wno-unused-parameter")
 add_c_flag_if_avail("-Wunused-but-set-parameter")
 add_c_flag_if_avail("-Wno-unused-variable")
-add_c_flag_if_avail("-fPIC")
-add_c_flag_if_avail("-std=c11")
-if(NOT c_std_c11)
-    add_c_flag_if_avail("-std=c99")
-endif()
+add_c_flag_if_avail("-Wno-unknown-pragmas")
 
 # SIMD OpenMP
 add_c_flag_if_avail("-fopenmp-simd")
@@ -120,6 +117,7 @@ add_cxx_flag_if_avail("-Wno-unknown-pragmas")
 add_cxx_flag_if_avail("-Wno-unused-variable")
 add_cxx_flag_if_avail("-Wunused-but-set-parameter")
 add_cxx_flag_if_avail("-Wno-implicit-fallthrough")
+add_cxx_flag_if_avail("-Wno-unknown-pragmas")
 add_cxx_flag_if_avail("-Wno-unused-value")
 add_cxx_flag_if_avail("-faligned-new")
 

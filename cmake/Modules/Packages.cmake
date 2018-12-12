@@ -162,6 +162,7 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
         foreach(_DIR ${CUDA_INCLUDE_DIRS})
             include_directories(SYSTEM ${_DIR})
         endforeach(_DIR ${CUDA_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
 
         find_library(CUDA_LIBRARY
             NAMES cuda
