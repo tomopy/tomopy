@@ -103,39 +103,6 @@ if fft_impl == 'mkl_fft':
     def ifft2(x, s=None, axes=(-2,-1), overwrite_input=False, extra_info=None):
         return mkl_fft.ifft2(x, shape=s, axes=axes, overwrite_x=overwrite_input)
 
-elif fft_impl == 'pyfftw':
-    import pyfftw
-    def _plan_effort(num_jobs):
-        if not num_jobs:
-            return 'FFTW_MEASURE'
-        if num_jobs > 10:
-            return 'FFTW_MEASURE'
-        else:
-            return 'FFTW_ESTIMATE'
-
-    def fft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
-        return pyfftw.interfaces.numpy_fft.fft(x, n=n, axis=axis,
-                                               overwrite_input=overwrite_input,
-                                               planner_effort=_plan_effort(extra_info))
-    
-
-    def ifft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
-        return pyfftw.interfaces.numpy_fft.ifft(x, n=n, axis=axis,
-                                                overwrite_input=overwrite_input,
-                                                planner_effort=_plan_effort(extra_info))
-
-
-    def fft2(x, s=None, axes=(-2,-1), overwrite_input=False, extra_info=None):
-        return pyfftw.interfaces.numpy_fft.fft2(x, s=s, axes=axes,
-                                                overwrite_input=overwrite_input,
-                                                planner_effort=_plan_effort(extra_info))
-    
-
-    def ifft2(x, s=None, axes=(-2,-1), overwrite_input=False, extra_info=None):
-        return pyfftw.interfaces.numpy_fft.ifft2(x, s=s, axes=axes,
-                                                 overwrite_input=overwrite_input,
-                                                 planner_effort=_plan_effort(extra_info))
-
 else:
     import numpy as np
     def fft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):

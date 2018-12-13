@@ -42,8 +42,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 // Possible speedups:
-//   * Load and save FFTW "wisdom" to file
-//   * Use guru interface to load real and imag into FFTW without copying
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
 //#define WRITE_FILES
@@ -53,18 +51,10 @@
 #define _XOPEN_SOURCE 700
 
 #include "gridrec.h"
-#ifdef USE_MKL
-#    include "mkl.h"
-#else
-#    include <fftw3.h>
-#endif
+#include "mkl.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef USE_MKL
-#    include <pthread.h>
-pthread_mutex_t lock;
-#endif
 
 #ifndef M_PI
 #    define M_PI 3.14159265359
@@ -97,11 +87,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     int    j;
     float *sine, *cose, *wtbl, *winv;
 
-#ifdef USE_MKL
     float *work, *work2;
-#else
-    float _Complex **work, **work2;
-#endif
 
     float (*const filter)(float, int, int, int, const float*) =
         get_filter(fname);
@@ -114,9 +100,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     float _Complex *   sino, *filphase, *filphase_iter = NULL, **H;
     float _Complex **  U_d, **V_d;
     float *            J_z, *P_z;
-#ifndef USE_MKL
-    pthread_mutex_lock(&lock);  // acquire global lock for set-up
-#endif
 
     const float coefs[11] = { 0.5767616E+02,  -0.8931343E+02, 0.4167596E+02,
                               -0.1053599E+02, 0.1662374E+01,  -0.1780527E-00,
@@ -134,11 +117,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     unsigned char filter2d = filter_is_2d(fname);
 
     // Allocate storage for various arrays.
-#ifdef USE_MKL
     sino = malloc_vector_c(pdim);
-#else
-    sino = malloc_vector_c(pdim * dt);
-#endif
     if(!filter2d)
     {
         filphase      = malloc_vector_c(pdim2);
@@ -163,17 +142,10 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     __ASSSUME_64BYTES_ALIGNED(U_d);
     V_d = malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(V_d);
-#ifdef USE_MKL
     work = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);
     work2 = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work2);
-#else
-    work = malloc_matrix_c(pdim2 * dt, L + 1);
-    __ASSSUME_64BYTES_ALIGNED(work);
-    work2 = malloc_matrix_c(pdim2 * dt, L + 1);
-    __ASSSUME_64BYTES_ALIGNED(work2);
-#endif
 
     // Set up table of sines and cosines.
     set_trig_tables(dt, theta, &sine, &cose);
@@ -183,7 +155,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
-#ifdef USE_MKL
     DFTI_DESCRIPTOR_HANDLE reverse_1d;
     MKL_LONG               length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
@@ -196,20 +167,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiSetValue(forward_2d, DFTI_THREAD_LIMIT,
                  1); /* FFT should run sequentially to avoid oversubscription */
     DftiCommitDescriptor(forward_2d);
-#else
-    int n[1] = { pdim };
-    // Set up fftw plans
-    fftwf_plan reverse_1d;
-    fftwf_plan reverse_1d_many;
-    fftwf_plan forward_2d;
-    reverse_1d =
-        fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_MEASURE);
-    reverse_1d_many = fftwf_plan_many_dft(1, n, dt, sino, n, 1, pdim, sino, n,
-                                          1, pdim, FFTW_BACKWARD, FFTW_MEASURE);
-    forward_2d =
-        fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_MEASURE);
-    pthread_mutex_unlock(&lock);  // release global lock
-#endif
 
     for(p = 0; p < dt; p++)
     {
@@ -226,84 +183,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     int         iul, iuh, ivl, ivh;
     int         k, k2;
 
-#ifndef USE_MKL
-    int jmin, jmax;
-    int b;
-    // Tune block size depending on architecture
-    const int bh = 64;
-    const int nb = pdim / bh;
-    float     wl, wh;
-    int       z = 0;
-    // Calculations below same for all slices so move outside of slice loop
-    // Set up cache blocking to reduce irregular access
-    for(b = 0; b < nb; b++)
-    {
-        wl = bh * b;
-        wh = bh * (b + 1);
-        // Limit j to loop over jmin,jmax and reduce if condition overhead
-        for(p = 0; p < dt; p++)
-        {
-            if(cose[p] > 0)
-            {
-                jmin = ((wl - M2) / cose[p]);
-                jmax = ceil(((wh - M2) / cose[p]));
-            }
-            else
-            {
-                jmin = ((wh - M2) / cose[p]);
-                jmax = ceil(((wl - M2) / cose[p]));
-            }
-            if(jmin < 1)
-            {
-                jmin = 1;
-            }
-            if(jmax > pdim2)
-            {
-                jmax = pdim2;
-            }
-            for(j = jmin; j < jmax; j++)
-            {
-                U = U_d[p][j];
-                if(U >= wl && U < wh)
-                {
-                    J_z[z] = j;
-                    P_z[z] = p;
-                    V      = V_d[p][j];
-
-                    iul = ceil(U - L2);
-                    iuh = floor(U + L2);
-                    ivl = ceil(V - L2);
-                    ivh = floor(V + L2);
-                    if(iul < 1)
-                        iul = 1;
-                    if(iuh >= pdim)
-                        iuh = pdim - 1;
-                    if(ivl < 1)
-                        ivl = 1;
-                    if(ivh >= pdim)
-                        ivh = pdim - 1;
-
-                    // Pre-compute work and work2
-                    // Note aliasing value (at index=0) is forced to zero.
-                    __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-                    for(iv = ivl, k = 0; iv <= ivh; iv++, k++)
-                    {
-                        work[z][k] =
-                            wtbl[(int) roundf(fabsf(V - iv) * tblspcg)];
-                    }
-                    __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-                    for(iu = iul, k2 = 0; iu <= iuh; iu++, k2++)
-                    {
-                        work2[z][k2] =
-                            wtbl[(int) roundf(fabsf(U - iu) * tblspcg)];
-                    }
-
-                    z++;
-                }
-            }
-        }
-    }
-#endif
     // For each slice.
     for(s = 0; s < dy; s += 2)
     {
@@ -359,7 +238,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
 
         float _Complex Cdata1, Cdata2;
 
-#ifdef USE_MKL
         // For each projection
         for(p = 0; p < dt; p++)
         {
@@ -442,81 +320,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
             }
         }
 
-#else
-        int zlimit = z;
-        // For each projection
-        for(p = 0; p < dt; p++)
-        {
-            const unsigned int j0 = dx * (p + s * dt), delta_index = dx * dt;
-
-            __PRAGMA_SIMD_VECREMAINDER
-            for(j = 0; j < dx; j++)
-            {
-                // Add data from both slices
-                float              second_sino = 0.0;
-                const unsigned int index       = j + j0;
-                if(__LIKELY((s + 1) < dy))
-                {
-                    second_sino = data[index + delta_index];
-                }
-                // sino[j] = data[index] + I*second_sino;
-                sino[j + (p * pdim)] = data[index] + I * second_sino;
-            }
-
-            __PRAGMA_SIMD_VECREMAINDER
-            for(j = dx; j < pdim; j++)
-            {
-                // Zero fill the rest of the array
-                // sino[j] = 0.0;
-                sino[j + (p * pdim)] = 0.0;
-            }
-        }
-        // Take FFT of the projection array
-        // fftwf_execute(reverse_1d);
-        fftwf_execute(reverse_1d_many);
-
-        // Use re-ordered p,j,U,V from cache-blocking calculations
-        // For each FFT(projection)
-        for(z = 0; z < zlimit; z++)
-        {
-            p = P_z[z];
-            j = J_z[z];
-            U = U_d[p][j];
-            V = V_d[p][j];
-
-            if(filter2d)
-                filphase_iter = filphase + pdim2 * p;
-
-            Cdata1 = filphase_iter[j] * sino[j + (p * pdim)];
-            Cdata2 = conjf(filphase_iter[j]) * sino[pdim - j + (p * pdim)];
-
-            // Note freq space origin is at (M2,M2), but we
-            // offset the indices U, V, etc. to range from 0 to M-1.
-            iul = ceilf(U - L2);
-            iuh = floorf(U + L2);
-            ivl = ceilf(V - L2);
-            ivh = floorf(V + L2);
-            if(iul < 1)
-                iul = 1;
-            if(iuh >= pdim)
-                iuh = pdim - 1;
-            if(ivl < 1)
-                ivl = 1;
-            if(ivh >= pdim)
-                ivh = pdim - 1;
-
-            __PRAGMA_OMP_SIMD_COLLAPSE
-            for(iu = iul, k2 = 0; iu <= iuh; iu++, k2++)
-            {
-                for(iv = ivl, k = 0; iv <= ivh; iv++, k++)
-                {
-                    const float convolv = work2[z][k2] * work[z][k];
-                    H[iu][iv] += convolv * Cdata1;
-                    H[pdim - iu][pdim - iv] += convolv * Cdata2;
-                }
-            }
-        }
-#endif
         // Carry out a 2D inverse FFT on the array H.
 
         // At the conclusion of this phase, the configuration
@@ -527,11 +330,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         // of the array, the first (resp. second) half contains data for the
         // right [X>0] (resp. left [X<0]) half of the image.
 
-#ifdef USE_MKL
         DftiComputeForward(forward_2d, H[0]);
-#else
-        fftwf_execute(forward_2d);
-#endif
 
         // Copy the real and imaginary parts of the complex data from H[][],
         // into the output buffers for the two reconstructed real images,
@@ -622,25 +421,14 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     free_vector_f(wtbl);
     free_vector_c(filphase);
     free_vector_f(winv);
-#ifdef USE_MKL
     free_vector_f(work);
-#else
-    free_matrix_c(work);
-    free_matrix_c(work2);
-#endif
     free_matrix_c(H);
     free_vector_f(J_z);
     free_vector_f(P_z);
     free_matrix_c(U_d);
     free_matrix_c(V_d);
-#ifdef USE_MKL
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
-#else
-    fftwf_destroy_plan(reverse_1d);
-    fftwf_destroy_plan(reverse_1d_many);
-    fftwf_destroy_plan(forward_2d);
-#endif
     return;
 }
 
@@ -794,41 +582,25 @@ malloc_64bytes_aligned(size_t sz)
 inline float*
 malloc_vector_f(size_t n)
 {
-#ifdef USE_MKL
     return (float*) malloc(n * sizeof(float));
-#else
-    return fftwf_alloc_real(n);
-#endif
 }
 
 inline void
 free_vector_f(float* v)
 {
-#ifdef USE_MKL
     free(v);
-#else
-    fftwf_free(v);
-#endif
 }
 
 inline float _Complex*
 malloc_vector_c(size_t n)
 {
-#ifdef USE_MKL
     return (float _Complex*) malloc(n * sizeof(float _Complex));
-#else
-    return fftwf_alloc_complex(n);
-#endif
 }
 
 inline void
 free_vector_c(float _Complex* v)
 {
-#ifdef USE_MKL
     free(v);
-#else
-    fftwf_free(v);
-#endif
 }
 
 float _Complex**

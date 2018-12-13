@@ -14,7 +14,6 @@ add_feature(${PROJECT_NAME}_C_FLAGS "C compiler flags")
 add_feature(CMAKE_C_STANDARD "C languae standard")
 
 # options (always available)
-add_option(TOMOPY_USE_MKL "Enable MKL" ON)
 add_option(TOMOPY_USE_GPERF "Enable Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)

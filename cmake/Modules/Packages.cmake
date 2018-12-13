@@ -47,49 +47,28 @@ endif(TOMOPY_USE_GPERF)
 #
 ################################################################################
 
-if(TOMOPY_USE_MKL)
-    find_package(PythonInterp REQUIRED)
+find_package(PythonInterp REQUIRED)
 
-    # anaconda should have installed MKL under this prefix
-    if(PYTHON_EXECUTABLE)
-        get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
-        if(UNIX)
-            get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
-        endif()
-        list(APPEND CMAKE_PREFIX_PATH
-            ${_MKL_PREFIX} # common path for UNIX
-            ${_MKL_PREFIX}/Library # common path for Windows
-            $ENV{CONDA_PREFIX} # fallback if set
-        )
+# anaconda should have installed MKL under this prefix
+if(PYTHON_EXECUTABLE)
+    get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
+    if(UNIX)
+        get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
     endif()
-
-    find_package(MKL)
-
-    if(MKL_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-        add_definitions(-DTOMOPY_USE_MKL)
-        add_definitions(-DUSE_MKL)
-    endif(MKL_FOUND)
-
-endif(TOMOPY_USE_MKL)
-
-
-################################################################################
-#
-#       FFTW
-#
-################################################################################
-if(NOT TOMOPY_USE_MKL OR NOT MKL_FOUND)
-    # single precision library and MT single precision library
-    find_package(FFTW3 COMPONENTS single threads_single)
-
-    if(FFTW3_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${FFTW3_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${FFTW3_LIBRARIES})
-    endif()
-
+    list(APPEND CMAKE_PREFIX_PATH
+        ${_MKL_PREFIX} # common path for UNIX
+        ${_MKL_PREFIX}/Library # common path for Windows
+        $ENV{CONDA_PREFIX} # fallback if set
+    )
 endif()
+
+find_package(MKL REQUIRED)
+
+if(MKL_FOUND)
+    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    add_definitions(-DTOMOPY_USE_MKL)
+endif(MKL_FOUND)
 
 
 ################################################################################
