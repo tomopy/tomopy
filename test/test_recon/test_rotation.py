@@ -92,7 +92,7 @@ class CenterFindingTestCase(unittest.TestCase):
     def test_find_center_vo(self):
         sim = read_file('sinogram.npy')
         cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=1e-2)
+        assert_allclose(cen, 45.28, rtol=0.015)
 
     def test_find_center_vo_with_downsampling(self):
         sim = read_file('sinogram.npy')
@@ -100,7 +100,7 @@ class CenterFindingTestCase(unittest.TestCase):
             sim, ((1000, 1000), (0, 0), (1000, 1000)),
             mode="constant", constant_values=0)
         cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=1e-2)
+        assert_allclose(cen, 45.28, rtol=0.015)
 
     def test_find_center_pc(self):
         proj_0 = read_file('projection.npy')
