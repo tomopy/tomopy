@@ -5,28 +5,10 @@
 ################################################################################
 
 include(GNUInstallDirs)
-include(CheckCCompilerFlag)
-
-
-# ---------------------------------------------------------------------------- #
-# check C flag
-macro(ADD_C_FLAG_IF_AVAIL FLAG)
-    if(NOT "${FLAG}" STREQUAL "")
-        string(REGEX REPLACE "^-" "c_" FLAG_NAME "${FLAG}")
-        string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE " " "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE "=" "_" FLAG_NAME "${FLAG_NAME}")
-        check_c_compiler_flag("${FLAG}" ${FLAG_NAME})
-        if(${FLAG_NAME})
-            add(${PROJECT_NAME}_C_FLAGS "${FLAG}")
-        endif()
-    endif()
-endmacro()
-
+include(Compilers)
 
 # ---------------------------------------------------------------------------- #
 #
-set(SANITIZE_TYPE leak CACHE STRING "-fsantitize=<TYPE>")
 set(CMAKE_INSTALL_MESSAGE LAZY)
 set(CMAKE_C_STANDARD 11 CACHE STRING "C language standard")
 
@@ -82,28 +64,33 @@ endif()
 
 # SIMD OpenMP
 add_c_flag_if_avail("-fopenmp-simd")
+# Intel floating-point model
+add_c_flag_if_avail("-fp-model=precise")
 
 if(TOMOPY_USE_ARCH)
-    add_c_flag_if_avail("-march")
-    add_c_flag_if_avail("-msse2")
-    add_c_flag_if_avail("-msse3")
-    add_c_flag_if_avail("-msse4")
-    add_c_flag_if_avail("-mavx")
-    add_c_flag_if_avail("-mavx2")
-    add_c_flag_if_avail("-xHOST")
-
-    if(TOMOPY_USE_AVX512)
-        add_c_flag_if_avail("-mavx512f")
-        add_c_flag_if_avail("-mavx512pf")
-        add_c_flag_if_avail("-mavx512er")
-        add_c_flag_if_avail("-mavx512cd")
-        add_c_flag_if_avail("-axMIC-AVX512")
+    if(CMAKE_C_COMPILER_IS_INTEL)
+        add_c_flag_if_avail("-xHOST")
+        if(TOMOPY_USE_AVX512)
+            add_c_flag_if_avail("-axMIC-AVX512")
+        endif()
+    else()
+        add_c_flag_if_avail("-march")
+        add_c_flag_if_avail("-msse2")
+        add_c_flag_if_avail("-msse3")
+        add_c_flag_if_avail("-msse4")
+        add_c_flag_if_avail("-mavx")
+        add_c_flag_if_avail("-mavx2")
+        if(TOMOPY_USE_AVX512)
+            add_c_flag_if_avail("-mavx512f")
+            add_c_flag_if_avail("-mavx512pf")
+            add_c_flag_if_avail("-mavx512er")
+            add_c_flag_if_avail("-mavx512cd")
+        endif()
     endif()
-
 endif()
 
 
 # ---------------------------------------------------------------------------- #
 # user customization
-add_c_flag_if_avail("${CFLAGS}")
-add_c_flag_if_avail("$ENV{CFLAGS}")
+add(${PROJECT_NAME}_C_FLAGS "${CFLAGS}")
+add(${PROJECT_NAME}_C_FLAGS "$ENV{CFLAGS}")

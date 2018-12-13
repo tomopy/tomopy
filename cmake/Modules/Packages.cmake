@@ -53,8 +53,14 @@ if(TOMOPY_USE_MKL)
     # anaconda should have installed MKL under this prefix
     if(PYTHON_EXECUTABLE)
         get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
-        get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
-        list(APPEND CMAKE_PREFIX_PATH ${_MKL_PREFIX} ${_MKL_PREFIX}/lib ${_MKL_PREFIX}/include)
+        if(UNIX)
+            get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
+        endif()
+        list(APPEND CMAKE_PREFIX_PATH
+            ${_MKL_PREFIX} # common path for UNIX
+            ${_MKL_PREFIX}/Library # common path for Windows
+            $ENV{CONDA_PREFIX} # fallback if set
+        )
     endif()
 
     find_package(MKL)
@@ -117,6 +123,23 @@ if(TOMOPY_USE_TBB)
     if(TBB_MALLOC_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
         list(APPEND EXTERNAL_LIBRARIES ${TBB_MALLOC_LIBRARIES})
+    endif()
+
+endif()
+
+
+################################################################################
+#
+#        OpenMP
+#
+################################################################################
+if(TOMOPY_USE_OPENMP)
+    if(NOT c_fopenmp_simd) # no need if -fopenmp-simd is available
+        find_package(OpenMP)
+
+        if(OpenMP_FOUND)
+            add(${PROJECT_NAME}_C_FLAGS "${OpenMP_C_FLAGS}")
+        endif()
     endif()
 
 endif()

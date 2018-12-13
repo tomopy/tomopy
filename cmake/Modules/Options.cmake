@@ -20,6 +20,7 @@ add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_TBB "Enable TBB malloc" OFF)
 add_option(TOMOPY_USE_ITTNOTIFY "Enable VTune API" OFF)
+add_option(TOMOPY_USE_OPENMP "Enable OpenMP for SIMD" ON)
 
 if(TOMOPY_USE_ARCH)
     add_option(TOMOPY_USE_AVX512 "Enable AVX-512 flags (if available)" OFF)

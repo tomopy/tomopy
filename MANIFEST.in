@@ -1,10 +1,7 @@
 include README.rst
 include LICENSE.txt
 include VERSION
-include build.py
-include config/Mk.base
 include CMakeLists.txt
-recursive-include config *
 recursive-include cmake *
 recursive-include tomopy/data *.tif *.h5
 recursive-include tomopy/sharedlibs *
@@ -12,4 +9,3 @@ recursive-include test *
 recursive-include include *
 recursive-include src *
 recursive-exclude * __pycache__ *.pyc
-recursive-exclude config *.o
