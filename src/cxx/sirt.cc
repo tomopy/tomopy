@@ -56,7 +56,7 @@ END_EXTERN_C
 
 void
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     auto tid = ThreadPool::GetThisThreadID();
     ConsumeParameters(tid);
@@ -74,11 +74,11 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
         sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                num_iter);
+                 num_iter);
     else
-        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp,
-                          data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                    num_iter);
+        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp, data,
+                          dy, dt, dx, center, theta, recon, ngridx, ngridy,
+                          num_iter);
 #else
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
@@ -93,7 +93,7 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 
 {
     farray_t gridx(ngridx + 1, 0.0f);
@@ -170,7 +170,6 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
         }
     }
 }
-
 
 //============================================================================//
 /*
@@ -305,7 +304,8 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+          const float* theta, float* recon, int ngridx, int ngridy,
+          int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
@@ -588,10 +588,10 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
                 // PRINT_HERE(std::to_string(d).c_str());
                 cuda_sirt_update(s, p, d, ngridx, ngridy, dt, dx,
-                                gpu_data->csize, gpu_data->data,
-                                gpu_data->simdata, gpu_data->indi,
-                                gpu_data->dist, gpu_data->sum, gpu_data->model,
-                                streams + stream_offset);
+                                 gpu_data->csize, gpu_data->data,
+                                 gpu_data->simdata, gpu_data->indi,
+                                 gpu_data->dist, gpu_data->sum, gpu_data->model,
+                                 streams + stream_offset);
                 // }
 
                 if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE &&
@@ -654,8 +654,8 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter)
+             const float* theta, float* recon, int ngridx, int ngridy,
+             int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openacc]");
@@ -783,8 +783,8 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy,
-           int num_iter)
+            const float* theta, float* recon, int ngridx, int ngridy,
+            int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openmp]");

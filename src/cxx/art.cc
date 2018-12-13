@@ -76,9 +76,9 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                 num_iter);
     else
-        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_openmp,
-        data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                num_iter);
+        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_openmp, data, dy,
+                          dt, dx, center, theta, recon, ngridx, ngridy,
+                          num_iter);
 #else
     art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
@@ -363,11 +363,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         cudaStream_t* streams  = _dataset->streams;
         auto          nstreams = _dataset->nstreams;
 
-#if defined(DEBUG)
+#    if defined(DEBUG)
         PRINT_HERE(std::string(std::string("|_slice: ") + std::to_string(s) +
                                std::string(" of ") + std::to_string(dy))
                        .c_str());
-#endif
+#    endif
 
         uintmax_t recon_offset = s * (ngridx * ngridy);
         float*    _recon       = recon + recon_offset;
@@ -375,12 +375,12 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         // For each projection angle
         for(int p = 0; p < dt; ++p)
         {
-#if defined(DEBUG)
+#    if defined(DEBUG)
             PRINT_HERE(std::string(std::string("  |_angle: ") +
                                    std::to_string(p) + std::string(" of ") +
                                    std::to_string(dt))
                            .c_str());
-#endif
+#    endif
 
             // Calculate the sin and cos values
             // of the projection angle and find
@@ -393,12 +393,12 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
             // For each detector pixel
             for(int d = 0; d < dx; ++d)
             {
-#if defined(DEBUG)
+#    if defined(DEBUG)
                 PRINT_HERE(std::string(std::string("    |_pixel: ") +
-                                       std::to_string(d) +
-                                       std::string(" of ") +
-                                       std::to_string(dx)).c_str());
-#endif
+                                       std::to_string(d) + std::string(" of ") +
+                                       std::to_string(dx))
+                               .c_str());
+#    endif
                 int stream_offset = (d % (nstreams - 2)) + (d % 2);
 
                 if(stream_offset + 1 >= nstreams)
@@ -502,7 +502,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     gpu_data->sum, gpu_data->simdata, streams + stream_offset);
 
                 static Mutex m;
-		m.lock();
+                m.lock();
 
                 // PRINT_HERE(std::to_string(d).c_str());
                 cuda_art_update(s, p, d, ngridx, ngridy, dt, dx,
@@ -519,7 +519,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i,
                                     s, p, d, "model");
                 }
-		
+
                 m.unlock();
             }
         }
@@ -542,11 +542,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
     for(int i = 0; i < num_iter; ++i)
     {
-#if defined(DEBUG)
+#    if defined(DEBUG)
         PRINT_HERE(std::string(std::string("iteration: ") + std::to_string(i) +
                                std::string(" of ") + std::to_string(num_iter))
                        .c_str());
-#endif
+#    endif
         // initialize simdata to zero
         cudaMemset(master_gpu_data->simdata, 0, _nd * sizeof(float));
 

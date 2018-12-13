@@ -42,8 +42,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
-#include <stdint.h>
 #include <float.h>
+#include <stdint.h>
 
 // for windows build
 #ifdef WIN32

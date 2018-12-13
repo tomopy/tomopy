@@ -57,9 +57,9 @@ extern nvtxEventAttributes_t nvtx_update;
 
 __global__ void
 sirt_update_global(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  const int* csize, const float* data, const float* simdata,
-                  const int* indi, const float* dist, const float* sum_dist,
-                  float* model)
+                   const int* csize, const float* data, const float* simdata,
+                   const int* indi, const float* dist, const float* sum_dist,
+                   float* model)
 {
     if(*sum_dist != 0.0f)
     {
@@ -83,9 +83,9 @@ sirt_update_global(int s, int p, int d, int ry, int rz, int dt, int dx,
 
 void
 cuda_sirt_update(int s, int p, int d, int ry, int rz, int dt, int dx,
-                const int* csize, const float* data, const float* simdata,
-                const int* indi, const float* dist, const float* sum,
-                float* model, cudaStream_t* streams)
+                 const int* csize, const float* data, const float* simdata,
+                 const int* indi, const float* dist, const float* sum,
+                 float* model, cudaStream_t* streams)
 {
     NVTX_RANGE_PUSH(&nvtx_update);
     int nb   = cuda_multi_processor_count();

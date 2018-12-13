@@ -76,9 +76,9 @@ cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
         bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                  num_iter, num_block, ind_block);
     else
-        run_gpu_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp,
-        data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                 num_iter, num_block, ind_block);
+        run_gpu_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp, data,
+                          dy, dt, dx, center, theta, recon, ngridx, ngridy,
+                          num_iter, num_block, ind_block);
 #else
     bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
              num_block, ind_block);

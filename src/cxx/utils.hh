@@ -42,18 +42,18 @@
 
 //============================================================================//
 
+#include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <vector>
-#include <utility>
-#include <memory>
 #include <thread>
-#include <algorithm>
-#include <functional>
+#include <utility>
+#include <vector>
 
 #ifdef TOMOPY_USE_TIMEMORY
 #    include <timemory/timemory.hpp>
@@ -406,8 +406,8 @@ farray_t DLL
 
 template <typename _Func, typename... _Args>
 void
-run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
-                  _Args... args)
+run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func,
+                  _Func omp_func, _Args... args)
 {
     std::deque<GpuOption> options;
     int                   default_idx = 0;
