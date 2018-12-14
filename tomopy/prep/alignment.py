@@ -50,7 +50,6 @@ import numpy as np
 import concurrent.futures as cf
 import tomopy.util.mproc as mproc
 import logging
-import dxchange
 
 from skimage import transform as tf
 from skimage.feature import register_translation
@@ -61,8 +60,6 @@ from scipy.signal import medfilt, medfilt2d
 from scipy.optimize import curve_fit
 from scipy.ndimage import affine_transform
 from collections import namedtuple
-
-import dxchange
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +127,7 @@ def align_seq(
 
     upsample_factor : integer, optional
         The upsampling factor. Registration accuracy is
-        inversely propotional to upsample_factor. 
+        inversely propotional to upsample_factor.
     rin : scalar, optional
         The inner radius of blur function. Pixels inside
         rin is set to one.
@@ -139,7 +136,7 @@ def align_seq(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration.
+        for each algorithm iteration. Requires the dxchange package.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -202,6 +199,7 @@ def align_seq(
             conv[n] = np.linalg.norm(err)
 
         if save:
+            import dxchange
             dxchange.write_tiff(prj, fdir + '/tmp/iters/prj/prj')
             dxchange.write_tiff(sim, fdir + '/tmp/iters/sim/sim')
             dxchange.write_tiff(rec, fdir + '/tmp/iters/rec/rec')
@@ -266,7 +264,7 @@ def align_joint(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration.
+        for each algorithm iteration. Requires the dxchange package.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -337,6 +335,7 @@ def align_joint(
             conv[n] = np.linalg.norm(err)
 
         if save:
+            import dxchange
             dxchange.write_tiff(prj, 'tmp/iters/prj/prj')
             dxchange.write_tiff(sim, 'tmp/iters/sim/sim')
             dxchange.write_tiff(rec, 'tmp/iters/rec/rec')
@@ -532,13 +531,13 @@ def find_slits_corners_aps_1id(img,
     Automatically locate the slit box location by its four corners.
 
     NOTE:
-    The four slits that form a binding box is the current setup at aps_1id, 
-    which reduce the illuminated region on the detector. Since the slits are 
-    stationary, they can serve as a reference to check detector drifting 
-    during the scan. Technically, the four slits should be used to find 
-    the transformation matrix (not necessarily affine) to correct the image. 
-    However, since we are dealing with 2D images with very little distortion, 
-    affine transformation matrices were used for approximation. Therefore 
+    The four slits that form a binding box is the current setup at aps_1id,
+    which reduce the illuminated region on the detector. Since the slits are
+    stationary, they can serve as a reference to check detector drifting
+    during the scan. Technically, the four slits should be used to find
+    the transformation matrix (not necessarily affine) to correct the image.
+    However, since we are dealing with 2D images with very little distortion,
+    affine transformation matrices were used for approximation. Therefore
     the "four corners" are used instead of all four slits.
 
     Parameters
@@ -549,10 +548,10 @@ def find_slits_corners_aps_1id(img,
         method for auto detecting slit corners
             - simple    :: assume a rectange slit box, fast but less accurate
                            (1 pixel precision)
-            - quadrant  :: subdivide the image into four quandrant, then use 
+            - quadrant  :: subdivide the image into four quandrant, then use
                            an explicit method to find the corner
                            (1 pixel precision)
-            - quadrant+ :: similar to quadrant, but use curve_fit (gauss1d) to 
+            - quadrant+ :: similar to quadrant, but use curve_fit (gauss1d) to
                            find the corner
                            (0.1 pixel precision)
     medfilt2_kernel_size : int, optional
