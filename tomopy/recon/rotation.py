@@ -55,8 +55,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy import ndimage
+import tifffile
 from tomopy.util.misc import fft2
-import dxchange
 from scipy.optimize import minimize
 from skimage.feature import register_translation
 from tomopy.misc.corr import circ_mask
@@ -347,7 +347,7 @@ def _create_mask(nrow, ncol, radius, drop):
         Image height.
     ncol : int
         Image width.
-    radius: int 
+    radius: int
         Radius of an object, in pixel unit.
     drop : int
         Drop lines around vertical center of the mask.
@@ -392,7 +392,7 @@ def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     tol : scalar, optional
         Subpixel accuracy
 
-    rotc_guess : float, optional 
+    rotc_guess : float, optional
         Initual guess value for the rotation center
 
     Returns
@@ -552,10 +552,13 @@ def write_center(
         rec = circ_mask(rec, axis=0)
 
     # Save images to a temporary folder.
+    dpath = os.path.abspath(dpath)
+    if not os.path.exists(dpath):
+        os.makedirs(dpath)
     for m in range(len(center)):
         fname = os.path.join(
             dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
-        dxchange.write_tiff(rec[m], fname=fname, overwrite=True)
+        tifffile.imsave(file=fname, data=rec[m])
 
 
 def mask_empty_slice(tomo, threshold=0.25):
