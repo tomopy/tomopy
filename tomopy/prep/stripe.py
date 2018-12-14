@@ -58,19 +58,26 @@ import pywt
 import tomopy.util.extern as extern
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
-from tomopy.util.misc import (fft, ifft)
+from tomopy.util.misc import (fft, ifft, fft2, ifft2)
+from scipy.ndimage import median_filter
+from scipy import signal
+from scipy.signal import savgol_filter
+from scipy.ndimage import binary_dilation
+from scipy.ndimage import uniform_filter1d
+from scipy import interpolate
 import logging
-
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy, Eduardo X. Miqueles"
+__author__ = "Doga Gursoy, Eduardo X. Miqueles, Nghia Vo"
 __credits__ = "Juan V. Bermudez, Hugo H. Slepicka"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['remove_stripe_fw',
            'remove_stripe_ti',
-           'remove_stripe_sf']
+           'remove_stripe_sf',
+           'remove_stripe_based_sorting',
+           'remove_stripe_based_filtering']
 
 
 def remove_stripe_fw(
@@ -337,3 +344,450 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         ncore=ncore,
         nchunk=nchunk)
     return arr
+
+
+def remove_stripe_based_sorting(tomo, size=21, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Algorithm 3 in the paper. Remove stripes using the sorting technique.
+    Work particularly well for removing partial stripes.
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    size : int
+        Window size of the median filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_stripe_based_sorting,
+        args=(size,),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _create_matindex(nrow, ncol):
+    listindex = np.arange(0.0, ncol, 1.0)
+    matindex = np.tile(listindex,(nrow,1))
+    return matindex
+
+
+def _rs_algorithm_3(sinogram, size, matindex):
+    """
+    Remove stripes using the sorting technique.
+    """
+    sinogram = np.transpose(sinogram)
+    matcomb = np.asarray(np.dstack((matindex, sinogram)))
+    matsort = np.asarray(
+        [row[row[:, 1].argsort()] for row in matcomb])
+    matsort[:, :, 1] = median_filter(matsort[:, :, 1],(size,1))
+    matsortback = np.asarray(
+        [row[row[:, 0].argsort()] for row in matsort])
+    sino_corrected = matsortback[:, :, 1]
+    return np.transpose(sino_corrected)
+
+
+def _remove_stripe_based_sorting(tomo, size):
+    matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]
+        tomo[:, m, :] = _rs_algorithm_3(sino, size, matindex)
+
+ 
+def remove_stripe_based_filtering(
+        tomo, sigma=3, size=21, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Algorithm 2 in the paper. Remove stripes using the filtering technique.    
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    sigma: float
+        Sigma of the Gaussian window which is used to separate 
+        the low-pass and high-pass components of the intensity
+        profiles of each column.
+    size : int
+        Window size of the median filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+ 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_stripe_based_filtering,
+        args=(sigma, size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _create_1d_window(ncol, sigma, pad):
+    window = signal.gaussian(ncol + 2 * pad, std = sigma)
+    return window
+
+
+def _create_listsign(ncol, pad):
+    listsign = np.power(-1.0,np.arange(ncol + 2 * pad))
+    return listsign
+
+ 
+def _rs_algorithm_2(sinogram, window, listsign, sigma, size, pad):
+    """
+    Remove stripes using the filtering technique.
+    """    
+    sinogram = np.transpose(sinogram)
+    sinogram2 = np.pad(sinogram,((0, 0),(pad, pad)), mode = 'reflect')
+    (_, ncol) = sinogram2.shape
+    sinosmooth = np.zeros_like(sinogram)
+    for i,sinolist in enumerate(sinogram2):        
+        sinosmooth[i] = np.real(
+            ifft(fft(sinolist*listsign)*window)*listsign)[pad:ncol-pad]
+    sinosharp = sinogram - sinosmooth
+    sinosmooth_cor = median_filter(sinosmooth,(size,1))
+    return np.transpose(sinosmooth_cor + sinosharp)
+ 
+ 
+def _remove_stripe_based_filtering(tomo, sigma, size):
+    pad = 150 # To reduce artifacts caused by FFT
+    window = _create_1d_window(tomo.shape[0], sigma, pad)
+    listsign = _create_listsign(tomo.shape[0], pad)    
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]
+        tomo[:, m, :] = _rs_algorithm_2(
+            sino, window, listsign, sigma, size, pad)
+ 
+
+def remove_stripe_based_fitting(
+        tomo, order=3, sigmax=5, sigmay=20, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Algorithm 1 in the paper. Remove stripes using the fitting technique.    
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    order: int
+        Polynomial fit order.
+    sigmax : float
+        Sigma of the Gaussian window in x-direction.
+    sigmay : float
+        Sigma of the Gaussian window in y-direction.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+ 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_stripe_based_fitting,
+        args=(order, sigmax, sigmay),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+ 
+ 
+def _create_2d_window(nrow, ncol, sigmax, sigmay, pad):
+    """
+    Create a 2D Gaussian window.
+    ---------
+    Parameters: - nrow, ncol: shape of the window.
+                - sigmax, sigmay: sigmas of the window.
+                - pad                
+    ---------
+    Return:     - 2D window.
+    """
+    height = nrow + 2*pad
+    width = ncol + 2*pad
+    centerx = (width-1.0)/2.0
+    centery = (height-1.0)/2.0    
+    y,x = np.ogrid[-centery:height-centery,-centerx:width-centerx]
+    numx = 2.0*sigmax*sigmax
+    numy = 2.0*sigmay*sigmay
+    win2d = np.exp(-(x*x/numx+y*y/numy))
+    return win2d
+
+
+def _create_matsign(nrow, ncol, pad):
+    listx = 1.0*np.arange(0, ncol + 2*pad)
+    listy = 1.0*np.arange(0, nrow + 2*pad)
+    x,y = np.meshgrid(listx, listy)
+    matsign = np.power(-1.0,x+y)
+    return matsign
+ 
+ 
+def _2d_filter(mat, win2d, matsign, pad):
+    """
+    Filtering an image using a 2D window.
+    ---------
+    Return:     - filtered image.
+    """
+    matpad = np.pad(mat,((0, 0), (pad, pad)), mode = 'edge')
+    matpad = np.pad(matpad,((pad, pad), (0, 0)), mode = 'mean')
+    (nrow, ncol) = matpad.shape
+    matfilter = np.real(ifft2(fft2(matpad*matsign)*win2d)*matsign)
+    return matfilter[pad:nrow-pad,pad:ncol-pad]
+ 
+ 
+def _rs_algorithm_1(sinogram, order, win2d, matsign, pad):
+    """
+    Remove stripes using the fitting technique.
+    """
+    (nrow, _) = sinogram.shape
+    nrow1 = nrow
+    if nrow1%2==0:
+        nrow1 = nrow1 - 1
+    sinofit = savgol_filter(sinogram, nrow1, order, axis=0,mode = 'mirror')
+    sinofitsmooth = _2d_filter(sinofit, win2d, matsign, pad)
+    num1 = np.mean(sinofit)
+    num2 = np.mean(sinofitsmooth)
+    sinofitsmooth = num1*sinofitsmooth/num2
+    return sinogram/sinofit*sinofitsmooth
+ 
+
+def _remove_stripe_based_fitting(tomo, order, sigmax, sigmay):
+    pad = 50 # To reduce artifacts caused by FFT
+    nrow = tomo.shape[0]
+    ncol = tomo.shape[2]
+    win2d = _create_2d_window(nrow, ncol, sigmax, sigmay, pad)
+    matsign = _create_matsign(nrow, ncol, pad)
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]       
+        tomo[:, m, :] = _rs_algorithm_1(sino, order, win2d, matsign, pad)
+        
+
+def remove_large_stripe(tomo, snr=3, size=51, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Algorithm 5 in the paper. Remove large stripes.    
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    snr  : float
+        Ratio used to detect locations of large stripes.
+        Greater is less sensitive. 
+    size : int
+        Window size of the median filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+ 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_large_stripe,
+        args=(snr, size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _detect_stripe(listdata, snr):
+    """
+    Algorithm 4 in the paper. Used to locate stripe positions.
+    """
+    numdata = len(listdata)
+    listsorted = np.sort(listdata)[::-1]
+    xlist = np.arange(0, numdata, 1.0)
+    ndrop = np.int16(0.25 * numdata)
+    (_slope, _intercept) = np.polyfit(
+        xlist[ndrop:-ndrop-1], listsorted[ndrop:-ndrop - 1], 1)
+    numt1 = _intercept + _slope * xlist[-1]
+    noiselevel = np.abs(numt1 - _intercept)
+    val1 = np.abs(listsorted[0] - _intercept) / noiselevel
+    val2 = np.abs(listsorted[-1] - numt1) / noiselevel
+    listmask = np.zeros_like(listdata)
+    if (val1 >= snr):
+        upper_thresh = _intercept + noiselevel * snr * 0.5
+        listmask[listdata > upper_thresh] = 1.0
+    if (val2 >= snr):
+        lower_thresh = numt1 - noiselevel * snr * 0.5
+        listmask[listdata <= lower_thresh] = 1.0
+    return listmask
+
+
+def _rs_algorithm_5(sinogram, snr, size, matindex):
+    """
+    Remove large stripes by: locating stripes, normalizing to remove
+    full stripes, using the sorting technique to
+    remove partial stripes.    
+    """
+    badpixelratio = 0.05
+    (nrow, ncol) = sinogram.shape
+    ndrop = np.int16(badpixelratio * nrow)
+    sinosorted = np.sort(sinogram, axis=0)
+    sinosmoothed = median_filter(sinosorted, (1, size))
+    list1 = np.mean(sinosorted[ndrop:nrow - ndrop], axis=0)
+    list2 = np.mean(sinosmoothed[ndrop:nrow - ndrop], axis=0)
+    listfact = list1 / list2
+    listmask = _detect_stripe(listfact, snr)
+    listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
+    matfact = np.tile(listfact,(nrow,1))
+    sinogram = sinogram / matfact
+    sinogram1 = np.transpose(sinogram)
+    matcombine = np.asarray(np.dstack((matindex, sinogram1)))
+    matsort = np.asarray(
+        [row[row[:, 1].argsort()] for row in matcombine])
+    matsort[:, :, 1] = np.transpose(sinosmoothed)
+    matsortback = np.asarray(
+        [row[row[:, 0].argsort()] for row in matsort])
+    sino_corrected = np.transpose(matsortback[:, :, 1])
+    listxmiss = np.where(listmask > 0.0)[0]
+    sinogram[:, listxmiss] = sino_corrected[:, listxmiss]
+    return sinogram
+
+
+def _remove_large_stripe(tomo, snr, size):
+    matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]       
+        tomo[:, m, :] = _rs_algorithm_5(sino, snr, size, matindex)
+
+
+def remove_dead_stripe(tomo, snr=3, size=51, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Algorithm 6 in the paper. Remove unresponsive and fluctuating stripes.
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    snr  : float
+        Ratio used to detect locations of large stripes.
+        Greater is less sensitive. 
+    size : int
+        Window size of the median filter.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+ 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_dead_stripe,
+        args=(snr, size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _rs_algorithm_6(sinogram, snr, size, matindex):
+    """
+    Remove unresponsive and fluctuating stripes.
+    """
+    sinogram = np.copy(sinogram) # Make it mutable
+    (nrow, _) = sinogram.shape
+    sinosmoothed = np.apply_along_axis(uniform_filter1d, 0, sinogram, 10)
+    listdiff = np.sum(np.abs(sinogram - sinosmoothed), axis=0)
+    nmean = np.mean(listdiff)
+    listdiffbck = median_filter(listdiff, size)
+    listdiffbck[listdiffbck == 0.0] = nmean
+    listfact = listdiff / listdiffbck
+    listmask = _detect_stripe(listfact, snr)
+    listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
+    listmask[0:2] = 0.0
+    listmask[-2:] = 0.0
+    listx = np.where(listmask < 1.0)[0]
+    listy = np.arange(nrow)
+    matz = sinogram[:, listx]
+    finter = interpolate.interp2d(listx, listy, matz, kind='linear')
+    listxmiss = np.where(listmask > 0.0)[0]
+    if len(listxmiss) > 0:
+        matzmiss = finter(listxmiss, listy)
+        sinogram[:, listxmiss] = matzmiss
+    # Use algorithm 5 to remove residual stripes
+    sinogram = _rs_algorithm_5(sinogram, snr, size, matindex) 
+    return sinogram
+
+def _remove_dead_stripe(tomo, snr, size):
+    matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]       
+        tomo[:, m, :] = _rs_algorithm_6(sino, snr, size, matindex)
+        
+
+def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, ncore=None, nchunk=None):
+    """
+    Remove horizontal stripes from sinogram using Nghia Vo's
+    approach :cite:
+    Combine algorithms 6,5,4,3 to remove all stripes.
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    snr  : float
+        Ratio used to detect locations of large stripes.
+        Greater is less sensitive. 
+    la_size : int
+        Window size of the median filter to remove large stripes.
+    sm_size : int
+        Window size of the median filter to remove small-to-medium stripes.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+ 
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_remove_all_stripe,
+        args=(snr, la_size, sm_size),
+        axis=1,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _remove_all_stripe(tomo, snr, la_size, sm_size):
+    matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
+    for m in range(tomo.shape[1]):
+        sino = tomo[:, m, :]
+        sino = _rs_algorithm_6(sino, snr, la_size, matindex)
+        sino = _rs_algorithm_3(sino, sm_size, matindex)
+        tomo[:, m, :] = sino
