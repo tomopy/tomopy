@@ -50,8 +50,6 @@ import numpy as np
 import concurrent.futures as cf
 import tomopy.util.mproc as mproc
 import logging
-import warnings
-import os
 import dxchange
 
 from skimage import transform as tf
@@ -61,7 +59,7 @@ from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
 from scipy.signal import medfilt, medfilt2d
 from scipy.optimize import curve_fit
-from scipy.ndimage import affine_transform, shift
+from scipy.ndimage import affine_transform
 from collections import namedtuple
 
 import dxchange
@@ -510,7 +508,6 @@ def shift_images(prj, sx, sy):
     """
 
     from skimage import transform as tf
-    from skimage.feature import register_translation
 
     # Needs scaling for skimage float operations.
     prj, scl = scale(prj)

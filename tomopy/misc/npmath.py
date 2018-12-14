@@ -49,7 +49,6 @@
 import numpy as np
 import scipy
 import logging
-import warnings
 
 logger = logging.getLogger(__name__)
 
