@@ -38,7 +38,6 @@ shallow_clone: true                 # default is "false"
 # environment variables
 environment:
   # these variables are common to all jobs
-  MINGW_PATH: "C:\\mingw-w64\\i686-5.3.0-posix-dwarf-rt_v4-rev0\\mingw32"
   matrix:
     - PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda35-x64"
@@ -52,14 +51,14 @@ matrix:
 #   - projectA\libs
 # scripts that run after cloning repository
 install:
-  - "set PATH=%MINGW_PATH%\\bin;%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - where gcc
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes True
   - conda config --add channels conda-forge
   - conda config --add channels jrmadsen
   - conda update conda  # required in order to find mkl-devel
   - >
       conda install
+      m2w64-gcc
       mkl mkl-devel mkl_fft
       nose
       numexpr
@@ -73,6 +72,7 @@ install:
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
+  - where gcc
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
@@ -81,6 +81,7 @@ platform: x64
 # build Configuration, i.e. Debug, Release, etc.
 configuration: Debug
 build_script:
+  - set CC=gcc
   - python setup.py install
 #---------------------------------#
 #       tests configuration       #
