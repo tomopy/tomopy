@@ -164,7 +164,8 @@ from_string(const std::string& val)
 inline std::string
 tolower(std::string val)
 {
-    for(uintmax_t i = 0; i < val.size(); ++i) val[i] = tolower(val[i]);
+    for(uintmax_t i = 0; i < val.size(); ++i)
+        val[i] = tolower(val[i]);
     return val;
 }
 
@@ -435,7 +436,8 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func,
 
         std::stringstream ss;
         GpuOption::header(ss);
-        for(const auto& itr : options) ss << itr << "\n";
+        for(const auto& itr : options)
+            ss << itr << "\n";
         GpuOption::footer(ss);
 
         AutoLock l(TypeMutex<decltype(std::cout)>());

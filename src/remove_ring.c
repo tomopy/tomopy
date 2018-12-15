@@ -73,9 +73,10 @@ remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
             image[i] = image[i - 1] + dx;
         }
         // Translate Image to Polar Coordinates
-        polar_image = polar_transform(
-            image, center_x, center_y, dx, dy, &pol_width, &pol_height,
-            thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+        polar_image =
+            polar_transform(image, center_x, center_y, dx, dy, &pol_width,
+                            &pol_height, thresh_max, thresh_min, r_scale,
+                            ang_scale, ring_width);
         m_azi = ceil((float) pol_height / 360.0) * angular_min;
         m_rad = 2 * ring_width + 1;
 

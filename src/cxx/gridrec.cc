@@ -71,15 +71,15 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
 
     filter_func filter = get_filter(fname);
 
-    const float        C      = 7.0;
-    const float        nt     = 20.0;
-    const float        lambda = 0.99998546;
-    const unsigned int L      = (int) (2 * C / M_PI);
-    const int          ltbl   = 512;
-    int                pdim;
-    std::complex<float>*   sino, *filphase, *filphase_iter = NULL, **H;
-    std::complex<float>**  U_d, **V_d;
-    float *            J_z, *P_z;
+    const float          C      = 7.0;
+    const float          nt     = 20.0;
+    const float          lambda = 0.99998546;
+    const unsigned int   L      = (int) (2 * C / M_PI);
+    const int            ltbl   = 512;
+    int                  pdim;
+    std::complex<float>* sino, *filphase, *filphase_iter = NULL, **H;
+    std::complex<float>**U_d, **V_d;
+    float *              J_z, *P_z;
 
     const float coefs[11] = { 0.5767616E+02,  -0.8931343E+02, 0.4167596E+02,
                               -0.1053599E+02, 0.1662374E+01,  -0.1780527E-00,
@@ -168,11 +168,11 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
     {
         // Set up table of combined filter-phase factors.
         cxx_set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
-                          filter2d);
+                              filter2d);
 
         // First clear the array H
         memset(H[0], 0, pdim * pdim * sizeof(H[0][0]));
-        //for(int i = 0; i < pdim * pdim; ++i)
+        // for(int i = 0; i < pdim * pdim; ++i)
         //    *(H[i]) = std::complex<float>();
 
         // Loop over the dt projection angles. For each angle, do the following:
@@ -417,8 +417,7 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
 //===========================================================================//
 
 void
-cxx_set_filter_tables(int dt, int pd, float center,
-                      filter_func pf,
+cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
                       const float* filter_par, std::complex<float>* A,
                       unsigned char filter2d)
 {
@@ -504,10 +503,11 @@ std::complex<float>**
 cxx_malloc_matrix_c(size_t nr, size_t nc)
 {
     std::complex<float>** m = nullptr;
-    size_t           i;
+    size_t                i;
 
     // Allocate pointers to rows,
-    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr * sizeof(std::complex<float>*));
+    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(
+        nr * sizeof(std::complex<float>*));
 
     /* Allocate rows and set the pointers to them */
     m[0] = cxx_malloc_vector_c(nr * nc);

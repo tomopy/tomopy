@@ -46,11 +46,11 @@
 
 #include "utils.hh"
 
-#include <cstdlib>
+#include <complex.h>
 #include <complex>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <complex.h>
 #include <math.h>
 
 //===========================================================================//
@@ -102,8 +102,7 @@ void
 cxx_free_matrix_c(std::complex<float>**& m);
 
 void
-cxx_set_filter_tables(int dt, int pd, float fac,
-                      filter_func,
+cxx_set_filter_tables(int dt, int pd, float fac, filter_func,
                       const float* filter_par, std::complex<float>* A,
                       unsigned char is2d);
 

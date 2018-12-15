@@ -112,7 +112,8 @@ PYBIND11_MODULE(libtomopy, tomo)
             return ref;
         });
         std::cout << "executing..." << std::endl;
-        for(auto i = 0; i < nitr; ++i) tm->exec(tg, fibonacci, n);
+        for(auto i = 0; i < nitr; ++i)
+            tm->exec(tg, fibonacci, n);
         std::cout << "joining..." << std::endl;
         int result = tg.join();
         return result;

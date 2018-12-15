@@ -83,8 +83,8 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy,
         const char* fname, const float* filter_par)
 {
-    cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                fname, filter_par);
+    cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, fname,
+                filter_par);
     /*
     int    s, p, iu, iv;
     int    j;

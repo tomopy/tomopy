@@ -54,10 +54,10 @@
 #endif
 #define ANSI
 
-void DLL
-     gridrec(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             const char fname[16], const float* filter_par);
+DLL void
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
+        const float* theta, float* recon, int ngridx, int ngridy,
+        const char fname[16], const float* filter_par);
 
 float*
 malloc_vector_f(size_t n);
@@ -125,9 +125,9 @@ set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl,
 float
 legendre(int n, const float* coefs, float x);
 
-extern void DLL
-     cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             const char fname[16], const float* filter_par);
+extern DLL void
+cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
+            const float* theta, float* recon, int ngridx, int ngridy,
+            const char fname[16], const float* filter_par);
 
 #endif

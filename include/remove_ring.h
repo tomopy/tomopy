@@ -58,11 +58,11 @@
 
 #define PI 3.14159265359
 
-void DLL
-     remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
-                 float thresh_max, float thresh_min, float threshold,
-                 int angular_min, int ring_width, int int_mode, int istart,
-                 int iend);
+DLL void
+remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
+            float thresh_max, float thresh_min, float threshold,
+            int angular_min, int ring_width, int int_mode, int istart,
+            int iend);
 
 int
 min_distance_to_edge(float center_x, float center_y, int width, int height);

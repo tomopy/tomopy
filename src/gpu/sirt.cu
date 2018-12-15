@@ -93,8 +93,9 @@ cuda_sirt_update(int s, int p, int d, int ry, int rz, int dt, int dx,
     int smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    sirt_update_global<<<nb, nt, smem, streams[0]>>>(
-        s, p, d, ry, rz, dt, dx, csize, data, simdata, indi, dist, sum, model);
+    sirt_update_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx,
+                                                     csize, data, simdata, indi,
+                                                     dist, sum, model);
     CUDA_CHECK_LAST_ERROR();
     NVTX_RANGE_POP(&nvtx_update);
 }

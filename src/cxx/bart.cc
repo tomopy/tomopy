@@ -279,7 +279,8 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
         // create task group
         TaskGroup<void> tg(tp);
         // For each slice
-        for(int s = 0; s < dy; ++s) task_man->exec(tg, compute_slice, i, s);
+        for(int s = 0; s < dy; ++s)
+            task_man->exec(tg, compute_slice, i, s);
         // join task group
         tg.join();
 

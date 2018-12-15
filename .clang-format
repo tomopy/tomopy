@@ -7,8 +7,10 @@ AlignConsecutiveDeclarations: true
 AlignEscapedNewlinesLeft: false
 AlignOperands: true
 AlignTrailingComments: true
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: TopLevel
 AlwaysBreakAfterReturnType: TopLevel
 AlwaysBreakBeforeMultilineStrings: false
@@ -42,6 +44,14 @@ IndentPPDirectives: AfterHash
 IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: false
 Language: Cpp
+# PenaltyBreakAssignment: 50
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakComment: 75
+PenaltyBreakFirstLessLess: 100
+# PenaltyBreakString: 100
+# PenaltyBreakTemplateDeclaration: 50
+# PenaltyExcessCharacter: 200
+# PenaltyReturnTypeOnItsOwnLine: 50
 PointerAlignment: Left
 SortIncludes: true
 SortUsingDeclarations: true

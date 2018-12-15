@@ -190,9 +190,11 @@ cxx_sort_intersections(const int& ind_condition, const farray_t& ax,
         if(nitr > 0)
         {
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coorx[k + nn] = bx[j + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coorx[k + nn] = bx[j + nn];
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coory[k + nn] = by[j + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coory[k + nn] = by[j + nn];
             j += nitr;
             k += nitr;
         }
@@ -220,9 +222,11 @@ cxx_sort_intersections(const int& ind_condition, const farray_t& ax,
         if(nitr > 0)
         {
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coorx[k + nn] = ax[i + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coorx[k + nn] = ax[i + nn];
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coory[k + nn] = ay[i + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coory[k + nn] = ay[i + nn];
             i += nitr;
             k += nitr;
         }
@@ -231,9 +235,11 @@ cxx_sort_intersections(const int& ind_condition, const farray_t& ax,
         if(nitr > 0)
         {
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coorx[k + nn] = bx[j + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coorx[k + nn] = bx[j + nn];
 #pragma omp simd
-            for(uintmax_t nn = 0; nn < nitr; ++nn) coory[k + nn] = by[j + nn];
+            for(uintmax_t nn = 0; nn < nitr; ++nn)
+                coory[k + nn] = by[j + nn];
             j += nitr;
             k += nitr;
         }
@@ -248,7 +254,8 @@ cxx_calc_sum_sqr(const farray_t& dist)
 {
     float sum_sqr = 0.0f;
     //#pragma omp simd reduction(+:sum_sqr)
-    for(uintmax_t n = 0; n < dist.size(); ++n) sum_sqr += dist[n] * dist[n];
+    for(uintmax_t n = 0; n < dist.size(); ++n)
+        sum_sqr += dist[n] * dist[n];
     return sum_sqr;
 }
 

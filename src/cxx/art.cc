@@ -440,11 +440,12 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 //
                 // inputs: asize, ax, ay, bsize, bx, by
                 // outputs: csize, coorx, coory
-                cuda_sort_intersections(
-                    quadrant, gpu_data->asize, gpu_data->ax, gpu_data->ay,
-                    gpu_data->bsize, gpu_data->bx, gpu_data->by,
-                    gpu_data->csize, gpu_data->coorx, gpu_data->coory,
-                    streams + stream_offset);
+                cuda_sort_intersections(quadrant, gpu_data->asize, gpu_data->ax,
+                                        gpu_data->ay, gpu_data->bsize,
+                                        gpu_data->bx, gpu_data->by,
+                                        gpu_data->csize, gpu_data->coorx,
+                                        gpu_data->coory,
+                                        streams + stream_offset);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
@@ -496,10 +497,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
                 // Calculate simdata
                 // PRINT_HERE(std::to_string(d).c_str());
-                cuda_calc_simdata(
-                    s, p, d, ngridx, ngridy, dt, dx, gpu_data->csize,
-                    gpu_data->indi, gpu_data->dist, gpu_data->model,
-                    gpu_data->sum, gpu_data->simdata, streams + stream_offset);
+                cuda_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
+                                  gpu_data->csize, gpu_data->indi,
+                                  gpu_data->dist, gpu_data->model,
+                                  gpu_data->sum, gpu_data->simdata,
+                                  streams + stream_offset);
 
                 static Mutex m;
                 m.lock();
@@ -524,7 +526,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
             }
         }
 
-        for(auto i = 0; i < nstreams; ++i) cudaStreamSynchronize(streams[i]);
+        for(auto i = 0; i < nstreams; ++i)
+            cudaStreamSynchronize(streams[i]);
 
         static Mutex m;
         m.lock();
@@ -557,7 +560,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         // create task group
         TaskGroup<void> tg(tp);
         // For each slice
-        for(int s = 0; s < dy; ++s) task_man->exec(tg, compute_slice, i, s);
+        for(int s = 0; s < dy; ++s)
+            task_man->exec(tg, compute_slice, i, s);
         // join task group
         tg.join();
     }

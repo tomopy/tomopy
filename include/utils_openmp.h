@@ -63,40 +63,40 @@
 
 // Utility functions for data simultation
 
-void DLL
-     openmp_preprocessing(int ngridx, int ngridy, int dz, float center, float* mov,
-                          float* gridx, float* gridy);
+DLL void
+openmp_preprocessing(int ngridx, int ngridy, int dz, float center, float* mov,
+                     float* gridx, float* gridy);
 
 int DLL
     openmp_calc_quadrant(float theta_p);
 
-void DLL
-     openmp_calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p,
-                        float cos_p, const float* gridx, const float* gridy,
-                        float* coordx, float* coordy);
+DLL void
+openmp_calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p,
+                   float cos_p, const float* gridx, const float* gridy,
+                   float* coordx, float* coordy);
 
-void DLL
-     openmp_trim_coords(int ngridx, int ngridy, const float* coordx,
-                        const float* coordy, const float* gridx, const float* gridy,
-                        int* asize, float* ax, float* ay, int* bsize, float* bx,
-                        float* by);
+DLL void
+openmp_trim_coords(int ngridx, int ngridy, const float* coordx,
+                   const float* coordy, const float* gridx, const float* gridy,
+                   int* asize, float* ax, float* ay, int* bsize, float* bx,
+                   float* by);
 
-void DLL
-     openmp_sort_intersections(int ind_condition, int asize, const float* ax,
-                               const float* ay, int bsize, const float* bx,
-                               const float* by, int* csize, float* coorx,
-                               float* coory);
+DLL void
+openmp_sort_intersections(int ind_condition, int asize, const float* ax,
+                          const float* ay, int bsize, const float* bx,
+                          const float* by, int* csize, float* coorx,
+                          float* coory);
 
-void DLL
-     openmp_calc_sum_sqr(const int csize, const float* dist, float* sum_sqr);
+DLL void
+openmp_calc_sum_sqr(const int csize, const float* dist, float* sum_sqr);
 
-void DLL
-     openmp_calc_dist(int ngridx, int ngridy, int csize, const float* coorx,
-                      const float* coory, int* indi, float* dist);
+DLL void
+openmp_calc_dist(int ngridx, int ngridy, int csize, const float* coorx,
+                 const float* coory, int* indi, float* dist);
 
-void DLL
-     openmp_calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
-                         int csize, const int* indi, const float* dist,
-                         const float* model, float* simdata);
+DLL void
+openmp_calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
+                    int csize, const int* indi, const float* dist,
+                    const float* model, float* simdata);
 
 #endif
