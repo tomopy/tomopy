@@ -36,6 +36,11 @@ add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP option for GPU execution" ${TOMOPY_USE_GPU})
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" OFF)
+add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
+
+if(TOMOPY_CXX_GRIDREC)
+    add_definitions(-DTOMOPY_CXX_GRIDREC)
+endif()
 
 if(TOMOPY_USE_ARCH)
     add_option(TOMOPY_USE_AVX512 "Enable AVX-512 flags (if available)" OFF)

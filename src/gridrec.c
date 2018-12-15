@@ -83,9 +83,10 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy,
         const char* fname, const float* filter_par)
 {
+#if defined(TOMOPY_CXX_GRIDREC)
     cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, fname,
                 filter_par);
-    /*
+#else
     int    s, p, iu, iv;
     int    j;
     float *sine, *cose, *wtbl, *winv;
@@ -162,13 +163,13 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     MKL_LONG               length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
     DftiSetValue(reverse_1d, DFTI_THREAD_LIMIT,
-                 1); // FFT should run sequentially to avoid oversubscription
+                 1);  // FFT should run sequentially to avoid oversubscription
     DftiCommitDescriptor(reverse_1d);
     DFTI_DESCRIPTOR_HANDLE forward_2d;
     MKL_LONG               length_2d[2] = { (MKL_LONG) pdim, (MKL_LONG) pdim };
     DftiCreateDescriptor(&forward_2d, DFTI_SINGLE, DFTI_COMPLEX, 2, length_2d);
     DftiSetValue(forward_2d, DFTI_THREAD_LIMIT,
-                 1); // FFT should run sequentially to avoid oversubscription
+                 1);  // FFT should run sequentially to avoid oversubscription
     DftiCommitDescriptor(forward_2d);
 
     for(p = 0; p < dt; p++)
@@ -433,7 +434,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-    */
+#endif
 }
 
 void
