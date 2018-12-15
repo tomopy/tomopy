@@ -54,7 +54,7 @@
 #include "mkl.h"
 #include <complex>
 
-using namespace std::complex_literals;
+using namespace std::literals::complex_literals;
 
 //===========================================================================//
 

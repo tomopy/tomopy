@@ -20,6 +20,9 @@ install:
   - "conda install python=${TRAVIS_PYTHON_VERSION} nose six numpy scipy
     scikit-image scikit-build mkl-devel mkl_fft python-coveralls
     dxchange numexpr coverage timemory pyctest"
+  - export CC=$(which gcc)
+  - export CXX=$(which g++)
+  - echo "CC = ${CC}, CXX = ${CXX}"
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install futures;
     fi
