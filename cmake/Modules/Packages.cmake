@@ -36,9 +36,9 @@ if(TOMOPY_USE_TIMEMORY)
         list(APPEND EXTERNAL_LIBRARIES
             ${TiMemory_LIBRARIES} ${TiMemory_C_LIBRARIES})
         add_definitions(-DTOMOPY_USE_TIMEMORY)
-    endif(TiMemory_FOUND)
+    endif()
 
-endif(TOMOPY_USE_TIMEMORY)
+endif()
 
 
 ################################################################################
@@ -54,9 +54,9 @@ if(TOMOPY_USE_GPERF)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
         list(APPEND EXTERNAL_LIBRARIES ${GPerfTools_LIBRARIES})
         add_definitions(-DTOMOPY_USE_GPERF)
-    endif(GPerfTools_FOUND)
+    endif()
 
-endif(TOMOPY_USE_GPERF)
+endif()
 
 
 ################################################################################
@@ -65,22 +65,35 @@ endif(TOMOPY_USE_GPERF)
 #
 ################################################################################
 
-if(TOMOPY_USE_OPENMP AND TOMOPY_USE_GPU)
+if(TOMOPY_USE_OPENMP)
     find_package(OpenMP)
 
     if(OpenMP_FOUND)
-        # Add the OpenMP-specific compiler and linker flags
-        foreach(LANG C CXX)
-            set(_FLAGS "${OpenMP_${LANG}_FLAGS}")
-            if(CMAKE_${LANG}_COMPILER_IS_PGI)
-                string(REPLACE "-mp" "-mp${PGI_OPENMP_TYPE}" _FLAGS "${_FLAGS}")
-            endif()
-            add(${PROJECT_NAME}_${LANG}_FLAGS "${_FLAGS}")
-        endforeach()
-        add_definitions(-DTOMOPY_USE_OPENMP)
-    endif(OpenMP_FOUND)
+        if(CMAKE_C_COMPILER_IS_PGI)
+            string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_C_FLAGS "${OpenMP_C_FLAGS}")
+        endif()
 
-endif(TOMOPY_USE_OPENMP AND TOMOPY_USE_GPU)
+        if(CMAKE_CXX_COMPILER_IS_PGI)
+            string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
+        endif()
+
+        # C
+        if(OpenMP_C_FOUND)
+            add(${PROJECT_NAME}_C_FLAGS "${OpenMP_C_FLAGS}")
+        endif()
+
+        # C++
+        if(OpenMP_CXX_FOUND)
+            add(${PROJECT_NAME}_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
+        endif()
+
+        # only define if GPU enabled
+        if(TOMOPY_USE_GPU)
+            add_definitions(-DTOMOPY_USE_OPENMP)
+        endif()
+    endif()
+
+endif()
 
 
 ################################################################################
@@ -94,13 +107,12 @@ if(TOMOPY_USE_OPENACC AND TOMOPY_USE_GPU)
 
     foreach(LANG C CXX)
         if(OpenACC_${LANG}_FOUND)
-            # Add the OpenACC flags
             add(${PROJECT_NAME}_${LANG}_FLAGS "${OpenACC_${LANG}_FLAGS}")
             add_definitions(-DTOMOPY_USE_OPENACC)
-        endif(OpenACC_${LANG}_FOUND)
+        endif()
     endforeach()
 
-endif(TOMOPY_USE_OPENACC AND TOMOPY_USE_GPU)
+endif()
 
 
 ################################################################################
@@ -116,9 +128,9 @@ if(TOMOPY_USE_TBB)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
         list(APPEND EXTERNAL_LIBRARIES ${TBB_LIBRARIES})
         add_definitions(-DTOMOPY_USE_TBB)
-    endif(TBB_FOUND)
+    endif()
 
-endif(TOMOPY_USE_TBB)
+endif()
 
 
 ################################################################################
@@ -127,26 +139,23 @@ endif(TOMOPY_USE_TBB)
 #
 ################################################################################
 
-if(TOMOPY_USE_MKL)
-    find_package(PythonInterp REQUIRED)
+find_package(PythonInterp)
 
-    # anaconda should have installed MKL under this prefix
-    if(PYTHON_EXECUTABLE)
-        get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
-        get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
-        list(APPEND CMAKE_PREFIX_PATH ${_MKL_PREFIX} ${_MKL_PREFIX}/lib ${_MKL_PREFIX}/include)
-    endif()
+# anaconda should have installed MKL under this prefix
+if(PYTHON_EXECUTABLE)
+    get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
+    get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
+    list(APPEND CMAKE_PREFIX_PATH ${_MKL_PREFIX} ${_MKL_PREFIX}/lib ${_MKL_PREFIX}/include)
+endif()
 
-    find_package(MKL)
+find_package(MKL REQUIRED)
 
-    if(MKL_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-        add_definitions(-DTOMOPY_USE_MKL)
-        add_definitions(-DUSE_MKL)
-    endif(MKL_FOUND)
-
-endif(TOMOPY_USE_MKL)
+if(MKL_FOUND)
+    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    add_definitions(-DTOMOPY_USE_MKL)
+    add_definitions(-DUSE_MKL)
+endif()
 
 
 ################################################################################
@@ -161,7 +170,7 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
     if(CUDA_FOUND)
         foreach(_DIR ${CUDA_INCLUDE_DIRS})
             include_directories(SYSTEM ${_DIR})
-        endforeach(_DIR ${CUDA_INCLUDE_DIRS})
+        endforeach()
         list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
 
         find_library(CUDA_LIBRARY
@@ -222,7 +231,7 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
         endif()
     endif()
 
-endif(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
+endif()
 
 
 ################################################################################
@@ -255,7 +264,7 @@ safe_remove_duplicates(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS})
 safe_remove_duplicates(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES})
 foreach(_DIR ${EXTERNAL_INCLUDE_DIRS})
     include_directories(SYSTEM ${_DIR})
-endforeach(_DIR ${EXTERNAL_INCLUDE_DIRS})
+endforeach()
 
 # configure package files
 configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in

@@ -6,22 +6,14 @@
 ################################################################################
 
 include(MacroUtilities)
+include(Compilers)
 
-set(PYBIND11_INSTALL OFF CACHE BOOL "PyBind11 installation" FORCE)
-set(PYBIND11_TEST OFF CACHE BOOL "PyBind11 testing" FORCE)
-
-set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static libraries" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-
-if(CMAKE_C_COMPILER_ID MATCHES "PGI" OR CMAKE_CXX_COMPILER_ID MATCHES "PGI")
-    set(COMPILER_IS_PGI ON)
-else()
-    set(COMPILER_IS_PGI OFF)
+if(CMAKE_C_COMPILER_IS_PGI)
+    set(OpenMP_C_IMPL "=nonuma" CACHE STRING "OpenMP C library setting")
 endif()
 
-if(COMPILER_IS_PGI)
-    set(PGI_INFO_TYPE "accel" CACHE STRING "PGI -Minfo=<type>")
-    set(PGI_OPENMP_TYPE "=nonuma" CACHE STRING "OpenMP setting")
+if(CMAKE_CXX_COMPILER_IS_PGI)
+    set(OpenMP_CXX_IMPL "=nonuma" CACHE STRING "OpenMP C++ library setting")
 endif()
 
 # features
@@ -31,10 +23,9 @@ add_feature(${PROJECT_NAME}_C_FLAGS "C compiler flags")
 add_feature(${PROJECT_NAME}_CXX_FLAGS "C++ compiler flags")
 add_feature(CMAKE_C_STANDARD "C languae standard")
 add_feature(CMAKE_CXX_STANDARD "C++11 STL standard")
-if(COMPILER_IS_PGI)
-    add_feature(PGI_INFO_TYPE "PGI -Minfo=<type>")
-    add_feature(PGI_OPENMP_TYPE "PGI -mp<...> (e.g. -mp=nonuma)")
-endif()
+add_feature(OpenMP_IMPL "OpenMP implementation (e.g. '=libomp', '=libiomp', '=nonuma', etc.)")
+add_feature(PYTHON_INCLUDE_DIR "Python include directory")
+add_feature(PYTHON_LIBRARY "Python library")
 
 # options (always available)
 add_option(TOMOPY_USE_MKL "Enable MKL" ON)
@@ -50,15 +41,7 @@ if(TOMOPY_USE_ARCH)
     add_option(TOMOPY_USE_AVX512 "Enable AVX-512 flags (if available)" OFF)
 endif()
 
-if(COMPILER_IS_PGI)
-    add_option(TOMOPY_PGI_INFO "Enable -Minfo=\${PGI_INFO_TYPE} for PGI compilers" ON)
-endif()
-
 set(PTL_USE_TBB OFF CACHE BOOL "Enable TBB backend for PTL")
-
-#if(TOMOPY_USE_GPU)
-#    set(PTL_USE_GPU ON CACHE BOOL "Enable GPU preprocessor")
-#endif()
 
 foreach(_OPT ARCH AVX512 GPERF)
     if(TOMOPY_USE_${_OPT})

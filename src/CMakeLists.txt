@@ -4,10 +4,15 @@
 #                                                                              #
 ################################################################################
 # ensure PIC flag is set
-set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code" FORCE)
 set(PYTHON_SITE_DIR ${CMAKE_INSTALL_PREFIX})
-set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs CACHE PATH
-    "Installation directory of libraries" FORCE)
+set(PYBIND11_INSTALL    OFF CACHE BOOL "PyBind11 installation"  FORCE)
+set(PYBIND11_TEST       OFF CACHE BOOL "PyBind11 testing"       FORCE)
+set(BUILD_STATIC_LIBS   ON  CACHE BOOL "Build static libraries" FORCE)
+set(BUILD_SHARED_LIBS   OFF CACHE BOOL "Build shared libraries" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON
+    CACHE BOOL "Position independent code" FORCE)
+set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    CACHE PATH "Installation directory of libraries" FORCE)
 
 #------------------------------------------------------------------------------#
 #
@@ -28,13 +33,9 @@ endif()
 #------------------------------------------------------------------------------#
 checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
     RELATIVE_PATH src/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-add_subdirectory(PTL)
 
-if(BUILD_STATIC_LIBS)
-    list(APPEND EXTERNAL_LIBRARIES ptl-static)
-else()
-    list(APPEND EXTERNAL_LIBRARIES ptl-shared)
-endif()
+add_subdirectory(PTL)
+list(APPEND EXTERNAL_LIBRARIES ptl-static)
 
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers ${PROJECT_SOURCE_DIR}/include/*.h)

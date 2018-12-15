@@ -8,6 +8,10 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(WARNING "In-source build")
 endif()
 
+if(SKBUILD)
+    message("Using scikit-build. cmake: ${CMAKE_COMMAND}...")
+endif()
+
 ################################################################################
 #
 #   CMake settings
@@ -41,8 +45,8 @@ mark_as_advanced(tomopy_VERSION)
 ################################################################################
 
 include(MacroUtilities)
-include(Options)
 include(Compilers)
+include(Options)
 include(GNUInstallDirs)
 include(ProjectSettings)
 include(BuildSettings)

@@ -50,58 +50,35 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "gridrec.h"
+#include "gridrec.hh"
 #include "mkl.h"
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
+#include <complex>
 
-#ifndef M_PI
-#    define M_PI 3.14159265359
-#endif
+using namespace std::literals;
 
-#define __LIKELY(x) __builtin_expect(!!(x), 1)
-#ifdef __INTEL_COMPILER
-#    define __PRAGMA_SIMD _Pragma("simd assert")
-#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                 \
-        _Pragma("simd assert, vecremainder, vectorlength(8)")
-#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
-#    define __PRAGMA_IVDEP _Pragma("ivdep")
-#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
-#else
-#    define __PRAGMA_SIMD
-#    define __PRAGMA_SIMD_VECREMAINDER
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#    define __PRAGMA_OMP_SIMD_COLLAPSE
-#    define __PRAGMA_IVDEP
-#    define __ASSSUME_64BYTES_ALIGNED(x)
-#endif
+//===========================================================================//
 
 void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy,
-        const char* fname, const float* filter_par)
+cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
+            const float* theta, float* recon, int ngridx, int ngridy,
+            const char* fname, const float* filter_par)
 {
-    cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                fname, filter_par);
-    /*
     int    s, p, iu, iv;
     int    j;
     float *sine, *cose, *wtbl, *winv;
 
     float *work, *work2;
 
-    float (*const filter)(float, int, int, int, const float*) =
-        get_filter(fname);
+    filter_func filter = get_filter(fname);
+
     const float        C      = 7.0;
     const float        nt     = 20.0;
     const float        lambda = 0.99998546;
     const unsigned int L      = (int) (2 * C / M_PI);
     const int          ltbl   = 512;
     int                pdim;
-    float _Complex *   sino, *filphase, *filphase_iter = NULL, **H;
-    float _Complex **  U_d, **V_d;
+    std::complex<float>*   sino, *filphase, *filphase_iter = NULL, **H;
+    std::complex<float>**  U_d, **V_d;
     float *            J_z, *P_z;
 
     const float coefs[11] = { 0.5767616E+02,  -0.8931343E+02, 0.4167596E+02,
@@ -120,18 +97,18 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     unsigned char filter2d = filter_is_2d(fname);
 
     // Allocate storage for various arrays.
-    sino = malloc_vector_c(pdim);
+    sino = cxx_malloc_vector_c(pdim);
     if(!filter2d)
     {
-        filphase      = malloc_vector_c(pdim2);
+        filphase      = cxx_malloc_vector_c(pdim2);
         filphase_iter = filphase;
     }
     else
     {
-        filphase = malloc_vector_c(dt * (pdim2));
+        filphase = cxx_malloc_vector_c(dt * (pdim2));
     }
     __ASSSUME_64BYTES_ALIGNED(filphase);
-    H = malloc_matrix_c(pdim, pdim);
+    H = cxx_malloc_matrix_c(pdim, pdim);
     __ASSSUME_64BYTES_ALIGNED(H);
     wtbl = malloc_vector_f(ltbl + 1);
     __ASSSUME_64BYTES_ALIGNED(wtbl);
@@ -141,9 +118,9 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     __ASSSUME_64BYTES_ALIGNED(J_z);
     P_z = malloc_vector_f(pdim2 * dt);
     __ASSSUME_64BYTES_ALIGNED(P_z);
-    U_d = malloc_matrix_c(dt, pdim);
+    U_d = cxx_malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(U_d);
-    V_d = malloc_matrix_c(dt, pdim);
+    V_d = cxx_malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(V_d);
     work = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);
@@ -162,13 +139,13 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     MKL_LONG               length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
     DftiSetValue(reverse_1d, DFTI_THREAD_LIMIT,
-                 1); // FFT should run sequentially to avoid oversubscription
+                 1); /* FFT should run sequentially to avoid oversubscription */
     DftiCommitDescriptor(reverse_1d);
     DFTI_DESCRIPTOR_HANDLE forward_2d;
     MKL_LONG               length_2d[2] = { (MKL_LONG) pdim, (MKL_LONG) pdim };
     DftiCreateDescriptor(&forward_2d, DFTI_SINGLE, DFTI_COMPLEX, 2, length_2d);
     DftiSetValue(forward_2d, DFTI_THREAD_LIMIT,
-                 1); // FFT should run sequentially to avoid oversubscription
+                 1); /* FFT should run sequentially to avoid oversubscription */
     DftiCommitDescriptor(forward_2d);
 
     for(p = 0; p < dt; p++)
@@ -190,11 +167,13 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     for(s = 0; s < dy; s += 2)
     {
         // Set up table of combined filter-phase factors.
-        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
+        cxx_set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
                           filter2d);
 
         // First clear the array H
         memset(H[0], 0, pdim * pdim * sizeof(H[0][0]));
+        //for(int i = 0; i < pdim * pdim; ++i)
+        //    *(H[i]) = std::complex<float>();
 
         // Loop over the dt projection angles. For each angle, do the following:
 
@@ -239,7 +218,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         // for carrying out the convolution (step 4 above), but necessitates
         // an additional correction -- See Phase 3 below.
 
-        float _Complex Cdata1, Cdata2;
+        std::complex<float> Cdata1, Cdata2;
 
         // For each projection
         for(p = 0; p < dt; p++)
@@ -257,7 +236,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
                 {
                     second_sino = data[index + delta_index];
                 }
-                sino[j] = data[index] + I * second_sino;
+                sino[j] = data[index] + 1if * second_sino;
             }
 
             __PRAGMA_SIMD_VECREMAINDER
@@ -276,7 +255,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
             for(j = 1; j < pdim2; j++)
             {
                 Cdata1 = filphase_iter[j] * sino[j];
-                Cdata2 = conjf(filphase_iter[j]) * sino[pdim - j];
+                Cdata2 = std::conj<float>(filphase_iter[j]) * sino[pdim - j];
 
                 U = j * cose_p + M2;
                 V = j * sine_p + M2;
@@ -396,11 +375,11 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
                     {
                         const float corrn = corrn_u * winv[k + padx];
                         recon[islc1 + ngridy * (ngridx - 1 - k) + j] =
-                            corrn * crealf(H[iu][iv]);
+                            corrn * std::real<float>(H[iu][iv]);
                         if(__LIKELY((s + 1) < dy))
                         {
                             recon[islc2 + ngridy * (ngridx - 1 - k) + j] =
-                                corrn * cimagf(H[iu][iv]);
+                                corrn * std::imag<float>(H[iu][iv]);
                         }
                     }
                     if(k < ngridx)
@@ -420,31 +399,32 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
 
     free_vector_f(sine);
     free_vector_f(cose);
-    free_vector_c(sino);
+    cxx_free_vector_c(sino);
     free_vector_f(wtbl);
-    free_vector_c(filphase);
+    cxx_free_vector_c(filphase);
     free_vector_f(winv);
     free_vector_f(work);
-    free_matrix_c(H);
+    cxx_free_matrix_c(H);
     free_vector_f(J_z);
     free_vector_f(P_z);
-    free_matrix_c(U_d);
-    free_matrix_c(V_d);
+    cxx_free_matrix_c(U_d);
+    cxx_free_matrix_c(V_d);
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-    */
 }
 
+//===========================================================================//
+
 void
-set_filter_tables(int dt, int pd, float center,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A,
-                  unsigned char filter2d)
+cxx_set_filter_tables(int dt, int pd, float center,
+                      filter_func pf,
+                      const float* filter_par, std::complex<float>* A,
+                      unsigned char filter2d)
 {
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
-    // (*pf)()], multiplying a complex phase factor (derived from the
+    // pf(...)], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments.
 
     const float norm  = M_PI / pd / dt;
@@ -457,14 +437,14 @@ set_filter_tables(int dt, int pd, float center,
     {
         for(j = 0; j < pd2; j++)
         {
-            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
+            A[j] = pf((float) j / pd, j, 0, pd2, filter_par);
         }
 
         __PRAGMA_SIMD
         for(j = 0; j < pd2; j++)
         {
             x = j * rtmp1;
-            A[j] *= (cosf(x) - I * sinf(x)) * norm;
+            A[j] *= (cosf(x) - 1if * sinf(x)) * norm;
         }
     }
     else
@@ -475,104 +455,39 @@ set_filter_tables(int dt, int pd, float center,
 
             for(j = 0; j < pd2; j++)
             {
-                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
+                A[j0 + j] = pf((float) j / pd, j, i, pd2, filter_par);
             }
 
             __PRAGMA_SIMD
             for(j = 0; j < pd2; j++)
             {
                 x = j * rtmp1;
-                A[j0 + j] *= (cosf(x) - I * sinf(x)) * norm;
+                A[j0 + j] *= (cosf(x) - 1if * sinf(x)) * norm;
             }
         }
     }
 }
 
-void
-set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl,
-                int linv, float* wtbl, float* winv)
+//===========================================================================//
+
+std::complex<float>*
+cxx_malloc_vector_c(size_t n)
 {
-    // Set up lookup tables for convolvent (used in Phase 1 of
-    // do_recon()), and for the final correction factor (used in
-    // Phase 3).
-
-    int         i;
-    float       norm;
-    const float fac   = (float) ltbl / (linv + 0.5);
-    const float polyz = legendre(nt, coefs, 0.);
-
-    wtbl[0] = 1.0;
-    for(i = 1; i <= ltbl; i++)
-    {
-        wtbl[i] = legendre(nt, coefs, (float) i / ltbl) / polyz;
-    }
-
-    // Note the final result at end of Phase 3 contains the factor,
-    // norm^2.  This incorporates the normalization of the 2D
-    // inverse FFT in Phase 2 as well as scale factors involved
-    // in the inverse Fourier transform of the convolvent.
-    norm = sqrt(M_PI / 2 / C / lambda) / 1.2;
-
-    winv[linv] = norm / wtbl[0];
-    __PRAGMA_IVDEP
-    for(i = 1; i <= linv; i++)
-    {
-        // Minus sign for alternate entries
-        // corrects for "natural" data layout
-        // in array H at end of Phase 1.
-        norm           = -norm;
-        winv[linv + i] = winv[linv - i] = norm / wtbl[(int) roundf(i * fac)];
-    }
+    return new std::complex<float>[n];
 }
+
+//===========================================================================//
 
 void
-set_trig_tables(int dt, const float* theta, float** sine, float** cose)
+cxx_free_vector_c(std::complex<float>*& v)
 {
-    // Set up tables of sines and cosines.
-    float *s, *c;
-
-    *sine = s = malloc_vector_f(dt);
-    __ASSSUME_64BYTES_ALIGNED(s);
-    *cose = c = malloc_vector_f(dt);
-    __ASSSUME_64BYTES_ALIGNED(c);
-
-    __PRAGMA_SIMD
-    for(int j = 0; j < dt; j++)
-    {
-        s[j] = sinf(theta[j]);
-        c[j] = cosf(theta[j]);
-    }
+    delete v;
+    v = nullptr;
 }
 
-float
-legendre(int n, const float* coefs, float x)
-{
-    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
-    // where P(j,x) is the jth Legendre polynomial.
-    // x must be between -1 and 1.
-    float penult, last, cur, y, mxlast;
-
-    y      = coefs[0];
-    penult = 1.0;
-    last   = x;
-    for(int j = 2; j <= n; j++)
-    {
-        mxlast = -(x * last);
-        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
-        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
-        if(!(j & 1))  // if j is even
-        {
-            y += cur * coefs[j >> 1];
-        }
-
-        penult = last;
-        last   = cur;
-    }
-    return y;
-}
-
-static inline void*
-malloc_64bytes_aligned(size_t sz)
+//===========================================================================//
+void*
+cxx_malloc_64bytes_aligned(size_t sz)
 {
 #ifdef __MINGW32__
     return __mingw_aligned_malloc(sz, 64);
@@ -583,41 +498,19 @@ malloc_64bytes_aligned(size_t sz)
 #endif
 }
 
-inline float*
-malloc_vector_f(size_t n)
-{
-    return (float*) malloc(n * sizeof(float));
-}
+//===========================================================================//
 
-inline void
-free_vector_f(float* v)
+std::complex<float>**
+cxx_malloc_matrix_c(size_t nr, size_t nc)
 {
-    free(v);
-}
-
-inline float _Complex*
-malloc_vector_c(size_t n)
-{
-    return (float _Complex*) malloc(n * sizeof(float _Complex));
-}
-
-inline void
-free_vector_c(float _Complex* v)
-{
-    free(v);
-}
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc)
-{
-    float _Complex** m = NULL;
+    std::complex<float>** m = nullptr;
     size_t           i;
 
     // Allocate pointers to rows,
-    m = (float _Complex**) malloc_64bytes_aligned(nr * sizeof(float _Complex*));
+    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr * sizeof(std::complex<float>*));
 
     /* Allocate rows and set the pointers to them */
-    m[0] = malloc_vector_c(nr * nc);
+    m[0] = cxx_malloc_vector_c(nr * nc);
 
     for(i = 1; i < nr; i++)
     {
@@ -626,117 +519,19 @@ malloc_matrix_c(size_t nr, size_t nc)
     return m;
 }
 
-inline void
-free_matrix_c(float _Complex** m)
+//===========================================================================//
+
+void
+cxx_free_matrix_c(std::complex<float>**& m)
 {
-    free_vector_c(m[0]);
+    delete m[0];
+    m[0] = nullptr;
 #ifdef __MINGW32__
     __mingw_aligned_free(m);
 #else
     free(m);
 #endif
+    m = nullptr;
 }
 
-// No filter
-float
-filter_none(float x, int i, int j, int fwidth, const float* pars)
-{
-    return 1.0;
-}
-
-// Shepp-Logan filter
-float
-filter_shepp(float x, int i, int j, int fwidth, const float* pars)
-{
-    if(i == 0)
-        return 0.0;
-    return fabsf(2 * x) * (sinf(M_PI * x) / (M_PI * x));
-}
-
-// Cosine filter
-float
-filter_cosine(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * (cosf(M_PI * x));
-}
-
-// Hann filter
-float
-filter_hann(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * 0.5 * (1. + cosf(2 * M_PI * x / pars[0]));
-}
-
-// Hamming filter
-float
-filter_hamming(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * (0.54 + 0.46 * cosf(2 * M_PI * x / pars[0]));
-}
-
-// Ramlak filter
-float
-filter_ramlak(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x);
-}
-
-// Parzen filter
-float
-filter_parzen(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * pow(1 - fabs(x) / pars[0], 3);
-}
-
-// Butterworth filter
-float
-filter_butterworth(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) / (1 + pow(x / pars[0], 2 * pars[1]));
-}
-
-// Custom filter
-float
-filter_custom(float x, int i, int j, int fwidth, const float* pars)
-{
-    return pars[i];
-}
-
-// Custom 2D filter
-float
-filter_custom2d(float x, int i, int j, int fwidth, const float* pars)
-{
-    return pars[j * fwidth + i];
-}
-
-float (*get_filter(const char* name))(float, int, int, int, const float*)
-{
-    struct
-    {
-        const char* name;
-        float (*const fp)(float, int, int, int, const float*);
-    } fltbl[] = {
-        { "none", filter_none },       { "shepp", filter_shepp },  // Default
-        { "cosine", filter_cosine },   { "hann", filter_hann },
-        { "hamming", filter_hamming }, { "ramlak", filter_ramlak },
-        { "parzen", filter_parzen },   { "butterworth", filter_butterworth },
-        { "custom", filter_custom },   { "custom2d", filter_custom2d }
-    };
-
-    for(int i = 0; i < 10; i++)
-    {
-        if(!strncmp(name, fltbl[i].name, 16))
-        {
-            return fltbl[i].fp;
-        }
-    }
-    return fltbl[1].fp;
-}
-
-unsigned char
-filter_is_2d(const char* name)
-{
-    if(!strncmp(name, "custom2d", 16))
-        return 1;
-    return 0;
-}
+//===========================================================================//

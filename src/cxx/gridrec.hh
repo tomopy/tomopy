@@ -41,93 +41,72 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gridrec_h
-#define _gridrec_h
+#ifndef _gridrec_hh
+#define _gridrec_hh
 
+#include "utils.hh"
+
+#include <cstdlib>
+#include <complex>
+#include <cstring>
+#include <functional>
 #include <complex.h>
-#include <stdlib.h>
+#include <math.h>
 
-#ifdef WIN32
-#    define DLL __declspec(dllexport)
-#else
-#    define DLL
+//===========================================================================//
+
+BEGIN_EXTERN_C
+#include "gridrec.h"
+END_EXTERN_C
+
+//===========================================================================//
+
+#ifndef M_PI
+#    define M_PI 3.14159265359
 #endif
-#define ANSI
 
-void DLL
-     gridrec(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             const char fname[16], const float* filter_par);
+#define __LIKELY(x) __builtin_expect(!!(x), 1)
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                 \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#else
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
+#endif
 
-float*
-malloc_vector_f(size_t n);
+//===========================================================================//
 
-void
-free_vector_f(float* v);
+typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
-float _Complex*
-malloc_vector_c(size_t n);
+//===========================================================================//
 
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
-
-void
-free_matrix_c(float _Complex** m);
-
-float (*get_filter(const char* name))(float, int, int, int, const float*);
-
-float
-filter_none(float, int, int, int, const float*);
-
-float
-filter_shepp(float, int, int, int, const float*);
-
-float
-filter_hann(float, int, int, int, const float*);
-
-float
-filter_hamming(float, int, int, int, const float*);
-
-float
-filter_ramlak(float, int, int, int, const float*);
-
-float
-filter_parzen(float, int, int, int, const float*);
-
-float
-filter_butterworth(float, int, int, int, const float*);
-
-float
-filter_custom(float, int, int, int, const float*);
-
-float
-filter_custom2d(float, int, int, int, const float*);
-
-unsigned char
-filter_is_2d(const char* name);
+std::complex<float>*
+cxx_malloc_vector_c(size_t n);
 
 void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A,
-                  unsigned char is2d);
+cxx_free_vector_c(std::complex<float>*& v);
+
+std::complex<float>**
+cxx_malloc_matrix_c(size_t nr, size_t nc);
 
 void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
+cxx_free_matrix_c(std::complex<float>**& m);
 
 void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl,
-                int linv, float* wtbl, float* winv);
+cxx_set_filter_tables(int dt, int pd, float fac,
+                      filter_func,
+                      const float* filter_par, std::complex<float>* A,
+                      unsigned char is2d);
 
-float
-legendre(int n, const float* coefs, float x);
-
-extern void DLL
-     cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             const char fname[16], const float* filter_par);
+//===========================================================================//
 
 #endif

@@ -130,12 +130,15 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
             memset(update.data(), 0, update.size() * sizeof(float));
             memset(rec.data(), 0, rec.size() * sizeof(float));
 
+            // recon offset for the slice
+            float* recon_off = recon + (s * dt * dx);
+
             // For each projection angle
             for(p = 0; p < dt; p++)
             {
                 theta_p = fmodf(theta[p], 2.0f * (float) M_PI);
                 // Rotate object - 2D slices
-                recon = rotate(recon, -theta_p, ngridx, ngridy, ngridx, ngridy);
+                auto recon_rot = rotate(recon_off, -theta_p, ngridx, ngridy, ngridx, ngridy);
                 // Calculate simulated data by summing up along x-axis
                 for(d = 0; d < dx; d++)
                 {
@@ -143,7 +146,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
                     for(n = 0; n < ngridx; n++)
                     {
                         simdata[ind_data] +=
-                            recon[n + d * ngridx + s * ngridx * ngridy];
+                            recon_rot[n + d * ngridx + s * ngridx * ngridy];
                     }
                 }
                 // Make update by backprojecting error along x-axis
@@ -162,10 +165,10 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 for(n = 0; n < ngridx * ngridy; n++)
                 {
                     ind_recon = s * ngridx * ngridy;
-                    recon[n + ind_recon] += update[n] / ngridx;
+                    recon_rot[n + ind_recon] += update[n] / ngridx;
                 }
                 // Back-Rotate object
-                recon = rotate(recon, theta_p, ngridx, ngridy, ngridx, ngridy);
+                recon_off = rotate(recon_rot, theta_p, ngridx, ngridy, ngridx, ngridy);
             }
         }
     }
