@@ -15,23 +15,12 @@ version: 1.0.{build}
 branches:
   only:
     - master
-    - dev
-# Do not build on tags (GitHub and BitBucket)
-# skip_tags: true
-# Start builds on tags only (GitHub and BitBucket)
-# skip_non_tags: true
 # Skipping commits affecting specific files (GitHub only).
 # More details here: /docs/appveyor-yml
 skip_commits:
  files:
    - docs/*
    - '**/*.html'
-# Including commits affecting specific files (GitHub only).
-# More details here: /docs/appveyor-yml
-#only_commits:
-#  files:
-#    - Project-A/
-#    - Project-B/
 # Do not build feature branch with open Pull Requests
 skip_branch_with_pr: true
 # Maximum number of concurrent jobs for the project
@@ -82,23 +71,8 @@ install:
 platform: x64
 # build Configuration, i.e. Debug, Release, etc.
 configuration: Debug
-
-# scripts to run before build
-before_build:
-
-# to run your custom scripts instead of automatic MSBuild
 build_script:
   - python setup.py install
-# scripts to run after build (working directory and environment changes are
-# persisted from the previous steps)
-after_build:
-
-# scripts to run *after* solution is built and *before* automatic packaging
-# occurs (web apps, NuGet packages, Azure Cloud Services)
-before_package:
-
-# to disable automatic builds
-#build: off
 #---------------------------------#
 #       tests configuration       #
 #---------------------------------#
@@ -109,8 +83,3 @@ before_test:
 # to run your custom scripts instead of automatic tests
 test_script:
   - nosetests test
-# scripts to run after tests
-after_test:
-
-# to disable automatic tests
-#test: off
