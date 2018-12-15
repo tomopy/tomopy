@@ -49,7 +49,7 @@ shallow_clone: true                 # default is "false"
 # environment variables
 environment:
   # these variables are common to all jobs
-  MINGW_PATH: "C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64"
+  MINGW_PATH: "C:\\mingw-w64\\i686-5.3.0-posix-dwarf-rt_v4-rev0\\mingw32"
   matrix:
     - PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda35-x64"
