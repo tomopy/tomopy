@@ -46,7 +46,7 @@ environment:
       MINICONDA: "C:\\Miniconda36-x64"
 matrix:
   # set this flag to immediately finish build once one of the jobs fails.
-  fast_finish: false
+  fast_finish: true
 # build cache to preserve files/folders between builds
 # cache:
 #   - projectA\libs
