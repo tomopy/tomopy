@@ -75,7 +75,9 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['find_center',
            'find_center_vo',
            'find_center_pc',
-           'write_center']
+           'write_center',
+           'mask_empty_slice',
+          ]
 
 
 PI = 3.14159265359
@@ -191,7 +193,7 @@ def _find_center_cost(
     center = np.array(center, dtype='float32')
     rec = recon(
         tomo_ind, theta, center,
-        sinogram_order=sinogram_order, 
+        sinogram_order=sinogram_order,
         algorithm='gridrec')
 
     if mask is True:
@@ -205,7 +207,7 @@ def _find_center_cost(
 
 
 def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
-                   ratio=0.5, drop=20):
+                   ratio=0.5, drop=20, smooth=True):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
@@ -226,6 +228,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
+    smooth : bool, optional
+        Whether to apply additional smoothing or not.
 
     Returns
     -------
@@ -239,8 +243,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.5,
     _tomo = tomo[:, ind, :]
 
     # Reduce noise by smooth filters. Use different filters for coarse and fine search
-    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
-    _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2))
+    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1)) if smooth else _tomo
+    _tomo_fs = ndimage.filters.median_filter(_tomo, (2, 2)) if smooth else _tomo
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
@@ -346,7 +350,7 @@ def _create_mask(nrow, ncol, radius, drop):
     return mask
 
 
-def find_center_pc(proj1, proj2, tol=0.5):
+def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     """
     Find rotation axis location by finding the offset between the first
     projection and a mirrored projection 180 degrees apart using
@@ -366,11 +370,19 @@ def find_center_pc(proj1, proj2, tol=0.5):
     tol : scalar, optional
         Subpixel accuracy
 
+    rotc_guess : float, optional 
+        Initual guess value for the rotation center
+
     Returns
     -------
     float
         Rotation axis location.
     """
+    imgshift = 0.0 if rotc_guess is None else rotc_guess - (proj1.shape[1]-1.0)/2.0
+
+    proj1 = ndimage.shift(proj1, [0,-imgshift], mode='constant', cval=0)
+    proj2 = ndimage.shift(proj2, [0,-imgshift], mode='constant', cval=0)
+
 
     # create reflection of second projection
     proj2 = np.fliplr(proj2)
@@ -382,7 +394,7 @@ def find_center_pc(proj1, proj2, tol=0.5):
     # registered translation with the second image
     center = (proj1.shape[1] + shift[0][1] - 1.0)/2.0
 
-    return center
+    return center + imgshift
 
 
 def write_center(
@@ -453,7 +465,7 @@ def write_center(
             :cite:`Chambolle:11`.
         'grad'
             Gradient descent method with a constant step size
-    
+
     filter_name : str, optional
         Name of the filter for analytic reconstruction.
 
@@ -522,3 +534,34 @@ def write_center(
         fname = os.path.join(
             dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
         dxchange.write_tiff(rec[m], fname=fname, overwrite=True)
+
+
+def mask_empty_slice(tomo, threshold=0.25):
+    """
+    Generate a mask to indicate whether current slice contains sample
+
+    At APS 1ID, some of the projection images contains large empty area above
+    the sample, resulting in empty layers.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    threshold : float, optional
+        determine whether a layer is considered to be empty
+
+    Returns
+    -------
+    nparray:
+        a mask indicate the emptyness of each layer
+    """
+    projs_sum = np.sum(tomo, axis=0)
+    projs_sum /= projs_sum.max()
+
+    projs_sumsum = np.sum(projs_sum, axis=0)
+    projs_sumsum /= projs_sumsum.max()
+    
+    stds = np.array([np.std(projs_sum[i,:]) for i in range(projs_sum.shape[0])])
+    std_ref = np.std(projs_sumsum)*threshold
+    
+    return np.array([std<std_ref for std in stds])

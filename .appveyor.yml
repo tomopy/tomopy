@@ -66,15 +66,15 @@ install:
   - "set PATH=%MINGW_PATH%\\bin;%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes True
   - conda config --add channels conda-forge
+  - conda config --add channels jrmadsen
   - conda update conda
   - "conda install
     python=%PYTHON_VERSION% mkl-devel mkl mingw make setuptools
-    nose dxchange h5py mkl_fft numexpr numpy pywavelets
+    nose dxchange mkl_fft numexpr numpy
     scipy scikit-image six"
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
-  - "cd c:\\projects\\tomopy"
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
@@ -88,7 +88,6 @@ before_build:
 
 # to run your custom scripts instead of automatic MSBuild
 build_script:
-  - python build.py
   - python setup.py install
 # scripts to run after build (working directory and environment changes are
 # persisted from the previous steps)

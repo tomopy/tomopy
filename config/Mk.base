@@ -27,5 +27,3 @@ pml_quad.o project.o sirt.o tv.o utils.o vector.o: utils.h
 $(INSTALLDIR)/$(SHAREDLIB): $(OBJ)
 	$(LINK) -o $(INSTALLDIR)/$(SHAREDLIB) $(OBJ) $(LINK_CFLAGS)
 
-clean:
-	rm -f $(OBJ) $(SHAREDLIB)
