@@ -103,11 +103,11 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[cpu]");
 
-    uintmax_t _nx = cast<uintmax_t>(ngridx);
-    uintmax_t _ny = cast<uintmax_t>(ngridy);
-    uintmax_t _dy = cast<uintmax_t>(dy);
-    uintmax_t _dt = cast<uintmax_t>(dt);
-    uintmax_t _dx = cast<uintmax_t>(dx);
+    uintmax_t _nx = scast<uintmax_t>(ngridx);
+    uintmax_t _ny = scast<uintmax_t>(ngridy);
+    uintmax_t _dy = scast<uintmax_t>(dy);
+    uintmax_t _dt = scast<uintmax_t>(dt);
+    uintmax_t _dx = scast<uintmax_t>(dx);
     uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
     uintmax_t _ng = _nx + _ny;        // number of grid points
 
@@ -169,7 +169,7 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            float theta_p  = fmodf(theta[p], 2.0f * cast<float>(M_PI));
+            float theta_p  = fmodf(theta[p], 2.0f * scast<float>(M_PI));
             float sin_p    = sinf(theta_p);
             float cos_p    = cosf(theta_p);
             int   quadrant = calc_quadrant(theta_p);

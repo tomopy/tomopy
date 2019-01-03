@@ -164,26 +164,26 @@
 EXTERN_C_
 #include "morph.h"
 #include "prep.h"
-#include "profiler.h"
 #include "remove_ring.h"
 #include "stripe.h"
 #include "utils.h"
 _EXTERN_C
+#include "utils.hh"
 
 //============================================================================//
 //  tasking includes
 //
-#include "TBBTask.hh"
-#include "TBBTaskGroup.hh"
-#include "Task.hh"
-#include "TaskGroup.hh"
-#include "TaskManager.hh"
-#include "TaskRunManager.hh"
-#include "ThreadData.hh"
-#include "ThreadPool.hh"
-#include "Threading.hh"
-#include "Types.hh"
-#include "tls.hh"
+#include "PTL/TBBTask.hh"
+#include "PTL/TBBTaskGroup.hh"
+#include "PTL/Task.hh"
+#include "PTL/TaskGroup.hh"
+#include "PTL/TaskManager.hh"
+#include "PTL/TaskRunManager.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/Threading.hh"
+#include "PTL/Types.hh"
+#include "profiler.hh"
 
 //============================================================================//
 

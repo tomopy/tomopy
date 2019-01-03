@@ -45,6 +45,11 @@
 #include <float.h>
 #include <stdint.h>
 
+#ifndef PRINT_HERE
+#    define PRINT_HERE(extra)                                                  \
+        printf("> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
+#endif  // !PRINT_HERE
+
 // for windows build
 #ifdef WIN32
 #    ifdef PY3K
@@ -476,11 +481,52 @@ rotate_y(const float x, const float y, const float theta)
 //============================================================================//
 
 float*
-rotate(const float* obj, const float theta, const int nx, const int ny,
-       const int dx, const int dy)
+expand(const float* arr_i, const int factor, const int nx, const int ny)
+{
+    float* arr_o = (float*) malloc(nx * factor * ny * factor * sizeof(float));
+    for(uint64_t i = 0; i < nx * ny; ++i)
+    {
+        for(uint64_t off = 0; off < factor; ++off)
+        {
+            arr_o[i * factor + off] = arr_i[i];
+        }
+    }
+    return arr_o;
+}
+
+//============================================================================//
+
+float*
+compress(const float* arr_i, const int factor, const int nx, const int ny)
+{
+    float* arr_o = (float*) malloc(nx * ny * sizeof(float));
+    for(uint64_t i = 0; i < nx * ny; ++i)
+    {
+        for(uint64_t off = 0; off < factor; ++off)
+        {
+            arr_o[i] += arr_i[i * factor + off];
+        }
+        arr_o[i] /= factor;
+    }
+    return arr_o;
+}
+
+//============================================================================//
+
+float*
+rotate(const float* _obj, const float theta, const int _nx, const int _ny,
+       const int _dx, const int _dy)
 {
 #define COMPUTE_MAX(a, b) (a < b) ? b : a
 #define COMPUTE_MIN(a, b) (a < b) ? a : b
+
+    PRINT_HERE("");
+    int    factor = 4;
+    int    nx     = _nx * factor;
+    int    ny     = _ny * factor;
+    int    dx     = _dx * factor;
+    int    dy     = _dy * factor;
+    float* obj    = expand(_obj, factor, _nx, _ny);
 
     int    nr     = sqrt(nx * nx + ny * ny);
     int    off_dx = dx / 2;
@@ -489,6 +535,7 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     int    off_ry = nr / 2;
     float* rot    = (float*) malloc(nr * nr * sizeof(float));
 
+    PRINT_HERE("");
     float obj_max = -1.0 * FLT_MAX;
     float obj_min = 1.0 * FLT_MAX;
     for(int i = 0; i < dx * dy; ++i)
@@ -498,6 +545,7 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     }
     float obj_mid = 0.5 * (obj_min + obj_max);
 
+    PRINT_HERE("");
     for(int i = 0; i < nr; ++i)
     {
         for(int j = 0; j < nr; ++j)
@@ -525,23 +573,27 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
         }
     }
 
+    PRINT_HERE("");
     float obj_sum = 0.0f;
     float rot_max = -1.0 * FLT_MAX;
     float rot_min = 1.0 * FLT_MAX;
     float rot_sum = 0.0f;
 
-// compute sum
+    PRINT_HERE("");
+    // compute sum
 #pragma omp simd
     for(int i = 0; i < nr * nr; ++i)
     {
         obj_sum += obj[i];
     }
+    PRINT_HERE("");
     // compute min/max
     for(int i = 0; i < nr * nr; ++i)
     {
         rot_max = COMPUTE_MAX(rot_max, rot[i]);
         rot_min = COMPUTE_MIN(rot_max, rot[i]);
     }
+    PRINT_HERE("");
     // translate so bottom is zero
     rot_max -= rot_min;
 #pragma omp simd
@@ -549,12 +601,14 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     {
         rot[i] -= rot_min;
     }
+    PRINT_HERE("");
 // rescale to max is 1
 #pragma omp simd
     for(int i = 0; i < nr * nr; ++i)
     {
         rot[i] /= rot_max;
     }
+    PRINT_HERE("");
 // compute sum
 #pragma omp simd
     for(int i = 0; i < nr * nr; ++i)
@@ -566,11 +620,20 @@ rotate(const float* obj, const float theta, const int nx, const int ny,
     {
         rot[i] *= (obj_sum / rot_sum);
     }
+    PRINT_HERE("");
 
 #undef COMPUTE_MAX
 #undef COMPUTE_MIN
 
-    return rot;
+    PRINT_HERE("");
+    float* _rot = compress(rot, factor, _nx, _ny);
+    PRINT_HERE("");
+    free(rot);
+    PRINT_HERE("");
+    free(obj);
+    PRINT_HERE("");
+
+    return _rot;
 }
 
 //============================================================================//

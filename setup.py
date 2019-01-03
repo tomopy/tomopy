@@ -34,6 +34,7 @@ def add_option(lc_name, disp_name):
     parser.add_argument("--disable-{}".format(lc_name), action='store_true',
                         help="Explicitly disnable {} build".format(disp_name))
 
+add_option("gpu", "GPU")
 add_option("cuda", "CUDA")
 add_option("openacc", "OpenACC")
 add_option("openmp", "OpenMP")
@@ -51,6 +52,7 @@ if args.help:
     left.append("--help")
 sys.argv = sys.argv[:1]+left
 
+add_bool_opt("TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
 add_bool_opt("TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
 add_bool_opt("TOMOPY_USE_OPENACC", args.enable_openacc, args.disable_openacc)
 add_bool_opt("TOMOPY_USE_OPENMP", args.enable_openmp, args.disable_openmp)
@@ -80,7 +82,7 @@ setup(
     download_url='http://github.com/tomopy/tomopy.git',
     license='BSD-3',
     cmake_args=cmake_args,
-    cmake_languages=('C', 'CXX'),
+    cmake_languages=('C'),
     platforms='Any',
     classifiers=[
         'Development Status :: 4 - Beta',

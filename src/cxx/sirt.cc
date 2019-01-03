@@ -76,8 +76,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
         sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                  num_iter);
     else
-        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp, data,
-                          dy, dt, dx, center, theta, recon, ngridx, ngridy,
+        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_cpu, data, dy,
+                          dt, dx, center, theta, recon, ngridx, ngridy,
                           num_iter);
 #else
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
@@ -109,202 +109,80 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
     farray_t dist(ngridx + ngridy, 0.0f);
     iarray_t indi(ngridx + ngridy, 0);
 
-    int      s, p, d, i, n;
     float    theta_p;
     float    mov;
     float    upd;
     int      ind_data, ind_recon;
     float    sum_dist2;
-    farray_t sum_dist(ngridx + ngridy, 0.0f);
-    farray_t simdata(dy * dt * dx, 0.0f);
-    farray_t update(ngridx + ngridy, 0.0f);
-    farray_t rec(dy * ngridx * ngridy, 0.0f);
+    farray_t tmp_recon(dy * ngridx * ngridy, 0.0f);
+    for(int ii = 0; ii < tmp_recon.size(); ++ii)
+        tmp_recon.at(ii) = recon[ii];
 
-    for(i = 0; i < num_iter; i++)
+    printf("%s [iterations = %i, dy = %i, dt = %i, dx = %i]\n", __FUNCTION__,
+           num_iter, dy, dt, dx);
+
+    for(int i = 0; i < num_iter; i++)
     {
-        memset(simdata.data(), 0, simdata.size() * sizeof(float));
+        farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
-        for(s = 0; s < dy; s++)
+        for(int s = 0; s < dy; s++)
         {
-            memset(sum_dist.data(), 0, sum_dist.size() * sizeof(float));
-            memset(update.data(), 0, update.size() * sizeof(float));
-            memset(rec.data(), 0, rec.size() * sizeof(float));
+            farray_t update(ngridx * ngridx, 0.0f);
+            farray_t recon_off(ngridx * ngridy, 0.0f);
 
             // recon offset for the slice
-            float* recon_off = recon + (s * dt * dx);
+            for(int ii = 0; ii < recon_off.size(); ++ii)
+            {
+                recon_off.at(ii) = tmp_recon.at(ii + (s * ngridx * ngridy));
+            }
 
             // For each projection angle
-            for(p = 0; p < dt; p++)
+            for(int p = 0; p < dt; p++)
             {
                 theta_p = fmodf(theta[p], 2.0f * (float) M_PI);
                 // Rotate object - 2D slices
                 auto recon_rot =
-                    rotate(recon_off, -theta_p, ngridx, ngridy, ngridx, ngridy);
+                    cxx_rotate(recon_off, -theta_p, ngridx, ngridy);
                 // Calculate simulated data by summing up along x-axis
-                for(d = 0; d < dx; d++)
+                for(int d = 0; d < dx; d++)
                 {
                     ind_data = d + p * dx + s * dt * dx;
-                    for(n = 0; n < ngridx; n++)
+                    for(int n = 0; n < ngridx; n++)
                     {
-                        simdata[ind_data] +=
-                            recon_rot[n + d * ngridx + s * ngridx * ngridy];
+                        simdata.at(ind_data) += recon_rot.at(n + d * ngridx);
                     }
                 }
                 // Make update by backprojecting error along x-axis
-                for(d = 0; d < dx; d++)
+                for(int d = 0; d < dx; d++)
                 {
                     sum_dist2 = ngridx;
                     ind_data  = d + p * dx + s * dt * dx;
-                    upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
-                    for(n = 0; n < ngridx; n++)
+                    upd = (data[ind_data] - simdata.at(ind_data)) / sum_dist2;
+                    for(int n = 0; n < ngridx; n++)
                     {
-                        update[n + d * ngridx + s * ngridx * ngridy] += upd;
+                        update.at(n + d * ngridx) += upd / ngridx;
                     }
                 }
-
                 // Update recon
-                for(n = 0; n < ngridx * ngridy; n++)
+                for(int n = 0; n < ngridx * ngridy; n++)
                 {
-                    ind_recon = s * ngridx * ngridy;
-                    recon_rot[n + ind_recon] += update[n] / ngridx;
+                    // ind_recon = s * ngridx * ngridy;
+                    recon_rot.at(n) += update.at(n) / ngridx;
                 }
                 // Back-Rotate object
-                recon_off =
-                    rotate(recon_rot, theta_p, ngridx, ngridy, ngridx, ngridy);
+                recon_off = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
             }
-        }
-    }
-}
-
-//============================================================================//
-/*
-void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-{
-    if(dy == 0 || dt == 0 || dx == 0)
-        return;
-
-    tim::enable_signal_detection();
-    TIMEMORY_AUTO_TIMER("[cpu]");
-
-    float mov = 0.0f;
-    int   csize;
-
-    uintmax_t _nx = cast<uintmax_t>(ngridx);
-    uintmax_t _ny = cast<uintmax_t>(ngridy);
-    uintmax_t _dy = cast<uintmax_t>(dy);
-    uintmax_t _dt = cast<uintmax_t>(dt);
-    uintmax_t _dx = cast<uintmax_t>(dx);
-    uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
-    uintmax_t _ng = _nx + _ny;        // number of grid points
-
-    // (float) * (size of ngrid{x,y} + 1)
-    farray_t gridx(_nx + 1);
-    farray_t gridy(_ny + 1);
-    farray_t coordx(_ny + 1);
-    farray_t coordy(_nx + 1);
-    // (int) * (size of ngridx + ngridy)
-    iarray_t indi(_ng);
-    // (float) * (size of ngridx + ngridy)
-    farray_t ax(_ng);
-    farray_t ay(_ng);
-    farray_t bx(_ng);
-    farray_t by(_ng);
-    farray_t coorx(_ng);
-    farray_t coory(_ng);
-    farray_t dist(_ng);
-    // (float) * (size of dy * dt * dx)
-    farray_t simdata(_nd, 0.0f);
-
-    for(int i = 0; i < num_iter; i++)
-    {
-        // initialize simdata to zero
-        // initialize simdata to zero
-        memset(simdata.data(), 0, _nd * sizeof(float));
-
-        cxx_preprocessing(ngridx, ngridy, dx, center[0], mov, gridx, gridy);
-        // Outputs: mov, gridx, gridy
-
-        // For each projection angle
-        for(int p = 0; p < dt; ++p)
-        {
-            // Calculate the sin and cos values
-            // of the projection angle and find
-            // at which quadrant on the cartesian grid.
-            float theta_p  = fmodf(theta[p], 2.0f * (float) M_PI);
-            float sin_p    = sinf(theta_p);
-            float cos_p    = cosf(theta_p);
-            int   quadrant = calc_quadrant(theta_p);
-
-            // For each detector pixel
-            for(int d = 0; d < dx; ++d)
+            for(int ii = 0; ii < (ngridx * ngridy); ++ii)
             {
-                dist.resize(_ng);
-                ax.resize(_ng, 0.0f);
-                ay.resize(_ng, 0.0f);
-                bx.resize(_ng, 0.0f);
-                by.resize(_ng, 0.0f);
-
-                // Calculate coordinates
-                float xi = -ngridx - ngridy;
-                float yi = 0.5f * (1 - dx) + d + mov;
-                cxx_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
-
-                // Merge the (coordx, gridy) and (gridx, coordy)
-                cxx_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                ax, ay, bx, by);
-
-                // Sort the array of intersection points (ax, ay) and
-                // (bx, by). The new sorted intersection points are
-                // stored in (coorx, coory). Total number of points
-                // are csize.
-                cxx_sort_intersections(quadrant, ax, ay, bx, by, csize, coorx,
-                                       coory);
-
-                // Calculate the distances (dist) between the
-                // intersection points (coorx, coory). Find the
-                // indices of the pixels on the reconstruction grid.
-                cxx_calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
-
-                dist.resize(csize - 1);
-                // Calculate dist*dist
-                float sum_dist2 =
-                    std::accumulate(dist.begin(), dist.end(), 0.0f,
-                                    [](float& init, const float& itr) {
-                                        return init =
-                                                   std::move(init) + itr * itr;
-                                    });
-
-                if(sum_dist2 != 0.0f)
-                {
-                    // For each slice
-                    for(int s = 0; s < dy; ++s)
-                    {
-                        // Calculate simdata
-                        cxx_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                                         indi, dist, recon, simdata);
-                        // Output: simdata
-
-                        // Update
-                        int   ind_data  = d + p * dx + s * dt * dx;
-                        int   ind_recon = s * ngridx * ngridy;
-                        float upd =
-                            (data[ind_data] - simdata[ind_data]) / sum_dist2;
-                        for(int n = 0; n < csize - 1; ++n)
-                        {
-                            recon[indi[n] + ind_recon] += upd * dist[n];
-                        }
-                    }
-                }
+                tmp_recon.at(ii + (s * ngridx * ngridy)) += recon_off.at(ii);
             }
         }
     }
 
-    tim::disable_signal_detection();
+    for(int ii = 0; ii < tmp_recon.size(); ++ii)
+        recon[ii] = tmp_recon.at(ii);
 }
-*/
+
 //============================================================================//
 
 void
@@ -344,11 +222,11 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
     //------------------------------------------------------------------------//
 
-    uintmax_t _nx = cast<uintmax_t>(ngridx);
-    uintmax_t _ny = cast<uintmax_t>(ngridy);
-    uintmax_t _dy = cast<uintmax_t>(dy);
-    uintmax_t _dt = cast<uintmax_t>(dt);
-    uintmax_t _dx = cast<uintmax_t>(dx);
+    uintmax_t _nx = scast<uintmax_t>(ngridx);
+    uintmax_t _ny = scast<uintmax_t>(ngridy);
+    uintmax_t _dy = scast<uintmax_t>(dy);
+    uintmax_t _dt = scast<uintmax_t>(dt);
+    uintmax_t _dx = scast<uintmax_t>(dx);
     uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
     uintmax_t _ng = _nx + _ny;        // number of grid points
 
@@ -473,7 +351,7 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            float theta_p  = fmodf(theta[p], 2.0f * cast<float>(M_PI));
+            float theta_p  = fmodf(theta[p], 2.0f * scast<float>(M_PI));
             int   quadrant = calc_quadrant(theta_p);
             float sin_p    = sinf(theta_p);
             float cos_p    = cosf(theta_p);
@@ -710,7 +588,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            theta_p  = fmod(theta[p], 2.0f * cast<float>(M_PI));
+            theta_p  = fmod(theta[p], 2.0f * scast<float>(M_PI));
             quadrant = openacc_calc_quadrant(theta_p);
             sin_p    = sinf(theta_p);
             cos_p    = cosf(theta_p);
@@ -839,7 +717,7 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            theta_p  = fmod(theta[p], 2.0f * cast<float>(M_PI));
+            theta_p  = fmod(theta[p], 2.0f * scast<float>(M_PI));
             quadrant = openmp_calc_quadrant(theta_p);
             sin_p    = sinf(theta_p);
             cos_p    = cosf(theta_p);

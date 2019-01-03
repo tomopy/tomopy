@@ -76,9 +76,8 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
                 num_iter);
     else
-        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_openmp, data, dy,
-                          dt, dx, center, theta, recon, ngridx, ngridy,
-                          num_iter);
+        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt,
+                          dx, center, theta, recon, ngridx, ngridy, num_iter);
 #else
     art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
@@ -104,11 +103,11 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
     float mov = 0.0f;
     int   csize;
 
-    uintmax_t _nx = cast<uintmax_t>(ngridx);
-    uintmax_t _ny = cast<uintmax_t>(ngridy);
-    uintmax_t _dy = cast<uintmax_t>(dy);
-    uintmax_t _dt = cast<uintmax_t>(dt);
-    uintmax_t _dx = cast<uintmax_t>(dx);
+    uintmax_t _nx = scast<uintmax_t>(ngridx);
+    uintmax_t _ny = scast<uintmax_t>(ngridy);
+    uintmax_t _dy = scast<uintmax_t>(dy);
+    uintmax_t _dt = scast<uintmax_t>(dt);
+    uintmax_t _dx = scast<uintmax_t>(dx);
     uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
     uintmax_t _ng = _nx + _ny;        // number of grid points
 
@@ -256,11 +255,11 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
     //------------------------------------------------------------------------//
 
-    uintmax_t _nx = cast<uintmax_t>(ngridx);
-    uintmax_t _ny = cast<uintmax_t>(ngridy);
-    uintmax_t _dy = cast<uintmax_t>(dy);
-    uintmax_t _dt = cast<uintmax_t>(dt);
-    uintmax_t _dx = cast<uintmax_t>(dx);
+    uintmax_t _nx = scast<uintmax_t>(ngridx);
+    uintmax_t _ny = scast<uintmax_t>(ngridy);
+    uintmax_t _dy = scast<uintmax_t>(dy);
+    uintmax_t _dt = scast<uintmax_t>(dt);
+    uintmax_t _dx = scast<uintmax_t>(dx);
     uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
     uintmax_t _ng = _nx + _ny;        // number of grid points
 
@@ -385,7 +384,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            float theta_p  = fmodf(theta[p], 2.0f * cast<float>(M_PI));
+            float theta_p  = fmodf(theta[p], 2.0f * scast<float>(M_PI));
             int   quadrant = calc_quadrant(theta_p);
             float sin_p    = sinf(theta_p);
             float cos_p    = cosf(theta_p);
@@ -624,7 +623,7 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            theta_p  = fmod(theta[p], 2.0f * cast<float>(M_PI));
+            theta_p  = fmod(theta[p], 2.0f * scast<float>(M_PI));
             quadrant = openacc_calc_quadrant(theta_p);
             sin_p    = sinf(theta_p);
             cos_p    = cosf(theta_p);
@@ -753,7 +752,7 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
             // Calculate the sin and cos values
             // of the projection angle and find
             // at which quadrant on the cartesian grid.
-            theta_p  = fmod(theta[p], 2.0f * cast<float>(M_PI));
+            theta_p  = fmod(theta[p], 2.0f * scast<float>(M_PI));
             quadrant = openmp_calc_quadrant(theta_p);
             sin_p    = sinf(theta_p);
             cos_p    = cosf(theta_p);

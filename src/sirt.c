@@ -41,12 +41,19 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "sirt.h"
 #include "utils.h"
 
 void
 sirt(const float* data, int dy, int dt, int dx, const float* center,
      const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
+    cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
+
+    /*
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -179,4 +186,5 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
     free(coory);
     free(dist);
     free(indi);
+    */
 }

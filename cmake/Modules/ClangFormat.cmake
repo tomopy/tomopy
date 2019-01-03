@@ -14,16 +14,16 @@ find_program(CLANG_FORMATTER
 if(CLANG_FORMATTER)
     file(GLOB headers
         ${PROJECT_SOURCE_DIR}/include/*.h
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.hh
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.hpp
         ${PROJECT_SOURCE_DIR}/src/gpu/*.h
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.hh)
+        ${PROJECT_SOURCE_DIR}/src/cxx/*.hh
+        ${PROJECT_SOURCE_DIR}/src/gpu/*.hh
+        ${PROJECT_SOURCE_DIR}/src/cxx/*.hpp)
     file(GLOB sources
         ${PROJECT_SOURCE_DIR}/src/*.c
         ${PROJECT_SOURCE_DIR}/src/cxx/*.cc
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cc
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.cu)
+        ${PROJECT_SOURCE_DIR}/src/gpu/*.cu
+        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp)
     add_custom_target(format
         COMMAND ${CLANG_FORMATTER} -i ${headers} ${sources}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

@@ -46,10 +46,9 @@
 //  TOMOPY python binding implementation
 //
 
-#include "libtomopy.hpp"
-#include "AutoLock.hh"
-#include "Threading.hh"
-#include "algorithms.hh"
+#include "tomocxx.hpp"
+#include "PTL/AutoLock.hh"
+#include "PTL/Threading.hh"
 
 #ifdef USE_TIMEMORY
 #    include <timemory/signal_detection.hpp>
@@ -62,7 +61,8 @@ _EXTERN_C
 
 //============================================================================//
 
-typedef py::array_t<float> float_array;
+typedef py::array_t<float, py::array::c_style | py::array::forcecast>
+    pyfarray_t;
 
 //============================================================================//
 
@@ -96,7 +96,7 @@ private:
 
 //============================================================================//
 
-PYBIND11_MODULE(libtomopy, tomo)
+PYBIND11_MODULE(tomocxx, tomo)
 {
     // py::add_ostream_redirect(tomo, "ostream_redirect");
 
@@ -119,111 +119,51 @@ PYBIND11_MODULE(libtomopy, tomo)
         return result;
     };
 
-    /*
-    auto art_task = [] (TaskGroupWrapper<void>* tgw,
-            const py::array_t<float> data,
-            int dy,
-            int dt,
-            int dx,
-            const py::array_t<float> center,
-            const py::array_t<float> theta,
-            py::array_t<float>& recon,
-            int ngridx,
-            int ngridy,
-            int num_iter)
-    {
-        if(dy == 0 || dt == 0 || dx == 0)
-            return;
-
-#ifdef USE_TIMEMORY
-        static bool _first = true;
-        {
-            AutoLock l(TypeMutex<tim::signal_settings>());
-            if(_first)
-            {
-                tim::enable_signal_detection();
-                _first = false;
-            }
-        }
-#endif
-
-        TaskRunManager* rm = TaskRunManager::GetInstance();
-        if(!rm->IsInitialized())
-            rm->Initialize();
-        TaskManager* tm = rm->GetTaskManager();
-
-        static int verbose = GetEnv<int>("TOMOPY_VERBOSE", 0);
-
-        if(verbose > 1)
-        {
-            AutoLock l(TypeMutex<std::iostream>());
-            std::cout << "[" << ThreadPool::GetThisThreadID() << "]> "
-                      << __FUNCTION__
-                      << " dims: [ "
-                      << dy << ", "
-                      << dt << ", "
-                      << dx << " ]"
-                      << ", grid: [ " << ngridx << ", " << ngridy << " ]"
-                      << ", iterations: " << num_iter << std::endl;
-        }
-
-        TaskGroup<void>* tg = tgw->get();
-        const int factor = 1;
-        for(int i = 0; i < factor; ++i)
-        {
-            auto _func = [=] (float* _recon)
-            {
-                art(data.data(),
-                    dy, dt, dx,
-                    center.data(), theta.data(), _recon,
-                    ngridx, ngridy, num_iter
-                    );
-                    //, 0, (i)*(dt/factor), 0, dy, (i+1)*(dt/factor), dx);
-
-                //int slc_offset = i * (dx * dt);
-                //int prj_offset = i * (dy) + j;
-                //alg::art _art(dy, dt, dx, ngridx, ngridy);
-                //_art.compute(data.data(), center.data(), theta.data(),
-                //             _recon, num_iter,
-                //             ThreeVectorYTX<int>( 0, (i)*(dt/factor),    0),
-                //             ThreeVectorYTX<int>(dy, (i+1)*(dt/factor), dx));
-            };
-            float* _recon = recon.mutable_data();
-            tm->exec(*tg, _func, _recon);
-        }
-    };*/
-
     tomo.def("run", run_fib, "Run fibonacci");
     tomo.def("fibonacci", &fibonacci, "Run fibonacci");
-    tomo.def("normalize_bg", &normalize_bg, "Normalize background");
-    tomo.def("remove_stripe_sf", &remove_stripe_sf, "Remove stripe");
-    tomo.def("project", &project, "Project 1D");
-    tomo.def("project2", &project2, "Project 2D");
-    tomo.def("project3", &project3, "Project 3D");
-    tomo.def("sample", &sample, "Sample");
-    tomo.def("art", &art, "Art reconstruction algorithm");
-    tomo.def("bart", &bart, "Bart reconstruction algorithm");
-    tomo.def("fbp", &fbp, "Filtered back projection reconstruction algorithm");
-    tomo.def("gridrec", &gridrec, "Gridrec reconstruction algorithm");
-    tomo.def("mlem", &mlem, "mlem reconstruction algorithm");
-    tomo.def("osem", &osem, "osem reconstruction algorithm");
-    tomo.def("ospml_hybrid", &ospml_hybrid,
-             "ospml hybrid reconstruction algorithm");
-    tomo.def("ospml_quad", &ospml_quad, "ospml quad reconstruction algorithm");
-    tomo.def("pml_hybrid", &pml_hybrid, "pml hybrid reconstruction algorithm");
-    tomo.def("pml_quad", &pml_quad, "pml quad reconstruction algorithm");
-    tomo.def("sirt", &sirt, "sirt reconstruction algorithm");
-    tomo.def("vector", &vector, "vector 1D");
-    tomo.def("vector2", &vector2, "vector 2D");
-    tomo.def("vector3", &vector3, "vector 3D");
-    tomo.def("remove_ring", &remove_ring, "remove ring");
+    // tomo.def("normalize_bg", &normalize_bg, "Normalize background");
+    // tomo.def("remove_stripe_sf", &remove_stripe_sf, "Remove stripe");
+    // tomo.def("project", &project, "Project 1D");
+    // tomo.def("project2", &project2, "Project 2D");
+    // tomo.def("project3", &project3, "Project 3D");
+    // tomo.def("sample", &sample, "Sample");
+    // tomo.def("art", &art, "Art reconstruction algorithm");
+    // tomo.def("bart", &bart, "Bart reconstruction algorithm");
+    // tomo.def("fbp", &fbp, "Filtered back projection reconstruction
+    // algorithm"); tomo.def("gridrec", &gridrec, "Gridrec reconstruction
+    // algorithm"); tomo.def("mlem", &mlem, "mlem reconstruction algorithm");
+    // tomo.def("osem", &osem, "osem reconstruction algorithm");
+    // tomo.def("ospml_hybrid", &ospml_hybrid,
+    //         "ospml hybrid reconstruction algorithm");
+    // tomo.def("ospml_quad", &ospml_quad, "ospml quad reconstruction
+    // algorithm"); tomo.def("pml_hybrid", &pml_hybrid, "pml hybrid
+    // reconstruction algorithm"); tomo.def("pml_quad", &pml_quad, "pml quad
+    // reconstruction algorithm"); tomo.def("sirt", &sirt, "sirt reconstruction
+    // algorithm"); tomo.def("vector", &vector, "vector 1D"); tomo.def("vector2",
+    // &vector2, "vector 2D"); tomo.def("vector3", &vector3, "vector 3D");
+    // tomo.def("remove_ring", &remove_ring, "remove ring");
     // tomo.def("art_task", art_task, "Art reconstruction algorithm");
 
-    py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");
-    task_group.def(py::init([] { return new TaskGroupWrapper<void>(); }),
-                   "Create TaskGroup<void>()");
-    task_group.def("join", &TaskGroupWrapper<void>::join,
-                   "Join the task group");
+    // py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");
+    // task_group.def(py::init([] { return new TaskGroupWrapper<void>(); }),
+    //               "Create TaskGroup<void>()");
+    // task_group.def("join", &TaskGroupWrapper<void>::join,
+    //               "Join the task group");
+
+    auto _rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
+        farray_t        cxx_arr(arr.size(), 0.0f);
+        py::buffer_info inbuf = arr.request();
+        memcpy(cxx_arr.data(), inbuf.ptr, cxx_arr.size() * sizeof(float));
+        // for(uintmax_t i = 0; i < arr.size(); ++i)
+        //    std::cout << "cxx_arr[" << i << "] = " << cxx_arr.at(i) <<
+        //    std::endl;
+        cxx_arr = cxx_rotate(cxx_arr, theta, nx, ny);
+        pyfarray_t      _arr(cxx_arr.size());
+        py::buffer_info outbuf = _arr.request();
+        memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));
+        return _arr;
+    };
+    tomo.def("rotate", _rotate, "rotate array");
 }
 
 //============================================================================//

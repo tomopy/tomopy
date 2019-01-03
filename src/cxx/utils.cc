@@ -462,10 +462,43 @@ cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx,
 
 //============================================================================//
 
+farray_t
+cxx_expand(const farray_t& arr_i, const int& factor)
+{
+    farray_t arr_o(arr_i.size() * factor, 0.0);
+    for(uint64_t i = 0; i < arr_i.size(); ++i)
+    {
+        for(uint64_t off = 0; off < factor; ++off)
+        {
+            arr_o.at(i * factor + off) = arr_i.at(i);
+        }
+    }
+    return arr_o;
+}
+
+//============================================================================//
+
+farray_t
+cxx_compress(const farray_t& arr_i, const int& factor)
+{
+    farray_t arr_o(arr_i.size() / factor, 0.0);
+    for(uint64_t i = 0; i < arr_o.size(); ++i)
+    {
+        for(uint64_t off = 0; off < factor; ++off)
+        {
+            arr_o.at(i) += arr_i.at(i * factor + off);
+        }
+        arr_o.at(i) /= factor;
+    }
+    return arr_o;
+}
+
+//============================================================================//
+
 float
 cxx_rotate_x(const float x, const float y, const float theta)
 {
-    return x * cos(theta) - y * sin(theta);
+    return x * cosf(theta) - y * sinf(theta);
 }
 
 //============================================================================//
@@ -473,103 +506,176 @@ cxx_rotate_x(const float x, const float y, const float theta)
 float
 cxx_rotate_y(const float x, const float y, const float theta)
 {
-    return x * sin(theta) + y * cos(theta);
+    return x * sinf(theta) + y * cosf(theta);
 }
 
 //============================================================================//
 
+bool
+bounded(const farray_t& obj, int nx, int ix, int iy)
+{
+    auto idx = [&](int _x, int _y) { return _y * nx + _x; };
+    return (ix >= 0 && iy >= 0 && idx(ix, iy) >= 0 && idx(ix, iy) < obj.size());
+}
+
+//============================================================================//
+
+float
+compute_neighbors(const farray_t& obj, float theta, int nx, int ix, int iy)
+{
+    float value = 0.0f;
+    int   nvals = 0;
+    auto  idx   = [&](int _x, int _y) { return _y * nx + _x; };
+
+    if(bounded(obj, nx, ix - 1, iy))
+    {
+        ++nvals;
+        value += powf(cosf(theta), 2.0f) * obj.at(idx(ix - 1, iy));
+    }
+
+    if(bounded(obj, nx, ix, iy + 1))
+    {
+        ++nvals;
+        value += powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy + 1));
+    }
+
+    return (nvals > 0) ? (value * (1.0f - powf(cos(theta), 2.0f)))
+                       : (powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy)));
+}
+//============================================================================//
+
 farray_t
-cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny,
-           const int dx, const int dy)
+cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
 {
 #define COMPUTE_MAX(a, b) (a < b) ? b : a
 #define COMPUTE_MIN(a, b) (a < b) ? a : b
 
-    int      nr     = sqrt(nx * nx + ny * ny);
-    int      off_dx = dx / 2;
-    int      off_dy = dy / 2;
-    int      off_rx = nr / 2;
-    int      off_ry = nr / 2;
-    farray_t rot(nr * nr, 0.0);
+    farray_t rot(nx * ny, 0.0);
+    float    xoff = round(nx / 2.0);
+    float    yoff = round(ny / 2.0);
+    float    xop  = (nx % 2 == 0) ? 0.5 : 0.0;
+    float    yop  = (ny % 2 == 0) ? 0.5 : 0.0;
 
-    float obj_max = -1.0 * std::numeric_limits<float>::max();
+    float obj_sum = 0.0f;
+    float rot_sum = 0.0f;
     float obj_min = 1.0 * std::numeric_limits<float>::max();
-    for(int i = 0; i < dx * dy; ++i)
+    float obj_max = -1.0 * std::numeric_limits<float>::max();
+    float rot_min = 1.0 * std::numeric_limits<float>::max();
+    float rot_max = -1.0 * std::numeric_limits<float>::max();
+
+    for(int i = 0; i < obj.size(); ++i)
     {
-        obj_max = COMPUTE_MAX(obj_max, obj[i]);
-        obj_min = COMPUTE_MIN(obj_max, obj[i]);
+        obj_max = COMPUTE_MAX(obj_max, obj.at(i));
+        obj_min = COMPUTE_MIN(obj_max, obj.at(i));
     }
     float obj_mid = 0.5 * (obj_min + obj_max);
 
-    for(int i = 0; i < nr; ++i)
+    for(int i = 0; i < nx; ++i)
     {
-        for(int j = 0; j < nr; ++j)
+        for(int j = 0; j < ny; ++j)
         {
-            // rotation x index in 2D
-            int rot_idx = i - off_rx;
-            // rotation y index in 2D
-            int rot_idy = i - off_ry;
-            // index in 1D array
-            int id_rot = j * nr + i;
+            // indices in 2D
+            float rx = float(i) - xoff + xop;
+            float ry = float(j) - yoff + yop;
             // transformation
-            int obj_idx = round(cxx_rotate_x(rot_idx, rot_idy, theta)) + off_dx;
-            int obj_idy = round(cxx_rotate_y(rot_idx, rot_idy, theta)) + off_dy;
+            float tx = cxx_rotate_x(rx, ry, theta);
+            float ty = cxx_rotate_y(rx, ry, theta);
+            // indices in 2D
+            float x = (tx + xoff - xop);
+            float y = (ty + yoff - yop);
             // index in 1D array
-            int id_obj = obj_idy * dx + obj_idx;
+            int   rz       = j * nx + i;
+            float _obj_val = 0.0f;
             // within bounds
-            if(obj_idx >= 0 && obj_idx < dx && obj_idy >= 0 && obj_idy <= dy)
+            if(rz < rot.size())
             {
-                rot[id_rot] += obj[id_obj];
+                int   x1   = floor(tx + xoff - xop);
+                int   y1   = floor(ty + yoff - yop);
+                int   x2   = x1 + 1;
+                int   y2   = y1 + 1;
+                float fxy1 = 0.0f;
+                float fxy2 = 0.0f;
+                if(y1 * nx + x1 < obj.size())
+                    fxy1 += (x2 - x) * obj.at(y1 * nx + x1);
+                if(y1 * nx + x2 < obj.size())
+                    fxy1 += (x - x1) * obj.at(y1 * nx + x2);
+                if(y2 * nx + x1 < obj.size())
+                    fxy2 += (x2 - x) * obj.at(y2 * nx + x1);
+                if(y2 * nx + x2 < obj.size())
+                    fxy2 += (x - x1) * obj.at(y2 * nx + x2);
+                _obj_val = (y2 - y) * fxy1 + (y - y1) * fxy2;
+                // printf("lx = %0.4f, ly = %0.4f, fz0 = %0.4f, fz1 = %0.4f, fz2
+                // "
+                //       "= %0.4f, fz3 = %0.4f, fzt = %0.4f\n",
+                //       lx, ly, fz0, fz1, fz2, fz3, fzt);
+                // int ox = round(tx + xoff - xop);
+                // int oy = round(ty + yoff - yop);
+                // int oz = oy * nx + ox;
+                // within bounds
+                // if(oz < obj.size())
+                //    _obj_val += obj.at(oz);
             }
-            else
-            {
-                rot[id_rot] += obj_mid;
-            }
+            rot.at(rz) += _obj_val;
+            /*
+            printf("theta = %-0.8f, "
+                   "i, j = [%2i, %2i], "
+                   "rx, ry = [%2.0f, %2.0f], "
+                   "tx, ty = [%2.0f, %2.0f], "
+                   "ox, oy = [%2i, %2i], "
+                   "rz, oz = [%2i, %2i], "
+                   "rot = %4.2f, obj = %4.2f\n",
+                   theta, i, j, rx, ry, tx, ty, ox, oy, rz, oz, rot.at(rz),
+                   _obj_val);
+            */
+        }
+    }
+    /*
+    // compute obj sum
+    for(int i = 0; i < obj.size(); ++i)
+    {
+        obj_sum += obj.at(i);
+    }
+
+    // compute rotation sum
+    for(int i = 0; i < rot.size(); ++i)
+    {
+        rot_sum += rot.at(i);
+    }
+
+    // compute min/max
+    for(int i = 0; i < rot.size(); ++i)
+    {
+        rot_max = COMPUTE_MAX(rot_max, rot.at(i));
+        rot_min = COMPUTE_MIN(rot_max, rot.at(i));
+    }
+
+    // translate so bottom is zero
+    for(int i = 0; i < rot.size(); ++i)
+    {
+        rot.at(i) -= rot_min;
+    }
+
+    // rescale to max is 1
+    if(fabs(rot_max - rot_min) > 0.0f)
+    {
+        for(int i = 0; i < rot.size(); ++i)
+        {
+            rot.at(i) /= (rot_max - rot_min);
         }
     }
 
-    float obj_sum = 0.0f;
-    float rot_max = -1.0 * std::numeric_limits<float>::max();
-    float rot_min = 1.0 * std::numeric_limits<float>::max();
-    float rot_sum = 0.0f;
-
-// compute sum
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
+    // rescale to obj range
+    for(int i = 0; i < rot.size(); ++i)
     {
-        obj_sum += obj[i];
-    }
-    // compute min/max
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot_max = COMPUTE_MAX(rot_max, rot[i]);
-        rot_min = COMPUTE_MIN(rot_max, rot[i]);
-    }
-    // translate so bottom is zero
-    rot_max -= rot_min;
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] -= rot_min;
-    }
-// rescale to max is 1
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] /= rot_max;
-    }
-// compute sum
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot_sum += rot[i];
-    }
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] *= (obj_sum / rot_sum);
+        rot_sum *= (obj_max - obj_min);
     }
 
+    // add obj minimum
+    for(int i = 0; i < rot.size(); ++i)
+    {
+        rot.at(i) += obj_min;
+    }
+    */
 #undef COMPUTE_MAX
 #undef COMPUTE_MIN
 

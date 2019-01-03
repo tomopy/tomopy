@@ -11,3 +11,4 @@ recursive-include src *
 recursive-exclude * __pycache__ *.pyc
 recursive-exclude src/pybind11/docs *
 recursive-exclude src/pybind11/tests *.h *.cpp *.py
+recursive-exclude _skbuild *

@@ -14,17 +14,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     CACHE PATH "Installation directory of libraries" FORCE)
 
-#------------------------------------------------------------------------------#
-#
-#   PyBind11 submodule
-#
-#------------------------------------------------------------------------------#
-if(TOMOPY_USE_PYBIND11)
-    # ensure the submodule is checked out
-    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    add_subdirectory(pybind11)
-endif()
 
 #------------------------------------------------------------------------------#
 #
@@ -38,16 +27,14 @@ add_subdirectory(PTL)
 list(APPEND EXTERNAL_LIBRARIES ptl-static)
 
 # Locate sources and headers for this project headers are included for IDEs
-file(GLOB tomo_headers ${PROJECT_SOURCE_DIR}/include/*.h)
-file(GLOB tomo_sources ${CMAKE_CURRENT_LIST_DIR}/*.c)
-file(GLOB tomo_cxxhdrs ${CMAKE_CURRENT_LIST_DIR}/cxx/*.hh)
-file(GLOB tomo_cxxsrcs ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
-
-# set language
-set_source_files_properties(${tomo_cxxsrcs} PROPERTIES LANGUAGE CXX
-    COMPILE_FLAGS ${${PROJECT_NAME}_CXX_FLAGS})
-set_source_files_properties(${tomo_sources} PROPERTIES LANGUAGE C
-    COMPILE_FLAGS ${${PROJECT_NAME}_C_FLAGS})
+file(GLOB tomo_headers
+    ${PROJECT_SOURCE_DIR}/include/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/gpu/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.hh
+    ${CMAKE_CURRENT_LIST_DIR}/gpu/*.hh)
+file(GLOB tomo_sources
+    ${CMAKE_CURRENT_LIST_DIR}/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
 # include dirs
 set(TARGET_INCLUDE_DIRECTORIES
@@ -107,8 +94,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
 # core sources
-set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources}
-                    ${tomo_cxxhdrs} ${tomo_cxxsrcs})
+set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 
 # add the library
 if(NOT TOMOPY_USE_CUDA)
@@ -164,3 +150,30 @@ install(TARGETS libtomopy
 add_custom_command(TARGET libtomopy POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
         ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
+
+#------------------------------------------------------------------------------#
+#
+#   PyBind11 submodule
+#
+#------------------------------------------------------------------------------#
+if(TOMOPY_USE_PYBIND11)
+    # ensure the submodule is checked out
+    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
+        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    add_subdirectory(pybind11)
+    include_directories(${TARGET_INCLUDE_DIRECTORIES})
+    pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.hpp)
+    target_link_libraries(tomocxx PUBLIC libtomopy)
+    set_target_properties(tomocxx PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+        LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+        ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+    )
+    install(TARGETS tomocxx
+        DESTINATION ${PYTHON_SITE_DIR}/tomopy
+        COMPONENT development)
+    add_custom_command(TARGET tomocxx POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
+        ${PROJECT_SOURCE_DIR}/tomopy/)
+endif()
