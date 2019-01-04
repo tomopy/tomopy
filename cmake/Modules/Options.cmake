@@ -38,6 +38,7 @@ add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ON)
 add_option(TOMOPY_USE_SANTITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
+add_option(TOMOPY_USE_COVERAGE "Enable code coverage" OFF)
 
 if(TOMOPY_USE_SANTITIZER)
     set(SANITIZER_TYPE leak)

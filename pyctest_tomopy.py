@@ -155,12 +155,6 @@ def configure():
     remove_duplicates(args.algorithms)
     remove_duplicates(args.phantoms)
 
-    if args.coverage:
-        # read by Makefile.linux and Makefile.darwin
-        pyctest.set(
-            "ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage")
-        pyctest.set("ENV{LDFLAGS}", "-fprofile-arcs -lgcov")
-
     git_exe = helpers.FindExePath("git")
     if git_exe is not None:
         pyctest.UPDATE_COMMAND = "{}".format(git_exe)
@@ -199,10 +193,12 @@ def run_pyctest():
         pyctest.PYTHON_EXECUTABLE)
     if args.coverage:
         pyctest.BUILD_COMMAND += " --build-type=Debug"
+    pyctest.BUILD_COMMAND += " --"
     if args.enable_sanitizer:
-        pyctest.BUILD_COMMAND += " --enable-sanitizer --sanitizer-type={}".format(
+        pyctest.BUILD_COMMAND += " -DTOMOPY_USE_SANITIZER=ON -DSANITIZER_TYPE={}".format(
             args.sanitizer_type)
-
+    if args.coverage:
+        pyctest.BUILD_COMMAND += " -DTOMOPY_USE_COVERAGE=ON"
     # generate the code coverage
     python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
     cover_exe = helpers.FindExePath("coverage", path=python_path)
@@ -210,7 +206,8 @@ def run_pyctest():
         gcov_cmd = helpers.FindExePath("gcov")
         if gcov_cmd is not None:
             pyctest.COVERAGE_COMMAND = "{}".format(gcov_cmd)
-            pyctest.set("CTEST_COVERAGE_EXTRA_FLAGS", "-m")
+            pyctest.set("CTEST_COVERAGE_EXTRA_FLAGS", "-m -p -s {}".format(
+                pyctest.SOURCE_DIRECTORY))
             pyctest.set("CTEST_EXTRA_COVERAGE_GLOB", "{}/*.gcno".format(
                 pyctest.SOURCE_DIRECTORY))
     else:

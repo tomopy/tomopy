@@ -170,6 +170,19 @@ if(TOMOPY_USE_SANITIZER)
     add_cxx_flag_if_avail("-fsanitize=${SANITIZER_TYPE}")
 endif()
 
+if(TOMOPY_USE_COVERAGE)
+    add_c_flag_if_avail("-ftest-coverage")
+    if(c_ftest_coverage)
+        add(PROJECT_C_FLAGS "-fprofile-arcs")
+    endif()
+    add_cxx_flag_if_avail("-ftest-coverage")
+    if(cxx_ftest_coverage)
+        add(PROJECT_CXX_FLAGS "-fprofile-arcs")
+        add(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs")
+        add_feature(CMAKE_EXE_LINKER_FLAGS "Linker flags")
+    endif()
+endif()
+
 # ---------------------------------------------------------------------------- #
 # user customization
 add(${PROJECT_NAME}_C_FLAGS "${CFLAGS}")

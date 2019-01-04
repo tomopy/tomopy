@@ -177,3 +177,10 @@ if(TOMOPY_USE_PYBIND11)
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
         ${PROJECT_SOURCE_DIR}/tomopy/)
 endif()
+
+if(TOMOPY_USE_COVERAGE)
+    for(_SRC_FILE ${LIBRARY_SOURCES})
+    string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}" _BIN_FILE "${_SRC_FILE}")
+    configure_file(${_SRC_FILE} ${_BIN_FILE} COPYONLY)
+endif()
