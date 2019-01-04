@@ -136,11 +136,11 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 recon_off.at(ii) = tmp_recon.at(ii + (s * ngridx * ngridy));
             }
 
+            farray_t recon_update(recon_off.size(), 0.0f);
             // For each projection angle
             for(int p = 0; p < dt; p++)
             {
-                theta_p = fmodf(theta[p], 2.0f * (float) M_PI);
-                theta_p += 0.5*M_PI;
+                theta_p = fmodf(theta[p] + (float) (0.5f * M_PI), 2.0f * (float) M_PI);
                 // Rotate object - 2D slices
                 auto recon_rot =
                     cxx_rotate(recon_off, -theta_p, ngridx, ngridy);
@@ -161,23 +161,18 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
                     upd = (data[ind_data] - simdata.at(ind_data)) / sum_dist2;
                     for(int n = 0; n < ngridx; n++)
                     {
-                        recon_rot.at(n + d * ngridx) += upd;
+                        recon_rot.at(n + d * ngridx) += upd / ngridx;
                     }
                 }
-                // Update recon
-                /*for(int n = 0; n < ngridx * ngridy; n++)
-                {
-                    // ind_recon = s * ngridx * ngridy;
-                    recon_rot.at(n) += update.at(n) / ngridx;
-                }*/
                 // Back-Rotate object
-                recon_off = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
-                //for(uint64_t i = 0; i < _recon_off.size(); ++i)
-                //    recon_off.at(i) += _recon_off.at(i);
+                auto tmp = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
+                for(uint64_t i = 0; i < tmp.size(); ++i)
+                    recon_update.at(i) += tmp.at(i);
             }
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
             {
-                tmp_recon.at(ii + (s * ngridx * ngridy)) = recon_off.at(ii);
+                tmp_recon.at(ii + (s * ngridx * ngridy)) += recon_update.at(ii)
+                                                            / static_cast<float>(dt);
             }
         }
     }
