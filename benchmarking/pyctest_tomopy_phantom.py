@@ -18,11 +18,7 @@ import signal
 import numpy as np
 import time as t
 import pylab
-
-try:
-    from pyctest_tomopy_utils import *
-except:
-    from benchmarking.pyctest_tomopy_utils import *
+from tomopy.misc.benchmark import *
 
 
 def get_basepath(args, algorithm, phantom):
@@ -203,9 +199,9 @@ if __name__ == "__main__":
     ncores = mp.cpu_count()
 
     parser.add_argument("-p", "--phantom", help="Phantom to use",
-                        default="shepp2d", choices=phantom_choices, type=str)
+                        default="lena", choices=phantom_choices, type=str)
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="sirt", choices=algorithms, type=str)
+                        default="art", choices=algorithms, type=str)
     parser.add_argument("-A", "--angles", help="number of angles",
                         default=360, type=int)
     parser.add_argument("-s", "--size", help="size of image",
@@ -267,7 +263,6 @@ if __name__ == "__main__":
 
     ret = 0
     try:
-
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):
             main(args)
 
@@ -275,6 +270,6 @@ if __name__ == "__main__":
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5)
         print('Exception - {}'.format(e))
-        ret = 2
+        ret = 1
 
     sys.exit(ret)

@@ -165,6 +165,10 @@ if(TOMOPY_USE_ARCH)
     endif()
 endif()
 
+if(TOMOPY_USE_SANITIZER)
+    add_c_flag_if_avail("-fsanitize=${SANITIZER_TYPE}")
+    add_cxx_flag_if_avail("-fsanitize=${SANITIZER_TYPE}")
+endif()
 
 # ---------------------------------------------------------------------------- #
 # user customization

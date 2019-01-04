@@ -108,6 +108,19 @@ def configure():
                         help="Disable running phantom tests",
                         action='store_true',
                         default=False)
+    parser.add_argument("--enable-sanitizer",
+                        help="Enable the sanitizer",
+                        action='store_true')
+    parser.add_argument("--sanitizer-type",
+                        help="Set the sanitizer type",
+                        default="memory",
+                        type=str,
+                        choices=["leak", "thread", "address", "memory"])
+    parser.add_argument("--customize-build-name",
+                        help="Customize the build name",
+                        type=str,
+                        default=None)
+
     # calls PyCTest.helpers.ArgumentParser.parse_args()
     args = parser.parse_args()
 
@@ -153,6 +166,10 @@ def configure():
         pyctest.UPDATE_COMMAND = "{}".format(git_exe)
         pyctest.set("CTEST_UPDATE_TYPE", "git")
 
+    if args.enable_sanitizer:
+        pyctest.set("CTEST_MEMORYCHECK_TYPE", "{}Sanitizer".format(
+            args.sanitizer_type.lower().capitalize()))
+
     return args
 
 
@@ -160,13 +177,16 @@ def run_pyctest():
     # run argparse, checkout source, copy over files
     args = configure()
     # Change the build name to somthing other than default
-    pyctest.BUILD_NAME = "[{}] [{} {} {}] [Python ({}) {}]".format(
+    pyctest.BUILD_NAME = "[{}] [{} {} {}] [Python {}]".format(
         pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
         platform.uname()[0],
         helpers.GetSystemVersionInfo(),
         platform.uname()[4],
-        platform.python_implementation(),
         platform.python_version())
+    if args.enable_sanitizer:
+        pyctest.BUILD_NAME += " [{}]".format(args.sanitizer_type.lower())
+    if args.customize_build_name:
+        pyctest.BUILD_NAME += " {}".format(args.customize_build_name)
     # when coverage is enabled, we compile in debug so modify the build name
     # so that the history of test timing is not affected
     if args.coverage:
@@ -177,6 +197,10 @@ def run_pyctest():
     # how to build the code
     pyctest.BUILD_COMMAND = "{} setup.py install".format(
         pyctest.PYTHON_EXECUTABLE)
+    if args.enable_sanitizer:
+        pyctest.BUILD_COMMAND += " --enable-sanitizer --sanitizer-type={}".format(
+            args.sanitizer_type)
+
     # generate the code coverage
     python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
     cover_exe = helpers.FindExePath("coverage", path=python_path)

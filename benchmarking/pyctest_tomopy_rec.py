@@ -19,10 +19,7 @@ import h5py
 import tomopy
 import dxchange
 import timemory
-try:
-    from pyctest_tomopy_utils import *
-except:
-    from benchmarking.pyctest_tomopy_utils import *
+from tomopy.misc.benchmark import *
 
 
 def get_dx_dims(fname, dataset):
@@ -181,7 +178,6 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
 
         imgs.extend(output_images(rec, fname, args.format, args.scale,
                                   args.ncol))
-        # dxchange.write_tiff_stack(rec, fname=fname, start=strt)
         strt += sino[1] - sino[0]
 
     return imgs
@@ -217,7 +213,7 @@ def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
     return imgs
 
 
-def output_analysis(manager, args):
+def output_analysis(manager, args, imgs):
     # timing report to stdout
     print('{}\n'.format(manager))
 
@@ -302,7 +298,7 @@ def main(arg):
     if args.output_dir is None:
         fpath = os.path.basename(os.path.dirname(args.fname))
         args.output_dir = os.path.join(fpath + "_output", args.algorithm)
-        if tomopy.util.mproc.get_rank() == 0 and not os.path.exists(args.output_dir):
+        if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
 
     manager = timemory.manager()
@@ -332,11 +328,11 @@ def main(arg):
         else:
             imgs = rec_full(fname, rot_center, args, blocked_views,
                             args.grainsize)
-
     else:
         print("File name does not exist: ", fname)
 
-    output_analysis(manager, args)
+    output_analysis(manager, args, imgs)
+
 
 if __name__ == "__main__":
     ret = 0

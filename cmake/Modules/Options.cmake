@@ -36,7 +36,13 @@ add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP option for GPU execution" ${TOMOPY_USE_GPU})
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ON)
+add_option(TOMOPY_USE_SANTITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
+
+if(TOMOPY_USE_SANTITIZER)
+    set(SANITIZER_TYPE leak)
+    add_feature(SANITIZER_TYPE "Type of sanitizer (-fsanitize=${SANITIZER_TYPE})")
+endif()
 
 if(TOMOPY_CXX_GRIDREC)
     add_definitions(-DTOMOPY_CXX_GRIDREC)

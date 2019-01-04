@@ -1,10 +1,67 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# #########################################################################
+# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+#                                                                         #
+# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
+# Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
+# U.S. Department of Energy. The U.S. Government has rights to use,       #
+# reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR    #
+# UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR        #
+# ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is     #
+# modified to produce derivative works, such modified software should     #
+# be clearly marked, so as not to confuse it with the version available   #
+# from ANL.                                                               #
+#                                                                         #
+# Additionally, redistribution and use in source and binary forms, with   #
+# or without modification, are permitted provided that the following      #
+# conditions are met:                                                     #
+#                                                                         #
+#     * Redistributions of source code must retain the above copyright    #
+#       notice, this list of conditions and the following disclaimer.     #
+#                                                                         #
+#     * Redistributions in binary form must reproduce the above copyright #
+#       notice, this list of conditions and the following disclaimer in   #
+#       the documentation and/or other materials provided with the        #
+#       distribution.                                                     #
+#                                                                         #
+#     * Neither the name of UChicago Argonne, LLC, Argonne National       #
+#       Laboratory, ANL, the U.S. Government, nor the names of its        #
+#       contributors may be used to endorse or promote products derived   #
+#       from this software without specific prior written permission.     #
+#                                                                         #
+# THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS     #
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT       #
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS       #
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago     #
+# Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,        #
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,    #
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        #
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER        #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT      #
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN       #
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
+# POSSIBILITY OF SUCH DAMAGE.                                             #
+# #########################################################################
+
+from __future__ import absolute_import
+
+__version__ = '1.2.1'
+
+__all__ = ['algorithms', 'image_quality', 'exit_action',
+           'output_image', 'print_size', 'convert_image',
+           'normalize', 'trim_border', 'fill_border',
+           'rescale_image', 'quantify_difference', 'output_images',
+           'image_comparison']
+
 import os
 import pylab
 import numpy as np
 import scipy.ndimage as ndimage
 import numpy.linalg as LA
 import timemory
-
 
 algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
               'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
@@ -51,7 +108,7 @@ def convert_image(fname, current_format, new_format):
         img = Image.open(_cur_img)
         out = img.convert("RGB")
         out.save(fname, "jpeg", quality=95)
-        print("  --> Converted '{}' to {} format...".format(fname, new_format.upper()))
+        # print("  --> Converted '{}' to {} format...".format(fname, new_format.upper()))
 
     except Exception as e:
 
@@ -163,11 +220,11 @@ def quantify_difference(label, img, rec):
     # pixel diff
     _sub = _img - _rec
     # x-gradient diff
-    _sx = ndimage.sobel(_img, axis=0, mode='constant') - \
-        ndimage.sobel(_rec, axis=0, mode='constant')
+    _sx = ndimage.sobel(_img, axis=0, mode='reflect') - \
+        ndimage.sobel(_rec, axis=0, mode='reflect')
     # y-gradient diff
-    _sy = ndimage.sobel(_img, axis=1, mode='constant') - \
-        ndimage.sobel(_rec, axis=1, mode='constant')
+    _sy = ndimage.sobel(_img, axis=1, mode='reflect') - \
+        ndimage.sobel(_rec, axis=1, mode='reflect')
 
     _l1_pix = LA.norm(_sub, ord=1)
     _l2_pix = LA.norm(_sub, ord=2)

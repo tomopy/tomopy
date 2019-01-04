@@ -162,3 +162,5 @@ script
 /benchmarking/shepp3d*
 /benchmarking/checkerboard*
 /benchmarking/peppers*
+/benchmarking/rotate.py
+/test_rotate.py
