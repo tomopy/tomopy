@@ -542,33 +542,17 @@ compute_neighbors(const farray_t& obj, float theta, int nx, int ix, int iy)
     return (nvals > 0) ? (value * (1.0f - powf(cos(theta), 2.0f)))
                        : (powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy)));
 }
+
 //============================================================================//
 
 farray_t
 cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
 {
-#define COMPUTE_MAX(a, b) (a < b) ? b : a
-#define COMPUTE_MIN(a, b) (a < b) ? a : b
-
     farray_t rot(nx * ny, 0.0);
     float    xoff = round(nx / 2.0);
     float    yoff = round(ny / 2.0);
     float    xop  = (nx % 2 == 0) ? 0.5 : 0.0;
     float    yop  = (ny % 2 == 0) ? 0.5 : 0.0;
-
-    float obj_sum = 0.0f;
-    float rot_sum = 0.0f;
-    float obj_min = 1.0 * std::numeric_limits<float>::max();
-    float obj_max = -1.0 * std::numeric_limits<float>::max();
-    float rot_min = 1.0 * std::numeric_limits<float>::max();
-    float rot_max = -1.0 * std::numeric_limits<float>::max();
-
-    for(int i = 0; i < obj.size(); ++i)
-    {
-        obj_max = COMPUTE_MAX(obj_max, obj.at(i));
-        obj_min = COMPUTE_MIN(obj_max, obj.at(i));
-    }
-    float obj_mid = 0.5 * (obj_min + obj_max);
 
     for(int i = 0; i < nx; ++i)
     {
@@ -608,56 +592,6 @@ cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
             rot.at(rz) += _obj_val;
         }
     }
-    /*
-    // compute obj sum
-    for(int i = 0; i < obj.size(); ++i)
-    {
-        obj_sum += obj.at(i);
-    }
-
-    // compute rotation sum
-    for(int i = 0; i < rot.size(); ++i)
-    {
-        rot_sum += rot.at(i);
-    }
-
-    // compute min/max
-    for(int i = 0; i < rot.size(); ++i)
-    {
-        rot_max = COMPUTE_MAX(rot_max, rot.at(i));
-        rot_min = COMPUTE_MIN(rot_max, rot.at(i));
-    }
-
-    // translate so bottom is zero
-    for(int i = 0; i < rot.size(); ++i)
-    {
-        rot.at(i) -= rot_min;
-    }
-
-    // rescale to max is 1
-    if(fabs(rot_max - rot_min) > 0.0f)
-    {
-        for(int i = 0; i < rot.size(); ++i)
-        {
-            rot.at(i) /= (rot_max - rot_min);
-        }
-    }
-
-    // rescale to obj range
-    for(int i = 0; i < rot.size(); ++i)
-    {
-        rot_sum *= (obj_max - obj_min);
-    }
-
-    // add obj minimum
-    for(int i = 0; i < rot.size(); ++i)
-    {
-        rot.at(i) += obj_min;
-    }
-    */
-#undef COMPUTE_MAX
-#undef COMPUTE_MIN
-
     return rot;
 }
 
