@@ -195,8 +195,10 @@ def run_pyctest():
     while "  " in pyctest.BUILD_NAME:
         pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
     # how to build the code
-    pyctest.BUILD_COMMAND = "{} setup.py install".format(
+    pyctest.BUILD_COMMAND = "{} setup.py --hide-listing install".format(
         pyctest.PYTHON_EXECUTABLE)
+    if args.coverage:
+        pyctest.BUILD_COMMAND += " --build-type=Debug"
     if args.enable_sanitizer:
         pyctest.BUILD_COMMAND += " --enable-sanitizer --sanitizer-type={}".format(
             args.sanitizer_type)
