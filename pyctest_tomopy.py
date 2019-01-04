@@ -199,6 +199,9 @@ def run_pyctest():
             args.sanitizer_type)
     if args.coverage:
         pyctest.BUILD_COMMAND += " -DTOMOPY_USE_COVERAGE=ON"
+
+    print("TomoPy BUILD_COMMAND: '{}'...".format(pyctest.BUILD_COMMAND))
+
     # generate the code coverage
     python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
     cover_exe = helpers.FindExePath("coverage", path=python_path)
