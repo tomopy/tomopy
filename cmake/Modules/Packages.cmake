@@ -24,6 +24,23 @@ endif()
 
 ################################################################################
 #
+#        GCov
+#
+################################################################################
+
+if(TOMOPY_USE_COVERAGE)
+    find_library(GCOV_LIBRARY gcov)
+    if(GCOV_LIBRARY)
+        list(APPEND EXTERNAL_LIBRARIES ${GCOV_LIBRARY})
+    else()
+        message(WARNING "gcov library was not found")
+        list(APPEND EXTERNAL_LIBRARIES gcov)
+    endif()
+endif()
+
+
+################################################################################
+#
 #                               TiMemory
 #
 ################################################################################
