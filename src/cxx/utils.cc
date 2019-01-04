@@ -604,29 +604,8 @@ cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
                 if(y2 * nx + x2 < obj.size())
                     fxy2 += (x - x1) * obj.at(y2 * nx + x2);
                 _obj_val = (y2 - y) * fxy1 + (y - y1) * fxy2;
-                // printf("lx = %0.4f, ly = %0.4f, fz0 = %0.4f, fz1 = %0.4f, fz2
-                // "
-                //       "= %0.4f, fz3 = %0.4f, fzt = %0.4f\n",
-                //       lx, ly, fz0, fz1, fz2, fz3, fzt);
-                // int ox = round(tx + xoff - xop);
-                // int oy = round(ty + yoff - yop);
-                // int oz = oy * nx + ox;
-                // within bounds
-                // if(oz < obj.size())
-                //    _obj_val += obj.at(oz);
             }
             rot.at(rz) += _obj_val;
-            /*
-            printf("theta = %-0.8f, "
-                   "i, j = [%2i, %2i], "
-                   "rx, ry = [%2.0f, %2.0f], "
-                   "tx, ty = [%2.0f, %2.0f], "
-                   "ox, oy = [%2i, %2i], "
-                   "rz, oz = [%2i, %2i], "
-                   "rot = %4.2f, obj = %4.2f\n",
-                   theta, i, j, rx, ry, tx, ty, ox, oy, rz, oz, rot.at(rz),
-                   _obj_val);
-            */
         }
     }
     /*

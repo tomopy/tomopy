@@ -12,3 +12,4 @@ if [ -z "${SOURCE_DIR}" ]; then exit 0; fi
 cd ${SOURCE_DIR}
 
 coverage xml
+mv coverage.xml .coverage.xml

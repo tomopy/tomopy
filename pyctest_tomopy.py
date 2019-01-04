@@ -21,7 +21,7 @@ import pyctest.helpers as helpers
 
 
 def cleanup(path=None, exclude=[]):
-    files = [ "coverage.xml", "pyctest_tomopy_rec.py",
+    files = [ "pyctest_tomopy_rec.py",
               "pyctest_tomopy_phantom.py", "pyctest_tomopy_utils.py"]
 
     sp.call((sys.executable, os.path.join(os.getcwd(), "setup.py"), "clean"))
