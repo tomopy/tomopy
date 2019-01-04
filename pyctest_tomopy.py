@@ -113,7 +113,7 @@ def configure():
                         action='store_true')
     parser.add_argument("--sanitizer-type",
                         help="Set the sanitizer type",
-                        default="memory",
+                        default="address",
                         type=str,
                         choices=["leak", "thread", "address", "memory"])
     parser.add_argument("--customize-build-name",
