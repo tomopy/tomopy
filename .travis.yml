@@ -7,28 +7,23 @@ os:
   - linux
 sudo: false
 env:
-  - PATH=${HOME}/miniconda/bin:${PATH} LD_LIBRARY_PATH=${HOME}/miniconda/lib
+  global:
+    - PATH=${HOME}/miniconda/bin:${PATH}
+    - LD_LIBRARY_PATH=${HOME}/miniconda/lib
+    - CTEST_SITE=Travis
+    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1'
 before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
+  - bash miniconda.sh -b -p ${HOME}/miniconda
   - export PATH="${HOME}/miniconda/bin:${PATH}"
-  - conda config --add channels conda-forge
-  - conda config --add channels jrmadsen
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update conda
+  - conda config --set always_yes yes
 install:
-  - "conda install python=${TRAVIS_PYTHON_VERSION} nose six numpy scipy
-    scikit-image scikit-build mkl-devel mkl_fft python-coveralls
-    dxchange numexpr coverage timemory pyctest"
-  - export CC=$(which gcc)
-  - export CXX=$(which g++)
-  - echo "CC = ${CC}, CXX = ${CXX}"
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install futures;
-    fi
+  - PYTHON_TAG=$(echo ${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
+  - conda env create -n tomopy -f envs/tomopy-python${PYTHON_TAG}.yml
+  - source activate tomopy
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests -- -VV
+  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS}
 script:
   - coverage run $(which nosetests)
 after_success:
