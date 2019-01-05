@@ -295,7 +295,7 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
         {
             std::cout << "\n"
                       << "[" << tid
-                      << "] Initializing CPU task run manager with " << nthreads
+                      << "] Initializing tasking run manager with " << nthreads
                       << " threads..." << std::endl;
             run_man->Initialize(nthreads);
         }
@@ -307,7 +307,7 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
     if(GetEnv<int>("TASKING_VERBOSE", 0) > 0)
     {
         AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << "> art::" << __FUNCTION__ << "@" << __LINE__ << " -- "
+        std::cout << "> " << __FUNCTION__ << "@" << __LINE__ << " -- "
                   << "run manager = " << run_man << ", "
                   << "task manager = " << task_man << ", "
                   << "thread pool = " << tp << ", "

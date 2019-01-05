@@ -144,10 +144,10 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
         }
 
         // Make update by backprojecting error along x-axis
-        float upd = (data[idx_data] - *_simdata);
+        float upd = (data[idx_data] - *_simdata) / fngridx;
         __PRAGMA_SIMD
         for(int n = 0; n < ngridx; n++)
-            _recon_rot[n] += upd / fngridx;
+            _recon_rot[n] += upd;
     }
     // Back-Rotate object
     auto tmp = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
