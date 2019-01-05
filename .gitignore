@@ -152,6 +152,7 @@ script
 *.gcda
 *.gcno
 /coverage.xml
+/.coverage.xml
 /CMakeFiles
 /benchmarking/*.jpeg
 /benchmarking/*.tif
@@ -164,4 +165,14 @@ script
 /benchmarking/checkerboard*
 /benchmarking/peppers*
 /benchmarking/rotate.py
+/benchmarking/art*
+/benchmarking/bart*
+/benchmarking/mlem*
+/benchmarking/osem*
+/benchmarking/sirt*
+/benchmarking/ospml*
+/benchmarking/pml*
+/benchmarking/gridrec*
+/benchmarking/tv*
+/benchmarking/grad*
 /test_rotate.py
