@@ -60,6 +60,7 @@ extern nvtxEventAttributes_t nvtx_sort_intersections;
 extern nvtxEventAttributes_t nvtx_sum_dist;
 extern nvtxEventAttributes_t nvtx_trim_coords;
 extern nvtxEventAttributes_t nvtx_calc_sum_sqr;
+extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
 //============================================================================//
@@ -852,6 +853,117 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx,
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_calc_simdata);
+}
+
+//============================================================================//
+//
+//  rotate
+//
+//============================================================================//
+
+__global__ void
+cuda_rotate_global(float* obj, const float theta, const int nx, const int ny,
+                   float* rot)
+{
+    float xoff = round(nx / 2.0);
+    float yoff = round(ny / 2.0);
+    float xop  = (nx % 2 == 0) ? 0.5 : 0.0;
+    float yop  = (ny % 2 == 0) ? 0.5 : 0.0;
+
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int j0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int istride = blockDim.x * gridDim.x;
+    int jstride = blockDim.y * gridDim.y;
+
+    int obj_size = nx * ny;
+    // for(int i = i0; i < size; i += stride)
+
+    for(int i = i0; i < nx; i += istride)
+    {
+        for(int j = j0; j < ny; j += jstride)
+        {
+            // indices in 2D
+            float rx = float(i) - xoff + xop;
+            float ry = float(j) - yoff + yop;
+            // transformation
+            float tx = rx * cosf(theta) + -ry * sinf(theta);
+            float ty = rx * sinf(theta) + ry * cosf(theta);
+            // indices in 2D
+            float x = (tx + xoff - xop);
+            float y = (ty + yoff - yop);
+            // index in 1D array
+            int rz = j * nx + i;
+            // within bounds
+            int   x1   = floor(tx + xoff - xop);
+            int   y1   = floor(ty + yoff - yop);
+            int   x2   = x1 + 1;
+            int   y2   = y1 + 1;
+            float fxy1 = 0.0f;
+            float fxy2 = 0.0f;
+            if(y1 * nx + x1 < obj_size)
+                fxy1 += (x2 - x) * obj[y1 * nx + x1];
+            if(y1 * nx + x2 < obj_size)
+                fxy1 += (x - x1) * obj[y1 * nx + x2];
+            if(y2 * nx + x1 < obj_size)
+                fxy2 += (x2 - x) * obj[y2 * nx + x1];
+            if(y2 * nx + x2 < obj_size)
+                fxy2 += (x - x1) * obj[y2 * nx + x2];
+            rot[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
+        }
+    }
+}
+
+//============================================================================//
+
+float*
+cuda_rotate(float* obj, const float theta, const int nx, const int ny,
+            cudaStream_t* streams)
+{
+    NVTX_RANGE_PUSH(&nvtx_rotate);
+
+    int nb   = cuda_multi_processor_count();
+    int nt   = cuda_max_threads_per_block();
+    int smem = 0;
+
+    float* rot = gpu_malloc<float>(nx * ny);
+
+    CUDA_CHECK_LAST_ERROR();
+    cuda_rotate_global<<<nb, nt, smem, streams[0]>>>(obj, theta, nx, ny, rot);
+    CUDA_CHECK_LAST_ERROR();
+
+    NVTX_RANGE_POP(&nvtx_rotate);
+
+    return rot;
+}
+
+//============================================================================//
+//
+//  add
+//
+//============================================================================//
+
+__global__ void
+cuda_add_global(float* data, int size, const float factor)
+{
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int istride = blockDim.x * gridDim.x;
+
+    for(int i = i0; i < size; i += istride)
+        data[i] += factor;
+}
+
+//============================================================================//
+
+void
+cuda_add(float* data, int size, const float factor, cudaStream_t* streams)
+{
+    int nb   = cuda_multi_processor_count();
+    int nt   = cuda_max_threads_per_block();
+    int smem = 0;
+
+    CUDA_CHECK_LAST_ERROR();
+    cuda_add_global<<<nb, nt, smem, streams[0]>>>(data, size, factor);
+    CUDA_CHECK_LAST_ERROR();
 }
 
 //============================================================================//

@@ -38,12 +38,22 @@
 //   TOMOPY CUDA implementation
 
 #include "gpu.hh"
+#include "PTL/TaskManager.hh"
+#include "PTL/TaskRunManager.hh"
+#include "utils.hh"
 
-extern "C"
-{
+BEGIN_EXTERN_C
 #include "sirt.h"
 #include "utils.h"
-}
+#include "utils_cuda.h"
+#include "utils_openacc.h"
+#include "utils_openmp.h"
+END_EXTERN_C
+
+#include <algorithm>
+#include <cstdlib>
+#include <memory>
+#include <numeric>
 
 #if !defined(cast)
 #    define cast static_cast
@@ -52,6 +62,8 @@ extern "C"
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_update;
 #endif
+
+#define HW_CONCURRENCY std::thread::hardware_concurrency()
 
 //============================================================================//
 
@@ -98,6 +110,104 @@ cuda_sirt_update(int s, int p, int d, int ry, int rz, int dt, int dx,
                                                      dist, sum, model);
     CUDA_CHECK_LAST_ERROR();
     NVTX_RANGE_POP(&nvtx_update);
+}
+
+//----------------------------------------------------------------------------//
+
+void
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
+          const float* theta, float* recon, int ngridx, int ngridy,
+          int num_iter)
+{
+    if(cuda_device_count() == 0)
+        throw std::runtime_error("No CUDA device(s) available");
+
+    cuda_device_query();
+
+    tim::enable_signal_detection();
+    TIMEMORY_AUTO_TIMER("[cuda]");
+
+    // assign the thread to a device
+    set_this_thread_device();
+
+    int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+    TaskRunManager* run_man  = gpu_run_manager();
+    init_run_manager(run_man, nthreads);
+    TaskManager*  task_man = run_man->GetTaskManager();
+    ThreadPool*   tp       = task_man->thread_pool();
+    cudaStream_t* streams  = create_streams(nthreads);
+
+    // needed for recon to output at proper orientation
+    float pi_offset = 0.5f * (float) M_PI;
+
+    for(int i = 0; i < num_iter; i++)
+    {
+        float*   simdata = malloc_and_memset<float>(dy * dt * dx, 0);
+        // For each slice
+        for(int s = 0; s < dy; s++)
+        {
+            int recon_size = ngridx * ngridy;
+            int slice_offset = s * ngridx * ngridy;
+            float*   recon_off = malloc_and_memcpy<float>(recon + slice_offset, ngridx * ngridy);
+            float* update = malloc_and_memset<float>(ngridx * ngridy, 0);
+
+            // For each projection angle
+            for(int p = 0; p < dt; p++)
+            {
+                float theta_p = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+
+                // Rotate object
+                float* recon_rot =
+                    cuda_rotate(recon_off, theta_p, ngridx, ngridy, streams);
+                cudaStreamSynchronize(streams[0]);
+
+                for(int d = 0; d < dx; d++)
+                {
+                    int    pix_offset = d * ngridx;  // pixel offset
+                    int    idx_data   = d + p * dx + s * dt * dx;
+                    float  fngridx    = ngridx;
+                    float  _sim       = 0.0f;
+                    float* _simdata   = simdata + idx_data;
+                    float* _recon_rot = recon_rot + pix_offset;
+
+                    // Calculate simulated data by summing up along x-axis
+                    _sim = reduce(_recon_rot, 0.0f, ngridx, streams[0]);
+                    cudaStreamSynchronize(streams[0]);
+
+                    // update shared simdata array
+                    gpu_memcpy(_simdata, &_sim, 1);
+
+                    // Make update by backprojecting error along x-axis
+                    float _value;
+                    cpu_memcpy(_simdata, &_value, 1);
+
+                    float upd = (data[idx_data] - _value) / fngridx;
+                    cuda_add(_recon_rot, ngridx, upd, streams);
+                    cudaStreamSynchronize(streams[0]);
+                }
+                // Back-Rotate object
+                float* tmp =
+                    cuda_rotate(recon_rot, theta_p, ngridx, ngridy, streams);
+                cudaStreamSynchronize(streams[0]);
+
+                cudaFree(recon_rot);
+
+                // update shared update array
+                transform_sum(tmp, recon_size, update, streams[0]);
+                cudaStreamSynchronize(streams[0]);
+
+                cudaFree(tmp);
+            }
+            cudaFree(recon_off);
+
+            float* _recon = recon + slice_offset;
+            farray_t _update(recon_size);
+            cpu_memcpy(update, _update.data(), recon_size);
+            for(int ii = 0; ii < recon_size; ++ii)
+                _recon[ii] += _update[ii] / static_cast<float>(dt);
+            cudaFree(update);
+        }
+    }
 }
 
 //============================================================================//

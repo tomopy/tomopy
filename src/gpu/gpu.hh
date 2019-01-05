@@ -232,6 +232,34 @@ malloc_and_memcpy(const _Tp* _cpu, uintmax_t size)
 //----------------------------------------------------------------------------//
 
 template <typename _Tp>
+_Tp*
+malloc_and_memset(uintmax_t size, int value)
+{
+    _Tp* _gpu;
+    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
+    CUDA_CHECK_LAST_ERROR();
+    cudaMemset(_gpu, value, size * sizeof(_Tp));
+    CUDA_CHECK_LAST_ERROR();
+    return _gpu;
+}
+
+//----------------------------------------------------------------------------//
+
+template <typename _Tp>
+_Tp*
+malloc_and_async_memset(uintmax_t size, int value, cudaStream_t stream)
+{
+    _Tp* _gpu;
+    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
+    CUDA_CHECK_LAST_ERROR();
+    cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
+    CUDA_CHECK_LAST_ERROR();
+    return _gpu;
+}
+
+//----------------------------------------------------------------------------//
+
+template <typename _Tp>
 void
 memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size)
 {
@@ -297,6 +325,30 @@ destroy_streams(cudaStream_t* streams, const int nstreams)
 
 //============================================================================//
 
+template <typename _Tp>
+_Tp
+reduce(_Tp* data, _Tp init, int nitems, cudaStream_t stream)
+{
+    _Tp* beg = data;
+    _Tp* end = data + nitems;
+    return thrust::reduce(thrust::system::cuda::par.on(stream), beg, end, init,
+                          thrust::plus<_Tp>());
+}
+
+//============================================================================//
+
+template <typename _Tp>
+void
+transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
+{
+    _Tp* beg = input_data;
+    _Tp* end = input_data + nitems;
+    thrust::transform(thrust::system::cuda::par.on(stream), beg, end, result,
+                      result, thrust::plus<_Tp>());
+}
+
+//============================================================================//
+
 #else  // not defined(TOMOPY_USE_CUDA)
 
 #    if !defined(cudaStream_t)
@@ -343,6 +395,18 @@ malloc_and_memcpy(const _Tp*, uintmax_t)
 }
 //----------------------------------------------------------------------------//
 template <typename _Tp>
+_Tp*
+malloc_and_memset(uintmax_t size, int value)
+{
+}
+//----------------------------------------------------------------------------//
+template <typename _Tp>
+_Tp*
+malloc_and_async_memset(uintmax_t size, int value, cudaStream_t stream)
+{
+}
+//----------------------------------------------------------------------------//
+template <typename _Tp>
 void
 memcpy_and_free(_Tp*, _Tp*, uintmax_t)
 {
@@ -369,6 +433,18 @@ create_streams(const int)
 //----------------------------------------------------------------------------//
 inline void
 destroy_streams(cudaStream_t*, const int)
+{
+}
+//============================================================================//
+template <typename _Tp>
+_Tp
+reduce(_Tp*, _Tp, int, cudaStream_t)
+{
+}
+//============================================================================//
+template <typename _Tp>
+void
+transform_sum(_Tp*, int, _Tp*, cudaStream_t)
 {
 }
 //============================================================================//

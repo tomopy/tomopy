@@ -67,6 +67,7 @@ nvtxEventAttributes_t nvtx_sum_dist;
 nvtxEventAttributes_t nvtx_trim_coords;
 nvtxEventAttributes_t nvtx_calc_sum_sqr;
 nvtxEventAttributes_t nvtx_update;
+nvtxEventAttributes_t nvtx_rotate;
 
 //----------------------------------------------------------------------------//
 
@@ -140,6 +141,13 @@ init_nvtx()
     nvtx_update.color         = 0xff99ff99; /* light green */
     nvtx_update.messageType   = NVTX_MESSAGE_TYPE_ASCII;
     nvtx_update.message.ascii = "update";
+
+    nvtx_rotate.version       = NVTX_VERSION;
+    nvtx_rotate.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_rotate.colorType     = NVTX_COLOR_ARGB;
+    nvtx_rotate.color         = 0xff0000ff; /* blue? */
+    nvtx_rotate.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_rotate.message.ascii = "rotate";
 }
 
 #endif

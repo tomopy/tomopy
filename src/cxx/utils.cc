@@ -542,6 +542,7 @@ compute_neighbors(const farray_t& obj, float theta, int nx, int ix, int iy)
     return (nvals > 0) ? (value * (1.0f - powf(cos(theta), 2.0f)))
                        : (powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy)));
 }
+
 //============================================================================//
 
 farray_t
@@ -591,7 +592,6 @@ cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
             rot.at(rz) += _obj_val;
         }
     }
-
     return rot;
 }
 
