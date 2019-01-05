@@ -51,9 +51,14 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
     if(dy == 0 || dt == 0 || dx == 0)
         return;
 
-    cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
+    if(cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
+                num_iter))
+        return;
 
-    /*
+    printf("\n\t%s (C) [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = "
+           "%i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -186,5 +191,4 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
     free(coory);
     free(dist);
     free(indi);
-    */
 }

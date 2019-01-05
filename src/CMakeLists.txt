@@ -147,9 +147,15 @@ install(TARGETS libtomopy
     COMPONENT development)
 
 # make sure the generated target gets put into the source tree for testing
-add_custom_command(TARGET libtomopy POST_BUILD
+if(UNIX)
+    add_custom_command(TARGET libtomopy POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:libtomopy>
+        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/$<TARGET_FILE_NAME:libtomopy>)
+else()
+    add_custom_command(TARGET libtomopy POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
         ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
+endif()
 
 #------------------------------------------------------------------------------#
 #
@@ -173,9 +179,15 @@ if(TOMOPY_USE_PYBIND11)
     install(TARGETS tomocxx
         DESTINATION ${PYTHON_SITE_DIR}/tomopy
         COMPONENT development)
-    add_custom_command(TARGET tomocxx POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
-        ${PROJECT_SOURCE_DIR}/tomopy/)
+    if(UNIX)
+        add_custom_command(TARGET tomocxx POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:tomocxx>
+            ${PROJECT_SOURCE_DIR}/tomopy/$<TARGET_FILE_NAME:tomocxx>)
+    else()
+        add_custom_command(TARGET tomocxx POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
+            ${PROJECT_SOURCE_DIR}/tomopy/)
+    endif()
 endif()
 
 if(TOMOPY_USE_COVERAGE)

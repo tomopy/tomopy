@@ -139,9 +139,9 @@ PYBIND11_MODULE(tomocxx, tomo)
     // algorithm"); tomo.def("pml_hybrid", &pml_hybrid, "pml hybrid
     // reconstruction algorithm"); tomo.def("pml_quad", &pml_quad, "pml quad
     // reconstruction algorithm"); tomo.def("sirt", &sirt, "sirt reconstruction
-    // algorithm"); tomo.def("vector", &vector, "vector 1D"); tomo.def("vector2",
-    // &vector2, "vector 2D"); tomo.def("vector3", &vector3, "vector 3D");
-    // tomo.def("remove_ring", &remove_ring, "remove ring");
+    // algorithm"); tomo.def("vector", &vector, "vector 1D");
+    // tomo.def("vector2", &vector2, "vector 2D"); tomo.def("vector3", &vector3,
+    // "vector 3D"); tomo.def("remove_ring", &remove_ring, "remove ring");
     // tomo.def("art_task", art_task, "Art reconstruction algorithm");
 
     // py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");

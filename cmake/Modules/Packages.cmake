@@ -33,9 +33,9 @@ if(TOMOPY_USE_COVERAGE)
     if(GCOV_LIBRARY)
         list(APPEND EXTERNAL_LIBRARIES ${GCOV_LIBRARY})
     else()
-        message(WARNING "gcov library was not found")
         list(APPEND EXTERNAL_LIBRARIES gcov)
     endif()
+    add(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
 endif()
 
 

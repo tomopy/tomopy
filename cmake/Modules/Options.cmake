@@ -41,7 +41,7 @@ add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage" OFF)
 
 if(TOMOPY_USE_SANITIZER)
-    set(SANITIZER_TYPE leak)
+    set(SANITIZER_TYPE leak CACHE STRING "Type of sanitizer")
     add_feature(SANITIZER_TYPE "Type of sanitizer (-fsanitize=${SANITIZER_TYPE})")
 endif()
 

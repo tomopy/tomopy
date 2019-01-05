@@ -273,7 +273,7 @@ ENDFUNCTION(ADD_DEPENDENT_OPTION _NAME _MESSAGE _DEFAULT _COND _COND_SETTING)
 #       TEST_FILE (one value) -- file to check for (default: CMakeLists.txt)
 #       ADDITIONAL_CMDS (many value) -- any addition commands to pass
 #
-MACRO(CHECKOUT_GIT_SUBMODULE)
+FUNCTION(CHECKOUT_GIT_SUBMODULE)
     # parse args
     cmake_parse_arguments(
         CHECKOUT
@@ -300,14 +300,14 @@ MACRO(CHECKOUT_GIT_SUBMODULE)
     # if not exists --> not been checked out
     set(_TEST_FILE "${_DIR}/${CHECKOUT_TEST_FILE}")
 
+    set(_RECURSE )
+    if(CHECKOUT_RECURSIVE)
+        set(_RECURSE --recursive)
+    endif(CHECKOUT_RECURSIVE)
+
     # if the module has not been checked out
     if(NOT EXISTS "${_TEST_FILE}")
         find_package(Git REQUIRED)
-
-        set(_RECURSE )
-        if(CHECKOUT_RECURSIVE)
-            set(_RECURSE --recursive)
-        endif(CHECKOUT_RECURSIVE)
 
         # perform the checkout
         execute_process(
@@ -326,9 +326,20 @@ MACRO(CHECKOUT_GIT_SUBMODULE)
             message(FATAL_ERROR "Command: \"${_CMD}\"")
         endif()
 
+    elseif(NOT SKIP_GIT_UPDATE)
+        find_package(Git)
+        if(Git_FOUND)
+            message(STATUS "Executing '${GIT_EXECUTABLE} submodule update ${_RECURSE} ${CHECKOUT_RELATIVE_PATH}'... Disable with SKIP_GIT_UPDATE...")
+            execute_process(
+                COMMAND
+                    ${GIT_EXECUTABLE} submodule update ${_RECURSE}
+                        ${CHECKOUT_RELATIVE_PATH}
+                WORKING_DIRECTORY
+                    ${CHECKOUT_WORKING_DIRECTORY})
+        endif()
     endif()
 
-ENDMACRO()
+ENDFUNCTION()
 
 
 #------------------------------------------------------------------------------#

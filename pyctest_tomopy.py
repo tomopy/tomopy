@@ -9,8 +9,9 @@ import os
 import sys
 import glob
 import shutil
-import platform
 import argparse
+import platform
+import warnings
 import traceback
 import subprocess as sp
 import multiprocessing as mp
@@ -19,15 +20,30 @@ import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
 
+from benchmarking import (
+    default_nitr,
+    default_phantom_size,
+    find_python_nosetest,
+    find_python_coverage,
+    find_ctest_token,
+    build_option_append,
+    build_name_append,
+    create_correct_module_test,
+    create_nosetest_test,
+    create_coverage_test,
+    create_phantom_test,
+    create_globus_test
+)
+
 
 def cleanup(path=None, exclude=[]):
-    files = [ "pyctest_tomopy_rec.py",
-              "pyctest_tomopy_phantom.py", "pyctest_tomopy_utils.py"]
-
+    """
+    route for cleaning up testing files
+    """
     sp.call((sys.executable, os.path.join(os.getcwd(), "setup.py"), "clean"))
     helpers.RemovePath(os.path.join(os.getcwd(), "tomopy.egg-info"))
     helpers.RemovePath(os.path.join(os.getcwd(), "MANIFEST"))
-    helpers.Cleanup(path, extra=files, exclude=exclude)
+    helpers.Cleanup(path, exclude=exclude)
 
 
 def configure():
@@ -52,8 +68,6 @@ def configure():
     # phantom choices
     phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
                        "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
-    # number of iterations
-    default_nitr = 10
     # number of cores
     default_ncores = mp.cpu_count()
     # default algorithm choices
@@ -63,6 +77,9 @@ def configure():
     # default phantom choices
     default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                         "lena", "peppers", "shepp2d", "shepp3d"]
+
+    # default globus phantoms
+    default_globus_phantoms = ["tomo_00001"]
 
     parser.add_argument("-n", "--ncores",
                         help="number of cores",
@@ -81,7 +98,7 @@ def configure():
     parser.add_argument("--phantom-size",
                         type=int,
                         help="Size parameter for the phantom reconstructions",
-                        default=None)
+                        default=default_phantom_size)
     parser.add_argument("--algorithms",
                         help="Algorithms to use",
                         type=str,
@@ -92,6 +109,11 @@ def configure():
                         help="Path to tomobank datasets",
                         type=str,
                         default=None)
+    parser.add_argument("--globus-phantoms",
+                        help="Globus phantom files (without extension)",
+                        type=str,
+                        default=default_globus_phantoms,
+                        nargs='*')
     parser.add_argument("--skip-cleanup",
                         help="Skip cleanup of any old pyctest files",
                         action='store_true',
@@ -167,202 +189,79 @@ def configure():
     return args
 
 
+
 def run_pyctest():
+    '''
+    Configure PyCTest and execute
+    '''
     # run argparse, checkout source, copy over files
     args = configure()
-    # Change the build name to somthing other than default
-    pyctest.BUILD_NAME = "[{}] [{} {} {}] [Python {}]".format(
-        pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
-        platform.uname()[0],
-        helpers.GetSystemVersionInfo(),
-        platform.uname()[4],
-        platform.python_version())
-    if args.enable_sanitizer:
-        pyctest.BUILD_NAME += " [{}]".format(args.sanitizer_type.lower())
-    if args.customize_build_name:
-        pyctest.BUILD_NAME += " {}".format(args.customize_build_name)
-    # when coverage is enabled, we compile in debug so modify the build name
-    # so that the history of test timing is not affected
-    if args.coverage:
-        pyctest.BUILD_NAME = "{} [coverage]".format(pyctest.BUILD_NAME)
-    # remove any consecutive spaces
-    while "  " in pyctest.BUILD_NAME:
-        pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
-    # how to build the code
-    pyctest.BUILD_COMMAND = "{} setup.py --hide-listing install".format(
-        pyctest.PYTHON_EXECUTABLE)
-    if args.coverage:
-        pyctest.BUILD_COMMAND += " --build-type=Debug"
-    pyctest.BUILD_COMMAND += " --"
-    if args.enable_sanitizer:
-        pyctest.BUILD_COMMAND += " -DTOMOPY_USE_SANITIZER=ON -DSANITIZER_TYPE={}".format(
-            args.sanitizer_type)
-    if args.coverage:
-        pyctest.BUILD_COMMAND += " -DTOMOPY_USE_COVERAGE=ON"
 
+    # shorthand directories
+    source_dir = pyctest.SOURCE_DIRECTORY
+
+    # executables
+    pyexe = pyctest.PYTHON_EXECUTABLE
+    pycoverage = find_python_coverage()
+    gcovcommand = helpers.FindExePath("gcov")
+    if gcovcommand is None:
+        args.coverage = False
+
+    # properties
+    bench_props = {
+        "WORKING_DIRECTORY" : os.path.join(pyctest.SOURCE_DIRECTORY, "benchmarking"),
+        "DEPENDS" : "nosetests",
+        "TIMEOUT" : "10800"
+    }
+
+    #   CTEST_TOKEN
+    find_ctest_token()
+
+    #   BUILD_NAME
+    pyctest.BUILD_NAME = "[{}]".format(pyctest.GetGitBranch(source_dir))
+    build_name_append(platform.uname()[0], separate=False, suffix="")
+    build_name_append(helpers.GetSystemVersionInfo(), prefix="(", suffix=")")
+    build_name_append(platform.uname()[4], separate=False, prefix="")
+    build_name_append(platform.python_version(), prefix="[Python ")
+    build_name_append(args.sanitizer_type.lower(), check=args.enable_sanitizer)
+    build_name_append(args.customize_build_name)
+    build_name_append("coverage", check=args.coverage)
+
+
+    #   BUILD_COMMAND
+    pyctest.BUILD_COMMAND = "{} setup.py --hide-listing install".format(pyexe)
+    pyctest.BUILD_COMMAND += " --build-type=Debug" if args.coverage else ""
+    pyctest.BUILD_COMMAND += " --"
+
+    build_option_append(args.enable_sanitizer, "TOMOPY_USE_SANITIZER", "ON")
+    build_option_append(args.enable_sanitizer, "SANITIZER_TYPE", args.sanitizer_type)
+    build_option_append(args.coverage, "TOMOPY_USE_COVERAGE", "ON")
     print("TomoPy BUILD_COMMAND: '{}'...".format(pyctest.BUILD_COMMAND))
 
-    # generate the code coverage
-    python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
-    cover_exe = helpers.FindExePath("coverage", path=python_path)
+    #   COVERAGE_COMMAND
+    pyctest.COVERAGE_COMMAND = "{};xml".format(pycoverage)
     if args.coverage:
-        gcov_cmd = helpers.FindExePath("gcov")
-        if gcov_cmd is not None:
-            pyctest.COVERAGE_COMMAND = "{}".format(gcov_cmd)
-            pyctest.set("CTEST_COVERAGE_EXTRA_FLAGS", "-m -p -s {}".format(
-                pyctest.SOURCE_DIRECTORY))
-            pyctest.set("CTEST_EXTRA_COVERAGE_GLOB", "{}/*.gcno".format(
-                pyctest.SOURCE_DIRECTORY))
-    else:
-        # assign to just generate python coverage
-        pyctest.COVERAGE_COMMAND = "{};xml".format(cover_exe)
-    # copy over files from os.getcwd() to pyctest.BINARY_DIR
-    # (implicitly copies over PyCTest{Pre,Post}Init.cmake if they exist)
-    copy_files = [os.path.join("benchmarking", "pyctest_tomopy_utils.py"),
-                  os.path.join("benchmarking", "pyctest_tomopy_phantom.py"),
-                  os.path.join("benchmarking", "pyctest_tomopy_rec.py")]
-    pyctest.copy_files(copy_files)
-    # find the CTEST_TOKEN_FILE
-    home = helpers.GetHomePath()
-    if home is not None:
-        token_path = os.path.join(home, ".tokens", "nersc-tomopy")
-        if os.path.exists(token_path):
-            pyctest.set("CTEST_TOKEN_FILE", token_path)
-    # create a CTest that checks we imported the correct module
-    test = pyctest.test()
-    test.SetName("correct_module")
-    test.SetCommand([pyctest.PYTHON_EXECUTABLE, "-c",
-                     "\"import os, sys, tomopy; " +
-                     "print('using tomopy module: {}'.format(tomopy.__file__)); " +
-                     "ret=0 if os.getcwd() in tomopy.__file__ else 1; " +
-                     "sys.exit(ret)\""])
-    # set directory to run test
-    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-    test.SetProperty("LABEL", "unit")
-    # create a CTest that wraps "nosetest"
-    test = pyctest.test()
-    test.SetName("nosetests")
-    test.SetProperty("DEPENDS", "correct_module")
-    test.SetProperty("RUN_SERIAL", "ON")
-    test.SetProperty("LABEL", "unit")
-    nosetest_exe = helpers.FindExePath("nosetests", path=python_path)
-    if nosetest_exe is None:
-        nosetest_exe = helpers.FindExePath("nosetests")
-    coverage_exe = helpers.FindExePath("coverage", path=python_path)
-    if coverage_exe is None:
-        coverage_exe = helpers.FindExePath("coverage")
-    # python $(which coverage) run $(which nosetests)
-    test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run",
-                    nosetest_exe])
-    # set directory to run test
-    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-    # Generating C code coverage is enabled
-    if args.coverage:
-        # if generating C code coverage, generating the Python coverage
-        # needs to be put inside a test (that runs after nosetest)
-        # because pyctest.COVERAGE_COMMAND is used to generate GCov files
-        coverage_cmd = ""
-        if platform.system() != "Windows":
-            cover_cmd = os.path.join(pyctest.SOURCE_DIRECTORY,
-                                     "benchmarking", "generate_coverage.sh")
-            coverage_cmd = [cover_cmd, pyctest.SOURCE_DIRECTORY]
-        else:
-            # don't attempt GCov on Windows
-            cover_cmd = helpers.FindExePath("coverage", path=python_path)
-            coverage_cmd = [cover_cmd, "xml"]
-        test = pyctest.test()
-        test.SetName("python_coverage")
-        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-        test.SetProperty("DEPENDS", "nosetests")
-        test.SetCommand(coverage_cmd)
-    # If path to globus is provided, skip when generating C coverage (too long)
-    if not args.coverage and args.globus_path is not None:
-        phantom = "tomo_00001"
-        h5file = os.path.join(args.globus_path, phantom, phantom + ".h5")
-        if not os.path.exists(h5file):
-            print("Warning! HDF5 file '{}' does not exists! "
-                  "Skipping test...".format(h5file))
-            h5file = None
-        # loop over args.algorithms and create tests for each
+        pyctest.COVERAGE_COMMAND = "{}".format(gcovcommand)
+        pyctest.set("CTEST_COVERAGE_EXTRA_FLAGS", "-m")
+        pyctest.set("CTEST_EXTRA_COVERAGE_GLOB", "{}/*.gcno".format(source_dir))
+
+    # unit tests
+    create_correct_module_test()
+    create_nosetest_test(args)
+    create_coverage_test(args)
+
+    # globus tests
+    for phantom in args.globus_phantoms:
         for algorithm in args.algorithms:
-            test = pyctest.test()
-            name = "{}_{}".format(phantom, algorithm)
-            # original number of iterations before num-iter added to test name
-            if args.num_iter != 10:
-                name = "{}_itr{}".format(name, args.num_iter)
-            test.SetName(name)
-            test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-            test.SetProperty("TIMEOUT", "7200")  # 2 hour
-            test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-            test.SetProperty("DEPENDS", "nosetests")
-            if h5file is None:
-                test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                "-c",
-                                "print(\"Path to Globus file '{}/{}.h5' not specified\")".format(
-                                    phantom, phantom)])
+            create_globus_test(args, bench_props, algorithm, phantom)
 
-            else:
-                test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                ".//benchmarking/pyctest_tomopy_rec.py",
-                                h5file,
-                                "-a", algorithm,
-                                "--type", "slice",
-                                "-f", "jpeg",
-                                "-S", "1",
-                                "-c", "4",
-                                "-o", "benchmarking/{}".format(name),
-                                "-n", "{}".format(args.ncores),
-                                "-i", "{}".format(args.num_iter)])
-    # loop over args.phantoms, skip when generating C coverage (too long)
-    if not args.coverage and not args.disable_phantom_tests:
-        for phantom in args.phantoms:
-            # create a test comparing all the args.algorithms
-            test = pyctest.test()
-            if len(args.algorithms) == 1:
-                test_args = ["-a"]
-                name = "{}_{}".format(phantom, "".join(args.algorithms))
-            else:
-                test_args = ["--compare"]
-                name = "{}_{}".format(phantom, "comparison")
+    # phantom tests
+    for phantom in args.phantoms:
+        create_phantom_test(args, bench_props, phantom)
 
-            nsize = 512 if phantom != "shepp3d" else 128
-            # if size customized, create unique test-name
-            if args.phantom_size is not None and args.phantom_size != 512:
-                nsize = (args.phantom_size if phantom != "shepp3d" else
-                         int(args.phantom_size / 4))
-                name = "{}_pix{}".format(name, nsize)
-            # original number of iterations before num-iter added to test name
-            if args.num_iter != 10:
-                name = "{}_itr{}".format(name, args.num_iter)
+    print('Running PyCTest:\n\n\t{}\n\n'.format(pyctest.BUILD_NAME))
 
-            test.SetName(name)
-            test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-            test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
-            test.SetProperty("TIMEOUT", "10800")  # 3 hours
-            test.SetProperty("DEPENDS", "nosetests")
-            ncores = args.ncores
-            niters = args.num_iter
-            if phantom == "shepp3d":
-                test.SetProperty("RUN_SERIAL", "ON")
-            test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                            "./benchmarking/pyctest_tomopy_phantom.py",
-                            "-p", phantom,
-                            "-s", "{}".format(nsize),
-                            "-A", "360",
-                            "-f", "jpeg",
-                            "-S", "1",
-                            "-n", "{}".format(ncores),
-                            "-i", "{}".format(niters),
-                            "--output-dir", "benchmarking/{}".format(name)]
-                            + test_args + args.algorithms)
-    # generate the CTestConfig.cmake and CTestCustom.cmake
-    pyctest.generate_config(pyctest.BINARY_DIRECTORY)
-    # generate the CTestTestfile.cmake file
-    pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
-    # run CTest
-    pyctest.run(pyctest.ARGUMENTS, pyctest.BINARY_DIRECTORY)
+    pyctest.run()
 
 
 if __name__ == "__main__":

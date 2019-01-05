@@ -37,6 +37,8 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
+#include "PTL/TaskManager.hh"
+#include "PTL/TaskRunManager.hh"
 #include "utils.hh"
 
 BEGIN_EXTERN_C
@@ -52,12 +54,21 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
+#define __PRAGMA_SIMD _Pragma("omp simd")
+#define __PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
+
 //============================================================================//
 
-void
+int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    // check to see if the C implementation is requested
+    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_SIRT", false);
+    // if C implementation is requested, return non-zero (failure)
+    if(use_c_algorithm)
+        return (int) false;
+
     auto tid = ThreadPool::GetThisThreadID();
     ConsumeParameters(tid);
 
@@ -68,6 +79,9 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 #endif
 
     TIMEMORY_AUTO_TIMER("");
+    printf(
+        "\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+        __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
 #if defined(TOMOPY_USE_GPU)
     // TODO: select based on memory
@@ -87,6 +101,64 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     AutoLock l(TypeMutex<decltype(std::cout)>());
     std::cout << "[" << tid << "]> " << t.stop_and_return() << std::endl;
 #endif
+
+    return (int) true;
+}
+
+//============================================================================//
+
+void
+compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
+                   const float* theta, int s, int p, farray_t* simdata,
+                   farray_t* update, farray_t* recon_off)
+{
+    int slice_offset = s * ngridx * ngridy;
+    // needed for recon to output at proper orientation
+    float pi_offset = 0.5f * (float) M_PI;
+
+    float theta_p = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+
+    // Rotate object
+    auto recon_rot = cxx_rotate(*recon_off, -theta_p, ngridx, ngridy);
+
+    for(int d = 0; d < dx; d++)
+    {
+        int    pix_offset = d * ngridx;  // pixel offset
+        int    idx_data   = d + p * dx + s * dt * dx;
+        float  fngridx    = ngridx;
+        float  _sim       = 0.0f;
+        float* _simdata   = simdata->data() + idx_data;
+        float* _recon_rot = recon_rot.data() + pix_offset;
+
+        // Calculate simulated data by summing up along x-axis
+        __PRAGMA_SIMD_REDUCTION(_sim)
+        for(int n = 0; n < ngridx; n++)
+            _sim += _recon_rot[n];
+
+        // update shared simdata array
+        {
+            static Mutex _mutex;
+            AutoLock     l(_mutex);
+            (*simdata)[idx_data] += _sim;
+        }
+
+        // Make update by backprojecting error along x-axis
+        float upd = (data[idx_data] - *_simdata) / fngridx;
+        __PRAGMA_SIMD
+        for(int n = 0; n < ngridx; n++)
+            _recon_rot[n] += upd / fngridx;
+    }
+    // Back-Rotate object
+    auto tmp = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
+
+    // update shared update array
+    {
+        static Mutex _mutex;
+        AutoLock     l(_mutex);
+        __PRAGMA_SIMD
+        for(uint64_t i = 0; i < tmp.size(); ++i)
+            (*update)[i] += tmp[i];
+    }
 }
 
 //============================================================================//
@@ -96,30 +168,12 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 
 {
-    farray_t gridx(ngridx + 1, 0.0f);
-    farray_t gridy(ngridy + 1, 0.0f);
-    farray_t coordx(ngridy + 1, 0.0f);
-    farray_t coordy(ngridx + 1, 0.0f);
-    farray_t ax(ngridx + ngridy, 0.0f);
-    farray_t ay(ngridx + ngridy, 0.0f);
-    farray_t bx(ngridx + ngridy, 0.0f);
-    farray_t by(ngridx + ngridy, 0.0f);
-    farray_t coorx(ngridx + ngridy, 0.0f);
-    farray_t coory(ngridx + ngridy, 0.0f);
-    farray_t dist(ngridx + ngridy, 0.0f);
-    iarray_t indi(ngridx + ngridy, 0);
-
-    float    theta_p;
-    float    mov;
-    float    upd;
-    int      ind_data, ind_recon;
-    float    sum_dist2;
-    farray_t tmp_recon(dy * ngridx * ngridy, 0.0f);
-    for(int ii = 0; ii < tmp_recon.size(); ++ii)
-        tmp_recon.at(ii) = recon[ii];
-
-    printf("%s [iterations = %i, dy = %i, dt = %i, dx = %i]\n", __FUNCTION__,
-           num_iter, dy, dt, dx);
+    int nthreads =
+        GetEnv("TOMOPY_NUM_THREADS", std::thread::hardware_concurrency());
+    TaskRunManager* run_man = cpu_run_manager();
+    init_run_manager(run_man, nthreads);
+    TaskManager* task_man = run_man->GetTaskManager();
+    ThreadPool*  tp       = task_man->thread_pool();
 
     for(int i = 0; i < num_iter; i++)
     {
@@ -130,55 +184,28 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
             farray_t update(ngridx * ngridx, 0.0f);
             farray_t recon_off(ngridx * ngridy, 0.0f);
 
+            int slice_offset = s * ngridx * ngridy;
+            // needed for recon to output at proper orientation
+            float pi_offset = 0.5f * (float) M_PI;
+
             // recon offset for the slice
             for(int ii = 0; ii < recon_off.size(); ++ii)
-            {
-                recon_off.at(ii) = tmp_recon.at(ii + (s * ngridx * ngridy));
-            }
+                recon_off[ii] = recon[ii + slice_offset];
 
-            farray_t recon_update(recon_off.size(), 0.0f);
+            TaskGroup<void> tg;
             // For each projection angle
             for(int p = 0; p < dt; p++)
             {
-                theta_p = fmodf(theta[p] + (float) (0.5f * M_PI), 2.0f * (float) M_PI);
-                // Rotate object - 2D slices
-                auto recon_rot =
-                    cxx_rotate(recon_off, -theta_p, ngridx, ngridy);
-                // Calculate simulated data by summing up along x-axis
-                for(int d = 0; d < dx; d++)
-                {
-                    ind_data = d + p * dx + s * dt * dx;
-                    for(int n = 0; n < ngridx; n++)
-                    {
-                        simdata.at(ind_data) += recon_rot.at(n + d * ngridx);
-                    }
-                }
-                // Make update by backprojecting error along x-axis
-                for(int d = 0; d < dx; d++)
-                {
-                    sum_dist2 = ngridx;
-                    ind_data  = d + p * dx + s * dt * dx;
-                    upd = (data[ind_data] - simdata.at(ind_data)) / sum_dist2;
-                    for(int n = 0; n < ngridx; n++)
-                    {
-                        recon_rot.at(n + d * ngridx) += upd / ngridx;
-                    }
-                }
-                // Back-Rotate object
-                auto tmp = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
-                for(uint64_t i = 0; i < tmp.size(); ++i)
-                    recon_update.at(i) += tmp.at(i);
+                task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy,
+                               data, theta, s, p, &simdata, &update,
+                               &recon_off);
             }
+            tg.join();
+            float* _recon = recon + slice_offset;
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
-            {
-                tmp_recon.at(ii + (s * ngridx * ngridy)) += recon_update.at(ii)
-                                                            / static_cast<float>(dt);
-            }
+                _recon[ii] += update[ii] / static_cast<float>(dt);
         }
     }
-
-    for(int ii = 0; ii < tmp_recon.size(); ++ii)
-        recon[ii] = tmp_recon.at(ii);
 }
 
 //============================================================================//

@@ -24,7 +24,14 @@ if(CLANG_FORMATTER)
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cc
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cu
         ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp)
-    add_custom_target(format
+
+    # avoid conflicting format targets
+    set(FORMAT_NAME format)
+    if(TARGET format)
+        set(FORMAT_NAME format-tomopy)
+    endif()
+
+    add_custom_target(${FORMAT_NAME}
         COMMAND ${CLANG_FORMATTER} -i ${headers} ${sources}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Running '${CLANG_FORMATTER}'..."
