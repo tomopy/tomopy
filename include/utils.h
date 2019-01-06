@@ -128,66 +128,60 @@ typedef struct _TomoDataset
 // Data simulation
 
 DLL void
-project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-        int dx, const float* center, const float* theta);
+project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+        const float* center, const float* theta);
 
 DLL void
-project2(const float* objx, const float* objy, int oy, int ox, int oz,
-         float* data, int dy, int dt, int dx, const float* center,
-         const float* theta);
+project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
+         int dy, int dt, int dx, const float* center, const float* theta);
 
 DLL void
-project3(const float* objx, const float* objy, const float* objz, int oy,
-         int ox, int oz, float* data, int dy, int dt, int dx,
-         const float* center, const float* theta, int axis);
+project3(const float* objx, const float* objy, const float* objz, int oy, int ox, int oz,
+         float* data, int dy, int dt, int dx, const float* center, const float* theta,
+         int axis);
 
 // Reconstruction algorithms
 
 DLL void
-art(const float* data, int dy, int dt, int dx, const float* center,
-    const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+    float* recon, int ngridx, int ngridy, int num_iter);
 
 DLL void
-bart(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-     int          num_block,
+bart(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter, int num_block,
      const float* ind_block);  // TODO: I think this should be int *
 
 DLL void
-fbp(const float* data, int dy, int dt, int dx, const float* center,
-    const float* theta, float* recon, int ngridx, int ngridy,
-    const char name[16], const float* filter_par);
+fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+    float* recon, int ngridx, int ngridy, const char name[16], const float* filter_par);
 
 DLL void
-grad(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-     const float* reg_pars);
+grad(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
 
 DLL void
-mlem(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter);
 
 DLL void
-osem(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-     int num_block, const float* ind_block);
+osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter, int num_block,
+     const float* ind_block);
 
 DLL void
 ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter, const float* reg_pars, int num_block,
-             const float* ind_block);
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+             const float* reg_pars, int num_block, const float* ind_block);
 
 DLL void
 ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy,
-           int num_iter, const float* reg_pars, int num_block,
-           const float* ind_block);
+           const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+           const float* reg_pars, int num_block, const float* ind_block);
 
 DLL void
 pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy,
-           int num_iter, const float* reg_pars);
+           const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+           const float* reg_pars);
 
 DLL void
 pml_quad(const float* data, int dy, int dt, int dx, const float* center,
@@ -195,80 +189,75 @@ pml_quad(const float* data, int dy, int dt, int dx, const float* center,
          const float* reg_pars);
 
 DLL void
-sirt(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter);
 
 DLL void
-tv(const float* data, int dy, int dt, int dx, const float* center,
-   const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-   const float* reg_pars);
+tv(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+   float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
 
 DLL void
-vector(const float* data, int dy, int dt, int dx, const float* center,
-       const float* theta, float* recon1, float* recon2, int ngridx, int ngridy,
-       int num_iter);
+vector(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+       float* recon1, float* recon2, int ngridx, int ngridy, int num_iter);
 
 DLL void
 vector2(const float* data1, const float* data2, int dy, int dt, int dx,
         const float* center1, const float* center2, const float* theta1,
-        const float* theta2, float* recon1, float* recon2, float* recon3,
-        int ngridx, int ngridy, int num_iter, int axis1, int axis2);
+        const float* theta2, float* recon1, float* recon2, float* recon3, int ngridx,
+        int ngridy, int num_iter, int axis1, int axis2);
 
 DLL void
-vector3(const float* data1, const float* data2, const float* data3, int dy,
-        int dt, int dx, const float* center1, const float* center2,
-        const float* center3, const float* theta1, const float* theta2,
-        const float* theta3, float* recon1, float* recon2, float* recon3,
-        int ngridx, int ngridy, int num_iter, int axis1, int axis2, int axis3);
+vector3(const float* data1, const float* data2, const float* data3, int dy, int dt,
+        int dx, const float* center1, const float* center2, const float* center3,
+        const float* theta1, const float* theta2, const float* theta3, float* recon1,
+        float* recon2, float* recon3, int ngridx, int ngridy, int num_iter, int axis1,
+        int axis2, int axis3);
 
 // Utility functions for data simultation
 
 DLL void
-preprocessing(int ngridx, int ngridy, int dz, float center, float* mov,
-              float* gridx, float* gridy);
+preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
+              float* gridy);
 
 int DLL
     calc_quadrant(float theta_p);
 
 DLL void
-calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p,
-            float cos_p, const float* gridx, const float* gridy, float* coordx,
-            float* coordy);
+calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p, float cos_p,
+            const float* gridx, const float* gridy, float* coordx, float* coordy);
 
 DLL void
 trim_coords(int ngridx, int ngridy, const float* coordx, const float* coordy,
-            const float* gridx, const float* gridy, int* asize, float* ax,
-            float* ay, int* bsize, float* bx, float* by);
+            const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
+            int* bsize, float* bx, float* by);
 
 DLL void
-sort_intersections(int ind_condition, int asize, const float* ax,
-                   const float* ay, int bsize, const float* bx, const float* by,
-                   int* csize, float* coorx, float* coory);
+sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
+                   int bsize, const float* bx, const float* by, int* csize, float* coorx,
+                   float* coory);
 
 DLL void
-calc_dist(int ngridx, int ngridy, int csize, const float* coorx,
-          const float* coory, int* indi, float* dist);
+calc_dist(int ngridx, int ngridy, int csize, const float* coorx, const float* coory,
+          int* indi, float* dist);
 
 DLL void
-calc_dist2(int ngridx, int ngridy, int csize, const float* coorx,
-           const float* coory, int* indx, int* indy, float* dist);
+calc_dist2(int ngridx, int ngridy, int csize, const float* coorx, const float* coory,
+           int* indx, int* indy, float* dist);
 
 DLL void
-calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
-             int csize, const int* indi, const float* dist, const float* model,
-             float* simdata);
+calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
+             const int* indi, const float* dist, const float* model, float* simdata);
 
 DLL void
-calc_simdata2(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
-              int csize, const int* indx, const int* indy, const float* dist,
-              float vx, float vy, const float* modelx, const float* modely,
+calc_simdata2(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
+              const int* indx, const int* indy, const float* dist, float vx, float vy,
+              const float* modelx, const float* modely, float* simdata);
+
+DLL void
+calc_simdata3(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
+              const int* indx, const int* indy, const float* dist, float vx, float vy,
+              const float* modelx, const float* modely, const float* modelz, int axis,
               float* simdata);
-
-DLL void
-calc_simdata3(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
-              int csize, const int* indx, const int* indy, const float* dist,
-              float vx, float vy, const float* modelx, const float* modely,
-              const float* modelz, int axis, float* simdata);
 
 float DLL
       rotate_x(const float x, const float y, const float theta);
@@ -277,7 +266,7 @@ float DLL
       rotate_y(const float x, const float y, const float theta);
 
 float* DLL
-       rotate(const float* obj, const float theta, const int nx, const int ny,
-              const int dx, const int dy);
+       rotate(const float* obj, const float theta, const int nx, const int ny, const int dx,
+              const int dy);
 
 #endif

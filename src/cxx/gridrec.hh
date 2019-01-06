@@ -69,7 +69,7 @@ END_EXTERN_C
 #ifdef __INTEL_COMPILER
 #    define __PRAGMA_SIMD _Pragma("simd assert")
 #    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                 \
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
         _Pragma("simd assert, vecremainder, vectorlength(8)")
 #    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
 #    define __PRAGMA_IVDEP _Pragma("ivdep")
@@ -102,9 +102,8 @@ void
 cxx_free_matrix_c(std::complex<float>**& m);
 
 void
-cxx_set_filter_tables(int dt, int pd, float fac, filter_func,
-                      const float* filter_par, std::complex<float>* A,
-                      unsigned char is2d);
+cxx_set_filter_tables(int dt, int pd, float fac, filter_func, const float* filter_par,
+                      std::complex<float>* A, unsigned char is2d);
 
 //===========================================================================//
 

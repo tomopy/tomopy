@@ -44,9 +44,8 @@
 #include "utils.h"
 
 void
-tv(const float* data, int dy, int dt, int dx, const float* center,
-   const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-   const float* reg_pars)
+tv(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+   float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars)
 {
     float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -70,10 +69,9 @@ tv(const float* data, int dy, int dt, int dx, const float* center,
     float* prox1   = (float*) malloc((dy * dt * dx) * sizeof(float));
     float* adjdata = (float*) malloc((dy * ngridx * ngridy) * sizeof(float));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL && simdata != NULL &&
-           sum_dist != NULL && update != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
+           simdata != NULL && sum_dist != NULL && update != NULL);
 
     int    s, p, d, i, n;
     int    quadrant;
@@ -172,19 +170,19 @@ tv(const float* data, int dy, int dt, int dx, const float* center,
                     // Calculate coordinates
                     xi = -ngridx - ngridy;
                     yi = 0.5f * (1 - dx) + d + mov;
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
@@ -192,15 +190,14 @@ tv(const float* data, int dy, int dt, int dx, const float* center,
                     calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                     // Calculate simdata
-                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
-                                 dist, recon,
+                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                 recon,
                                  simdata);  // Output: simdata
 
-                    ind_data = d + p * dx + s * dt * dx;
-                    prox1[ind_data] =
-                        (prox1[ind_data] + c * simdata[ind_data] * r -
-                         c * data[ind_data]) /
-                        (1 + c);
+                    ind_data        = d + p * dx + s * dt * dx;
+                    prox1[ind_data] = (prox1[ind_data] + c * simdata[ind_data] * r -
+                                       c * data[ind_data]) /
+                                      (1 + c);
 
                     // Calculate dist*dist
                     sum_dist2 = 0.0f;
@@ -214,8 +211,7 @@ tv(const float* data, int dy, int dt, int dx, const float* center,
                     // adjdata = R^*(prox1)
                     if(sum_dist2 != 0.0f)
                         for(n = 0; n < csize - 1; n++)
-                            adjdata[ind_recon + indi[n]] +=
-                                r * prox1[ind_data] * dist[n];
+                            adjdata[ind_recon + indi[n]] += r * prox1[ind_data] * dist[n];
                 }
             }
 

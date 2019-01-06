@@ -42,6 +42,7 @@ def cleanup(path=None, exclude=[]):
     """
     sp.call((sys.executable, os.path.join(os.getcwd(), "setup.py"), "clean"))
     helpers.RemovePath(os.path.join(os.getcwd(), "tomopy.egg-info"))
+    helpers.RemovePath(os.path.join(os.getcwd(), "dist"))
     helpers.RemovePath(os.path.join(os.getcwd(), "MANIFEST"))
     helpers.Cleanup(path, exclude=exclude)
 

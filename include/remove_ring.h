@@ -60,9 +60,8 @@
 
 DLL void
 remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
-            float thresh_max, float thresh_min, float threshold,
-            int angular_min, int ring_width, int int_mode, int istart,
-            int iend);
+            float thresh_max, float thresh_min, float threshold, int angular_min,
+            int ring_width, int int_mode, int istart, int iend);
 
 int
 min_distance_to_edge(float center_x, float center_y, int width, int height);
@@ -71,15 +70,14 @@ int
 iroundf(float x);
 
 float**
-polar_transform(float** image, float center_x, float center_y, int width,
-                int height, int* p_pol_width, int* p_pol_height,
-                float thresh_max, float thresh_min, int r_scale, int ang_scale,
-                int overhang);
+polar_transform(float** image, float center_x, float center_y, int width, int height,
+                int* p_pol_width, int* p_pol_height, float thresh_max, float thresh_min,
+                int r_scale, int ang_scale, int overhang);
 
 float**
 inverse_polar_transform(float** polar_image, float center_x, float center_y,
-                        int pol_width, int pol_height, int width, int height,
-                        int r_scale, int over_hang);
+                        int pol_width, int pol_height, int width, int height, int r_scale,
+                        int over_hang);
 
 void
 swap_float(float* arr, int index1, int index2);
@@ -91,33 +89,30 @@ int
 partition(float* median_array, int left, int right, int pivot_index);
 
 int
-partition_2_arrays(float* median_array, int* position_array, int left,
-                   int right, int pivot_index);
+partition_2_arrays(float* median_array, int* position_array, int left, int right,
+                   int pivot_index);
 
 void
 quick_sort(float* median_array, int left, int right);
 
 void
-quick_sort_2_arrays(float* median_array, int* position_array, int left,
-                    int right);
+quick_sort_2_arrays(float* median_array, int* position_array, int left, int right);
 
 void
-bubble_2_arrays(float* median_array, int* position_array, int index,
-                int length);
+bubble_2_arrays(float* median_array, int* position_array, int index, int length);
 
 void
 median_filter_fast_1D(float*** filtered_image, float*** image, int start_row,
-                      int start_col, int end_row, int end_col, char axis,
-                      int kernel_rad, int filter_width, int width, int height);
+                      int start_col, int end_row, int end_col, char axis, int kernel_rad,
+                      int filter_width, int width, int height);
 
 void
-mean_filter_fast_1D(float*** filtered_image, float*** image, int start_row,
-                    int start_col, int end_row, int end_col, int int_mode,
-                    int kernel_rad, int width, int height);
+mean_filter_fast_1D(float*** filtered_image, float*** image, int start_row, int start_col,
+                    int end_row, int end_col, int int_mode, int kernel_rad, int width,
+                    int height);
 
 void
-ring_filter(float*** polar_image, int pol_height, int pol_width,
-            float threshold, int m_rad, int m_azi, int ring_width,
-            int int_mode);
+ring_filter(float*** polar_image, int pol_height, int pol_width, float threshold,
+            int m_rad, int m_azi, int ring_width, int int_mode);
 
 #endif

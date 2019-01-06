@@ -54,8 +54,8 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
-#define __PRAGMA_SIMD _Pragma("omp simd")
-#define __PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
+#define PRAGMA_SIMD _Pragma("omp simd")
+#define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
 #define HW_CONCURRENCY std::thread::hardware_concurrency()
 
 //============================================================================//
@@ -80,20 +80,17 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 #endif
 
     TIMEMORY_AUTO_TIMER("");
-    printf(
-        "\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-        __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
 #if defined(TOMOPY_USE_GPU)
     // TODO: select based on memory
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
-        sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                 num_iter);
+        sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
     else
-        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_cpu, data, dy,
-                          dt, dx, center, theta, recon, ngridx, ngridy,
-                          num_iter);
+        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_cpu, data, dy, dt, dx,
+                          center, theta, recon, ngridx, ngridy, num_iter);
 #else
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
@@ -110,10 +107,9 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
-                   const float* theta, int s, int p, farray_t* simdata,
-                   farray_t* update, farray_t* recon_off)
+                   const float* theta, int s, int p, farray_t* simdata, farray_t* update,
+                   farray_t* recon_off)
 {
-    int slice_offset = s * ngridx * ngridy;
     // needed for recon to output at proper orientation
     float pi_offset = 0.5f * (float) M_PI;
 
@@ -132,7 +128,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
         float* _recon_rot = recon_rot.data() + pix_offset;
 
         // Calculate simulated data by summing up along x-axis
-        __PRAGMA_SIMD_REDUCTION(_sim)
+        PRAGMA_SIMD_REDUCTION(_sim)
         for(int n = 0; n < ngridx; n++)
             _sim += _recon_rot[n];
 
@@ -145,7 +141,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
 
         // Make update by backprojecting error along x-axis
         float upd = (data[idx_data] - *_simdata) / fngridx;
-        __PRAGMA_SIMD
+        PRAGMA_SIMD
         for(int n = 0; n < ngridx; n++)
             _recon_rot[n] += upd;
     }
@@ -156,7 +152,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
     {
         static Mutex _mutex;
         AutoLock     l(_mutex);
-        __PRAGMA_SIMD
+        PRAGMA_SIMD
         for(uint64_t i = 0; i < tmp.size(); ++i)
             (*update)[i] += tmp[i];
     }
@@ -169,6 +165,9 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 
 {
+    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
     int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
     TaskRunManager* run_man  = cpu_run_manager();
     init_run_manager(run_man, nthreads);
@@ -184,24 +183,22 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
             farray_t update(ngridx * ngridy, 0.0f);
             farray_t recon_off(ngridx * ngridy, 0.0f);
 
-            int slice_offset = s * ngridx * ngridy;
-            // needed for recon to output at proper orientation
-            float pi_offset = 0.5f * (float) M_PI;
+            int    slice_offset = s * ngridx * ngridy;
+            float* _recon       = recon + slice_offset;
 
             // recon offset for the slice
             for(int ii = 0; ii < recon_off.size(); ++ii)
-                recon_off[ii] = recon[ii + slice_offset];
+                recon_off[ii] = _recon[ii];
 
             TaskGroup<void> tg;
             // For each projection angle
             for(int p = 0; p < dt; p++)
             {
-                task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy,
-                               data, theta, s, p, &simdata, &update,
-                               &recon_off);
+                task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy, data,
+                               theta, s, p, &simdata, &update, &recon_off);
             }
             tg.join();
-            float* _recon = recon + slice_offset;
+
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
                 _recon[ii] += update[ii] / static_cast<float>(dt);
         }
@@ -213,8 +210,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
 #if !defined(TOMOPY_USE_CUDA)
 void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy,
-          int num_iter)
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
@@ -224,8 +220,7 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter)
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openacc]");
@@ -244,10 +239,9 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
     int*   indi    = (int*) malloc((ngridx + ngridy) * sizeof(int));
     float* simdata = (float*) malloc((dy * dt * dx) * sizeof(float));
 
-    assert(coordx != nullptr && coordy != nullptr && ax != nullptr &&
-           ay != nullptr && by != nullptr && bx != nullptr &&
-           coorx != nullptr && coory != nullptr && dist != nullptr &&
-           indi != nullptr && simdata != nullptr);
+    assert(coordx != nullptr && coordy != nullptr && ax != nullptr && ay != nullptr &&
+           by != nullptr && bx != nullptr && coorx != nullptr && coory != nullptr &&
+           dist != nullptr && indi != nullptr && simdata != nullptr);
 
     int   s, p, d, i, n;
     int   quadrant;
@@ -282,25 +276,24 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = (1 - dx) / 2.0f + d + mov;
-                openacc_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                    gridy, coordx, coordy);
+                openacc_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                    coordx, coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                openacc_trim_coords(ngridx, ngridy, coordx, coordy, gridx,
-                                    gridy, &asize, ax, ay, &bsize, bx, by);
+                openacc_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                    ax, ay, &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                openacc_sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                           by, &csize, coorx, coory);
+                openacc_sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                           coorx, coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
                 // indices of the pixels on the reconstruction grid.
-                openacc_calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                  dist);
+                openacc_calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                 // Calculate dist*dist
                 float sum_dist2 = 0.0f;
@@ -315,14 +308,14 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
                     for(s = 0; s < dy; s++)
                     {
                         // Calculate simdata
-                        openacc_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-                                             csize, indi, dist, recon,
+                        openacc_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
+                                             dist, recon,
                                              simdata);  // Output: simdata
 
                         // Update
                         ind_data  = d + p * dx + s * dt * dx;
                         ind_recon = s * ngridx * ngridy;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd       = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];
@@ -353,8 +346,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter)
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openmp]");
@@ -373,10 +365,9 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
     int*   indi    = (int*) malloc((ngridx + ngridy) * sizeof(int));
     float* simdata = (float*) malloc((dy * dt * dx) * sizeof(float));
 
-    assert(coordx != nullptr && coordy != nullptr && ax != nullptr &&
-           ay != nullptr && by != nullptr && bx != nullptr &&
-           coorx != nullptr && coory != nullptr && dist != nullptr &&
-           indi != nullptr && simdata != nullptr);
+    assert(coordx != nullptr && coordy != nullptr && ax != nullptr && ay != nullptr &&
+           by != nullptr && bx != nullptr && coorx != nullptr && coory != nullptr &&
+           dist != nullptr && indi != nullptr && simdata != nullptr);
 
     int   s, p, d, i, n;
     int   quadrant;
@@ -411,25 +402,24 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = (1 - dx) / 2.0f + d + mov;
-                openmp_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                   gridy, coordx, coordy);
+                openmp_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                   coordx, coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                openmp_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                   &asize, ax, ay, &bsize, bx, by);
+                openmp_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                   ax, ay, &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                openmp_sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                          by, &csize, coorx, coory);
+                openmp_sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                          coorx, coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
                 // indices of the pixels on the reconstruction grid.
-                openmp_calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                 dist);
+                openmp_calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                 // Calculate dist*dist
                 float sum_dist2 = 0.0f;
@@ -444,14 +434,14 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
                     for(s = 0; s < dy; s++)
                     {
                         // Calculate simdata
-                        openmp_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-                                            csize, indi, dist, recon,
+                        openmp_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
+                                            dist, recon,
                                             simdata);  // Output: simdata
 
                         // Update
                         ind_data  = d + p * dx + s * dt * dx;
                         ind_recon = s * ngridx * ngridy;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd       = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];

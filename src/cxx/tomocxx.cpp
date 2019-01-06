@@ -61,8 +61,7 @@ _EXTERN_C
 
 //============================================================================//
 
-typedef py::array_t<float, py::array::c_style | py::array::forcecast>
-    pyfarray_t;
+typedef py::array_t<float, py::array::c_style | py::array::forcecast> pyfarray_t;
 
 //============================================================================//
 

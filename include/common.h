@@ -44,8 +44,8 @@
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                 \
-            extern "C"                                                         \
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
             {
 #    endif
 #    ifndef END_EXTERN_C

@@ -44,8 +44,8 @@
 #include "utils.h"
 
 void
-project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-        int dx, const float* center, const float* theta)
+project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+        const float* center, const float* theta)
 {
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
@@ -60,9 +60,8 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
     float* dist   = (float*) malloc((ox + oz + 1) * sizeof(float));
     int*   indi   = (int*) malloc((ox + oz + 1) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int   s, p, d;
     int   quadrant;
@@ -89,19 +88,18 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
             // Calculate coordinates
             xi = -ox - oz;
             yi = (1 - dx) / 2.0 + d + mov;
-            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx,
-                        coordy);
+            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx, coordy);
 
             // Merge the (coordx, gridy) and (gridx, coordy)
-            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay,
-                        &bsize, bx, by);
+            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay, &bsize, bx,
+                        by);
 
             // Sort the array of intersection points (ax, ay) and
             // (bx, by). The new sorted intersection points are
             // stored in (coorx, coory). Total number of points
             // are csize.
-            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
-                               coorx, coory);
+            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coorx,
+                               coory);
 
             // Calculate the distances (dist) between the
             // intersection points (coorx, coory). Find the
@@ -133,9 +131,8 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
 }
 
 void
-project2(const float* objx, const float* objy, int oy, int ox, int oz,
-         float* data, int dy, int dt, int dx, const float* center,
-         const float* theta)
+project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
+         int dy, int dt, int dx, const float* center, const float* theta)
 {
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
@@ -152,9 +149,8 @@ project2(const float* objx, const float* objy, int oy, int ox, int oz,
     int*   indy   = (int*) malloc((ox + oz + 1) * sizeof(int));
     int*   indi   = (int*) malloc((ox + oz + 1) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int   s, p, d;
     int   quadrant;
@@ -192,19 +188,18 @@ project2(const float* objx, const float* objy, int oy, int ox, int oz,
             vx = (srcx - detx) / dv;
             vy = (srcy - dety) / dv;
 
-            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx,
-                        coordy);
+            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx, coordy);
 
             // Merge the (coordx, gridy) and (gridx, coordy)
-            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay,
-                        &bsize, bx, by);
+            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay, &bsize, bx,
+                        by);
 
             // Sort the array of intersection points (ax, ay) and
             // (bx, by). The new sorted intersection points are
             // stored in (coorx, coory). Total number of points
             // are csize.
-            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
-                               coorx, coory);
+            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coorx,
+                               coory);
 
             // Calculate the distances (dist) between the
             // intersection points (coorx, coory). Find the
@@ -215,8 +210,8 @@ project2(const float* objx, const float* objy, int oy, int ox, int oz,
             for(s = 0; s < dy; s++)
             {
                 // Calculate simdata
-                calc_simdata2(s, p, d, ox, oz, dt, dx, csize, indx, indy, dist,
-                              vx, vy, objx, objy,
+                calc_simdata2(s, p, d, ox, oz, dt, dx, csize, indx, indy, dist, vx, vy,
+                              objx, objy,
                               data);  // Output: simulated data
             }
         }
@@ -237,9 +232,9 @@ project2(const float* objx, const float* objy, int oy, int ox, int oz,
 }
 
 void
-project3(const float* objx, const float* objy, const float* objz, int oy,
-         int ox, int oz, float* data, int dy, int dt, int dx,
-         const float* center, const float* theta, int axis)
+project3(const float* objx, const float* objy, const float* objz, int oy, int ox, int oz,
+         float* data, int dy, int dt, int dx, const float* center, const float* theta,
+         int axis)
 {
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
@@ -256,9 +251,8 @@ project3(const float* objx, const float* objy, const float* objz, int oy,
     int*   indy   = (int*) malloc((ox + oz + 1) * sizeof(int));
     int*   indi   = (int*) malloc((ox + oz + 1) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int   s, p, d;
     int   quadrant;
@@ -296,19 +290,18 @@ project3(const float* objx, const float* objy, const float* objz, int oy,
             vx = (srcx - detx) / dv;
             vy = (srcy - dety) / dv;
 
-            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx,
-                        coordy);
+            calc_coords(ox, oz, xi, yi, sin_p, cos_p, gridx, gridy, coordx, coordy);
 
             // Merge the (coordx, gridy) and (gridx, coordy)
-            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay,
-                        &bsize, bx, by);
+            trim_coords(ox, oz, coordx, coordy, gridx, gridy, &asize, ax, ay, &bsize, bx,
+                        by);
 
             // Sort the array of intersection points (ax, ay) and
             // (bx, by). The new sorted intersection points are
             // stored in (coorx, coory). Total number of points
             // are csize.
-            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
-                               coorx, coory);
+            sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coorx,
+                               coory);
 
             // Calculate the distances (dist) between the
             // intersection points (coorx, coory). Find the
@@ -319,8 +312,8 @@ project3(const float* objx, const float* objy, const float* objz, int oy,
             for(s = 0; s < dy; s++)
             {
                 // Calculate simdata
-                calc_simdata3(s, p, d, ox, oz, dt, dx, csize, indx, indy, dist,
-                              vx, vy, objx, objy, objz, axis,
+                calc_simdata3(s, p, d, ox, oz, dt, dx, csize, indx, indy, dist, vx, vy,
+                              objx, objy, objz, axis,
                               data);  // Output: simulated data
             }
         }

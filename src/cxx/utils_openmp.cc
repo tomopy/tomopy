@@ -103,8 +103,7 @@ openmp_calc_quadrant(float theta_p)
 
 void
 openmp_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-                   const float* gridx, const float* gridy, float* coordx,
-                   float* coordy)
+                   const float* gridx, const float* gridy, float* coordx, float* coordy)
 {
     float srcx, srcy, detx, dety;
     float slope, islope;
@@ -134,8 +133,8 @@ openmp_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 
 void
 openmp_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
-                   const float* gridx, const float* gridy, int* asize,
-                   float* ax, float* ay, int* bsize, float* bx, float* by)
+                   const float* gridx, const float* gridy, int* asize, float* ax,
+                   float* ay, int* bsize, float* bx, float* by)
 {
     *asize         = 0;
     *bsize         = 0;
@@ -169,10 +168,9 @@ openmp_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
 //============================================================================//
 
 void
-openmp_sort_intersections(int ind_condition, int asize, const float* ax,
-                          const float* ay, int bsize, const float* bx,
-                          const float* by, int* csize, float* coorx,
-                          float* coory)
+openmp_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
+                          int bsize, const float* bx, const float* by, int* csize,
+                          float* coorx, float* coory)
 {
     int i = 0, j = 0, k = 0;
     if(ind_condition == 0)
@@ -251,8 +249,8 @@ openmp_sort_intersections(int ind_condition, int asize, const float* ax,
 //============================================================================//
 
 void
-openmp_calc_dist(int ry, int rz, int csize, const float* coorx,
-                 const float* coory, int* indi, float* dist)
+openmp_calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
+                 int* indi, float* dist)
 {
     const int _size = csize - 1;
 
@@ -345,9 +343,9 @@ openmp_calc_dist(int ry, int rz, int csize, const float* coorx,
 //============================================================================//
 
 void
-openmp_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx,
-                    int csize, const int* indi, const float* dist,
-                    const float* model, float* simdata)
+openmp_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+                    const int* indi, const float* dist, const float* model,
+                    float* simdata)
 {
     int index_model = s * ry * rz;
     int index_data  = d + p * dx + s * dt * dx;

@@ -56,8 +56,8 @@
 
 DLL void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy,
-        const char fname[16], const float* filter_par);
+        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
+        const float* filter_par);
 
 float*
 malloc_vector_f(size_t n);
@@ -112,15 +112,14 @@ filter_is_2d(const char* name);
 void
 set_filter_tables(int dt, int pd, float fac,
                   float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A,
-                  unsigned char is2d);
+                  const float* filter_par, float _Complex* A, unsigned char is2d);
 
 void
 set_trig_tables(int dt, const float* theta, float** SP, float** CP);
 
 void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl,
-                int linv, float* wtbl, float* winv);
+set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
+                float* wtbl, float* winv);
 
 float
 legendre(int n, const float* coefs, float x);

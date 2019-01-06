@@ -180,8 +180,7 @@ cuda_multi_processor_count()
         return 0;
 
     // keep from querying device
-    static thread_local cuda_device_info<int>* _instance =
-        new cuda_device_info<int>();
+    static thread_local cuda_device_info<int>* _instance = new cuda_device_info<int>();
     // use the thread assigned devices
     int device = this_thread_device();
 
@@ -204,8 +203,7 @@ cuda_max_threads_per_block()
         return 0;
 
     // keep from querying device
-    static thread_local cuda_device_info<int>* _instance =
-        new cuda_device_info<int>();
+    static thread_local cuda_device_info<int>* _instance = new cuda_device_info<int>();
     // use the thread assigned devices
     int device = this_thread_device();
 
@@ -228,8 +226,7 @@ cuda_warp_size()
         return 0;
 
     // keep from querying device
-    static thread_local cuda_device_info<int>* _instance =
-        new cuda_device_info<int>();
+    static thread_local cuda_device_info<int>* _instance = new cuda_device_info<int>();
     // use the thread assigned devices
     int device = this_thread_device();
 
@@ -252,8 +249,7 @@ cuda_shared_memory_per_block()
         return 0;
 
     // keep from querying device
-    static thread_local cuda_device_info<int>* _instance =
-        new cuda_device_info<int>();
+    static thread_local cuda_device_info<int>* _instance = new cuda_device_info<int>();
     // use the thread assigned devices
     int device = this_thread_device();
 
@@ -397,22 +393,20 @@ cuda_device_query()
         int memBusWidth;
         int L2CacheSize;
 
-        printf(
-            "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
-            driverVersion / 1000, (driverVersion % 100) / 10,
-            runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+        printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
+               driverVersion / 1000, (driverVersion % 100) / 10, runtimeVersion / 1000,
+               (runtimeVersion % 100) / 10);
 
         printf("  CUDA Capability Major/Minor version number:    %d.%d\n",
                deviceProp.major, deviceProp.minor);
 
         char msg[256];
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-        sprintf_s(
-            msg, sizeof(msg),
-            "  Total amount of global memory:                 %.0f MBytes "
-            "(%llu bytes)\n",
-            static_cast<float>(deviceProp.totalGlobalMem / 1048576.0f),
-            (unsigned long long) deviceProp.totalGlobalMem);
+        sprintf_s(msg, sizeof(msg),
+                  "  Total amount of global memory:                 %.0f MBytes "
+                  "(%llu bytes)\n",
+                  static_cast<float>(deviceProp.totalGlobalMem / 1048576.0f),
+                  (unsigned long long) deviceProp.totalGlobalMem);
 #else
         snprintf(msg, sizeof(msg),
                  "  Total amount of global memory:                 %.0f MBytes "
@@ -422,10 +416,9 @@ cuda_device_query()
 #endif
         printf("%s", msg);
 
-        printf(
-            "  GPU Max Clock rate:                            %.0f MHz (%0.2f "
-            "GHz)\n",
-            deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
+        printf("  GPU Max Clock rate:                            %.0f MHz (%0.2f "
+               "GHz)\n",
+               deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
 
 #if CUDART_VERSION >= 5000
         // This is supported in CUDA 5.0 (runtime API device properties)
@@ -436,45 +429,36 @@ cuda_device_query()
 
         if(deviceProp.l2CacheSize)
         {
-            printf(
-                "  L2 Cache Size:                                 %d bytes\n",
-                deviceProp.l2CacheSize);
+            printf("  L2 Cache Size:                                 %d bytes\n",
+                   deviceProp.l2CacheSize);
         }
 
 #else
-        getCudaAttribute<int>(&memoryClock,
-                              CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE, dev);
+        getCudaAttribute<int>(&memoryClock, CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE, dev);
         printf("  Memory Clock rate:                             %.0f Mhz\n",
                memoryClock * 1e-3f);
-        getCudaAttribute<int>(&memBusWidth,
-                              CU_DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH, dev);
-        printf("  Memory Bus Width:                              %d-bit\n",
-               memBusWidth);
-        getCudaAttribute<int>(&L2CacheSize, CU_DEVICE_ATTRIBUTE_L2_CACHE_SIZE,
+        getCudaAttribute<int>(&memBusWidth, CU_DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH,
                               dev);
+        printf("  Memory Bus Width:                              %d-bit\n", memBusWidth);
+        getCudaAttribute<int>(&L2CacheSize, CU_DEVICE_ATTRIBUTE_L2_CACHE_SIZE, dev);
 
         if(L2CacheSize)
-            printf(
-                "  L2 Cache Size:                                 %d bytes\n",
-                L2CacheSize);
+            printf("  L2 Cache Size:                                 %d bytes\n",
+                   L2CacheSize);
 #endif
 
-        printf(
-            "  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
-            "%d), 3D=(%d, %d, %d)\n",
-            deviceProp.maxTexture1D, deviceProp.maxTexture2D[0],
-            deviceProp.maxTexture2D[1], deviceProp.maxTexture3D[0],
-            deviceProp.maxTexture3D[1], deviceProp.maxTexture3D[2]);
+        printf("  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
+               "%d), 3D=(%d, %d, %d)\n",
+               deviceProp.maxTexture1D, deviceProp.maxTexture2D[0],
+               deviceProp.maxTexture2D[1], deviceProp.maxTexture3D[0],
+               deviceProp.maxTexture3D[1], deviceProp.maxTexture3D[2]);
         printf("  Maximum Layered 1D Texture Size, (num) layers  1D=(%d), %d "
                "layers\n",
-               deviceProp.maxTexture1DLayered[0],
-               deviceProp.maxTexture1DLayered[1]);
-        printf(
-            "  Maximum Layered 2D Texture Size, (num) layers  2D=(%d, %d), %d "
-            "layers\n",
-            deviceProp.maxTexture2DLayered[0],
-            deviceProp.maxTexture2DLayered[1],
-            deviceProp.maxTexture2DLayered[2]);
+               deviceProp.maxTexture1DLayered[0], deviceProp.maxTexture1DLayered[1]);
+        printf("  Maximum Layered 2D Texture Size, (num) layers  2D=(%d, %d), %d "
+               "layers\n",
+               deviceProp.maxTexture2DLayered[0], deviceProp.maxTexture2DLayered[1],
+               deviceProp.maxTexture2DLayered[2]);
 
         printf("  Total amount of constant memory:               %lu bytes\n",
                deviceProp.totalConstMem);
@@ -498,11 +482,9 @@ cuda_device_query()
                deviceProp.memPitch);
         printf("  Texture alignment:                             %lu bytes\n",
                deviceProp.textureAlignment);
-        printf(
-            "  Concurrent copy and kernel execution:          %s with %d copy "
-            "engine(s)\n",
-            (deviceProp.deviceOverlap ? "Yes" : "No"),
-            deviceProp.asyncEngineCount);
+        printf("  Concurrent copy and kernel execution:          %s with %d copy "
+               "engine(s)\n",
+               (deviceProp.deviceOverlap ? "Yes" : "No"), deviceProp.asyncEngineCount);
         printf("  Run time limit on kernels:                     %s\n",
                deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No");
         printf("  Integrated GPU sharing Host Memory:            %s\n",
@@ -526,24 +508,21 @@ cuda_device_query()
                deviceProp.cooperativeLaunch ? "Yes" : "No");
         printf("  Supports MultiDevice Co-op Kernel Launch:      %s\n",
                deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
-        printf(
-            "  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
-            deviceProp.pciDomainID, deviceProp.pciBusID,
-            deviceProp.pciDeviceID);
+        printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
+               deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] = {
-            "Default (multiple host threads can use ::cudaSetDevice() with "
-            "device "
-            "simultaneously)",
-            "Exclusive (only one host thread in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Prohibited (no host thread can use ::cudaSetDevice() with this "
-            "device)",
-            "Exclusive Process (many threads in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Unknown",
-            NULL
-        };
+        const char* sComputeMode[] =
+            { "Default (multiple host threads can use ::cudaSetDevice() with "
+              "device "
+              "simultaneously)",
+              "Exclusive (only one host thread in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Prohibited (no host thread can use ::cudaSetDevice() with this "
+              "device)",
+              "Exclusive Process (many threads in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Unknown",
+              NULL };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }

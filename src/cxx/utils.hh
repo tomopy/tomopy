@@ -75,9 +75,9 @@
 #endif
 
 #if !defined(PRINT_HERE)
-#    define PRINT_HERE(extra)                                                  \
-        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(),        \
-               __FUNCTION__, __FILE__, __LINE__, extra)
+#    define PRINT_HERE(extra)                                                            \
+        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(), __FUNCTION__,    \
+               __FILE__, __LINE__, extra)
 #endif
 
 #if !defined(NUM_TASK_THREADS)
@@ -138,9 +138,9 @@ struct GpuOption
     friend std::ostream& operator<<(std::ostream& os, const GpuOption& opt)
     {
         std::stringstream ss;
-        ss << "\t" << std::right << std::setw(5) << opt.index << "  \t"
-           << std::left << std::setw(12) << opt.key << "  " << std::left
-           << std::setw(40) << opt.description;
+        ss << "\t" << std::right << std::setw(5) << opt.index << "  \t" << std::left
+           << std::setw(12) << opt.key << "  " << std::left << std::setw(40)
+           << opt.description;
         os << ss.str();
         return os;
     }
@@ -185,20 +185,19 @@ init_thread_data(ThreadPool* tp)
 
 template <typename _Tp>
 void
-print_cpu_array(const uintmax_t& n, const _Tp* data, const int& itr,
-                const int& slice, const int& angle, const int& pixel,
-                const std::string& tag)
+print_cpu_array(const uintmax_t& n, const _Tp* data, const int& itr, const int& slice,
+                const int& angle, const int& pixel, const std::string& tag)
 {
     std::ofstream     ofs;
     std::stringstream fname;
-    fname << "outputs/cpu/" << tag << "_" << itr << "_" << slice << "_" << angle
-          << "_" << pixel << ".dat";
+    fname << "outputs/cpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
+          << pixel << ".dat";
     ofs.open(fname.str().c_str());
     if(!ofs)
         return;
     for(uintmax_t i = 0; i < n; ++i)
-        ofs << std::setw(6) << i << " \t " << std::setw(12)
-            << std::setprecision(8) << data[i] << std::endl;
+        ofs << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
+            << data[i] << std::endl;
     ofs.close();
 }
 
@@ -256,8 +255,8 @@ typedef std::vector<AngleData*> AngleDataArray;
 inline TaskRunManager*&
 cpu_run_manager()
 {
-    static TaskRunManager* _instance = new TaskRunManager(
-        GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
+    static TaskRunManager* _instance =
+        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
 }
 
@@ -267,8 +266,8 @@ inline TaskRunManager*&
 gpu_run_manager()
 {
     AutoLock               l(TypeMutex<TaskRunManager>());
-    static TaskRunManager* _instance = new TaskRunManager(
-        GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
+    static TaskRunManager* _instance =
+        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
 }
 
@@ -294,9 +293,8 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
         if(!run_man->IsInitialized())
         {
             std::cout << "\n"
-                      << "[" << tid
-                      << "] Initializing tasking run manager with " << nthreads
-                      << " threads..." << std::endl;
+                      << "[" << tid << "] Initializing tasking run manager with "
+                      << nthreads << " threads..." << std::endl;
             run_man->Initialize(nthreads);
         }
     }
@@ -332,16 +330,15 @@ cxx_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 
 DLL void
 cxx_trim_coords(int ry, int rz, const farray_t& coordx, const farray_t& coordy,
-                const farray_t& gridx, const farray_t& gridy, farray_t& ax,
-                farray_t& ay, farray_t& bx, farray_t& by);
+                const farray_t& gridx, const farray_t& gridy, farray_t& ax, farray_t& ay,
+                farray_t& bx, farray_t& by);
 
 //============================================================================//
 
 DLL void
-cxx_sort_intersections(const int& ind_condition, const farray_t& ax,
-                       const farray_t& ay, const farray_t& bx,
-                       const farray_t& by, int& csize, farray_t& coorx,
-                       farray_t& coory);
+cxx_sort_intersections(const int& ind_condition, const farray_t& ax, const farray_t& ay,
+                       const farray_t& bx, const farray_t& by, int& csize,
+                       farray_t& coorx, farray_t& coory);
 
 //============================================================================//
 
@@ -351,15 +348,14 @@ cxx_calc_sum_sqr(const farray_t& dist);
 //============================================================================//
 
 DLL void
-cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx,
-              const farray_t& coory, iarray_t& indi, farray_t& dist);
+cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
+              iarray_t& indi, farray_t& dist);
 
 //============================================================================//
 
 DLL void
-cxx_calc_dist2(int ry, int rz, int csize, const farray_t& coorx,
-               const farray_t& coory, iarray_t& indx, iarray_t& indy,
-               farray_t& dist);
+cxx_calc_dist2(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
+               iarray_t& indx, iarray_t& indy, farray_t& dist);
 
 //============================================================================//
 
@@ -371,19 +367,17 @@ cxx_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
 //============================================================================//
 
 DLL void
-cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  int csize, const iarray_t& indx, const iarray_t& indy,
-                  const farray_t& dist, float vx, float vy,
-                  const farray_t& modelx, const farray_t& modely,
+cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
+                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
                   farray_t& simdata);
 
 //============================================================================//
 
 DLL void
-cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  int csize, const iarray_t& indx, const iarray_t& indy,
-                  const farray_t& dist, float vx, float vy,
-                  const farray_t& modelx, const farray_t& modely,
+cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
+                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
                   const farray_t& modelz, int axis, farray_t& simdata);
 
 //============================================================================//
@@ -406,8 +400,8 @@ DLL farray_t
 
 template <typename _Func, typename... _Args>
 void
-run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func,
-                  _Func omp_func, _Args... args)
+run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
+                  _Args... args)
 {
     std::deque<GpuOption> options;
     int                   default_idx = 0;
@@ -503,8 +497,10 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func,
     {
         {
             AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] " << e.what()
+                      << std::endl;
             std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] "
-                      << e.what() << std::endl;
+                      << "Falling back to CPU algorithm..." << std::endl;
         }
         cpu_func(_forward_args_t(_Args, args));
     }

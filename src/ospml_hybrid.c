@@ -45,9 +45,8 @@
 
 void
 ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter, const float* reg_pars, int num_block,
-             const float* ind_block)
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+             const float* reg_pars, int num_block, const float* ind_block)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -62,9 +61,8 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
     float* dist   = (float*) malloc((ngridx + ngridy) * sizeof(float));
     int*   indi   = (int*) malloc((ngridx + ngridy) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int    s, q, p, d, i, m, n, os;
     int    quadrant;
@@ -126,29 +124,28 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                         // Calculate coordinates
                         xi = -ngridx - ngridy;
                         yi = 0.5f * (1 - dx) + d + mov;
-                        calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                    gridy, coordx, coordy);
+                        calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                    coordx, coordy);
 
                         // Merge the (coordx, gridy) and (gridx, coordy)
-                        trim_coords(ngridx, ngridy, coordx, coordy, gridx,
-                                    gridy, &asize, ax, ay, &bsize, bx, by);
+                        trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                    ax, ay, &bsize, bx, by);
 
                         // Sort the array of intersection points (ax, ay) and
                         // (bx, by). The new sorted intersection points are
                         // stored in (coorx, coory). Total number of points
                         // are csize.
-                        sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                           by, &csize, coorx, coory);
+                        sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                           coorx, coory);
 
                         // Calculate the distances (dist) between the
                         // intersection points (coorx, coory). Find the
                         // indices of the pixels on the reconstruction grid.
-                        calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                  dist);
+                        calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                         // Calculate simdata
-                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                                     indi, dist, recon,
+                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                     recon,
                                      simdata);  // Output: simdata
 
                         // Calculate dist*dist
@@ -167,8 +164,7 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                             upd       = data[ind_data] / simdata[ind_data];
                             for(n = 0; n < csize - 1; n++)
                             {
-                                E[indi[n]] -=
-                                    recon[indi[n] + ind_recon] * upd * dist[n];
+                                E[indi[n]] -= recon[indi[n] + ind_recon] * upd * dist[n];
                             }
                         }
                     }
@@ -208,8 +204,7 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                             rg[q]     = recon[ind1] - recon[indg[q]];
                             gammag[q] = 1 / (1 + fabs(rg[q] / reg_pars[1]));
                             F[ind0] += 2 * reg_pars[0] * wg[q] * gammag[q];
-                            G[ind0] -=
-                                2 * reg_pars[0] * wg[q] * gammag[q] * mg[q];
+                            G[ind0] -= 2 * reg_pars[0] * wg[q] * gammag[q] * mg[q];
                         }
                     }
                 }
@@ -398,10 +393,9 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                         q = m + n * ngridy;
                         if(F[q] != 0.0)
                         {
-                            ind0 = q + s * ngridx * ngridy;
-                            recon[ind0] =
-                                (-G[q] + sqrt(G[q] * G[q] - 8 * E[q] * F[q])) /
-                                (4 * F[q]);
+                            ind0        = q + s * ngridx * ngridy;
+                            recon[ind0] = (-G[q] + sqrt(G[q] * G[q] - 8 * E[q] * F[q])) /
+                                          (4 * F[q]);
                         }
                     }
                 }

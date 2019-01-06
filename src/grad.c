@@ -44,9 +44,8 @@
 #include "utils.h"
 
 void
-grad(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-     const float* reg_pars)
+grad(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars)
 {
     float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -69,10 +68,9 @@ grad(const float* data, int dy, int dt, int dx, const float* center,
     float* recon0 = (float*) malloc((dy * ngridx * ngridy) * sizeof(float));
     float* lambda = (float*) malloc((dy) * sizeof(float));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL && simdata != NULL &&
-           sum_dist != NULL && grad != NULL && grad0 != NULL &&
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
+           simdata != NULL && sum_dist != NULL && grad != NULL && grad0 != NULL &&
            recon0 != NULL && lambda != NULL);
 
     int    s, p, d, i, n;
@@ -139,19 +137,19 @@ grad(const float* data, int dy, int dt, int dx, const float* center,
                     // Calculate coordinates
                     xi = -ngridx - ngridy;
                     yi = 0.5f * (1 - dx) + d + mov;
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
@@ -159,8 +157,8 @@ grad(const float* data, int dy, int dt, int dx, const float* center,
                     calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                     // Calculate simdata
-                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
-                                 dist, recon,
+                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                 recon,
                                  simdata);  // Output: simdata
 
                     ind_data        = d + p * dx + s * dt * dx;
@@ -198,11 +196,10 @@ grad(const float* data, int dy, int dt, int dx, const float* center,
                     for(iy = 0; iy < ngridy; iy++)
                         for(ix = 0; ix < ngridx; ix++)
                         {
-                            lambda[s] +=
-                                (recon[ind_recon + iy * ngridx + ix] -
-                                 recon0[ind_recon + iy * ngridx + ix]) *
-                                (grad[ind_recon + iy * ngridx + ix] -
-                                 grad0[ind_recon + iy * ngridx + ix]);
+                            lambda[s] += (recon[ind_recon + iy * ngridx + ix] -
+                                          recon0[ind_recon + iy * ngridx + ix]) *
+                                         (grad[ind_recon + iy * ngridx + ix] -
+                                          grad0[ind_recon + iy * ngridx + ix]);
                             upd += (grad[ind_recon + iy * ngridx + ix] -
                                     grad0[ind_recon + iy * ngridx + ix]) *
                                    (grad[ind_recon + iy * ngridx + ix] -

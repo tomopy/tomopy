@@ -45,14 +45,13 @@
 #include "utils.h"
 
 void
-sirt(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
 
-    if(cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                num_iter))
+    if(cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
         return;
 
     printf("\n\t%s (C) [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = "
@@ -72,9 +71,8 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
     float* dist   = (float*) malloc((ngridx + ngridy) * sizeof(float));
     int*   indi   = (int*) malloc((ngridx + ngridy) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int    s, p, d, i, n;
     int    quadrant;
@@ -118,19 +116,19 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
                     // Calculate coordinates
                     xi = -ngridx - ngridy;
                     yi = 0.5f * (1 - dx) + d + mov;
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
@@ -138,8 +136,8 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
                     calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                     // Calculate simdata
-                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
-                                 dist, recon,
+                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                 recon,
                                  simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -154,7 +152,7 @@ sirt(const float* data, int dy, int dt, int dx, const float* center,
                     if(sum_dist2 != 0.0f)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             update[indi[n]] += upd * dist[n];

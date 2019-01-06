@@ -64,7 +64,7 @@
 #ifdef __INTEL_COMPILER
 #    define __PRAGMA_SIMD _Pragma("simd assert")
 #    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                 \
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
         _Pragma("simd assert, vecremainder, vectorlength(8)")
 #    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
 #    define __PRAGMA_IVDEP _Pragma("ivdep")
@@ -80,8 +80,8 @@
 
 void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy,
-        const char* fname, const float* filter_par)
+        const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
+        const float* filter_par)
 {
 #if defined(TOMOPY_CXX_GRIDREC)
     cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, fname,
@@ -93,13 +93,12 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
 
     float *work, *work2;
 
-    float (*const filter)(float, int, int, int, const float*) =
-        get_filter(fname);
-    const float        C      = 7.0;
-    const float        nt     = 20.0;
-    const float        lambda = 0.99998546;
-    const unsigned int L      = (int) (2 * C / M_PI);
-    const int          ltbl   = 512;
+    float (*const filter)(float, int, int, int, const float*) = get_filter(fname);
+    const float        C                                      = 7.0;
+    const float        nt                                     = 20.0;
+    const float        lambda                                 = 0.99998546;
+    const unsigned int L                                      = (int) (2 * C / M_PI);
+    const int          ltbl                                   = 512;
     int                pdim;
     float _Complex *   sino, *filphase, *filphase_iter = NULL, **H;
     float _Complex **  U_d, **V_d;
@@ -191,8 +190,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     for(s = 0; s < dy; s += 2)
     {
         // Set up table of combined filter-phase factors.
-        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
-                          filter2d);
+        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase, filter2d);
 
         // First clear the array H
         memset(H[0], 0, pdim * pdim * sizeof(H[0][0]));
@@ -440,8 +438,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
 void
 set_filter_tables(int dt, int pd, float center,
                   float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A,
-                  unsigned char filter2d)
+                  const float* filter_par, float _Complex* A, unsigned char filter2d)
 {
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
@@ -490,8 +487,8 @@ set_filter_tables(int dt, int pd, float center,
 }
 
 void
-set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl,
-                int linv, float* wtbl, float* winv)
+set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int linv,
+                float* wtbl, float* winv)
 {
     // Set up lookup tables for convolvent (used in Phase 1 of
     // do_recon()), and for the final correction factor (used in
@@ -716,13 +713,11 @@ float (*get_filter(const char* name))(float, int, int, int, const float*)
     {
         const char* name;
         float (*const fp)(float, int, int, int, const float*);
-    } fltbl[] = {
-        { "none", filter_none },       { "shepp", filter_shepp },  // Default
-        { "cosine", filter_cosine },   { "hann", filter_hann },
-        { "hamming", filter_hamming }, { "ramlak", filter_ramlak },
-        { "parzen", filter_parzen },   { "butterworth", filter_butterworth },
-        { "custom", filter_custom },   { "custom2d", filter_custom2d }
-    };
+    } fltbl[] = { { "none", filter_none },       { "shepp", filter_shepp },  // Default
+                  { "cosine", filter_cosine },   { "hann", filter_hann },
+                  { "hamming", filter_hamming }, { "ramlak", filter_ramlak },
+                  { "parzen", filter_parzen },   { "butterworth", filter_butterworth },
+                  { "custom", filter_custom },   { "custom2d", filter_custom2d } };
 
     for(int i = 0; i < 10; i++)
     {

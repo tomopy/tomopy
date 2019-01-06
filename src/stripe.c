@@ -44,8 +44,7 @@
 #include "stripe.h"
 
 void
-remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart,
-                 int iend)
+remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart, int iend)
 {
     int    i, j, k, p, s;
     float* avrage_row;
@@ -90,8 +89,7 @@ remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart,
             // Subtract this difference from each row in sinogram.
             for(j = 0; j < dz; j++)
             {
-                data[j + s * dz + p * dy * dz] -=
-                    (avrage_row[j] - smooth_row[j]);
+                data[j + s * dz + p * dy * dz] -= (avrage_row[j] - smooth_row[j]);
             }
         }
 

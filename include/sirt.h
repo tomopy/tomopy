@@ -50,36 +50,31 @@ BEGIN_EXTERN_C
 
 int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy,
-         int num_iter);
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy,
-         int num_iter);
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy,
-          int num_iter);
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
 sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter);
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //----------------------------------------------------------------------------//
 
 void
 sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter);
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //============================================================================//
 //
@@ -88,10 +83,8 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
 //============================================================================//
 
 void
-cuda_sirt_update(int s, int p, int d, int ry, int rz, int dt, int dx,
-                 const int* csize, const float* data, const float* simdata,
-                 const int* indi, const float* dist, const float* sum,
-                 float* model, cudaStream_t* streams);
+cuda_sirt_update(const float* data, const float simval, float* simdata, int ngrix,
+                 float* recon_rot, int size, cudaStream_t*);
 
 //============================================================================//
 

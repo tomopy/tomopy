@@ -64,22 +64,22 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy,
-          int num_iter, int num_block, const float* ind_block);
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+          int num_block, const float* ind_block);
 
 //----------------------------------------------------------------------------//
 
 void
 bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter, int num_block, const float* ind_block);
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+             int num_block, const float* ind_block);
 
 //----------------------------------------------------------------------------//
 
 void
 bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter, int num_block, const float* ind_block);
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+            int num_block, const float* ind_block);
 
 //============================================================================//
 //

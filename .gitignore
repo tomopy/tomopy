@@ -120,7 +120,7 @@ nosetests.xml
 .pydevproject
 .idea
 .vscode
-/CMakeLists.txt.user
+/CMakeLists.txt.user*
 
 # Private functions #
 #####################
@@ -176,3 +176,4 @@ script
 /benchmarking/tv*
 /benchmarking/grad*
 /test_rotate.py
+/benchmarking/backup

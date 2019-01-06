@@ -44,9 +44,8 @@
 #include "utils.h"
 
 void
-fbp(const float* data, int dy, int dt, int dx, const float* center,
-    const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
-    const float* filter_par)
+fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+    float* recon, int ngridx, int ngridy, const char* fname, const float* filter_par)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -61,9 +60,8 @@ fbp(const float* data, int dy, int dt, int dx, const float* center,
     float* dist   = (float*) malloc((ngridx + ngridy) * sizeof(float));
     int*   indi   = (int*) malloc((ngridx + ngridy) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int   s, p, d, n;
     int   quadrant;
@@ -95,19 +93,19 @@ fbp(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = 0.5f * (1 - dx) + d + mov;
-                calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
-                            coordx, coordy);
+                calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, coordx,
+                            coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                            &asize, ax, ay, &bsize, bx, by);
+                trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax, ay,
+                            &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                   &csize, coorx, coory);
+                sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coorx,
+                                   coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the

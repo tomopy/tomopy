@@ -46,7 +46,7 @@
 #include <stdint.h>
 
 #ifndef PRINT_HERE
-#    define PRINT_HERE(extra)                                                  \
+#    define PRINT_HERE(extra)                                                            \
         printf("> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
 #endif  // !PRINT_HERE
 
@@ -68,8 +68,8 @@ initlibtomopy(void)
 //============================================================================//
 
 void
-preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
-              float* gridx, float* gridy)
+preprocessing(int ry, int rz, int num_pixels, float center, float* mov, float* gridx,
+              float* gridy)
 {
     for(int i = 0; i <= ry; ++i)
     {
@@ -120,8 +120,7 @@ calc_quadrant(float theta_p)
 
 void
 calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-            const float* gridx, const float* gridy, float* coordx,
-            float* coordy)
+            const float* gridx, const float* gridy, float* coordx, float* coordy)
 {
     float srcx, srcy, detx, dety;
     float slope, islope;
@@ -150,9 +149,9 @@ calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 //============================================================================//
 
 void
-trim_coords(int ry, int rz, const float* coordx, const float* coordy,
-            const float* gridx, const float* gridy, int* asize, float* ax,
-            float* ay, int* bsize, float* bx, float* by)
+trim_coords(int ry, int rz, const float* coordx, const float* coordy, const float* gridx,
+            const float* gridy, int* asize, float* ax, float* ay, int* bsize, float* bx,
+            float* by)
 {
     *asize         = 0;
     *bsize         = 0;
@@ -186,9 +185,9 @@ trim_coords(int ry, int rz, const float* coordx, const float* coordy,
 //============================================================================//
 
 void
-sort_intersections(int ind_condition, int asize, const float* ax,
-                   const float* ay, int bsize, const float* bx, const float* by,
-                   int* csize, float* coorx, float* coory)
+sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
+                   int bsize, const float* bx, const float* by, int* csize, float* coorx,
+                   float* coory)
 {
     int i = 0, j = 0, k = 0;
     if(ind_condition == 0)
@@ -267,8 +266,8 @@ sort_intersections(int ind_condition, int asize, const float* ax,
 //============================================================================//
 
 void
-calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
-          int* indi, float* dist)
+calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int* indi,
+          float* dist)
 {
     const int _size = csize - 1;
 
@@ -361,8 +360,8 @@ calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
 //============================================================================//
 
 void
-calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory,
-           int* indx, int* indy, float* dist)
+calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory, int* indx,
+           int* indy, float* dist)
 {
 #pragma omp simd
     for(int n = 0; n < csize - 1; ++n)
@@ -390,8 +389,7 @@ calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory,
 
 void
 calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-             const int* indi, const float* dist, const float* model,
-             float* simdata)
+             const int* indi, const float* dist, const float* model, float* simdata)
 {
     int index_model = s * ry * rz;
     int index_data  = d + p * dx + s * dt * dx;
@@ -405,9 +403,8 @@ calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
 
 void
 calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-              const int* indx, const int* indy, const float* dist, float vx,
-              float vy, const float* modelx, const float* modely,
-              float* simdata)
+              const int* indx, const int* indy, const float* dist, float vx, float vy,
+              const float* modelx, const float* modely, float* simdata)
 {
     int n;
 
@@ -424,9 +421,9 @@ calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
 
 void
 calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-              const int* indx, const int* indy, const float* dist, float vx,
-              float vy, const float* modelx, const float* modely,
-              const float* modelz, int axis, float* simdata)
+              const int* indx, const int* indy, const float* dist, float vx, float vy,
+              const float* modelx, const float* modely, const float* modelz, int axis,
+              float* simdata)
 {
     int n;
 
@@ -514,8 +511,8 @@ compress(const float* arr_i, const int factor, const int nx, const int ny)
 //============================================================================//
 
 float*
-rotate(const float* _obj, const float theta, const int _nx, const int _ny,
-       const int _dx, const int _dy)
+rotate(const float* _obj, const float theta, const int _nx, const int _ny, const int _dx,
+       const int _dy)
 {
 #define COMPUTE_MAX(a, b) (a < b) ? b : a
 #define COMPUTE_MIN(a, b) (a < b) ? a : b

@@ -56,10 +56,9 @@ extern nvtxEventAttributes_t nvtx_update;
 //============================================================================//
 
 __global__ void
-art_update_global(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  const int* csize, const float* data, const float* simdata,
-                  const int* indi, const float* dist, const float* sum_dist,
-                  float* model)
+art_update_global(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
+                  const float* data, const float* simdata, const int* indi,
+                  const float* dist, const float* sum_dist, float* model)
 {
     if(*sum_dist != 0.0f)
     {
@@ -82,10 +81,9 @@ art_update_global(int s, int p, int d, int ry, int rz, int dt, int dx,
 //----------------------------------------------------------------------------//
 
 void
-cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx,
-                const int* csize, const float* data, const float* simdata,
-                const int* indi, const float* dist, const float* sum,
-                float* model, cudaStream_t* streams)
+cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
+                const float* data, const float* simdata, const int* indi,
+                const float* dist, const float* sum, float* model, cudaStream_t* streams)
 {
     NVTX_RANGE_PUSH(&nvtx_update);
     int nb   = cuda_multi_processor_count();
@@ -93,9 +91,8 @@ cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx,
     int smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    art_update_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx,
-                                                    csize, data, simdata, indi,
-                                                    dist, sum, model);
+    art_update_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize, data,
+                                                    simdata, indi, dist, sum, model);
     CUDA_CHECK_LAST_ERROR();
     NVTX_RANGE_POP(&nvtx_update);
 }

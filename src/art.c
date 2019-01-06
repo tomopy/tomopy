@@ -45,12 +45,12 @@
 #include "utils.h"
 
 void
-art(const float* data, int dy, int dt, int dx, const float* center,
-    const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+    float* recon, int ngridx, int ngridy, int num_iter)
 {
-    cxx_art(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
 
-    /*
     float* gridx   = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy   = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -164,5 +164,4 @@ art(const float* data, int dy, int dt, int dx, const float* center,
     free(dist);
     free(indi);
     free(simdata);
-    */
 }

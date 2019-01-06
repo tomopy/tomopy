@@ -44,9 +44,9 @@
 #include "utils.h"
 
 void
-osem(const float* data, int dy, int dt, int dx, const float* center,
-     const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-     int num_block, const float* ind_block)
+osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter, int num_block,
+     const float* ind_block)
 {
     float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -64,10 +64,9 @@ osem(const float* data, int dy, int dt, int dx, const float* center,
     float* sum_dist = (float*) malloc((ngridx * ngridy) * sizeof(float));
     float* update   = (float*) malloc((ngridx * ngridy) * sizeof(float));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL && simdata != NULL &&
-           sum_dist != NULL && update != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
+           simdata != NULL && sum_dist != NULL && update != NULL);
 
     int   s, q, p, d, i, m, n, os;
     int   quadrant;
@@ -124,29 +123,28 @@ osem(const float* data, int dy, int dt, int dx, const float* center,
                         // Calculate coordinates
                         xi = -ngridx - ngridy;
                         yi = 0.5f * (1 - dx) + d + mov;
-                        calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                    gridy, coordx, coordy);
+                        calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                    coordx, coordy);
 
                         // Merge the (coordx, gridy) and (gridx, coordy)
-                        trim_coords(ngridx, ngridy, coordx, coordy, gridx,
-                                    gridy, &asize, ax, ay, &bsize, bx, by);
+                        trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                    ax, ay, &bsize, bx, by);
 
                         // Sort the array of intersection points (ax, ay) and
                         // (bx, by). The new sorted intersection points are
                         // stored in (coorx, coory). Total number of points
                         // are csize.
-                        sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                           by, &csize, coorx, coory);
+                        sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                           coorx, coory);
 
                         // Calculate the distances (dist) between the
                         // intersection points (coorx, coory). Find the
                         // indices of the pixels on the reconstruction grid.
-                        calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                  dist);
+                        calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                         // Calculate simdata
-                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                                     indi, dist, recon,
+                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                     recon,
                                      simdata);  // Output: simdata
 
                         // Calculate dist*dist

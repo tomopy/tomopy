@@ -60,11 +60,9 @@ sample(int mode, const float* data, int dx, int dy, int dz, int axis, int npad,
        float* out);
 
 DLL void
-downsample(const float* data, int dx, int dy, int dz, int level, int axis,
-           float* out);
+downsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out);
 
 DLL void
-upsample(const float* data, int dx, int dy, int dz, int level, int axis,
-         float* out);
+upsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out);
 
 #endif

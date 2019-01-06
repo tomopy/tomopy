@@ -107,8 +107,8 @@ cxx_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 
 void
 cxx_trim_coords(int ry, int rz, const farray_t& coordx, const farray_t& coordy,
-                const farray_t& gridx, const farray_t& gridy, farray_t& ax,
-                farray_t& ay, farray_t& bx, farray_t& by)
+                const farray_t& gridx, const farray_t& gridy, farray_t& ax, farray_t& ay,
+                farray_t& bx, farray_t& by)
 {
     int   asize    = 0;
     int   bsize    = 0;
@@ -146,10 +146,9 @@ cxx_trim_coords(int ry, int rz, const farray_t& coordx, const farray_t& coordy,
 //============================================================================//
 
 void
-cxx_sort_intersections(const int& ind_condition, const farray_t& ax,
-                       const farray_t& ay, const farray_t& bx,
-                       const farray_t& by, int& csize, farray_t& coorx,
-                       farray_t& coory)
+cxx_sort_intersections(const int& ind_condition, const farray_t& ax, const farray_t& ay,
+                       const farray_t& bx, const farray_t& by, int& csize,
+                       farray_t& coorx, farray_t& coory)
 {
     uintmax_t i = 0, j = 0, k = 0;
     auto      _asize = ax.size();
@@ -262,8 +261,8 @@ cxx_calc_sum_sqr(const farray_t& dist)
 //============================================================================//
 
 void
-cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx,
-              const farray_t& coory, iarray_t& indi, farray_t& dist)
+cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
+              iarray_t& indi, farray_t& dist)
 {
     const int _size = csize - 1;
 
@@ -356,9 +355,8 @@ cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx,
 //============================================================================//
 
 void
-cxx_calc_dist2(int ry, int rz, int csize, const farray_t& coorx,
-               const farray_t& coory, iarray_t& indx, iarray_t& indy,
-               farray_t& dist)
+cxx_calc_dist2(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
+               iarray_t& indx, iarray_t& indy, farray_t& dist)
 {
 #pragma omp simd
     for(int n = 0; n < csize - 1; ++n)
@@ -400,10 +398,9 @@ cxx_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
 //============================================================================//
 
 void
-cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  int csize, const iarray_t& indx, const iarray_t& indy,
-                  const farray_t& dist, float vx, float vy,
-                  const farray_t& modelx, const farray_t& modely,
+cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
+                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
                   farray_t& simdata)
 {
     int n;
@@ -420,10 +417,9 @@ cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx,
 //============================================================================//
 
 void
-cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  int csize, const iarray_t& indx, const iarray_t& indy,
-                  const farray_t& dist, float vx, float vy,
-                  const farray_t& modelx, const farray_t& modely,
+cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
+                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
+                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
                   const farray_t& modelz, int axis, farray_t& simdata)
 {
     int n;

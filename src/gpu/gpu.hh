@@ -42,8 +42,8 @@
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                 \
-            extern "C"                                                         \
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
             {
 #    endif
 #    ifndef END_EXTERN_C
@@ -91,9 +91,9 @@ END_EXTERN_C
 //============================================================================//
 
 #if !defined(PRINT_HERE)
-#    define PRINT_HERE(extra)                                                  \
-        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(),        \
-               __FUNCTION__, __FILE__, __LINE__, extra)
+#    define PRINT_HERE(extra)                                                            \
+        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(), __FUNCTION__,    \
+               __FILE__, __LINE__, extra)
 #endif
 
 //============================================================================//
@@ -189,8 +189,7 @@ template <typename _Tp>
 void
 gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice,
-                    stream);
+    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
     CUDA_CHECK_LAST_ERROR();
 }
 
@@ -210,8 +209,7 @@ template <typename _Tp>
 void
 cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost,
-                    stream);
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
     CUDA_CHECK_LAST_ERROR();
 }
 
@@ -278,8 +276,7 @@ malloc_and_async_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
     CUDA_CHECK_LAST_ERROR();
-    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice,
-                    stream);
+    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
     CUDA_CHECK_LAST_ERROR();
     return _gpu;
 }
@@ -290,8 +287,7 @@ template <typename _Tp>
 void
 async_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost,
-                    stream);
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
     CUDA_CHECK_LAST_ERROR();
     cudaFree(_gpu);
 }
@@ -343,8 +339,8 @@ transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
 {
     _Tp* beg = input_data;
     _Tp* end = input_data + nitems;
-    thrust::transform(thrust::system::cuda::par.on(stream), beg, end, result,
-                      result, thrust::plus<_Tp>());
+    thrust::transform(thrust::system::cuda::par.on(stream), beg, end, result, result,
+                      thrust::plus<_Tp>());
 }
 
 //============================================================================//
@@ -455,14 +451,13 @@ transform_sum(_Tp*, int, _Tp*, cudaStream_t)
 
 template <typename _Tp>
 void
-print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr,
-                const int& slice, const int& angle, const int& pixel,
-                const std::string& tag)
+print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr, const int& slice,
+                const int& angle, const int& pixel, const std::string& tag)
 {
     std::ofstream     ofs;
     std::stringstream fname;
-    fname << "outputs/gpu/" << tag << "_" << itr << "_" << slice << "_" << angle
-          << "_" << pixel << ".dat";
+    fname << "outputs/gpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
+          << pixel << ".dat";
     ofs.open(fname.str().c_str());
     std::vector<_Tp> cpu_data(n, _Tp());
     std::cout << "printing to file " << fname.str() << "..." << std::endl;
@@ -470,8 +465,8 @@ print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr,
     if(!ofs)
         return;
     for(uintmax_t i = 0; i < n; ++i)
-        ofs << std::setw(6) << i << " \t " << std::setw(12)
-            << std::setprecision(8) << cpu_data[i] << std::endl;
+        ofs << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
+            << cpu_data[i] << std::endl;
     ofs.close();
 }
 

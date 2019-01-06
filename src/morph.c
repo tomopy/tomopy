@@ -61,8 +61,7 @@ sample(int mode, const float* data, int dx, int dy, int dz, int level, int axis,
 }
 
 DLL void
-downsample(const float* data, int dx, int dy, int dz, int level, int axis,
-           float* out)
+downsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out)
 {
     unsigned           m, n, p, binsize;
     unsigned long long i, j, k, ind;
@@ -136,8 +135,7 @@ downsample(const float* data, int dx, int dy, int dz, int level, int axis,
 }
 
 DLL void
-upsample(const float* data, int dx, int dy, int dz, int level, int axis,
-         float* out)
+upsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out)
 {
     unsigned           m, n, p, binsize;
     unsigned long long k, i, j, ind;

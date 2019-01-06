@@ -67,8 +67,7 @@
 #    endif
 //----------------------------------------------------------------------------//
 
-#elif defined(__linux__) || defined(__linux) || defined(linux) ||              \
-    defined(__gnu_linux__)
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
 #    if !defined(_LINUX)
 #        define _LINUX
 #    endif
@@ -135,8 +134,8 @@
 #endif
 
 #ifndef EXTERN_C_
-#    define EXTERN_C_                                                          \
-        extern "C"                                                             \
+#    define EXTERN_C_                                                                    \
+        extern "C"                                                                       \
         {
 #endif
 
@@ -194,8 +193,7 @@ using namespace std::placeholders;  // for _1, _2, _3...
 //============================================================================//
 
 // define helper macros
-#define pyobj_cast(_var, _type, _pyobject)                                     \
-    _type* _var = _pyobject.cast<_type*>()
+#define pyobj_cast(_var, _type, _pyobject) _type* _var = _pyobject.cast<_type*>()
 
 //============================================================================//
 
@@ -210,23 +208,14 @@ public:
     ~TaskRunManagerWrapper() {}
 
     inline TaskRunManager* get() const { return _manager; }
-    inline void   Initialize(uint64_t n = 0) { _manager->Initialize(n); }
-    inline void   Terminate() { _manager->Terminate(); }
-    inline void   Wait() { _manager->Wait(); }
-    inline bool   IsInitialized() const { return _manager->IsInitialized(); }
-    inline size_t GetNumberOfThreads() const
-    {
-        return _manager->GetNumberOfThreads();
-    }
-    inline ThreadPool* GetThreadPool() const
-    {
-        return _manager->GetThreadPool();
-    }
-    inline TaskManager* GetTaskManager() const
-    {
-        return _manager->GetTaskManager();
-    }
-    inline void TiMemoryReport(std::string fname, bool echo = true) const
+    inline void            Initialize(uint64_t n = 0) { _manager->Initialize(n); }
+    inline void            Terminate() { _manager->Terminate(); }
+    inline void            Wait() { _manager->Wait(); }
+    inline bool            IsInitialized() const { return _manager->IsInitialized(); }
+    inline size_t GetNumberOfThreads() const { return _manager->GetNumberOfThreads(); }
+    inline ThreadPool*  GetThreadPool() const { return _manager->GetThreadPool(); }
+    inline TaskManager* GetTaskManager() const { return _manager->GetTaskManager(); }
+    inline void         TiMemoryReport(std::string fname, bool echo = true) const
     {
         _manager->TiMemoryReport(fname, echo);
     }

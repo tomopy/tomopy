@@ -62,8 +62,8 @@ using namespace std::literals::complex_literals;
 
 void
 cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            const char* fname, const float* filter_par)
+            const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
+            const float* filter_par)
 {
 #if defined(TOMOPY_CXX_GRIDREC)
     int    s, p, iu, iv;
@@ -416,8 +416,7 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&forward_2d);
     return;
 #else
-    throw std::runtime_error(
-        "Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
+    throw std::runtime_error("Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
 #endif
 }
 
@@ -474,8 +473,7 @@ cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
         }
     }
 #else
-    throw std::runtime_error(
-        "Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
+    throw std::runtime_error("Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
 #endif
 }
 
@@ -518,8 +516,8 @@ cxx_malloc_matrix_c(size_t nr, size_t nc)
     size_t                i;
 
     // Allocate pointers to rows,
-    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(
-        nr * sizeof(std::complex<float>*));
+    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr *
+                                                           sizeof(std::complex<float>*));
 
     /* Allocate rows and set the pointers to them */
     m[0] = cxx_malloc_vector_c(nr * nc);

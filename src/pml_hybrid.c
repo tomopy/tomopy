@@ -45,8 +45,8 @@
 
 void
 pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy,
-           int num_iter, const float* reg_pars)
+           const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+           const float* reg_pars)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -61,9 +61,8 @@ pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
     float* dist   = (float*) malloc((ngridx + ngridy) * sizeof(float));
     int*   indi   = (int*) malloc((ngridx + ngridy) * sizeof(int));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
     int    s, p, d, i, m, n, q;
     int    quadrant;
@@ -111,19 +110,19 @@ pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                     // Calculate coordinates
                     xi = -ngridx - ngridy;
                     yi = 0.5f * (1 - dx) + d + mov;
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
@@ -131,8 +130,8 @@ pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                     calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                     // Calculate simdata
-                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
-                                 dist, recon,
+                    calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                 recon,
                                  simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -151,8 +150,7 @@ pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                         upd       = data[ind_data] / simdata[ind_data];
                         for(n = 0; n < csize - 1; n++)
                         {
-                            E[indi[n]] -=
-                                recon[indi[n] + ind_recon] * upd * dist[n];
+                            E[indi[n]] -= recon[indi[n] + ind_recon] * upd * dist[n];
                         }
                     }
                 }
@@ -383,8 +381,7 @@ pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                     {
                         ind0 = q + s * ngridx * ngridy;
                         recon[ind0] =
-                            (-G[q] + sqrt(G[q] * G[q] - 8 * E[q] * F[q])) /
-                            (4 * F[q]);
+                            (-G[q] + sqrt(G[q] * G[q] - 8 * E[q] * F[q])) / (4 * F[q]);
                     }
                 }
             }

@@ -73,11 +73,10 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
     // TODO: select based on memory
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
-        art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                num_iter);
+        art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
     else
-        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt,
-                          dx, center, theta, recon, ngridx, ngridy, num_iter);
+        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt, dx,
+                          center, theta, recon, ngridx, ngridy, num_iter);
 #else
     art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
@@ -161,19 +160,18 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 float xi = -ngridx - ngridy;
                 float yi = 0.5f * (1 - dx) + d + mov;
-                cxx_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                cxx_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                cxx_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                ax, ay, bx, by);
+                cxx_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, ax, ay, bx,
+                                by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                cxx_sort_intersections(quadrant, ax, ay, bx, by, csize, coorx,
-                                       coory);
+                cxx_sort_intersections(quadrant, ax, ay, bx, by, csize, coorx, coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
@@ -185,8 +183,7 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 float sum_dist2 =
                     std::accumulate(dist.begin(), dist.end(), 0.0f,
                                     [](float& init, const float& itr) {
-                                        return init =
-                                                   std::move(init) + itr * itr;
+                                        return init = std::move(init) + itr * itr;
                                     });
 
                 if(sum_dist2 != 0.0f)
@@ -195,15 +192,14 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
                     for(int s = 0; s < dy; ++s)
                     {
                         // Calculate simdata
-                        cxx_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                                         indi, dist, recon, simdata);
+                        cxx_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
+                                         dist, recon, simdata);
                         // Output: simdata
 
                         // Update
                         int   ind_data  = d + p * dx + s * dt * dx;
                         int   ind_recon = s * ngridx * ngridy;
-                        float upd =
-                            (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        float upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(int n = 0; n < csize - 1; ++n)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];
@@ -375,9 +371,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         for(int p = 0; p < dt; ++p)
         {
 #    if defined(DEBUG)
-            PRINT_HERE(std::string(std::string("  |_angle: ") +
-                                   std::to_string(p) + std::string(" of ") +
-                                   std::to_string(dt))
+            PRINT_HERE(std::string(std::string("  |_angle: ") + std::to_string(p) +
+                                   std::string(" of ") + std::to_string(dt))
                            .c_str());
 #    endif
 
@@ -393,9 +388,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
             for(int d = 0; d < dx; ++d)
             {
 #    if defined(DEBUG)
-                PRINT_HERE(std::string(std::string("    |_pixel: ") +
-                                       std::to_string(d) + std::string(" of ") +
-                                       std::to_string(dx))
+                PRINT_HERE(std::string(std::string("    |_pixel: ") + std::to_string(d) +
+                                       std::string(" of ") + std::to_string(dx))
                                .c_str());
 #    endif
                 int stream_offset = (d % (nstreams - 2)) + (d % 2);
@@ -404,8 +398,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 {
                     PRINT_HERE(std::string(std::string("bad stream offset: ") +
                                            std::to_string(stream_offset) +
-                                           std::string(" of ") +
-                                           std::to_string(nstreams))
+                                           std::string(" of ") + std::to_string(nstreams))
                                    .c_str());
                 }
 
@@ -417,20 +410,18 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 //
                 // inputs: gridx, gridy
                 // outputs: coordx, coordy
-                cuda_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p,
-                                 gpu_data->gridx, gpu_data->gridy,
-                                 gpu_data->coordx, gpu_data->coordy,
+                cuda_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gpu_data->gridx,
+                                 gpu_data->gridy, gpu_data->coordx, gpu_data->coordy,
                                  streams + stream_offset);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
                 //
                 // inputs: gridx, gridy, coordx, coordy
                 // outputs: asize, ax, ay, bsize, bx, by
-                cuda_trim_coords(ngridx, ngridy, gpu_data->coordx,
-                                 gpu_data->coordy, gpu_data->gridx,
-                                 gpu_data->gridy, gpu_data->asize, gpu_data->ax,
-                                 gpu_data->ay, gpu_data->bsize, gpu_data->bx,
-                                 gpu_data->by, streams + stream_offset);
+                cuda_trim_coords(ngridx, ngridy, gpu_data->coordx, gpu_data->coordy,
+                                 gpu_data->gridx, gpu_data->gridy, gpu_data->asize,
+                                 gpu_data->ax, gpu_data->ay, gpu_data->bsize,
+                                 gpu_data->bx, gpu_data->by, streams + stream_offset);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
@@ -440,11 +431,9 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 // inputs: asize, ax, ay, bsize, bx, by
                 // outputs: csize, coorx, coory
                 cuda_sort_intersections(quadrant, gpu_data->asize, gpu_data->ax,
-                                        gpu_data->ay, gpu_data->bsize,
-                                        gpu_data->bx, gpu_data->by,
-                                        gpu_data->csize, gpu_data->coorx,
-                                        gpu_data->coory,
-                                        streams + stream_offset);
+                                        gpu_data->ay, gpu_data->bsize, gpu_data->bx,
+                                        gpu_data->by, gpu_data->csize, gpu_data->coorx,
+                                        gpu_data->coory, streams + stream_offset);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
@@ -460,16 +449,14 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 //
                 // inputs: csize, dist
                 // outputs: sum
-                cuda_calc_sum_sqr(gpu_data->csize, gpu_data->dist,
-                                  gpu_data->sum, streams + stream_offset);
+                cuda_calc_sum_sqr(gpu_data->csize, gpu_data->dist, gpu_data->sum,
+                                  streams + stream_offset);
 
-                if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE &&
-                   p < PRINT_MAX_ANGLE && d < PRINT_MAX_PIXEL)
+                if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE && p < PRINT_MAX_ANGLE &&
+                   d < PRINT_MAX_PIXEL)
                 {
-                    print_gpu_array(_ny, gpu_data->coordx, i, s, p, d,
-                                    "coordx");
-                    print_gpu_array(_nx, gpu_data->coordy, i, s, p, d,
-                                    "coordy");
+                    print_gpu_array(_ny, gpu_data->coordx, i, s, p, d, "coordx");
+                    print_gpu_array(_nx, gpu_data->coordy, i, s, p, d, "coordy");
                     print_gpu_array(1, gpu_data->asize, i, s, p, d, "asize");
                     print_gpu_array(_ng, gpu_data->ax, i, s, p, d, "ax");
                     print_gpu_array(_ng, gpu_data->ay, i, s, p, d, "ay");
@@ -482,8 +469,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     print_gpu_array(_ng, gpu_data->indi, i, s, p, d, "indi");
                     print_gpu_array(_ng, gpu_data->dist, i, s, p, d, "dist");
                     print_gpu_array(1, gpu_data->sum, i, s, p, d, "sum");
-                    print_gpu_array(_dy * _dt * _dt, gpu_data->data, i, s, p, d,
-                                    "data");
+                    print_gpu_array(_dy * _dt * _dt, gpu_data->data, i, s, p, d, "data");
                 }
 
                 // calc_simdata_gpu and art_update_gpu do this check to
@@ -496,9 +482,8 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
                 // Calculate simdata
                 // PRINT_HERE(std::to_string(d).c_str());
-                cuda_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-                                  gpu_data->csize, gpu_data->indi,
-                                  gpu_data->dist, gpu_data->model,
+                cuda_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, gpu_data->csize,
+                                  gpu_data->indi, gpu_data->dist, gpu_data->model,
                                   gpu_data->sum, gpu_data->simdata,
                                   streams + stream_offset);
 
@@ -506,19 +491,18 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
                 m.lock();
 
                 // PRINT_HERE(std::to_string(d).c_str());
-                cuda_art_update(s, p, d, ngridx, ngridy, dt, dx,
-                                gpu_data->csize, gpu_data->data,
-                                gpu_data->simdata, gpu_data->indi,
+                cuda_art_update(s, p, d, ngridx, ngridy, dt, dx, gpu_data->csize,
+                                gpu_data->data, gpu_data->simdata, gpu_data->indi,
                                 gpu_data->dist, gpu_data->sum, gpu_data->model,
                                 streams + stream_offset);
 
-                if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE &&
-                   p < PRINT_MAX_ANGLE && d < PRINT_MAX_PIXEL)
+                if(i < PRINT_MAX_ITER && s < PRINT_MAX_SLICE && p < PRINT_MAX_ANGLE &&
+                   d < PRINT_MAX_PIXEL)
                 {
-                    print_gpu_array(_dy * _dt * _dx, gpu_data->simdata, i, s, p,
-                                    d, "simdata");
-                    print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i,
-                                    s, p, d, "model");
+                    print_gpu_array(_dy * _dt * _dx, gpu_data->simdata, i, s, p, d,
+                                    "simdata");
+                    print_gpu_array(_dy * (ngridx * ngridy), gpu_data->model, i, s, p, d,
+                                    "model");
                 }
 
                 m.unlock();
@@ -530,8 +514,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
         static Mutex m;
         m.lock();
-        cudaMemcpyAsync(_recon, gpu_data->model,
-                        (ngridx * ngridy) * sizeof(float),
+        cudaMemcpyAsync(_recon, gpu_data->model, (ngridx * ngridy) * sizeof(float),
                         cudaMemcpyDeviceToHost, _dataset->streams[0]);
         CUDA_CHECK_LAST_ERROR();
         cudaStreamSynchronize(streams[0]);
@@ -576,8 +559,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 art_openacc(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter)
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openacc]");
@@ -596,10 +578,9 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
     int*   indi    = (int*) malloc((ngridx + ngridy) * sizeof(int));
     float* simdata = (float*) malloc((dy * dt * dx) * sizeof(float));
 
-    assert(coordx != nullptr && coordy != nullptr && ax != nullptr &&
-           ay != nullptr && by != nullptr && bx != nullptr &&
-           coorx != nullptr && coory != nullptr && dist != nullptr &&
-           indi != nullptr && simdata != nullptr);
+    assert(coordx != nullptr && coordy != nullptr && ax != nullptr && ay != nullptr &&
+           by != nullptr && bx != nullptr && coorx != nullptr && coory != nullptr &&
+           dist != nullptr && indi != nullptr && simdata != nullptr);
 
     int   s, p, d, i, n;
     int   quadrant;
@@ -634,25 +615,24 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = (1 - dx) / 2.0f + d + mov;
-                openacc_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                    gridy, coordx, coordy);
+                openacc_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                    coordx, coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                openacc_trim_coords(ngridx, ngridy, coordx, coordy, gridx,
-                                    gridy, &asize, ax, ay, &bsize, bx, by);
+                openacc_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                    ax, ay, &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                openacc_sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                           by, &csize, coorx, coory);
+                openacc_sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                           coorx, coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
                 // indices of the pixels on the reconstruction grid.
-                openacc_calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                  dist);
+                openacc_calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                 // Calculate dist*dist
                 float sum_dist2 = 0.0f;
@@ -667,14 +647,14 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
                     for(s = 0; s < dy; s++)
                     {
                         // Calculate simdata
-                        openacc_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-                                             csize, indi, dist, recon,
+                        openacc_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
+                                             dist, recon,
                                              simdata);  // Output: simdata
 
                         // Update
                         ind_data  = d + p * dx + s * dt * dx;
                         ind_recon = s * ngridx * ngridy;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd       = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];
@@ -705,8 +685,7 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 art_openmp(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy,
-           int num_iter)
+           const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openmp]");
@@ -725,10 +704,9 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
     int*   indi    = (int*) malloc((ngridx + ngridy) * sizeof(int));
     float* simdata = (float*) malloc((dy * dt * dx) * sizeof(float));
 
-    assert(coordx != nullptr && coordy != nullptr && ax != nullptr &&
-           ay != nullptr && by != nullptr && bx != nullptr &&
-           coorx != nullptr && coory != nullptr && dist != nullptr &&
-           indi != nullptr && simdata != nullptr);
+    assert(coordx != nullptr && coordy != nullptr && ax != nullptr && ay != nullptr &&
+           by != nullptr && bx != nullptr && coorx != nullptr && coory != nullptr &&
+           dist != nullptr && indi != nullptr && simdata != nullptr);
 
     int   s, p, d, i, n;
     int   quadrant;
@@ -763,25 +741,24 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = (1 - dx) / 2.0f + d + mov;
-                openmp_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                   gridy, coordx, coordy);
+                openmp_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                   coordx, coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                openmp_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                   &asize, ax, ay, &bsize, bx, by);
+                openmp_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize,
+                                   ax, ay, &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                openmp_sort_intersections(quadrant, asize, ax, ay, bsize, bx,
-                                          by, &csize, coorx, coory);
+                openmp_sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                          coorx, coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
                 // indices of the pixels on the reconstruction grid.
-                openmp_calc_dist(ngridx, ngridy, csize, coorx, coory, indi,
-                                 dist);
+                openmp_calc_dist(ngridx, ngridy, csize, coorx, coory, indi, dist);
 
                 // Calculate dist*dist
                 float sum_dist2 = 0.0f;
@@ -796,14 +773,14 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
                     for(s = 0; s < dy; s++)
                     {
                         // Calculate simdata
-                        openmp_calc_simdata(s, p, d, ngridx, ngridy, dt, dx,
-                                            csize, indi, dist, recon,
+                        openmp_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi,
+                                            dist, recon,
                                             simdata);  // Output: simdata
 
                         // Update
                         ind_data  = d + p * dx + s * dt * dx;
                         ind_recon = s * ngridx * ngridy;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd       = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];

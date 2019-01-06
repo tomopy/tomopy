@@ -44,9 +44,8 @@
 #include "utils.h"
 
 void
-vector(const float* data, int dy, int dt, int dx, const float* center,
-       const float* theta, float* recon1, float* recon2, int ngridx, int ngridy,
-       int num_iter)
+vector(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+       float* recon1, float* recon2, int ngridx, int ngridy, int num_iter)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -63,9 +62,8 @@ vector(const float* data, int dy, int dt, int dx, const float* center,
     int*   indy   = (int*) malloc((ngridx + ngridy + 1) * sizeof(int));
 
     assert(gridx != NULL && gridy != NULL && coordx != NULL && coordy != NULL &&
-           ax != NULL && ay != NULL && by != NULL && bx != NULL &&
-           coorx != NULL && coory != NULL && dist != NULL && indx != NULL &&
-           indy != NULL);
+           ax != NULL && ay != NULL && by != NULL && bx != NULL && coorx != NULL &&
+           coory != NULL && dist != NULL && indx != NULL && indy != NULL);
 
     int    s, p, d, i, n, m;
     int    quadrant;
@@ -121,29 +119,28 @@ vector(const float* data, int dy, int dt, int dx, const float* center,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata2(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2,
+                    calc_simdata2(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -158,13 +155,11 @@ vector(const float* data, int dy, int dt, int dx, const float* center,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }
@@ -207,8 +202,8 @@ vector(const float* data, int dy, int dt, int dx, const float* center,
 void
 vector2(const float* data1, const float* data2, int dy, int dt, int dx,
         const float* center1, const float* center2, const float* theta1,
-        const float* theta2, float* recon1, float* recon2, float* recon3,
-        int ngridx, int ngridy, int num_iter, int axis1, int axis2)
+        const float* theta2, float* recon1, float* recon2, float* recon3, int ngridx,
+        int ngridy, int num_iter, int axis1, int axis2)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -225,9 +220,8 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
     int*   indy   = (int*) malloc((ngridx + ngridy + 1) * sizeof(int));
 
     assert(gridx != NULL && gridy != NULL && coordx != NULL && coordy != NULL &&
-           ax != NULL && ay != NULL && by != NULL && bx != NULL &&
-           coorx != NULL && coory != NULL && dist != NULL && indx != NULL &&
-           indy != NULL);
+           ax != NULL && ay != NULL && by != NULL && bx != NULL && coorx != NULL &&
+           coory != NULL && dist != NULL && indx != NULL && indy != NULL);
 
     int    s, p, d, i, n, m;
     int    quadrant;
@@ -285,30 +279,28 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2, recon3,
-                                  axis1,
+                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2, recon3, axis1,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -323,13 +315,11 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data1[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data1[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }
@@ -395,30 +385,28 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2, recon3,
-                                  axis2,
+                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2, recon3, axis2,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -433,13 +421,11 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data2[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data2[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }
@@ -483,11 +469,11 @@ vector2(const float* data1, const float* data2, int dy, int dt, int dx,
 }
 
 void
-vector3(const float* data1, const float* data2, const float* data3, int dy,
-        int dt, int dx, const float* center1, const float* center2,
-        const float* center3, const float* theta1, const float* theta2,
-        const float* theta3, float* recon1, float* recon2, float* recon3,
-        int ngridx, int ngridy, int num_iter, int axis1, int axis2, int axis3)
+vector3(const float* data1, const float* data2, const float* data3, int dy, int dt,
+        int dx, const float* center1, const float* center2, const float* center3,
+        const float* theta1, const float* theta2, const float* theta3, float* recon1,
+        float* recon2, float* recon3, int ngridx, int ngridy, int num_iter, int axis1,
+        int axis2, int axis3)
 {
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -504,9 +490,8 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
     int*   indy   = (int*) malloc((ngridx + ngridy + 1) * sizeof(int));
 
     assert(gridx != NULL && gridy != NULL && coordx != NULL && coordy != NULL &&
-           ax != NULL && ay != NULL && by != NULL && bx != NULL &&
-           coorx != NULL && coory != NULL && dist != NULL && indx != NULL &&
-           indy != NULL);
+           ax != NULL && ay != NULL && by != NULL && bx != NULL && coorx != NULL &&
+           coory != NULL && dist != NULL && indx != NULL && indy != NULL);
 
     int    s, p, d, i, n, m;
     int    quadrant;
@@ -564,30 +549,28 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2, recon3,
-                                  axis1,
+                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2, recon3, axis1,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -602,13 +585,11 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data1[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data1[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }
@@ -674,30 +655,28 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2, recon3,
-                                  axis2,
+                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2, recon3, axis2,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -712,13 +691,11 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data2[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data2[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }
@@ -784,30 +761,28 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     vx = (srcx - detx) / dv;
                     vy = (srcy - dety) / dv;
 
-                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx,
-                                gridy, coordx, coordy);
+                    calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
+                                coordx, coordy);
 
                     // Merge the (coordx, gridy) and (gridx, coordy)
-                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                                &asize, ax, ay, &bsize, bx, by);
+                    trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
+                                ay, &bsize, bx, by);
 
                     // Sort the array of intersection points (ax, ay) and
                     // (bx, by). The new sorted intersection points are
                     // stored in (coorx, coory). Total number of points
                     // are csize.
-                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                       &csize, coorx, coory);
+                    sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize,
+                                       coorx, coory);
 
                     // Calculate the distances (dist) between the
                     // intersection points (coorx, coory). Find the
                     // indices of the pixels on the reconstruction grid.
-                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy,
-                               dist);
+                    calc_dist2(ngridx, ngridy, csize, coorx, coory, indx, indy, dist);
 
                     // Calculate simdata
-                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx,
-                                  indy, dist, vx, vy, recon1, recon2, recon3,
-                                  axis3,
+                    calc_simdata3(s, p, d, ngridx, ngridy, dt, dx, csize, indx, indy,
+                                  dist, vx, vy, recon1, recon2, recon3, axis3,
                                   simdata);  // Output: simdata
 
                     // Calculate dist*dist
@@ -822,13 +797,11 @@ vector3(const float* data1, const float* data2, const float* data3, int dy,
                     if(sum_dist2 != 0.0)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd = (data3[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd      = (data3[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
-                            update1[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vx;
-                            update2[indy[n] + indx[n] * ngridy] +=
-                                upd * dist[n] * vy;
+                            update1[indy[n] + indx[n] * ngridy] += upd * dist[n] * vx;
+                            update2[indy[n] + indx[n] * ngridy] += upd * dist[n] * vy;
                         }
                     }
                 }

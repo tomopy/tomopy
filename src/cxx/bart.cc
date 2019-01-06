@@ -73,15 +73,15 @@ cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
     // TODO: select based on memory
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
-        bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                 num_iter, num_block, ind_block);
+        bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                 num_block, ind_block);
     else
-        run_gpu_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp, data,
-                          dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                          num_iter, num_block, ind_block);
+        run_gpu_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp, data, dy, dt,
+                          dx, center, theta, recon, ngridx, ngridy, num_iter, num_block,
+                          ind_block);
 #else
-    bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
-             num_block, ind_block);
+    bart_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter, num_block,
+             ind_block);
 #endif
 
 #if defined(TOMOPY_USE_TIMEMORY)
@@ -115,11 +115,9 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
 
     //------------------------------------------------------------------------//
 
-    uintmax_t nthreads =
-        GetEnv<uintmax_t>("TOMOPY_NUM_THREADS", NUM_TASK_THREADS);
-    nthreads = (nthreads > uintmax_t(dy * num_block))
-                   ? uintmax_t(dy * num_block)
-                   : nthreads;
+    uintmax_t nthreads = GetEnv<uintmax_t>("TOMOPY_NUM_THREADS", NUM_TASK_THREADS);
+    nthreads =
+        (nthreads > uintmax_t(dy * num_block)) ? uintmax_t(dy * num_block) : nthreads;
 
     //------------------------------------------------------------------------//
 
@@ -137,9 +135,8 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
                   << "..." << std::endl;
     }
 
-    auto compute_subset = [&](int i, int s, int os, float mov,
-                              const farray_t& gridx, const farray_t& gridy,
-                              int subset_ind1, int subset_ind2) {
+    auto compute_subset = [&](int i, int s, int os, float mov, const farray_t& gridx,
+                              const farray_t& gridy, int subset_ind1, int subset_ind2) {
         ConsumeParameters(i);
 
         farray_t sum_dist(_nx * _ny);
@@ -184,9 +181,9 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
                             gridy.data(), coordx.data(), coordy.data());
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(ngridx, ngridy, coordx.data(), coordy.data(),
-                            gridx.data(), gridy.data(), &asize, ax.data(),
-                            ay.data(), &bsize, bx.data(), by.data());
+                trim_coords(ngridx, ngridy, coordx.data(), coordy.data(), gridx.data(),
+                            gridy.data(), &asize, ax.data(), ay.data(), &bsize, bx.data(),
+                            by.data());
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
@@ -199,12 +196,12 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
                 // indices of the pixels on the reconstruction grid.
-                calc_dist(ngridx, ngridy, csize, coorx.data(), coory.data(),
-                          indi.data(), dist.data());
+                calc_dist(ngridx, ngridy, csize, coorx.data(), coory.data(), indi.data(),
+                          dist.data());
 
                 // Calculate simdata
-                calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                             indi.data(), dist.data(), recon, simdata.data());
+                calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi.data(),
+                             dist.data(), recon, simdata.data());
                 // Output: simdata
 
                 // Calculate dist*dist
@@ -219,8 +216,7 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
                 if(sum_dist2 != 0.0f)
                 {
                     int   ind_data = d + p * dx + s * dt * dx;
-                    float upd =
-                        (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                    float upd      = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                     for(int n = 0; n < csize - 1; n++)
                     {
                         update[indi[n]] += upd * dist[n];
@@ -247,8 +243,7 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
         farray_t gridx(_nx + 1);
         farray_t gridy(_ny + 1);
 
-        preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx.data(),
-                      gridy.data());
+        preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx.data(), gridy.data());
         // Outputs: mov, gridx, gridy
 
         int subset_ind1 = dt / num_block;
@@ -258,8 +253,8 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
         TaskGroup<void> tg(tp);
         // For each slice
         for(int os = 0; os < num_block; os++)
-            task_man->exec(tg, compute_subset, i, s, os, mov, gridx, gridy,
-                           subset_ind1, subset_ind2);
+            task_man->exec(tg, compute_subset, i, s, os, mov, gridx, gridy, subset_ind1,
+                           subset_ind2);
         // join task group
         tg.join();
 
@@ -296,13 +291,12 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy,
-          int num_iter, int num_block, const float* ind_block)
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+          int num_block, const float* ind_block)
 {
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                      num_iter, num_block, ind_block);
-    throw std::runtime_error(
-        "BART algorithm has not been implemented for CUDA");
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                      num_block, ind_block);
+    throw std::runtime_error("BART algorithm has not been implemented for CUDA");
 
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[cuda]");
@@ -316,13 +310,12 @@ bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy,
-             int num_iter, int num_block, const float* ind_block)
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+             int num_block, const float* ind_block)
 {
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                      num_iter, num_block, ind_block);
-    throw std::runtime_error(
-        "BART algorithm has not been implemented for OpenACC");
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                      num_block, ind_block);
+    throw std::runtime_error("BART algorithm has not been implemented for OpenACC");
 
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openacc]");
@@ -336,13 +329,12 @@ bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            int num_iter, int num_block, const float* ind_block)
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+            int num_block, const float* ind_block)
 {
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                      num_iter, num_block, ind_block);
-    throw std::runtime_error(
-        "BART algorithm has not been implemented for OpenMP");
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                      num_block, ind_block);
+    throw std::runtime_error("BART algorithm has not been implemented for OpenMP");
 
     tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openmp]");

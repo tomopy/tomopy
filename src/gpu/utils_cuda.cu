@@ -70,6 +70,80 @@ extern nvtxEventAttributes_t nvtx_rotate;
 //  blockDim:   This variable and contains the dimensions of the block.
 //  threadIdx:  This variable contains the thread index within the block.
 
+//----------------------------------------------------------------------------//
+
+__inline__ __device__ float
+warpReduceSum(float val)
+{
+    for(int offset = warpSize / 2; offset > 0; offset /= 2)
+        val += __shfl_down(val, offset);
+    return val;
+}
+
+//----------------------------------------------------------------------------//
+
+__inline__ __device__ float
+warpAllReduceSum(float val)
+{
+    for(int mask = warpSize / 2; mask > 0; mask /= 2)
+        val += __shfl_xor(val, mask);
+    return val;
+}
+
+//----------------------------------------------------------------------------//
+
+__inline__ __device__ float
+blockReduceSum(float val)
+{
+    static __shared__ float shared[32];  // Shared mem for 32 partial sums
+    int                   lane = threadIdx.x % warpSize;
+    int                   wid  = threadIdx.x / warpSize;
+
+    val = warpReduceSum(val);  // Each warp performs partial reduction
+
+    if(lane == 0)
+        shared[wid] = val;  // Write reduced value to shared memory
+
+    __syncthreads();  // Wait for all partial reductions
+
+    // read from shared memory only if that warp existed
+    val = (threadIdx.x < blockDim.x / warpSize) ? shared[lane] : 0;
+
+    if(wid == 0)
+        val = warpReduceSum(val);  // Final reduce within first warp
+
+    return val;
+}
+
+//----------------------------------------------------------------------------//
+
+__global__ void
+deviceReduceKernel(float* in, float* out, int N)
+{
+    float sum = 0;
+    // reduce multiple elements per thread
+    for(int i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    {
+        sum += in[i];
+    }
+    sum = blockReduceSum(sum);
+    if(threadIdx.x == 0)
+        out[blockIdx.x] = sum;
+}
+
+//----------------------------------------------------------------------------//
+
+void
+deviceReduce(float* in, float* out, int N, cudaStream_t stream)
+{
+    int threads = 512;
+    int blocks  = min((N + threads - 1) / threads, 1024);
+    int smem    = 0;
+
+    deviceReduceKernel<<<blocks, threads, smem, stream>>>(in, out, N);
+    deviceReduceKernel<<<1, 1024, 0, stream>>>(out, out, blocks);
+}
+
 //============================================================================//
 //
 //  efficient reduction
@@ -114,14 +188,6 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
     }
 
     __syncthreads();
-    if(blockSize >= 1024)
-    {
-        if(tid < 512)
-        {
-            _data[tid] += _data[tid + 512];
-        }
-        __syncthreads();
-    }
 
     if(blockSize >= 512)
     {
@@ -151,7 +217,7 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
     }
 
     if(tid < 32)
-        warpReduce(_data, tid);
+        warpReduce<blockSize, _Tp>(_data, tid);
 
     if(tid == 0)
         _odata[blockIdx.x] = _data[0];
@@ -160,47 +226,101 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
 //----------------------------------------------------------------------------//
 
 template <typename _Tp>
-__global__ void
-compute_reduction(_Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
-                  int smemSize)
+void
+compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
+                  int dimBlock, int smemSize, cudaStream_t stream)
 {
-    int threads = blockDim.x * gridDim.x;
+    cudaStreamSynchronize(stream);
+    CUDA_CHECK_LAST_ERROR();
 
     switch(threads)
     {
-        case 1024:
-            reduce<1024><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
-            break;
         case 512:
-            reduce<512><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<512, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 256:
-            reduce<256><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<256, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 128:
-            reduce<128><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<128, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 64:
-            reduce<64><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<64, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 32:
-            reduce<32><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<32, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 16:
-            reduce<16><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<16, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 8:
-            reduce<8><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<8, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 4:
-            reduce<4><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<4, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 2:
-            reduce<2><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<2, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
         case 1:
-            reduce<1><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata);
+            reduce<1, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
+                _idata, _odata, threads);
             break;
+    }
+    CUDA_CHECK_LAST_ERROR();
+
+    cudaStreamSynchronize(stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//============================================================================//
+
+template <typename _Tp>
+void
+call_compute_reduction(int& _i, int& _offset, int nthreads,
+                       _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
+                       int smemSize, cudaStream_t stream)
+{
+    // assumes nthreads < cuda_max_threads_per_block()
+    compute_reduction(nthreads, _idata + _offset, _odata + _offset, dimGrid,
+                      dimBlock, smemSize, stream);
+    _i -= nthreads;
+    _offset += nthreads;
+}
+
+//============================================================================//
+
+void
+reduce(float* _in, float* _out, int size, cudaStream_t stream)
+{
+
+    int  remain = size;
+    int offset = 0;
+
+    int smemSize = cuda_shared_memory_per_block();
+    int dimGrid  = cuda_multi_processor_count();
+    int dimBlock = cuda_max_threads_per_block();
+
+    while(remain > 0)
+    {
+        for(const auto& itr : { 512, 256, 128, 64, 32, 16, 8, 4, 2, 1 })
+        {
+            if(remain >= itr)
+            {
+                call_compute_reduction(remain, offset, itr, _in, _out,
+                                       dimGrid, dimBlock, smemSize, stream);
+                break;
+            }
+        }
     }
 }
 
@@ -214,7 +334,7 @@ template <typename _Tp>
 __global__ void
 cuda_global_zero(_Tp* data, int size, int* offset)
 {
-    int i0 = blockIdx.x * blockDim.x + threadIdx.x + ((offset) ? (*offset) : 0);
+    int i0     = blockIdx.x * blockDim.x + threadIdx.x + ((offset) ? (*offset) : 0);
     int stride = blockDim.x * gridDim.x;
     for(int i = i0; i < size; i += stride)
         data[i] = _Tp(0);
@@ -263,8 +383,8 @@ cuda_preprocessing_global_mov(int num_pixels, float center, float* mov)
 //----------------------------------------------------------------------------//
 
 void
-cuda_preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
-                   float* gridx, float* gridy, cudaStream_t* streams)
+cuda_preprocessing(int ry, int rz, int num_pixels, float center, float* mov, float* gridx,
+                   float* gridy, cudaStream_t* streams)
 {
     NVTX_RANGE_PUSH(&nvtx_preprocessing);
 
@@ -274,16 +394,13 @@ cuda_preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
 
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_preprocessing_global_x<<<nb, nt, smem, streams[0]>>>(ry, gridx,
-                                                              ry + 1);
+    cuda_preprocessing_global_x<<<nb, nt, smem, streams[0]>>>(ry, gridx, ry + 1);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_preprocessing_global_y<<<nb, nt, smem, streams[1]>>>(rz, gridy,
-                                                              rz + 1);
+    cuda_preprocessing_global_y<<<nb, nt, smem, streams[1]>>>(rz, gridy, rz + 1);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_preprocessing_global_mov<<<1, 1, smem, streams[2]>>>(num_pixels,
-                                                              center, mov);
+    cuda_preprocessing_global_mov<<<1, 1, smem, streams[2]>>>(num_pixels, center, mov);
     CUDA_CHECK_LAST_ERROR();
 
     for(auto i : { 0, 1, 2 })
@@ -303,8 +420,8 @@ cuda_preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
 //============================================================================//
 
 __global__ void
-cuda_calc_coords_global(const float* grid, float* coord, float slope,
-                        float src_minus, float src_plus, int size)
+cuda_calc_coords_global(const float* grid, float* coord, float slope, float src_minus,
+                        float src_plus, int size)
 {
     int i0     = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -319,8 +436,8 @@ cuda_calc_coords_global(const float* grid, float* coord, float slope,
 
 void
 cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-                 const float* gridx, const float* gridy, float* coordx,
-                 float* coordy, cudaStream_t* streams)
+                 const float* gridx, const float* gridy, float* coordx, float* coordy,
+                 cudaStream_t* streams)
 {
     if(ry <= 0 && rz <= 0)
         return;
@@ -340,12 +457,12 @@ cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_calc_coords_global<<<nb, nt, smem, streams[0]>>>(gridx, coordy, slope,
-                                                          srcx, srcy, ry + 1);
+    cuda_calc_coords_global<<<nb, nt, smem, streams[0]>>>(gridx, coordy, slope, srcx,
+                                                          srcy, ry + 1);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_calc_coords_global<<<nb, nt, smem, streams[1]>>>(gridy, coordx, islope,
-                                                          srcy, srcx, rz + 1);
+    cuda_calc_coords_global<<<nb, nt, smem, streams[1]>>>(gridy, coordx, islope, srcy,
+                                                          srcx, rz + 1);
     CUDA_CHECK_LAST_ERROR();
 
     cudaStreamSynchronize(streams[0]);
@@ -361,10 +478,9 @@ cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
 //============================================================================//
 
 __global__ void
-cuda_trim_coords_global_a(int ry, int rz, const float* coordx,
-                          const float* coordy, const float* gridx,
-                          const float* gridy, int* asize, float* ax, float* ay,
-                          int* bsize, float* bx, float* by)
+cuda_trim_coords_global_a(int ry, int rz, const float* coordx, const float* coordy,
+                          const float* gridx, const float* gridy, int* asize, float* ax,
+                          float* ay, int* bsize, float* bx, float* by)
 {
     int i0     = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -386,10 +502,9 @@ cuda_trim_coords_global_a(int ry, int rz, const float* coordx,
 //----------------------------------------------------------------------------//
 
 __global__ void
-cuda_trim_coords_global_b(int ry, int rz, const float* coordx,
-                          const float* coordy, const float* gridx,
-                          const float* gridy, int* asize, float* ax, float* ay,
-                          int* bsize, float* bx, float* by)
+cuda_trim_coords_global_b(int ry, int rz, const float* coordx, const float* coordy,
+                          const float* gridx, const float* gridy, int* asize, float* ax,
+                          float* ay, int* bsize, float* bx, float* by)
 {
     int i0     = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -412,9 +527,8 @@ cuda_trim_coords_global_b(int ry, int rz, const float* coordx,
 
 void
 cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
-                 const float* gridx, const float* gridy, int* asize, float* ax,
-                 float* ay, int* bsize, float* bx, float* by,
-                 cudaStream_t* streams)
+                 const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
+                 int* bsize, float* bx, float* by, cudaStream_t* streams)
 {
     if(ry <= 0 && rz <= 0)
         return;
@@ -433,16 +547,14 @@ cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
     cuda_global_zero<int><<<1, 1, smem, streams[1]>>>(bsize, 1, nullptr);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_trim_coords_global_a<<<nb, nt, smem, streams[0]>>>(ry, rz, coordx,
-                                                            coordy, gridx,
-                                                            gridy, asize, ax,
-                                                            ay, bsize, bx, by);
+    cuda_trim_coords_global_a<<<nb, nt, smem, streams[0]>>>(ry, rz, coordx, coordy, gridx,
+                                                            gridy, asize, ax, ay, bsize,
+                                                            bx, by);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_trim_coords_global_b<<<nb, nt, smem, streams[1]>>>(ry, rz, coordx,
-                                                            coordy, gridx,
-                                                            gridy, asize, ax,
-                                                            ay, bsize, bx, by);
+    cuda_trim_coords_global_b<<<nb, nt, smem, streams[1]>>>(ry, rz, coordx, coordy, gridx,
+                                                            gridy, asize, ax, ay, bsize,
+                                                            bx, by);
     CUDA_CHECK_LAST_ERROR();
 
     cudaStreamSynchronize(streams[0]);
@@ -458,8 +570,7 @@ cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
 //============================================================================//
 
 __global__ void
-cuda_sort_intersections_global_csize(const int* asize, const int* bsize,
-                                     int* csize)
+cuda_sort_intersections_global_csize(const int* asize, const int* bsize, int* csize)
 {
     *csize = (*asize) + (*bsize);
 }
@@ -468,10 +579,9 @@ cuda_sort_intersections_global_csize(const int* asize, const int* bsize,
 
 __global__ void
 cuda_sort_intersections_global_a(int ind_condition, int* ijk, const int* asize,
-                                 const float* ax, const float* ay,
-                                 const int* bsize, const float* bx,
-                                 const float* by, int* csize, float* coorx,
-                                 float* coory)
+                                 const float* ax, const float* ay, const int* bsize,
+                                 const float* bx, const float* by, int* csize,
+                                 float* coorx, float* coory)
 {
     int& i = ijk[0];
     int& k = ijk[2];
@@ -494,10 +604,9 @@ cuda_sort_intersections_global_a(int ind_condition, int* ijk, const int* asize,
 
 __global__ void
 cuda_sort_intersections_global_b(int ind_condition, int* ijk, const int* asize,
-                                 const float* ax, const float* ay,
-                                 const int* bsize, const float* bx,
-                                 const float* by, int* csize, float* coorx,
-                                 float* coory)
+                                 const float* ax, const float* ay, const int* bsize,
+                                 const float* bx, const float* by, int* csize,
+                                 float* coorx, float* coory)
 {
     int& i = ijk[0];
     int& j = ijk[1];
@@ -518,11 +627,10 @@ cuda_sort_intersections_global_b(int ind_condition, int* ijk, const int* asize,
 //----------------------------------------------------------------------------//
 
 __global__ void
-cuda_sort_intersections_global_partial(int ind_condition, int* ijk,
-                                       const int* asize, const float* ax,
-                                       const float* ay, const int* bsize,
-                                       const float* bx, const float* by,
-                                       int* csize, float* coorx, float* coory)
+cuda_sort_intersections_global_partial(int ind_condition, int* ijk, const int* asize,
+                                       const float* ax, const float* ay, const int* bsize,
+                                       const float* bx, const float* by, int* csize,
+                                       float* coorx, float* coory)
 {
     int  offset = (ind_condition == 0) ? ((*asize) - 1) : 0;
     int  opsign = (ind_condition == 0) ? -1 : 1;
@@ -551,11 +659,9 @@ cuda_sort_intersections_global_partial(int ind_condition, int* ijk,
 //----------------------------------------------------------------------------//
 
 __global__ void
-cuda_sort_intersections_global(int ind_condition, const int* asize,
-                               const float* ax, const float* ay,
-                               const int* bsize, const float* bx,
-                               const float* by, int* csize, float* coorx,
-                               float* coory)
+cuda_sort_intersections_global(int ind_condition, const int* asize, const float* ax,
+                               const float* ay, const int* bsize, const float* bx,
+                               const float* by, int* csize, float* coorx, float* coory)
 {
     int i = 0, j = 0, k = 0;
 
@@ -622,18 +728,20 @@ cuda_sort_intersections(int ind_condition, const int* asize, const float* ax,
     cuda_sort_intersections_global_partial<<<1, 1, smem, streams[0]>>>(
         ind_condition, ijk, asize, ax, ay, bsize, bx, by, csize, coorx, coory);
 
-    cuda_sort_intersections_global_csize<<<1, 1, smem, streams[1]>>>(asize,
-                                                                     bsize,
-                                                                     csize);
+    cuda_sort_intersections_global_csize<<<1, 1, smem, streams[1]>>>(asize, bsize, csize);
 
     cudaStreamSynchronize(streams[0]);
     cudaStreamSynchronize(streams[1]);
 
-    cuda_sort_intersections_global_a<<<nb, nt, smem, streams[0]>>>(
-        ind_condition, ijk, asize, ax, ay, bsize, bx, by, csize, coorx, coory);
+    cuda_sort_intersections_global_a<<<nb, nt, smem, streams[0]>>>(ind_condition, ijk,
+                                                                   asize, ax, ay, bsize,
+                                                                   bx, by, csize, coorx,
+                                                                   coory);
 
-    cuda_sort_intersections_global_b<<<nb, nt, smem, streams[1]>>>(
-        ind_condition, ijk, asize, ax, ay, bsize, bx, by, csize, coorx, coory);
+    cuda_sort_intersections_global_b<<<nb, nt, smem, streams[1]>>>(ind_condition, ijk,
+                                                                   asize, ax, ay, bsize,
+                                                                   bx, by, csize, coorx,
+                                                                   coory);
 
     cudaStreamSynchronize(streams[0]);
     cudaStreamSynchronize(streams[1]);
@@ -691,9 +799,8 @@ cuda_calc_dist_global_indi(int ry, int rz, const int* csize, const float* coorx,
 //----------------------------------------------------------------------------//
 
 void
-cuda_calc_dist(int ry, int rz, const int* csize, const float* coorx,
-               const float* coory, int* indi, float* dist,
-               cudaStream_t* streams)
+cuda_calc_dist(int ry, int rz, const int* csize, const float* coorx, const float* coory,
+               int* indi, float* dist, cudaStream_t* streams)
 {
     NVTX_RANGE_PUSH(&nvtx_calc_dist);
 
@@ -703,14 +810,12 @@ cuda_calc_dist(int ry, int rz, const int* csize, const float* coorx,
 
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_calc_dist_global_dist<<<nb, nt, smem, streams[0]>>>(ry, rz, csize,
-                                                             coorx, coory, indi,
-                                                             dist);
+    cuda_calc_dist_global_dist<<<nb, nt, smem, streams[0]>>>(ry, rz, csize, coorx, coory,
+                                                             indi, dist);
     CUDA_CHECK_LAST_ERROR();
 
-    cuda_calc_dist_global_indi<<<nb, nt, smem, streams[0]>>>(ry, rz, csize,
-                                                             coorx, coory, indi,
-                                                             dist);
+    cuda_calc_dist_global_indi<<<nb, nt, smem, streams[0]>>>(ry, rz, csize, coorx, coory,
+                                                             indi, dist);
     CUDA_CHECK_LAST_ERROR();
 
     cudaStreamSynchronize(streams[0]);
@@ -765,8 +870,7 @@ cuda_calc_sum_sqr(const int* csize, const float* dist, float* sum_sqr,
     static thread_local int    last_size = -1;
     static thread_local float* data      = NULL;
 
-    cudaMemcpyAsync(&size, csize, sizeof(int), cudaMemcpyDeviceToHost,
-                    streams[0]);
+    cudaMemcpyAsync(&size, csize, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
     CUDA_CHECK_LAST_ERROR();
 
     cudaStreamSynchronize(streams[0]);
@@ -784,16 +888,15 @@ cuda_calc_sum_sqr(const int* csize, const float* dist, float* sum_sqr,
     last_size  = size;
     float _sum = 0.0f;
 
-    thrust::transform(thrust::system::cuda::par.on(streams[0]), dist,
-                      dist + size, dist, data, thrust::multiplies<float>());
+    thrust::transform(thrust::system::cuda::par.on(streams[0]), dist, dist + size, dist,
+                      data, thrust::multiplies<float>());
     CUDA_CHECK_LAST_ERROR();
 
-    _sum = thrust::reduce(thrust::system::cuda::par.on(streams[0]), data,
-                          data + size, 0.0f, thrust::plus<float>());
+    _sum = thrust::reduce(thrust::system::cuda::par.on(streams[0]), data, data + size,
+                          0.0f, thrust::plus<float>());
     CUDA_CHECK_LAST_ERROR();
 
-    cudaMemcpyAsync(sum_sqr, &_sum, sizeof(float), cudaMemcpyHostToDevice,
-                    streams[0]);
+    cudaMemcpyAsync(sum_sqr, &_sum, sizeof(float), cudaMemcpyHostToDevice, streams[0]);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_calc_sum_sqr);
@@ -808,8 +911,7 @@ cuda_calc_sum_sqr(const int* csize, const float* dist, float* sum_sqr,
 __global__ void
 cuda_calc_simdata_global(int s, int p, int d, int ry, int rz, int dt, int dx,
                          const int* csize, const int* indi, const float* dist,
-                         const float* model, const float* sum_dist,
-                         float* simdata)
+                         const float* model, const float* sum_dist, float* simdata)
 {
     if(*sum_dist != 0.0f)
     {
@@ -834,10 +936,9 @@ cuda_calc_simdata_global(int s, int p, int d, int ry, int rz, int dt, int dx,
 //----------------------------------------------------------------------------//
 
 void
-cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx,
-                  const int* csize, const int* indi, const float* dist,
-                  const float* model, const float* sum_dist, float* simdata,
-                  cudaStream_t* streams)
+cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
+                  const int* indi, const float* dist, const float* model,
+                  const float* sum_dist, float* simdata, cudaStream_t* streams)
 {
     NVTX_RANGE_PUSH(&nvtx_calc_simdata);
 
@@ -846,10 +947,9 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx,
     int smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    cuda_calc_simdata_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt,
-                                                           dx, csize, indi,
-                                                           dist, model,
-                                                           sum_dist, simdata);
+    cuda_calc_simdata_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize,
+                                                           indi, dist, model, sum_dist,
+                                                           simdata);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_calc_simdata);
@@ -862,8 +962,7 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx,
 //============================================================================//
 
 __global__ void
-cuda_rotate_global(float* obj, const float theta, const int nx, const int ny,
-                   float* rot)
+cuda_rotate_global(float* obj, const float theta, const int nx, const int ny, float* rot)
 {
     float xoff = round(nx / 2.0);
     float yoff = round(ny / 2.0);
@@ -878,9 +977,9 @@ cuda_rotate_global(float* obj, const float theta, const int nx, const int ny,
     int obj_size = nx * ny;
     // for(int i = i0; i < size; i += stride)
 
-    for(int i = i0; i < nx; i += istride)
+    for(int j = j0; j < ny; j += jstride)
     {
-        for(int j = j0; j < ny; j += jstride)
+        for(int i = i0; i < nx; i += istride)
         {
             // indices in 2D
             float rx = float(i) - xoff + xop;
@@ -915,55 +1014,21 @@ cuda_rotate_global(float* obj, const float theta, const int nx, const int ny,
 
 //============================================================================//
 
-float*
-cuda_rotate(float* obj, const float theta, const int nx, const int ny,
-            cudaStream_t* streams)
+void
+cuda_rotate(float* dst, float* src, const float theta, const int nx, const int ny,
+            cudaStream_t* stream)
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    int nb   = cuda_multi_processor_count();
-    int nt   = cuda_max_threads_per_block();
-    int smem = 0;
-
-    float* rot = gpu_malloc<float>(nx * ny);
+    dim3 nb(32, 32);
+    dim3 nt(4, 4);
+    int  smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    cuda_rotate_global<<<nb, nt, smem, streams[0]>>>(obj, theta, nx, ny, rot);
+    cuda_rotate_global<<<nb, nt, smem, *stream>>>(src, theta, nx, ny, dst);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_rotate);
-
-    return rot;
-}
-
-//============================================================================//
-//
-//  add
-//
-//============================================================================//
-
-__global__ void
-cuda_add_global(float* data, int size, const float factor)
-{
-    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int istride = blockDim.x * gridDim.x;
-
-    for(int i = i0; i < size; i += istride)
-        data[i] += factor;
-}
-
-//============================================================================//
-
-void
-cuda_add(float* data, int size, const float factor, cudaStream_t* streams)
-{
-    int nb   = cuda_multi_processor_count();
-    int nt   = cuda_max_threads_per_block();
-    int smem = 0;
-
-    CUDA_CHECK_LAST_ERROR();
-    cuda_add_global<<<nb, nt, smem, streams[0]>>>(data, size, factor);
-    CUDA_CHECK_LAST_ERROR();
 }
 
 //============================================================================//
