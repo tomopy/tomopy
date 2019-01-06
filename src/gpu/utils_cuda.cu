@@ -1025,7 +1025,7 @@ cuda_rotate(float* dst, float* src, const float theta, const int nx, const int n
     int  smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    cuda_rotate_global<<<nb, nt, smem, *stream>>>(src, theta, nx, ny, dst);
+    cuda_rotate_global<<<nb, nt, smem>>>(src, theta, nx, ny, dst);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_rotate);
