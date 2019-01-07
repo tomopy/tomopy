@@ -131,6 +131,8 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
         "\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
         __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
+    TIMEMORY_AUTO_TIMER("");
+
     // assign the thread to a device
     set_this_thread_device();
 
@@ -208,9 +210,9 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
                     CUDA_CHECK_LAST_ERROR();
 
                     // update shared simdata array
-                    cudaMemcpy(_gpu_simdata, &_gpu_sim, float_size,
-                               cudaMemcpyHostToDevice);
-                    CUDA_CHECK_LAST_ERROR();
+                    //cudaMemcpy(_gpu_simdata, &_gpu_sim, float_size,
+                    //           cudaMemcpyHostToDevice);
+                    //CUDA_CHECK_LAST_ERROR();
 
                     // Make update by backprojecting error along x-axis
                     cuda_sirt_update(_gpu_data, _gpu_sim, _gpu_simdata, ngridx,

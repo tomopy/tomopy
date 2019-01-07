@@ -133,11 +133,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
             _sim += _recon_rot[n];
 
         // update shared simdata array
-        {
-            static Mutex _mutex;
-            AutoLock     l(_mutex);
-            (*simdata)[idx_data] += _sim;
-        }
+        (*simdata)[idx_data] += _sim;
 
         // Make update by backprojecting error along x-axis
         float upd = (data[idx_data] - *_simdata) / fngridx;
@@ -149,13 +145,9 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
     auto tmp = cxx_rotate(recon_rot, theta_p, ngridx, ngridy);
 
     // update shared update array
-    {
-        static Mutex _mutex;
-        AutoLock     l(_mutex);
-        PRAGMA_SIMD
-        for(uint64_t i = 0; i < tmp.size(); ++i)
+    PRAGMA_SIMD
+    for(uint64_t i = 0; i < tmp.size(); ++i)
             (*update)[i] += tmp[i];
-    }
 }
 
 //============================================================================//
@@ -163,10 +155,11 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
 void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-
 {
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
+    TIMEMORY_AUTO_TIMER("");
 
     int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
     TaskRunManager* run_man  = cpu_run_manager();
