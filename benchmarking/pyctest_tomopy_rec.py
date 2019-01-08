@@ -277,7 +277,7 @@ def main(arg):
                               "(default 0.5)")
                         )
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="gridrec", choices=algorithms, type=str)
+                        default="sirt", choices=algorithms, type=str)
     parser.add_argument("-n", "--ncores", help="number of cores",
                         default=default_ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
@@ -288,7 +288,7 @@ def main(arg):
     parser.add_argument("-c", "--ncol", help="Number of images per row",
                         default=1, type=int)
     parser.add_argument("-i", "--num-iter", help="Number of iterations",
-                        default=1, type=int)
+                        default=5, type=int)
     parser.add_argument("-o", "--output-dir", help="Output directory",
                         default=None, type=str)
     parser.add_argument("-g", "--grainsize",

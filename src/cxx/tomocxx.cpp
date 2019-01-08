@@ -156,7 +156,7 @@ PYBIND11_MODULE(tomocxx, tomo)
         // for(uintmax_t i = 0; i < arr.size(); ++i)
         //    std::cout << "cxx_arr[" << i << "] = " << cxx_arr.at(i) <<
         //    std::endl;
-        cxx_arr = cxx_rotate(cxx_arr, theta, nx, ny);
+        cxx_arr = cxx_rotate(cxx_arr.data(), theta, nx, ny);
         pyfarray_t      _arr(cxx_arr.size());
         py::buffer_info outbuf = _arr.request();
         memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));

@@ -200,9 +200,9 @@ if __name__ == "__main__":
     ncores = mp.cpu_count()
 
     parser.add_argument("-p", "--phantom", help="Phantom to use",
-                        default="lena", choices=phantom_choices, type=str)
+                        default="shepp2d", choices=phantom_choices, type=str)
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="art", choices=algorithms, type=str)
+                        default="sirt", choices=algorithms, type=str)
     parser.add_argument("-A", "--angles", help="number of angles",
                         default=360, type=int)
     parser.add_argument("-s", "--size", help="size of image",

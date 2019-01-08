@@ -56,7 +56,7 @@ extern nvtxEventAttributes_t nvtx_update;
 //============================================================================//
 
 __global__ void
-art_update_global(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
+art_update_kernel(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
                   const float* data, const float* simdata, const int* indi,
                   const float* dist, const float* sum_dist, float* model)
 {
@@ -91,7 +91,7 @@ cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* 
     int smem = 0;
 
     CUDA_CHECK_LAST_ERROR();
-    art_update_global<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize, data,
+    art_update_kernel<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize, data,
                                                     simdata, indi, dist, sum, model);
     CUDA_CHECK_LAST_ERROR();
     NVTX_RANGE_POP(&nvtx_update);

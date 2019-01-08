@@ -88,7 +88,7 @@ __inline__ __device__ float
 warpAllReduceSum(float val)
 {
     for(int mask = warpSize / 2; mask > 0; mask /= 2)
-        val += __shfl_xor_sync(-1, val, mask);
+        val += __shfl_xor_sync(FULL_MASK, val, mask);
     return val;
 }
 
@@ -120,11 +120,14 @@ blockReduceSum(float val)
 //----------------------------------------------------------------------------//
 
 __global__ void
-deviceReduceKernel(float* in, float* out, int N)
+deviceReduceKernel(const float* in, float* out, int N)
 {
-    float sum = 0;
+    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int   istride = blockDim.x * gridDim.x;
+    float sum     = 0;
+
     // reduce multiple elements per thread
-    for(int i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for(int i = i0; i < N; i += istride)
     {
         sum += in[i];
     }
@@ -136,7 +139,7 @@ deviceReduceKernel(float* in, float* out, int N)
 //----------------------------------------------------------------------------//
 
 float
-deviceReduce(float* in, float* out, int N, cudaStream_t stream)
+deviceReduce(const float* in, float* out, int N, cudaStream_t stream)
 {
     int threads = 512;
     int blocks  = min((N + threads - 1) / threads, 1024);
@@ -357,7 +360,7 @@ cuda_global_zero(_Tp* data, int size, int* offset)
 //============================================================================//
 
 __global__ void
-cuda_rotate_global(float* dst, const float* src, const float theta, const int nx,
+cuda_rotate_kernel(float* dst, const float* src, const float theta, const int nx,
                    const int ny)
 {
     float xoff = round(nx / 2.0);
@@ -365,10 +368,10 @@ cuda_rotate_global(float* dst, const float* src, const float theta, const int nx
     float xop  = (nx % 2 == 0) ? 0.5 : 0.0;
     float yop  = (ny % 2 == 0) ? 0.5 : 0.0;
 
-    int j0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int jstride = blockDim.x * gridDim.x;
-    int i0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int istride = blockDim.y * gridDim.y;
+    int j0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int jstride = blockDim.y * gridDim.y;
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int istride = blockDim.x * gridDim.x;
 
     int src_size = nx * ny;
 
@@ -376,7 +379,6 @@ cuda_rotate_global(float* dst, const float* src, const float theta, const int nx
     {
         for(int i = i0; i < nx; i += istride)
         {
-            // PRINT_HERE("");
             // indices in 2D
             float rx = float(i) - xoff + xop;
             float ry = float(j) - yoff + yop;
@@ -391,23 +393,19 @@ cuda_rotate_global(float* dst, const float* src, const float theta, const int nx
             if(rz < 0 || rz >= src_size)
                 continue;
             // within bounds
-            int x1 = floor(tx + xoff - xop);
-            int y1 = floor(ty + yoff - yop);
-            // if(x1 < 0 || y1 < 0)
-            //    continue;
-            // printf("i = %i, j = %i, z = %i, x1 = %i, y1 = %i\n", i, j, rz,
-            // x1, y1);
-            int   x2   = x1 + 1;
-            int   y2   = y1 + 1;
-            float fxy1 = 0.0f;
-            float fxy2 = 0.0f;
-            if(x1 >= 0 && y1 >= 0 && y1 * nx + x1 < src_size)
+            unsigned x1   = floor(tx + xoff - xop);
+            unsigned y1   = floor(ty + yoff - yop);
+            unsigned x2   = x1 + 1;
+            unsigned y2   = y1 + 1;
+            float    fxy1 = 0.0f;
+            float    fxy2 = 0.0f;
+            if(y1 * nx + x1 < src_size)
                 fxy1 += (x2 - x) * src[y1 * nx + x1];
-            if(x2 >= 0 && y1 >= 0 && y1 * nx + x2 < src_size)
+            if(y1 * nx + x2 < src_size)
                 fxy1 += (x - x1) * src[y1 * nx + x2];
-            if(x1 >= 0 && y2 >= 0 && y2 * nx + x1 < src_size)
+            if(y2 * nx + x1 < src_size)
                 fxy2 += (x2 - x) * src[y2 * nx + x1];
-            if(x2 >= 0 && y2 >= 0 && y2 * nx + x2 < src_size)
+            if(y2 * nx + x2 < src_size)
                 fxy2 += (x - x1) * src[y2 * nx + x2];
             dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
         }
@@ -422,13 +420,13 @@ cuda_rotate(const float* src, const float theta, const int nx, const int ny,
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    dim3 nb   = dim3(64, 16);
-    dim3 nt   = dim3(64, 16);
-    int  smem = 0;
+    dim3 block = dim3(256);
+    dim3 grid  = dim3((nx + block.x - 1) / block.x, nx);
+    int  smem  = 0;
 
     float* _dst = gpu_malloc<float>(nx * ny);
     cudaMemsetAsync(_dst, 0, nx * ny * sizeof(float), stream);
-    cuda_rotate_global<<<nb, nt, smem, stream>>>(_dst, src, theta, nx, ny);
+    cuda_rotate_kernel<<<grid, block, smem, stream>>>(_dst, src, theta, nx, ny);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_rotate);
@@ -443,12 +441,12 @@ cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    dim3 nb   = dim3(64, 16);
-    dim3 nt   = dim3(64, 16);
-    int  smem = 0;
+    dim3 block = dim3(256);
+    dim3 grid  = dim3((nx + block.x - 1) / block.x, nx);
+    int  smem  = 0;
 
     cudaMemsetAsync(dst, 0, nx * ny * sizeof(float), stream);
-    cuda_rotate_global<<<nb, nt, smem, stream>>>(dst, src, theta, nx, ny);
+    cuda_rotate_kernel<<<grid, block, smem, stream>>>(dst, src, theta, nx, ny);
 
     CUDA_CHECK_LAST_ERROR();
 

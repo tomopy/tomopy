@@ -459,7 +459,7 @@ cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize
 //============================================================================//
 
 farray_t
-cxx_rotate(const farray_t& src, const float theta, const int nx, const int ny)
+cxx_rotate(const float* src, const float theta, const int nx, const int ny)
 {
     farray_t dst(nx * ny, 0.0);
     float    xoff     = round(nx / 2.0);
@@ -507,7 +507,7 @@ cxx_rotate(const farray_t& src, const float theta, const int nx, const int ny)
 //============================================================================//
 
 void
-cxx_rotate_ip(farray_t& dst, const farray_t& src, const float theta, const int nx,
+cxx_rotate_ip(farray_t& dst, const float* src, const float theta, const int nx,
               const int ny)
 {
     memset(dst.data(), 0, nx * ny * sizeof(float));

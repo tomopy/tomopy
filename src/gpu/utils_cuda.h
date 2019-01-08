@@ -52,8 +52,13 @@
 //  reduce
 //============================================================================//
 
+__global__ void
+deviceReduceKernel(const float* in, float* out, int N);
+
+//----------------------------------------------------------------------------//
+
 DLL float
-deviceReduce(float* in, float* out, int N, cudaStream_t stream);
+deviceReduce(const float* in, float* out, int N, cudaStream_t stream);
 
 //============================================================================//
 //  reduce

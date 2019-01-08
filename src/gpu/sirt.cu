@@ -69,70 +69,62 @@ extern nvtxEventAttributes_t nvtx_update;
 
 //============================================================================//
 
-cudaStream_t
-get_stream(bool sync)
+class cuda_streamer
 {
+public:
     typedef std::list<cudaStream_t> stream_list_t;
 
-    static thread_local int nthread_streams = GetEnv<int>("TOMOPY_NUM_THREAD_STREAMS", 4);
-    static thread_local cudaStream_t* thread_streams = create_streams(nthread_streams);
-    static thread_local bool          init           = true;
-    static thread_local stream_list_t available_streams;
-    static thread_local stream_list_t utilized_streams;
-
-    if(init)
+    cuda_streamer(int nstreams)
+    : m_num_streams(nstreams)
+    , m_streams(create_streams(m_num_streams))
     {
-        for(int i = 0; i < nthread_streams; ++i)
-            available_streams.push_back(thread_streams[i]);
-        init = false;
+        for(int i = 0; i < m_num_streams; ++i)
+            m_available.push_back(m_streams[i]);
     }
 
-    cudaStream_t _tmp_stream;
-    if(!sync)
+    ~cuda_streamer() { destroy_streams(m_streams, m_num_streams); }
+
+    cudaStream_t get()
     {
-        // printf("\t%s [line: %i] fetching stream... avail = %lu, used =
-        // %lu\n",
-        //       __FUNCTION__, __LINE__, available_streams.size(),
-        //       utilized_streams.size());
-        if(available_streams.size() > 0)
+        if(m_available.size() > 0)
         {
-            // PRINT_HERE("");
-            _tmp_stream = available_streams.front();
-            available_streams.pop_front();
-            utilized_streams.push_back(_tmp_stream);
+            cudaStream_t _tmp_stream = m_available.front();
+            m_available.pop_front();
+            m_utilized.push_back(_tmp_stream);
             return _tmp_stream;
         }
-        else
-        {
-            // PRINT_HERE("");
-            _tmp_stream = utilized_streams.front();
-            utilized_streams.pop_front();
-            utilized_streams.push_back(_tmp_stream);
-            cudaStreamSynchronize(_tmp_stream);
-            CUDA_CHECK_LAST_ERROR();
-            return _tmp_stream;
-        }
-    }
-    // synchronize
-    while(!utilized_streams.empty())
-    {
-        // printf("\t%s [line: %i] synchronizing streams... avail = %lu, used "
-        //       "= %lu\n",
-        //       __FUNCTION__, __LINE__, available_streams.size(),
-        //       utilized_streams.size());
-        _tmp_stream = utilized_streams.front();
-        utilized_streams.pop_front();
-        available_streams.push_back(_tmp_stream);
+        cudaStream_t _tmp_stream = m_utilized.front();
+        m_utilized.pop_front();
+        m_utilized.push_back(_tmp_stream);
         cudaStreamSynchronize(_tmp_stream);
         CUDA_CHECK_LAST_ERROR();
+        return _tmp_stream;
     }
-    return _tmp_stream;
-}
+
+    void sync()
+    {
+        // synchronize
+        while(!m_utilized.empty())
+        {
+            cudaStream_t _tmp_stream = m_utilized.front();
+            m_utilized.pop_front();
+            m_available.push_back(_tmp_stream);
+            cudaStreamSynchronize(_tmp_stream);
+            CUDA_CHECK_LAST_ERROR();
+        }
+    }
+
+private:
+    uintmax_t     m_num_streams;
+    cudaStream_t* m_streams;
+    stream_list_t m_available;
+    stream_list_t m_utilized;
+};
 
 //============================================================================//
 
 __global__ void
-cuda_sirt_arrsum_global(float* dst, const float* src, int size, const float factor)
+cuda_sirt_arrsum_kernel(float* dst, const float* src, int size, const float factor)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -146,7 +138,7 @@ cuda_sirt_arrsum_global(float* dst, const float* src, int size, const float fact
 //============================================================================//
 
 __global__ void
-cuda_sirt_arrsum_global(float* dst, const float factor, int size)
+cuda_sirt_arrsum_kernel(float* dst, const float factor, int size)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -160,7 +152,7 @@ cuda_sirt_arrsum_global(float* dst, const float factor, int size)
 //============================================================================//
 
 __global__ void
-cuda_sirt_update_global(const float* data, const float* simdata, int ngridx,
+cuda_sirt_update_kernel(const float* data, const float* simdata, int ngridx,
                         float* recon_rot, int size)
 {
     float upd     = (data[0] - simdata[0]) / static_cast<float>(ngridx);
@@ -176,7 +168,7 @@ cuda_sirt_update_global(const float* data, const float* simdata, int ngridx,
 //============================================================================//
 
 __global__ void
-cuda_sirt_copy_global(float* dst, const float* src, int size)
+cuda_sirt_copy_kernel(float* dst, const float* src, int size)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -187,20 +179,41 @@ cuda_sirt_copy_global(float* dst, const float* src, int size)
     }
 }
 
+//============================================================================//
+
+__global__ void
+cuda_sirt_update_kernel(float* recon, const float* data, const float* sum, const int nx,
+                        int size)
+{
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int istride = blockDim.x * gridDim.x;
+
+    float upd = (*data - *sum) / static_cast<float>(nx);
+    for(int i = i0; i < size; i += istride)
+    {
+        recon[i] += upd;
+    }
+}
+
 //----------------------------------------------------------------------------//
 
 void
-cuda_sirt_update(const float* data, const float* simdata, int ngridx, float* recon_rot,
-                 int size, cudaStream_t* stream)
+cuda_sirt_update(int nx, float* recon, const float* data, float* buffer,
+                 cudaStream_t stream)
 {
     NVTX_RANGE_PUSH(&nvtx_update);
-    int nb   = cuda_multi_processor_count();
-    int nt   = 4;  // cuda_max_threads_per_block();
-    int smem = 0;
+    int block = 512;
+    int grid  = (nx + block - 1) / block;
+    int smem  = 0;
 
-    CUDA_CHECK_LAST_ERROR();
-    cuda_sirt_update_global<<<nb, nt, smem>>>(data, simdata, ngridx, recon_rot, size);
-    CUDA_CHECK_LAST_ERROR();
+    // Calculate simulated data by summing up along x-axis
+    int _grid = min(grid, 1024);
+    deviceReduceKernel<<<_grid, block, smem, stream>>>(recon, buffer, nx);
+    deviceReduceKernel<<<1, 1024, 0, stream>>>(buffer, buffer, block);
+
+    // Make update by backprojecting error along x-axis
+    cuda_sirt_update_kernel<<<grid, block, smem, stream>>>(recon, data, buffer, nx, nx);
+
     NVTX_RANGE_POP(&nvtx_update);
 }
 
@@ -219,15 +232,14 @@ struct thread_data
     float*       m_sum;
     float*       m_rot;
     float*       m_tmp;
-    float*       m_recon;
+    float*       m_buffer;
     float*       m_update;
-    float*       m_simdata;
-    float*       m_simdata_cpu;
-    float*       m_gpu_recon;
+    const float* m_recon;
+    const float* m_data;
     cudaStream_t m_stream;
 
     thread_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
-                const float* gpu_recon)
+                const float* data)
     : m_device(device)
     , m_id(id)
     , m_dy(dy)
@@ -239,14 +251,11 @@ struct thread_data
     , m_sum(gpu_malloc<float>(m_nx))
     , m_rot(gpu_malloc<float>(m_size))
     , m_tmp(gpu_malloc<float>(m_size))
-    , m_recon(gpu_malloc<float>(m_size))
+    , m_recon(nullptr)
+    , m_buffer(gpu_malloc<float>(m_nx * m_dt))
     , m_update(gpu_malloc<float>(m_size))
-    , m_simdata(gpu_malloc<float>(m_dy * m_dt * m_dx))
-    , m_simdata_cpu(new float[dy * dt * dx])
     {
         cudaStreamCreate(&m_stream);
-        cudaMemset(m_simdata, 0, m_dy * m_dt * m_dx * sizeof(float));
-        memset(m_simdata_cpu, 0, m_dy * m_dt * m_dx * sizeof(float));
     }
 
     ~thread_data()
@@ -254,59 +263,53 @@ struct thread_data
         cudaFree(m_sum);
         cudaFree(m_rot);
         cudaFree(m_tmp);
-        cudaFree(m_recon);
+        cudaFree(m_buffer);
         cudaFree(m_update);
-        cudaFree(m_simdata);
-        delete[] m_simdata_cpu;
         cudaStreamDestroy(m_stream);
     }
 
-    void initialize(int nb, int nt, int smem, const float* gpu_recon, int s)
+    void initialize(const float* data, const float* recon, int s)
     {
-        int          offset  = s * m_size;
-        const float* g_recon = gpu_recon + offset;
-        cudaMemset(m_update, 0, m_size * sizeof(float));
-        cudaMemcpy(m_recon, g_recon, m_size * sizeof(float), cudaMemcpyDeviceToDevice);
-
-        /*float* _buffer = gpu_malloc<float>(m_size);
-        cudaMemset(_buffer, 0, m_size * sizeof(float));
-        float _this_sum = deviceReduce(m_recon, _buffer, m_size, m_stream);
-        float _real_sum = deviceReduce(g_recon, _buffer, m_size, m_stream);
-        printf("[TID: %i] gpu recon = %p, real sum = %f, local recon = %p, "
-               "local sum = %f\n",
-               m_id, g_recon, _real_sum, m_recon, _this_sum);
-        cudaFree(_buffer);*/
+        uintmax_t offset = s * m_dt * m_dx;
+        m_data           = data + offset;
+        offset           = s * m_size;
+        m_recon          = recon + offset;
+        cudaMemsetAsync(m_update, 0, m_size * sizeof(float), m_stream);
     }
 
-    void finalize(int nb, int nt, int smem, float* gpu_recon, int s)
+    void finalize(float* recon, int s)
     {
+        int   block  = 512;
+        int   grid   = (m_size + block - 1) / block;
         int   offset = s * m_size;
         float factor = 1.0f / static_cast<float>(m_dt);
-        cuda_sirt_arrsum_global<<<nb, nt, smem, m_stream>>>(gpu_recon + offset, m_update,
-                                                            m_size, factor);
+        cuda_sirt_arrsum_kernel<<<grid, block, 0, m_stream>>>(recon + offset, m_update,
+                                                              m_size, factor);
     }
 
-    void sync() { cudaStreamSynchronize(m_stream); }
+    void sync()
+    {
+        cudaStreamSynchronize(m_stream);
+        CUDA_CHECK_LAST_ERROR();
+    }
 
     cudaStream_t stream() const { return m_stream; }
 
-    void reset_simdata()
-    {
-        cudaMemset(m_simdata, 0, m_dy * m_dt * m_dx * sizeof(float));
-        memset(m_simdata_cpu, 0, m_dy * m_dt * m_dx * sizeof(float));
-    }
+    float*       rot() const { return m_rot; }
+    float*       tmp() const { return m_tmp; }
+    float*       update() const { return m_update; }
+    const float* recon() const { return m_recon; }
+    const float* data() const { return m_data; }
 
-    float* cpu_simdata() const { return m_simdata_cpu; }
-    float* simdata() const { return m_simdata; }
-    float* update() const { return m_update; }
-    float* recon() const { return m_recon; }
-    float* rot() const { return m_rot; }
-    float* tmp() const { return m_tmp; }
+    float* buffer() const
+    {
+        cudaMemsetAsync(m_buffer, 0, m_nx * m_dt * sizeof(float), m_stream);
+        return m_buffer;
+    }
 
     float* sum()
     {
         cudaMemsetAsync(m_sum, 0, m_nx * sizeof(float), m_stream);
-        CUDA_CHECK_LAST_ERROR();
         return m_sum;
     }
 };
@@ -314,9 +317,8 @@ struct thread_data
 //============================================================================//
 
 void
-cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* cpu_data,
-                        const float* theta, int s, int p, int nthreads,
-                        thread_data** _thread_data)
+cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
+                        int p, int nthreads, thread_data** _thread_data)
 {
     auto         thread_number = ThreadPool::GetThisThreadID() % nthreads;
     thread_data* _cache        = _thread_data[thread_number];
@@ -328,77 +330,44 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* cpu
     float theta_p    = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
     int   recon_size = ngridx * ngridy;
     int   float_size = sizeof(float);
-    int   nb         = 4 * cuda_multi_processor_count();
-    int   nt         = cuda_max_threads_per_block();
+    int   block      = 512;
+    int   grid       = (ngridx + block - 1) / block;
     int   smem       = 0;
 
-    float* simdata     = _cache->simdata();
-    float* recon       = _cache->recon();
-    float* update      = _cache->update();
-    float* cpu_simdata = _cache->cpu_simdata();
-    float* recon_rot   = _cache->rot();
-    float* recon_tmp   = _cache->tmp();
+    const float* recon     = _cache->recon();
+    const float* data      = _cache->data();
+    float*       update    = _cache->update();
+    float*       recon_rot = _cache->rot();
+    float*       recon_tmp = _cache->tmp();
+    float*       buffer    = _cache->buffer();
 
     // Rotate object
     cuda_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy, stream);
-    CUDA_CHECK_LAST_ERROR();
 
+    // static thread_local cuda_streamer* _streamer = new cuda_streamer(dx);
     for(int d = 0; d < dx; ++d)
     {
-        int          pix_offset   = d * ngridx;  // pixel offset
-        int          idx_data     = d + p * dx + s * dt * dx;
-        float*       _cpu_simdata = cpu_simdata + idx_data;
-        const float* _cpu_data    = cpu_data + idx_data;
-        float        _sim         = 0.0f;
-
-        // Calculate simulated data by summing up along x-axis
-        //_sim = reduce(_recon_rot, _cache->sum(), ngridx, stream);
-        _sim = deviceReduce(recon_rot + pix_offset, _cache->sum(), ngridx, stream);
-
-        // update shared simdata array
-        *_cpu_simdata += _sim;
-
-        cuda_sirt_arrsum_global<<<1, 1, smem, stream>>>(simdata + idx_data, _sim, 1);
-
-        // Make update by backprojecting error along x-axis
-        float upd = (*_cpu_data - *_cpu_simdata) / fngridx;
-        cuda_sirt_arrsum_global<<<nb, nt, smem, stream>>>(recon_rot + pix_offset, upd,
-                                                          ngridx);
+        int pix_offset = d * ngridx;  // pixel offset
+        int idx_data   = d + p * dx;  // data offset
+        // cudaStream_t _stream    = _streamer->get();
+        cuda_sirt_update(ngridx, recon_rot + pix_offset, data + idx_data, _cache->sum(),
+                         stream);
     }
+    //_streamer->sync();
 
     // Back-Rotate object
     cuda_rotate_ip(recon_tmp, recon_rot, theta_p, ngridx, ngridy, stream);
-    CUDA_CHECK_LAST_ERROR();
-
-    /*{
-        cudaStreamSynchronize(stream);
-        CUDA_CHECK_LAST_ERROR();
-        float* g_recon = recon_tmp;
-        float* m_recon = recon_rot;
-        int    m_size  = ngridx * ngridy;
-        float* _buffer = gpu_malloc<float>(m_size);
-        cudaMemset(_buffer, 0, m_size * sizeof(float));
-        float _this_sum = deviceReduce(m_recon, _buffer, m_size, stream);
-        float _real_sum = deviceReduce(g_recon, _buffer, m_size, stream);
-        printf("[TID: %i] recon (tmp) = %p, tmpary sum = %f, recon (rot) = %p, "
-               "rotate sum = %f\n",
-               thread_number, g_recon, _real_sum, m_recon, _this_sum);
-        cudaFree(_buffer);
-        cudaStreamSynchronize(stream);
-        CUDA_CHECK_LAST_ERROR();
-    }*/
 
     // update shared update array
-    cuda_sirt_arrsum_global<<<nb, nt, smem, stream>>>(update, recon_tmp, ngridx * ngridy,
-                                                      1.0f);
-    CUDA_CHECK_LAST_ERROR();
+    cuda_sirt_arrsum_kernel<<<grid, block, smem, stream>>>(update, recon_tmp,
+                                                           ngridx * ngridy, 1.0f);
 }
 
 //----------------------------------------------------------------------------//
 
 void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
+          const float* theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
 {
     if(cuda_device_count() == 0)
         throw std::runtime_error("No CUDA device(s) available");
@@ -414,7 +383,7 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
     set_this_thread_device();
     int num_devices = cuda_device_count();
 
-    int nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+    int nthreads = GetEnv("TOMOPY_NUM_THREADS", 1);
     // int             nstreams = GetEnv("TOMOPY_NUM_STREAMS", nthreads);
     // cudaStream_t*   streams  = create_streams(nstreams);
     TaskRunManager* run_man = gpu_run_manager();
@@ -422,32 +391,26 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
     TaskManager* task_man = run_man->GetTaskManager();
 
     // needed for recon to output at proper orientation
-    int    recon_size = ngridx * ngridy;
-    int    float_size = sizeof(float);
-    int    nb         = 4 * cuda_multi_processor_count();
-    int    nt         = cuda_max_threads_per_block();
-    int    smem       = 0;
-    float* gpu_recon  = gpu_malloc<float>(dy * recon_size);
+    float* recon = gpu_malloc<float>(dy * ngridx * ngridy);
+    float* data  = gpu_malloc<float>(dy * dt * dx);
 
-    cudaMemcpy(gpu_recon, recon, dy * recon_size * float_size, cudaMemcpyHostToDevice);
-    CUDA_CHECK_LAST_ERROR();
+    cudaMemcpy(recon, cpu_recon, dy * ngridx * ngridy * sizeof(float),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(data, cpu_data, dy * dt * dx * sizeof(float), cudaMemcpyHostToDevice);
 
     thread_data** _thread_data = new thread_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
         _thread_data[i] =
-            new thread_data(i % num_devices, i, dy, dt, dx, ngridx, ngridy, gpu_recon);
+            new thread_data(i % num_devices, i, dy, dt, dx, ngridx, ngridy, data);
 
     for(int i = 0; i < num_iter; i++)
     {
-        for(int i = 0; i < nthreads; ++i)
-            _thread_data[i]->reset_simdata();
-
         // For each slice
         for(int s = 0; s < dy; ++s)
         {
             int slice_offset = s * ngridx * ngridy;
             for(int i = 0; i < nthreads; ++i)
-                _thread_data[i]->initialize(nb, nt, smem, gpu_recon, s);
+                _thread_data[i]->initialize(data, recon, s);
             for(int i = 0; i < nthreads; ++i)
                 _thread_data[i]->sync();
 
@@ -455,30 +418,28 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
             // For each projection angle
             for(int p = 0; p < dt; ++p)
             {
-                task_man->exec(tg, cuda_compute_projection, dt, dx, ngridx, ngridy, data,
-                               theta, s, p, nthreads, _thread_data);
+                task_man->exec(tg, cuda_compute_projection, dt, dx, ngridx, ngridy, theta,
+                               s, p, nthreads, _thread_data);
                 tg.join();
             }
             tg.join();
-            cudaDeviceSynchronize();
+            // cudaDeviceSynchronize();
 
             for(int i = 0; i < nthreads; ++i)
-                _thread_data[i]->finalize(nb, nt, smem, gpu_recon, s);
-            for(int i = 0; i < nthreads; ++i)
-                _thread_data[i]->sync();
+                _thread_data[i]->finalize(recon, s);
+            // for(int i = 0; i < nthreads; ++i)
+            //    _thread_data[i]->sync();
         }
     }
     cudaDeviceSynchronize();
-
-    cudaMemcpy(recon, gpu_recon, dy * recon_size * float_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
+               cudaMemcpyDeviceToHost);
+    cudaFree(recon);
+    cudaFree(data);
 
     for(int i = 0; i < nthreads; ++i)
         delete _thread_data[i];
     delete[] _thread_data;
-
-    cudaFree(gpu_recon);
-
-    // destroy_streams(streams, nstreams);
 
     cudaDeviceSynchronize();
 }
