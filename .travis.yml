@@ -10,8 +10,7 @@ env:
   global:
     - PATH=${HOME}/miniconda/bin:${PATH}
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
-    - CTEST_SITE=Travis
-    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1'
+    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
     - TOMOPY_USE_C_SIRT=1
 before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
