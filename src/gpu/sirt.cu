@@ -405,6 +405,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     for(int i = 0; i < num_iter; i++)
     {
+        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
+               num_iter);
         // For each slice
         for(int s = 0; s < dy; ++s)
         {
@@ -420,7 +422,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             {
                 task_man->exec(tg, cuda_compute_projection, dt, dx, ngridx, ngridy, theta,
                                s, p, nthreads, _thread_data);
-                tg.join();
             }
             tg.join();
             // cudaDeviceSynchronize();
