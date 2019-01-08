@@ -42,6 +42,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "gpu.hh"
+#include "utils.hh"
 #include <cstdint>
 
 BEGIN_EXTERN_C
@@ -50,309 +51,102 @@ END_EXTERN_C
 
 //============================================================================//
 
-void
-openmp_preprocessing(int ry, int rz, int num_pixels, float center, float* mov,
-                     float* gridx, float* gridy)
+float*
+openmp_rotate(const float* src, const float theta, const int nx, const int ny)
 {
-    for(int i = 0; i <= ry; ++i)
+    float* dst      = new float[nx * ny];
+    float  xoff     = round(nx / 2.0);
+    float  yoff     = round(ny / 2.0);
+    float  xop      = (nx % 2 == 0) ? 0.5 : 0.0;
+    float  yop      = (ny % 2 == 0) ? 0.5 : 0.0;
+    int    src_size = nx * ny;
+    memset(dst, 0, nx * ny * sizeof(float));
+
+    for(int j = 0; j < ny; ++j)
     {
-        gridx[i] = -ry * 0.5f + i;
+        for(int i = 0; i < nx; ++i)
+        {
+            // indices in 2D
+            float rx = float(i) - xoff + xop;
+            float ry = float(j) - yoff + yop;
+            // transformation
+            float tx = rx * cosf(theta) + -ry * sinf(theta);
+            float ty = rx * sinf(theta) + ry * cosf(theta);
+            // indices in 2D
+            float x = (tx + xoff - xop);
+            float y = (ty + yoff - yop);
+            // index in 1D array
+            int rz = j * nx + i;
+            if(rz < 0 || rz >= src_size)
+                continue;
+            // within bounds
+            int   x1   = floor(tx + xoff - xop);
+            int   y1   = floor(ty + yoff - yop);
+            int   x2   = x1 + 1;
+            int   y2   = y1 + 1;
+            float fxy1 = 0.0f;
+            float fxy2 = 0.0f;
+            if(x1 >= 0 && y1 >= 0 && y1 * nx + x1 < src_size)
+                fxy1 += (x2 - x) * src[y1 * nx + x1];
+            if(x2 >= 0 && y1 >= 0 && y1 * nx + x2 < src_size)
+                fxy1 += (x - x1) * src[y1 * nx + x2];
+            if(x1 >= 0 && y2 >= 0 && y2 * nx + x1 < src_size)
+                fxy2 += (x2 - x) * src[y2 * nx + x1];
+            if(x2 >= 0 && y2 >= 0 && y2 * nx + x2 < src_size)
+                fxy2 += (x - x1) * src[y2 * nx + x2];
+            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
+        }
     }
-
-    for(int i = 0; i <= rz; ++i)
-    {
-        gridy[i] = -rz * 0.5f + i;
-    }
-
-    *mov = ((float) num_pixels - 1) * 0.5f - center;
-    if(*mov - floor(*mov) < 0.01f)
-    {
-        *mov += 0.01f;
-    }
-    *mov += 0.5;
-}
-
-//============================================================================//
-
-int
-openmp_calc_quadrant(float theta_p)
-{
-    // here we cast the float to an integer and rescale the integer to
-    // near INT_MAX to retain the precision. This method was tested
-    // on 1M random random floating points between -2*pi and 2*pi and
-    // was found to produce a speed up of:
-    //
-    //  - 14.5x (Intel i7 MacBook)
-    //  - 2.2x  (NERSC KNL)
-    //  - 1.5x  (NERSC Edison)
-    //  - 1.7x  (NERSC Haswell)
-    //
-    // with a 0.0% incorrect quadrant determination rate
-    //
-    const int32_t ipi_c   = 340870420;
-    int32_t       theta_i = (int32_t)(theta_p * ipi_c);
-    theta_i += (theta_i < 0) ? (2.0f * M_PI * ipi_c) : 0;
-
-    return ((theta_i >= 0 && theta_i < 0.5f * M_PI * ipi_c) ||
-            (theta_i >= 1.0f * M_PI * ipi_c && theta_i < 1.5f * M_PI * ipi_c))
-               ? 1
-               : 0;
-}
-
-//============================================================================//
-
-void
-openmp_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-                   const float* gridx, const float* gridy, float* coordx, float* coordy)
-{
-    float srcx, srcy, detx, dety;
-    float slope, islope;
-    int   n;
-
-    srcx = xi * cos_p - yi * sin_p;
-    srcy = xi * sin_p + yi * cos_p;
-    detx = -xi * cos_p - yi * sin_p;
-    dety = -xi * sin_p + yi * cos_p;
-
-    slope  = (srcy - dety) / (srcx - detx);
-    islope = (srcx - detx) / (srcy - dety);
-
-#pragma omp simd
-    for(n = 0; n <= ry; n++)
-    {
-        coordy[n] = slope * (gridx[n] - srcx) + srcy;
-    }
-#pragma omp simd
-    for(n = 0; n <= rz; n++)
-    {
-        coordx[n] = islope * (gridy[n] - srcy) + srcx;
-    }
+    return dst;
 }
 
 //============================================================================//
 
 void
-openmp_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
-                   const float* gridx, const float* gridy, int* asize, float* ax,
-                   float* ay, int* bsize, float* bx, float* by)
+openmp_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
+                          const float* theta, int s, int p, float* simdata, float* update,
+                          float* recon_off)
 {
-    *asize         = 0;
-    *bsize         = 0;
-    float gridx_gt = gridx[0] + 0.01f;
-    float gridx_le = gridx[ry] - 0.01f;
+    // needed for recon to output at proper orientation
+    float pi_offset = 0.5f * (float) M_PI;
+    float fngridx   = ngridx;
+    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
 
-    for(int n = 0; n <= rz; ++n)
+    // Rotate object
+    float* recon_rot = openmp_rotate(recon_off, -theta_p, ngridx, ngridy);
+
+    for(int d = 0; d < dx; d++)
     {
-        if(coordx[n] >= gridx_gt && coordx[n] <= gridx_le)
-        {
-            ax[*asize] = coordx[n];
-            ay[*asize] = gridy[n];
-            ++(*asize);
-        }
+        int    pix_offset = d * ngridx;  // pixel offset
+        int    idx_data   = d + p * dx + s * dt * dx;
+        float* _simdata   = simdata + idx_data;
+        float* _recon_rot = recon_rot + pix_offset;
+        float  _sim       = 0.0f;
+
+        // Calculate simulated data by summing up along x-axis
+        for(int n = 0; n < ngridx; n++)
+            _sim += _recon_rot[n];
+
+        // update shared simdata array
+        *_simdata += _sim;
+
+        // Make update by backprojecting error along x-axis
+        float upd = (data[idx_data] - *_simdata) / fngridx;
+        for(int n = 0; n < ngridx; n++)
+            _recon_rot[n] += upd;
     }
+    // Back-Rotate object
+    float* recon_tmp = openmp_rotate(recon_rot, theta_p, ngridx, ngridy);
 
-    float gridy_gt = gridy[0] + 0.01f;
-    float gridy_le = gridy[rz] - 0.01f;
+    static Mutex _mutex;
+    _mutex.lock();
+    // update shared update array
+    for(uint64_t i = 0; i < (ngridx * ngridy); ++i)
+        update[i] += recon_tmp[i];
+    _mutex.unlock();
 
-    for(int n = 0; n <= ry; ++n)
-    {
-        if(coordy[n] >= gridy_gt && coordy[n] <= gridy_le)
-        {
-            bx[*bsize] = gridx[n];
-            by[*bsize] = coordy[n];
-            ++(*bsize);
-        }
-    }
-}
-
-//============================================================================//
-
-void
-openmp_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
-                          int bsize, const float* bx, const float* by, int* csize,
-                          float* coorx, float* coory)
-{
-    int i = 0, j = 0, k = 0;
-    if(ind_condition == 0)
-    {
-        while(i < asize && j < bsize)
-        {
-            if(ax[asize - 1 - i] < bx[j])
-            {
-                coorx[k] = ax[asize - 1 - i];
-                coory[k] = ay[asize - 1 - i];
-                ++i;
-            }
-            else
-            {
-                coorx[k] = bx[j];
-                coory[k] = by[j];
-                ++j;
-            }
-            ++k;
-        }
-
-        while(i < asize)
-        {
-            coorx[k] = ax[asize - 1 - i];
-            coory[k] = ay[asize - 1 - i];
-            ++i;
-            ++k;
-        }
-        while(j < bsize)
-        {
-            coorx[k] = bx[j];
-            coory[k] = by[j];
-            ++j;
-            ++k;
-        }
-
-        (*csize) = asize + bsize;
-    }
-    else
-    {
-        while(i < asize && j < bsize)
-        {
-            if(ax[i] < bx[j])
-            {
-                coorx[k] = ax[i];
-                coory[k] = ay[i];
-                ++i;
-            }
-            else
-            {
-                coorx[k] = bx[j];
-                coory[k] = by[j];
-                ++j;
-            }
-            ++k;
-        }
-
-        while(i < asize)
-        {
-            coorx[k] = ax[i];
-            coory[k] = ay[i];
-            ++i;
-            ++k;
-        }
-        while(j < bsize)
-        {
-            coorx[k] = bx[j];
-            coory[k] = by[j];
-            ++j;
-            ++k;
-        }
-        (*csize) = asize + bsize;
-    }
-}
-
-//============================================================================//
-
-void
-openmp_calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
-                 int* indi, float* dist)
-{
-    const int _size = csize - 1;
-
-    //------------------------------------------------------------------------//
-    //              calculate dist
-    //------------------------------------------------------------------------//
-    {
-        float _diffx[_size];
-        float _diffy[_size];
-
-#pragma omp simd
-        for(int n = 0; n < _size; ++n)
-        {
-            _diffx[n] = (coorx[n + 1] - coorx[n]) * (coorx[n + 1] - coorx[n]);
-        }
-
-#pragma omp simd
-        for(int n = 0; n < _size; ++n)
-        {
-            _diffy[n] = (coory[n + 1] - coory[n]) * (coory[n + 1] - coory[n]);
-        }
-
-#pragma omp simd
-        for(int n = 0; n < _size; ++n)
-        {
-            dist[n] = sqrtf(_diffx[n] + _diffy[n]);
-        }
-    }
-
-    //------------------------------------------------------------------------//
-    //              calculate indi
-    //------------------------------------------------------------------------//
-
-    float _midx[_size];
-    float _midy[_size];
-    float _x1[_size];
-    float _x2[_size];
-    int   _i1[_size];
-    int   _i2[_size];
-    int   _indx[_size];
-    int   _indy[_size];
-
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _midx[n] = 0.5f * (coorx[n + 1] + coorx[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _midy[n] = 0.5f * (coory[n + 1] + coory[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _x1[n] = _midx[n] + 0.5f * ry;
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _x2[n] = _midy[n] + 0.5f * rz;
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _i1[n] = (int) (_midx[n] + 0.5f * ry);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _i2[n] = (int) (_midy[n] + 0.5f * rz);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _indx[n] = _i1[n] - (_i1[n] > _x1[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _indy[n] = _i2[n] - (_i2[n] > _x2[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        indi[n] = _indy[n] + (_indx[n] * rz);
-    }
-}
-
-//============================================================================//
-
-void
-openmp_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-                    const int* indi, const float* dist, const float* model,
-                    float* simdata)
-{
-    int index_model = s * ry * rz;
-    int index_data  = d + p * dx + s * dt * dx;
-    for(int n = 0; n < csize - 1; ++n)
-    {
-        simdata[index_data] += model[indi[n] + index_model] * dist[n];
-    }
+    delete[] recon_rot;
+    delete[] recon_tmp;
 }
 
 //============================================================================//

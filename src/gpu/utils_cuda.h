@@ -49,67 +49,6 @@
 #include "gpu.h"
 
 //============================================================================//
-//  preprocessing
-//============================================================================//
-
-DLL void
-cuda_preprocessing(int ry, int rz, int num_pixels, float center, float* mov, float* gridx,
-                   float* gridy, cudaStream_t* streams);
-
-//============================================================================//
-//  calc_coords
-//============================================================================//
-
-DLL void
-cuda_calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p, float cos_p,
-                 const float* gridx, const float* gridy, float* coordx, float* coordy,
-                 cudaStream_t* streams);
-
-//============================================================================//
-//  trim_coords
-//============================================================================//
-
-DLL void
-cuda_trim_coords(int ngridx, int ngridy, const float* coordx, const float* coordy,
-                 const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
-                 int* bsize, float* bx, float* by, cudaStream_t* streams);
-
-//============================================================================//
-//  sort intersections
-//============================================================================//
-
-DLL void
-cuda_sort_intersections(int ind_condition, const int* asize, const float* ax,
-                        const float* ay, const int* bsize, const float* bx,
-                        const float* by, int* csize, float* coorx, float* coory,
-                        cudaStream_t* streams);
-
-//============================================================================//
-//  calc_dist_sqr
-//============================================================================//
-
-DLL void
-cuda_calc_sum_sqr(const int* csize, const float* dist, float* sum_sqr,
-                  cudaStream_t* streams);
-
-//============================================================================//
-//  calc_dist
-//============================================================================//
-
-DLL void
-cuda_calc_dist(int ngridx, int ngridy, const int* csize, const float* coorx,
-               const float* coory, int* indi, float* dist, cudaStream_t* streams);
-
-//============================================================================//
-//  calc_simdata
-//============================================================================//
-
-DLL void
-cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
-                  const int* indi, const float* dist, const float* model,
-                  const float* sum_dist, float* simdata, cudaStream_t* streams);
-
-//============================================================================//
 //  reduce
 //============================================================================//
 

@@ -41,8 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _utils_openacc_h
-#define _utils_openacc_h
+#pragma once
 
 #include "string.h"
 #include <assert.h>
@@ -51,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "utils.h"
 
 #if !defined(DLL)
@@ -61,49 +61,26 @@
 #    endif
 #endif
 
+// Utility functions for data simultation
+
 //============================================================================//
 
 BEGIN_EXTERN_C
 
 //============================================================================//
 
-DLL void
-openacc_preprocessing(int ngridx, int ngridy, int dz, float center, float* mov,
-                      float* gridx, float* gridy);
+float*
+openacc_rotate(const float* src, const float theta, const int nx, const int ny);
 
-int DLL
-    openacc_calc_quadrant(float theta_p);
+//============================================================================//
 
-DLL void
-openacc_calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p, float cos_p,
-                    const float* gridx, const float* gridy, float* coordx, float* coordy);
-
-DLL void
-openacc_trim_coords(int ngridx, int ngridy, const float* coordx, const float* coordy,
-                    const float* gridx, const float* gridy, int* asize, float* ax,
-                    float* ay, int* bsize, float* bx, float* by);
-
-DLL void
-openacc_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
-                           int bsize, const float* bx, const float* by, int* csize,
-                           float* coorx, float* coory);
-
-DLL void
-openacc_calc_sum_sqr(const int csize, const float* dist, float* sum_sqr);
-
-DLL void
-openacc_calc_dist(int ngridx, int ngridy, int csize, const float* coorx,
-                  const float* coory, int* indi, float* dist);
-
-DLL void
-openacc_calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx,
-                     int csize, const int* indi, const float* dist, const float* model,
-                     float* simdata);
+void
+openacc_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
+                           const float* theta, int s, int p, float* simdata,
+                           float* update, float* recon_off);
 
 //============================================================================//
 
 END_EXTERN_C
 
 //============================================================================//
-
-#endif

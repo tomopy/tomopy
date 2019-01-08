@@ -97,194 +97,12 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
          int num_block, const float* ind_block)
 {
-    if(dy == 0 || dt == 0 || dx == 0)
-        return;
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                      num_block, ind_block);
 
-    tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[cpu]");
 
-    uintmax_t _nx = scast<uintmax_t>(ngridx);
-    uintmax_t _ny = scast<uintmax_t>(ngridy);
-    uintmax_t _dy = scast<uintmax_t>(dy);
-    uintmax_t _dt = scast<uintmax_t>(dt);
-    uintmax_t _dx = scast<uintmax_t>(dx);
-    uintmax_t _nd = _dy * _dt * _dx;  // number of total entries
-    uintmax_t _ng = _nx + _ny;        // number of grid points
-
-    farray_t simdata = farray_t(_nd, 0.0f);
-
-    //------------------------------------------------------------------------//
-
-    uintmax_t nthreads = GetEnv<uintmax_t>("TOMOPY_NUM_THREADS", NUM_TASK_THREADS);
-    nthreads =
-        (nthreads > uintmax_t(dy * num_block)) ? uintmax_t(dy * num_block) : nthreads;
-
-    //------------------------------------------------------------------------//
-
-    TaskRunManager* run_man = cpu_run_manager();
-    init_run_manager(run_man, nthreads);
-    TaskManager* task_man = run_man->GetTaskManager();
-    ThreadPool*  tp       = task_man->thread_pool();
-
-    {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << "> bart::" << __FUNCTION__ << "@" << __LINE__ << " -- "
-                  << "dy = " << dy << ", "
-                  << "dt = " << dt << ", "
-                  << "dx = " << dx << ", "
-                  << "..." << std::endl;
-    }
-
-    auto compute_subset = [&](int i, int s, int os, float mov, const farray_t& gridx,
-                              const farray_t& gridy, int subset_ind1, int subset_ind2) {
-        ConsumeParameters(i);
-
-        farray_t sum_dist(_nx * _ny);
-        farray_t update(_nx * _ny);
-
-        if(os + 1 == num_block)
-            subset_ind2 += dt % num_block;
-
-        // For each projection angle
-        for(int q = 0; q < subset_ind2; q++)
-        {
-            int p = (int) ind_block[q + os * subset_ind1];
-            int asize, bsize, csize;
-            // (float) * (size of ngrid{x,y} + 1)
-            farray_t coordx(_ny + 1);
-            farray_t coordy(_nx + 1);
-            // (float) * (size of ngridx + ngridy)
-            farray_t ax(_ng);
-            farray_t ay(_ng);
-            farray_t bx(_ng);
-            farray_t by(_ng);
-            farray_t coorx(_ng);
-            farray_t coory(_ng);
-            iarray_t indi(_nx + _ny);
-            farray_t dist(_nx + _ny);
-
-            // Calculate the sin and cos values
-            // of the projection angle and find
-            // at which quadrant on the cartesian grid.
-            float theta_p  = fmodf(theta[p], 2.0f * scast<float>(M_PI));
-            float sin_p    = sinf(theta_p);
-            float cos_p    = cosf(theta_p);
-            int   quadrant = calc_quadrant(theta_p);
-
-            // For each detector pixel
-            for(int d = 0; d < dx; d++)
-            {
-                // Calculate coordinates
-                float xi = -ngridx - ngridy;
-                float yi = (1 - dx) / 2.0f + d + mov;
-                calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx.data(),
-                            gridy.data(), coordx.data(), coordy.data());
-
-                // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(ngridx, ngridy, coordx.data(), coordy.data(), gridx.data(),
-                            gridy.data(), &asize, ax.data(), ay.data(), &bsize, bx.data(),
-                            by.data());
-
-                // Sort the array of intersection points (ax, ay) and
-                // (bx, by). The new sorted intersection points are
-                // stored in (coorx, coory). Total number of points
-                // are csize.
-                sort_intersections(quadrant, asize, ax.data(), ay.data(), bsize,
-                                   bx.data(), by.data(), &csize, coorx.data(),
-                                   coory.data());
-
-                // Calculate the distances (dist) between the
-                // intersection points (coorx, coory). Find the
-                // indices of the pixels on the reconstruction grid.
-                calc_dist(ngridx, ngridy, csize, coorx.data(), coory.data(), indi.data(),
-                          dist.data());
-
-                // Calculate simdata
-                calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi.data(),
-                             dist.data(), recon, simdata.data());
-                // Output: simdata
-
-                // Calculate dist*dist
-                float sum_dist2 = 0.0f;
-                for(int n = 0; n < csize - 1; n++)
-                {
-                    sum_dist2 += dist[n] * dist[n];
-                    sum_dist[indi[n]] += dist[n];
-                }
-
-                // Update
-                if(sum_dist2 != 0.0f)
-                {
-                    int   ind_data = d + p * dx + s * dt * dx;
-                    float upd      = (data[ind_data] - simdata[ind_data]) / sum_dist2;
-                    for(int n = 0; n < csize - 1; n++)
-                    {
-                        update[indi[n]] += upd * dist[n];
-                    }
-                }
-            }
-        }
-
-        // static Mutex mutex;
-        // mutex.lock();
-        for(int n = 0; n < ngridx * ngridy; n++)
-        {
-            if(sum_dist[n] != 0.0f)
-            {
-                int ind_recon = s * ngridx * ngridy;
-                recon[n + ind_recon] += update[n] / sum_dist[n];
-            }
-        }
-        // mutex.unlock();
-    };
-    //------------------------------------------------------------------------//
-    auto compute_slice = [&](int i, int s) {
-        float    mov;
-        farray_t gridx(_nx + 1);
-        farray_t gridy(_ny + 1);
-
-        preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx.data(), gridy.data());
-        // Outputs: mov, gridx, gridy
-
-        int subset_ind1 = dt / num_block;
-        int subset_ind2 = subset_ind1;
-
-        // create task group
-        TaskGroup<void> tg(tp);
-        // For each slice
-        for(int os = 0; os < num_block; os++)
-            task_man->exec(tg, compute_subset, i, s, os, mov, gridx, gridy, subset_ind1,
-                           subset_ind2);
-        // join task group
-        tg.join();
-
-        // For each ordered-subset num_subset
-        // for(int os = 0; os < num_block; os++)
-        //    compute_subset(i, s, os, mov, gridx, gridy,
-        //                   subset_ind1, subset_ind2);
-    };
-
-    //------------------------------------------------------------------------//
-
-    for(int i = 0; i < num_iter; i++)
-    {
-        // initialize simdata to zero
-        memset(simdata.data(), 0, _dy * _dt * _dx * sizeof(float));
-
-        // create task group
-        TaskGroup<void> tg(tp);
-        // For each slice
-        for(int s = 0; s < dy; ++s)
-            task_man->exec(tg, compute_slice, i, s);
-        // join task group
-        tg.join();
-
-        // For each slice
-        // for(int s = 0; s < dy; s++)
-        //    compute_slice(i, s);
-    }
-
-    tim::disable_signal_detection();
+    throw std::runtime_error("BART algorithm has not been implemented for CXX");
 }
 
 //============================================================================//
@@ -296,14 +114,12 @@ bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       num_block, ind_block);
+
     throw std::runtime_error("BART algorithm has not been implemented for CUDA");
 
-    tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[cuda]");
 
     // insert code here
-
-    tim::disable_signal_detection();
 }
 
 //============================================================================//
@@ -315,14 +131,10 @@ bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       num_block, ind_block);
+
     throw std::runtime_error("BART algorithm has not been implemented for OpenACC");
 
-    tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openacc]");
-
-    // insert code here
-
-    tim::disable_signal_detection();
 }
 
 //============================================================================//
@@ -334,14 +146,10 @@ bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       num_block, ind_block);
+
     throw std::runtime_error("BART algorithm has not been implemented for OpenMP");
 
-    tim::enable_signal_detection();
     TIMEMORY_AUTO_TIMER("[openmp]");
-
-    // insert code here
-
-    tim::disable_signal_detection();
 }
 
 //============================================================================//

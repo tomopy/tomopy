@@ -459,96 +459,14 @@ cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize
 //============================================================================//
 
 farray_t
-cxx_expand(const farray_t& arr_i, const int& factor)
+cxx_rotate(const farray_t& src, const float theta, const int nx, const int ny)
 {
-    farray_t arr_o(arr_i.size() * factor, 0.0);
-    for(uint64_t i = 0; i < arr_i.size(); ++i)
-    {
-        for(uint64_t off = 0; off < factor; ++off)
-        {
-            arr_o.at(i * factor + off) = arr_i.at(i);
-        }
-    }
-    return arr_o;
-}
-
-//============================================================================//
-
-farray_t
-cxx_compress(const farray_t& arr_i, const int& factor)
-{
-    farray_t arr_o(arr_i.size() / factor, 0.0);
-    for(uint64_t i = 0; i < arr_o.size(); ++i)
-    {
-        for(uint64_t off = 0; off < factor; ++off)
-        {
-            arr_o.at(i) += arr_i.at(i * factor + off);
-        }
-        arr_o.at(i) /= factor;
-    }
-    return arr_o;
-}
-
-//============================================================================//
-
-float
-cxx_rotate_x(const float x, const float y, const float theta)
-{
-    return x * cosf(theta) - y * sinf(theta);
-}
-
-//============================================================================//
-
-float
-cxx_rotate_y(const float x, const float y, const float theta)
-{
-    return x * sinf(theta) + y * cosf(theta);
-}
-
-//============================================================================//
-
-bool
-bounded(const farray_t& obj, int nx, int ix, int iy)
-{
-    auto idx = [&](int _x, int _y) { return _y * nx + _x; };
-    return (ix >= 0 && iy >= 0 && idx(ix, iy) >= 0 && idx(ix, iy) < obj.size());
-}
-
-//============================================================================//
-
-float
-compute_neighbors(const farray_t& obj, float theta, int nx, int ix, int iy)
-{
-    float value = 0.0f;
-    int   nvals = 0;
-    auto  idx   = [&](int _x, int _y) { return _y * nx + _x; };
-
-    if(bounded(obj, nx, ix - 1, iy))
-    {
-        ++nvals;
-        value += powf(cosf(theta), 2.0f) * obj.at(idx(ix - 1, iy));
-    }
-
-    if(bounded(obj, nx, ix, iy + 1))
-    {
-        ++nvals;
-        value += powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy + 1));
-    }
-
-    return (nvals > 0) ? (value * (1.0f - powf(cos(theta), 2.0f)))
-                       : (powf(sinf(theta), 2.0f) * obj.at(idx(ix, iy)));
-}
-
-//============================================================================//
-
-farray_t
-cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
-{
-    farray_t rot(nx * ny, 0.0);
-    float    xoff = round(nx / 2.0);
-    float    yoff = round(ny / 2.0);
-    float    xop  = (nx % 2 == 0) ? 0.5 : 0.0;
-    float    yop  = (ny % 2 == 0) ? 0.5 : 0.0;
+    farray_t dst(nx * ny, 0.0);
+    float    xoff     = round(nx / 2.0);
+    float    yoff     = round(ny / 2.0);
+    float    xop      = (nx % 2 == 0) ? 0.5 : 0.0;
+    float    yop      = (ny % 2 == 0) ? 0.5 : 0.0;
+    int      src_size = nx * ny;
 
     for(int i = 0; i < nx; ++i)
     {
@@ -558,37 +476,32 @@ cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny)
             float rx = float(i) - xoff + xop;
             float ry = float(j) - yoff + yop;
             // transformation
-            float tx = cxx_rotate_x(rx, ry, theta);
-            float ty = cxx_rotate_y(rx, ry, theta);
+            float tx = rx * cosf(theta) + -ry * sinf(theta);
+            float ty = rx * sinf(theta) + ry * cosf(theta);
             // indices in 2D
             float x = (tx + xoff - xop);
             float y = (ty + yoff - yop);
             // index in 1D array
-            int   rz       = j * nx + i;
-            float _obj_val = 0.0f;
+            int rz = j * nx + i;
             // within bounds
-            if(rz < rot.size())
-            {
-                int   x1   = floor(tx + xoff - xop);
-                int   y1   = floor(ty + yoff - yop);
-                int   x2   = x1 + 1;
-                int   y2   = y1 + 1;
-                float fxy1 = 0.0f;
-                float fxy2 = 0.0f;
-                if(y1 * nx + x1 < obj.size())
-                    fxy1 += (x2 - x) * obj.at(y1 * nx + x1);
-                if(y1 * nx + x2 < obj.size())
-                    fxy1 += (x - x1) * obj.at(y1 * nx + x2);
-                if(y2 * nx + x1 < obj.size())
-                    fxy2 += (x2 - x) * obj.at(y2 * nx + x1);
-                if(y2 * nx + x2 < obj.size())
-                    fxy2 += (x - x1) * obj.at(y2 * nx + x2);
-                _obj_val = (y2 - y) * fxy1 + (y - y1) * fxy2;
-            }
-            rot.at(rz) += _obj_val;
+            int   x1   = floor(tx + xoff - xop);
+            int   y1   = floor(ty + yoff - yop);
+            int   x2   = x1 + 1;
+            int   y2   = y1 + 1;
+            float fxy1 = 0.0f;
+            float fxy2 = 0.0f;
+            if(x1 >= 0 && y1 >= 0 && y1 * nx + x1 < src_size)
+                fxy1 += (x2 - x) * src[y1 * nx + x1];
+            if(x2 >= 0 && y1 >= 0 && y1 * nx + x2 < src_size)
+                fxy1 += (x - x1) * src[y1 * nx + x2];
+            if(x1 >= 0 && y2 >= 0 && y2 * nx + x1 < src_size)
+                fxy2 += (x2 - x) * src[y2 * nx + x1];
+            if(x2 >= 0 && y2 >= 0 && y2 * nx + x2 < src_size)
+                fxy2 += (x - x1) * src[y2 * nx + x2];
+            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
         }
     }
-    return rot;
+    return dst;
 }
 
 //============================================================================//
