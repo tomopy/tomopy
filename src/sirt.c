@@ -42,8 +42,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "sirt.h"
-#include "utils.h"
 #include "profiler.h"
+#include "utils.h"
 
 void
 sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,

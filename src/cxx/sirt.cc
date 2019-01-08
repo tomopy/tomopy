@@ -112,8 +112,8 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
 {
     // needed for recon to output at proper orientation
     float pi_offset = 0.5f * (float) M_PI;
-
-    float theta_p = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+    float fngridx   = ngridx;
+    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
 
     // Rotate object
     auto recon_rot = cxx_rotate(*recon_off, -theta_p, ngridx, ngridy);
@@ -122,10 +122,9 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
     {
         int    pix_offset = d * ngridx;  // pixel offset
         int    idx_data   = d + p * dx + s * dt * dx;
-        float  fngridx    = ngridx;
-        float  _sim       = 0.0f;
         float* _simdata   = simdata->data() + idx_data;
         float* _recon_rot = recon_rot.data() + pix_offset;
+        float  _sim       = 0.0f;
 
         // Calculate simulated data by summing up along x-axis
         PRAGMA_SIMD_REDUCTION(_sim)
@@ -147,7 +146,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
     // update shared update array
     PRAGMA_SIMD
     for(uint64_t i = 0; i < tmp.size(); ++i)
-            (*update)[i] += tmp[i];
+        (*update)[i] += tmp[i];
 }
 
 //============================================================================//

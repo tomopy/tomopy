@@ -75,6 +75,7 @@ def run(phantom, algorithm, args, get_recon=False):
 
     label = "{} @ {}".format(algorithm.upper(), phantom.upper())
 
+    quantify_difference(label + " (self)", rec, np.zeros(rec.shape, dtype=rec.dtype))
     quantify_difference(label, obj, rec)
 
     if "orig" not in image_quality:

@@ -129,6 +129,10 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     # Mask each reconstructed slice with a circle.
     rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
 
+    obj = np.zeros(rec.shape, dtype=rec.dtype)
+    label = "{} @ {}".format(algorithm.upper(), h5fname)
+    quantify_difference(label, obj, rec)
+
     return rec
 
 

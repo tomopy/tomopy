@@ -96,8 +96,8 @@ __inline__ __device__ float
 blockReduceSum(float val)
 {
     static __shared__ float shared[32];  // Shared mem for 32 partial sums
-    int                   lane = threadIdx.x % warpSize;
-    int                   wid  = threadIdx.x / warpSize;
+    int                     lane = threadIdx.x % warpSize;
+    int                     wid  = threadIdx.x / warpSize;
 
     val = warpReduceSum(val);  // Each warp performs partial reduction
 
@@ -133,7 +133,7 @@ deviceReduceKernel(float* in, float* out, int N)
 
 //----------------------------------------------------------------------------//
 
-void
+float
 deviceReduce(float* in, float* out, int N, cudaStream_t stream)
 {
     int threads = 512;
@@ -142,6 +142,11 @@ deviceReduce(float* in, float* out, int N, cudaStream_t stream)
 
     deviceReduceKernel<<<blocks, threads, smem, stream>>>(in, out, N);
     deviceReduceKernel<<<1, 1024, 0, stream>>>(out, out, blocks);
+
+    float _sum;
+    cudaMemcpyAsync(&_sum, out, sizeof(float), cudaMemcpyDeviceToHost, stream);
+    cudaStreamSynchronize(stream);
+    return _sum;
 }
 
 //============================================================================//
@@ -227,8 +232,8 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
 
 template <typename _Tp>
 void
-compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
-                  int dimBlock, int smemSize, cudaStream_t stream)
+compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
+                  int smemSize, cudaStream_t stream)
 {
     cudaStreamSynchronize(stream);
     CUDA_CHECK_LAST_ERROR();
@@ -236,44 +241,44 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
     switch(threads)
     {
         case 512:
-            reduce<512, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<512, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 256:
-            reduce<256, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<256, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 128:
-            reduce<128, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<128, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 64:
-            reduce<64, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<64, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 32:
-            reduce<32, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<32, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 16:
-            reduce<16, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<16, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 8:
-            reduce<8, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<8, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 4:
-            reduce<4, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<4, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 2:
-            reduce<2, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<2, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 1:
-            reduce<1, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<1, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
     }
     CUDA_CHECK_LAST_ERROR();
@@ -286,24 +291,22 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
 
 template <typename _Tp>
 void
-call_compute_reduction(int& _i, int& _offset, int nthreads,
-                       _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
-                       int smemSize, cudaStream_t stream)
+call_compute_reduction(int& _i, int& _offset, int nthreads, _Tp* _idata, _Tp* _odata,
+                       int dimGrid, int dimBlock, int smemSize, cudaStream_t stream)
 {
     // assumes nthreads < cuda_max_threads_per_block()
-    compute_reduction(nthreads, _idata + _offset, _odata + _offset, dimGrid,
-                      dimBlock, smemSize, stream);
+    compute_reduction(nthreads, _idata + _offset, _odata + _offset, dimGrid, dimBlock,
+                      smemSize, stream);
     _i -= nthreads;
     _offset += nthreads;
 }
 
 //============================================================================//
 
-void
+float
 reduce(float* _in, float* _out, int size, cudaStream_t stream)
 {
-
-    int  remain = size;
+    int remain = size;
     int offset = 0;
 
     int smemSize = cuda_shared_memory_per_block();
@@ -316,12 +319,17 @@ reduce(float* _in, float* _out, int size, cudaStream_t stream)
         {
             if(remain >= itr)
             {
-                call_compute_reduction(remain, offset, itr, _in, _out,
-                                       dimGrid, dimBlock, smemSize, stream);
+                call_compute_reduction(remain, offset, itr, _in, _out, dimGrid, dimBlock,
+                                       smemSize, stream);
                 break;
             }
         }
     }
+
+    float _sum;
+    cudaMemcpyAsync(&_sum, _out, sizeof(float), cudaMemcpyDeviceToHost, stream);
+    cudaStreamSynchronize(stream);
+    return _sum;
 }
 
 //============================================================================//
@@ -962,25 +970,28 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, const int
 //============================================================================//
 
 __global__ void
-cuda_rotate_global(float* obj, const float theta, const int nx, const int ny, float* rot)
+cuda_rotate_global(float* dst, const float* src, const float theta, const int nx,
+                   const int ny)
 {
     float xoff = round(nx / 2.0);
     float yoff = round(ny / 2.0);
     float xop  = (nx % 2 == 0) ? 0.5 : 0.0;
     float yop  = (ny % 2 == 0) ? 0.5 : 0.0;
 
-    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int j0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int istride = blockDim.x * gridDim.x;
-    int jstride = blockDim.y * gridDim.y;
+    int j0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int jstride = blockDim.x * gridDim.x;
 
-    int obj_size = nx * ny;
-    // for(int i = i0; i < size; i += stride)
+    int src_size = nx * ny;
 
     for(int j = j0; j < ny; j += jstride)
     {
-        for(int i = i0; i < nx; i += istride)
+        if(j < 0 || j >= ny)
+            continue;
+        if(j * nx + nx - 1 > src_size)
+            continue;
+        for(int i = 0; i < nx; ++i)
         {
+            // PRINT_HERE("");
             // indices in 2D
             float rx = float(i) - xoff + xop;
             float ry = float(j) - yoff + yop;
@@ -992,43 +1003,67 @@ cuda_rotate_global(float* obj, const float theta, const int nx, const int ny, fl
             float y = (ty + yoff - yop);
             // index in 1D array
             int rz = j * nx + i;
+            if(rz < 0 || rz >= src_size)
+                continue;
             // within bounds
-            int   x1   = floor(tx + xoff - xop);
-            int   y1   = floor(ty + yoff - yop);
+            int x1 = floor(tx + xoff - xop);
+            int y1 = floor(ty + yoff - yop);
+            // if(x1 < 0 || y1 < 0)
+            //    continue;
+            // printf("i = %i, j = %i, z = %i, x1 = %i, y1 = %i\n", i, j, rz,
+            // x1, y1);
             int   x2   = x1 + 1;
             int   y2   = y1 + 1;
             float fxy1 = 0.0f;
             float fxy2 = 0.0f;
-            if(y1 * nx + x1 < obj_size)
-                fxy1 += (x2 - x) * obj[y1 * nx + x1];
-            if(y1 * nx + x2 < obj_size)
-                fxy1 += (x - x1) * obj[y1 * nx + x2];
-            if(y2 * nx + x1 < obj_size)
-                fxy2 += (x2 - x) * obj[y2 * nx + x1];
-            if(y2 * nx + x2 < obj_size)
-                fxy2 += (x - x1) * obj[y2 * nx + x2];
-            rot[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
+            if(x1 >= 0 && y1 >= 0 && y1 * nx + x1 < src_size)
+                fxy1 += (x2 - x) * src[y1 * nx + x1];
+            if(x2 >= 0 && y1 >= 0 && y1 * nx + x2 < src_size)
+                fxy1 += (x - x1) * src[y1 * nx + x2];
+            if(x1 >= 0 && y2 >= 0 && y2 * nx + x1 < src_size)
+                fxy2 += (x2 - x) * src[y2 * nx + x1];
+            if(x2 >= 0 && y2 >= 0 && y2 * nx + x2 < src_size)
+                fxy2 += (x - x1) * src[y2 * nx + x2];
+            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
         }
     }
 }
 
 //============================================================================//
 
-void
-cuda_rotate(float* dst, float* src, const float theta, const int nx, const int ny,
+float*
+cuda_rotate(const float* src, const float theta, const int nx, const int ny,
             cudaStream_t* stream)
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    dim3 nb(32, 32);
-    dim3 nt(4, 4);
-    int  smem = 0;
+    int nb   = 64;
+    int nt   = 64;
+    int smem = 0;
 
-    CUDA_CHECK_LAST_ERROR();
-    cuda_rotate_global<<<nb, nt, smem>>>(src, theta, nx, ny, dst);
+    float* _dst = gpu_malloc<float>(nx * ny);
+    float* _src = gpu_malloc<float>(nx * ny);
+
+    if(stream)
+    {
+        cudaMemsetAsync(_dst, 0, nx * ny * sizeof(float), *stream);
+        cudaMemcpyAsync(_src, src, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice,
+                        *stream);
+        cuda_rotate_global<<<nb, nt, smem, *stream>>>(_dst, _src, theta, nx, ny);
+        cudaFree(_src);
+    }
+    else
+    {
+        cudaMemcpy(_src, src, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
+        cudaMemset(_dst, 0, nx * ny * sizeof(float));
+        cuda_rotate_global<<<nb, nt, smem>>>(_dst, _src, theta, nx, ny);
+        cudaFree(_src);
+    }
+
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_rotate);
+    return _dst;
 }
 
 //============================================================================//

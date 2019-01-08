@@ -92,13 +92,17 @@
 #        if defined(DEBUG)
 #            define CUDA_CHECK_LAST_ERROR()                                              \
                 {                                                                        \
+                    cudaDeviceSynchronize();                                             \
                     cudaError err = cudaGetLastError();                                  \
                     if(cudaSuccess != err)                                               \
                     {                                                                    \
                         fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",  \
                                 __FUNCTION__, __FILE__, __LINE__,                        \
                                 cudaGetErrorString(err));                                \
-                        exit(-1);                                                        \
+                        printf("cudaCheckError() failed at %s@'%s':%i : %s\n",           \
+                               __FUNCTION__, __FILE__, __LINE__,                         \
+                               cudaGetErrorString(err));                                 \
+                        exit(1);                                                         \
                     }                                                                    \
                 }
 #        else

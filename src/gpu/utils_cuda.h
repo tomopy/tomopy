@@ -113,23 +113,23 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, const int
 //  reduce
 //============================================================================//
 
-DLL void
+DLL float
 deviceReduce(float* in, float* out, int N, cudaStream_t stream);
 
 //============================================================================//
 //  reduce
 //============================================================================//
 
-DLL void
+DLL float
 reduce(float* _in, float* _out, int size, cudaStream_t stream);
 
 //============================================================================//
 //  rotate
 //============================================================================//
 
-DLL void
-cuda_rotate(float* dst, float* src, const float theta, const int nx, const int ny,
-            cudaStream_t* streams);
+DLL float*
+cuda_rotate(const float* src, const float theta, const int nx, const int ny,
+            cudaStream_t* stream);
 
 //----------------------------------------------------------------------------//
 

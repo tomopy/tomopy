@@ -35,7 +35,7 @@ BraceWrapping:
     SplitEmptyNamespace:    false
 BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: true
-ColumnLimit: 80
+ColumnLimit: 90
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 0
 ContinuationIndentWidth: 4

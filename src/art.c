@@ -65,9 +65,9 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
     int*   indi    = (int*) malloc((ngridx + ngridy) * sizeof(int));
     float* simdata = (float*) malloc((dy * dt * dx) * sizeof(float));
 
-    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL &&
-           by != NULL && bx != NULL && coorx != NULL && coory != NULL &&
-           dist != NULL && indi != NULL && simdata != NULL);
+    assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
+           simdata != NULL);
 
     int   s, p, d, i, n;
     int   quadrant;
@@ -102,19 +102,19 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
                 // Calculate coordinates
                 xi = -ngridx - ngridy;
                 yi = 0.5f * (1 - dx) + d + mov;
-                calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
-                            coordx, coordy);
+                calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, coordx,
+                            coordy);
 
                 // Merge the (coordx, gridy) and (gridx, coordy)
-                trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy,
-                            &asize, ax, ay, &bsize, bx, by);
+                trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax, ay,
+                            &bsize, bx, by);
 
                 // Sort the array of intersection points (ax, ay) and
                 // (bx, by). The new sorted intersection points are
                 // stored in (coorx, coory). Total number of points
                 // are csize.
-                sort_intersections(quadrant, asize, ax, ay, bsize, bx, by,
-                                   &csize, coorx, coory);
+                sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coorx,
+                                   coory);
 
                 // Calculate the distances (dist) between the
                 // intersection points (coorx, coory). Find the
@@ -134,14 +134,14 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
                     for(s = 0; s < dy; s++)
                     {
                         // Calculate simdata
-                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize,
-                                     indi, dist, recon,
+                        calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist,
+                                     recon,
                                      simdata);  // Output: simdata
 
                         // Update
                         ind_data  = d + p * dx + s * dt * dx;
                         ind_recon = s * ngridx * ngridy;
-                        upd = (data[ind_data] - simdata[ind_data]) / sum_dist2;
+                        upd       = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             recon[indi[n] + ind_recon] += upd * dist[n];
