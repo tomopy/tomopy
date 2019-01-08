@@ -68,7 +68,13 @@ reduce(float* _in, float* _out, int size, cudaStream_t stream);
 
 DLL float*
 cuda_rotate(const float* src, const float theta, const int nx, const int ny,
-            cudaStream_t* stream);
+            cudaStream_t stream);
+
+//----------------------------------------------------------------------------//
+
+DLL void
+cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
+               const int ny, cudaStream_t stream);
 
 //----------------------------------------------------------------------------//
 

@@ -63,6 +63,8 @@ extern nvtxEventAttributes_t nvtx_calc_sum_sqr;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
+#define FULL_MASK 0xffffffff
+
 //============================================================================//
 
 //  gridDim:    This variable contains the dimensions of the grid.
@@ -76,7 +78,7 @@ __inline__ __device__ float
 warpReduceSum(float val)
 {
     for(int offset = warpSize / 2; offset > 0; offset /= 2)
-        val += __shfl_down(val, offset);
+        val += __shfl_down_sync(FULL_MASK, val, offset);
     return val;
 }
 
@@ -86,7 +88,7 @@ __inline__ __device__ float
 warpAllReduceSum(float val)
 {
     for(int mask = warpSize / 2; mask > 0; mask /= 2)
-        val += __shfl_xor(val, mask);
+        val += __shfl_xor_sync(-1, val, mask);
     return val;
 }
 
@@ -365,16 +367,14 @@ cuda_rotate_global(float* dst, const float* src, const float theta, const int nx
 
     int j0      = blockIdx.x * blockDim.x + threadIdx.x;
     int jstride = blockDim.x * gridDim.x;
+    int i0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int istride = blockDim.y * gridDim.y;
 
     int src_size = nx * ny;
 
     for(int j = j0; j < ny; j += jstride)
     {
-        if(j < 0 || j >= ny)
-            continue;
-        if(j * nx + nx - 1 > src_size)
-            continue;
-        for(int i = 0; i < nx; ++i)
+        for(int i = i0; i < nx; i += istride)
         {
             // PRINT_HERE("");
             // indices in 2D
@@ -418,37 +418,41 @@ cuda_rotate_global(float* dst, const float* src, const float theta, const int nx
 
 float*
 cuda_rotate(const float* src, const float theta, const int nx, const int ny,
-            cudaStream_t* stream)
+            cudaStream_t stream)
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    int nb   = 64;
-    int nt   = 64;
-    int smem = 0;
+    dim3 nb   = dim3(64, 16);
+    dim3 nt   = dim3(64, 16);
+    int  smem = 0;
 
     float* _dst = gpu_malloc<float>(nx * ny);
-    float* _src = gpu_malloc<float>(nx * ny);
-
-    if(stream)
-    {
-        cudaMemsetAsync(_dst, 0, nx * ny * sizeof(float), *stream);
-        cudaMemcpyAsync(_src, src, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice,
-                        *stream);
-        cuda_rotate_global<<<nb, nt, smem, *stream>>>(_dst, _src, theta, nx, ny);
-        cudaFree(_src);
-    }
-    else
-    {
-        cudaMemcpy(_src, src, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
-        cudaMemset(_dst, 0, nx * ny * sizeof(float));
-        cuda_rotate_global<<<nb, nt, smem>>>(_dst, _src, theta, nx, ny);
-        cudaFree(_src);
-    }
-
+    cudaMemsetAsync(_dst, 0, nx * ny * sizeof(float), stream);
+    cuda_rotate_global<<<nb, nt, smem, stream>>>(_dst, src, theta, nx, ny);
     CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_POP(&nvtx_rotate);
     return _dst;
+}
+
+//============================================================================//
+
+void
+cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
+               const int ny, cudaStream_t stream)
+{
+    NVTX_RANGE_PUSH(&nvtx_rotate);
+
+    dim3 nb   = dim3(64, 16);
+    dim3 nt   = dim3(64, 16);
+    int  smem = 0;
+
+    cudaMemsetAsync(dst, 0, nx * ny * sizeof(float), stream);
+    cuda_rotate_global<<<nb, nt, smem, stream>>>(dst, src, theta, nx, ny);
+
+    CUDA_CHECK_LAST_ERROR();
+
+    NVTX_RANGE_POP(&nvtx_rotate);
 }
 
 //============================================================================//

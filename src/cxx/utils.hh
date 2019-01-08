@@ -393,7 +393,13 @@ cxx_rotate_y(const float x, const float y, const float theta);
 //============================================================================//
 
 DLL farray_t
-    cxx_rotate(const farray_t& obj, const float theta, const int nx, const int ny);
+    cxx_rotate(const farray_t& src, const float theta, const int nx, const int ny);
+
+//============================================================================//
+
+DLL void
+cxx_rotate_ip(farray_t& dst, const farray_t& src, const float theta, const int nx,
+              const int ny);
 
 //============================================================================//
 #define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...

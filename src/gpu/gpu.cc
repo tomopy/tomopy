@@ -468,6 +468,8 @@ cuda_device_query()
                deviceProp.regsPerBlock);
         printf("  Warp size:                                     %d\n",
                deviceProp.warpSize);
+        printf("  Multiprocessor count:                          %d\n",
+               deviceProp.multiProcessorCount);
         printf("  Maximum number of threads per multiprocessor:  %d\n",
                deviceProp.maxThreadsPerMultiProcessor);
         printf("  Maximum number of threads per block:           %d\n",

@@ -505,3 +505,51 @@ cxx_rotate(const farray_t& src, const float theta, const int nx, const int ny)
 }
 
 //============================================================================//
+
+void
+cxx_rotate_ip(farray_t& dst, const farray_t& src, const float theta, const int nx,
+              const int ny)
+{
+    memset(dst.data(), 0, nx * ny * sizeof(float));
+    float xoff     = round(nx / 2.0);
+    float yoff     = round(ny / 2.0);
+    float xop      = (nx % 2 == 0) ? 0.5 : 0.0;
+    float yop      = (ny % 2 == 0) ? 0.5 : 0.0;
+    int   src_size = nx * ny;
+
+    for(int i = 0; i < nx; ++i)
+    {
+        for(int j = 0; j < ny; ++j)
+        {
+            // indices in 2D
+            float rx = float(i) - xoff + xop;
+            float ry = float(j) - yoff + yop;
+            // transformation
+            float tx = rx * cosf(theta) + -ry * sinf(theta);
+            float ty = rx * sinf(theta) + ry * cosf(theta);
+            // indices in 2D
+            float x = (tx + xoff - xop);
+            float y = (ty + yoff - yop);
+            // index in 1D array
+            int rz = j * nx + i;
+            // within bounds
+            int   x1   = floor(tx + xoff - xop);
+            int   y1   = floor(ty + yoff - yop);
+            int   x2   = x1 + 1;
+            int   y2   = y1 + 1;
+            float fxy1 = 0.0f;
+            float fxy2 = 0.0f;
+            if(x1 >= 0 && y1 >= 0 && y1 * nx + x1 < src_size)
+                fxy1 += (x2 - x) * src[y1 * nx + x1];
+            if(x2 >= 0 && y1 >= 0 && y1 * nx + x2 < src_size)
+                fxy1 += (x - x1) * src[y1 * nx + x2];
+            if(x1 >= 0 && y2 >= 0 && y2 * nx + x1 < src_size)
+                fxy2 += (x2 - x) * src[y2 * nx + x1];
+            if(x2 >= 0 && y2 >= 0 && y2 * nx + x2 < src_size)
+                fxy2 += (x - x1) * src[y2 * nx + x2];
+            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
+        }
+    }
+}
+
+//============================================================================//

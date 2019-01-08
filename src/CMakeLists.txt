@@ -14,7 +14,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     CACHE PATH "Installation directory of libraries" FORCE)
 
-
 #------------------------------------------------------------------------------#
 #
 #   PTL submodule
@@ -147,15 +146,9 @@ install(TARGETS libtomopy
     COMPONENT development)
 
 # make sure the generated target gets put into the source tree for testing
-if(UNIX)
-    add_custom_command(TARGET libtomopy POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:libtomopy>
-        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/$<TARGET_FILE_NAME:libtomopy>)
-else()
-    add_custom_command(TARGET libtomopy POST_BUILD
+add_custom_command(TARGET libtomopy POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
-        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
-endif()
+    ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
 
 #------------------------------------------------------------------------------#
 #
@@ -171,23 +164,21 @@ if(TOMOPY_USE_PYBIND11)
     pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.hpp)
     target_link_libraries(tomocxx PUBLIC libtomopy)
+    get_target_property(_INCLUDE_DIRS tomocxx INCLUDE_DIRECTORIES)
     set_target_properties(tomocxx PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
         LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
         ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+        COMPILE_FLAGS               "${CMAKE_CXX_FLAGS} ${${PROJECT_NAME}_CXX_FLAGS}"
+        INCLUDE_DIRECTORIES         "${_INCLUDE_DIRS};${TARGET_INCLUDE_DIRECTORIES}"
     )
     install(TARGETS tomocxx
         DESTINATION ${PYTHON_SITE_DIR}/tomopy
         COMPONENT development)
-    if(UNIX)
-        add_custom_command(TARGET tomocxx POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:tomocxx>
-            ${PROJECT_SOURCE_DIR}/tomopy/$<TARGET_FILE_NAME:tomocxx>)
-    else()
-        add_custom_command(TARGET tomocxx POST_BUILD
+
+    add_custom_command(TARGET tomocxx POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
-            ${PROJECT_SOURCE_DIR}/tomopy/)
-    endif()
+        ${PROJECT_SOURCE_DIR}/tomopy/)
 endif()
 
 if(TOMOPY_USE_COVERAGE)
