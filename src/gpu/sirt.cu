@@ -387,6 +387,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                cudaMemcpyHostToDevice);
     cudaMemcpy(data, cpu_data, dy * dt * dx * sizeof(float), cudaMemcpyHostToDevice);
 
+    int nstreams = GetEnv("TOMOPY_NUM_STREAMS", 1);
+    int nthreads = GetEnv("TOMOPY_NUM_THREADS", nstreams);
     thread_data** _thread_data = new thread_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
         _thread_data[i] =
