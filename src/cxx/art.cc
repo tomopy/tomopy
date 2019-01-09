@@ -58,7 +58,7 @@ void
 cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    auto tid = ThreadPool::GetThisThreadID();
+    auto tid = GetThisThreadID();
     ConsumeParameters(tid);
 
 #if defined(TOMOPY_USE_TIMEMORY)

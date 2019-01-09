@@ -22,8 +22,11 @@ set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
 checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
     RELATIVE_PATH src/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-add_subdirectory(PTL)
-list(APPEND EXTERNAL_LIBRARIES ptl-static)
+if(TOMOPY_USE_PTL)
+    add_subdirectory(PTL)
+    list(APPEND EXTERNAL_LIBRARIES ptl-static)
+    add_definitions(-DTOMOPY_USE_PTL)
+endif()
 
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers

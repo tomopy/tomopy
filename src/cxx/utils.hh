@@ -76,8 +76,8 @@
 
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(), __FUNCTION__,    \
-               __FILE__, __LINE__, extra)
+        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
+               __LINE__, extra)
 #endif
 
 #if !defined(NUM_TASK_THREADS)
@@ -285,7 +285,7 @@ update_mutex()
 inline void
 init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 {
-    auto tid = ThreadPool::GetThisThreadID();
+    auto tid = GetThisThreadID();
     ConsumeParameters(tid);
 
     {
@@ -503,9 +503,8 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
     {
         {
             AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] " << e.what()
-                      << std::endl;
-            std::cerr << "[TID: " << ThreadPool::GetThisThreadID() << "] "
+            std::cerr << "[TID: " << GetThisThreadID() << "] " << e.what() << std::endl;
+            std::cerr << "[TID: " << GetThisThreadID() << "] "
                       << "Falling back to CPU algorithm..." << std::endl;
         }
         cpu_func(_forward_args_t(_Args, args));

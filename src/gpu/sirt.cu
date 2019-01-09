@@ -37,10 +37,6 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
-#include "PTL/TBBTaskGroup.hh"
-#include "PTL/TaskGroup.hh"
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
 #include "gpu.hh"
 #include "utils.hh"
 
@@ -320,7 +316,7 @@ void
 cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
                         int p, int nthreads, thread_data** _thread_data)
 {
-    auto         thread_number = ThreadPool::GetThisThreadID() % nthreads;
+    auto         thread_number = GetThisThreadID() % nthreads;
     thread_data* _cache        = _thread_data[thread_number];
     cudaStream_t stream        = _cache->stream();
 
@@ -383,13 +379,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     set_this_thread_device();
     int num_devices = cuda_device_count();
 
-    int nthreads = GetEnv("TOMOPY_NUM_THREADS", 1);
-    // int             nstreams = GetEnv("TOMOPY_NUM_STREAMS", nthreads);
-    // cudaStream_t*   streams  = create_streams(nstreams);
-    TaskRunManager* run_man = gpu_run_manager();
-    init_run_manager(run_man, nthreads);
-    TaskManager* task_man = run_man->GetTaskManager();
-
     // needed for recon to output at proper orientation
     float* recon = gpu_malloc<float>(dy * ngridx * ngridy);
     float* data  = gpu_malloc<float>(dy * dt * dx);
@@ -405,8 +394,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
-               num_iter);
+        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
         // For each slice
         for(int s = 0; s < dy; ++s)
         {
@@ -416,14 +404,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             for(int i = 0; i < nthreads; ++i)
                 _thread_data[i]->sync();
 
-            TaskGroup<void> tg;
             // For each projection angle
             for(int p = 0; p < dt; ++p)
             {
-                task_man->exec(tg, cuda_compute_projection, dt, dx, ngridx, ngridy, theta,
-                               s, p, nthreads, _thread_data);
+                cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
+                                        _thread_data);
             }
-            tg.join();
             // cudaDeviceSynchronize();
 
             for(int i = 0; i < nthreads; ++i)

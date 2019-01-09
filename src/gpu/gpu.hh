@@ -90,10 +90,24 @@ END_EXTERN_C
 
 //============================================================================//
 
+inline uintmax_t
+GetThisThreadID()
+{
+#if defined(TOMOPY_USE_PTL)
+    return ThreadPool::GetThisThreadID();
+#else
+    static std::atomic<uintmax_t> tcounter;
+    static thread_local auto      tid = tcounter++;
+    return tid;
+#endif
+}
+
+//============================================================================//
+
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(), __FUNCTION__,    \
-               __FILE__, __LINE__, extra)
+        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
+               __LINE__, extra)
 #endif
 
 //============================================================================//

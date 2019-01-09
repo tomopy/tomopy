@@ -70,7 +70,12 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     if(use_c_algorithm)
         return (int) false;
 
-    auto tid = ThreadPool::GetThisThreadID();
+#if defined(TOMOPY_USE_PTL)
+    auto tid = GetThisThreadID();
+#else
+    static std::atomic<uintmax_t> tcounter;
+    static thread_local auto      tid = tcounter++;
+#endif
     ConsumeParameters(tid);
 
 #if defined(TOMOPY_USE_TIMEMORY)
@@ -140,6 +145,24 @@ struct cpu_thread_data
 
     ~cpu_thread_data() { delete[] m_data; }
 
+    cpu_thread_data(const cpu_thread_data& rhs)
+    : m_id(rhs.m_id)
+    , m_dy(rhs.m_dy)
+    , m_dt(rhs.m_dt)
+    , m_dx(rhs.m_dx)
+    , m_nx(rhs.m_nx)
+    , m_ny(rhs.m_ny)
+    , m_size(rhs.m_size)
+    , m_rot(rhs.m_rot)
+    , m_tmp(rhs.m_tmp)
+    , m_recon(rhs.m_recon)
+    , m_update(new float[m_size])
+    , m_simdata(rhs.m_simdata)
+    , m_data(rhs.m_data)
+    {
+        memcpy(m_update, rhs.m_update, m_size * sizeof(float));
+    }
+
     void initialize(const float* data, float* recon, float* simdata, uintmax_t s)
     {
         uintmax_t offset = s * m_dt * m_dx;
@@ -175,7 +198,7 @@ void
 compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
                    int p, int nthreads, cpu_thread_data** _thread_data)
 {
-    auto             thread_number = ThreadPool::GetThisThreadID() % nthreads;
+    auto             thread_number = GetThisThreadID() % nthreads;
     cpu_thread_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
@@ -232,10 +255,12 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 
     TIMEMORY_AUTO_TIMER("");
 
-    int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
-    TaskRunManager* run_man  = cpu_run_manager();
+    int nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+#if defined(TOMOPY_USE_PTL)
+    TaskRunManager* run_man = cpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
+#endif
 
     cpu_thread_data** _thread_data = new cpu_thread_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
@@ -243,26 +268,35 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
-               num_iter);
+        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
         {
-            for(int i = 0; i < nthreads; ++i)
-                _thread_data[i]->initialize(data, recon, simdata.data(), s);
+            for(int ii = 0; ii < nthreads; ++ii)
+                _thread_data[ii]->initialize(data, recon, simdata.data(), s);
 
+#if defined(TOMOPY_USE_PTL)
             TaskGroup<void> tg;
             // For each projection angle
             for(int p = 0; p < dt; p++)
             {
                 task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy, theta, s,
                                p, nthreads, _thread_data);
+                compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
+                                   _thread_data);
             }
             tg.join();
-
-            for(int i = 0; i < nthreads; ++i)
-                _thread_data[i]->finalize(recon, s);
+#else
+            // For each projection angle
+            for(int p = 0; p < dt; p++)
+            {
+                compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
+                                   _thread_data);
+            }
+#endif
+            for(int ii = 0; ii < nthreads; ++ii)
+                _thread_data[ii]->finalize(recon, s);
         }
     }
 }
@@ -291,8 +325,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
-               num_iter);
+        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
@@ -334,8 +367,7 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
-               num_iter);
+        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)

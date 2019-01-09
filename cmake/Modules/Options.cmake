@@ -8,12 +8,17 @@
 include(MacroUtilities)
 include(Compilers)
 
+set(_USE_PTL ON)
+set(_USE_PYBIND ON)
+
 if(CMAKE_C_COMPILER_IS_PGI)
     set(OpenMP_C_IMPL "=nonuma" CACHE STRING "OpenMP C library setting")
 endif()
 
 if(CMAKE_CXX_COMPILER_IS_PGI)
     set(OpenMP_CXX_IMPL "=nonuma" CACHE STRING "OpenMP C++ library setting")
+    set(_USE_PTL OFF)
+    set(_USE_PYBIND OFF)
 endif()
 
 # features
@@ -35,10 +40,11 @@ add_option(TOMOPY_USE_GPERF "Enable Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP option for GPU execution" ${TOMOPY_USE_GPU})
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
-add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ON)
+add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ${_USE_PYBIND})
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage" OFF)
+add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ${_USE_PYBIND})
 
 if(TOMOPY_USE_SANITIZER)
     set(SANITIZER_TYPE leak CACHE STRING "Type of sanitizer")
