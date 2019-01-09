@@ -1,0 +1,15 @@
+##
+##  Ignore everything...
+##
+
+*
+
+##
+##  Except these files...
+##
+
+!.gitignore
+!__init__.py
+!pyctest_*.py
+!*.sh
+!README.md

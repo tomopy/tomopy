@@ -205,8 +205,9 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
         for(int n = 0; n < ngridx; ++n)
             _sum += _recon_rot[n];
 
+        *_simdata += _sum;
         // Make update by backprojecting error along x-axis
-        float upd = (*_data - (*_simdata + _sum)) / fngridx;
+        float upd = (*_data - *_simdata) / fngridx;
 #pragma omp simd
         for(int n = 0; n < ngridx; n++)
             _recon_rot[n] += upd;
@@ -242,6 +243,8 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 
     for(int i = 0; i < num_iter; i++)
     {
+        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
+               num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
@@ -288,6 +291,8 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
 
     for(int i = 0; i < num_iter; i++)
     {
+        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
+               num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
@@ -329,6 +334,8 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
 
     for(int i = 0; i < num_iter; i++)
     {
+        printf("[%li]> iteration %3i of %3i...\n", ThreadPool::GetThisThreadID(), i,
+               num_iter);
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
