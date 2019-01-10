@@ -70,7 +70,7 @@ master_doc = 'index'
 # General information about the project.
 Argonne = u'Argonne National Laboratory'
 project = u'TomoPy'
-copyright = u'2013-2015, ' + Argonne
+copyright = u'2013-2019, ' + Argonne
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

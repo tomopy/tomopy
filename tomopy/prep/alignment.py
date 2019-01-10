@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2016-17, UChicago Argonne, LLC. All rights reserved.      #
+# Copyright (c) 2016-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2017-17. UChicago Argonne, LLC. This software was produced    #
+# Copyright 2016-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
