@@ -1,5 +1,8 @@
 #!/bin/bash -l
 
+# make sure files are not owned by root
+umask 0000
+
 #------------------------------------------------------------------------------#
 #   init
 #------------------------------------------------------------------------------#
@@ -16,6 +19,10 @@ done
 #------------------------------------------------------------------------------#
 if [ ! -d /home/tomopy ]; then
     git clone https://github.com/jrmadsen/tomopy.git /home/tomopy
+    cd /home/tomopy
+    git checkout gpu-devel 2> /dev/null
+else
+    cd /home/tomopy
 fi
 
 #------------------------------------------------------------------------------#
@@ -29,6 +36,7 @@ if [ -n "${COMPILER}" ]; then
         ;;
         "pgi-llvm")
             module load pgi-llvm
+            module load pgi
         ;;
         "clang")
             echo 1 | update-alternatives --config cc
@@ -42,6 +50,15 @@ if [ -n "${COMPILER}" ]; then
             echo "Invalid option \"${COMPILER}\". Valid options: pgi, pgi-llvm, clang, gcc"
         ;;
     esac
+fi
+
+#------------------------------------------------------------------------------#
+#   build
+#------------------------------------------------------------------------------#
+if [ -f setup.py ]; then
+    echo -e "Running \"$(which python) setup.py install\" with ARGS=\"${ARGS}\"..."
+    $(which python) setup.py install ${ARGS} 1> /dev/null \
+        && echo "Build success" || echo "Build failure"
 fi
 
 #------------------------------------------------------------------------------#

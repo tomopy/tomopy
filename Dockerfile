@@ -25,6 +25,7 @@ WORKDIR /work
 COPY ./.docker/config-path.sh /work/config-path.sh
 COPY ./.docker/apt.sh /work/apt.sh
 COPY ./.docker/conda.sh /work/conda.sh
+COPY ./envs /work/envs
 
 #------------------------------------------------------------------------------#
 #   environment
@@ -37,10 +38,7 @@ ENV PYTHON_VERSION ${PYTHON_VERSION}
 RUN ./apt.sh && \
     ./conda.sh && \
     ./config-path.sh && \
-    apt-get -y autoclean && \
-    rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/* && \
-    /opt/conda/bin/conda clean -a -y && \
     rm -rf /work/*
 
 #------------------------------------------------------------------------------#
