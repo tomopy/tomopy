@@ -143,7 +143,7 @@ struct cpu_thread_data
     {
     }
 
-    ~cpu_thread_data() { delete[] m_data; }
+    ~cpu_thread_data() { delete[] m_update; }
 
     cpu_thread_data(const cpu_thread_data& rhs)
     : m_id(rhs.m_id)
@@ -205,6 +205,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     float        pi_offset = 0.5f * (float) M_PI;
     float        fngridx   = ngridx;
     float        theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+    // these structures are cached and re-used
     float*       simdata   = _cache->simdata();
     float*       recon     = _cache->recon();
     float*       update    = _cache->update();
@@ -218,13 +219,16 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     {
         int          pix_offset = d * ngridx;  // pixel offset
         int          idx_data   = d + p * dx;
+        // instead of including all the offsets later in the
+        // index lookup, offset the pointer itself
+        // this should make it easier for compiler to apply SIMD
         const float* _data      = data + idx_data;
         float*       _simdata   = simdata + idx_data;
         float*       _recon_rot = recon_rot.data() + pix_offset;
         float        _sum       = 0.0f;
 
         // Calculate simulated data by summing up along x-axis
-#pragma omp simd reduction(+ : _sum)
+#pragma omp simd reduction(+:_sum)
         for(int n = 0; n < ngridx; ++n)
             _sum += _recon_rot[n];
 
@@ -262,6 +266,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 
     TIMEMORY_AUTO_TIMER("");
 
+    // create a cache of the data for each thread
     cpu_thread_data** _thread_data = new cpu_thread_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
         _thread_data[i] = new cpu_thread_data(i, dy, dt, dx, ngridx, ngridy);
@@ -269,10 +274,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
     for(int i = 0; i < num_iter; i++)
     {
         printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
+        // reset the simulation data
         farray_t simdata(dy * dt * dx, 0.0f);
+
         // For each slice
         for(int s = 0; s < dy; s++)
         {
+            // for each thread, calculate all the offsets of the data
+            // for this slice
             for(int ii = 0; ii < nthreads; ++ii)
                 _thread_data[ii]->initialize(data, recon, simdata.data(), s);
 
@@ -293,6 +302,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
                                    _thread_data);
             }
 #endif
+            // update the reconstruction
             for(int ii = 0; ii < nthreads; ++ii)
                 _thread_data[ii]->finalize(recon, s);
         }
