@@ -52,6 +52,9 @@
 #    if !defined(__global__)
 #        define __global__
 #    endif
+#    if !defined(__device__)
+#        define __device__
+#    endif
 #endif
 
 //============================================================================//
@@ -60,6 +63,23 @@
 
 __global__ void
 deviceReduceKernel(const float* in, float* out, int N);
+
+//----------------------------------------------------------------------------//
+#if defined(TOMOPY_USE_CUDA)
+/*
+__device__ float
+reduce_sum(cg::thread_group g, float* temp, float val);
+
+//----------------------------------------------------------------------------//
+
+__device__ float
+thread_sum(const float* input, int n);
+*/
+#endif  // TOMOPY_USE_CUDA
+//----------------------------------------------------------------------------//
+
+__global__ void
+sum_kernel_block(float* sum, const float* input, int n);
 
 //----------------------------------------------------------------------------//
 

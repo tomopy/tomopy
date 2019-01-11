@@ -128,6 +128,12 @@
 #    ifndef NVTX_RANGE_POP
 #        define NVTX_RANGE_POP(obj) nvtxRangePop()
 #    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg) nvtxMark(name)
+#    endif
 
 void
 init_nvtx();
@@ -138,6 +144,12 @@ init_nvtx();
 #    endif
 #    ifndef NVTX_RANGE_POP
 #        define NVTX_RANGE_POP(obj)
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg)
 #    endif
 
 inline void

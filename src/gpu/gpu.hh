@@ -155,6 +155,7 @@ set_this_thread_device()
 
 //----------------------------------------------------------------------------//
 //  CUDA headers
+#    include <cooperative_groups.h>
 #    include <cuda.h>
 #    include <cuda_runtime_api.h>
 #    include <vector_types.h>

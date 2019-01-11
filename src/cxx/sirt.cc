@@ -253,14 +253,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    TIMEMORY_AUTO_TIMER("");
-
     int nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
 #if defined(TOMOPY_USE_PTL)
     TaskRunManager* run_man = cpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
 #endif
+
+    TIMEMORY_AUTO_TIMER("");
 
     cpu_thread_data** _thread_data = new cpu_thread_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
@@ -283,8 +283,6 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
             {
                 task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy, theta, s,
                                p, nthreads, _thread_data);
-                compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
-                                   _thread_data);
             }
             tg.join();
 #else
@@ -299,6 +297,8 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
                 _thread_data[ii]->finalize(recon, s);
         }
     }
+
+    printf("\n");
 }
 
 //============================================================================//

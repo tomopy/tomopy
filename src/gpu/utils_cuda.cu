@@ -49,6 +49,8 @@ BEGIN_EXTERN_C
 #include "utils_cuda.h"
 END_EXTERN_C
 
+namespace cg = cooperative_groups;
+
 //============================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
@@ -335,6 +337,115 @@ reduce(float* _in, float* _out, int size, cudaStream_t stream)
     cudaMemcpyAsync(&_sum, _out, sizeof(float), cudaMemcpyDeviceToHost, stream);
     cudaStreamSynchronize(stream);
     return _sum;
+}
+
+//============================================================================//
+//
+//      Cooperative Groups for sum
+//
+//============================================================================//
+
+__device__ float
+reduce_sum(cg::thread_group g, float* temp, float val)
+{
+    int lane = g.thread_rank();
+
+    // Each iteration halves the number of active threads
+    // Each thread adds its partial sum[i] to sum[lane+i]
+    for(int i = g.size() / 2; i > 0; i /= 2)
+    {
+        temp[lane] = val;
+        g.sync();  // wait for all threads to store
+        if(lane < i)
+            val += temp[lane + i];
+        g.sync();  // wait for all threads to load
+    }
+    return val;  // note: only thread 0 will return full sum
+}
+
+//============================================================================//
+
+__device__ float
+thread_sum(const float* input, int n)
+{
+    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int   iN      = n;
+    int   istride = blockDim.x * gridDim.x;
+    float sum     = 0;
+
+    for(int i = i0; i < iN; i += istride)
+    {
+        sum += input[i];
+        // float4 in = ((float4*) input)[i];
+        // sum += in.x + in.y + in.z + in.w;
+    }
+    return sum;
+}
+
+//============================================================================//
+
+__global__ void
+sum_kernel_block(float* sum, const float* input, int n)
+{
+    float my_sum = thread_sum(input, n);
+
+    extern __shared__ float temp[];
+    auto                    g         = cg::this_thread_block();
+    float                   block_sum = reduce_sum(g, temp, my_sum);
+
+    if(g.thread_rank() == 0)
+        atomicAdd(sum, block_sum);
+}
+
+//============================================================================//
+
+template <int tile_sz>
+__device__ float
+reduce_sum_tile_shfl(cg::thread_block_tile<tile_sz> g, float val)
+{
+    // Each iteration halves the number of active threads
+    // Each thread adds its partial sum[i] to sum[lane+i]
+    for(int i = g.size() / 2; i > 0; i /= 2)
+    {
+        val += g.shfl_down(val, i);
+    }
+
+    return val;  // note: only thread 0 will return full sum
+}
+
+//============================================================================//
+
+template <int tile_sz>
+__global__ void
+sum_kernel_tile_shfl(float* sum, float* input, int n)
+{
+    float my_sum = thread_sum(input, n);
+
+    auto  tile     = cg::tiled_partition<tile_sz>(cg::this_thread_block());
+    float tile_sum = reduce_sum_tile_shfl<tile_sz>(tile, my_sum);
+
+    if(tile.thread_rank() == 0)
+        atomicAdd(sum, tile_sum);
+}
+
+//============================================================================//
+
+__device__ float
+atomicAggInc(float* ptr)
+{
+    cg::coalesced_group g = cg::coalesced_threads();
+    float               prev;
+
+    // elect the first active thread to perform atomic add
+    if(g.thread_rank() == 0)
+    {
+        prev = atomicAdd(ptr, g.size());
+    }
+
+    // broadcast previous value within the warp
+    // and add each active thread’s rank to it
+    prev = g.thread_rank() + g.shfl(prev, 0);
+    return prev;
 }
 
 //============================================================================//
