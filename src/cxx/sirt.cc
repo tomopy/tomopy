@@ -50,6 +50,7 @@ BEGIN_EXTERN_C
 END_EXTERN_C
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <memory>
 #include <numeric>
@@ -202,9 +203,9 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     cpu_thread_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
-    float        pi_offset = 0.5f * (float) M_PI;
+    //float        pi_offset = 0.5f * (float) M_PI;
     float        fngridx   = ngridx;
-    float        theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+    float        theta_p   = fmodf(theta[p], 2.0f * (float) M_PI);
     // these structures are cached and re-used
     float*       simdata   = _cache->simdata();
     float*       recon     = _cache->recon();
@@ -273,7 +274,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
+        auto t_start = std::chrono::system_clock::now();
         // reset the simulation data
         farray_t simdata(dy * dt * dx, 0.0f);
 
@@ -306,6 +307,19 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
             for(int ii = 0; ii < nthreads; ++ii)
                 _thread_data[ii]->finalize(recon, s);
         }
+        auto                          t_end           = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
+        printf("[%li]> iteration %3i of %3i... %5.2f seconds\n", GetThisThreadID(), i,
+               num_iter, elapsed_seconds.count());
+    }
+
+    float _theta = 0.5 * (float) M_PI;
+    for(int s = 0; s < dy; s++)
+    {
+        float* _recon = recon + s * ngridx * ngridy;
+        auto recon_rot = cxx_rotate(_recon, _theta, ngridx, ngridy);
+        for(int i = 0; i < (ngridx * ngridy); ++i)
+            _recon[i] = recon_rot[i];
     }
 
     printf("\n");
@@ -335,7 +349,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
+        auto     t_start = std::chrono::system_clock::now();
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
@@ -361,6 +375,10 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
                 _recon[ii] += update[ii] / static_cast<float>(dt);
         }
+        auto                          t_end           = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
+        printf("[%li]> iteration %3i of %3i... %5.2f seconds\n", GetThisThreadID(), i,
+               num_iter, elapsed_seconds.count());
     }
 }
 
@@ -377,7 +395,7 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
 
     for(int i = 0; i < num_iter; i++)
     {
-        printf("[%li]> iteration %3i of %3i...\n", GetThisThreadID(), i, num_iter);
+        auto     t_start = std::chrono::system_clock::now();
         farray_t simdata(dy * dt * dx, 0.0f);
         // For each slice
         for(int s = 0; s < dy; s++)
@@ -403,6 +421,10 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
                 _recon[ii] += update[ii] / static_cast<float>(dt);
         }
+        auto                          t_end           = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
+        printf("[%li]> iteration %3i of %3i... %5.2f seconds\n", GetThisThreadID(), i,
+               num_iter, elapsed_seconds.count());
     }
 }
 
