@@ -1,18 +1,18 @@
 language: python
-python:
-  - "2.7"
-  - "3.6"
-  - "3.7"
 os:
   - linux
 sudo: false
 env:
+  matrix:
+    - PYTHON_VERSION="2.7"
+    - PYTHON_VERSION="3.6"
+    - PYTHON_VERSION="3.7"
   global:
     - PATH=${HOME}/miniconda/bin:${PATH}
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
     - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
 before_install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -24,10 +24,10 @@ install:
   - conda config --add channels jrmadsen
   - conda config --add channels conda-forge
   - >
-      conda install python=$TRAVIS_PYTHON_VERSION
+      conda install python=$PYTHON_VERSION
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       conda install --file envs/requirements-py27.txt;
     fi
   - conda info -a
