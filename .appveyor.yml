@@ -1,55 +1,25 @@
-# AppVeyor is a continuous integration service to build and run tests under
-# Windows and Linux https://ci.appveyor.com/project/tomopy/tomopy
-# Notes:
-#   - Minimal appveyor.yml file is an empty file. All sections are optional.
-#   - Indent each level of configuration with 2 spaces. Do not use tabs!
-#   - All section names are case-sensitive.
-#   - Section names should be unique on each level.
-#---------------------------------#
-#      general configuration      #
-#---------------------------------#
-# version format
-# you can use {branch} name in version format too
 version: 1.0.{build}
-# branches to build
 branches:
   only:
     - master
-# Skipping commits affecting specific files (GitHub only).
-# More details here: /docs/appveyor-yml
 skip_commits:
  files:
    - docs/*
    - '**/*.html'
-# Do not build feature branch with open Pull Requests
 skip_branch_with_pr: true
-# Maximum number of concurrent jobs for the project
 max_jobs: 1
-#---------------------------------#
-#    environment configuration    #
-#---------------------------------#
-# Build worker image (VM template)
 image: Visual Studio 2015
-# scripts that are called at very beginning, before repo cloning
 init:
   - git config --global core.autocrlf input
-# fetch repository as zip archive
-shallow_clone: true                 # default is "false"
-# environment variables
+shallow_clone: true
 environment:
-  # these variables are common to all jobs
   matrix:
     - PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda35-x64"
     - PYTHON_VERSION: "3.6"
       MINICONDA: "C:\\Miniconda36-x64"
 matrix:
-  # set this flag to immediately finish build once one of the jobs fails.
   fast_finish: true
-# build cache to preserve files/folders between builds
-# cache:
-#   - projectA\libs
-# scripts that run after cloning repository
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda activate
@@ -65,23 +35,12 @@ install:
   - conda info -a
   - "python --version"
   # - where gcc
-#---------------------------------#
-#       build configuration       #
-#---------------------------------#
-# build platform, i.e. x86, x64, Any CPU. This setting is optional.
 platform: x64
-# build Configuration, i.e. Debug, Release, etc.
 configuration: Debug
 build_script:
   - set CC=gcc
   - python setup.py install
-#---------------------------------#
-#       tests configuration       #
-#---------------------------------#
-# scripts to run before tests (working directory and environment changes are
-# persisted from the previous steps such as "before_build")
 before_test:
   - cd test/
-# to run your custom scripts instead of automatic tests
 test_script:
   - nosetests -v
