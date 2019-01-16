@@ -1,5 +1,4 @@
 coverage
 nose
 pyctest
-scikit-build
 timemory

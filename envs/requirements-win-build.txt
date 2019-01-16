@@ -1,3 +1,2 @@
 m2w64-gcc
 nose
-scikit-build
