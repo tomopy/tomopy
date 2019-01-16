@@ -14,9 +14,9 @@ init:
 shallow_clone: true
 environment:
   matrix:
-    - PYTHON_VERSION: "3.5"
-      MINICONDA: "C:\\Miniconda35-x64"
     - PYTHON_VERSION: "3.6"
+      MINICONDA: "C:\\Miniconda35-x64"
+    - PYTHON_VERSION: "3.7"
       MINICONDA: "C:\\Miniconda36-x64"
 matrix:
   fast_finish: true

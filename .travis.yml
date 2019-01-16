@@ -1,8 +1,8 @@
 language: python
 python:
   - "2.7"
-  - "3.5"
   - "3.6"
+  - "3.7"
 os:
   - linux
 sudo: false
@@ -12,15 +12,17 @@ env:
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
     - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
 before_install:
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
   - bash miniconda.sh -b -p ${HOME}/miniconda
   - export PATH="${HOME}/miniconda/bin:${PATH}"
   - conda config --set always_yes yes
 install:
   - conda config --add channels jrmadsen
   - conda config --add channels conda-forge
-  - conda update conda
-  - PYTHON_TAG=$(echo ${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
   - >
       conda install python=$TRAVIS_PYTHON_VERSION
       --file envs/requirements-all.txt
