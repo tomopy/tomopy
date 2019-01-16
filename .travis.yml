@@ -5,33 +5,35 @@ python:
   - "3.6"
 os:
   - linux
-#  - osx
 sudo: false
 env:
-  - PATH=$HOME/miniconda/bin:$PATH LD_LIBRARY_PATH=$HOME/miniconda/lib C_INCLUDE_PATH=$HOME/miniconda/include
+  global:
+    - PATH=${HOME}/miniconda/bin:${PATH}
+    - LD_LIBRARY_PATH=${HOME}/miniconda/lib
+    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
 before_install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda config --add channels conda-forge
-  - conda config --add channels jrmadsen
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update conda
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p ${HOME}/miniconda
+  - export PATH="${HOME}/miniconda/bin:${PATH}"
+  - conda config --set always_yes yes
+  - conda activate
 install:
-  - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy scipy
-    scikit-image mkl-devel mkl_fft python-coveralls dxchange
-    numexpr coverage timemory pyctest"
+  - conda config --add channels jrmadsen
+  - conda config --add channels conda-forge
+  - conda update conda
+  - PYTHON_TAG=$(echo ${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
+  - >
+      conda install python=$TRAVIS_PYTHON_VERSION
+      --file envs/requirements-all.txt
+      --file envs/requirements-unix-build.txt
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install futures;
+      conda install --file envs/requirements-py27.txt;
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests
+  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS}
 script:
+  - cd test/
   - coverage run $(which nosetests)
 after_success:
   - coveralls

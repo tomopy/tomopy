@@ -52,27 +52,19 @@ matrix:
 # scripts that run after cloning repository
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - conda activate
   - conda config --set always_yes True
-  - conda config --add channels conda-forge
   - conda config --add channels jrmadsen
+  - conda config --add channels conda-forge
   - conda update conda  # required in order to find mkl-devel
   - >
-      conda install
-      m2w64-gcc
-      mkl mkl-devel mkl_fft
-      nose
-      numexpr
-      numpy
-      python=%PYTHON_VERSION%
-      scipy
-      scikit-build
-      scikit-image
-      setuptools
-      six
+      conda install python=%PYTHON_VERSION%
+      --file envs/requirements-all.txt
+      --file envs/requirements-win-build.txt
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
-  - where gcc
+  # - where gcc
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
