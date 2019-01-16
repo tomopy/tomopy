@@ -28,7 +28,7 @@ install:
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
   - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      conda install --file envs/requirements-py27.txt;
+      conda install python-coveralls --file envs/requirements-py27.txt;
     fi
   - conda info -a
   - conda list --explicit

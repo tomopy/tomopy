@@ -1,6 +1,5 @@
 coverage
 nose
 pyctest
-python-coveralls
 scikit-build
 timemory
