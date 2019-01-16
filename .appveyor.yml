@@ -21,7 +21,7 @@ environment:
 matrix:
   fast_finish: true
 install:
-  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - "%MINICONDA%\\Scripts\\activate.bat"
   - conda config --set always_yes True
   - conda config --add channels jrmadsen
   - conda config --add channels conda-forge
@@ -33,7 +33,7 @@ install:
   # Check that we have the expected version and architecture for Python
   - conda info -a
   - "python --version"
-  # - where gcc
+  - where gcc
 platform: x64
 configuration: Debug
 build_script:
