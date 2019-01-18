@@ -149,20 +149,30 @@ PYBIND11_MODULE(tomocxx, tomo)
     // task_group.def("join", &TaskGroupWrapper<void>::join,
     //               "Join the task group");
 
-    auto _rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
+    auto _apply_rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
         farray_t        cxx_arr(arr.size(), 0.0f);
         py::buffer_info inbuf = arr.request();
         memcpy(cxx_arr.data(), inbuf.ptr, cxx_arr.size() * sizeof(float));
-        // for(uintmax_t i = 0; i < arr.size(); ++i)
-        //    std::cout << "cxx_arr[" << i << "] = " << cxx_arr.at(i) <<
-        //    std::endl;
-        cxx_arr = cxx_rotate(cxx_arr.data(), theta, nx, ny);
+        cxx_arr = cxx_apply_rotation(cxx_arr.data(), theta, nx, ny);
         pyfarray_t      _arr(cxx_arr.size());
         py::buffer_info outbuf = _arr.request();
         memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));
         return _arr;
     };
-    tomo.def("rotate", _rotate, "rotate array");
+    auto _remove_rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
+        farray_t        cxx_arr(arr.size(), 0.0f);
+        py::buffer_info inbuf = arr.request();
+        memcpy(cxx_arr.data(), inbuf.ptr, cxx_arr.size() * sizeof(float));
+        cxx_arr = cxx_remove_rotation(cxx_arr.data(), theta, nx, ny);
+        pyfarray_t      _arr(cxx_arr.size());
+        py::buffer_info outbuf = _arr.request();
+        memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));
+        return _arr;
+    };
+
+    tomo.def("apply_rotation", _remove_rotate, "rotate array");
+    tomo.def("remove_rotation", _remove_rotate, "rotate array");
+    tomo.def("bilinear_interpolation", &bilinear_interpolation, "bilinear interpolation");
 }
 
 //============================================================================//

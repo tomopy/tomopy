@@ -15,7 +15,8 @@ set(CMAKE_C_STANDARD 11 CACHE STRING "C language standard")
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "CXX language standard")
 set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "Require the C language standard")
 set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "Require the CXX language standard")
-
+set(CMAKE_CUDA_STANDARD 11 CACHE STRING "CUDA language standard")
+set(CMAKE_CUDA_STANDARD_REQUIRED ON CACHE BOOL "Require the CUDA language standard")
 
 # ---------------------------------------------------------------------------- #
 # set the output directory (critical on Windows)
@@ -41,9 +42,9 @@ endforeach(_TYPE ARCHIVE LIBRARY RUNTIME)
 #  debug macro
 #
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    add_definitions(-DDEBUG)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS DEBUG)
 else("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    add_definitions(-DNDEBUG)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS NDEBUG)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
 
@@ -107,7 +108,7 @@ if(TOMOPY_USE_OPENACC)
     # definition in case it does
     if((c_fopenacc OR c_acc OR c_h_acc) AND
        (cxx_fopenacc OR cxx_acc OR cxx_h_acc))
-        add_definitions(-DTOMOPY_USE_OPENACC)
+        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENACC)
     endif()
 endif(TOMOPY_USE_OPENACC)
 

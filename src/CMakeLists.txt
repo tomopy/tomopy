@@ -25,8 +25,14 @@ checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
 if(TOMOPY_USE_PTL)
     add_subdirectory(PTL)
     list(APPEND EXTERNAL_LIBRARIES ptl-static)
-    add_definitions(-DTOMOPY_USE_PTL)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_PTL)
 endif()
+
+#------------------------------------------------------------------------------#
+#
+#   TomoPy Python module
+#
+#------------------------------------------------------------------------------#
 
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers
@@ -47,12 +53,126 @@ set(TARGET_INCLUDE_DIRECTORIES
     ${TiMemory_INCLUDE_DIRS}
     ${EXTERNAL_INCLUDE_DIRS})
 
+# core sources
+set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 
-################################################################################
-#                                                                              #
-#                           TomoPy (Python)                                    #
-#                                                                              #
-################################################################################
+# add the library
+if(TOMOPY_USE_CUDA)
+    file(GLOB CUDA_LIBRARY_HEADERS
+        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.h"
+        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.hh"
+        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.icc")
+
+    file(GLOB CUDA_LIBRARY_SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc"
+        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
+
+    list(APPEND LIBRARY_SOURCES
+        ${CUDA_LIBRARY_HEADERS}
+        ${CUDA_LIBRARY_SOURCES})
+
+    list(APPEND TARGET_INCLUDE_DIRECTORIES
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+    set(CUDA_PROPERTIES
+        CUDA_STANDARD               11
+        CUDA_STANDARD_REQUIRED      ON
+        #CUDA_PTX_COMPILATION        OFF
+        CUDA_SEPARABLE_COMPILATION  OFF
+        CUDA_RESOLVE_DEVICE_SYMBOLS OFF
+        )
+endif()
+
+# create library
+add_library(libtomopy SHARED ${LIBRARY_SOURCES})
+
+# link library
+target_link_libraries(libtomopy ${EXTERNAL_LIBRARIES} ${EXTERNAL_CUDA_LIBRARIES})
+
+# target properties
+set_target_properties(libtomopy
+    PROPERTIES
+    PREFIX ""
+    RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
+    LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
+    ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
+    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
+    C_STANDARD                  ${CMAKE_C_STANDARD}
+    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
+    CXX_STANDARD                ${CMAKE_CXX_STANDARD}
+    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
+    ${CUDA_PROPERTIES}
+)
+
+target_compile_definitions(libtomopy PUBLIC
+    ${${PROJECT_NAME}_DEFINITIONS})
+
+target_compile_options(libtomopy PUBLIC
+    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>
+)
+
+# Install the compiled library
+install(TARGETS libtomopy
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    COMPONENT development)
+
+# make sure the generated target gets put into the source tree for testing
+add_custom_command(TARGET libtomopy POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
+    ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
+
+
+#------------------------------------------------------------------------------#
+#
+#   PyBind11 submodule
+#
+#------------------------------------------------------------------------------#
+if(TOMOPY_USE_PYBIND11)
+    # ensure the submodule is checked out
+    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
+        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+    add_subdirectory(pybind11)
+
+    pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.hpp)
+
+    target_link_libraries(tomocxx PUBLIC libtomopy)
+
+    set_target_properties(tomocxx PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+        LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
+        ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy)
+
+    target_compile_definitions(tomocxx PUBLIC
+        ${${PROJECT_NAME}_DEFINITIONS})
+
+    get_target_property(_INCLUDE_DIRS tomocxx INCLUDE_DIRECTORIES)
+    target_include_directories(tomocxx PRIVATE
+        ${_INCLUDE_DIRS} ${TARGET_INCLUDE_DIRECTORIES})
+
+    target_compile_options(tomocxx PUBLIC
+        $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
+        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CXX_FLAGS} ${${PROJECT_NAME}_CUDA_FLAGS}>)
+
+    install(TARGETS tomocxx
+        DESTINATION ${PYTHON_SITE_DIR}/tomopy
+        COMPONENT development)
+
+    add_custom_command(TARGET tomocxx POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
+        ${PROJECT_SOURCE_DIR}/tomopy/)
+endif()
+
+
+#------------------------------------------------------------------------------#
+#
+#   TomoPy Python file configuration
+#
+#------------------------------------------------------------------------------#
 
 # helper macro
 macro(CONFIG_INSTALL RELATIVE_PATH)
@@ -95,95 +215,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${PYSETUP} ${PROJECT_BINARY_DIR}/
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
-# core sources
-set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
-
-# add the library
-if(NOT TOMOPY_USE_CUDA)
-    add_library(libtomopy SHARED ${LIBRARY_SOURCES})
-else()
-    file(GLOB CUDA_LIBRARY_HEADERS
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.h"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.hh"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.icc")
-
-    file(GLOB CUDA_CXX_LIBRARY_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc")
-    set_source_files_properties(${CUDA_CXX_LIBRARY_SOURCES}
-        PROPERTIES
-            LANGUAGE CXX
-            COMPILE_FLAGS ${${PROJECT_NAME}_CXX_FLAGS})
-
-    file(GLOB CUDA_CU_LIBRARY_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
-    set_source_files_properties(${CUDA_CU_LIBRARY_SOURCES}
-        PROPERTIES
-	    LANGUAGE CXX
-            COMPILE_FLAGS ${${PROJECT_NAME}_CXX_FLAGS})
-
-    cuda_add_library(libtomopy SHARED
-        ${LIBRARY_SOURCES}
-        ${CUDA_LIBRARY_HEADERS}
-        ${CUDA_CU_LIBRARY_SOURCES}
-        ${CUDA_CXX_LIBRARY_SOURCES})
-endif()
-
-# link library
-target_link_libraries(libtomopy ${EXTERNAL_LIBRARIES} ${EXTERNAL_CUDA_LIBRARIES})
-
-# target properties
-set_target_properties(libtomopy
-    PROPERTIES
-    PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-    LANGUAGE                    CXX
-    LINKER_LANGUAGE             CXX
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-)
-
-# Install the compiled library
-install(TARGETS libtomopy
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT development)
-
-# make sure the generated target gets put into the source tree for testing
-add_custom_command(TARGET libtomopy POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
-    ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
 
 #------------------------------------------------------------------------------#
 #
-#   PyBind11 submodule
+#   Code coverage
 #
 #------------------------------------------------------------------------------#
-if(TOMOPY_USE_PYBIND11)
-    # ensure the submodule is checked out
-    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    add_subdirectory(pybind11)
-    include_directories(${TARGET_INCLUDE_DIRECTORIES})
-    pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.hpp)
-    target_link_libraries(tomocxx PUBLIC libtomopy)
-    get_target_property(_INCLUDE_DIRS tomocxx INCLUDE_DIRECTORIES)
-    set_target_properties(tomocxx PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
-        LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
-        ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
-        COMPILE_FLAGS               "${CMAKE_CXX_FLAGS} ${${PROJECT_NAME}_CXX_FLAGS}"
-        INCLUDE_DIRECTORIES         "${_INCLUDE_DIRS};${TARGET_INCLUDE_DIRECTORIES}"
-    )
-    install(TARGETS tomocxx
-        DESTINATION ${PYTHON_SITE_DIR}/tomopy
-        COMPONENT development)
-
-    add_custom_command(TARGET tomocxx POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
-        ${PROJECT_SOURCE_DIR}/tomopy/)
-endif()
-
 if(TOMOPY_USE_COVERAGE)
     foreach(_SRC_FILE ${LIBRARY_SOURCES})
         string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}"

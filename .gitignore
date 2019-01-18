@@ -93,6 +93,7 @@ test.py
 main.py
 *.ipynb
 trunk
+/test/*.jpeg
 
 # Installer logs
 ##############

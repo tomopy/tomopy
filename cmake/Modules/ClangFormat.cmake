@@ -23,7 +23,8 @@ if(CLANG_FORMATTER)
         ${PROJECT_SOURCE_DIR}/src/cxx/*.cc
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cc
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cu
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp)
+        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp
+        ${PROJECT_SOURCE_DIR}/test/*.cc)
 
     # avoid conflicting format targets
     set(FORMAT_NAME format)

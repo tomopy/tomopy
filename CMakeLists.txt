@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     set(MSG "")
@@ -58,6 +58,11 @@ include(ClangFormat)
 ################################################################################
 
 add_subdirectory(src)
+
+if(TOMOPY_USE_OPENCV)
+add_executable(test_opencv test/test_opencv.cc)
+target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES})
+endif()
 
 ################################################################################
 #   Information

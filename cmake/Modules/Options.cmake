@@ -39,6 +39,7 @@ add_option(TOMOPY_USE_GPU "Enable GPU preprocessor" ON)
 add_option(TOMOPY_USE_GPERF "Enable Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP option for GPU execution" ${TOMOPY_USE_GPU})
+add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ON)
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ${_USE_PYBIND})
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
@@ -52,7 +53,7 @@ if(TOMOPY_USE_SANITIZER)
 endif()
 
 if(TOMOPY_CXX_GRIDREC)
-    add_definitions(-DTOMOPY_CXX_GRIDREC)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_CXX_GRIDREC)
 endif()
 
 if(TOMOPY_USE_ARCH)
@@ -69,50 +70,37 @@ endforeach()
 
 # default settings
 set(OpenACC_FOUND OFF)
-set(CUDA_FOUND OFF)
+set(_USE_CUDA ${TOMOPY_USE_GPU})
+set(_USE_OPENACC ${TOMOPY_USE_GPU})
 
 # possible options (sometimes available)
 if(TOMOPY_USE_GPU)
     find_package(OpenACC QUIET)
-    if(NOT COMPILER_IS_PGI)
-        find_package(CUDA QUIET)
+    check_language(CUDA)
+    if(CMAKE_CUDA_COMPILER)
+        enable_language(CUDA)
+    else()
+        message(STATUS "No CUDA support")
     endif()
 endif()
 
-if(OpenACC_FOUND)
-    set(_USE_OPENACC ON)
-else()
-    set(_USE_OPENACC OFF)
-endif()
-
-if(CUDA_FOUND)
-    set(_USE_CUDA ON)
-else()
-    set(_USE_CUDA OFF)
-endif()
+set(_USE_OPENACC ${OpenACC_FOUND})
 
 add_option(TOMOPY_USE_OPENACC "Enable OpenACC option for GPU execution" ${_USE_OPENACC})
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" ${_USE_CUDA})
 
-if(TOMOPY_USE_CUDA)
-    # find the cuda compiler
-    find_program(CMAKE_CUDA_COMPILER nvcc
-        PATHS /usr/local/cuda
-        HINTS /usr/local/cuda
-        PATH_SUFFIXES bin)
-    if(CMAKE_CUDA_COMPILER)
-        include(CudaConfig)
-    endif(CMAKE_CUDA_COMPILER)
-endif(TOMOPY_USE_CUDA)
 
 if(TOMOPY_USE_GPU)
-    add_definitions(-DTOMOPY_USE_GPU)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_GPU)
+    if(TOMOPY_USE_CUDA)
+        add_feature(CMAKE_CUDA_STANDARD "CUDA STL standard")
+    endif(TOMOPY_USE_CUDA)
 endif(TOMOPY_USE_GPU)
-
-unset(COMPILER_IS_PGI)
 
 if(APPLE)
     add_option(CMAKE_INSTALL_RPATH_USE_LINK_PATH
         "Hardcode installation rpath based on link path" ON NO_FEATURE)
 endif()
+
+unset(COMPILER_IS_PGI)

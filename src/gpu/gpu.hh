@@ -150,6 +150,16 @@ set_this_thread_device()
 }
 
 //============================================================================//
+
+template <typename _Tp>
+_Tp*
+cpu_malloc(uintmax_t size)
+{
+    _Tp* _cpu = (_Tp*) malloc(size * sizeof(_Tp));
+    return _cpu;
+}
+
+//============================================================================//
 //  CUDA only
 #if defined(TOMOPY_USE_CUDA)
 

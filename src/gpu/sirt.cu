@@ -190,14 +190,11 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
     NVTX_NAME_THREAD(thread_number, __FUNCTION__);
 
     // needed for recon to output at proper orientation
-    float pi_offset  = 0.5f * (float) M_PI;
-    float fngridx    = ngridx;
-    float theta_p    = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
-    int   recon_size = ngridx * ngridy;
-    int   float_size = sizeof(float);
-    int   block      = 512;
-    int   grid       = (dx + block - 1) / block;
-    int   smem       = block * sizeof(float);
+    float pi_offset = 0.5f * (float) M_PI;
+    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+    int   block     = 512;
+    int   grid      = (dx + block - 1) / block;
+    int   smem      = block * sizeof(float);
 
     const float* recon     = _cache->recon();
     const float* data      = _cache->data();
@@ -243,7 +240,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     // get some properties
     int num_devices = cuda_device_count();
     int nthreads    = GetEnv("TOMOPY_NUM_THREADS", 4);
-    nthreads = std::max(nthreads, 1);
+    nthreads        = std::max(nthreads, 1);
     if(nthreads > 4)
     {
         printf("INFO: Current version allows no more than 4 threads...\n");
@@ -326,8 +323,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                 cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
                                         _gpu_thread_data);
             }
-            finalize();
             sync();
+            final();
 #endif
             cudaDeviceSynchronize();
         }

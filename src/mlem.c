@@ -41,12 +41,26 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "mlem.h"
+#include "profiler.h"
 #include "utils.h"
 
 void
 mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
      float* recon, int ngridx, int ngridy, int num_iter)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
+    if(cxx_mlem(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
+        return;
+
+    printf("\n\t%s (C) [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = "
+           "%i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
+    void* timer = TIMEMORY_AUTO_TIMER("");
+
     float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx   = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -181,4 +195,6 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
     free(simdata);
     free(sum_dist);
     free(update);
+
+    FREE_TIMEMORY_AUTO_TIMER(timer);
 }

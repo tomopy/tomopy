@@ -316,90 +316,36 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 //============================================================================//
 
 DLL void
-cxx_preprocessing(int ry, int rz, int num_pixels, float center, float& mov,
-                  farray_t& gridx, farray_t& gridy);
-
-//============================================================================//
-
-DLL void
-cxx_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-                const farray_t& gridx, const farray_t& gridy, farray_t& coordx,
-                farray_t& coordy);
-
-//============================================================================//
-
-DLL void
-cxx_trim_coords(int ry, int rz, const farray_t& coordx, const farray_t& coordy,
-                const farray_t& gridx, const farray_t& gridy, farray_t& ax, farray_t& ay,
-                farray_t& bx, farray_t& by);
-
-//============================================================================//
-
-DLL void
-cxx_sort_intersections(const int& ind_condition, const farray_t& ax, const farray_t& ay,
-                       const farray_t& bx, const farray_t& by, int& csize,
-                       farray_t& coorx, farray_t& coory);
+cxx_affine_transform(farray_t& dst, const float* src, float theta, int nx, int ny, int dx,
+                     int dy);
 
 //============================================================================//
 
 DLL float
-cxx_calc_sum_sqr(const farray_t& dist);
-
-//============================================================================//
-
-DLL void
-cxx_calc_dist(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
-              iarray_t& indi, farray_t& dist);
-
-//============================================================================//
-
-DLL void
-cxx_calc_dist2(int ry, int rz, int csize, const farray_t& coorx, const farray_t& coory,
-               iarray_t& indx, iarray_t& indy, farray_t& dist);
-
-//============================================================================//
-
-DLL void
-cxx_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-                 const iarray_t& indi, const farray_t& dist, const float* model,
-                 farray_t& simdata);
-
-//============================================================================//
-
-DLL void
-cxx_calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
-                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
-                  farray_t& simdata);
-
-//============================================================================//
-
-DLL void
-cxx_calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-                  const iarray_t& indx, const iarray_t& indy, const farray_t& dist,
-                  float vx, float vy, const farray_t& modelx, const farray_t& modely,
-                  const farray_t& modelz, int axis, farray_t& simdata);
-
-//============================================================================//
-
-DLL float
-cxx_rotate_x(const float x, const float y, const float theta);
-
-//============================================================================//
-
-DLL float
-cxx_rotate_y(const float x, const float y, const float theta);
+bilinear_interpolation(float x, float y, float x1, float x2, float y1, float y2,
+                       float x1y1, float x2y1, float x1y2, float x2y2);
 
 //============================================================================//
 
 DLL farray_t
-    cxx_rotate(const float* src, const float theta, const int nx, const int ny);
+    cxx_apply_rotation(const float* src, float theta, const int nx, const int ny);
 
 //============================================================================//
 
 DLL void
-cxx_rotate_ip(farray_t& dst, const float* src, const float theta, const int nx,
-              const int ny);
+cxx_apply_rotation_ip(farray_t& dst, const float* src, float theta, const int nx,
+                      const int ny);
+
+//============================================================================//
+
+DLL farray_t
+    cxx_remove_rotation(const float* src, float theta, const int nx, const int ny);
+
+//============================================================================//
+
+DLL void
+cxx_remove_rotation_ip(farray_t& dst, const float* src, float theta, const int nx,
+                       const int ny);
 
 //============================================================================//
 #define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...

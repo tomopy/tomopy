@@ -135,7 +135,7 @@ struct cpu_thread_data
     , m_nx(nx)
     , m_ny(ny)
     , m_size(m_nx * m_ny)
-    , m_rot(farray_t(m_size, 0.0f))
+    , m_rot(farray_t(4 * m_size, 0.0f))
     , m_tmp(farray_t(m_size, 0.0f))
     , m_recon(nullptr)
     , m_update(new float[m_size])
@@ -203,9 +203,9 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     cpu_thread_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
-    //float        pi_offset = 0.5f * (float) M_PI;
-    float        fngridx   = ngridx;
-    float        theta_p   = fmodf(theta[p], 2.0f * (float) M_PI);
+    float pi_offset = 0.5f * (float) M_PI;
+    float fngridx   = ngridx;
+    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
     // these structures are cached and re-used
     float*       simdata   = _cache->simdata();
     float*       recon     = _cache->recon();
@@ -214,12 +214,18 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     farray_t&    recon_rot = _cache->rot();
     farray_t&    recon_tmp = _cache->tmp();
 
-    cxx_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy);
+    int ix = ngridx;
+    int iy = ngridy;
+    int ox = 1 * ngridx;
+    int oy = 1 * ngridy;
+
+    // Forward-Rotate object
+    cxx_affine_transform(recon_rot, recon, -theta_p, ix, iy, ox, oy);
 
     for(int d = 0; d < dx; d++)
     {
-        int          pix_offset = d * ngridx;  // pixel offset
-        int          idx_data   = d + p * dx;
+        int pix_offset = d * ox;  // pixel offset
+        int idx_data   = d + p * dx;
         // instead of including all the offsets later in the
         // index lookup, offset the pointer itself
         // this should make it easier for compiler to apply SIMD
@@ -229,19 +235,20 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
         float        _sum       = 0.0f;
 
         // Calculate simulated data by summing up along x-axis
-#pragma omp simd reduction(+:_sum)
-        for(int n = 0; n < ngridx; ++n)
+#pragma omp simd reduction(+ : _sum)
+        for(int n = 0; n < ox; ++n)
             _sum += _recon_rot[n];
 
         *_simdata += _sum;
         // Make update by backprojecting error along x-axis
         float upd = (*_data - *_simdata) / fngridx;
 #pragma omp simd
-        for(int n = 0; n < ngridx; n++)
+        for(int n = 0; n < ox; ++n)
             _recon_rot[n] += upd;
     }
+
     // Back-Rotate object
-    cxx_rotate_ip(recon_tmp, recon_rot.data(), theta_p, ngridx, ngridy);
+    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_p, ox, oy, ix, iy);
 
     // update shared update array
 #pragma omp simd
@@ -313,14 +320,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
                num_iter, elapsed_seconds.count());
     }
 
-    float _theta = 0.5 * (float) M_PI;
+    /*float _theta = 0.5 * (float) M_PI;
     for(int s = 0; s < dy; s++)
     {
-        float* _recon = recon + s * ngridx * ngridy;
-        auto recon_rot = cxx_rotate(_recon, _theta, ngridx, ngridy);
+        float* _recon    = recon + s * ngridx * ngridy;
+        auto   recon_rot = cxx_apply_rotation(_recon, _theta, ngridx, ngridy);
         for(int i = 0; i < (ngridx * ngridy); ++i)
             _recon[i] = recon_rot[i];
-    }
+    }*/
 
     printf("\n");
 }
@@ -361,7 +368,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
             float* _recon       = recon + slice_offset;
 
             // recon offset for the slice
-            for(int ii = 0; ii < recon_off.size(); ++ii)
+            for(uintmax_t ii = 0; ii < recon_off.size(); ++ii)
                 recon_off[ii] = _recon[ii];
 
             // For each projection angle
@@ -407,7 +414,7 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
             float* _recon       = recon + slice_offset;
 
             // recon offset for the slice
-            for(int ii = 0; ii < recon_off.size(); ++ii)
+            for(uintmax_t ii = 0; ii < recon_off.size(); ++ii)
                 recon_off[ii] = _recon[ii];
 
             // For each projection angle

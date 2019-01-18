@@ -68,6 +68,9 @@ def run(phantom, algorithm, args, get_recon=False):
 
     obj = normalize(obj)
     rec = normalize(rec)
+    obj_max = np.amax(obj)
+    rec_max = np.amax(rec)
+    print("Max obj = {}, rec = {}".format(obj_max, rec_max))
 
     rec = trim_border(rec, rec.shape[0],
                       rec[0].shape[0] - obj[0].shape[0],

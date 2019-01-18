@@ -22,3 +22,4 @@ dependencies:
   - scipy
   - six
   - timemory
+  - opencv

@@ -53,6 +53,7 @@ import unittest
 from ..util import read_file
 from tomopy.recon.algorithm import recon
 from numpy.testing import assert_allclose
+from tomopy.misc.benchmark import output_images, image_comparison
 import numpy as np
 
 __author__ = "Doga Gursoy"
@@ -144,9 +145,14 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             read_file('pml_quad.npy'), rtol=1e-2)
 
     def test_sirt(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
-            read_file('sirt.npy'), rtol=1e-2)
+        r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
+        c_sirt = read_file('sirt.npy')
+        comparison = image_comparison(
+            1, r_sirt.shape[0], r_sirt.shape[1],
+            r_sirt.shape[2], c_sirt)
+        comparison.assign('sirt', 0, r_sirt)
+        output_images(comparison.array, "test/sirt")
+        assert_allclose(r_sirt, c_sirt, rtol=1e-2)
 
     def test_tv(self):
         assert_allclose(

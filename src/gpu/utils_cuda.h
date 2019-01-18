@@ -58,24 +58,55 @@
 #endif
 
 //============================================================================//
+
+__device__ void
+cuda_preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
+                   float* gridy);
+
+//----------------------------------------------------------------------------//
+
+__device__ int
+cuda_calc_quadrant(float theta_p);
+
+//----------------------------------------------------------------------------//
+
+__device__ void
+cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
+                 const float* gridx, const float* gridy, float* coordx, float* coordy);
+
+//----------------------------------------------------------------------------//
+
+__device__ void
+cuda_trim_coords(int ngridx, int ngridy, const float* coordx, const float* coordy,
+                 const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
+                 int* bsize, float* bx, float* by);
+
+//----------------------------------------------------------------------------//
+
+__device__ void
+cuda_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
+                        int bsize, const float* bx, const float* by, int* csize,
+                        float* coorx, float* coory);
+
+//----------------------------------------------------------------------------//
+
+__device__ void
+cuda_calc_dist(int ngridx, int ngridy, int csize, const float* coorx, const float* coory,
+               int* indi, float* dist);
+
+//----------------------------------------------------------------------------//
+
+__device__ void
+cuda_calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
+                  const int* indi, const float* dist, const float* model, float* simdata);
+
+//============================================================================//
 //  reduce
 //============================================================================//
 
 __global__ void
 deviceReduceKernel(const float* in, float* out, int N);
 
-//----------------------------------------------------------------------------//
-#if defined(TOMOPY_USE_CUDA)
-/*
-__device__ float
-reduce_sum(cg::thread_group g, float* temp, float val);
-
-//----------------------------------------------------------------------------//
-
-__device__ float
-thread_sum(const float* input, int n);
-*/
-#endif  // TOMOPY_USE_CUDA
 //----------------------------------------------------------------------------//
 
 __global__ void
