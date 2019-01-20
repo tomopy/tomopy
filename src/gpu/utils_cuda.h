@@ -59,9 +59,9 @@
 
 //============================================================================//
 
-__device__ void
-cuda_preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
-                   float* gridy);
+__global__ void
+cuda_preprocessing(int ngridx, int ngridy, int dz, int s, float* center, float* mov,
+                   float* gridx, float* gridy);
 
 //----------------------------------------------------------------------------//
 

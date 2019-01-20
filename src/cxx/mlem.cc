@@ -93,8 +93,8 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
 #endif
 
     TIMEMORY_AUTO_TIMER("");
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
 #if defined(TOMOPY_USE_GPU)
     // TODO: select based on memory
@@ -122,6 +122,9 @@ void
 mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
     float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx   = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -265,6 +268,8 @@ void
 mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
     mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 #endif
@@ -275,6 +280,8 @@ void
 mlem_openacc(const float* data, int dy, int dt, int dx, const float* center,
              const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
     mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 
@@ -284,6 +291,8 @@ void
 mlem_openmp(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
     mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 

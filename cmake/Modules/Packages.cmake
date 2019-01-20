@@ -13,7 +13,6 @@ include(FindPackageHandleStandardArgs)
 
 if(NOT WIN32)
     set(CMAKE_THREAD_PREFER_PTHREAD ON)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
 find_package(Threads)
@@ -294,6 +293,7 @@ if(TOMOPY_USE_OPENCV)
         set(msg "${msg}    OpenCV needed: ${OpenCV_COMPONENTS} (${_NUM_FOUND_COMPONENT_LIBS})\n")
         message(WARNING "${msg}")
         unset(msg)
+        set(TOMOPY_USE_OPENCV OFF)
     endif()
 
     unset(_NUM_FOUND_COMPONENT_LIBS)

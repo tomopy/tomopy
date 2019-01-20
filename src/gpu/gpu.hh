@@ -112,6 +112,13 @@ GetThisThreadID()
 
 //============================================================================//
 
+#if !defined(GPU_PRINT_HERE)
+#    define GPU_PRINT_HERE(extra)                                                        \
+        printf("[GPU]> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
+#endif
+
+//============================================================================//
+
 template <typename _Tp> using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //============================================================================//
