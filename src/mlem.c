@@ -115,7 +115,7 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                 quadrant = calc_quadrant(theta_p);
                 sin_p    = sinf(theta_p);
                 cos_p    = cosf(theta_p);
-
+                printf("theta = %8.3f\n", theta_p * (180.0 / (float) M_PI));
                 // For each detector pixel
                 for(d = 0; d < dx; d++)
                 {
@@ -124,7 +124,13 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     yi = 0.5f * (1 - dx) + d + mov;
                     calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
                                 coordx, coordy);
-
+                    /*
+                    printf("\n");
+                    for(int n = 0; n <= ngridx; ++n)
+                        printf("\tgridx[%2i] = %8.3f, gridy[%2i] = %8.3f, coordx[%2i] = "
+                               "%8.3f, coordy[%2i] = %8.3f\n",
+                               n, gridx[n], n, gridy[n], n, coordx[n], n, coordy[n]);
+                    */
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
                                 ay, &bsize, bx, by);
@@ -152,6 +158,7 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     {
                         sum_dist2 += dist[n] * dist[n];
                         sum_dist[indi[n]] += dist[n];
+                        // printf("sum_dist[%i] = %f\n", indi[n], sum_dist[indi[n]]);
                     }
 
                     // Update
@@ -162,11 +169,11 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                         for(n = 0; n < csize - 1; n++)
                         {
                             update[indi[n]] += upd * dist[n];
+                            // printf("update[%i] = %f\n", indi[n], update[indi[n]]);
                         }
                     }
                 }
             }
-
             m = 0;
             for(n = 0; n < ngridx * ngridy; n++)
             {

@@ -119,6 +119,24 @@ GetThisThreadID()
 
 //============================================================================//
 
+#if !defined(START_TIMER)
+#    define START_TIMER(var) auto var = std::chrono::system_clock::now()
+#endif
+
+//============================================================================//
+
+#if !defined(REPORT_TIMER)
+#    define REPORT_TIMER(start_time, note, counter, total_count)                         \
+        {                                                                                \
+            auto                          end_time = std::chrono::system_clock::now();   \
+            std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
+            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n", GetThisThreadID(),   \
+                   note, counter, total_count, elapsed_seconds.count());                 \
+        }
+#endif
+
+//============================================================================//
+
 template <typename _Tp> using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //============================================================================//

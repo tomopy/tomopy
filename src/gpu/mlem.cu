@@ -328,228 +328,116 @@ mlem_update_kernel(float* recon, const float* update, const float* sumdist, int 
 
 //============================================================================//
 
-struct cuda_data
-{
-    typedef cuda_data this_type;
-
-    int          m_device;
-    int          m_id;
-    int          m_dy;
-    int          m_dt;
-    int          m_dx;
-    int          m_nx;
-    int          m_ny;
-    float*       m_mov;
-    float*       m_gridx;
-    float*       m_gridy;
-    float*       m_coordx;
-    float*       m_coordy;
-    float*       m_ax;
-    float*       m_ay;
-    float*       m_bx;
-    float*       m_by;
-    float*       m_coorx;
-    float*       m_coory;
-    float*       m_dist;
-    int*         m_indi;
-    float*       m_simdata;
-    float*       m_sumdist;
-    float*       m_update;
-    const float* m_recon;
-    const float* m_data;
-
-    cuda_data(int device, int id, int dy, int dt, int dx, int nx, int ny, float* simdata,
-              const float* recon, const float* data)
-    : m_device(device)
-    , m_id(id)
-    , m_dy(dy)
-    , m_dt(dt)
-    , m_dx(dx)
-    , m_nx(nx)
-    , m_ny(ny)
-    , m_mov(nullptr)
-    , m_gridx(gpu_malloc<float>(nx + 1))
-    , m_gridy(gpu_malloc<float>(ny + 1))
-    //, m_coordx(gpu_malloc<float>(ny + 1))
-    //, m_coordy(gpu_malloc<float>(nx + 1))
-    //, m_ax(gpu_malloc<float>(nx + ny))
-    //, m_ay(gpu_malloc<float>(nx + ny))
-    //, m_bx(gpu_malloc<float>(nx + ny))
-    //, m_by(gpu_malloc<float>(nx + ny))
-    //, m_coorx(gpu_malloc<float>(nx + ny))
-    //, m_coory(gpu_malloc<float>(nx + ny))
-    //, m_dist(gpu_malloc<float>(nx + ny))
-    //, m_indi(gpu_malloc<int>(nx + ny))
-    //, m_simdata(simdata)
-    , m_sumdist(gpu_malloc<float>(nx * ny))
-    , m_update(gpu_malloc<float>(nx * ny))
-    , m_recon(recon)
-    , m_data(data)
-    {
-    }
-
-    ~cuda_data()
-    {
-        cudaFree(m_gridx);
-        cudaFree(m_gridy);
-        // cudaFree(m_coordx);
-        // cudaFree(m_coordy);
-        // cudaFree(m_ax);
-        // cudaFree(m_ay);
-        // cudaFree(m_bx);
-        // cudaFree(m_by);
-        // cudaFree(m_coorx);
-        // cudaFree(m_coory);
-        // cudaFree(m_dist);
-        // cudaFree(m_indi);
-        cudaFree(m_sumdist);
-        cudaFree(m_update);
-    }
-
-    void initialize(int s, float* mov, float* gridx, float* gridy)
-    {
-        m_gridx = gridx;
-        m_gridy = gridy;
-        m_mov   = mov;
-        cudaMemset(m_update, 0, m_nx * m_ny * sizeof(float));
-        cudaMemset(m_sumdist, 0, m_nx * m_ny * sizeof(float));
-        cudaStreamSynchronize(0);
-        CUDA_CHECK_LAST_ERROR();
-    }
-
-    void finalize(float* recon, int s)
-    {
-        int      block  = 512;
-        int      grid   = (m_nx * m_ny + block - 1) / block;
-        int      offset = s * m_nx * m_ny;
-        AutoLock l(TypeMutex<this_type>());  // lock update
-        mlem_update_kernel<<<grid, block>>>(recon, m_update, m_sumdist, offset,
-                                            m_nx * m_ny);
-        cudaStreamSynchronize(0);
-        CUDA_CHECK_LAST_ERROR();
-    }
-
-    void sync()
-    {
-        cudaStreamSynchronize(0);
-        CUDA_CHECK_LAST_ERROR();
-    }
-
-    // clang-format off
-#define DEFINE_GETTER(type, obj, m_obj)                                                  \
-    __device__ __host__ type obj () const { return m_obj ; }
-    // clang-format on
-
-    DEFINE_GETTER(int, nx, m_nx)
-    DEFINE_GETTER(int, ny, m_ny)
-    DEFINE_GETTER(int, dy, m_dy)
-    DEFINE_GETTER(int, dt, m_dt)
-    DEFINE_GETTER(int, dx, m_dx)
-    DEFINE_GETTER(float*, mov, m_mov)
-    DEFINE_GETTER(float*, gridx, m_gridx)
-    DEFINE_GETTER(float*, gridy, m_gridy)
-    DEFINE_GETTER(float*, coordx, m_coordx)
-    DEFINE_GETTER(float*, coordy, m_coordy)
-    DEFINE_GETTER(float*, ax, m_ax)
-    DEFINE_GETTER(float*, ay, m_ay)
-    DEFINE_GETTER(float*, bx, m_bx)
-    DEFINE_GETTER(float*, by, m_by)
-    DEFINE_GETTER(float*, coorx, m_coorx)
-    DEFINE_GETTER(float*, coory, m_coory)
-    DEFINE_GETTER(float*, dist, m_dist)
-    DEFINE_GETTER(int*, indi, m_indi)
-    DEFINE_GETTER(float*, simdata, m_simdata)
-    DEFINE_GETTER(float*, sumdist, m_sumdist)
-    DEFINE_GETTER(float*, update, m_update)
-    DEFINE_GETTER(const float*, recon, m_recon)
-    DEFINE_GETTER(const float*, data, m_data)
-
-#undef DEFINE_GETTER
-};
-
-//============================================================================//
-
-template <typename _Tp, typename _Up = _Tp>
-__device__ _Tp*
-           global_malloc(uintmax_t size, int& offset, _Up* pool = nullptr)
-{
-    _Tp* ptr = nullptr;
-    if(pool)
-    {
-        _Tp* _pool  = (_Tp*) pool;
-        ptr         = _pool + offset;
-        float ratio = sizeof(_Up) / float(sizeof(_Tp));
-        offset += (int) (ratio * size);
-    }
-    else
-    {
-        ptr    = new _Tp[size];
-        offset = 0;
-    }
-    return ptr;
-}
-
-//============================================================================//
-#if defined(DEBUG)
-#    define assert_valid_pointer(ptr) assert(ptr != nullptr)
-#else
-#    define assert_valid_pointer(ptr)
-#endif
-
 __global__ void
 cuda_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const float* mov,
                         const float* gridx, const float* gridy, float* sum_dist,
-                        float* update, const float* data, const float* recon,
-                        float* coordx, float* coordy, float* ax, float* ay, float* bx,
-                        float* by, int* indi, float* dist, int s, int p,
-                        int quadrant, float sin_p, float cos_p)
+                        float* update, const float* data, const float* recon, int s,
+                        int p, int quadrant, float sin_p, float cos_p)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = gridDim.x * blockDim.x;
 
-    for(int d = d0; d < dx; d += dstride)
+    int ry = ngridx;
+    int rz = ngridy;
+    /*
+    float gridx_gt = gridx[0] + 0.01f;
+    float gridx_le = gridx[ngridx] - 0.01f;
+    float gridy_gt = gridy[0] + 0.01f;
+    float gridy_le = gridy[ngridy] - 0.01f;
+    */
+
+    float xoff = floorf(0.5f * ngridx) - ((ngridx % 2 == 0) ? 0.5f : 0.0f);
+    float yoff = floorf(0.5f * ngridy) - ((ngridy % 2 == 0) ? 0.5f : 0.0f);
+
+    // PRINT_HERE("");
+    for(int d = d0; d < dx - 1; d += dstride)
     {
-        int asize = 0;
-        int bsize = 0;
-        int csize = 0;
         // Calculate coordinates
-        float xi = -ngridx - ngridy;
-        float yi = 0.5f * (1 - dx) + d + *mov;
-        cuda_calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy, coordx, coordy);
-
-        // Merge the (coordx, gridy) and (gridx, coordy)
-        cuda_trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax, ay, &bsize,
-                         bx, by);
-
-        // Sort the array of intersection points (ax, ay) and
-        // (bx, by). The new sorted intersection points are
-        // stored in (coorx, coory). Total number of points
-        // are csize.
-        cuda_sort_intersections(quadrant, asize, ax, ay, bsize, bx, by, &csize, coordx,
-                                coordy);
-
-        // Calculate the distances (dist) between the
-        // intersection points (coorx, coory). Find the
-        // indices of the pixels on the reconstruction grid.
-        cuda_calc_dist(ngridx, ngridy, csize, coordx, coordy, indi, dist);
-
-        float _simdata = 0.0f;
-        // Calculate simdata
-        cuda_calc_simdata(s, p, d, ngridx, ngridy, dt, dx, csize, indi, dist, recon,
-                          &_simdata);  // Output: simdata
-
-        int   index_data = d + p * dx + s * dt * dx;
-        float upd        = data[index_data] / _simdata;
-
-        for(int n = 0; n < csize - 1; n++)
+        /*
+        float xi     = -ngridx - ngridy;
+        float yi     = 0.5f * (1 - dx) + d + *mov;
+        float srcx   = xi * cos_p - yi * sin_p;
+        float srcy   = xi * sin_p + yi * cos_p;
+        float detx   = -xi * cos_p - yi * sin_p;
+        float dety   = -xi * sin_p + yi * cos_p;
+        float slope  = (srcy - dety) / (srcx - detx);
+        float islope = (srcx - detx) / (srcy - dety);
+        */
+        int i = d;
+        for(int j = 0; j < ngridy - 1; ++j)
         {
-            float* sd = sum_dist + indi[n];
-            atomicAdd(sd, dist[n]);
-        }
-        for(int n = 0; n < csize - 1; n++)
-        {
-            float* up = update + indi[n];
-            atomicAdd(up, upd * dist[n]);
+            // centered coordinates
+            float cx0 = float(i) - xoff;
+            float cy0 = float(j) - yoff;
+            // transform coords and then offset to global coords
+            float x0 = (cx0 * cos_p - cy0 * sin_p);  // + xoff;
+            float y0 = (cx0 * sin_p + cy0 * cos_p);  // + yoff;
+            // centered coordinates
+            float mx = floorf(x0);
+            float my = floorf(y0);
+            float px = ceilf(x0);
+            float py = ceilf(y0);
+
+            // printf("x,y = [%8.3f, %8.3f], mx,my = [%8.3f, %8.3f], px,py = [%8.3f,
+            // %8.3f]\n",
+            //       x0, y0, mx, my, px, py);
+
+            //--------------------------------------------------------------------------//
+            auto compute_indi = [x0, y0, ry, rz](float x1, float y1) {
+                float _midx = 0.5f * (x1 + x0);
+                float _x1   = _midx + 0.5f * ry;
+                float _i1   = (int) (_midx + 0.5f * ry);
+                int   _indx = _i1 - (_i1 > _x1);
+
+                float _midy = 0.5f * (y1 + y0);
+                float _x2   = _midy + 0.5f * rz;
+                float _i2   = (int) (_midy + 0.5f * rz);
+                int   _indy = _i2 - (_i2 > _x2);
+
+                // compute index
+                int indi = _indy + (_indx * rz);
+                return indi;
+            };
+            //--------------------------------------------------------------------------//
+            auto update_indi = [&](int indi, float simdata, float dist) {
+                atomicAdd(&sum_dist[indi], dist);
+                if(simdata != 0.0f)
+                {
+                    int   index_data = d + p * dx + s * dt * dx;
+                    float upd        = data[index_data] / simdata;
+                    atomicAdd(&update[indi], upd * dist);
+                }
+            };
+            //--------------------------------------------------------------------------//
+
+            // data offset
+            int index_model = s * ry * rz;
+
+            int mindi = compute_indi(mx, my);
+            if(mindi >= 0 && mindi < ry * rz)
+            {
+                // compute distance
+                float mdist = sqrtf(powf(x0 - mx, 2.0f) + powf(y0 - my, 2.0f));
+                // Calculate simdata
+                float msimdata = recon[mindi + index_model] * mdist;
+                // Update
+                update_indi(mindi, msimdata, mdist);
+            }
+
+            int pindi = compute_indi(px, py);
+            if(pindi >= 0 && pindi < ry * rz)
+            {
+                // compute distance
+                float pdist = sqrtf(powf(px - x0, 2.0f) + powf(py - y0, 2.0f));
+                // Calculate simdata
+                float psimdata = recon[pindi + index_model] * pdist;
+                // Update
+                update_indi(pindi, psimdata, pdist);
+            }
+
+            // printf("[%2i, %2i]> [x,y] = [%8.3f, %8.3f], indi = %i, dist = %8.3f,
+            // sum_dist = %8.3f, update = %8.3f\n",
+            //       i, j, x0, y0, indi, dist, sum_dist[indi], update[indi]);
         }
     }
 }
@@ -564,49 +452,24 @@ cuda_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
 {
     int p0      = blockIdx.x * blockDim.x + threadIdx.x;
     int pstride = gridDim.x * blockDim.x;
+    int block   = 512;
+    int grid    = (dx + block - 1) / block;
 
-    int    nx          = ngridx;
-    int    ny          = ngridy;
-    int    fb          = sizeof(float);
-    int    ib          = sizeof(int);
-    int    ratio       = (fb == ib) ? 1 : ((fb > ib) ? (fb / ib) : (ib / fb));
-    int    total_alloc = (7 + ratio) * (nx + ny);
-    int    offset      = 0;
-    float* mem_pool    = global_malloc<float>(total_alloc, offset);
-    float* coordx      = global_malloc<float>(ny + nx, offset, mem_pool);
-    float* coordy      = global_malloc<float>(nx + ny, offset, mem_pool);
-    float* ax          = global_malloc<float>(nx + ny, offset, mem_pool);
-    float* ay          = global_malloc<float>(nx + ny, offset, mem_pool);
-    float* bx          = global_malloc<float>(nx + ny, offset, mem_pool);
-    float* by          = global_malloc<float>(nx + ny, offset, mem_pool);
-    float* dist        = global_malloc<float>(nx + ny, offset, mem_pool);
-    int*   indi        = global_malloc<int>(nx + ny, offset, mem_pool);
-    assert_valid_pointer(coordx);
-    assert_valid_pointer(coordy);
-    assert_valid_pointer(ax);
-    assert_valid_pointer(ay);
-    assert_valid_pointer(bx);
-    assert_valid_pointer(by);
-    assert_valid_pointer(dist);
-    assert_valid_pointer(indi);
-    int size = dt;
-
-    for(int p = p0; p < size; p += pstride)
+    float theta_offset = 0.5f * (float) M_PI;
+    for(int p = p0; p < dt; p += pstride)
     {
         // Calculate the sin and cos values
         // of the projection angle and find
         // at which quadrant on the cartesian grid.
-        float theta_p  = fmodf(theta[p], 2.0f * (float) M_PI);
+        float theta_p  = fmodf(theta[p] + theta_offset, 2.0f * (float) M_PI);
         float sin_p    = sinf(theta_p);
         float cos_p    = cosf(theta_p);
         int   quadrant = cuda_calc_quadrant(theta_p);
 
-        cuda_mlem_compute_pixel<<<4, 1>>>(ngridx, ngridy, dy, dt, dx, mov, gridx, gridy,
-                                sum_dist, update, data, recon, coordx, coordy, ax, ay,
-                                bx, by, indi, dist, s, p, quadrant, sin_p, cos_p);
+        cuda_mlem_compute_pixel<<<grid, block>>>(ngridx, ngridy, dy, dt, dx, mov, gridx,
+                                                 gridy, sum_dist, update, data, recon, s,
+                                                 p, quadrant, sin_p, cos_p);
     }
-
-    delete[] mem_pool;
 }
 
 //============================================================================//
@@ -670,8 +533,8 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
 
             // For each projection angle
             cuda_mlem_compute_projection<<<4, 4, smem>>>(ngridx, ngridy, dy, dt, dx,
-                                                          theta, mov, gridx, gridy, data,
-                                                          recon, s, sum_dist, update);
+                                                         theta, mov, gridx, gridy, data,
+                                                         recon, s, sum_dist, update);
             cudaStreamSynchronize(0);
             CUDA_CHECK_LAST_ERROR();
 
@@ -682,13 +545,13 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
             CUDA_CHECK_LAST_ERROR();
             auto                          s_end = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsed_seconds = s_end - s_start;
-            printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(), "slice", s, dy,
-                   elapsed_seconds.count());
+            printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(),
+                   "slice", s, dy, elapsed_seconds.count());
         }
         auto                          t_end           = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = t_end - t_start;
-        printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(), "iteration", i,
-               num_iter, elapsed_seconds.count());
+        printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(),
+               "iteration", i, num_iter, elapsed_seconds.count());
     }
 
     cudaDeviceSynchronize();
@@ -699,7 +562,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cudaStreamSynchronize(0);
     CUDA_CHECK_LAST_ERROR();
 
-    //cudaDeviceReset();
+    // cudaDeviceReset();
     cudaFree(recon);
     cudaFree(mov);
     cudaFree(gridx);

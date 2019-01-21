@@ -70,12 +70,74 @@ constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
 }
 
 //============================================================================//
+
+farray_t
+cxx_expand(const float* src, const int factor, const int nx, const int ny)
+{
+    farray_t    dst  = farray_t(nx * factor * ny * factor, 0.0f);
+    const float mult = factor * factor;
+    const int   size = nx * ny;
+    for(int j = 0; j < ny; ++j)
+    {
+        for(int i = 0; i < nx * ny; ++i)
+        {
+            int   idx00 = j * nx + i;
+            float val   = src[idx00] / mult;
+            dst[idx00]  = val;
+            for(int off = 1; off <= factor; ++off)
+            {
+                int idx10 = j * nx + (i + off);
+                int idx01 = (j + off) * nx + i;
+                int idx11 = (j + off) * nx + (i + off);
+                if(idx10 < size)
+                    dst[idx10] = val;
+                if(idx01 < size)
+                    dst[idx01] = val;
+                if(idx11 < size)
+                    dst[idx11] = val;
+            }
+        }
+    }
+    return dst;
+}
+
+//============================================================================//
+
+farray_t
+cxx_compress(const float* src, const int factor, const int nx, const int ny)
+{
+    farray_t  dst  = farray_t(nx * ny, 0.0f);
+    const int size = abs(factor) * nx * abs(factor) * ny;
+    for(int j = 0; j < ny; ++j)
+    {
+        for(int i = 0; i < nx * ny; ++i)
+        {
+            int idx00  = j * nx + i;
+            dst[idx00] = src[idx00];
+            for(int off = 1; off <= abs(factor); ++off)
+            {
+                int idx10 = j * nx + (i + off);
+                int idx01 = (j + off) * nx + i;
+                int idx11 = (j + off) * nx + (i + off);
+                if(idx10 < size)
+                    dst[idx00] += src[idx10];
+                if(idx01 < size)
+                    dst[idx00] += src[idx01];
+                if(idx11 < size)
+                    dst[idx00] += src[idx11];
+            }
+        }
+    }
+    return dst;
+}
+
+//============================================================================//
 #if defined(TOMOPY_USE_OPENCV)
 Mat
-cxx_affine_transform(const Mat& warp_src, float theta, int nx, int ny, float scale,
-                     int dx, int dy)
+cxx_affine_transform(const Mat& warp_src, float theta, const int nx, const int ny,
+                     float scale)
 {
-    Mat   warp_dst = Mat::zeros(dx, dy, warp_src.type());
+    Mat   warp_dst = Mat::zeros(nx, ny, warp_src.type());
     float cx       = 0.5f * ny + ((ny % 2 == 0) ? 0.5f : 0.0f);
     float cy       = 0.5f * nx + ((nx % 2 == 0) ? 0.5f : 0.0f);
     Point center   = Point(cx, cy);
@@ -87,31 +149,34 @@ cxx_affine_transform(const Mat& warp_src, float theta, int nx, int ny, float sca
 //============================================================================//
 
 void
-cxx_affine_transform(farray_t& dst, const float* src, float theta, int nx, int ny, int dx,
-                     int dy)
+cxx_affine_transform(farray_t& dst, const float* src, float theta, const int nx,
+                     const int ny, const int factor)
 {
 #if defined(TOMOPY_USE_OPENCV)
-    if(dx > nx)
+    if(factor > 1)
     {
-        Mat warp_tmp = Mat::zeros(nx, ny, CV_32F);
-        memcpy(warp_tmp.ptr(), src, nx * ny * sizeof(float));
+        dst          = std::move(cxx_expand(src, factor, nx, ny));
+        int dx       = nx * factor;
+        int dy       = ny * factor;
         Mat warp_src = Mat::zeros(dx, dy, CV_32F);
-        resize(warp_tmp, warp_src, warp_src.size(), 0.0, 0.0, INTER_CUBIC);
+        memcpy(warp_src.ptr(), dst.data(), dst.size() * sizeof(float));
         float angle    = theta * (180.0f / pi);
         float scale    = 1.0;
-        Mat   warp_rot = cxx_affine_transform(warp_src, angle, nx, ny, scale, dx, dy);
+        Mat   warp_rot = cxx_affine_transform(warp_src, angle, dx, dy, scale);
         memcpy(dst.data(), warp_rot.ptr(), dx * dy * sizeof(float));
     }
-    else if(dx < nx)
+    else if(factor < -1)
     {
-        Mat warp_src = Mat::zeros(nx, ny, CV_32F);
-        memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
+        int dx       = nx * abs(factor);
+        int dy       = ny * abs(factor);
+        Mat warp_src = Mat::zeros(dx, dy, CV_32F);
+        memcpy(warp_src.ptr(), src, dx * dy * sizeof(float));
         float angle    = theta * (180.0f / pi);
         float scale    = 1.0;
-        Mat   warp_tmp = cxx_affine_transform(warp_src, angle, nx, ny, scale, dx, dy);
-        Mat   warp_rot = Mat::zeros(dx, dy, CV_32F);
-        resize(warp_tmp, warp_rot, warp_rot.size(), 0.0, 0.0, INTER_AREA);
+        Mat   warp_rot = cxx_affine_transform(warp_src, angle, dx, dy, scale);
+        dst.resize(dx * dy, 0.0f);
         memcpy(dst.data(), warp_rot.ptr(), dx * dy * sizeof(float));
+        dst = std::move(cxx_compress(dst.data(), abs(factor), nx, ny));
     }
     else
     {
@@ -119,8 +184,8 @@ cxx_affine_transform(farray_t& dst, const float* src, float theta, int nx, int n
         memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
         float angle    = theta * (180.0f / pi);
         float scale    = 1.0;
-        Mat   warp_rot = cxx_affine_transform(warp_src, angle, nx, ny, scale, dx, dy);
-        memcpy(dst.data(), warp_rot.ptr(), dx * dy * sizeof(float));
+        Mat   warp_rot = cxx_affine_transform(warp_src, angle, nx, ny, scale);
+        memcpy(dst.data(), warp_rot.ptr(), nx * ny * sizeof(float));
     }
 #else
     std::stringstream ss;
@@ -196,98 +261,14 @@ cxx_apply_rotation_ip(farray_t& dst, const float* src, float theta, const int nx
 {
     memset(dst.data(), 0, nx * ny * sizeof(float));
 #if defined(TOMOPY_USE_OPENCV)
-    cxx_affine_transform(dst, src, theta, nx, ny, nx, ny);
+    cxx_affine_transform(dst, src, theta, nx, ny, 1);
 #else
     cxx_remove_rotation_ip(dst, src, theta, nx, ny);
 #endif
     return;
-
-    /*
-    static int verbose = GetEnv<int>("TOMOPY_VERBOSE", 0);
-    float      dsum    = 0.0f;
-    float      ssum    = 0.0f;
-    theta              = fmodf(theta, twopi);
-    float ptheta       = (theta < 0.0f) ? twopi + theta : theta;
-    float xoff         = truncf(nx / 2.0f);
-    float yoff         = truncf(ny / 2.0f);
-    float xop          = (nx % 2 == 0) ? 0.5f : 0.0f;
-    float yop          = (ny % 2 == 0) ? 0.5f : 0.0f;
-    int xcos         = (ptheta > halfpi && ptheta < 1.5f * halfpi) ? 1 : 1;
-    int ysin         = (ptheta > pi) ? 1 : 1;
-    int   size         = nx * ny;
-
-    auto linear_interpolate = [=](float x, int x1, int x2, float y, int y1, int y2,
-                                  float& fxy1, float& fxy2) {
-        int _offx = xoff - xop;
-        int _offy = yoff - yop;
-        // lambda that computes the source value for given indices
-        auto compute = [=](int _x, int _y) {
-            float _f = (_x > 0 && _y > 0 && _x < nx && _y < ny && _y * nx + _x < size)
-                       ? src[_y * nx + _x]
-                       : 0.0f;
-            return _f;
-        };
-        fxy1 += (x2 - x) * compute(x1, y1);
-        fxy1 += (x - x1) * compute(x2, y1);
-        fxy2 += (x2 - x) * compute(x1, y2);
-        fxy2 += (x - x1) * compute(x2, y2);
-        return (y2 - y) * fxy1 + (y - y1) * fxy2;
-    };
-
-    if(verbose > 1)
-        printf("\noffset = [%6.3f, %6.3f], op = [%6.3f, %6.3f], [xcos, ysin] = [%2i, "
-               "%2i], size = [%2i, %2i] = %3i, "
-               "theta = %8.3f\n\n",
-               xoff, yoff, xop, yop, xcos, ysin, nx, ny, size,
-               theta * (180.0f / ((float) M_PI)));
-
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx; ++i)
-        {
-            // offset indices
-            float ox = float(i) - xoff + xop;
-            float oy = float(j) - yoff + yop;
-            // rotated indices
-            float rx = ox * cosf(theta) - oy * sinf(theta);
-            float ry = ox * sinf(theta) + oy * cosf(theta);
-            // indices in 2D
-            float x = (rx + xoff - xop);
-            float y = (ry + yoff - yop);
-            // index in 1D array
-            int rz = j * nx + i;
-            // within bounds
-            int   x1     = floor(x);
-            int   y1     = floor(y);
-            int   x2     = floor(x) + xcos;
-            int   y2     = floor(y) + ysin;
-            float fxy1   = 0.0f;
-            float fxy2   = 0.0f;
-            float interp = linear_interpolate(x, x1, x2, y, y1, y2, fxy1, fxy2);
-            dst[rz] += interp;
-            dsum += interp;
-            ssum += src[rz];
-            if(verbose > 1)
-                printf(
-                    "[i, j] = [%2i, %2i] = %2i, off[x, y] = [%6.3f, %6.3f], rot[x, y] = "
-                    "[%6.3f, %6.3f], [x, y] = [%6.3f, %6.3f], [x1, y1] = [%2i, %2i], "
-                    "[x2, y2] = [%2i, %2i], [fxy1, fxy2] = [%6.3f, %6.3f], interp = %6.3f,
-    dst[%i] = "
-                    "%6.3f\n",
-                    i, j, rz, ox, oy, rx, ry, x, y, x1, y1, x2, y2, fxy1, fxy2, interp,
-                    rz, dst[rz]);
-        }
-        if(verbose > 1)
-            printf("\n");
-    }
-
-
-    float scale = (fabs(dsum) > 0.0f) ? ssum / dsum : 1.0f;
-    for(int j = 0; j < ny; ++j)
-        for(int i = 0; i < nx; ++i)
-            dst[j * nx + i] *= scale;
-    */
 }
+
+//============================================================================//
 
 struct Pixel
 {
@@ -517,7 +498,7 @@ cxx_remove_rotation_ip(farray_t& dst, const float* src, float theta, const int n
 {
     memset(dst.data(), 0, nx * ny * sizeof(float));
 #if defined(TOMOPY_USE_OPENCV)
-    cxx_affine_transform(dst, src, theta, nx, ny, nx, ny);
+    cxx_affine_transform(dst, src, theta, nx, ny, 1);
 #else
 
     static thread_local int verbose = GetEnv<int>("TOMOPY_VERBOSE", 0);

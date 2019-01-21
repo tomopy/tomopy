@@ -141,7 +141,7 @@ openmp_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* d
     static Mutex _mutex;
     _mutex.lock();
     // update shared update array
-    for(uint64_t i = 0; i < (ngridx * ngridy); ++i)
+    for(int i = 0; i < (ngridx * ngridy); ++i)
         update[i] += recon_tmp[i];
     _mutex.unlock();
 

@@ -82,7 +82,6 @@ sirt(const float* data, int dy, int dt, int dx, const float* center, const float
     float  theta_p, sin_p, cos_p;
     float  mov, xi, yi;
     int    asize, bsize, csize;
-    float* simdata;
     float  upd;
     int    ind_data, ind_recon;
     float* sum_dist;
@@ -91,7 +90,7 @@ sirt(const float* data, int dy, int dt, int dx, const float* center, const float
 
     for(i = 0; i < num_iter; i++)
     {
-        simdata = (float*) calloc((dt * dy * dx), sizeof(float));
+        float* simdata = (float*) calloc((dt * dy * dx), sizeof(float));
 
         // For each slice
         for(s = 0; s < dy; s++)
@@ -178,6 +177,7 @@ sirt(const float* data, int dy, int dt, int dx, const float* center, const float
         }
 
         free(simdata);
+        printf("[c]> iteration %3i of %3i...\n", i, num_iter);
     }
 
     free(gridx);

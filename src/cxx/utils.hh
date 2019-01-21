@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -185,19 +186,28 @@ init_thread_data(ThreadPool* tp)
 
 template <typename _Tp>
 void
-print_cpu_array(const uintmax_t& n, const _Tp* data, const int& itr, const int& slice,
-                const int& angle, const int& pixel, const std::string& tag)
+print_cpu_array(const uintmax_t& nx, const uintmax_t& ny, const _Tp* data, const int& itr,
+                const int& slice, const int& angle, const int& pixel,
+                const std::string& tag)
 {
     std::ofstream     ofs;
     std::stringstream fname;
     fname << "outputs/cpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
           << pixel << ".dat";
+    std::stringstream ss;
+    for(uintmax_t j = 0; j < ny; ++j)
+    {
+        for(uintmax_t i = 0; i < nx; ++i)
+        {
+            ss << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
+               << data[i + j * nx] << std::endl;
+        }
+        ss << std::endl;
+    }
     ofs.open(fname.str().c_str());
     if(!ofs)
         return;
-    for(uintmax_t i = 0; i < n; ++i)
-        ofs << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
-            << data[i] << std::endl;
+    ofs << ss.str() << std::endl;
     ofs.close();
 }
 
@@ -316,8 +326,8 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 //============================================================================//
 
 DLL void
-cxx_affine_transform(farray_t& dst, const float* src, float theta, int nx, int ny, int dx,
-                     int dy);
+cxx_affine_transform(farray_t& dst, const float* src, float theta, const int nx,
+                     const int ny, const int factor);
 
 //============================================================================//
 

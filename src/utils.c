@@ -122,27 +122,22 @@ void
 calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
             const float* gridx, const float* gridy, float* coordx, float* coordy)
 {
-    float srcx, srcy, detx, dety;
-    float slope, islope;
-    int   n;
-
-    srcx = xi * cos_p - yi * sin_p;
-    srcy = xi * sin_p + yi * cos_p;
-    detx = -xi * cos_p - yi * sin_p;
-    dety = -xi * sin_p + yi * cos_p;
-
-    slope  = (srcy - dety) / (srcx - detx);
-    islope = (srcx - detx) / (srcy - dety);
+    float srcx   = xi * cos_p - yi * sin_p;
+    float srcy   = xi * sin_p + yi * cos_p;
+    float detx   = -xi * cos_p - yi * sin_p;
+    float dety   = -xi * sin_p + yi * cos_p;
+    float slope  = (srcy - dety) / (srcx - detx);
+    float islope = (srcx - detx) / (srcy - dety);
 
 #pragma omp simd
-    for(n = 0; n <= ry; n++)
-    {
-        coordy[n] = slope * (gridx[n] - srcx) + srcy;
-    }
-#pragma omp simd
-    for(n = 0; n <= rz; n++)
+    for(int n = 0; n <= rz; ++n)
     {
         coordx[n] = islope * (gridy[n] - srcy) + srcx;
+    }
+#pragma omp simd
+    for(int n = 0; n <= ry; ++n)
+    {
+        coordy[n] = slope * (gridx[n] - srcx) + srcy;
     }
 }
 
@@ -301,54 +296,24 @@ calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int
     //              calculate indi
     //------------------------------------------------------------------------//
 
-    float _midx[_size];
-    float _midy[_size];
-    float _x1[_size];
-    float _x2[_size];
-    int   _i1[_size];
-    int   _i2[_size];
-    int   _indx[_size];
-    int   _indy[_size];
+    int _indx[_size];
+    int _indy[_size];
 
 #pragma omp simd
     for(int n = 0; n < _size; ++n)
     {
-        _midx[n] = 0.5f * (coorx[n + 1] + coorx[n]);
+        float _midx = 0.5f * (coorx[n + 1] + coorx[n]);
+        float _x1   = _midx + 0.5f * ry;
+        float _i1   = (int) (_midx + 0.5f * ry);
+        _indx[n]    = _i1 - (_i1 > _x1);
     }
 #pragma omp simd
     for(int n = 0; n < _size; ++n)
     {
-        _midy[n] = 0.5f * (coory[n + 1] + coory[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _x1[n] = _midx[n] + 0.5f * ry;
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _x2[n] = _midy[n] + 0.5f * rz;
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _i1[n] = (int) (_midx[n] + 0.5f * ry);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _i2[n] = (int) (_midy[n] + 0.5f * rz);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _indx[n] = _i1[n] - (_i1[n] > _x1[n]);
-    }
-#pragma omp simd
-    for(int n = 0; n < _size; ++n)
-    {
-        _indy[n] = _i2[n] - (_i2[n] > _x2[n]);
+        float _midy = 0.5f * (coory[n + 1] + coory[n]);
+        float _x2   = _midy + 0.5f * rz;
+        float _i2   = (int) (_midy + 0.5f * rz);
+        _indy[n]    = _i2 - (_i2 > _x2);
     }
 #pragma omp simd
     for(int n = 0; n < _size; ++n)
@@ -480,12 +445,28 @@ rotate_y(const float x, const float y, const float theta)
 float*
 expand(const float* arr_i, const int factor, const int nx, const int ny)
 {
-    float* arr_o = (float*) malloc(nx * factor * ny * factor * sizeof(float));
-    for(uint64_t i = 0; i < nx * ny; ++i)
+    float*      arr_o = (float*) malloc(nx * factor * ny * factor * sizeof(float));
+    const float mult  = factor * factor;
+    const int   size  = nx * ny;
+    for(int j = 0; j < ny; ++j)
     {
-        for(uint64_t off = 0; off < factor; ++off)
+        for(int i = 0; i < nx * ny; ++i)
         {
-            arr_o[i * factor + off] = arr_i[i];
+            int   idx00  = j * nx + i;
+            float val    = arr_i[idx00] / mult;
+            arr_o[idx00] = val;
+            for(int off = 1; off <= factor; ++off)
+            {
+                int idx10 = j * nx + (i + off);
+                int idx01 = (j + off) * nx + i;
+                int idx11 = (j + off) * nx + (i + off);
+                if(idx10 < size)
+                    arr_o[idx10] = val;
+                if(idx01 < size)
+                    arr_o[idx01] = val;
+                if(idx11 < size)
+                    arr_o[idx11] = val;
+            }
         }
     }
     return arr_o;
@@ -496,14 +477,27 @@ expand(const float* arr_i, const int factor, const int nx, const int ny)
 float*
 compress(const float* arr_i, const int factor, const int nx, const int ny)
 {
-    float* arr_o = (float*) malloc(nx * ny * sizeof(float));
-    for(uint64_t i = 0; i < nx * ny; ++i)
+    float*    arr_o = (float*) malloc(nx * ny * sizeof(float));
+    const int size  = nx * ny;
+    for(int j = 0; j < ny; ++j)
     {
-        for(uint64_t off = 0; off < factor; ++off)
+        for(int i = 0; i < nx * ny; ++i)
         {
-            arr_o[i] += arr_i[i * factor + off];
+            int idx00    = j * nx + i;
+            arr_o[idx00] = arr_i[idx00];
+            for(int off = 1; off <= factor; ++off)
+            {
+                int idx10 = j * nx + (i + off);
+                int idx01 = (j + off) * nx + i;
+                int idx11 = (j + off) * nx + (i + off);
+                if(idx10 < size)
+                    arr_o[idx00] += arr_i[idx10];
+                if(idx01 < size)
+                    arr_o[idx00] += arr_i[idx10];
+                if(idx11 < size)
+                    arr_o[idx00] += arr_i[idx10];
+            }
         }
-        arr_o[i] /= factor;
     }
     return arr_o;
 }
@@ -518,7 +512,7 @@ rotate(const float* _obj, const float theta, const int _nx, const int _ny, const
 #define COMPUTE_MIN(a, b) (a < b) ? a : b
 
     PRINT_HERE("");
-    int    factor = 4;
+    int    factor = 2;
     int    nx     = _nx * factor;
     int    ny     = _ny * factor;
     int    dx     = _dx * factor;

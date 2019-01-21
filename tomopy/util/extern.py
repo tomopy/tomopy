@@ -368,6 +368,11 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
+    _min = np.amin(tomo)
+    tomo -= _min
+    _max = np.amax(tomo)
+    tomo /= _max
+
     LIB_TOMOPY.mlem.restype = dtype.as_c_void_p()
     return LIB_TOMOPY.mlem(
             dtype.as_c_float_p(tomo),
@@ -509,6 +514,11 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         dt, dx = tomo.shape
     else:
         dy, dt, dx = tomo.shape
+
+    _min = np.amin(tomo)
+    tomo -= _min
+    _max = np.amax(tomo)
+    tomo /= _max
 
     LIB_TOMOPY.sirt.restype = dtype.as_c_void_p()
     return LIB_TOMOPY.sirt(
