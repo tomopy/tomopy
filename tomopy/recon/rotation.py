@@ -77,10 +77,7 @@ __all__ = ['find_center',
            'find_center_pc',
            'write_center',
            'mask_empty_slice',
-          ]
-
-
-
+           ]
 
 
 def find_center(
@@ -238,9 +235,9 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
     (depth, height, width) = tomo.shape
     if ind is None:
         ind = height // 2
-        if height>10:
+        if height > 10:
             # Averaging sinograms to improve SNR
-            _tomo = np.mean(tomo[:, ind-5:ind+5, :], axis = 1)
+            _tomo = np.mean(tomo[:, ind - 5:ind + 5, :], axis=1)
         else:
             _tomo = tomo[:, ind, :]
     else:
@@ -254,14 +251,17 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
-        _tomo_coarse = downsample(np.expand_dims(_tomo_cs,1), level=2)[:, 0, :]
-        init_cen = _search_coarse(_tomo_coarse, smin / 4.0, smax / 4.0, ratio, drop)
-        fine_cen = _search_fine(_tomo_fs, srad, step, init_cen*4, ratio, drop)
+        _tomo_coarse = downsample(
+            np.expand_dims(_tomo_cs, 1), level=2)[:, 0, :]
+        init_cen = _search_coarse(
+            _tomo_coarse, smin / 4.0, smax / 4.0, ratio, drop)
+        fine_cen = _search_fine(_tomo_fs, srad, step,
+                                init_cen * 4, ratio, drop)
     else:
         init_cen = _search_coarse(_tomo_cs, smin, smax, ratio, drop)
         fine_cen = _search_fine(_tomo_fs, srad, step, init_cen, ratio, drop)
-    
-    logger.debug('Rotation center search finished: %i', fine_cen)     
+
+    logger.debug('Rotation center search finished: %i', fine_cen)
     return fine_cen
 
 
@@ -270,14 +270,14 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     Coarse search for finding the rotation center.
     """
     (nrow, ncol) = sino.shape
-    cen_fliplr = (ncol - 1.0) / 2.0    
-    smin = np.int16(np.clip(smin + cen_fliplr, 0,ncol-1)-cen_fliplr)
-    smax = np.int16(np.clip(smax + cen_fliplr, 0,ncol-1)-cen_fliplr)
+    cen_fliplr = (ncol - 1.0) / 2.0
+    smin = np.int16(np.clip(smin + cen_fliplr, 0, ncol - 1) - cen_fliplr)
+    smax = np.int16(np.clip(smax + cen_fliplr, 0, ncol - 1) - cen_fliplr)
     # Flip left-right the [0:Pi ] sinogram to make a full [0;2Pi] sinogram
     flip_sino = np.fliplr(sino)
     # Below image is used for compensating the shift of the [Pi;2Pi] sinogram
     # It helps to avoid local minima.
-    comp_sino = np.flipud(sino)    
+    comp_sino = np.flipud(sino)
     list_shift = np.arange(smin, smax + 1)
     list_metric = np.zeros(len(list_shift), dtype='float32')
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
@@ -295,10 +295,10 @@ def _search_coarse(sino, smin, smax, ratio, drop):
         abs_fft2_sino *= mask
         list_metric[i - smin] = abs_fft2_sino.mean()
     minpos = np.argmin(list_metric)
-    if minpos==0:
+    if minpos == 0:
         logger.debug('WARNING!!!Global minimum is out of searching range')
         logger.debug('Please extend smin: %i', smin)
-    if minpos==len(list_metric)-1:
+    if minpos == len(list_metric) - 1:
         logger.debug('WARNING!!!Global minimum is out of searching range')
         logger.debug('Please extend smax: %i', smax)
     init_cen = cen_fliplr + list_shift[minpos] / 2.0
@@ -311,27 +311,27 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     """
     (nrow, ncol) = sino.shape
     cen_fliplr = (ncol - 1.0) / 2.0
-    srad = np.clip(np.abs(srad), 1.0, ncol/4.0)
+    srad = np.clip(np.abs(srad), 1.0, ncol / 4.0)
     step = np.clip(np.abs(step), 0.1, srad)
     init_cen = np.clip(init_cen, srad, ncol - srad - 1)
     list_cor = init_cen + np.arange(-srad, srad + step, step)
     flip_sino = np.fliplr(sino)
-    comp_sino = np.flipud(sino) # Used to avoid local minima
-    list_metric = np.zeros(len(list_cor), dtype = np.float32)
-    mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)    
+    comp_sino = np.flipud(sino)  # Used to avoid local minima
+    list_metric = np.zeros(len(list_cor), dtype=np.float32)
+    mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
     for i, cor in enumerate(list_cor):
-        shift = 2.0*(cor - cen_fliplr)        
+        shift = 2.0 * (cor - cen_fliplr)
         sino_shift = ndimage.interpolation.shift(
-            flip_sino, (0, shift), order = 3, prefilter = True)
-        if shift>=0:
+            flip_sino, (0, shift), order=3, prefilter=True)
+        if shift >= 0:
             shift_int = np.int16(np.ceil(shift))
-            sino_shift[:,:shift_int] = comp_sino[:,:shift_int]
+            sino_shift[:, :shift_int] = comp_sino[:, :shift_int]
         else:
             shift_int = np.int16(np.floor(shift))
-            sino_shift[:,shift_int:] = comp_sino[:,shift_int:]
+            sino_shift[:, shift_int:] = comp_sino[:, shift_int:]
         sinojoin = np.vstack((sino, sino_shift))
         list_metric[i] = np.mean(np.abs(
-            np.fft.fftshift(fft2(sinojoin)))*mask)
+            np.fft.fftshift(fft2(sinojoin))) * mask)
     cor = list_cor[np.argmin(list_metric)]
     return cor
 
@@ -340,13 +340,21 @@ def _create_mask(nrow, ncol, radius, drop):
     """
     Make a binary mask to select coefficients outside the double-wedge region.
     Eq.(3) in https://doi.org/10.1364/OE.22.019078
-    ---------
-    Parameters: - nrow: Image height.
-                - ncol: Image width.
-                - radius: Radius of an object, in pixel unit.
-                - drop: Drop lines around vertical center of the mask.
-    ---------
-    Return:     - 2D binary mask.
+
+    Parameters
+    ----------
+    nrow : int
+        Image height.
+    ncol : int
+        Image width.
+    radius: int 
+        Radius of an object, in pixel unit.
+    drop : int
+        Drop lines around vertical center of the mask.
+
+    Returns
+    -------
+        2D binary mask.
     """
     du = 1.0 / ncol
     dv = (nrow - 1.0) / (nrow * 2.0 * np.pi)
@@ -359,8 +367,8 @@ def _create_mask(nrow, ncol, radius, drop):
         (pos1, pos2) = np.clip(np.sort(
             (-pos + cen_col, pos + cen_col)), 0, ncol - 1)
         mask[i, pos1:pos2 + 1] = 1.0
-    mask[cen_row - drop:cen_row + drop + 1,:] = 0.0
-    mask[:, cen_col-1:cen_col+2] = 0.0
+    mask[cen_row - drop:cen_row + drop + 1, :] = 0.0
+    mask[:, cen_col - 1:cen_col + 2] = 0.0
     return mask
 
 
@@ -392,21 +400,21 @@ def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     float
         Rotation axis location.
     """
-    imgshift = 0.0 if rotc_guess is None else rotc_guess - (proj1.shape[1]-1.0)/2.0
+    imgshift = 0.0 if rotc_guess is None else rotc_guess - \
+        (proj1.shape[1] - 1.0) / 2.0
 
-    proj1 = ndimage.shift(proj1, [0,-imgshift], mode='constant', cval=0)
-    proj2 = ndimage.shift(proj2, [0,-imgshift], mode='constant', cval=0)
-
+    proj1 = ndimage.shift(proj1, [0, -imgshift], mode='constant', cval=0)
+    proj2 = ndimage.shift(proj2, [0, -imgshift], mode='constant', cval=0)
 
     # create reflection of second projection
     proj2 = np.fliplr(proj2)
 
     # Determine shift between images using scikit-image pcm
-    shift = register_translation(proj1, proj2, upsample_factor=1.0/tol)
+    shift = register_translation(proj1, proj2, upsample_factor=1.0 / tol)
 
     # Compute center of rotation as the center of first image and the
     # registered translation with the second image
-    center = (proj1.shape[1] + shift[0][1] - 1.0)/2.0
+    center = (proj1.shape[1] + shift[0][1] - 1.0) / 2.0
 
     return center + imgshift
 
@@ -574,8 +582,9 @@ def mask_empty_slice(tomo, threshold=0.25):
 
     projs_sumsum = np.sum(projs_sum, axis=0)
     projs_sumsum /= projs_sumsum.max()
-    
-    stds = np.array([np.std(projs_sum[i,:]) for i in range(projs_sum.shape[0])])
-    std_ref = np.std(projs_sumsum)*threshold
-    
-    return np.array([std<std_ref for std in stds])
+
+    stds = np.array([np.std(projs_sum[i, :])
+                     for i in range(projs_sum.shape[0])])
+    std_ref = np.std(projs_sumsum) * threshold
+
+    return np.array([std < std_ref for std in stds])
