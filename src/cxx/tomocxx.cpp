@@ -59,11 +59,11 @@ EXTERN_C_
 #include "gridrec.h"
 _EXTERN_C
 
-//============================================================================//
+//======================================================================================//
 
 typedef py::array_t<float, py::array::c_style | py::array::forcecast> pyfarray_t;
 
-//============================================================================//
+//======================================================================================//
 
 int
 fibonacci(int n)
@@ -71,7 +71,7 @@ fibonacci(int n)
     return (n < 2) ? 1 : fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-//============================================================================//
+//======================================================================================//
 
 template <typename _Tp, typename _Arg = _Tp> class TaskGroupWrapper
 {
@@ -93,7 +93,7 @@ private:
     task_group_type m_task_group;
 };
 
-//============================================================================//
+//======================================================================================//
 
 PYBIND11_MODULE(tomocxx, tomo)
 {
@@ -149,30 +149,21 @@ PYBIND11_MODULE(tomocxx, tomo)
     // task_group.def("join", &TaskGroupWrapper<void>::join,
     //               "Join the task group");
 
-    auto _apply_rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
+    auto _rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
         farray_t        cxx_arr(arr.size(), 0.0f);
         py::buffer_info inbuf = arr.request();
         memcpy(cxx_arr.data(), inbuf.ptr, cxx_arr.size() * sizeof(float));
-        cxx_arr = cxx_apply_rotation(cxx_arr.data(), theta, nx, ny);
-        pyfarray_t      _arr(cxx_arr.size());
-        py::buffer_info outbuf = _arr.request();
-        memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));
-        return _arr;
-    };
-    auto _remove_rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
-        farray_t        cxx_arr(arr.size(), 0.0f);
-        py::buffer_info inbuf = arr.request();
-        memcpy(cxx_arr.data(), inbuf.ptr, cxx_arr.size() * sizeof(float));
-        cxx_arr = cxx_remove_rotation(cxx_arr.data(), theta, nx, ny);
+        cxx_arr = cxx_rotate(cxx_arr.data(), theta, nx, ny);
         pyfarray_t      _arr(cxx_arr.size());
         py::buffer_info outbuf = _arr.request();
         memcpy(outbuf.ptr, cxx_arr.data(), cxx_arr.size() * sizeof(float));
         return _arr;
     };
 
-    tomo.def("apply_rotation", _remove_rotate, "rotate array");
-    tomo.def("remove_rotation", _remove_rotate, "rotate array");
+    tomo.def("rotate", _rotate, "rotate array");
+    tomo.def("apply_rotation", _rotate, "rotate array");
+    tomo.def("remove_rotation", _rotate, "rotate array");
     tomo.def("bilinear_interpolation", &bilinear_interpolation, "bilinear interpolation");
 }
 
-//============================================================================//
+//======================================================================================//

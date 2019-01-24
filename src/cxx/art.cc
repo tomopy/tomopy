@@ -52,7 +52,7 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
-//============================================================================//
+//======================================================================================//
 
 void
 cxx_art(const float* data, int dy, int dt, int dx, const float* center,
@@ -87,7 +87,7 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 art_cpu(const float* data, int dy, int dt, int dx, const float* center,
@@ -100,7 +100,7 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
     throw std::runtime_error("ART algorithm has not been implemented for CXX");
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 art_cuda(const float* data, int dy, int dt, int dx, const float* center,
@@ -150,7 +150,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
     });
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 art_openacc(const float* data, int dy, int dt, int dx, const float* center,
@@ -163,7 +163,7 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
     throw std::runtime_error("ART algorithm has not been implemented for OpenACC");
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 art_openmp(const float* data, int dy, int dt, int dx, const float* center,
@@ -176,4 +176,4 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
     throw std::runtime_error("ART algorithm has not been implemented for OpenMP");
 }
 
-//============================================================================//
+//======================================================================================//

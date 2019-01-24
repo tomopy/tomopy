@@ -43,87 +43,44 @@
 
 #pragma once
 
-#include <complex.h>
-#include <stdlib.h>
+#include "common.h"
 
-#ifdef WIN32
-#    define DLL __declspec(dllexport)
-#else
-#    define DLL
-#endif
-#define ANSI
+//======================================================================================//
 
-DLL void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
-        const float* filter_par);
+BEGIN_EXTERN_C
 
-float*
-malloc_vector_f(size_t n);
+//======================================================================================//
+
+int
+cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+            const float* center, const float* theta);
+
+//======================================================================================//
 
 void
-free_vector_f(float* v);
+project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+            const float* center, const float* theta);
 
-float _Complex*
-malloc_vector_c(size_t n);
-
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
+//======================================================================================//
 
 void
-free_matrix_c(float _Complex** m);
+project_cuda(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
+             int dx, const float* center, const float* theta);
 
-float (*get_filter(const char* name))(float, int, int, int, const float*);
-
-float
-filter_none(float, int, int, int, const float*);
-
-float
-filter_shepp(float, int, int, int, const float*);
-
-float
-filter_hann(float, int, int, int, const float*);
-
-float
-filter_hamming(float, int, int, int, const float*);
-
-float
-filter_ramlak(float, int, int, int, const float*);
-
-float
-filter_parzen(float, int, int, int, const float*);
-
-float
-filter_butterworth(float, int, int, int, const float*);
-
-float
-filter_custom(float, int, int, int, const float*);
-
-float
-filter_custom2d(float, int, int, int, const float*);
-
-unsigned char
-filter_is_2d(const char* name);
+//======================================================================================//
 
 void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char is2d);
+project_openacc(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
+                int dx, const float* center, const float* theta);
+
+//======================================================================================//
 
 void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
+project_openmp(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
+               int dx, const float* center, const float* theta);
 
-void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
-                float* wtbl, float* winv);
+//======================================================================================//
 
-float
-legendre(int n, const float* coefs, float x);
+END_EXTERN_C
 
-extern DLL void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            const char fname[16], const float* filter_par);
+//======================================================================================//

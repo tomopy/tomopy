@@ -37,6 +37,7 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
+#include "common.hh"
 #include "gpu.hh"
 #include "utils.hh"
 
@@ -62,9 +63,7 @@ END_EXTERN_C
 extern nvtxEventAttributes_t nvtx_update;
 #endif
 
-#define HW_CONCURRENCY std::thread::hardware_concurrency()
-
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 cuda_sirt_arrsum_kernel(float* dst, const float* src, int size, const float factor)
@@ -78,7 +77,7 @@ cuda_sirt_arrsum_kernel(float* dst, const float* src, int size, const float fact
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 struct gpu_thread_data
 {
@@ -155,7 +154,7 @@ struct gpu_thread_data
     const float* data() const { return m_data; }
 };
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
@@ -178,7 +177,7 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
@@ -186,6 +185,8 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
 {
     auto             thread_number = GetThisThreadID() % nthreads;
     gpu_thread_data* _cache        = _gpu_thread_data[thread_number];
+
+    nppSetStream(0);
 
     NVTX_NAME_THREAD(thread_number, __FUNCTION__);
 
@@ -206,19 +207,18 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
     cuda_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy);
 
     NVTX_RANGE_PUSH(&nvtx_update);
-
     cuda_sirt_pixels_kernel<<<grid, block, smem>>>(p, ngridx, dx, recon_rot, data);
-
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
     cuda_rotate_ip(recon_tmp, recon_rot, theta_p, ngridx, ngridy);
 
     // update shared update array
-    cuda_sirt_arrsum_kernel<<<grid, block>>>(update, recon_tmp, ngridx * ngridy, 1.0f);
+    cuda_sirt_arrsum_kernel<<<grid, block, smem>>>(update, recon_tmp, ngridx * ngridy,
+                                                   1.0f);
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
@@ -239,13 +239,9 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     // get some properties
     int num_devices = cuda_device_count();
-    int nthreads    = GetEnv("TOMOPY_NUM_THREADS", 4);
+    int nthreads    = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
     nthreads        = std::max(nthreads, 1);
-    if(nthreads > 4)
-    {
-        printf("INFO: Current version allows no more than 4 threads...\n");
-        nthreads = 4;
-    }
+
 #if defined(TOMOPY_USE_PTL)
     TaskRunManager* run_man = cpu_run_manager();
     init_run_manager(run_man, nthreads);
@@ -273,16 +269,13 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     auto initialize = [&](int s) {
         int idx = GetThisThreadID() % nthreads;
         _gpu_thread_data[idx]->initialize(data, recon, s);
+        _gpu_thread_data[idx]->sync();
     };
 
     auto finalize = [&](int s) {
         int idx = GetThisThreadID() % nthreads;
-        _gpu_thread_data[idx]->finalize(recon, s);
-    };
-
-    auto sync = [&]() {
-        int idx = GetThisThreadID() % nthreads;
         _gpu_thread_data[idx]->sync();
+        _gpu_thread_data[idx]->finalize(recon, s);
     };
 
 #if defined(TOMOPY_USE_PTL)
@@ -294,7 +287,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     printf("\n");
     for(int i = 0; i < num_iter; i++)
     {
-        auto t_start = std::chrono::system_clock::now();
+        START_TIMER(t_start);
         // For each slice
         for(int s = 0; s < dy; ++s)
         {
@@ -303,7 +296,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
 #if defined(TOMOPY_USE_PTL)
             tp->get_queue()->ExecuteOnAllThreads(tp, init);
-            tp->get_queue()->ExecuteOnAllThreads(tp, sync);
             TaskGroup<void> tg;
             // For each projection angle
             for(int p = 0; p < dt; p++)
@@ -312,27 +304,22 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                                s, p, nthreads, _gpu_thread_data);
             }
             tg.join();
-            tp->get_queue()->ExecuteOnAllThreads(tp, sync);
             tp->get_queue()->ExecuteOnAllThreads(tp, final);
 #else
             init();
-            sync();
             // For each projection angle
             for(int p = 0; p < dt; p++)
             {
                 cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
                                         _gpu_thread_data);
             }
-            sync();
             final();
 #endif
-            cudaDeviceSynchronize();
+            cudaStreamSynchronize(0);
         }
-        cudaDeviceSynchronize();
-        auto                          t_end           = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
-        printf("[%li]> iteration %3i of %3i... %5.2f seconds\n", GetThisThreadID(), i,
-               num_iter, elapsed_seconds.count());
+        cudaStreamSynchronize(0);
+        // cudaDeviceSynchronize();
+        REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
     printf("\n");
 
@@ -348,4 +335,4 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cudaDeviceSynchronize();
 }
 
-//============================================================================//
+//======================================================================================//

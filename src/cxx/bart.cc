@@ -51,7 +51,7 @@ END_EXTERN_C
 #include <cstdlib>
 #include <memory>
 
-//============================================================================//
+//======================================================================================//
 
 void
 cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
@@ -90,7 +90,7 @@ cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
@@ -105,7 +105,7 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
     throw std::runtime_error("BART algorithm has not been implemented for CXX");
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
@@ -122,7 +122,7 @@ bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
     // insert code here
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
@@ -137,7 +137,7 @@ bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("[openacc]");
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
@@ -152,4 +152,4 @@ bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("[openmp]");
 }
 
-//============================================================================//
+//======================================================================================//

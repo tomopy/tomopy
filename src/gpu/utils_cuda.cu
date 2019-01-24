@@ -37,10 +37,11 @@
 //  ---------------------------------------------------------------
 //   TOMOPY implementation
 
-//============================================================================//
+//======================================================================================//
 
 #include "PTL/AutoLock.hh"
 #include "PTL/ThreadPool.hh"
+#include "common.hh"
 #include "gpu.hh"
 #include <set>
 
@@ -49,7 +50,7 @@ BEGIN_EXTERN_C
 #include "utils_cuda.h"
 END_EXTERN_C
 
-//============================================================================//
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_calc_coords;
@@ -63,130 +64,132 @@ extern nvtxEventAttributes_t nvtx_calc_sum_sqr;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
-//============================================================================//
+//======================================================================================//
+// interpolation types
+#define INTER_NN NPPI_INTER_NN
+#define INTER_LINEAR NPPI_INTER_LINEAR
+#define INTER_CUBIC NPPI_INTER_CUBIC
+
+//======================================================================================//
 
 //  gridDim:    This variable contains the dimensions of the grid.
 //  blockIdx:   This variable contains the block index within the grid.
 //  blockDim:   This variable and contains the dimensions of the block.
 //  threadIdx:  This variable contains the thread index within the block.
 
-//============================================================================//
-//
-//  zero out array
-//
-//============================================================================//
-
-template <typename _Tp>
-__global__ void
-cuda_global_zero(_Tp* data, int size, int* offset)
-{
-    int i0     = blockIdx.x * blockDim.x + threadIdx.x + ((offset) ? (*offset) : 0);
-    int stride = blockDim.x * gridDim.x;
-    for(int i = i0; i < size; i += stride)
-        data[i] = _Tp(0);
-}
-
-//============================================================================//
+//======================================================================================//
 //
 //  rotate
 //
-//============================================================================//
+//======================================================================================//
+
+template <typename _Tp>
+void
+print_array(const _Tp* data, int nx, int ny, const std::string& desc)
+{
+    std::stringstream ss;
+    ss << desc << "\n\n";
+    ss << std::fixed;
+    ss.precision(3);
+    for(int j = 0; j < ny; ++j)
+    {
+        ss << "  ";
+        for(int i = 0; i < nx; ++i)
+        {
+            ss << std::setw(8) << data[j * nx + i] << " ";
+        }
+        ss << std::endl;
+    }
+    std::cout << ss.str() << std::endl;
+}
+
+//======================================================================================//
+//
+//  rotate
+//
+//======================================================================================//
 
 void
 cuda_rotate_kernel(float* dst, const float* src, const float theta, const int nx,
-                   const int ny)
+                   const int ny, int eInterp = INTER_CUBIC)
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
-    float xoff = floorf(nx / 2.0) + ((nx % 2 == 0) ? 0.5 : 0.0);
-    float yoff = floorf(ny / 2.0) + ((ny % 2 == 0) ? 0.5 : 0.0);
+    auto getRotationMatrix2D = [&](double m[2][3], double scale) {
+        double angle    = theta * (M_PI / 180.0);
+        double alpha    = scale * cos(angle);
+        double beta     = scale * sin(angle);
+        double center_x = (0.5 * nx) - 0.5;
+        double center_y = (0.5 * ny) - 0.5;
+        // printf("center = [%8.3f, %8.3f]\n", center_x, center_y);
+
+        m[0][0] = alpha;
+        m[0][1] = beta;
+        m[0][2] = (1.0 - alpha) * center_x - beta * center_y;
+        m[1][0] = -beta;
+        m[1][1] = alpha;
+        m[1][2] = beta * center_x + (1.0 - alpha) * center_y;
+    };
 
     NppiSize siz;
-    siz.width = nx;
+    siz.width  = nx;
     siz.height = ny;
+
     NppiRect roi;
-    roi.x = xoff;
-    roi.y = yoff;
-    roi.width = nx;
+    roi.x      = 0;
+    roi.y      = 0;
+    roi.width  = nx;
     roi.height = ny;
-    int step = nx * sizeof(float);
-    float cos_p = cosf(theta);
-    float sin_p = sinf(theta);
-    double rot[2][3] = {{ cos_p, sin_p, 0.0f}, {-sin_p, cos_p, 0.0f}};
-    NppStatus ret = nppiWarpAffine_32f_C1R(src, siz, step, roi,
-                                           dst, step, roi,
-                                           rot, NPPI_INTER_CUBIC);
 
-    /*
-    int j0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int jstride = blockDim.y * gridDim.y;
-    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int istride = blockDim.x * gridDim.x;
+    int    step = nx * sizeof(float);
+    double rot[2][3];
+    getRotationMatrix2D(rot, 1.0);
 
-    int src_size = nx * ny;
+#if defined(DEBUG)
+    printf("theta = %5.1f\n", theta);
+    print_array((double*) rot, 3, 2, "rot");
+#endif
 
-    for(int j = j0; j < ny; j += jstride)
-    {
-        for(int i = i0; i < nx; i += istride)
-        {
-            // indices in 2D
-            float rx = float(i) - xoff;
-            float ry = float(j) - yoff;
-            // transformation
-            float tx = rx * cosf(theta) + -ry * sinf(theta);
-            float ty = rx * sinf(theta) + ry * cosf(theta);
-            // indices in 2D
-            float x = (tx + xoff);
-            float y = (ty + yoff);
-            // index in 1D array
-            int rz = j * nx + i;
-            if(rz < 0 || rz >= src_size)
-                continue;
-            // within bounds
-            unsigned x1   = floor(tx + xoff);
-            unsigned y1   = floor(ty + yoff);
-            unsigned x2   = x1 + 1;
-            unsigned y2   = y1 + 1;
-            float    fxy1 = 0.0f;
-            float    fxy2 = 0.0f;
-            if(y1 * nx + x1 < src_size)
-                fxy1 += (x2 - x) * src[y1 * nx + x1];
-            if(y1 * nx + x2 < src_size)
-                fxy1 += (x - x1) * src[y1 * nx + x2];
-            if(y2 * nx + x1 < src_size)
-                fxy2 += (x2 - x) * src[y2 * nx + x1];
-            if(y2 * nx + x2 < src_size)
-                fxy2 += (x - x1) * src[y2 * nx + x2];
-            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
-        }
-    }
-    */
+    NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta,
+                                       rot[0][2], rot[1][2], eInterp);
+
+    if(ret != NPP_SUCCESS)
+        printf("%s returned non-zero NPP status: %i\n", __FUNCTION__, ret);
 
     NVTX_RANGE_POP(&nvtx_rotate);
 
-    cudaStreamSynchronize(0);
-    CUDA_CHECK_LAST_ERROR();
+    // cudaStreamSynchronize(0);
+    // CUDA_CHECK_LAST_ERROR();
 }
 
-//============================================================================//
+//======================================================================================//
+
+inline int
+GetInterpolationMode()
+{
+    static thread_local int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
+    return eInterp;
+}
+
+//======================================================================================//
 
 float*
 cuda_rotate(const float* src, const float theta, const int nx, const int ny)
 {
     float* _dst = gpu_malloc<float>(nx * ny);
-    cudaMemset(_dst, 0, nx * ny * sizeof(float));
-    cuda_rotate_kernel(_dst, src, theta, nx, ny);
+    // cudaMemset(_dst, 0, nx * ny * sizeof(float));
+    cuda_rotate_kernel(_dst, src, theta * (180.0f / pi), nx, ny, GetInterpolationMode());
     return _dst;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
                const int ny)
 {
-    cudaMemset(dst, 0, nx * ny * sizeof(float));
-    cuda_rotate_kernel(dst, src, theta, nx, ny);
+    // cudaMemset(dst, 0, nx * ny * sizeof(float));
+    cuda_rotate_kernel(dst, src, theta * (180.0f / pi), nx, ny, GetInterpolationMode());
 }
 
-//============================================================================//
+//======================================================================================//

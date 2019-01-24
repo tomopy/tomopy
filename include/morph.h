@@ -43,8 +43,7 @@
 
 // Module for data morphing.
 
-#ifndef _morph_h
-#define _morph_h
+#pragma once
 
 #include <math.h>
 #include <stdio.h>
@@ -64,5 +63,3 @@ downsample(const float* data, int dx, int dy, int dz, int level, int axis, float
 
 DLL void
 upsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out);
-
-#endif

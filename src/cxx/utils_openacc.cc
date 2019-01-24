@@ -49,7 +49,7 @@ BEGIN_EXTERN_C
 #include "utils_openacc.h"
 END_EXTERN_C
 
-//============================================================================//
+//======================================================================================//
 
 float*
 openacc_rotate(const float* src, const float theta, const int nx, const int ny)
@@ -100,7 +100,7 @@ openacc_rotate(const float* src, const float theta, const int nx, const int ny)
     return dst;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 openacc_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
@@ -149,4 +149,4 @@ openacc_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* 
     delete[] recon_tmp;
 }
 
-//============================================================================//
+//======================================================================================//

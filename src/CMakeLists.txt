@@ -37,39 +37,23 @@ endif()
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers
     ${PROJECT_SOURCE_DIR}/include/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/gpu/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.hh
-    ${CMAKE_CURRENT_LIST_DIR}/gpu/*.hh)
+    ${PROJECT_SOURCE_DIR}/include/*.hh
+    ${PROJECT_SOURCE_DIR}/include/*.hpp
+    ${PROJECT_SOURCE_DIR}/include/*.icc)
 file(GLOB tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
-
-# include dirs
-set(TARGET_INCLUDE_DIRECTORIES
-    ${PROJECT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_LIST_DIR}/PTL/source
-    ${CMAKE_CURRENT_LIST_DIR}/cxx
-    ${CMAKE_CURRENT_LIST_DIR}/gpu
-    ${TiMemory_INCLUDE_DIRS}
-    ${EXTERNAL_INCLUDE_DIRS})
 
 # core sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 
 # add the library
 if(TOMOPY_USE_CUDA)
-    file(GLOB CUDA_LIBRARY_HEADERS
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.h"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.hh"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.icc")
-
     file(GLOB CUDA_LIBRARY_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc"
         "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
 
-    list(APPEND LIBRARY_SOURCES
-        ${CUDA_LIBRARY_HEADERS}
-        ${CUDA_LIBRARY_SOURCES})
+    list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
 
     list(APPEND TARGET_INCLUDE_DIRECTORIES
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
@@ -81,8 +65,6 @@ if(TOMOPY_USE_CUDA)
         CUDA_SEPARABLE_COMPILATION  ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         )
-    find_package(CUDA REQUIRED)
-    list(APPEND EXTERNAL_CUDA_LIBRARIES ${CUDA_npp_LIBRARY})
 endif()
 
 # create library
@@ -103,8 +85,7 @@ set_target_properties(libtomopy
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
-    ${CUDA_PROPERTIES}
-)
+    ${CUDA_PROPERTIES})
 
 target_compile_definitions(libtomopy PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
@@ -112,8 +93,7 @@ target_compile_definitions(libtomopy PUBLIC
 target_compile_options(libtomopy PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>
-)
+    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 # Install the compiled library
 install(TARGETS libtomopy
@@ -139,7 +119,7 @@ if(TOMOPY_USE_PYBIND11)
     add_subdirectory(pybind11)
 
     pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.hpp)
+        ${PROJECT_SOURCE_DIR}/include/tomocxx.hpp)
 
     target_link_libraries(tomocxx PUBLIC libtomopy)
 
@@ -158,7 +138,7 @@ if(TOMOPY_USE_PYBIND11)
     target_compile_options(tomocxx PUBLIC
         $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
         $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CXX_FLAGS} ${${PROJECT_NAME}_CUDA_FLAGS}>)
+        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
     install(TARGETS tomocxx
         DESTINATION ${PYTHON_SITE_DIR}/tomopy

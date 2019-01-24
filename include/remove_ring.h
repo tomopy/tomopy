@@ -43,8 +43,7 @@
 
 // Module for ring removal in reconstructed domain
 
-#ifndef _remove_ring_h
-#define _remove_ring_h
+#pragma once
 
 #include <math.h>
 #include <stdio.h>
@@ -114,5 +113,3 @@ mean_filter_fast_1D(float*** filtered_image, float*** image, int start_row, int 
 void
 ring_filter(float*** polar_image, int pol_height, int pol_width, float threshold,
             int m_rad, int m_azi, int ring_width, int int_mode);
-
-#endif

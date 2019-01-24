@@ -37,10 +37,9 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
-#ifndef utils_hh_
-#define utils_hh_
+#pragma once
 
-//============================================================================//
+//======================================================================================//
 
 #include <algorithm>
 #include <cstdint>
@@ -97,7 +96,14 @@
 #    define PRINT_MAX_PIXEL 0
 #endif
 
-//============================================================================//
+#define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
+
+//======================================================================================//
+
+typedef std::vector<float> farray_t;
+typedef std::vector<int>   iarray_t;
+
+//======================================================================================//
 
 struct GpuOption
 {
@@ -147,7 +153,7 @@ struct GpuOption
     }
 };
 
-//============================================================================//
+//======================================================================================//
 
 template <typename _Tp>
 _Tp
@@ -160,7 +166,7 @@ from_string(const std::string& val)
     return ret;
 }
 
-//============================================================================//
+//======================================================================================//
 
 inline std::string
 tolower(std::string val)
@@ -170,7 +176,7 @@ tolower(std::string val)
     return val;
 }
 
-//============================================================================//
+//======================================================================================//
 
 inline void
 init_thread_data(ThreadPool* tp)
@@ -182,7 +188,7 @@ init_thread_data(ThreadPool* tp)
     thread_data->within_task = false;
 }
 
-//============================================================================//
+//======================================================================================//
 
 template <typename _Tp>
 void
@@ -211,56 +217,7 @@ print_cpu_array(const uintmax_t& nx, const uintmax_t& ny, const _Tp* data, const
     ofs.close();
 }
 
-//============================================================================//
-
-typedef std::vector<float> farray_t;
-typedef std::vector<int>   iarray_t;
-
-//============================================================================//
-
-struct AngleData
-{
-    AngleData()
-    : s(0)
-    , p(0)
-    , d(0)
-    , csize(0)
-    , sum_dist_sqr(0.0f)
-    , indi(nullptr)
-    , dist(nullptr)
-    {
-    }
-
-    // _ngrid == ngridx + ngridy
-    AngleData(int _s, int _p, int _d, int _csize, const int& _ngrid)
-    : s(_s)
-    , p(_p)
-    , d(_d)
-    , csize(_csize)
-    , sum_dist_sqr(0.0f)
-    , indi(new iarray_t(_ngrid))
-    , dist(new farray_t(_ngrid))
-    {
-    }
-
-    ~AngleData()
-    {
-        delete indi;
-        delete dist;
-    }
-
-    int       s;
-    int       p;
-    int       d;
-    int       csize;
-    float     sum_dist_sqr;
-    iarray_t* indi;
-    farray_t* dist;
-};
-
-typedef std::vector<AngleData*> AngleDataArray;
-
-//============================================================================//
+//======================================================================================//
 
 inline TaskRunManager*&
 cpu_run_manager()
@@ -270,7 +227,7 @@ cpu_run_manager()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 inline TaskRunManager*&
 gpu_run_manager()
@@ -281,7 +238,7 @@ gpu_run_manager()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 inline Mutex&
 update_mutex()
@@ -290,7 +247,7 @@ update_mutex()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 inline void
 init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
@@ -323,42 +280,29 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 DLL void
 cxx_affine_transform(farray_t& dst, const float* src, float theta, const int nx,
                      const int ny, const int factor);
 
-//============================================================================//
+//======================================================================================//
 
 DLL float
 bilinear_interpolation(float x, float y, float x1, float x2, float y1, float y2,
                        float x1y1, float x2y1, float x1y2, float x2y2);
 
-//============================================================================//
+//======================================================================================//
 
 DLL farray_t
-    cxx_apply_rotation(const float* src, float theta, const int nx, const int ny);
+    cxx_rotate(const float* src, float theta, const int nx, const int ny);
 
-//============================================================================//
-
-DLL void
-cxx_apply_rotation_ip(farray_t& dst, const float* src, float theta, const int nx,
-                      const int ny);
-
-//============================================================================//
-
-DLL farray_t
-    cxx_remove_rotation(const float* src, float theta, const int nx, const int ny);
-
-//============================================================================//
+//======================================================================================//
 
 DLL void
-cxx_remove_rotation_ip(farray_t& dst, const float* src, float theta, const int nx,
-                       const int ny);
+cxx_rotate_ip(farray_t& dst, const float* src, float theta, const int nx, const int ny);
 
-//============================================================================//
-#define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
+//======================================================================================//
 
 template <typename _Func, typename... _Args>
 void
@@ -467,6 +411,4 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
     }
 }
 
-//============================================================================//
-
-#endif
+//======================================================================================//

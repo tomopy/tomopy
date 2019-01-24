@@ -58,11 +58,7 @@ include(ClangFormat)
 ################################################################################
 
 add_subdirectory(src)
-
-if(TOMOPY_USE_OPENCV AND OpenCV_FOUND)
-    add_executable(test_opencv test/test_opencv.cc)
-    target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES})
-endif()
+add_subdirectory(test)
 
 ################################################################################
 #   Information

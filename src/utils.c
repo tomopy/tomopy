@@ -65,7 +65,7 @@ initlibtomopy(void)
 #    endif
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 void
 preprocessing(int ry, int rz, int num_pixels, float center, float* mov, float* gridx,
@@ -89,7 +89,7 @@ preprocessing(int ry, int rz, int num_pixels, float center, float* mov, float* g
     *mov += 0.5;
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 calc_quadrant(float theta_p)
@@ -116,7 +116,7 @@ calc_quadrant(float theta_p)
                : 0;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
@@ -141,7 +141,7 @@ calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 trim_coords(int ry, int rz, const float* coordx, const float* coordy, const float* gridx,
@@ -177,7 +177,7 @@ trim_coords(int ry, int rz, const float* coordx, const float* coordy, const floa
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
@@ -258,7 +258,7 @@ sort_intersections(int ind_condition, int asize, const float* ax, const float* a
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int* indi,
@@ -322,7 +322,7 @@ calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory, int* indx,
@@ -350,7 +350,7 @@ calc_dist2(int ry, int rz, int csize, const float* coorx, const float* coory, in
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
@@ -364,7 +364,7 @@ calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
@@ -382,7 +382,7 @@ calc_simdata2(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
@@ -424,7 +424,7 @@ calc_simdata3(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 float
 rotate_x(const float x, const float y, const float theta)
@@ -432,7 +432,7 @@ rotate_x(const float x, const float y, const float theta)
     return x * cos(theta) - y * sin(theta);
 }
 
-//============================================================================//
+//======================================================================================//
 
 float
 rotate_y(const float x, const float y, const float theta)
@@ -440,7 +440,7 @@ rotate_y(const float x, const float y, const float theta)
     return x * sin(theta) + y * cos(theta);
 }
 
-//============================================================================//
+//======================================================================================//
 
 float*
 expand(const float* arr_i, const int factor, const int nx, const int ny)
@@ -472,7 +472,7 @@ expand(const float* arr_i, const int factor, const int nx, const int ny)
     return arr_o;
 }
 
-//============================================================================//
+//======================================================================================//
 
 float*
 compress(const float* arr_i, const int factor, const int nx, const int ny)
@@ -502,7 +502,7 @@ compress(const float* arr_i, const int factor, const int nx, const int ny)
     return arr_o;
 }
 
-//============================================================================//
+//======================================================================================//
 
 float*
 rotate(const float* _obj, const float theta, const int _nx, const int _ny, const int _dx,
@@ -627,4 +627,4 @@ rotate(const float* _obj, const float theta, const int _nx, const int _ny, const
     return _rot;
 }
 
-//============================================================================//
+//======================================================================================//

@@ -39,6 +39,7 @@
 
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
+#include "common.hh"
 #include "gpu.hh"
 #include "utils.hh"
 #include "utils_cuda.h"
@@ -56,17 +57,13 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
-#define PRAGMA_SIMD _Pragma("omp simd")
-#define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
-#define HW_CONCURRENCY std::thread::hardware_concurrency()
-
 #if defined(TOMOPY_USE_CUDA)
 extern void
 mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 int
 cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
@@ -116,7 +113,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     return (int) true;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const float* mov,
@@ -177,8 +174,8 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
             }*/
 
             // printf("gridx = %8.3f, gridy = %8.3f, ax = %8.3f, ay = %8.3f, bx = %8.3f,
-            // by = %8.3f, coorx = %8.3f, coory = %8.3f\n", gridx[j], gridy[j], ax, ay, bx,
-            // by, coorx, coory);
+            // by = %8.3f, coorx = %8.3f, coory = %8.3f\n", gridx[j], gridy[j], ax, ay,
+            // bx, by, coorx, coory);
 
             // centered coordinates
             float cx0 = float(i) - xoff;
@@ -275,7 +272,7 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 cpu_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
@@ -315,7 +312,7 @@ cpu_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
@@ -542,7 +539,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 #if !defined(TOMOPY_USE_CUDA)
 void
@@ -555,7 +552,7 @@ mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
 }
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 void
 mlem_openacc(const float* data, int dy, int dt, int dx, const float* center,
@@ -566,7 +563,7 @@ mlem_openacc(const float* data, int dy, int dt, int dx, const float* center,
     mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 mlem_openmp(const float* data, int dy, int dt, int dx, const float* center,
@@ -577,4 +574,4 @@ mlem_openmp(const float* data, int dy, int dt, int dx, const float* center,
     mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 
-//============================================================================//
+//======================================================================================//

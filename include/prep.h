@@ -43,8 +43,7 @@
 
 // Module for data value corrections.
 
-#ifndef _corr_h
-#define _corr_h
+#pragma once
 
 #include <stdio.h>
 
@@ -56,5 +55,3 @@
 
 DLL void
 normalize_bg(float* data, int dx, int dy, int dz, int nair);
-
-#endif

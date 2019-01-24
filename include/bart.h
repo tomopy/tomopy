@@ -37,60 +37,51 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
-#ifndef bart_h_
-#define bart_h_
+#pragma once
 
 #include "common.h"
 
-//============================================================================//
+//======================================================================================//
 
 BEGIN_EXTERN_C
 
-//============================================================================//
+//======================================================================================//
 
 void
 cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
          int num_block, const float* ind_block);
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
          int num_block, const float* ind_block);
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
           int num_block, const float* ind_block);
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
              const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
              int num_block, const float* ind_block);
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
             int num_block, const float* ind_block);
 
-//============================================================================//
-//
-//      Specific utils functions for BART
-//
-//============================================================================//
-
-//============================================================================//
+//======================================================================================//
 
 END_EXTERN_C
 
-//============================================================================//
-
-#endif
+//======================================================================================//

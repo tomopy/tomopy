@@ -41,6 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "common.hh"
 #include "gpu.hh"
 #include "utils.hh"
 
@@ -66,9 +67,7 @@ END_EXTERN_C
 extern nvtxEventAttributes_t nvtx_update;
 #endif
 
-#define HW_CONCURRENCY std::thread::hardware_concurrency()
-
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 cuda_preprocessing(int ry, int rz, int num_pixels, int s, float* center, float* mov,
@@ -92,7 +91,7 @@ cuda_preprocessing(int ry, int rz, int num_pixels, int s, float* center, float* 
     *mov += 0.5;
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ int
 cuda_calc_quadrant(float theta_p)
@@ -119,7 +118,7 @@ cuda_calc_quadrant(float theta_p)
                : 0;
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ void
 cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
@@ -143,7 +142,7 @@ cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ void
 cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
@@ -179,7 +178,7 @@ cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ void
 cuda_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
@@ -260,7 +259,7 @@ cuda_sort_intersections(int ind_condition, int asize, const float* ax, const flo
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ void
 cuda_calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
@@ -295,7 +294,7 @@ cuda_calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ void
 cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
@@ -308,7 +307,7 @@ cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 mlem_update_kernel(float* recon, const float* update, const float* sumdist, int offset,
@@ -326,7 +325,7 @@ mlem_update_kernel(float* recon, const float* update, const float* sumdist, int 
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 cuda_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const float* mov,
@@ -442,7 +441,7 @@ cuda_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const fl
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 cuda_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
@@ -472,7 +471,7 @@ cuda_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center,
@@ -580,4 +579,4 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     CUDA_CHECK_LAST_ERROR();
 }
 
-//============================================================================//
+//======================================================================================//

@@ -42,8 +42,7 @@
 //      Here we declare the GPU interface
 //
 
-#ifndef gpu_h_
-#define gpu_h_
+#pragma once
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
@@ -81,7 +80,7 @@
 
 #include "common.h"
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #if defined(TOMOPY_USE_CUDA)
 #    include <cuda.h>
@@ -114,14 +113,15 @@
 #    endif
 #endif
 
-//============================================================================//
+//======================================================================================//
 //
 //      NVTX macros
 //
-//============================================================================//
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
 #    include <nvToolsExt.h>
+
 #    ifndef NVTX_RANGE_PUSH
 #        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
 #    endif
@@ -159,44 +159,33 @@ init_nvtx()
 
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 BEGIN_EXTERN_C  // begin extern "C"
 
-    //----------------------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
     //  device-specific info
-    //----------------------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
 
-    void DLL
-         cuda_device_query();
-int      DLL
-         cuda_device_count();
+    DLL void
+    cuda_device_query();
+DLL int
+cuda_device_count();
 // this functions sets "thread_device()" value to device number
-int DLL
-    cuda_set_device(int device);
+DLL int
+cuda_set_device(int device);
 // the functions below use "thread_device()" function to get device number
-int DLL
-    cuda_multi_processor_count();
-int DLL
-    cuda_max_threads_per_block();
-int DLL
-    cuda_warp_size();
-int DLL
-    cuda_shared_memory_per_block();
+DLL int
+cuda_multi_processor_count();
+DLL int
+cuda_max_threads_per_block();
+DLL int
+cuda_warp_size();
+DLL int
+cuda_shared_memory_per_block();
 
-//----------------------------------------------------------------------------//
-//  dataset handling for GPU
-//----------------------------------------------------------------------------//
-
-void DLL
-     init_tomo_dataset();
-void DLL
-     free_tomo_dataset(bool is_master);
-
-//============================================================================//
+//======================================================================================//
 
 END_EXTERN_C  // end extern "C"
 
-//----------------------------------------------------------------------------//
-
-#endif
+    //--------------------------------------------------------------------------------------//

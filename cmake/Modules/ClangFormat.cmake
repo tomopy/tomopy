@@ -14,17 +14,18 @@ find_program(CLANG_FORMATTER
 if(CLANG_FORMATTER)
     file(GLOB headers
         ${PROJECT_SOURCE_DIR}/include/*.h
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.h
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.hh
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.hh
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.hpp)
+        ${PROJECT_SOURCE_DIR}/include/*.h
+        ${PROJECT_SOURCE_DIR}/include/*.hh
+        ${PROJECT_SOURCE_DIR}/include/*.hpp)
     file(GLOB sources
         ${PROJECT_SOURCE_DIR}/src/*.c
         ${PROJECT_SOURCE_DIR}/src/cxx/*.cc
+        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cc
         ${PROJECT_SOURCE_DIR}/src/gpu/*.cu
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp
-        ${PROJECT_SOURCE_DIR}/test/*.cc)
+        ${PROJECT_SOURCE_DIR}/test/*.cc
+        ${PROJECT_SOURCE_DIR}/test/*.cu
+        ${PROJECT_SOURCE_DIR}/test/*.cpp)
 
     # avoid conflicting format targets
     set(FORMAT_NAME format)

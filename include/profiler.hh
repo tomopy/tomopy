@@ -41,8 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _profiler_hh
-#define _profiler_hh
+#pragma once
 
 #ifdef TOMOPY_USE_TIMEMORY
 #    include <timemory/timemory.hpp>
@@ -63,7 +62,5 @@ disable_signal_detection()
 {
 }
 }
-
-#endif
 
 #endif

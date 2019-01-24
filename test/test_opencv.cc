@@ -1,10 +1,9 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include <iomanip>
 #include <iostream>
 #include <stdio.h>
-#include <iostream>
-#include <iomanip>
 
 using namespace cv;
 using namespace std;
@@ -29,7 +28,8 @@ cxx_affine_transform(const Mat& warp_src, float theta, int nx, int ny, float sca
     Mat   rot      = getRotationMatrix2D(center, theta, scale);
     std::cout.precision(3);
     std::cout << std::fixed;
-    std::cout << "theta = " << theta
+    std::cout << "theta = "
+              << theta
               //<< ", rot = \n" << rot
               << std::endl;
     for(int i = 0; i < rot.rows; ++i)

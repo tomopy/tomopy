@@ -39,55 +39,120 @@
 
 #pragma once
 
-#include "common.h"
+#include "gpu.hh"
+#include "utils.hh"
 
 //======================================================================================//
 
-BEGIN_EXTERN_C
+namespace
+{
+constexpr float pi       = static_cast<float>(M_PI);
+constexpr float halfpi   = 0.5f * pi;
+constexpr float twopi    = 2.0f * pi;
+constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
+}
 
 //======================================================================================//
 
-void
-cxx_art(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#define PRAGMA_SIMD _Pragma("omp simd")
+#define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
+#define HW_CONCURRENCY std::thread::hardware_concurrency()
+
+//======================================================================================//
+
+struct cpu_rotate_data
+{
+    int          m_id;
+    int          m_dy;
+    int          m_dt;
+    int          m_dx;
+    int          m_nx;
+    int          m_ny;
+    uintmax_t    m_size;
+    farray_t     m_rot;
+    farray_t     m_tmp;
+    float*       m_recon;
+    float*       m_update;
+    float*       m_simdata;
+    const float* m_data;
+
+    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny)
+    : m_id(id)
+    , m_dy(dy)
+    , m_dt(dt)
+    , m_dx(dx)
+    , m_nx(nx)
+    , m_ny(ny)
+    , m_size(m_nx * m_ny)
+    , m_rot(farray_t(m_size, 0.0f))
+    , m_tmp(farray_t(m_size, 0.0f))
+    , m_recon(nullptr)
+    , m_update(new float[m_size])
+    , m_simdata(nullptr)
+    , m_data(nullptr)
+    {
+    }
+
+    ~cpu_rotate_data() { delete[] m_update; }
+
+    cpu_rotate_data(const cpu_rotate_data& rhs)
+    : m_id(rhs.m_id)
+    , m_dy(rhs.m_dy)
+    , m_dt(rhs.m_dt)
+    , m_dx(rhs.m_dx)
+    , m_nx(rhs.m_nx)
+    , m_ny(rhs.m_ny)
+    , m_size(rhs.m_size)
+    , m_rot(rhs.m_rot)
+    , m_tmp(rhs.m_tmp)
+    , m_recon(rhs.m_recon)
+    , m_update(new float[m_size])
+    , m_simdata(rhs.m_simdata)
+    , m_data(rhs.m_data)
+    {
+        memcpy(m_update, rhs.m_update, m_size * sizeof(float));
+    }
+
+    float*&         simdata() { return m_simdata; }
+    float*&         update() { return m_update; }
+    float*&         recon() { return m_recon; }
+    const float*&   data() { return m_data; }
+    farray_t&       rot() { return m_rot; }
+    farray_t&       tmp() { return m_tmp; }
+    const farray_t& rot() const { return m_rot; }
+    const farray_t& tmp() const { return m_tmp; }
+};
 
 //--------------------------------------------------------------------------------------//
 
-void
-art_cpu(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#ifndef DLL
+#    ifdef WIN32
+#        define DLL __declspec(dllexport)
+#    else
+#        define DLL
+#    endif
+#endif
 
 //--------------------------------------------------------------------------------------//
 
-void
-art_cuda(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#ifdef __cplusplus
+#    include <cstdio>
+#    include <cstring>
+#else
+#    include <stdio.h>
+#    include <string.h>
+#endif
 
 //--------------------------------------------------------------------------------------//
 
-void
-art_openacc(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#if defined(TOMOPY_USE_CUDA)
+#    include <cuda.h>
+#    include <cuda_runtime_api.h>
+#    include <vector_types.h>
+#else
+#    if !defined(cudaStream_t)
+#        define cudaStream_t int
+#    endif
+#endif
 
 //--------------------------------------------------------------------------------------//
-
-void
-art_openmp(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-//
-//      Specific utils functions for ART
-//
-//======================================================================================//
-
-void
-cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
-                const float* data, const float* simdata, const int* indi,
-                const float* dist, const float* sum, float* model, cudaStream_t* streams);
-
-//======================================================================================//
-
-END_EXTERN_C
-
-//======================================================================================//

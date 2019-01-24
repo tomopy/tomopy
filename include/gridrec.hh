@@ -41,8 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gridrec_hh
-#define _gridrec_hh
+#pragma once
 
 #include "utils.hh"
 
@@ -106,5 +105,3 @@ cxx_set_filter_tables(int dt, int pd, float fac, filter_func, const float* filte
                       std::complex<float>* A, unsigned char is2d);
 
 //===========================================================================//
-
-#endif

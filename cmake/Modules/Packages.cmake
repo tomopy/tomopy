@@ -11,13 +11,16 @@ include(FindPackageHandleStandardArgs)
 #
 ################################################################################
 
-if(NOT WIN32)
-    set(CMAKE_THREAD_PREFER_PTHREAD ON)
-endif()
+if(CMAKE_C_COMPILER_IS_INTEL OR CMAKE_CXX_COMPILER_IS_INTEL)
+    if(NOT WIN32)
+        set(CMAKE_THREAD_PREFER_PTHREAD ON)
+        set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
+    endif()
 
-find_package(Threads)
-if(Threads_FOUND)
-    list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
+    find_package(Threads)
+    if(Threads_FOUND)
+        list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
+    endif()
 endif()
 
 
@@ -210,60 +213,8 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
             --default-stream per-thread)
     endif()
 
-    #find_package(CUDA)
-
-    #if(CUDA_FOUND)
-        #foreach(_DIR ${CUDA_INCLUDE_DIRS})
-        #    include_directories(SYSTEM ${_DIR})
-        #endforeach()
-        #list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-
-        #find_library(CUDA_LIBRARY
-        #    NAMES cuda
-        #    PATHS /usr/local/cuda
-        #    HINTS /usr/local/cuda
-        #    PATH_SUFFIXES lib lib64)
-
-        #find_library(CUDART_LIBRARY
-        #    NAMES cudart
-        #    PATHS /usr/local/cuda
-        #    HINTS /usr/local/cuda
-        #    PATH_SUFFIXES lib lib64)
-
-        #find_library(CUDART_STATIC_LIBRARY
-        #    NAMES cudart_static
-        #    PATHS /usr/local/cuda
-        #    HINTS /usr/local/cuda
-        #    PATH_SUFFIXES lib lib64)
-
-        #find_library(RT_LIBRARY
-        #    NAMES rt
-        #    PATHS /usr /usr/local /opt/local
-        #    HINTS /usr /usr/local /opt/local
-        #    PATH_SUFFIXES lib lib64)
-
-        #find_library(DL_LIBRARY
-        #    NAMES dl
-        #    PATHS /usr /usr/local /opt/local
-        #    HINTS /usr /usr/local /opt/local
-        #    PATH_SUFFIXES lib lib64)
-
-        #foreach(NAME CUDA CUDART CUDART_STATIC NVTX RT DL)
-        #    if(${NAME}_LIBRARY)
-        #        list(APPEND EXTERNAL_CUDA_LIBRARIES ${${NAME}_LIBRARY})
-        #    endif()
-        #endforeach()
-
-        #set(CUDA_GENERATED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/BuildProducts/bin)
-        #set(CUDA_SEPARABLE_COMPILATION OFF)
-
-        #set(CUDA_ARCH "sm_35" CACHE STRING "CUDA architecture flag")
-        #add(${PROJECT_NAME}_CUDA_FLAGS "-arch=${CUDA_ARCH} --default-stream per-thread")
-        #list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_CUDA)
-        #add_feature(CUDA_ARCH "CUDA architecture (e.g. sm_35)")
-        #add_feature(CUDA_NVCC_FLAGS "CUDA NVCC compiler flags")
-    #endif()
-
+    find_package(CUDA REQUIRED)
+    list(APPEND EXTERNAL_CUDA_LIBRARIES ${CUDA_npp_LIBRARY})
 endif()
 
 
@@ -339,3 +290,9 @@ configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
 configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
     ${PROJECT_BINARY_DIR}/tomopy/allocator/__init__.py
     @ONLY)
+
+# include dirs
+set(TARGET_INCLUDE_DIRECTORIES
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src/PTL/source
+    ${EXTERNAL_INCLUDE_DIRS})

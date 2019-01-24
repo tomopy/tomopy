@@ -37,7 +37,7 @@
 //  ---------------------------------------------------------------
 //   TOMOPY implementation
 
-//============================================================================//
+//======================================================================================//
 
 #include "PTL/AutoLock.hh"
 #include "PTL/ThreadPool.hh"
@@ -51,7 +51,7 @@ END_EXTERN_C
 
 namespace cg = cooperative_groups;
 
-//============================================================================//
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_calc_coords;
@@ -67,14 +67,14 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 #define FULL_MASK 0xffffffff
 
-//============================================================================//
+//======================================================================================//
 
 //  gridDim:    This variable contains the dimensions of the grid.
 //  blockIdx:   This variable contains the block index within the grid.
 //  blockDim:   This variable and contains the dimensions of the block.
 //  threadIdx:  This variable contains the thread index within the block.
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 __inline__ __device__ float
 warpReduceSum(float val)
@@ -84,7 +84,7 @@ warpReduceSum(float val)
     return val;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 __inline__ __device__ float
 warpAllReduceSum(float val)
@@ -94,7 +94,7 @@ warpAllReduceSum(float val)
     return val;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 __inline__ __device__ float
 blockReduceSum(float val)
@@ -119,7 +119,7 @@ blockReduceSum(float val)
     return val;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 __global__ void
 deviceReduceKernel(const float* in, float* out, int N)
@@ -138,7 +138,7 @@ deviceReduceKernel(const float* in, float* out, int N)
         out[blockIdx.x] = sum;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 float
 deviceReduce(const float* in, float* out, int N)
@@ -156,12 +156,12 @@ deviceReduce(const float* in, float* out, int N)
     return _sum;
 }
 
-//============================================================================//
+//======================================================================================//
 //
 //  efficient reduction
 //  https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 //
-//============================================================================//
+//======================================================================================//
 
 template <unsigned int blockSize, typename _Tp>
 __device__ void
@@ -181,7 +181,7 @@ warpReduce(volatile _Tp* _data, unsigned int tid)
         _data[tid] += _data[tid + 1];
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 template <unsigned int blockSize, typename _Tp>
 __global__ void
@@ -235,7 +235,7 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
         _odata[blockIdx.x] = _data[0];
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 template <typename _Tp>
 void
@@ -248,44 +248,34 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlo
     switch(threads)
     {
         case 512:
-            reduce<512, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<512, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 256:
-            reduce<256, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<256, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 128:
-            reduce<128, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<128, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 64:
-            reduce<64, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<64, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 32:
-            reduce<32, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<32, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 16:
-            reduce<16, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<16, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 8:
-            reduce<8, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<8, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 4:
-            reduce<4, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<4, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 2:
-            reduce<2, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<2, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
         case 1:
-            reduce<1, _Tp>
-                <<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
+            reduce<1, _Tp><<<dimGrid, dimBlock, smemSize>>>(_idata, _odata, threads);
             break;
     }
     CUDA_CHECK_LAST_ERROR();
@@ -294,7 +284,7 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlo
     CUDA_CHECK_LAST_ERROR();
 }
 
-//============================================================================//
+//======================================================================================//
 
 template <typename _Tp>
 void
@@ -308,7 +298,7 @@ call_compute_reduction(int& _i, int& _offset, int nthreads, _Tp* _idata, _Tp* _o
     _offset += nthreads;
 }
 
-//============================================================================//
+//======================================================================================//
 
 float
 reduce(float* _in, float* _out, int size)
@@ -339,11 +329,11 @@ reduce(float* _in, float* _out, int size)
     return _sum;
 }
 
-//============================================================================//
+//======================================================================================//
 //
 //      Cooperative Groups for sum
 //
-//============================================================================//
+//======================================================================================//
 
 __device__ float
 reduce_sum(cg::thread_group g, float* temp, float val)
@@ -363,7 +353,7 @@ reduce_sum(cg::thread_group g, float* temp, float val)
     return val;  // note: only thread 0 will return full sum
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ float
 thread_sum(const float* input, int n)
@@ -382,7 +372,7 @@ thread_sum(const float* input, int n)
     return sum;
 }
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 sum_kernel_block(float* sum, const float* input, int n)
@@ -397,7 +387,7 @@ sum_kernel_block(float* sum, const float* input, int n)
         atomicAdd(sum, block_sum);
 }
 
-//============================================================================//
+//======================================================================================//
 
 template <int tile_sz>
 __device__ float
@@ -413,7 +403,7 @@ reduce_sum_tile_shfl(cg::thread_block_tile<tile_sz> g, float val)
     return val;  // note: only thread 0 will return full sum
 }
 
-//============================================================================//
+//======================================================================================//
 
 template <int tile_sz>
 __global__ void
@@ -428,7 +418,7 @@ sum_kernel_tile_shfl(float* sum, float* input, int n)
         atomicAdd(sum, tile_sum);
 }
 
-//============================================================================//
+//======================================================================================//
 
 __device__ float
 atomicAggInc(float* ptr)
@@ -448,4 +438,4 @@ atomicAggInc(float* ptr)
     return prev;
 }
 
-//============================================================================//
+//======================================================================================//

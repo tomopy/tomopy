@@ -43,8 +43,7 @@
 
 // Module for stripe removal.
 
-#ifndef _stripe_h
-#define _stripe_h
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,5 +56,3 @@
 
 DLL void
 remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart, int iend);
-
-#endif

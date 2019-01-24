@@ -42,19 +42,16 @@
 //      Here we copy the memory to GPU and call the GPU kernels
 //
 
-extern "C"
-{
-#include "gpu.h"
-}
+#include "gpu.hh"
+#include "utils.hh"
 
-//============================================================================//
+//======================================================================================//
 // C++
 
 // includes all C, CUDA, and C++ header files
 #include "PTL/ThreadPool.hh"
-#include "gpu.hh"
 
-//============================================================================//
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
 
@@ -69,7 +66,7 @@ nvtxEventAttributes_t nvtx_calc_sum_sqr;
 nvtxEventAttributes_t nvtx_update;
 nvtxEventAttributes_t nvtx_rotate;
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 init_nvtx()
@@ -152,7 +149,7 @@ init_nvtx()
 
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_set_device(int device)
@@ -171,7 +168,7 @@ cuda_set_device(int device)
     return device;
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_multi_processor_count()
@@ -194,7 +191,7 @@ cuda_multi_processor_count()
     return ((*_instance)[device] = deviceProp.multiProcessorCount);
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_max_threads_per_block()
@@ -217,7 +214,7 @@ cuda_max_threads_per_block()
     return ((*_instance)[device] = deviceProp.maxThreadsPerBlock);
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_warp_size()
@@ -240,7 +237,7 @@ cuda_warp_size()
     return ((*_instance)[device] = deviceProp.warpSize);
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_shared_memory_per_block()
@@ -263,59 +260,7 @@ cuda_shared_memory_per_block()
     return ((*_instance)[device] = deviceProp.sharedMemPerBlock);
 }
 
-//============================================================================//
-
-void
-init_tomo_dataset()
-{
-    if(cuda_device_count() > 0)
-    {
-        tomo_dataset* _dataset = TomoDataset();
-        _dataset->nstreams     = 32;
-        _dataset->streams      = create_streams(_dataset->nstreams);
-    }
-}
-
-//============================================================================//
-
-void
-free_tomo_dataset(bool is_master)
-{
-    if(cuda_device_count() > 0)
-    {
-        tomo_dataset*& _dataset = TomoDataset();
-        cudaFree(_dataset->gpu->asize);
-        cudaFree(_dataset->gpu->bsize);
-        cudaFree(_dataset->gpu->csize);
-        cudaFree(_dataset->gpu->coordx);
-        cudaFree(_dataset->gpu->coordy);
-        cudaFree(_dataset->gpu->ax);
-        cudaFree(_dataset->gpu->ay);
-        cudaFree(_dataset->gpu->bx);
-        cudaFree(_dataset->gpu->by);
-        cudaFree(_dataset->gpu->coorx);
-        cudaFree(_dataset->gpu->coory);
-        cudaFree(_dataset->gpu->dist);
-        cudaFree(_dataset->gpu->indi);
-        cudaFree(_dataset->gpu->sum);
-        if(is_master)
-        {
-            cudaFree(_dataset->gpu->gridx);
-            cudaFree(_dataset->gpu->gridy);
-            cudaFree(_dataset->gpu->simdata);
-            cudaFree(_dataset->gpu->model);
-            cudaFree((void*) _dataset->gpu->center);
-            cudaFree((void*) _dataset->gpu->theta);
-            cudaFree(_dataset->gpu->mov);
-            cudaFree(_dataset->gpu->data);
-        }
-        destroy_streams(_dataset->streams, _dataset->nstreams);
-        delete _dataset->gpu;
-        _dataset->gpu = nullptr;
-    }
-}
-
-//============================================================================//
+//======================================================================================//
 
 int
 cuda_device_count()
@@ -329,7 +274,7 @@ cuda_device_count()
     return deviceCount;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 cuda_device_query()
@@ -513,19 +458,18 @@ cuda_device_query()
         printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
                deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] = {
-            "Default (multiple host threads can use ::cudaSetDevice() with "
-            "device "
-            "simultaneously)",
-            "Exclusive (only one host thread in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Prohibited (no host thread can use ::cudaSetDevice() with this "
-            "device)",
-            "Exclusive Process (many threads in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Unknown",
-            NULL
-        };
+        const char* sComputeMode[] =
+            { "Default (multiple host threads can use ::cudaSetDevice() with "
+              "device "
+              "simultaneously)",
+              "Exclusive (only one host thread in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Prohibited (no host thread can use ::cudaSetDevice() with this "
+              "device)",
+              "Exclusive Process (many threads in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Unknown",
+              NULL };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }
@@ -535,4 +479,4 @@ cuda_device_query()
     CUDA_CHECK_LAST_ERROR();
 }
 
-//============================================================================//
+//======================================================================================//

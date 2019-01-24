@@ -62,7 +62,7 @@
 #    define DLL
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 typedef struct _TomoData
 {
@@ -104,7 +104,7 @@ typedef struct _TomoData
     float* data;
 } tomo_data;
 
-//============================================================================//
+//======================================================================================//
 
 #if !defined(TOMOPY_USE_CUDA)
 #    if !defined(cudaStream_t)
@@ -115,7 +115,7 @@ typedef struct _TomoData
 #    include <cuda_runtime_api.h>
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 typedef struct _TomoDataset
 {
@@ -219,8 +219,8 @@ DLL void
 preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
               float* gridy);
 
-int DLL
-    calc_quadrant(float theta_p);
+DLL int
+calc_quadrant(float theta_p);
 
 DLL void
 calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p, float cos_p,

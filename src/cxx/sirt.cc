@@ -39,6 +39,7 @@
 
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
+#include "common.hh"
 #include "utils.hh"
 
 BEGIN_EXTERN_C
@@ -55,11 +56,7 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
-#define PRAGMA_SIMD _Pragma("omp simd")
-#define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
-#define HW_CONCURRENCY std::thread::hardware_concurrency()
-
-//============================================================================//
+//======================================================================================//
 
 int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
@@ -109,98 +106,14 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     return (int) true;
 }
 
-//============================================================================//
-
-struct cpu_thread_data
-{
-    int          m_id;
-    int          m_dy;
-    int          m_dt;
-    int          m_dx;
-    int          m_nx;
-    int          m_ny;
-    uintmax_t    m_size;
-    farray_t     m_rot;
-    farray_t     m_tmp;
-    float*       m_recon;
-    float*       m_update;
-    float*       m_simdata;
-    const float* m_data;
-
-    cpu_thread_data(int id, int dy, int dt, int dx, int nx, int ny)
-    : m_id(id)
-    , m_dy(dy)
-    , m_dt(dt)
-    , m_dx(dx)
-    , m_nx(nx)
-    , m_ny(ny)
-    , m_size(m_nx * m_ny)
-    , m_rot(farray_t(4 * m_size, 0.0f))
-    , m_tmp(farray_t(m_size, 0.0f))
-    , m_recon(nullptr)
-    , m_update(new float[m_size])
-    , m_simdata(nullptr)
-    , m_data(nullptr)
-    {
-    }
-
-    ~cpu_thread_data() { delete[] m_update; }
-
-    cpu_thread_data(const cpu_thread_data& rhs)
-    : m_id(rhs.m_id)
-    , m_dy(rhs.m_dy)
-    , m_dt(rhs.m_dt)
-    , m_dx(rhs.m_dx)
-    , m_nx(rhs.m_nx)
-    , m_ny(rhs.m_ny)
-    , m_size(rhs.m_size)
-    , m_rot(rhs.m_rot)
-    , m_tmp(rhs.m_tmp)
-    , m_recon(rhs.m_recon)
-    , m_update(new float[m_size])
-    , m_simdata(rhs.m_simdata)
-    , m_data(rhs.m_data)
-    {
-        memcpy(m_update, rhs.m_update, m_size * sizeof(float));
-    }
-
-    void initialize(const float* data, float* recon, float* simdata, uintmax_t s)
-    {
-        uintmax_t offset = s * m_dt * m_dx;
-        m_data           = data + offset;
-        m_simdata        = simdata + offset;
-        offset           = s * m_size;
-        memset(m_update, 0, m_size * sizeof(float));
-        m_recon = recon + offset;
-    }
-
-    void finalize(float* recon, uintmax_t s)
-    {
-        uintmax_t offset = s * m_size;
-        float*    _recon = recon + offset;
-        float     factor = 1.0f / static_cast<float>(m_dt);
-        for(uintmax_t i = 0; i < m_size; ++i)
-            _recon[i] += m_update[i] * factor;
-    }
-
-    float*          simdata() { return m_simdata; }
-    float*          update() { return m_update; }
-    float*          recon() { return m_recon; }
-    farray_t&       rot() { return m_rot; }
-    farray_t&       tmp() { return m_tmp; }
-    const farray_t& rot() const { return m_rot; }
-    const farray_t& tmp() const { return m_tmp; }
-    const float*    data() const { return m_data; }
-};
-
-//============================================================================//
+//======================================================================================//
 
 void
 compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
-                   int p, int nthreads, cpu_thread_data** _thread_data)
+                   int p, int nthreads, cpu_rotate_data** _thread_data)
 {
     auto             thread_number = GetThisThreadID() % nthreads;
-    cpu_thread_data* _cache        = _thread_data[thread_number];
+    cpu_rotate_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
     float pi_offset = 0.5f * (float) M_PI;
@@ -262,7 +175,7 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
         update[i] += recon_tmp[i];
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
@@ -281,13 +194,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("");
 
     // create a cache of the data for each thread
-    cpu_thread_data** _thread_data = new cpu_thread_data*[nthreads];
+    cpu_rotate_data** _thread_data = new cpu_rotate_data*[nthreads];
     for(int i = 0; i < nthreads; ++i)
-        _thread_data[i] = new cpu_thread_data(i, dy, dt, dx, ngridx, ngridy);
+        _thread_data[i] = new cpu_rotate_data(i, dy, dt, dx, ngridx, ngridy);
 
+    uintmax_t m_size = static_cast<uintmax_t>(ngridx * ngridy);
     for(int i = 0; i < num_iter; i++)
     {
-        auto t_start = std::chrono::system_clock::now();
+        START_TIMER(t_start);
         // reset the simulation data
         farray_t simdata(dy * dt * dx, 0.0f);
 
@@ -297,7 +211,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
             // for each thread, calculate all the offsets of the data
             // for this slice
             for(int ii = 0; ii < nthreads; ++ii)
-                _thread_data[ii]->initialize(data, recon, simdata.data(), s);
+            {
+                uintmax_t offset            = static_cast<uintmax_t>(s * dt * dx);
+                _thread_data[ii]->data()    = data + offset;
+                _thread_data[ii]->simdata() = simdata.data() + offset;
+                offset                      = s * m_size;
+                memset(_thread_data[ii]->update(), 0, m_size * sizeof(float));
+                _thread_data[ii]->recon() = recon + offset;
+            }
 
 #if defined(TOMOPY_USE_PTL)
             TaskGroup<void> tg;
@@ -318,27 +239,21 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
 #endif
             // update the reconstruction
             for(int ii = 0; ii < nthreads; ++ii)
-                _thread_data[ii]->finalize(recon, s);
+            {
+                uintmax_t offset = static_cast<uintmax_t>(s) * m_size;
+                float*    _recon = recon + offset;
+                float     factor = 1.0f / static_cast<float>(dt);
+                for(uintmax_t i = 0; i < m_size; ++i)
+                    _recon[i] += _thread_data[ii]->update()[i] * factor;
+            }
         }
-        auto                          t_end           = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
-        printf("[%li]> iteration %3i of %3i... %5.2f seconds\n", GetThisThreadID(), i,
-               num_iter, elapsed_seconds.count());
+        REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
-
-    /*float _theta = 0.5 * (float) M_PI;
-    for(int s = 0; s < dy; s++)
-    {
-        float* _recon    = recon + s * ngridx * ngridy;
-        auto   recon_rot = cxx_apply_rotation(_recon, _theta, ngridx, ngridy);
-        for(int i = 0; i < (ngridx * ngridy); ++i)
-            _recon[i] = recon_rot[i];
-    }*/
 
     printf("\n");
 }
 
-//============================================================================//
+//======================================================================================//
 
 #if !defined(TOMOPY_USE_CUDA)
 void
@@ -349,7 +264,7 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 }
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 void
 sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const float* theta,
@@ -395,7 +310,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float* theta,
@@ -441,4 +356,4 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
     }
 }
 
-//============================================================================//
+//======================================================================================//

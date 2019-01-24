@@ -49,7 +49,7 @@ BEGIN_EXTERN_C
 #include "utils_openmp.h"
 END_EXTERN_C
 
-//============================================================================//
+//======================================================================================//
 
 float*
 openmp_rotate(const float* src, const float theta, const int nx, const int ny)
@@ -100,7 +100,7 @@ openmp_rotate(const float* src, const float theta, const int nx, const int ny)
     return dst;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 openmp_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* data,
@@ -149,4 +149,4 @@ openmp_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* d
     delete[] recon_tmp;
 }
 
-//============================================================================//
+//======================================================================================//

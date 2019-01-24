@@ -53,7 +53,7 @@ extern "C"
 extern nvtxEventAttributes_t nvtx_update;
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 __global__ void
 art_update_kernel(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
@@ -78,7 +78,7 @@ art_update_kernel(int s, int p, int d, int ry, int rz, int dt, int dx, const int
     }
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 void
 cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
@@ -97,4 +97,4 @@ cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* 
     NVTX_RANGE_POP(&nvtx_update);
 }
 
-//============================================================================//
+//======================================================================================//
