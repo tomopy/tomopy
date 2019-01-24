@@ -3,6 +3,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <iostream>
+#include <iomanip>
 
 using namespace cv;
 using namespace std;
@@ -25,6 +27,20 @@ cxx_affine_transform(const Mat& warp_src, float theta, int nx, int ny, float sca
     float cy       = 0.5f * nx + ((nx % 2 == 0) ? 0.5f : 0.0f);
     Point center   = Point(cx, cy);
     Mat   rot      = getRotationMatrix2D(center, theta, scale);
+    std::cout.precision(3);
+    std::cout << std::fixed;
+    std::cout << "theta = " << theta
+              //<< ", rot = \n" << rot
+              << std::endl;
+    for(int i = 0; i < rot.rows; ++i)
+    {
+        for(int j = 0; j < rot.cols; ++j)
+        {
+            std::cout << std::setw(8) << std::setprecision(3) << std::fixed
+                      << rot.at<float>(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
     warpAffine(warp_src, warp_dst, rot, warp_src.size(), INTER_CUBIC);
     return warp_dst;
 }

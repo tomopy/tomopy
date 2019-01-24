@@ -81,6 +81,8 @@ if(TOMOPY_USE_CUDA)
         CUDA_SEPARABLE_COMPILATION  ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         )
+    find_package(CUDA REQUIRED)
+    list(APPEND EXTERNAL_CUDA_LIBRARIES ${CUDA_npp_LIBRARY})
 endif()
 
 # create library

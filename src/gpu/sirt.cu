@@ -203,7 +203,7 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
     float*       recon_tmp = _cache->tmp();
 
     // Rotate object
-    cuda_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy, 0);
+    cuda_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy);
 
     NVTX_RANGE_PUSH(&nvtx_update);
 
@@ -212,7 +212,7 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p, ngridx, ngridy, 0);
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p, ngridx, ngridy);
 
     // update shared update array
     cuda_sirt_arrsum_kernel<<<grid, block>>>(update, recon_tmp, ngridx * ngridy, 1.0f);

@@ -531,6 +531,10 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
             cudaStreamSynchronize(0);
             CUDA_CHECK_LAST_ERROR();
 
+            // initialize sum_dist and update to zero
+            cudaMemset(sum_dist, 0, (ngridx * ngridy) * sizeof(float));
+            cudaMemset(update, 0, (ngridx * ngridy) * sizeof(float));
+
             // For each projection angle
             cuda_mlem_compute_projection<<<4, 4, smem>>>(ngridx, ngridy, dy, dt, dx,
                                                          theta, mov, gridx, gridy, data,

@@ -122,25 +122,22 @@ void
 cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const float* mov,
                        const float* gridx, const float* gridy, float* sum_dist,
                        float* update, const float* data, const float* recon, int s, int p,
-                       int quadrant, float sin_p, float cos_p)
+                       int quadrant, float theta_p, float sin_p, float cos_p)
 {
     int ry = ngridx;
     int rz = ngridy;
-    /*
+
     float gridx_gt = gridx[0] + 0.01f;
     float gridx_le = gridx[ngridx] - 0.01f;
     float gridy_gt = gridy[0] + 0.01f;
     float gridy_le = gridy[ngridy] - 0.01f;
-    */
 
     float xoff = floorf(0.5f * ngridx) - ((ngridx % 2 == 0) ? 0.5f : 0.0f);
     float yoff = floorf(0.5f * ngridy) - ((ngridy % 2 == 0) ? 0.5f : 0.0f);
 
-    // PRINT_HERE("");
     for(int d = 0; d < dx; ++d)
     {
         // Calculate coordinates
-        /*
         float xi     = -ngridx - ngridy;
         float yi     = 0.5f * (1 - dx) + d + *mov;
         float srcx   = xi * cos_p - yi * sin_p;
@@ -148,11 +145,41 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
         float detx   = -xi * cos_p - yi * sin_p;
         float dety   = -xi * sin_p + yi * cos_p;
         float slope  = (srcy - dety) / (srcx - detx);
-        float islope = (srcx - detx) / (srcy - dety);*/
+        float islope = (srcx - detx) / (srcy - dety);
 
-        int i = d;
-        for(int j = 0; j < ngridy; ++j)
+        int   i           = d;
+        float simdata_sum = 0.0f;
+        for(int j = 0; j < dx; ++j)
         {
+            /*
+            float coordx = islope * (gridy[j] - srcy) + srcx;
+            float coordy = slope * (gridx[j] - srcx) + srcy;
+            //if(coordx < gridx_gt || coordx > gridx_le)
+            //    continue;
+            //if(coordy < gridy_gt || coordy > gridy_le)
+            //    continue;
+
+            float ax = coordx;
+            float ay = gridy[j];
+            float bx = gridx[j];
+            float by = coordy;
+            float coorx, coory;
+
+            if(ax < bx)
+            {
+                coorx = ax;
+                coory = ay;
+            }
+            else
+            {
+                coorx = bx;
+                coory = by;
+            }*/
+
+            // printf("gridx = %8.3f, gridy = %8.3f, ax = %8.3f, ay = %8.3f, bx = %8.3f,
+            // by = %8.3f, coorx = %8.3f, coory = %8.3f\n", gridx[j], gridy[j], ax, ay, bx,
+            // by, coorx, coory);
+
             // centered coordinates
             float cx0 = float(i) - xoff;
             float cy0 = float(j) - yoff;
@@ -165,18 +192,44 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
             float px = ceilf(x0);
             float py = ceilf(y0);
 
+            auto pythag = [](float a, float b) { return sqrtf(a * a + b * b); };
+
+            /*float x1 = gridx[0];
+            float y1 = gridy[0];
+            float d1 = pythag(x1 - x0, y1 - y0);
+            for(int ii = 0; ii < ry; ++ii)
+            {
+                float nx = gridx[ii];
+                for(int jj = 0; jj < rz; ++jj)
+                {
+                    float ny = gridy[jj];
+                    float dn = pythag(nx - x0, ny - y0);
+                    if(dn < d1)
+                    {
+                        x1 = nx;
+                        y1 = ny;
+                        d1 = dn;
+                    }
+                }
+            }*/
+            // nothing
+            // float gx0 = gridx[j];
+            // float gy0 = gridy[j];
+            // float xg = (gx0 * cos_p - gy0 * sin_p);
+            // float yg = (gx0 * sin_p + gy0 * sin_p);
+
             // printf("x,y = [%8.3f, %8.3f], mx,my = [%8.3f, %8.3f], px,py = [%8.3f,
             // %8.3f]\n",
             //       x0, y0, mx, my, px, py);
 
             //--------------------------------------------------------------------------//
-            auto compute_indi = [x0, y0, ry, rz](float x1, float y1) {
-                float _midx = 0.5f * (x1 + x0);
+            auto compute_indi = [&](float xn, float x, float yn, float y) {
+                float _midx = 0.5f * (xn + x);
                 float _x1   = _midx + 0.5f * ry;
                 float _i1   = (int) (_midx + 0.5f * ry);
                 int   _indx = _i1 - (_i1 > _x1);
 
-                float _midy = 0.5f * (y1 + y0);
+                float _midy = 0.5f * (yn + y);
                 float _x2   = _midy + 0.5f * rz;
                 float _i2   = (int) (_midy + 0.5f * rz);
                 int   _indy = _i2 - (_i2 > _x2);
@@ -196,35 +249,28 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
                 }
             };
             //--------------------------------------------------------------------------//
+            auto compute = [&](float _x, float _x0, float _y, float _y0) {
+                // data offset
+                int index_model = s * ry * rz;
 
-            // data offset
-            int index_model = s * ry * rz;
+                int _indi = compute_indi(_x, _x0, _y, _y0);
+                if(_indi >= 0 && _indi < ry * rz)
+                {
+                    // compute distance
+                    float _dist = pythag((_x - _x0) * sin_p, (_y - _y0) * -cos_p);
+                    // Calculate simdata
+                    float _simdata = recon[_indi + index_model] * _dist;
+                    // Update
+                    update_indi(_indi, _simdata, _dist);
+                }
+            };
+            //--------------------------------------------------------------------------//
 
-            int mindi = compute_indi(mx, my);
-            if(mindi >= 0 && mindi < ry * rz)
-            {
-                // compute distance
-                float mdist = sqrtf(powf(x0 - mx, 2.0f) + powf(y0 - my, 2.0f));
-                // Calculate simdata
-                float msimdata = recon[mindi + index_model] * mdist;
-                // Update
-                update_indi(mindi, msimdata, mdist);
-            }
-
-            int pindi = compute_indi(px, py);
-            if(pindi >= 0 && pindi < ry * rz)
-            {
-                // compute distance
-                float pdist = sqrtf(powf(px - x0, 2.0f) + powf(py - y0, 2.0f));
-                // Calculate simdata
-                float psimdata = recon[pindi + index_model] * pdist;
-                // Update
-                update_indi(pindi, psimdata, pdist);
-            }
-
-            // printf("[%2i, %2i]> [x,y] = [%8.3f, %8.3f], indi = %i, dist = %8.3f,
-            // sum_dist = %8.3f, update = %8.3f\n",
-            //       i, j, x0, y0, indi, dist, sum_dist[indi], update[indi]);
+            // compute(coordx, x0, coordy, y0);
+            compute(mx, x0, my, y0);
+            compute(px, x0, py, y0);
+            // compute(xg, x0, yg, y0);
+            // compute(x0, x1, y0, y1);
         }
     }
 }
@@ -253,7 +299,8 @@ cpu_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
         int   quadrant = calc_quadrant(theta_p);
 
         cpu_mlem_compute_pixel(ngridx, ngridy, dy, dt, dx, mov, gridx, gridy, sum_dist,
-                               update, data, recon, s, p, quadrant, sin_p, cos_p);
+                               update, data, recon, s, p, quadrant, theta_p, sin_p,
+                               cos_p);
 
         // REPORT_TIMER(p_timer, "\t\tangle", p, dt);
     }
@@ -384,14 +431,14 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
                     // For each detector pixel
                     for(d = 0; d < dx; d++)
                     {
-                        //#if defined(DEBUG)
+#if defined(OUTPUT_DATA)
                         memset(coordx, 0, (ngridy + 1) * sizeof(float));
                         memset(coordy, 0, (ngridx + 1) * sizeof(float));
                         memset(coorx, 0, (ngridx + ngridy) * sizeof(float));
                         memset(coory, 0, (ngridx + ngridy) * sizeof(float));
                         memset(dist, 0, (ngridx + ngridy) * sizeof(float));
                         memset(indi, 0, (ngridx + ngridy) * sizeof(int));
-                        //#endif
+#endif
                         // Calculate coordinates
                         xi = -ngridx - ngridy;
                         yi = 0.5f * (1 - dx) + d + mov;
@@ -446,19 +493,19 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
                             }
                         }
 
-                        //#if defined(DEBUG)
+#if defined(OUTPUT_DATA)
                         float _size[] = { (float) asize, (float) bsize, (float) csize, xi,
                                           yi };
                         print_cpu_array(5, 1, _size, i, s, p, d, "sizes");
-                        // print_cpu_array(ngridx + 1, 1, gridx, i, s, p, d, "gridx");
-                        // print_cpu_array(ngridy + 1, 1, gridy, i, s, p, d, "gridy");
+                        print_cpu_array(ngridx + 1, 1, gridx, i, s, p, d, "gridx");
+                        print_cpu_array(ngridy + 1, 1, gridy, i, s, p, d, "gridy");
                         print_cpu_array(ngridy + 1, 1, coordx, i, s, p, d, "coordx");
                         print_cpu_array(ngridx + 1, 1, coordy, i, s, p, d, "coordy");
                         print_cpu_array(ngridx + ngridy, 1, coorx, i, s, p, d, "coorx");
                         print_cpu_array(ngridx + ngridy, 1, coory, i, s, p, d, "coory");
                         print_cpu_array(ngridx + ngridy, 1, dist, i, s, p, d, "dist");
                         print_cpu_array(ngridx + ngridy, 1, indi, i, s, p, d, "indi");
-                        //#endif
+#endif
                     }
                 }
                 m = 0;

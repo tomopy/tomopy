@@ -193,6 +193,8 @@ cpu_malloc(uintmax_t size)
 #    include <cooperative_groups.h>
 #    include <cuda.h>
 #    include <cuda_runtime_api.h>
+#    include <npp.h>
+#    include <nppi.h>
 #    include <vector_types.h>
 
 //----------------------------------------------------------------------------//

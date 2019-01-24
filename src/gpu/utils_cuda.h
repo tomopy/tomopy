@@ -115,28 +115,27 @@ sum_kernel_block(float* sum, const float* input, int n);
 //----------------------------------------------------------------------------//
 
 DLL float
-deviceReduce(const float* in, float* out, int N, cudaStream_t stream);
+deviceReduce(const float* in, float* out, int N);
 
 //============================================================================//
 //  reduce
 //============================================================================//
 
 DLL float
-reduce(float* _in, float* _out, int size, cudaStream_t stream);
+reduce(float* _in, float* _out, int size);
 
 //============================================================================//
 //  rotate
 //============================================================================//
 
 DLL float*
-cuda_rotate(const float* src, const float theta, const int nx, const int ny,
-            cudaStream_t stream);
+cuda_rotate(const float* src, const float theta, const int nx, const int ny);
 
 //----------------------------------------------------------------------------//
 
 DLL void
 cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
-               const int ny, cudaStream_t stream);
+               const int ny);
 
 //----------------------------------------------------------------------------//
 
