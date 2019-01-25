@@ -37,6 +37,7 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
+#include "common.hh"
 #include "utils.hh"
 
 BEGIN_EXTERN_C
@@ -112,6 +113,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
 
     throw std::runtime_error("ART algorithm has not been implemented for CUDA");
 
+    /*
     uintmax_t _nx = scast<uintmax_t>(ngridx);
     uintmax_t _ny = scast<uintmax_t>(ngridy);
     uintmax_t _dy = scast<uintmax_t>(dy);
@@ -148,6 +150,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
         gpu_malloc<float>(1),                       // mov
         malloc_and_memcpy(data, _nd)                // data
     });
+    */
 }
 
 //======================================================================================//

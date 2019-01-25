@@ -2,6 +2,7 @@ name: tomopy
 channels:
   - conda-forge
   - jrmadsen
+  - intel
   - defaults
 dependencies:
   - python=3.5
@@ -23,3 +24,5 @@ dependencies:
   - six
   - timemory
   - opencv
+  - ipp-devel
+  - ipp-include

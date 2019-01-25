@@ -124,16 +124,19 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
     int ry = ngridx;
     int rz = ngridy;
 
+    /*
     float gridx_gt = gridx[0] + 0.01f;
     float gridx_le = gridx[ngridx] - 0.01f;
     float gridy_gt = gridy[0] + 0.01f;
     float gridy_le = gridy[ngridy] - 0.01f;
+    */
 
     float xoff = floorf(0.5f * ngridx) - ((ngridx % 2 == 0) ? 0.5f : 0.0f);
     float yoff = floorf(0.5f * ngridy) - ((ngridy % 2 == 0) ? 0.5f : 0.0f);
 
     for(int d = 0; d < dx; ++d)
     {
+        /*
         // Calculate coordinates
         float xi     = -ngridx - ngridy;
         float yi     = 0.5f * (1 - dx) + d + *mov;
@@ -142,10 +145,9 @@ cpu_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const flo
         float detx   = -xi * cos_p - yi * sin_p;
         float dety   = -xi * sin_p + yi * cos_p;
         float slope  = (srcy - dety) / (srcx - detx);
-        float islope = (srcx - detx) / (srcy - dety);
+        float islope = (srcx - detx) / (srcy - dety);*/
 
-        int   i           = d;
-        float simdata_sum = 0.0f;
+        int i = d;
         for(int j = 0; j < dx; ++j)
         {
             /*

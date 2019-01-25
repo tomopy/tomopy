@@ -254,6 +254,25 @@ endif()
 
 ################################################################################
 #
+#        Intel IPP
+#
+################################################################################
+
+if(TOMOPY_USE_IPP)
+    find_package(IPP COMPONENTS core i s cv)
+
+    if(IPP_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${IPP_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${IPP_LIBRARIES})
+        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_IPP)
+    else()
+        set(TOMOPY_USE_IPP OFF)
+    endif()
+endif()
+
+
+################################################################################
+#
 #        ITTNOTIFY (for VTune)
 #
 ################################################################################

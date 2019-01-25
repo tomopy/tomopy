@@ -39,180 +39,19 @@
 
 #pragma once
 
-#ifdef __cplusplus
-#    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                           \
-            extern "C"                                                                   \
-            {
-#    endif
-#    ifndef END_EXTERN_C
-#        define END_EXTERN_C }
-#    endif
-#else
-#    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C
-#    endif
-#    ifndef END_EXTERN_C
-#        define END_EXTERN_C
-#    endif
-#endif
-
-//======================================================================================//
-//  C headers
+#include "common.hh"
 
 BEGIN_EXTERN_C
 #include "gpu.h"
 #include "utils.h"
 END_EXTERN_C
 
-#include <cinttypes>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-
-//======================================================================================//
-//  C++ headers
-
-#include <atomic>
-#include <chrono>
-#include <complex>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <unordered_map>
-
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/Utility.hh"
-
-//======================================================================================//
-
-inline uintmax_t
-GetThisThreadID()
-{
-#if defined(TOMOPY_USE_PTL)
-    return ThreadPool::GetThisThreadID();
-#else
-    static std::atomic<uintmax_t> tcounter;
-    static thread_local auto      tid = tcounter++;
-    return tid;
-#endif
-}
-
-//======================================================================================//
-
-#if !defined(PRINT_HERE)
-#    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
-               __LINE__, extra)
-#endif
-
-//======================================================================================//
-
-#if !defined(GPU_PRINT_HERE)
-#    define GPU_PRINT_HERE(extra)                                                        \
-        printf("[GPU]> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
-#endif
-
-//======================================================================================//
-
-#if !defined(START_TIMER)
-#    define START_TIMER(var) auto var = std::chrono::system_clock::now()
-#endif
-
-//======================================================================================//
-
-#if !defined(REPORT_TIMER)
-#    define REPORT_TIMER(start_time, note, counter, total_count)                         \
-        {                                                                                \
-            auto                          end_time = std::chrono::system_clock::now();   \
-            std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
-            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n", GetThisThreadID(),   \
-                   note, counter, total_count, elapsed_seconds.count());                 \
-        }
-#endif
-
-//======================================================================================//
-
-template <typename _Tp> using cuda_device_info = std::unordered_map<int, _Tp>;
-
-//======================================================================================//
-
-inline tomo_dataset*&
-TomoDataset()
-{
-    static thread_local tomo_dataset* _instance = new tomo_dataset();
-    return _instance;
-}
-
-//======================================================================================//
-
-inline int&
-this_thread_device()
-{
-#if defined(TOMOPY_USE_CUDA)
-    static std::atomic<int> _ntid(0);
-    ThreadLocalStatic int   _instance =
-        (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
-    return _instance;
-#else
-    static thread_local int _instance = 0;
-    return _instance;
-#endif
-}
-
-//======================================================================================//
-
-inline void
-set_this_thread_device()
-{
-#if defined(TOMOPY_USE_CUDA)
-    cuda_set_device(this_thread_device());
-#endif
-}
-
-//======================================================================================//
-
-template <typename _Tp>
-_Tp*
-cpu_malloc(uintmax_t size)
-{
-    _Tp* _cpu = (_Tp*) malloc(size * sizeof(_Tp));
-    return _cpu;
-}
-
 //======================================================================================//
 //  CUDA only
+
 #if defined(TOMOPY_USE_CUDA)
 
 //--------------------------------------------------------------------------------------//
-//  CUDA headers
-#    include <cooperative_groups.h>
-#    include <cuda.h>
-#    include <cuda_runtime_api.h>
-#    include <npp.h>
-#    include <nppi.h>
-#    include <vector_types.h>
-
-//--------------------------------------------------------------------------------------//
-//  Thrust headers
-#    include <thrust/device_vector.h>
-#    include <thrust/execution_policy.h>
-#    include <thrust/fill.h>
-#    include <thrust/functional.h>
-#    include <thrust/host_vector.h>
-#    include <thrust/partition.h>
-#    include <thrust/reduce.h>
-#    include <thrust/sequence.h>
-#    include <thrust/system/cpp/execution_policy.h>
-#    include <thrust/system/cuda/execution_policy.h>
-#    include <thrust/system/omp/execution_policy.h>
-#    include <thrust/system/tbb/execution_policy.h>
-#    include <thrust/transform.h>
-
-//======================================================================================//
 
 template <typename _Tp>
 _Tp*
@@ -398,11 +237,8 @@ transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
 
 #else  // not defined(TOMOPY_USE_CUDA)
 
-#    if !defined(cudaStream_t)
-#        define cudaStream_t int
-#    endif
-
 //======================================================================================//
+
 template <typename _Tp>
 _Tp*
 gpu_malloc(uintmax_t size)
@@ -482,41 +318,18 @@ inline void
 destroy_streams(cudaStream_t*, const int)
 {
 }
-//======================================================================================//
+//--------------------------------------------------------------------------------------//
 template <typename _Tp>
 _Tp
 reduce(_Tp*, _Tp, int, cudaStream_t)
 {
 }
-//======================================================================================//
+//--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
 transform_sum(_Tp*, int, _Tp*, cudaStream_t)
 {
 }
-//======================================================================================//
+//--------------------------------------------------------------------------------------//
 
 #endif  // if defined(TOMOPY_USE_CUDA)
-
-//======================================================================================//
-
-template <typename _Tp>
-void
-print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr, const int& slice,
-                const int& angle, const int& pixel, const std::string& tag)
-{
-    std::ofstream     ofs;
-    std::stringstream fname;
-    fname << "outputs/gpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
-          << pixel << ".dat";
-    ofs.open(fname.str().c_str());
-    std::vector<_Tp> cpu_data(n, _Tp());
-    std::cout << "printing to file " << fname.str() << "..." << std::endl;
-    cpu_memcpy<_Tp>(gpu_data, cpu_data.data(), n);
-    if(!ofs)
-        return;
-    for(uintmax_t i = 0; i < n; ++i)
-        ofs << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
-            << cpu_data[i] << std::endl;
-    ofs.close();
-}

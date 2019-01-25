@@ -47,24 +47,33 @@ file(GLOB tomo_sources
 # core sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 
-# add the library
-if(TOMOPY_USE_CUDA)
-    file(GLOB CUDA_LIBRARY_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
+# target properties based on build
+if(TOMOPY_USE_GPU)
+    if(TOMOPY_USE_CUDA)
+        file(GLOB CUDA_LIBRARY_SOURCES
+            "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc"
+            "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
 
-    list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
+        list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
 
-    list(APPEND TARGET_INCLUDE_DIRECTORIES
-        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        list(APPEND TARGET_INCLUDE_DIRECTORIES
+            ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-    set(CUDA_PROPERTIES
-        CUDA_STANDARD               11
-        CUDA_STANDARD_REQUIRED      ON
-        #CUDA_PTX_COMPILATION        OFF
-        CUDA_SEPARABLE_COMPILATION  ON
-        CUDA_RESOLVE_DEVICE_SYMBOLS ON
-        )
+        set(CUDA_PROPERTIES
+            CUDA_STANDARD               11
+            CUDA_STANDARD_REQUIRED      ON
+            #CUDA_PTX_COMPILATION        OFF
+            CUDA_SEPARABLE_COMPILATION  ON
+            CUDA_RESOLVE_DEVICE_SYMBOLS ON
+            )
+    endif()
+
+    if(TOMOPY_USE_OPENACC)
+        if(cxx_acc)
+            set(OPENACC_PROPERTIES
+                LINK_OPTIONS -acc)
+        endif()
+    endif()
 endif()
 
 # create library
@@ -85,7 +94,7 @@ set_target_properties(libtomopy
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
-    ${CUDA_PROPERTIES})
+    ${CUDA_PROPERTIES} ${OPENACC_PROPERTIES})
 
 target_compile_definitions(libtomopy PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})

@@ -48,8 +48,12 @@
 #else
 #    include <cstddef>
 #    include <cstring>
-#    define TIMEMORY_AUTO_TIMER(c_str) NULL
-#    define TIMEMORY_BASIC_AUTO_TIMER(c_str) NULL
+#    define TIMEMORY_AUTO_TIMER(c_str)                                                   \
+        {                                                                                \
+        }
+#    define TIMEMORY_BASIC_AUTO_TIMER(c_str)                                             \
+        {                                                                                \
+        }
 
 namespace tim
 {

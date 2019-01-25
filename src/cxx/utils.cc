@@ -49,6 +49,12 @@
 #include <stdexcept>
 #include <vector>
 
+#if defined(TOMOPY_USE_IPP)
+#    include <ipp.h>
+#    include <ippdefs.h>
+#    include <ippi.h>
+#endif
+
 #if defined(TOMOPY_USE_OPENCV)
 #    include <opencv2/highgui/highgui.hpp>
 #    include <opencv2/imgcodecs.hpp>
@@ -59,68 +65,6 @@ using namespace cv;
 //======================================================================================//
 
 template <typename _Tp> using Vector = std::vector<_Tp>;
-
-//======================================================================================//
-
-farray_t
-cxx_expand(const float* src, const int factor, const int nx, const int ny)
-{
-    farray_t    dst  = farray_t(nx * factor * ny * factor, 0.0f);
-    const float mult = factor * factor;
-    const int   size = nx * ny;
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx * ny; ++i)
-        {
-            int   idx00 = j * nx + i;
-            float val   = src[idx00] / mult;
-            dst[idx00]  = val;
-            for(int off = 1; off <= factor; ++off)
-            {
-                int idx10 = j * nx + (i + off);
-                int idx01 = (j + off) * nx + i;
-                int idx11 = (j + off) * nx + (i + off);
-                if(idx10 < size)
-                    dst[idx10] = val;
-                if(idx01 < size)
-                    dst[idx01] = val;
-                if(idx11 < size)
-                    dst[idx11] = val;
-            }
-        }
-    }
-    return dst;
-}
-
-//======================================================================================//
-
-farray_t
-cxx_compress(const float* src, const int factor, const int nx, const int ny)
-{
-    farray_t  dst  = farray_t(nx * ny, 0.0f);
-    const int size = abs(factor) * nx * abs(factor) * ny;
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx * ny; ++i)
-        {
-            int idx00  = j * nx + i;
-            dst[idx00] = src[idx00];
-            for(int off = 1; off <= abs(factor); ++off)
-            {
-                int idx10 = j * nx + (i + off);
-                int idx01 = (j + off) * nx + i;
-                int idx11 = (j + off) * nx + (i + off);
-                if(idx10 < size)
-                    dst[idx00] += src[idx10];
-                if(idx01 < size)
-                    dst[idx00] += src[idx01];
-                if(idx11 < size)
-                    dst[idx00] += src[idx11];
-            }
-        }
-    }
-    return dst;
-}
 
 //======================================================================================//
 #if defined(TOMOPY_USE_OPENCV)
@@ -140,88 +84,71 @@ cxx_affine_transform(const Mat& warp_src, float theta, const int nx, const int n
 //======================================================================================//
 
 void
-cxx_affine_transform(farray_t& dst, const float* src, float theta, const int nx,
-                     const int ny, const int factor)
+cxx_affine_transform(farray_t& dst, const float* src, float theta_rad, float theta_deg,
+                     const int nx, const int ny, const float scale)
 {
 #if defined(TOMOPY_USE_OPENCV)
-    if(factor > 1)
-    {
-        dst          = std::move(cxx_expand(src, factor, nx, ny));
-        int dx       = nx * factor;
-        int dy       = ny * factor;
-        Mat warp_src = Mat::zeros(dx, dy, CV_32F);
-        memcpy(warp_src.ptr(), dst.data(), dst.size() * sizeof(float));
-        float angle    = theta * (180.0f / pi);
-        float scale    = 1.0;
-        Mat   warp_rot = cxx_affine_transform(warp_src, angle, dx, dy, scale);
-        memcpy(dst.data(), warp_rot.ptr(), dx * dy * sizeof(float));
-    }
-    else if(factor < -1)
-    {
-        int dx       = nx * abs(factor);
-        int dy       = ny * abs(factor);
-        Mat warp_src = Mat::zeros(dx, dy, CV_32F);
-        memcpy(warp_src.ptr(), src, dx * dy * sizeof(float));
-        float angle    = theta * (180.0f / pi);
-        float scale    = 1.0;
-        Mat   warp_rot = cxx_affine_transform(warp_src, angle, dx, dy, scale);
-        dst.resize(dx * dy, 0.0f);
-        memcpy(dst.data(), warp_rot.ptr(), dx * dy * sizeof(float));
-        dst = std::move(cxx_compress(dst.data(), abs(factor), nx, ny));
-    }
-    else
-    {
-        Mat warp_src = Mat::zeros(nx, ny, CV_32F);
-        memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
-        float angle    = theta * (180.0f / pi);
-        float scale    = 1.0;
-        Mat   warp_rot = cxx_affine_transform(warp_src, angle, nx, ny, scale);
-        memcpy(dst.data(), warp_rot.ptr(), nx * ny * sizeof(float));
-    }
+
+    Mat warp_src = Mat::zeros(nx, ny, CV_32F);
+    memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
+    Mat warp_rot = cxx_affine_transform(warp_src, theta_deg, nx, ny, scale);
+    memcpy(dst.data(), warp_rot.ptr(), nx * ny * sizeof(float));
+
+#elif defined(TOMOPY_USE_IPP)
+
+    auto getRotationMatrix2D = [&](double m[2][3]) {
+        double alpha    = scale * cos(theta_rad);
+        double beta     = scale * sin(theta_rad);
+        double center_x = (0.5 * nx) - 0.5;
+        double center_y = (0.5 * ny) - 0.5;
+
+        m[0][0] = alpha;
+        m[0][1] = beta;
+        m[0][2] = (1.0 - alpha) * center_x - beta * center_y;
+
+        m[1][0] = -beta;
+        m[1][1] = alpha;
+        m[1][2] = beta * center_x + (1.0 - alpha) * center_y;
+    };
+
+    IppiSize siz;
+    siz.width  = nx;
+    siz.height = ny;
+
+    /*IppiRect roi;
+    roi.x      = 0;
+    roi.y      = 0;
+    roi.width  = nx;
+    roi.height = ny;*/
+
+    double        rot[2][3];
+    int           bufSize   = 0;
+    int           specSize  = 0;
+    int           initSize  = 0;
+    int           step      = nx * sizeof(float);
+    IppiPoint     dstOffset = { 0, 0 };
+    IppiWarpSpec* pSpec     = NULL;
+    getRotationMatrix2D(rot);
+
+    ippiWarpAffineGetSize(siz, siz, ipp32f, rot, ippCubic, ippWarpForward,
+                          ippBorderDefault, &specSize, &initSize);
+    ippiWarpGetBufferSize(pSpec, siz, &bufSize);
+    pSpec          = (IppiWarpSpec*) ippsMalloc_32f(specSize);
+    Ipp8u* pBuffer = ippsMalloc_8u(bufSize);
+
+    ippiWarpAffineCubic_32f_C1R(src, step, dst.data(), step, dstOffset, siz, pSpec,
+                                pBuffer);
+
+    ippsFree(pSpec);
+    ippsFree(pBuffer);
+
 #else
+
     std::stringstream ss;
-    ss << __FUNCTION__ << " not implemented without OpenCV!";
+    ss << __FUNCTION__ << " not implemented without OpenCV or Intel IPP!";
     throw std::runtime_error(ss.str());
+
 #endif
-}
-
-//======================================================================================//
-
-float
-bilinear_interpolation(float x, float y, float x1, float x2, float y1, float y2,
-                       float x1y1, float x2y1, float x1y2, float x2y2)
-{
-    if(x1 > x2)
-        std::swap(x1, x2);
-    if(y1 > y2)
-        std::swap(y1, y2);
-
-    if(x < x1 || x > x2)
-        printf(
-            "Warning! interpolating for x = %6.3f which is not in bound [%6.3f, %6.3f]\n",
-            x, x1, x2);
-    if(y < y1 || y > y2)
-        printf(
-            "Warning! interpolating for y = %6.3f which is not in bound [%6.3f, %6.3f]\n",
-            y, y1, y2);
-
-    printf("interpolating for x = %6.3f from [%6.3f, %6.3f]. values = [%6.3f, %6.3f]\n",
-           x, x1, x2, x1y1, x2y1);
-    printf("interpolating for x = %6.3f from [%6.3f, %6.3f]. values = [%6.3f, %6.3f]\n",
-           x, x1, x2, x1y2, x2y2);
-
-    float fx1y1 = (x2 - x) / (x2 - x1) * x1y1;
-    float fx2y1 = (x - x1) / (x2 - x1) * x2y1;
-    float fx1y2 = (x2 - x) / (x2 - x1) * x1y2;
-    float fx2y2 = (x - x1) / (x2 - x1) * x2y2;
-
-    printf("interpolating for y = %6.3f from [%6.3f, %6.3f]. values = [%6.3f, %6.3f]\n",
-           y, y1, y2, (fx1y1 + fx2y1), (fx1y2 + fx2y2));
-    printf("%8.3f, %8.3f, %8.3f, %8.3f, %8.3f, %8.3f\n", fx1y1, fx2y1, fx1y2, fx2y2,
-           (fx1y1 + fx2y1), (fx1y2 + fx2y2));
-
-    return (y2 - y) / (y2 - y1) * (fx1y1 + fx2y1) +
-           (y - y1) / (y2 - y1) * (fx1y2 + fx2y2);
 }
 
 //======================================================================================//
@@ -240,9 +167,11 @@ void
 cxx_rotate_ip(farray_t& dst, const float* src, float theta, const int nx, const int ny)
 {
     memset(dst.data(), 0, nx * ny * sizeof(float));
-#if defined(TOMOPY_USE_OPENCV)
-    cxx_affine_transform(dst, src, theta, nx, ny, 1);
+#if defined(TOMOPY_USE_OPENCV) || defined(TOMOPY_USE_IPP)
+    cxx_affine_transform(dst, src, theta, theta * (180.0f / M_PI), nx, ny, 1);
 #else
+
+    // this is flawed and should not be production
     int   src_size = nx * ny;
     float xoff     = (0.5f * nx) - 0.5f;
     float yoff     = (0.5f * ny) - 0.5f;

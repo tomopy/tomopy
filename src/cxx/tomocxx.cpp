@@ -120,34 +120,11 @@ PYBIND11_MODULE(tomocxx, tomo)
 
     tomo.def("run", run_fib, "Run fibonacci");
     tomo.def("fibonacci", &fibonacci, "Run fibonacci");
-    // tomo.def("normalize_bg", &normalize_bg, "Normalize background");
-    // tomo.def("remove_stripe_sf", &remove_stripe_sf, "Remove stripe");
-    // tomo.def("project", &project, "Project 1D");
-    // tomo.def("project2", &project2, "Project 2D");
-    // tomo.def("project3", &project3, "Project 3D");
-    // tomo.def("sample", &sample, "Sample");
-    // tomo.def("art", &art, "Art reconstruction algorithm");
-    // tomo.def("bart", &bart, "Bart reconstruction algorithm");
-    // tomo.def("fbp", &fbp, "Filtered back projection reconstruction
-    // algorithm"); tomo.def("gridrec", &gridrec, "Gridrec reconstruction
-    // algorithm"); tomo.def("mlem", &mlem, "mlem reconstruction algorithm");
-    // tomo.def("osem", &osem, "osem reconstruction algorithm");
-    // tomo.def("ospml_hybrid", &ospml_hybrid,
-    //         "ospml hybrid reconstruction algorithm");
-    // tomo.def("ospml_quad", &ospml_quad, "ospml quad reconstruction
-    // algorithm"); tomo.def("pml_hybrid", &pml_hybrid, "pml hybrid
-    // reconstruction algorithm"); tomo.def("pml_quad", &pml_quad, "pml quad
-    // reconstruction algorithm"); tomo.def("sirt", &sirt, "sirt reconstruction
-    // algorithm"); tomo.def("vector", &vector, "vector 1D");
-    // tomo.def("vector2", &vector2, "vector 2D"); tomo.def("vector3", &vector3,
-    // "vector 3D"); tomo.def("remove_ring", &remove_ring, "remove ring");
-    // tomo.def("art_task", art_task, "Art reconstruction algorithm");
 
-    // py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");
-    // task_group.def(py::init([] { return new TaskGroupWrapper<void>(); }),
-    //               "Create TaskGroup<void>()");
-    // task_group.def("join", &TaskGroupWrapper<void>::join,
-    //               "Join the task group");
+    py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");
+    task_group.def(py::init([] { return new TaskGroupWrapper<void>(); }),
+                   "Create TaskGroup<void>()");
+    task_group.def("join", &TaskGroupWrapper<void>::join, "Join the task group");
 
     auto _rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
         farray_t        cxx_arr(arr.size(), 0.0f);
@@ -163,7 +140,6 @@ PYBIND11_MODULE(tomocxx, tomo)
     tomo.def("rotate", _rotate, "rotate array");
     tomo.def("apply_rotation", _rotate, "rotate array");
     tomo.def("remove_rotation", _rotate, "rotate array");
-    tomo.def("bilinear_interpolation", &bilinear_interpolation, "bilinear interpolation");
 }
 
 //======================================================================================//

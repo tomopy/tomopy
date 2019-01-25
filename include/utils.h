@@ -41,15 +41,14 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _utils_h
-#define _utils_h
+#pragma once
 
-#include "string.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define _USE_MATH_DEFINES
 #ifndef M_PI
@@ -62,47 +61,8 @@
 #    define DLL
 #endif
 
-//======================================================================================//
-
-typedef struct _TomoData
-{
-    int dy;
-    int dt;
-    int dx;
-    int ngridx;
-    int ngridy;
-    // size (first = 0)
-    int* asize;
-    int* bsize;
-    int* csize;
-    // grid (first = 3)
-    float* gridx;
-    float* gridy;
-    // coord (first = 5)
-    float* coordx;
-    float* coordy;
-    // a (first = 7)
-    float* ax;
-    float* ay;
-    // b (first = 9)
-    float* bx;
-    float* by;
-    // coor (first = 11)
-    float* coorx;
-    float* coory;
-    // etc. (first = 13)
-    float* dist;
-    int*   indi;
-    float* simdata;
-    float* model;
-    // const (first = 17)
-    const float* center;
-    const float* theta;
-    // sum (first = 19)
-    float* sum;
-    float* mov;
-    float* data;
-} tomo_data;
+#include "common.h"
+#include "gpu.h"
 
 //======================================================================================//
 
@@ -116,15 +76,6 @@ typedef struct _TomoData
 #endif
 
 //======================================================================================//
-
-typedef struct _TomoDataset
-{
-    int           nstreams;
-    cudaStream_t* streams;
-    tomo_data*    cpu;
-    tomo_data*    gpu;
-} tomo_dataset;
-
 // Data simulation
 
 DLL void
@@ -268,5 +219,3 @@ rotate_y(const float x, const float y, const float theta);
 DLL float*
 rotate(const float* obj, const float theta, const int nx, const int ny, const int dx,
        const int dy);
-
-#endif

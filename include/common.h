@@ -92,3 +92,33 @@
 #endif
 
 //--------------------------------------------------------------------------------------//
+
+BEGIN_EXTERN_C
+
+//  device-specific info
+DLL void
+cuda_device_query();
+
+DLL int
+cuda_device_count();
+
+// this functions sets "thread_device()" value to device number
+DLL int
+cuda_set_device(int device);
+
+// the functions below use "thread_device()" function to get device number
+DLL int
+cuda_multi_processor_count();
+
+DLL int
+cuda_max_threads_per_block();
+
+DLL int
+cuda_warp_size();
+
+DLL int
+cuda_shared_memory_per_block();
+
+END_EXTERN_C
+
+//--------------------------------------------------------------------------------------//

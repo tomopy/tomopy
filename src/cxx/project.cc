@@ -100,13 +100,14 @@ compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, in
     cpu_rotate_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
-    float     theta_p   = fmodf(theta[p] + halfpi, twopi);
-    float*    simdata   = _cache->simdata();
-    float*    recon     = _cache->recon();
-    farray_t& recon_rot = _cache->rot();
+    float     theta_rad_p = fmodf(theta[p] + halfpi, twopi);
+    float     theta_deg_p = theta_rad_p * (180.0 / pi);
+    float*    simdata     = _cache->simdata();
+    float*    recon       = _cache->recon();
+    farray_t& recon_rot   = _cache->rot();
 
     // Forward-Rotate object
-    cxx_affine_transform(recon_rot, recon, -theta_p, nx, ny, 1.0f);
+    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
 
     for(int d = 0; d < dx; d++)
     {
@@ -145,11 +146,12 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
         for(int p = 0; p < dt; p++)
         {
             // needed for recon to output at proper orientation
-            float    theta_p = fmodf(theta[p] + halfpi, twopi);
+            float    theta_rad_p = fmodf(theta[p] + halfpi, twopi);
+            float    theta_deg_p = theta_rad_p * (180.0f / pi);
             farray_t obj_rot(rot_size, 0.0f);
 
             // Forward-Rotate object
-            cxx_affine_transform(obj_rot, obj, -theta_p, ox, oz, 1.0f);
+            cxx_affine_transform(obj_rot, obj, -theta_rad_p, -theta_deg_p, ox, oz);
 
             for(int d = 0; d < dx; d++)
             {

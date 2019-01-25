@@ -116,8 +116,8 @@ compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, in
     cpu_rotate_data* _cache        = _thread_data[thread_number];
 
     // needed for recon to output at proper orientation
-    float pi_offset = 0.5f * (float) M_PI;
-    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
+    float theta_rad_p = fmodf(theta[p] + halfpi, twopi);
+    float theta_deg_p = theta_rad_p * (180.0 / pi);
     // these structures are cached and re-used
     float*       simdata   = _cache->simdata();
     float*       recon     = _cache->recon();
@@ -127,7 +127,7 @@ compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, in
     farray_t&    recon_tmp = _cache->tmp();
 
     // Forward-Rotate object
-    cxx_affine_transform(recon_rot, recon, -theta_p, nx, ny, 1.0f);
+    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
 
     for(int d = 0; d < dx; d++)
     {
@@ -162,7 +162,7 @@ compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, in
     }
 
     // Back-Rotate object
-    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_p, nx, ny, 1.0f);
+    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, nx, ny);
 
     // update shared update array
 #pragma omp simd

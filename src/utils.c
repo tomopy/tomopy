@@ -443,90 +443,17 @@ rotate_y(const float x, const float y, const float theta)
 //======================================================================================//
 
 float*
-expand(const float* arr_i, const int factor, const int nx, const int ny)
-{
-    float*      arr_o = (float*) malloc(nx * factor * ny * factor * sizeof(float));
-    const float mult  = factor * factor;
-    const int   size  = nx * ny;
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx * ny; ++i)
-        {
-            int   idx00  = j * nx + i;
-            float val    = arr_i[idx00] / mult;
-            arr_o[idx00] = val;
-            for(int off = 1; off <= factor; ++off)
-            {
-                int idx10 = j * nx + (i + off);
-                int idx01 = (j + off) * nx + i;
-                int idx11 = (j + off) * nx + (i + off);
-                if(idx10 < size)
-                    arr_o[idx10] = val;
-                if(idx01 < size)
-                    arr_o[idx01] = val;
-                if(idx11 < size)
-                    arr_o[idx11] = val;
-            }
-        }
-    }
-    return arr_o;
-}
-
-//======================================================================================//
-
-float*
-compress(const float* arr_i, const int factor, const int nx, const int ny)
-{
-    float*    arr_o = (float*) malloc(nx * ny * sizeof(float));
-    const int size  = nx * ny;
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx * ny; ++i)
-        {
-            int idx00    = j * nx + i;
-            arr_o[idx00] = arr_i[idx00];
-            for(int off = 1; off <= factor; ++off)
-            {
-                int idx10 = j * nx + (i + off);
-                int idx01 = (j + off) * nx + i;
-                int idx11 = (j + off) * nx + (i + off);
-                if(idx10 < size)
-                    arr_o[idx00] += arr_i[idx10];
-                if(idx01 < size)
-                    arr_o[idx00] += arr_i[idx10];
-                if(idx11 < size)
-                    arr_o[idx00] += arr_i[idx10];
-            }
-        }
-    }
-    return arr_o;
-}
-
-//======================================================================================//
-
-float*
-rotate(const float* _obj, const float theta, const int _nx, const int _ny, const int _dx,
-       const int _dy)
+rotate(const float* obj, const float theta, const int nx, const int ny, const int dx,
+       const int dy)
 {
 #define COMPUTE_MAX(a, b) (a < b) ? b : a
 #define COMPUTE_MIN(a, b) (a < b) ? a : b
 
-    PRINT_HERE("");
-    int    factor = 2;
-    int    nx     = _nx * factor;
-    int    ny     = _ny * factor;
-    int    dx     = _dx * factor;
-    int    dy     = _dy * factor;
-    float* obj    = expand(_obj, factor, _nx, _ny);
-
-    int    nr     = sqrt(nx * nx + ny * ny);
-    int    off_dx = dx / 2;
-    int    off_dy = dy / 2;
-    int    off_rx = nr / 2;
-    int    off_ry = nr / 2;
-    float* rot    = (float*) malloc(nr * nr * sizeof(float));
-
-    PRINT_HERE("");
+    int   nr      = sqrt(nx * nx + ny * ny);
+    int   off_dx  = dx / 2;
+    int   off_dy  = dy / 2;
+    int   off_rx  = nr / 2;
+    int   off_ry  = nr / 2;
     float obj_max = -1.0 * FLT_MAX;
     float obj_min = 1.0 * FLT_MAX;
     for(int i = 0; i < dx * dy; ++i)
@@ -536,7 +463,7 @@ rotate(const float* _obj, const float theta, const int _nx, const int _ny, const
     }
     float obj_mid = 0.5 * (obj_min + obj_max);
 
-    PRINT_HERE("");
+    float* rot = (float*) malloc(nr * nr * sizeof(float));
     for(int i = 0; i < nr; ++i)
     {
         for(int j = 0; j < nr; ++j)
@@ -564,67 +491,7 @@ rotate(const float* _obj, const float theta, const int _nx, const int _ny, const
         }
     }
 
-    PRINT_HERE("");
-    float obj_sum = 0.0f;
-    float rot_max = -1.0 * FLT_MAX;
-    float rot_min = 1.0 * FLT_MAX;
-    float rot_sum = 0.0f;
-
-    PRINT_HERE("");
-    // compute sum
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        obj_sum += obj[i];
-    }
-    PRINT_HERE("");
-    // compute min/max
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot_max = COMPUTE_MAX(rot_max, rot[i]);
-        rot_min = COMPUTE_MIN(rot_max, rot[i]);
-    }
-    PRINT_HERE("");
-    // translate so bottom is zero
-    rot_max -= rot_min;
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] -= rot_min;
-    }
-    PRINT_HERE("");
-// rescale to max is 1
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] /= rot_max;
-    }
-    PRINT_HERE("");
-// compute sum
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot_sum += rot[i];
-    }
-#pragma omp simd
-    for(int i = 0; i < nr * nr; ++i)
-    {
-        rot[i] *= (obj_sum / rot_sum);
-    }
-    PRINT_HERE("");
-
-#undef COMPUTE_MAX
-#undef COMPUTE_MIN
-
-    PRINT_HERE("");
-    float* _rot = compress(rot, factor, _nx, _ny);
-    PRINT_HERE("");
-    free(rot);
-    PRINT_HERE("");
-    free(obj);
-    PRINT_HERE("");
-
-    return _rot;
+    return rot;
 }
 
 //======================================================================================//
