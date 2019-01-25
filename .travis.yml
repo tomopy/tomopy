@@ -12,6 +12,7 @@ env:
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
     - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
     - TOMOPY_USE_C_SIRT=1
+    - TOMOPY_USE_C_MLEM=1
 before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p ${HOME}/miniconda
@@ -23,7 +24,7 @@ install:
   - source activate tomopy
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --disable-phantom-tests --disable-gpu --disable-cuda ${PYCTEST_ARGS}
 script:
   - coverage run $(which nosetests)
 after_success:

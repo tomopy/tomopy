@@ -308,7 +308,7 @@ def create_phantom_test(args, bench_props, phantom):
     # test properties
     test_props = bench_props
     if phantom.lower() == "shepp3d":
-        test_props = bench_props["RUN_SERIAL"] = "ON"
+        test_props["RUN_SERIAL"] = "ON"
 
     # test command
     cmd = [pyexe, "./pyctest_tomopy_phantom.py"] + test_args

@@ -131,21 +131,74 @@ def configure():
                         help="Disable running phantom tests",
                         action='store_true',
                         default=False)
-    parser.add_argument("--enable-sanitizer",
-                        help="Enable the sanitizer",
-                        action='store_true')
-    parser.add_argument("--sanitizer-type",
-                        help="Set the sanitizer type",
-                        default="address",
-                        type=str,
-                        choices=["leak", "thread", "address", "memory"])
     parser.add_argument("--customize-build-name",
                         help="Customize the build name",
                         type=str,
                         default=None)
+    parser.add_argument("--cmake-args",
+                        help="CMake arguments passed to build",
+                        type=str,
+                        default=[])
 
-    # calls PyCTest.helpers.ArgumentParser.parse_args()
+    def add_bool_opt(args, opt, enable_opt, disable_opt):
+        if enable_opt and disable_opt:
+            msg = """\nWarning! python options for CMake argument '{}' was enabled \
+    AND disabled.\nGiving priority to disable...\n""".format(opt)
+            warnings.warn(msg)
+            enable_opt = False
+
+        if enable_opt:
+            args.cmake_args.append("-D{}:BOOL={}".format(opt, "ON"))
+        if disable_opt:
+            args.cmake_args.append("-D{}:BOOL={}".format(opt, "OFF"))
+
+
+    def add_option(parser, lc_name, disp_name):
+        # enable option
+        parser.add_argument("--enable-{}".format(lc_name), action='store_true',
+                            help="Explicitly enable {} build".format(disp_name))
+        # disable option
+        parser.add_argument("--disable-{}".format(lc_name), action='store_true',
+                            help="Explicitly disnable {} build".format(disp_name))
+
+    add_option(parser, "gpu", "GPU")
+    add_option(parser, "cuda", "CUDA")
+    add_option(parser, "openacc", "OpenACC")
+    add_option(parser, "openmp", "OpenMP")
+    add_option(parser, "nvtx", "NVTX (NVIDIA Nsight)")
+    add_option(parser, "arch", "Hardware optimized")
+    add_option(parser, "avx512", "AVX-512 optimized")
+    add_option(parser, "gperf", "gperftools")
+    add_option(parser, "timemory", "TiMemory")
+    add_option(parser, "sanitizer", "Enable sanitizer (default=leak)")
+
+    parser.add_argument("--sanitizer-type", default="leak",
+                        help="Set the sanitizer type",
+                        type=str, choices=["leak", "thread", "address", "memory"])
+
     args = parser.parse_args()
+
+    add_bool_opt(args, "TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
+    add_bool_opt(args, "TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
+    add_bool_opt(args, "TOMOPY_USE_OPENACC", args.enable_openacc, args.disable_openacc)
+    add_bool_opt(args, "TOMOPY_USE_OPENMP", args.enable_openmp, args.disable_openmp)
+    add_bool_opt(args, "TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
+    if args.enable_avx512 and not args.enable_arch:
+        args.enable_arch = True
+        args.disable_arch = False
+    add_bool_opt(args, "TOMOPY_USE_ARCH", args.enable_arch, args.disable_arch)
+    add_bool_opt(args, "TOMOPY_USE_AVX512", args.enable_avx512, args.disable_avx512)
+    add_bool_opt(args, "TOMOPY_USE_GPERF", args.enable_gperf, args.disable_gperf)
+    add_bool_opt(args, "TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
+    add_bool_opt(args, "TOMOPY_USE_SANITIZER",
+                 args.enable_sanitizer, args.disable_sanitizer)
+
+    if args.enable_sanitizer:
+        args.cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))
+
+    if len(args.cmake_args) > 0:
+        print("\n\n\tCMake arguments set via command line: {}\n".format(
+            args.cmake_args))
 
     if args.cleanup:
         cleanup(pyctest.BINARY_DIRECTORY)
@@ -232,7 +285,7 @@ def run_pyctest():
     #   BUILD_COMMAND
     pyctest.BUILD_COMMAND = "{} setup.py --hide-listing install".format(pyexe)
     pyctest.BUILD_COMMAND += " --build-type=Debug" if args.coverage else ""
-    pyctest.BUILD_COMMAND += " --"
+    pyctest.BUILD_COMMAND += " -- {}".format(" ".join(args.cmake_args))
 
     build_option_append(args.enable_sanitizer, "TOMOPY_USE_SANITIZER", "ON")
     build_option_append(args.enable_sanitizer, "SANITIZER_TYPE", args.sanitizer_type)
