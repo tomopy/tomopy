@@ -109,8 +109,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
-                   int p, int nthreads, cpu_rotate_data** _thread_data)
+compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, int p,
+                   int nthreads, cpu_rotate_data** _thread_data)
 {
     auto             thread_number = GetThisThreadID() % nthreads;
     cpu_rotate_data* _cache        = _thread_data[thread_number];
@@ -126,17 +126,12 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
     farray_t&    recon_rot = _cache->rot();
     farray_t&    recon_tmp = _cache->tmp();
 
-    static int factor = GetEnv<int>("TOMOPY_ROTATE_FACTOR", 1);
-    int        ix     = ngridx;
-    int        iy     = ngridy;
-    int        ox     = factor * ngridx;
-
     // Forward-Rotate object
-    cxx_affine_transform(recon_rot, recon, -theta_p, ix, iy, factor);
+    cxx_affine_transform(recon_rot, recon, -theta_p, nx, ny, 1.0f);
 
     for(int d = 0; d < dx; d++)
     {
-        int pix_offset = d * ox;  // pixel offset
+        int pix_offset = d * nx;  // pixel offset
         int idx_data   = d + p * dx;
         // instead of including all the offsets later in the
         // index lookup, offset the pointer itself
@@ -147,12 +142,12 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
         float        _sum       = 0.0f;
         float        _fngridx   = 0.0f;
 
-        for(int n = 0; n < ox; ++n)
+        for(int n = 0; n < nx; ++n)
             _fngridx += (_recon_rot[n] != 0.0f) ? 1.0 : 0.0f;
 
             // Calculate simulated data by summing up along x-axis
 #pragma omp simd reduction(+ : _sum)
-        for(int n = 0; n < ox; ++n)
+        for(int n = 0; n < nx; ++n)
             _sum += _recon_rot[n];
 
         *_simdata += _sum;
@@ -161,13 +156,13 @@ compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, i
         {
             float upd = (*_data - *_simdata) / _fngridx;
 #pragma omp simd
-            for(int n = 0; n < ox; ++n)
+            for(int n = 0; n < nx; ++n)
                 _recon_rot[n] += upd;
         }
     }
 
     // Back-Rotate object
-    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_p, ix, iy, -factor);
+    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_p, nx, ny, 1.0f);
 
     // update shared update array
 #pragma omp simd

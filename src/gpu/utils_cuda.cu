@@ -110,18 +110,17 @@ print_array(const _Tp* data, int nx, int ny, const std::string& desc)
 //======================================================================================//
 
 void
-cuda_rotate_kernel(float* dst, const float* src, const float theta, const int nx,
-                   const int ny, int eInterp = INTER_CUBIC)
+cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
+                   const float theta_deg, const int nx, const int ny,
+                   int eInterp = INTER_CUBIC)
 {
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
     auto getRotationMatrix2D = [&](double m[2][3], double scale) {
-        double angle    = theta * (M_PI / 180.0);
-        double alpha    = scale * cos(angle);
-        double beta     = scale * sin(angle);
+        double alpha    = scale * cos(theta_rad);
+        double beta     = scale * sin(theta_rad);
         double center_x = (0.5 * nx) - 0.5;
         double center_y = (0.5 * ny) - 0.5;
-        // printf("center = [%8.3f, %8.3f]\n", center_x, center_y);
 
         m[0][0] = alpha;
         m[0][1] = beta;
@@ -146,13 +145,18 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta, const int nx
     getRotationMatrix2D(rot, 1.0);
 
 #if defined(DEBUG)
-    printf("theta = %5.1f\n", theta);
+    printf("theta = %5.1f\n", theta_deg);
     print_array((double*) rot, 3, 2, "rot");
 #endif
 
-    NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta,
+// #define USE_NPPI_ROTATE
+#if defined(USE_NPPI_ROTATE)
+    NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
                                        rot[0][2], rot[1][2], eInterp);
-
+#else
+    NppStatus ret =
+        nppiWarpAffine_32f_C1R(src, siz, step, roi, dst, step, roi, rot, eInterp);
+#endif
     if(ret != NPP_SUCCESS)
         printf("%s returned non-zero NPP status: %i\n", __FUNCTION__, ret);
 
@@ -167,29 +171,28 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta, const int nx
 inline int
 GetInterpolationMode()
 {
-    static thread_local int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
+    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
     return eInterp;
 }
 
 //======================================================================================//
 
 float*
-cuda_rotate(const float* src, const float theta, const int nx, const int ny)
+cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
+            const int ny)
 {
     float* _dst = gpu_malloc<float>(nx * ny);
-    // cudaMemset(_dst, 0, nx * ny * sizeof(float));
-    cuda_rotate_kernel(_dst, src, theta * (180.0f / pi), nx, ny, GetInterpolationMode());
+    cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode());
     return _dst;
 }
 
 //======================================================================================//
 
 void
-cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
-               const int ny)
+cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
+               const int nx, const int ny)
 {
-    // cudaMemset(dst, 0, nx * ny * sizeof(float));
-    cuda_rotate_kernel(dst, src, theta * (180.0f / pi), nx, ny, GetInterpolationMode());
+    cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode());
 }
 
 //======================================================================================//

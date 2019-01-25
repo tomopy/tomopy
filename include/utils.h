@@ -259,14 +259,14 @@ calc_simdata3(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int c
               const float* modelx, const float* modely, const float* modelz, int axis,
               float* simdata);
 
-float DLL
-      rotate_x(const float x, const float y, const float theta);
+DLL float
+rotate_x(const float x, const float y, const float theta);
 
-float DLL
-      rotate_y(const float x, const float y, const float theta);
+DLL float
+rotate_y(const float x, const float y, const float theta);
 
-float* DLL
-       rotate(const float* obj, const float theta, const int nx, const int ny, const int dx,
-              const int dy);
+DLL float*
+rotate(const float* obj, const float theta, const int nx, const int ny, const int dx,
+       const int dy);
 
 #endif

@@ -128,12 +128,13 @@ reduce(float* _in, float* _out, int size);
 //======================================================================================//
 
 DLL float*
-cuda_rotate(const float* src, const float theta, const int nx, const int ny);
+cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
+            const int ny);
 
 //--------------------------------------------------------------------------------------//
 
 DLL void
-cuda_rotate_ip(float* dst, const float* src, const float theta, const int nx,
-               const int ny);
+cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
+               const int nx, const int ny);
 
 //--------------------------------------------------------------------------------------//

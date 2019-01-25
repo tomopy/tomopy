@@ -66,7 +66,7 @@ extern nvtxEventAttributes_t nvtx_update;
 //======================================================================================//
 
 __global__ void
-cuda_sirt_arrsum_kernel(float* dst, const float* src, int size, const float factor)
+cuda_sirt_sum_kernel(float* dst, const float* src, int size, const float factor)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -85,6 +85,7 @@ struct gpu_thread_data
 
     int          m_device;
     int          m_id;
+    int          m_block;
     int          m_dy;
     int          m_dt;
     int          m_dx;
@@ -100,6 +101,7 @@ struct gpu_thread_data
     gpu_thread_data(int device, int id, int dy, int dt, int dx, int nx, int ny)
     : m_device(device)
     , m_id(id)
+    , m_block(GetEnv<int>("CUDA_BLOCK_SIZE", 128))
     , m_dy(dy)
     , m_dt(dt)
     , m_dx(dx)
@@ -121,6 +123,8 @@ struct gpu_thread_data
         cudaFree(m_update);
     }
 
+    int compute_grid(int size) const { return (size + m_block - 1) / m_block; }
+
     void initialize(const float* data, const float* recon, int s)
     {
         uintmax_t offset = s * m_dt * m_dx;
@@ -132,13 +136,11 @@ struct gpu_thread_data
 
     void finalize(float* recon, int s)
     {
-        int      block  = 512;
-        int      grid   = (m_size + block - 1) / block;
+        int      grid   = compute_grid(m_size);
         int      offset = s * m_size;
         float    factor = 1.0f / static_cast<float>(m_dt);
         AutoLock l(TypeMutex<this_type>());  // lock update
-        cuda_sirt_arrsum_kernel<<<grid, block>>>(recon + offset, m_update, m_size,
-                                                 factor);
+        cuda_sirt_sum_kernel<<<grid, m_block>>>(recon + offset, m_update, m_size, factor);
     }
 
     void sync()
@@ -147,6 +149,7 @@ struct gpu_thread_data
         CUDA_CHECK_LAST_ERROR();
     }
 
+    int          block() const { return m_block; }
     float*       rot() const { return m_rot; }
     float*       tmp() const { return m_tmp; }
     float*       update() const { return m_update; }
@@ -164,16 +167,14 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
 
     for(int d = i0; d < dx; d += istride)
     {
-        int          pix_offset = d * nx;      // pixel offset
-        int          idx_data   = d + p * dx;  // data offset
-        float*       _recon     = recon + pix_offset;
-        const float* _data      = data + idx_data;
-        float        _sum       = 0.0f;
+        int   pix_offset = d * nx;      // pixel offset
+        int   idx_data   = d + p * dx;  // data offset
+        float sum        = 0.0f;
         for(int i = 0; i < nx; ++i)
-            _sum += _recon[i];
-        float upd = (*_data - _sum) / static_cast<float>(nx);
+            sum += recon[i + pix_offset];
+        float upd = (data[idx_data] - sum) / static_cast<float>(nx);
         for(int i = 0; i < nx; ++i)
-            _recon[i] += upd;
+            recon[i + pix_offset] += upd;
     }
 }
 
@@ -183,19 +184,19 @@ void
 cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* theta, int s,
                         int p, int nthreads, gpu_thread_data** _gpu_thread_data)
 {
-    auto             thread_number = GetThisThreadID() % nthreads;
-    gpu_thread_data* _cache        = _gpu_thread_data[thread_number];
+    auto              thread_number = GetThisThreadID() % nthreads;
+    gpu_thread_data*& _cache        = _gpu_thread_data[thread_number];
 
     nppSetStream(0);
 
     NVTX_NAME_THREAD(thread_number, __FUNCTION__);
 
     // needed for recon to output at proper orientation
-    float pi_offset = 0.5f * (float) M_PI;
-    float theta_p   = fmodf(theta[p] + pi_offset, 2.0f * (float) M_PI);
-    int   block     = 512;
-    int   grid      = (dx + block - 1) / block;
-    int   smem      = block * sizeof(float);
+    float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+    float theta_p_deg = theta_p_rad * (180.0f / pi);
+    int   block       = _cache->block();
+    int   grid        = _cache->compute_grid(dx);
+    int   smem        = 0;
 
     const float* recon     = _cache->recon();
     const float* data      = _cache->data();
@@ -204,18 +205,17 @@ cuda_compute_projection(int dt, int dx, int ngridx, int ngridy, const float* the
     float*       recon_tmp = _cache->tmp();
 
     // Rotate object
-    cuda_rotate_ip(recon_rot, recon, -theta_p, ngridx, ngridy);
+    cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, ngridx, ngridy);
 
     NVTX_RANGE_PUSH(&nvtx_update);
     cuda_sirt_pixels_kernel<<<grid, block, smem>>>(p, ngridx, dx, recon_rot, data);
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p, ngridx, ngridy);
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, ngridx, ngridy);
 
     // update shared update array
-    cuda_sirt_arrsum_kernel<<<grid, block, smem>>>(update, recon_tmp, ngridx * ngridy,
-                                                   1.0f);
+    cuda_sirt_sum_kernel<<<grid, block, smem>>>(update, recon_tmp, ngridx * ngridy, 1.0f);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -269,7 +269,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     auto initialize = [&](int s) {
         int idx = GetThisThreadID() % nthreads;
         _gpu_thread_data[idx]->initialize(data, recon, s);
-        _gpu_thread_data[idx]->sync();
     };
 
     auto finalize = [&](int s) {
@@ -315,9 +314,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             }
             final();
 #endif
-            cudaStreamSynchronize(0);
         }
-        cudaStreamSynchronize(0);
         // cudaDeviceSynchronize();
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }

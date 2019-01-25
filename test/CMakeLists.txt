@@ -1,4 +1,9 @@
 
+add_option(BUILD_TESTS "Build compiled tests" OFF)
+if(NOT BUILD_TESTS)
+    return()
+endif()
+  
 if(TOMOPY_USE_OPENCV AND OpenCV_FOUND)
     add_executable(test_opencv test_opencv.cc)
     target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES})
