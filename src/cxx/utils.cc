@@ -64,7 +64,8 @@ using namespace cv;
 
 //======================================================================================//
 
-template <typename _Tp> using Vector = std::vector<_Tp>;
+template <typename _Tp>
+using Vector = std::vector<_Tp>;
 
 //======================================================================================//
 #if defined(TOMOPY_USE_OPENCV)
@@ -168,7 +169,7 @@ cxx_rotate_ip(farray_t& dst, const float* src, float theta, const int nx, const 
 {
     memset(dst.data(), 0, nx * ny * sizeof(float));
 #if defined(TOMOPY_USE_OPENCV) || defined(TOMOPY_USE_IPP)
-    cxx_affine_transform(dst, src, theta, theta * (180.0f / M_PI), nx, ny, 1);
+    cxx_affine_transform(dst, src, theta, theta * degrees, nx, ny, 1);
 #else
 
     // this is flawed and should not be production

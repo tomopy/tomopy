@@ -115,7 +115,7 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                 quadrant = calc_quadrant(theta_p);
                 sin_p    = sinf(theta_p);
                 cos_p    = cosf(theta_p);
-                printf("theta = %8.3f\n", theta_p * (180.0 / (float) M_PI));
+
                 // For each detector pixel
                 for(d = 0; d < dx; d++)
                 {

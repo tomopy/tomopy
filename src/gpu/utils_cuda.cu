@@ -39,11 +39,8 @@
 
 //======================================================================================//
 
-#include "PTL/AutoLock.hh"
-#include "PTL/ThreadPool.hh"
 #include "common.hh"
 #include "gpu.hh"
-#include <set>
 
 BEGIN_EXTERN_C
 #include "gpu.h"

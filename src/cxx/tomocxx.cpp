@@ -73,7 +73,8 @@ fibonacci(int n)
 
 //======================================================================================//
 
-template <typename _Tp, typename _Arg = _Tp> class TaskGroupWrapper
+template <typename _Tp, typename _Arg = _Tp>
+class TaskGroupWrapper
 {
 public:
     typedef TaskGroup<_Tp, _Arg> task_group_type;

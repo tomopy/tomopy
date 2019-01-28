@@ -45,11 +45,17 @@ def run(phantom, algorithm, args, get_recon=False):
 
     imgs = []
     bname = get_basepath(args, algorithm, phantom)
+    pname = os.path.join(bname, "proj_{}_".format(algorithm))
     oname = os.path.join(bname, "orig_{}_".format(algorithm))
     fname = os.path.join(bname, "stack_{}_".format(algorithm))
     dname = os.path.join(bname, "diff_{}_".format(algorithm))
 
     prj, ang, obj = generate(phantom, args.size, args.angles)
+    proj = np.zeros(shape=[prj.shape[1], prj.shape[0], prj.shape[2]], dtype=np.float)
+    for i in range(0, prj.shape[1]):
+        proj[i,:,:] = prj[:,i,:]
+    print(proj.shape)
+    output_images(proj, pname, args.format, args.scale, args.ncol)
 
     # always add algorithm
     _kwargs = {"algorithm": algorithm}
@@ -65,6 +71,7 @@ def run(phantom, algorithm, args, get_recon=False):
     with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
                                   algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
+
 
     obj = normalize(obj)
     rec = normalize(rec)
@@ -89,6 +96,7 @@ def run(phantom, algorithm, args, get_recon=False):
 
     if get_recon is True:
         return rec
+
 
     print("oname = {}, fname = {}, dname = {}".format(oname, fname, dname))
     imgs.extend(output_images(obj, oname, args.format, args.scale, args.ncol))

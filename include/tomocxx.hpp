@@ -159,6 +159,9 @@
 //======================================================================================//
 //  tomopy includes
 //
+#include "common.hh"
+#include "utils.hh"
+
 EXTERN_C_
 #include "morph.h"
 #include "prep.h"
@@ -166,22 +169,6 @@ EXTERN_C_
 #include "stripe.h"
 #include "utils.h"
 _EXTERN_C
-#include "utils.hh"
-
-//======================================================================================//
-//  tasking includes
-//
-#include "PTL/TBBTask.hh"
-#include "PTL/TBBTaskGroup.hh"
-#include "PTL/Task.hh"
-#include "PTL/TaskGroup.hh"
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "profiler.hh"
 
 //======================================================================================//
 

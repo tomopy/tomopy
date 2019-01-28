@@ -79,12 +79,14 @@ END_EXTERN_C
 #include <chrono>
 #include <complex>
 #include <cstdint>
+#include <deque>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -99,12 +101,20 @@ END_EXTERN_C
 #endif
 
 #include "PTL/AutoLock.hh"
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
+#include "PTL/Types.hh"
 #include "PTL/Utility.hh"
+
+#if defined(TOMOPY_USE_PTL)
+#    include "PTL/TBBTask.hh"
+#    include "PTL/TBBTaskGroup.hh"
+#    include "PTL/Task.hh"
+#    include "PTL/TaskGroup.hh"
+#    include "PTL/TaskManager.hh"
+#    include "PTL/TaskRunManager.hh"
+#    include "PTL/ThreadData.hh"
+#    include "PTL/ThreadPool.hh"
+#    include "PTL/Threading.hh"
+#endif
 
 //--------------------------------------------------------------------------------------//
 
@@ -175,7 +185,9 @@ END_EXTERN_C
 #define PRAGMA_SIMD _Pragma("omp simd")
 #define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
 #define HW_CONCURRENCY std::thread::hardware_concurrency()
-#define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
+#if !defined(_forward_args_t)
+#    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
+#endif
 
 #if defined(DEBUG)
 #    define PRINT_MAX_ITER 1
@@ -197,12 +209,15 @@ constexpr float pi       = static_cast<float>(M_PI);
 constexpr float halfpi   = 0.5f * pi;
 constexpr float twopi    = 2.0f * pi;
 constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
+constexpr float degrees  = 180.0f / pi;
 }
 
 //======================================================================================//
 
 typedef std::vector<float> farray_t;
 typedef std::vector<int>   iarray_t;
+template <typename _Tp>
+using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //======================================================================================//
 
@@ -264,6 +279,8 @@ struct cpu_rotate_data
     int          m_dx;
     int          m_nx;
     int          m_ny;
+    int          m_px;  // padded x
+    int          m_py;  // padded y
     uintmax_t    m_size;
     farray_t     m_rot;
     farray_t     m_tmp;
@@ -272,47 +289,32 @@ struct cpu_rotate_data
     float*       m_simdata;
     const float* m_data;
 
-    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny)
+    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny, int px, int py,
+                    float* recon, float* simdata, const float* data)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
     , m_dx(dx)
     , m_nx(nx)
     , m_ny(ny)
-    , m_size(m_nx * m_ny)
+    , m_px(px)
+    , m_py(py)
+    , m_size(m_px * m_py)
     , m_rot(farray_t(m_size, 0.0f))
     , m_tmp(farray_t(m_size, 0.0f))
-    , m_recon(nullptr)
-    , m_update(new float[m_size])
-    , m_simdata(nullptr)
-    , m_data(nullptr)
+    , m_recon(recon)
+    , m_update(nullptr)
+    , m_simdata(simdata)
+    , m_data(data)
     {
     }
 
-    ~cpu_rotate_data() { delete[] m_update; }
+    ~cpu_rotate_data() {}
 
-    cpu_rotate_data(const cpu_rotate_data& rhs)
-    : m_id(rhs.m_id)
-    , m_dy(rhs.m_dy)
-    , m_dt(rhs.m_dt)
-    , m_dx(rhs.m_dx)
-    , m_nx(rhs.m_nx)
-    , m_ny(rhs.m_ny)
-    , m_size(rhs.m_size)
-    , m_rot(rhs.m_rot)
-    , m_tmp(rhs.m_tmp)
-    , m_recon(rhs.m_recon)
-    , m_update(new float[m_size])
-    , m_simdata(rhs.m_simdata)
-    , m_data(rhs.m_data)
-    {
-        memcpy(m_update, rhs.m_update, m_size * sizeof(float));
-    }
-
-    float*&         simdata() { return m_simdata; }
-    float*&         update() { return m_update; }
-    float*&         recon() { return m_recon; }
-    const float*&   data() { return m_data; }
+    int             xpad() const { return (m_px - m_nx) / 2; }
+    int             ypad() const { return (m_py - m_ny) / 2; }
+    int             px() const { return m_px; }
+    int             py() const { return m_py; }
     farray_t&       rot() { return m_rot; }
     farray_t&       tmp() { return m_tmp; }
     const farray_t& rot() const { return m_rot; }
@@ -365,10 +367,6 @@ GetThisThreadID()
                    note, counter, total_count, elapsed_seconds.count());                 \
         }
 #endif
-
-//======================================================================================//
-
-template <typename _Tp> using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //======================================================================================//
 
@@ -430,7 +428,7 @@ tolower(std::string val)
 }
 
 //======================================================================================//
-
+#if defined(TOMOPY_USE_PTL)
 inline void
 init_thread_data(ThreadPool* tp)
 {
@@ -440,12 +438,22 @@ init_thread_data(ThreadPool* tp)
     thread_data->is_master   = false;
     thread_data->within_task = false;
 }
-
+#endif
 //======================================================================================//
 
+inline Mutex&
+update_mutex()
+{
+    static Mutex _instance;
+    return _instance;
+}
+
+//======================================================================================//
+#if defined(TOMOPY_USE_PTL)
 inline TaskRunManager*&
 cpu_run_manager()
 {
+    AutoLock               l(TypeMutex<TaskRunManager>());
     static TaskRunManager* _instance =
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
@@ -459,15 +467,6 @@ gpu_run_manager()
     AutoLock               l(TypeMutex<TaskRunManager>());
     static TaskRunManager* _instance =
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
-    return _instance;
-}
-
-//======================================================================================//
-
-inline Mutex&
-update_mutex()
-{
-    static Mutex _instance;
     return _instance;
 }
 
@@ -503,7 +502,7 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
                   << "..." << std::endl;
     }
 }
-
+#endif
 //======================================================================================//
 
 template <typename _Func, typename... _Args>

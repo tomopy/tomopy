@@ -91,46 +91,6 @@ cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 //======================================================================================//
 
 void
-compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, int p,
-                   uintmax_t nthreads, cpu_rotate_data** _thread_data)
-{
-    ConsumeParameters(dt, s);
-
-    auto             thread_number = GetThisThreadID() % nthreads;
-    cpu_rotate_data* _cache        = _thread_data[thread_number];
-
-    // needed for recon to output at proper orientation
-    float     theta_rad_p = fmodf(theta[p] + halfpi, twopi);
-    float     theta_deg_p = theta_rad_p * (180.0 / pi);
-    float*    simdata     = _cache->simdata();
-    float*    recon       = _cache->recon();
-    farray_t& recon_rot   = _cache->rot();
-
-    // Forward-Rotate object
-    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
-
-    for(int d = 0; d < dx; d++)
-    {
-        int pix_offset = d * nx;  // pixel offset
-        int idx_data   = d + p * dx;
-        // instead of including all the offsets later in the
-        // index lookup, offset the pointer itself
-        // this should make it easier for compiler to apply SIMD
-        float* _simdata   = simdata + idx_data;
-        float* _recon_rot = recon_rot.data() + pix_offset;
-        float  _sum       = 0.0f;
-
-        // Calculate simulated data by summing up along x-axis
-        for(int n = 0; n < nx; ++n)
-            _sum += _recon_rot[n];
-
-        *_simdata += _sum;
-    }
-}
-
-//======================================================================================//
-
-void
 project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
             const float* center, const float* theta)
 {
@@ -140,6 +100,7 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
     TIMEMORY_AUTO_TIMER("");
 
     uintmax_t rot_size = static_cast<uintmax_t>(ox * oz);
+    int       offset   = (dx - oz) / 2 - 1;
     for(int s = 0; s < dy; s++)
     {
         // For each projection angle
@@ -147,28 +108,18 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
         {
             // needed for recon to output at proper orientation
             float    theta_rad_p = fmodf(theta[p] + halfpi, twopi);
-            float    theta_deg_p = theta_rad_p * (180.0f / pi);
-            farray_t obj_rot(rot_size, 0.0f);
+            float    theta_deg_p = theta_rad_p * degrees;
+            farray_t obj_rot(ox * oz, 0.0f);
 
             // Forward-Rotate object
-            cxx_affine_transform(obj_rot, obj, -theta_rad_p, -theta_deg_p, ox, oz);
+            cxx_affine_transform(obj_rot, obj, -theta_rad_p, -theta_deg_p, oz, ox);
 
-            for(int d = 0; d < dx; d++)
+            for(int d = 0; d < ox; ++d)
             {
-                int pix_offset = d * ox;  // pixel offset
-                int idx_data   = d + p * dx;
-                // instead of including all the offsets later in the
-                // index lookup, offset the pointer itself
-                // this should make it easier for compiler to apply SIMD
-                float* _data    = data + idx_data;
-                float* _obj_rot = obj_rot.data() + pix_offset;
-                float  _sum     = 0.0f;
-
+                int idx_data = d + p * dx + s * dt * dx;
                 // Calculate simulated data by summing up along x-axis
-                for(int n = 0; n < ox; ++n)
-                    _sum += _obj_rot[n];
-
-                *_data += _sum;
+                for(int n = 0; n < oz; ++n)
+                    data[idx_data + offset] += obj_rot[d * ox + n];
             }
         }
     }

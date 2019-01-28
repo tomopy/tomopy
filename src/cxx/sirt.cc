@@ -37,8 +37,6 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
 #include "common.hh"
 #include "utils.hh"
 
@@ -68,21 +66,12 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     if(use_c_algorithm)
         return (int) false;
 
-#if defined(TOMOPY_USE_PTL)
     auto tid = GetThisThreadID();
-#else
-    static std::atomic<uintmax_t> tcounter;
-    static thread_local auto      tid = tcounter++;
-#endif
     ConsumeParameters(tid);
 
-#if defined(TOMOPY_USE_TIMEMORY)
-    tim::timer t(__FUNCTION__);
-    t.format().get()->width(10);
-    t.start();
-#endif
-
+    START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
+
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
@@ -98,10 +87,7 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 #endif
 
-#if defined(TOMOPY_USE_TIMEMORY)
-    AutoLock l(TypeMutex<decltype(std::cout)>());
-    std::cout << "[" << tid << "]> " << t.stop_and_return() << std::endl;
-#endif
+    REPORT_TIMER(cxx_timer, __FUNCTION__, 0, 0);
 
     return (int) true;
 }
@@ -109,29 +95,38 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, int p,
-                   int nthreads, cpu_rotate_data** _thread_data)
+compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, int s,
+                   int p, float* m_recon, float* m_simdata, const float* m_data,
+                   float* update)
 {
-    auto             thread_number = GetThisThreadID() % nthreads;
-    cpu_rotate_data* _cache        = _thread_data[thread_number];
+    static thread_local cpu_rotate_data* _cache = nullptr;
+    static Mutex                         _mutex;
+    if(!_cache)
+    {
+        _cache = new cpu_rotate_data(GetThisThreadID(), dy, dt, dx, nx, ny, nx, ny,
+                                     m_recon, m_simdata, m_data);
+    }
 
     // needed for recon to output at proper orientation
-    float theta_rad_p = fmodf(theta[p] + halfpi, twopi);
-    float theta_deg_p = theta_rad_p * (180.0 / pi);
+    float theta_rad_p = fmodf(theta[p], pi) + halfpi;
+    float theta_deg_p = theta_rad_p * degrees;
     // these structures are cached and re-used
-    float*       simdata   = _cache->simdata();
-    float*       recon     = _cache->recon();
-    float*       update    = _cache->update();
-    const float* data      = _cache->data();
+    const float* data      = m_data + s * dt * dx;
+    float*       simdata   = m_simdata + s * dt * dx;
+    float*       recon     = m_recon + s * nx * ny;
     farray_t&    recon_rot = _cache->rot();
     farray_t&    recon_tmp = _cache->tmp();
+    int          px        = _cache->px();
+    int          py        = _cache->py();
+    float        fngridx   = static_cast<float>(nx);
 
     // Forward-Rotate object
-    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
+    memset(recon_rot.data(), 0, px * py * sizeof(float));
+    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, px, py);
 
     for(int d = 0; d < dx; d++)
     {
-        int pix_offset = d * nx;  // pixel offset
+        int pix_offset = d * nx + px;  // pixel offset
         int idx_data   = d + p * dx;
         // instead of including all the offsets later in the
         // index lookup, offset the pointer itself
@@ -140,34 +135,27 @@ compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, in
         float*       _simdata   = simdata + idx_data;
         float*       _recon_rot = recon_rot.data() + pix_offset;
         float        _sum       = 0.0f;
-        float        _fngridx   = 0.0f;
 
-        for(int n = 0; n < nx; ++n)
-            _fngridx += (_recon_rot[n] != 0.0f) ? 1.0 : 0.0f;
-
-            // Calculate simulated data by summing up along x-axis
-#pragma omp simd reduction(+ : _sum)
+        // Calculate simulated data by summing up along x-axis
         for(int n = 0; n < nx; ++n)
             _sum += _recon_rot[n];
-
         *_simdata += _sum;
+
         // Make update by backprojecting error along x-axis
-        if(_fngridx != 0.0f)
-        {
-            float upd = (*_data - *_simdata) / _fngridx;
-#pragma omp simd
-            for(int n = 0; n < nx; ++n)
-                _recon_rot[n] += upd;
-        }
+        float upd = (*_data - *_simdata) / fngridx;
+        for(int n = 0; n < nx; ++n)
+            _recon_rot[n] += upd;
     }
 
     // Back-Rotate object
-    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, nx, ny);
+    memset(recon_tmp.data(), 0, px * py * sizeof(float));
+    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, px, py);
 
     // update shared update array
-#pragma omp simd
+    _mutex.lock();
     for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
-        update[i] += recon_tmp[i];
+        update[i] += recon_tmp[i] / static_cast<float>(dx);
+    _mutex.unlock();
 }
 
 //======================================================================================//
@@ -179,21 +167,17 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    int nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
 #if defined(TOMOPY_USE_PTL)
-    TaskRunManager* run_man = cpu_run_manager();
+    int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+    TaskRunManager* run_man  = cpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
+    init_thread_data(run_man->GetThreadPool());
 #endif
 
     TIMEMORY_AUTO_TIMER("");
 
-    // create a cache of the data for each thread
-    cpu_rotate_data** _thread_data = new cpu_rotate_data*[nthreads];
-    for(int i = 0; i < nthreads; ++i)
-        _thread_data[i] = new cpu_rotate_data(i, dy, dt, dx, ngridx, ngridy);
-
-    uintmax_t m_size = static_cast<uintmax_t>(ngridx * ngridy);
+    //----------------------------------------------------------------------------------//
     for(int i = 0; i < num_iter; i++)
     {
         START_TIMER(t_start);
@@ -205,42 +189,21 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
         {
             // for each thread, calculate all the offsets of the data
             // for this slice
-            for(int ii = 0; ii < nthreads; ++ii)
-            {
-                uintmax_t offset            = static_cast<uintmax_t>(s * dt * dx);
-                _thread_data[ii]->data()    = data + offset;
-                _thread_data[ii]->simdata() = simdata.data() + offset;
-                offset                      = s * m_size;
-                memset(_thread_data[ii]->update(), 0, m_size * sizeof(float));
-                _thread_data[ii]->recon() = recon + offset;
-            }
+            farray_t update(ngridx * ngridy, 0.0f);
 
 #if defined(TOMOPY_USE_PTL)
             TaskGroup<void> tg;
-            // For each projection angle
-            for(int p = 0; p < dt; p++)
-            {
-                task_man->exec(tg, compute_projection, dt, dx, ngridx, ngridy, theta, s,
-                               p, nthreads, _thread_data);
-            }
+            for(int p = 0; p < dt; ++p)
+                task_man->exec(tg, compute_projection, dy, dt, dx, ngridx, ngridy, theta,
+                               s, p, recon, simdata.data(), data, update.data());
             tg.join();
 #else
-            // For each projection angle
-            for(int p = 0; p < dt; p++)
-            {
-                compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
-                                   _thread_data);
-            }
+            for(int p = 0; p < dt; ++p)
+                compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, recon,
+                                   simdata.data(), data, update.data());
 #endif
-            // update the reconstruction
-            for(int ii = 0; ii < nthreads; ++ii)
-            {
-                uintmax_t offset = static_cast<uintmax_t>(s) * m_size;
-                float*    _recon = recon + offset;
-                float     factor = 1.0f / static_cast<float>(dt);
-                for(uintmax_t i = 0; i < m_size; ++i)
-                    _recon[i] += _thread_data[ii]->update()[i] * factor;
-            }
+            for(int j = 0; j < (ngridx * ngridy); ++j)
+                recon[j + s * ngridx * ngridy] += update[j];
         }
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
@@ -249,7 +212,6 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
 }
 
 //======================================================================================//
-
 #if !defined(TOMOPY_USE_CUDA)
 void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
@@ -258,7 +220,6 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 #endif
-
 //======================================================================================//
 
 void
@@ -296,7 +257,7 @@ sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const floa
             }
 
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
-                _recon[ii] += update[ii] / static_cast<float>(dt);
+                _recon[ii] += update[ii] / static_cast<float>(dx);
         }
         auto                          t_end           = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = t_end - t_start;
@@ -342,7 +303,7 @@ sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float
             }
 
             for(int ii = 0; ii < (ngridx * ngridy); ++ii)
-                _recon[ii] += update[ii] / static_cast<float>(dt);
+                _recon[ii] += update[ii] / static_cast<float>(dx);
         }
         auto                          t_end           = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = t_end - t_start;

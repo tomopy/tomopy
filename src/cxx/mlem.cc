@@ -37,8 +37,6 @@
 //  ---------------------------------------------------------------
 //   TOMOPY class header
 
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
 #include "common.hh"
 #include "gpu.hh"
 #include "utils.hh"
@@ -70,7 +68,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     // check to see if the C implementation is requested
-    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_MLEM", false);
+    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_MLEM", true);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
         return (int) false;
@@ -426,7 +424,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
                     quadrant = calc_quadrant(theta_p);
                     sin_p    = sinf(theta_p);
                     cos_p    = cosf(theta_p);
-                    printf("theta = %8.3f\n", theta_p * (180.0 / (float) M_PI));
+                    printf("theta = %8.3f\n", theta_p * degrees);
                     // For each detector pixel
                     for(d = 0; d < dx; d++)
                     {
