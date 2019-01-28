@@ -27,6 +27,7 @@ install:
       conda install python=$PYTHON_VERSION
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
+      --file envs/requirements-bench.txt
   - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       conda install python-coveralls --file envs/requirements-py27.txt;
     fi

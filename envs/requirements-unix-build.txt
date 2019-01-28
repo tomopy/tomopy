@@ -1,4 +1,2 @@
 coverage
 nose
-pyctest
-timemory
