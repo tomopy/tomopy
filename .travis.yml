@@ -1,37 +1,41 @@
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
 os:
   - linux
-#  - osx
 sudo: false
 env:
-  - PATH=$HOME/miniconda/bin:$PATH LD_LIBRARY_PATH=$HOME/miniconda/lib C_INCLUDE_PATH=$HOME/miniconda/include
+  matrix:
+    - PYTHON_VERSION="2.7"
+    - PYTHON_VERSION="3.6"
+    - PYTHON_VERSION="3.7"
+  global:
+    - PATH=${HOME}/miniconda/bin:${PATH}
+    - LD_LIBRARY_PATH=${HOME}/miniconda/lib
+    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
 before_install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda config --add channels conda-forge
-  - conda config --add channels jrmadsen
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update conda
+  - bash miniconda.sh -b -p ${HOME}/miniconda
+  - export PATH="${HOME}/miniconda/bin:${PATH}"
+  - conda config --set always_yes yes
 install:
-  - "conda install python=$TRAVIS_PYTHON_VERSION nose six numpy scipy
-    scikit-image mkl-devel mkl_fft python-coveralls dxchange
-    numexpr coverage timemory pyctest"
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install futures;
+  - conda config --add channels jrmadsen
+  - conda config --add channels conda-forge
+  - >
+      conda install python=$PYTHON_VERSION
+      --file envs/requirements-all.txt
+      --file envs/requirements-unix-build.txt
+      --file envs/requirements-bench.txt
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      conda install python-coveralls --file envs/requirements-py27.txt;
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --pyctest-site=Travis --pyctest-submit --pyctest-jobs=1 --disable-phantom-tests
+  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS}
 script:
+  - cd test/
   - coverage run $(which nosetests)
 after_success:
   - coveralls

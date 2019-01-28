@@ -1,0 +1,11 @@
+dxchange
+h5py
+mkl
+mkl-devel
+mkl_fft
+numexpr
+numpy
+pywavelets
+scikit-image
+scipy
+six

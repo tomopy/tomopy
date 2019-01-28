@@ -33,12 +33,32 @@ This will launch the GitHub desktop application
 and ask you where you want to save it. Select a location in your
 computer and feel comfortable with making modifications in the code.
 
+
+Installing dependencies
+=======================
+To build and run TomoPy, you will need to install at least the dependencies
+listed in ``env/requirements-all.txt`` plus additional dependencies based
+on your build environment. For example, installing requirements for building
+the Python 2.7 version on Unix can be accomplished as follows::
+
+    $ conda install --file requirements-all.txt --file requirements-27.txt --file requirements-unix-build.txt
+
+
+Building TomoPy
+===============
+
+After navigating to inside the `tomopy` directory, you can install TomoPy by
+running the install script in the typical Python way::
+
+    $ python setup.py install
+
+
 Running the Tests
 =================
-Tomopy has a suite of python unit tests that live in the ``/test`` directory,
+TomoPy has a suite of Python unit tests that live in the ``/test`` directory,
 where they follow the same tree structure as the packages under ``/tomopy``.
 These are automatically run by TravisCI when you make a pull request
-(See below for how to do that) and you can run them manually using pytest,
+(See below for how to do that). You can run them manually using pytest,
 or whichever python test runner you prefer.  To make it easier to run tests
 on the changes you make to the code, it is recommended that you install TomoPy
 in development mode.  (`python setup.py develop`)
