@@ -99,8 +99,8 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 
     TIMEMORY_AUTO_TIMER("");
 
-    uintmax_t rot_size = static_cast<uintmax_t>(ox * oz);
-    int       offset   = (dx - oz) / 2 - 1;
+    // uintmax_t rot_size = static_cast<uintmax_t>(ox * oz);
+    int offset = (dx - oz) / 2 - 1;
     for(int s = 0; s < dy; s++)
     {
         // For each projection angle

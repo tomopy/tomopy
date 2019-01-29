@@ -327,12 +327,6 @@ cuda_device_query()
         cudaDriverGetVersion(&driverVersion);
         cudaRuntimeGetVersion(&runtimeVersion);
 
-        // This only available in CUDA 4.0-4.2 (but these were only exposed in
-        // the CUDA Driver API)
-        int memoryClock;
-        int memBusWidth;
-        int L2CacheSize;
-
         printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
                driverVersion / 1000, (driverVersion % 100) / 10, runtimeVersion / 1000,
                (runtimeVersion % 100) / 10);
@@ -374,6 +368,11 @@ cuda_device_query()
         }
 
 #else
+        // This only available in CUDA 4.0-4.2 (but these were only exposed in
+        // the CUDA Driver API)
+        int memoryClock;
+        int memBusWidth;
+        int L2CacheSize;
         getCudaAttribute<int>(&memoryClock, CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE, dev);
         printf("  Memory Clock rate:                             %.0f Mhz\n",
                memoryClock * 1e-3f);
