@@ -182,7 +182,7 @@ using namespace std::placeholders;  // for _1, _2, _3...
 #define pyobj_cast(_var, _type, _pyobject) _type* _var = _pyobject.cast<_type*>()
 
 //======================================================================================//
-
+#if defined(TOMOPY_USE_PTL)
 class TaskRunManagerWrapper
 {
 public:
@@ -209,7 +209,7 @@ public:
 private:
     TaskRunManager* _manager;
 };
-
+#endif
 //======================================================================================//
 
 // undefine helper macros
