@@ -13,6 +13,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON
     CACHE BOOL "Position independent code" FORCE)
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     CACHE PATH "Installation directory of libraries" FORCE)
+if(TOMOPY_USE_PYBIND11)
+    # ensure the submodule is checked out
+    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
+        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    add_subdirectory(pybind11)
+endif()
 
 #------------------------------------------------------------------------------#
 #
@@ -121,33 +127,30 @@ add_custom_command(TARGET libtomopy POST_BUILD
 #
 #------------------------------------------------------------------------------#
 if(TOMOPY_USE_PYBIND11)
-    # ensure the submodule is checked out
-    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-    add_subdirectory(pybind11)
+    file(GLOB TOMOCXX_SOURCES ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cpp)
+    file(GLOB TOMOCXX_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
-    pybind11_add_module(tomocxx ${CMAKE_CURRENT_LIST_DIR}/cxx/tomocxx.cpp
-        ${PROJECT_SOURCE_DIR}/include/tomocxx.hpp)
+    pybind11_add_module(tomocxx ${TOMOCXX_HEADERS} ${TOMOCXX_SOURCES})
 
-    target_link_libraries(tomocxx PUBLIC libtomopy)
+    target_link_libraries(tomocxx PRIVATE libtomopy ${EXTERNAL_LIBRARIES})
 
     set_target_properties(tomocxx PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
         LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
         ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy)
 
-    target_compile_definitions(tomocxx PUBLIC
+    target_compile_definitions(tomocxx PRIVATE
         ${${PROJECT_NAME}_DEFINITIONS})
 
     get_target_property(_INCLUDE_DIRS tomocxx INCLUDE_DIRECTORIES)
     target_include_directories(tomocxx PRIVATE
-        ${_INCLUDE_DIRS} ${TARGET_INCLUDE_DIRECTORIES})
+        ${PYTHON_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}/pybind11/include
+        ${TARGET_INCLUDE_DIRECTORIES})
 
-    target_compile_options(tomocxx PUBLIC
+    target_compile_options(tomocxx PRIVATE
         $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
+        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
     install(TARGETS tomocxx
         DESTINATION ${PYTHON_SITE_DIR}/tomopy

@@ -47,24 +47,19 @@
 //
 
 #include "tomocxx.hpp"
-#include "PTL/AutoLock.hh"
-#include "PTL/Threading.hh"
+#include "common.hh"
 
-#ifdef USE_TIMEMORY
+#if defined(TOMOPY_USE_TIMEMORY)
 #    include <timemory/signal_detection.hpp>
 #    include <timemory/timemory.hpp>
 #endif
-
-EXTERN_C_
-#include "gridrec.h"
-_EXTERN_C
 
 //======================================================================================//
 
 typedef py::array_t<float, py::array::c_style | py::array::forcecast> pyfarray_t;
 
 //======================================================================================//
-
+#if defined(TOMOPY_USE_PTL)
 int
 fibonacci(int n)
 {
@@ -93,19 +88,23 @@ public:
 private:
     task_group_type m_task_group;
 };
-
+#endif
 //======================================================================================//
 
-PYBIND11_MODULE(tomocxx, tomo)
+PYBIND11_MODULE(tomocxx, tomocxx)
 {
-    // py::add_ostream_redirect(tomo, "ostream_redirect");
+    py::add_ostream_redirect(tomocxx, "ostream_redirect");
 
+
+#if defined(TOMOPY_USE_PTL)
     auto run_fib = [=](int n, int nitr) {
-        TaskRunManager* rm = TaskRunManager::GetInstance();
-        if(!rm->IsInitialized())
-            rm->Initialize();
+        int nthreads          = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+        TaskRunManager* rm = cpu_run_manager();
+        init_run_manager(rm, nthreads);
         std::cout << "getting task manager..." << std::endl;
         TaskManager* tm = rm->GetTaskManager();
+        std::cout << "getting thread pool..." << std::endl;
+        ThreadPool* tp = tm->thread_pool();
         std::cout << "creating task group..." << std::endl;
         TaskGroup<int> tg([](int& ref, int i) {
             ref += i;
@@ -119,13 +118,14 @@ PYBIND11_MODULE(tomocxx, tomo)
         return result;
     };
 
-    tomo.def("run", run_fib, "Run fibonacci");
-    tomo.def("fibonacci", &fibonacci, "Run fibonacci");
+    tomocxx.def("run", run_fib, "Run fibonacci");
+    tomocxx.def("fibonacci", &fibonacci, "Run fibonacci");
 
-    py::class_<TaskGroupWrapper<void>> task_group(tomo, "task_group");
+    py::class_<TaskGroupWrapper<void>> task_group(tomocxx, "task_group");
     task_group.def(py::init([] { return new TaskGroupWrapper<void>(); }),
                    "Create TaskGroup<void>()");
     task_group.def("join", &TaskGroupWrapper<void>::join, "Join the task group");
+#endif
 
     auto _rotate = [=](pyfarray_t arr, float theta, int nx, int ny) {
         farray_t        cxx_arr(arr.size(), 0.0f);
@@ -138,9 +138,9 @@ PYBIND11_MODULE(tomocxx, tomo)
         return _arr;
     };
 
-    tomo.def("rotate", _rotate, "rotate array");
-    tomo.def("apply_rotation", _rotate, "rotate array");
-    tomo.def("remove_rotation", _rotate, "rotate array");
+    tomocxx.def("rotate", _rotate, "rotate array");
+    tomocxx.def("apply_rotation", _rotate, "rotate array");
+    tomocxx.def("remove_rotation", _rotate, "rotate array");
 }
 
 //======================================================================================//

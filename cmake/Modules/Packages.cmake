@@ -224,7 +224,7 @@ endif()
 #
 ################################################################################
 if(TOMOPY_USE_OPENCV)
-    set(OpenCV_COMPONENTS opencv_core opencv_imgproc opencv_highgui)
+    set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
     find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
 
     foreach(_COMPONENT ${OpenCV_COMPONENTS})
