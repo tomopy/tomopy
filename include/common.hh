@@ -155,7 +155,6 @@ END_EXTERN_C
 #    include <thrust/system/cpp/execution_policy.h>
 #    include <thrust/system/cuda/execution_policy.h>
 #    include <thrust/system/omp/execution_policy.h>
-#    include <thrust/system/tbb/execution_policy.h>
 #    include <thrust/transform.h>
 #    include <vector_types.h>
 #else
