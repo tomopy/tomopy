@@ -13,3 +13,5 @@
 !pyctest_*.py
 !*.sh
 !README.md
+!profile.sh
+!setup.py

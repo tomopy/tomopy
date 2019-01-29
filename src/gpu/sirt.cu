@@ -106,7 +106,8 @@ struct gpu_data
         m_update = gpu_malloc<float>(m_dy * m_nx * m_ny);
         m_recon  = gpu_malloc<float>(m_dy * m_nx * m_ny);
         m_data   = gpu_malloc<float>(m_dy * m_dt * m_dx);
-        cudaMemcpy(m_data, data, m_dy * m_dt * m_dx, cudaMemcpyHostToDevice);
+        cudaMemcpy(m_data, cpu_data, m_dy * m_dt * m_dx * sizeof(float),
+                   cudaMemcpyHostToDevice);
     }
 
     ~gpu_data()
@@ -144,7 +145,8 @@ struct gpu_data
             cudaMemcpyPeer(m_recon, m_device, recon, 0,
                            m_dy * m_nx * m_ny * sizeof(float));
         else
-            cudaMemcpy(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float));
+            cudaMemcpy(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float),
+                       cudaMemcpyDeviceToDevice);
     }
 
     int    device() const { return m_device; }
@@ -183,7 +185,7 @@ cuda_sirt_atomic_sum_kernel(float* dst, const float* src, int size, const float 
 //======================================================================================//
 
 __global__ void
-cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
+cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data, float* dst)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -197,7 +199,7 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
             sum += recon[i + pix_offset];
         float upd = (data[idx_data] - sum) / static_cast<float>(nx);
         for(int i = 0; i < nx; ++i)
-            recon[i + pix_offset] += upd;
+            dst[i + pix_offset] += upd;
     }
 }
 
@@ -211,10 +213,10 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     gpu_data*& _cache        = _gpu_data[thread_number];
 
     cuda_set_device(_cache->device());
-    nppSetStream(0);
+    //nppSetStream(0);
 
     // needed for recon to output at proper orientation
-    float theta_p_rad = fmodf(theta[p] + halfpi, pi);
+    float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float theta_p_deg = theta_p_rad * degrees;
     int   block       = _cache->block();
     int   grid        = _cache->compute_grid(dx);
@@ -228,18 +230,20 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     // Rotate object
     cudaMemset(recon_rot, 0, nx * ny * sizeof(float));
     cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny);
+    cudaMemcpy(recon_tmp, recon_rot, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
 
     NVTX_RANGE_PUSH(&nvtx_update);
-    cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data);
+    cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data, recon_tmp);
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
+    cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
     cudaMemset(recon_tmp, 0, nx * ny * sizeof(float));
     cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny);
 
     // update shared update array
-    float factor = 1.0f / static_cast<float>(nx);
-    cuda_sirt_sum_kernel<<<grid, block>>>(update, recon_tmp, nx * ny, factor);
+    float factor = 1.0f / static_cast<float>(dx);
+    cuda_sirt_atomic_sum_kernel<<<grid, block>>>(update, recon_tmp, nx * ny, factor);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -338,7 +342,9 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                 dst = tmp_recon;
                 cudaMemcpyPeer(dst, dst_device, src, src_device, dy * ngridx * ngridy);
             }
-            cuda_sirt_sum_kernel<<<grid, block>>>(recon, dst, dy * ngridx * ngridy, 1.0f);
+            float factor = 1.0f;
+            cuda_sirt_atomic_sum_kernel<<<grid, block>>>(recon, dst, dy * ngridx * ngridy,
+                                                         factor);
         }
         cudaDeviceSynchronize();
         REPORT_TIMER(t_start, "iteration", i, num_iter);
