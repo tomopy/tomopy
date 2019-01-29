@@ -185,7 +185,8 @@ cuda_sirt_atomic_sum_kernel(float* dst, const float* src, int size, const float 
 //======================================================================================//
 
 __global__ void
-cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data, float* dst)
+cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
+                        float* dst)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -213,7 +214,7 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     gpu_data*& _cache        = _gpu_data[thread_number];
 
     cuda_set_device(_cache->device());
-    //nppSetStream(0);
+    // nppSetStream(0);
 
     // needed for recon to output at proper orientation
     float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
@@ -234,6 +235,7 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
 
     NVTX_RANGE_PUSH(&nvtx_update);
     cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data, recon_tmp);
+    cudaStreamSynchronize(0);
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
@@ -284,14 +286,14 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     int master_device = 0;
     cuda_set_device(master_device);
     float* tmp_recon = gpu_malloc<float>(dy * ngridx * ngridy);
-    float* recon = gpu_malloc<float>(dy * ngridx * ngridy);
+    float* recon     = gpu_malloc<float>(dy * ngridx * ngridy);
     cudaMemcpy(recon, cpu_recon, dy * ngridx * ngridy * sizeof(float),
                cudaMemcpyHostToDevice);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
 
     for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii] = new gpu_data(ii % num_devices, ii, dy, dt, dx, ngridx, ngridy, cpu_data);
-
+        _gpu_data[ii] =
+            new gpu_data(ii % num_devices, ii, dy, dt, dx, ngridx, ngridy, cpu_data);
 
     for(int i = 0; i < num_iter; i++)
     {

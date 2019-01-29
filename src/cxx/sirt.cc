@@ -103,8 +103,8 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
     static Mutex                         _mutex;
     if(!_cache)
     {
-        _cache = new cpu_rotate_data(GetThisThreadID(), dy, dt, dx, nx, ny, nx, ny,
-                                     m_recon, m_simdata, m_data);
+        _cache = new cpu_rotate_data(GetThisThreadID(), dy, dt, dx, nx, ny, m_recon,
+                                     m_simdata, m_data);
     }
 
     // needed for recon to output at proper orientation
@@ -116,17 +116,15 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
     float*       recon     = m_recon + s * nx * ny;
     farray_t&    recon_rot = _cache->rot();
     farray_t&    recon_tmp = _cache->tmp();
-    int          px        = _cache->px();
-    int          py        = _cache->py();
     float        fngridx   = static_cast<float>(nx);
 
     // Forward-Rotate object
-    memset(recon_rot.data(), 0, px * py * sizeof(float));
-    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, px, py);
+    memset(recon_rot.data(), 0, nx * ny * sizeof(float));
+    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
 
     for(int d = 0; d < dx; d++)
     {
-        int pix_offset = d * nx + px;  // pixel offset
+        int pix_offset = d * nx;  // pixel offset
         int idx_data   = d + p * dx;
         // instead of including all the offsets later in the
         // index lookup, offset the pointer itself
@@ -148,13 +146,15 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
     }
 
     // Back-Rotate object
-    memset(recon_tmp.data(), 0, px * py * sizeof(float));
-    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, px, py);
+    memset(recon_tmp.data(), 0, nx * ny * sizeof(float));
+    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, nx, ny);
 
     // update shared update array
     _mutex.lock();
     for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
+    {
         update[i] += recon_tmp[i] / static_cast<float>(dx);
+    }
     _mutex.unlock();
 }
 
@@ -199,11 +199,15 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
             tg.join();
 #else
             for(int p = 0; p < dt; ++p)
+            {
                 compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, recon,
                                    simdata.data(), data, update.data());
+            }
 #endif
             for(int j = 0; j < (ngridx * ngridy); ++j)
+            {
                 recon[j + s * ngridx * ngridy] += update[j];
+            }
         }
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }

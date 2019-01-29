@@ -279,8 +279,6 @@ struct cpu_rotate_data
     int          m_dx;
     int          m_nx;
     int          m_ny;
-    int          m_px;  // padded x
-    int          m_py;  // padded y
     uintmax_t    m_size;
     farray_t     m_rot;
     farray_t     m_tmp;
@@ -289,17 +287,15 @@ struct cpu_rotate_data
     float*       m_simdata;
     const float* m_data;
 
-    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny, int px, int py,
-                    float* recon, float* simdata, const float* data)
+    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny, float* recon,
+                    float* simdata, const float* data)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
     , m_dx(dx)
     , m_nx(nx)
     , m_ny(ny)
-    , m_px(px)
-    , m_py(py)
-    , m_size(m_px * m_py)
+    , m_size(m_nx * m_ny)
     , m_rot(farray_t(m_size, 0.0f))
     , m_tmp(farray_t(m_size, 0.0f))
     , m_recon(recon)
@@ -311,10 +307,6 @@ struct cpu_rotate_data
 
     ~cpu_rotate_data() {}
 
-    int             xpad() const { return (m_px - m_nx) / 2; }
-    int             ypad() const { return (m_py - m_ny) / 2; }
-    int             px() const { return m_px; }
-    int             py() const { return m_py; }
     farray_t&       rot() { return m_rot; }
     farray_t&       tmp() { return m_tmp; }
     const farray_t& rot() const { return m_rot; }

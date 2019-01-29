@@ -95,11 +95,10 @@ PYBIND11_MODULE(tomocxx, tomocxx)
 {
     py::add_ostream_redirect(tomocxx, "ostream_redirect");
 
-
 #if defined(TOMOPY_USE_PTL)
     auto run_fib = [=](int n, int nitr) {
-        int nthreads          = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
-        TaskRunManager* rm = cpu_run_manager();
+        int             nthreads = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+        TaskRunManager* rm       = cpu_run_manager();
         init_run_manager(rm, nthreads);
         std::cout << "getting task manager..." << std::endl;
         TaskManager* tm = rm->GetTaskManager();
