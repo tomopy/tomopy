@@ -231,15 +231,17 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     // Rotate object
     cudaMemset(recon_rot, 0, nx * ny * sizeof(float));
     cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny);
-    cudaMemcpy(recon_tmp, recon_rot, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
+    // cudaMemcpy(recon_tmp, recon_rot, nx * ny * sizeof(float),
+    // cudaMemcpyDeviceToDevice);
 
     NVTX_RANGE_PUSH(&nvtx_update);
-    cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data, recon_tmp);
+    cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data, recon_rot);
     cudaStreamSynchronize(0);
     NVTX_RANGE_POP(&nvtx_update);
 
     // Back-Rotate object
-    cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
+    // cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float),
+    // cudaMemcpyDeviceToDevice);
     cudaMemset(recon_tmp, 0, nx * ny * sizeof(float));
     cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny);
 

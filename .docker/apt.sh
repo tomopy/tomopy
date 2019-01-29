@@ -32,8 +32,11 @@ EXTRA_PACKAGES="valgrind kcachegrind gdb\
 
 MPI_PACKAGES="libopenmpi-dev openmpi-bin openmpi-common"
 
+CUDA_PACKAGES="nvidia-nsight cuda-visual-tools-10-0 cuda-nsight-compute-10-0 \
+    cuda-nsight-10-0"
+
 apt-get install -y --reinstall ${CORE_PACKAGES} ${COMPILER_PACKAGES} \
-    ${IMAGE_PACKAGES} ${PROFILE_PACKAGES} ${MATH_PACKAGES}
+    ${IMAGE_PACKAGES} ${PROFILE_PACKAGES} ${MATH_PACKAGES} ${CUDA_PACKAGES}
 
 
 #-----------------------------------------------------------------------------#

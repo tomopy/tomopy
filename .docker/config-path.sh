@@ -7,6 +7,7 @@ cat << EOF > /etc/profile.d/conda-libs.sh
 
 unset PYTHONPATH
 PATH=/opt/conda/bin:${PATH}
+PATH=/usr/local/cuda-10.0/NsightCompute-1.0:${PATH} 
 export PATH
 
 EOF
@@ -18,7 +19,7 @@ cat << EOF > /etc/profile.d/conda-tomopy.sh
 if [ -z "$(which conda)" ]; then PATH="/opt/conda/bin:${PATH}"; fi
 export PATH
 
-source deactivate
-source activate tomopy
+conda deactivate
+conda activate tomopy
 
 EOF
