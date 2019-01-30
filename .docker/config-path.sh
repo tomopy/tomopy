@@ -20,7 +20,7 @@ if [ -z "$(which conda)" ]; then PATH="/opt/conda/bin:${PATH}"; fi
 export PATH
 
 conda init bash
-conda deactivate
+# conda deactivate
 conda activate tomopy
 
 EOF

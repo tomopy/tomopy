@@ -87,7 +87,8 @@ struct gpu_data
     float*        m_update;
     float*        m_recon;
     float*        m_data;
-    cudaStream_t* m_stream = create_streams(1);
+    int           m_num_streams = 2;
+    cudaStream_t* m_streams     = create_streams(m_num_streams);
 
     gpu_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
              const float* cpu_data)
@@ -122,33 +123,43 @@ struct gpu_data
         cudaFree(m_update);
         cudaFree(m_recon);
         cudaFree(m_data);
-        destroy_streams(m_stream, 1);
+        destroy_streams(m_streams, m_num_streams);
     }
 
     int compute_grid(int size) const { return (size + m_block - 1) / m_block; }
 
-    void sync()
+    void sync(int stream_id = -1)
     {
-        cudaStreamSynchronize(0);
-        CUDA_CHECK_LAST_ERROR();
+        auto _sync = [&](int _stream_id) {
+            cudaStreamSynchronize(m_streams[_stream_id]);
+            CUDA_CHECK_LAST_ERROR();
+        };
+
+        if(stream_id < 0)
+        {
+            for(int i = 0; i < m_num_streams; ++i)
+                _sync(i);
+        }
+        else
+            _sync(stream_id);
     }
 
     void reset()
     {
-        if(m_device != 0)
+        if(m_device != this_thread_device())
         {
             cuda_set_device(m_device);
             cudaDeviceSynchronize();
         }
         cudaMemset(m_update, 0, m_dy * m_nx * m_ny * sizeof(float));
-        if(m_device != 0)
-            cuda_set_device(0);
+        if(m_device != this_thread_device())
+            cuda_set_device(this_thread_device());
     }
 
     void copy(const float* recon)
     {
-        if(m_device != 0)
-            cudaMemcpyPeer(m_recon, m_device, recon, 0,
+        if(m_device != this_thread_device())
+            cudaMemcpyPeer(m_recon, m_device, recon, this_thread_device(),
                            m_dy * m_nx * m_ny * sizeof(float));
         else
             cudaMemcpy(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float),
@@ -162,7 +173,10 @@ struct gpu_data
     float*       update() const { return m_update; }
     float*       recon() const { return m_recon; }
     float*       data() const { return m_data; }
-    cudaStream_t stream() { return *m_stream; }
+    cudaStream_t stream(int stream_id = 0)
+    {
+        return m_streams[stream_id % m_num_streams];
+    }
 };
 
 //======================================================================================//
@@ -222,13 +236,15 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
 
     cuda_set_device(_cache->device());
 
-    cudaStream_t stream = _cache->stream();
+    cudaStream_t astream = _cache->stream(0);
+    cudaStream_t bstream = _cache->stream(1);
 
     // needed for recon to output at proper orientation
     float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float theta_p_deg = theta_p_rad * degrees;
     int   block       = _cache->block();
     int   grid        = _cache->compute_grid(dx);
+    int   smem        = 0;
 
     const float* recon     = _cache->recon();
     const float* data      = _cache->data();
@@ -237,27 +253,28 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     float*       recon_tmp = _cache->tmp();
 
     // Rotate object
-    cudaMemset(recon_rot, 0, nx * ny * sizeof(float));
-    cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny);
+    cudaMemsetAsync(recon_rot, 0, nx * ny * sizeof(float), astream);
+    cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, astream);
     // cudaMemcpy(recon_tmp, recon_rot, nx * ny * sizeof(float),
     // cudaMemcpyDeviceToDevice);
 
     NVTX_RANGE_PUSH(&nvtx_update);
-    cuda_sirt_pixels_kernel<<<grid, block>>>(p, nx, dx, recon_rot, data, recon_rot);
-    cudaStreamSynchronize(0);
+    cuda_sirt_pixels_kernel<<<grid, block, smem, astream>>>(p, nx, dx, recon_rot, data,
+                                                            recon_rot);
+    cudaStreamSynchronize(astream);
     NVTX_RANGE_POP(&nvtx_update);
 
-    cudaStreamSynchronize(stream);
+    cudaStreamSynchronize(bstream);
     // Back-Rotate object
     // cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float),
     // cudaMemcpyDeviceToDevice);
-    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), stream);
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), bstream);
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, bstream);
 
     // update shared update array
     float factor = 1.0f / static_cast<float>(dx);
-    cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, recon_tmp, nx * ny,
-                                                            factor);
+    cuda_sirt_atomic_sum_kernel<<<grid, block, 0, bstream>>>(update, recon_tmp, nx * ny,
+                                                             factor);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -296,7 +313,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("");
 
     // GPU allocated copies
-    int master_device = 0;
+    int master_device = this_thread_device();
     cuda_set_device(master_device);
     float* tmp_recon = gpu_malloc<float>(dy * ngridx * ngridy);
     float* recon     = gpu_malloc<float>(dy * ngridx * ngridy);
