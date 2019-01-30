@@ -60,6 +60,10 @@ END_EXTERN_C
 #endif
 
 #if defined(TOMOPY_USE_NVTX)
+extern nvtxEventAttributes_t nvtx_total;
+extern nvtxEventAttributes_t nvtx_iteration;
+extern nvtxEventAttributes_t nvtx_slice;
+extern nvtxEventAttributes_t nvtx_projection;
 extern nvtxEventAttributes_t nvtx_update;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
@@ -70,19 +74,20 @@ struct gpu_data
 {
     typedef gpu_data this_type;
 
-    int    m_device;
-    int    m_id;
-    int    m_block;
-    int    m_dy;
-    int    m_dt;
-    int    m_dx;
-    int    m_nx;
-    int    m_ny;
-    float* m_rot;
-    float* m_tmp;
-    float* m_update;
-    float* m_recon;
-    float* m_data;
+    int           m_device;
+    int           m_id;
+    int           m_block;
+    int           m_dy;
+    int           m_dt;
+    int           m_dx;
+    int           m_nx;
+    int           m_ny;
+    float*        m_rot;
+    float*        m_tmp;
+    float*        m_update;
+    float*        m_recon;
+    float*        m_data;
+    cudaStream_t* m_stream = create_streams(1);
 
     gpu_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
              const float* cpu_data)
@@ -117,6 +122,7 @@ struct gpu_data
         cudaFree(m_update);
         cudaFree(m_recon);
         cudaFree(m_data);
+        destroy_streams(m_stream, 1);
     }
 
     int compute_grid(int size) const { return (size + m_block - 1) / m_block; }
@@ -149,13 +155,14 @@ struct gpu_data
                        cudaMemcpyDeviceToDevice);
     }
 
-    int    device() const { return m_device; }
-    int    block() const { return m_block; }
-    float* rot() const { return m_rot; }
-    float* tmp() const { return m_tmp; }
-    float* update() const { return m_update; }
-    float* recon() const { return m_recon; }
-    float* data() const { return m_data; }
+    int          device() const { return m_device; }
+    int          block() const { return m_block; }
+    float*       rot() const { return m_rot; }
+    float*       tmp() const { return m_tmp; }
+    float*       update() const { return m_update; }
+    float*       recon() const { return m_recon; }
+    float*       data() const { return m_data; }
+    cudaStream_t stream() { return *m_stream; }
 };
 
 //======================================================================================//
@@ -214,7 +221,8 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     gpu_data*& _cache        = _gpu_data[thread_number];
 
     cuda_set_device(_cache->device());
-    // nppSetStream(0);
+
+    cudaStream_t stream = _cache->stream();
 
     // needed for recon to output at proper orientation
     float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
@@ -239,15 +247,17 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     cudaStreamSynchronize(0);
     NVTX_RANGE_POP(&nvtx_update);
 
+    cudaStreamSynchronize(stream);
     // Back-Rotate object
     // cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float),
     // cudaMemcpyDeviceToDevice);
-    cudaMemset(recon_tmp, 0, nx * ny * sizeof(float));
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny);
+    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), stream);
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, stream);
 
     // update shared update array
     float factor = 1.0f / static_cast<float>(dx);
-    cuda_sirt_atomic_sum_kernel<<<grid, block>>>(update, recon_tmp, nx * ny, factor);
+    cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, recon_tmp, nx * ny,
+                                                            factor);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -259,6 +269,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     if(cuda_device_count() == 0)
         throw std::runtime_error("No CUDA device(s) available");
 
+    init_nvtx();
     cuda_device_query();
 
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
@@ -271,7 +282,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     // get some properties
     int num_devices       = cuda_device_count();
-    int nthreads          = GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY);
+    int nthreads          = GetEnv("TOMOPY_NUM_THREADS", 1);
     nthreads              = std::max(nthreads, 1);
     cudaStream_t* streams = create_streams(num_devices);
 
@@ -297,8 +308,11 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         _gpu_data[ii] =
             new gpu_data(ii % num_devices, ii, dy, dt, dx, ngridx, ngridy, cpu_data);
 
+    NVTX_RANGE_PUSH(&nvtx_total);
+
     for(int i = 0; i < num_iter; i++)
     {
+        NVTX_RANGE_PUSH(&nvtx_iteration);
         START_TIMER(t_start);
 
         // set "update" to zero, copy in "recon"
@@ -313,6 +327,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         // Loop over slices
         for(int s = 0; s < dy; ++s)
         {
+            NVTX_RANGE_PUSH(&nvtx_slice);
+
 #if defined(TOMOPY_USE_PTL)
             TaskGroup<void> tg;
             // For each projection angle
@@ -326,6 +342,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                 cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
                                         _gpu_data);
 #endif
+            NVTX_RANGE_POP(&nvtx_slice);
         }
 
         cuda_set_device(master_device);
@@ -352,6 +369,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         }
         cudaDeviceSynchronize();
         REPORT_TIMER(t_start, "iteration", i, num_iter);
+        NVTX_RANGE_POP(&nvtx_iteration);
     }
     printf("\n");
 
@@ -367,6 +385,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     cudaDeviceSynchronize();
     destroy_streams(streams, num_devices);
+    NVTX_RANGE_POP(&nvtx_total);
 }
 
 //======================================================================================//

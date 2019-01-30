@@ -51,18 +51,6 @@ namespace cg = cooperative_groups;
 
 //======================================================================================//
 
-#if defined(TOMOPY_USE_NVTX)
-extern nvtxEventAttributes_t nvtx_calc_coords;
-extern nvtxEventAttributes_t nvtx_calc_dist;
-extern nvtxEventAttributes_t nvtx_calc_simdata;
-extern nvtxEventAttributes_t nvtx_preprocessing;
-extern nvtxEventAttributes_t nvtx_sort_intersections;
-extern nvtxEventAttributes_t nvtx_sum_dist;
-extern nvtxEventAttributes_t nvtx_trim_coords;
-extern nvtxEventAttributes_t nvtx_calc_sum_sqr;
-extern nvtxEventAttributes_t nvtx_rotate;
-#endif
-
 #define FULL_MASK 0xffffffff
 
 //======================================================================================//

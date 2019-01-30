@@ -47,17 +47,12 @@ BEGIN_EXTERN_C
 #include "utils_cuda.h"
 END_EXTERN_C
 
-//======================================================================================//
-
 #if defined(TOMOPY_USE_NVTX)
-extern nvtxEventAttributes_t nvtx_calc_coords;
-extern nvtxEventAttributes_t nvtx_calc_dist;
-extern nvtxEventAttributes_t nvtx_calc_simdata;
-extern nvtxEventAttributes_t nvtx_preprocessing;
-extern nvtxEventAttributes_t nvtx_sort_intersections;
-extern nvtxEventAttributes_t nvtx_sum_dist;
-extern nvtxEventAttributes_t nvtx_trim_coords;
-extern nvtxEventAttributes_t nvtx_calc_sum_sqr;
+extern nvtxEventAttributes_t nvtx_total;
+extern nvtxEventAttributes_t nvtx_iteration;
+extern nvtxEventAttributes_t nvtx_slice;
+extern nvtxEventAttributes_t nvtx_projection;
+extern nvtxEventAttributes_t nvtx_update;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
@@ -109,8 +104,10 @@ print_array(const _Tp* data, int nx, int ny, const std::string& desc)
 void
 cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
-                   int eInterp = INTER_CUBIC)
+                   int eInterp = INTER_CUBIC, cudaStream_t stream = 0)
 {
+    cudaStreamSynchronize(stream);
+    nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
     auto getRotationMatrix2D = [&](double m[2][3], double scale) {
@@ -157,10 +154,9 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     if(ret != NPP_SUCCESS)
         printf("%s returned non-zero NPP status: %i\n", __FUNCTION__, ret);
 
+    cudaStreamSynchronize(stream);
     NVTX_RANGE_POP(&nvtx_rotate);
-
-    // cudaStreamSynchronize(0);
-    // CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_ERROR();
 }
 
 //======================================================================================//
@@ -176,10 +172,11 @@ GetInterpolationMode()
 
 float*
 cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
-            const int ny)
+            const int ny, cudaStream_t stream)
 {
     float* _dst = gpu_malloc<float>(nx * ny);
-    cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode());
+    cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode(),
+                       stream);
     return _dst;
 }
 
@@ -187,9 +184,10 @@ cuda_rotate(const float* src, const float theta_rad, const float theta_deg, cons
 
 void
 cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
-               const int nx, const int ny)
+               const int nx, const int ny, cudaStream_t stream)
 {
-    cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode());
+    cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode(),
+                       stream);
 }
 
 //======================================================================================//

@@ -50,16 +50,17 @@
 
 #if defined(TOMOPY_USE_NVTX)
 
-nvtxEventAttributes_t nvtx_calc_coords;
-nvtxEventAttributes_t nvtx_calc_dist;
-nvtxEventAttributes_t nvtx_calc_simdata;
-nvtxEventAttributes_t nvtx_preprocessing;
+nvtxEventAttributes_t nvtx_total;
+nvtxEventAttributes_t nvtx_iteration;
+nvtxEventAttributes_t nvtx_slice;
+nvtxEventAttributes_t nvtx_projection;
+nvtxEventAttributes_t nvtx_update;
+nvtxEventAttributes_t nvtx_rotate;
+
 nvtxEventAttributes_t nvtx_sort_intersections;
 nvtxEventAttributes_t nvtx_sum_dist;
 nvtxEventAttributes_t nvtx_trim_coords;
 nvtxEventAttributes_t nvtx_calc_sum_sqr;
-nvtxEventAttributes_t nvtx_update;
-nvtxEventAttributes_t nvtx_rotate;
 
 //--------------------------------------------------------------------------------------//
 
@@ -71,33 +72,47 @@ init_nvtx()
         return;
     first = false;
 
-    nvtx_calc_coords.version       = NVTX_VERSION;
-    nvtx_calc_coords.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_calc_coords.colorType     = NVTX_COLOR_ARGB;
-    nvtx_calc_coords.color         = 0xff0000ff; /* blue? */
-    nvtx_calc_coords.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_calc_coords.message.ascii = "calc_coords";
+    nvtx_total.version       = NVTX_VERSION;
+    nvtx_total.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_total.colorType     = NVTX_COLOR_ARGB;
+    nvtx_total.color         = 0xff0000ff; /* blue? */
+    nvtx_total.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_total.message.ascii = "calc_coords";
 
-    nvtx_calc_dist.version       = NVTX_VERSION;
-    nvtx_calc_dist.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_calc_dist.colorType     = NVTX_COLOR_ARGB;
-    nvtx_calc_dist.color         = 0xffffff00; /* yellow */
-    nvtx_calc_dist.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_calc_dist.message.ascii = "calc_dist";
+    nvtx_iteration.version       = NVTX_VERSION;
+    nvtx_iteration.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_iteration.colorType     = NVTX_COLOR_ARGB;
+    nvtx_iteration.color         = 0xffffff00; /* yellow */
+    nvtx_iteration.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_iteration.message.ascii = "calc_dist";
 
-    nvtx_calc_simdata.version       = NVTX_VERSION;
-    nvtx_calc_simdata.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_calc_simdata.colorType     = NVTX_COLOR_ARGB;
-    nvtx_calc_simdata.color         = 0xff00ffff; /* cyan */
-    nvtx_calc_simdata.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_calc_simdata.message.ascii = "calc_simdata";
+    nvtx_slice.version       = NVTX_VERSION;
+    nvtx_slice.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_slice.colorType     = NVTX_COLOR_ARGB;
+    nvtx_slice.color         = 0xff00ffff; /* cyan */
+    nvtx_slice.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_slice.message.ascii = "calc_simdata";
 
-    nvtx_preprocessing.version       = NVTX_VERSION;
-    nvtx_preprocessing.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_preprocessing.colorType     = NVTX_COLOR_ARGB;
-    nvtx_preprocessing.color         = 0xff00ffff; /* pink */
-    nvtx_preprocessing.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_preprocessing.message.ascii = "preprocessing";
+    nvtx_projection.version       = NVTX_VERSION;
+    nvtx_projection.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_projection.colorType     = NVTX_COLOR_ARGB;
+    nvtx_projection.color         = 0xff00ffff; /* pink */
+    nvtx_projection.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_projection.message.ascii = "preprocessing";
+
+    nvtx_update.version       = NVTX_VERSION;
+    nvtx_update.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_update.colorType     = NVTX_COLOR_ARGB;
+    nvtx_update.color         = 0xff99ff99; /* light green */
+    nvtx_update.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_update.message.ascii = "update";
+
+    nvtx_rotate.version       = NVTX_VERSION;
+    nvtx_rotate.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
+    nvtx_rotate.colorType     = NVTX_COLOR_ARGB;
+    nvtx_rotate.color         = 0xff0000ff; /* blue? */
+    nvtx_rotate.messageType   = NVTX_MESSAGE_TYPE_ASCII;
+    nvtx_rotate.message.ascii = "rotate";
 
     nvtx_sort_intersections.version       = NVTX_VERSION;
     nvtx_sort_intersections.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
@@ -126,20 +141,6 @@ init_nvtx()
     nvtx_calc_sum_sqr.color         = 0xffffa500; /* orange */
     nvtx_calc_sum_sqr.messageType   = NVTX_MESSAGE_TYPE_ASCII;
     nvtx_calc_sum_sqr.message.ascii = "calc_sum_sqr";
-
-    nvtx_update.version       = NVTX_VERSION;
-    nvtx_update.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_update.colorType     = NVTX_COLOR_ARGB;
-    nvtx_update.color         = 0xff99ff99; /* light green */
-    nvtx_update.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_update.message.ascii = "update";
-
-    nvtx_rotate.version       = NVTX_VERSION;
-    nvtx_rotate.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_rotate.colorType     = NVTX_COLOR_ARGB;
-    nvtx_rotate.color         = 0xff0000ff; /* blue? */
-    nvtx_rotate.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_rotate.message.ascii = "rotate";
 }
 
 #endif

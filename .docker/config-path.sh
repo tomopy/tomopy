@@ -19,6 +19,7 @@ cat << EOF > /etc/profile.d/conda-tomopy.sh
 if [ -z "$(which conda)" ]; then PATH="/opt/conda/bin:${PATH}"; fi
 export PATH
 
+conda init bash
 conda deactivate
 conda activate tomopy
 
