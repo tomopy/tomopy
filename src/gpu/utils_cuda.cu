@@ -106,7 +106,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = INTER_CUBIC, cudaStream_t stream = 0)
 {
-    cudaStreamSynchronize(stream);
+    // cudaStreamSynchronize(stream);
     nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
@@ -154,8 +154,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     if(ret != NPP_SUCCESS)
         printf("%s returned non-zero NPP status: %i\n", __FUNCTION__, ret);
 
-    cudaStreamSynchronize(stream);
-    NVTX_RANGE_POP(&nvtx_rotate);
+    NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_ERROR();
 }
 
@@ -164,7 +163,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
 inline int
 GetInterpolationMode()
 {
-    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
+    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_NN);
     return eInterp;
 }
 

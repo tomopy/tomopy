@@ -235,7 +235,6 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     gpu_data*& _cache        = _gpu_data[thread_number];
 
     cuda_set_device(_cache->device());
-
     cudaStream_t astream = _cache->stream(0);
     cudaStream_t bstream = _cache->stream(1);
 
@@ -255,26 +254,22 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     // Rotate object
     cudaMemsetAsync(recon_rot, 0, nx * ny * sizeof(float), astream);
     cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, astream);
-    // cudaMemcpy(recon_tmp, recon_rot, nx * ny * sizeof(float),
-    // cudaMemcpyDeviceToDevice);
 
     NVTX_RANGE_PUSH(&nvtx_update);
     cuda_sirt_pixels_kernel<<<grid, block, smem, astream>>>(p, nx, dx, recon_rot, data,
                                                             recon_rot);
-    cudaStreamSynchronize(astream);
-    NVTX_RANGE_POP(&nvtx_update);
+    // cudaStreamSynchronize(astream);
+    NVTX_RANGE_POP(astream);
 
-    cudaStreamSynchronize(bstream);
     // Back-Rotate object
-    // cudaMemcpy(recon_rot, recon_tmp, nx * ny * sizeof(float),
-    // cudaMemcpyDeviceToDevice);
-    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), bstream);
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, bstream);
+    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), astream);
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, astream);
 
     // update shared update array
     float factor = 1.0f / static_cast<float>(dx);
-    cuda_sirt_atomic_sum_kernel<<<grid, block, 0, bstream>>>(update, recon_tmp, nx * ny,
-                                                             factor);
+    cuda_sirt_atomic_sum_kernel<<<grid, block, smem, astream>>>(update, recon_tmp,
+                                                                nx * ny, factor);
+    cudaStreamSynchronize(astream);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -359,7 +354,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                 cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
                                         _gpu_data);
 #endif
-            NVTX_RANGE_POP(&nvtx_slice);
+            NVTX_RANGE_POP(0);
         }
 
         cuda_set_device(master_device);
@@ -381,12 +376,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
                 cudaMemcpyPeer(dst, dst_device, src, src_device, dy * ngridx * ngridy);
             }
             float factor = 1.0f;
-            cuda_sirt_atomic_sum_kernel<<<grid, block>>>(recon, dst, dy * ngridx * ngridy,
-                                                         factor);
+            cuda_sirt_sum_kernel<<<grid, block>>>(recon, dst, dy * ngridx * ngridy,
+                                                  factor);
         }
         cudaDeviceSynchronize();
         REPORT_TIMER(t_start, "iteration", i, num_iter);
-        NVTX_RANGE_POP(&nvtx_iteration);
+        NVTX_RANGE_POP(0);
     }
     printf("\n");
 
@@ -402,7 +397,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     cudaDeviceSynchronize();
     destroy_streams(streams, num_devices);
-    NVTX_RANGE_POP(&nvtx_total);
+    NVTX_RANGE_POP(0);
 }
 
 //======================================================================================//

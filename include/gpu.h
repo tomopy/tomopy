@@ -126,7 +126,9 @@
 #        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
 #    endif
 #    ifndef NVTX_RANGE_POP
-#        define NVTX_RANGE_POP(obj) nvtxRangePop()
+#        define NVTX_RANGE_POP(obj)                                                      \
+            cudaStreamSynchronize(obj);                                                  \
+            nvtxRangePop()
 #    endif
 #    ifndef NVTX_NAME_THREAD
 #        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)

@@ -94,7 +94,7 @@ cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* 
     art_update_kernel<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize, data,
                                                     simdata, indi, dist, sum, model);
     CUDA_CHECK_LAST_ERROR();
-    NVTX_RANGE_POP(&nvtx_update);
+    NVTX_RANGE_POP(streams[0]);
 }
 
 //======================================================================================//
