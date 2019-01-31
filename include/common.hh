@@ -444,24 +444,26 @@ update_mutex()
 
 //======================================================================================//
 #if defined(TOMOPY_USE_PTL)
-inline TaskRunManager*&
+inline TaskRunManager*
 cpu_run_manager()
 {
     AutoLock                            l(TypeMutex<TaskRunManager>());
-    static thread_local TaskRunManager* _instance =
-        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
-    return _instance;
+    typedef std::shared_ptr<TaskRunManager> run_man_ptr;
+    static thread_local run_man_ptr         _instance = run_man_ptr(
+        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
+    return _instance.get();
 }
 
 //======================================================================================//
 
-inline TaskRunManager*&
+inline TaskRunManager*
 gpu_run_manager()
 {
     AutoLock               l(TypeMutex<TaskRunManager>());
-    static TaskRunManager* _instance =
-        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
-    return _instance;
+    typedef std::shared_ptr<TaskRunManager> run_man_ptr;
+    static thread_local run_man_ptr         _instance = run_man_ptr(
+        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
+    return _instance.get();
 }
 
 //======================================================================================//

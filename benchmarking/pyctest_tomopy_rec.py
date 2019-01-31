@@ -194,6 +194,57 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
 
 
 @timemory.util.auto_timer()
+def rec_partial(h5fname, rot_center, args, blocked_views, nchunks=1):
+
+    data_size = get_dx_dims(h5fname, 'data')
+
+    output_dir = os.path.join(args.output_dir, 'rec_full')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Select sinogram range to reconstruct.
+    sino_start = args.begin
+    sino_end = data_size[1] if args.end is None else min(args.end, data_size[1])
+
+    # The number of sinogram chunks to reconstruct. Only one chunk at the time
+    # is reconstructed allowing for limited RAM machines to complete a full
+    # reconstruction.
+    chunks = nchunks
+
+    nSino_per_chunk = (sino_end - sino_start)/chunks
+    print("Reconstructing [%d] slices from slice [%d] to [%d] "
+          "in [%d] chunks of [%d] slices each" %
+          ((sino_end - sino_start), sino_start, sino_end,
+           chunks, nSino_per_chunk))
+
+    imgs = []
+    strt = 0
+    for iChunk in range(0, chunks):
+        print('\n  -- chunk # %i' % (iChunk+1))
+        sino_chunk_start = sino_start + nSino_per_chunk*iChunk
+        sino_chunk_end = sino_start + nSino_per_chunk*(iChunk+1)
+        print('\n  --------> [%i, %i]' % (sino_chunk_start, sino_chunk_end))
+
+        if sino_chunk_end > sino_end:
+            break
+
+        sino = (int(sino_chunk_start), int(sino_chunk_end))
+
+        # Reconstruct.
+        rec = reconstruct(h5fname, sino, rot_center, args, blocked_views)
+
+        # Write data as stack of TIFs.
+        fname = os.path.join(output_dir, 'recon_{}_'.format(args.algorithm))
+        print("Reconstructions: ", fname)
+
+        imgs.extend(output_images(rec, fname, args.format, args.scale,
+                                  args.ncol))
+        strt += sino[1] - sino[0]
+
+    return imgs
+
+
+@timemory.util.auto_timer()
 def rec_slice(h5fname, nsino, rot_center, args, blocked_views):
 
     data_size = get_dx_dims(h5fname, 'data')
@@ -265,6 +316,7 @@ def main(arg):
     import multiprocessing as mp
     default_ncores = mp.cpu_count()
 
+    type_choices = ["slice", "full", "partial"]
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",
                         help=("file name of a tmographic dataset: "
@@ -275,7 +327,8 @@ def main(arg):
                               "(default 1/2 image horizontal size)")
                         )
     parser.add_argument("--type", nargs='?', type=str, default="slice",
-                        help="reconstruction type: full (default slice)")
+                        help="reconstruction type: full (default: slice)",
+                        choices=type_choices)
     parser.add_argument("--nsino", nargs='?', type=restricted_float,
                         default=0.5,
                         help=("location of the sinogram used by slice "
@@ -299,7 +352,13 @@ def main(arg):
                         default=None, type=str)
     parser.add_argument("-g", "--grainsize",
                         help="Granularity of slices to compute",
-                        default=16, type=int)
+                        default=None, type=int)
+    parser.add_argument("-b", "--begin",
+                        help="Begin slice number (requires: --type=partial)",
+                        default=0, type=int)
+    parser.add_argument("-e", "--end",
+                        help="End slice number (requires: --type=partial)",
+                        default=24, type=int)
 
     args = parser.parse_args()
 
@@ -327,17 +386,18 @@ def main(arg):
 
     blocked_views = None
 
-    slice = False
-    if args.type == "slice":
-        slice = True
-
     imgs = []
     if os.path.isfile(fname):
-        if slice:
+        if args.type == "slice":
             imgs = rec_slice(fname, nsino, rot_center, args, blocked_views)
+        elif args.type == "partial":
+            grainsize = 1 if args.grainsize is None else args.grainsize
+            imgs = rec_partial(fname, rot_center, args, blocked_views,
+                               grainsize)
         else:
+            grainsize = 16 if args.grainsize is None else args.grainsize
             imgs = rec_full(fname, rot_center, args, blocked_views,
-                            args.grainsize)
+                            grainsize)
     else:
         print("File name does not exist: ", fname)
 
