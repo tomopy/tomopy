@@ -381,7 +381,10 @@ inline void
 set_this_thread_device()
 {
 #if defined(TOMOPY_USE_CUDA)
-    cuda_set_device(this_thread_device());
+    auto devid = this_thread_device();
+    auto thrid = GetThisThreadID();
+    cuda_set_device(devid);
+    printf("[%lu] Running on GPU %i\n", thrid, devid);
 #endif
 }
 

@@ -61,7 +61,7 @@ def run(phantom, algorithm, args, get_recon=False):
     _kwargs = {"algorithm": algorithm}
 
     # assign number of cores
-    _kwargs["ncore"] = ncores
+    _kwargs["ncore"] = args.ncores
 
     # don't assign "num_iter" if gridrec or fbp
     if algorithm not in ["fbp", "gridrec"]:

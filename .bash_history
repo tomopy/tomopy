@@ -68,3 +68,63 @@
    68* python setup.py install && nv-nsight-cu-cli -o block_128.3 --nvtx -c 100 $(which python) ./pyctest_tomopy_rec.py /home/globus/tomo_00001/tomo_00001.h5 -o tomo_00001_sirt/block_128 -i 1 && CUDA_BLOCK_SIZE=32 nv-nsight-cu-cli -o block_32.3 --nvtx -c 100 $(which python) ./pyctest_tomopy_rec.py /home/globus/tomo_00001/tomo_00001.h5 -o tomo_00001_sirt/block_32 -i 
    69  N=4; python setup.py install && nv-nsight-cu-cli -o block_128.${N} --nvtx -c 100 $(which python) ./pyctest_tomopy_rec.py /home/globus/tomo_00001/tomo_00001.h5 -o tomo_00001_sirt/block_128 -i 1 && CUDA_BLOCK_SIZE=32 nv-nsight-cu-cli -o block_32.${N} --nvtx -c 100 $(which python) ./pyctest_tomopy_rec.py /home/globus/tomo_00001/tomo_00001.h5 -o tomo_00001_sirt/block_32 -i 1
    70  history > .bash_history
+    1  conda activate tomopy
+    2  python setup.py install
+    3  ./pyctest_tomopy_phantom.py -i 20
+    4  python setup.py install && TOMOPY_NUM_THREADS=4 ./pyctest_tomopy_rec.py -i 10 -o tomo_00001_sirt/block_32 /home/globus/tomo_00001/tomo_00001.h5 
+    5  python setup.py install && TOMOPY_NUM_THREADS=4 ./pyctest_tomopy_rec.py -i 10 -o tomo_00001_sirt/block_128 /home/globus/tomo_00001/tomo_00001.h5 
+    6  python setup.py install && ./pyctest_tomopy_rec.py -i 10 -o tomo_00001_sirt/block_128 /home/globus/tomo_00001/tomo_00001.h5 
+    7  export TOMOPY_NUM_THREADS=4
+    8  python setup.py install && ./pyctest_tomopy_rec.py -i 10 -o tomo_00001_sirt/block_128_thread_4 /home/globus/tomo_00001/tomo_00001.h5 
+    9  python setup.py install && ./pyctest_tomopy_rec.py -i 10 -o tomo_00001_sirt/block_128_thread_${TOMOPY_NUM_THREADS} /home/globus/tomo_00001/tomo_00001.h5 
+   10  cat ../.bash_history 
+   11  echo $PATH
+   12  ls /usr/local/cuda-10.0/
+   13  export PATH=${PATH}:/usr/local/cuda-10.0/NsightCompute-1.0
+   14  nv-nsight-cu-cli --help
+   15  tail ../.bash_history 
+   16  ./profile.sh 
+   17  cat profile.sh 
+   18  mv block_128.0.nsight-cuprof-report block_128_thread_8.0.nsight-cuprof-report
+   19  ./profile.sh 1
+   20  ./profile.sh 1 10
+   21  ./profile.sh 2 10
+   22  ./profile.sh 3 10
+   23  ./profile.sh 4 10
+   24  cd ..
+   25  python setup.py --help
+   26  python setup.py --disable-nvtx install
+   27  cd benchmarking/
+   28  emacs profile.sh 
+   29  ls -t
+   30* ./profile-n
+   31  export CUDA_BLOCK_SIZE=256
+   32  ./profile-nvprof.sh 5 10
+   33  cat profile-nvprof.sh
+   34  export TOMOPY_NUM_THREADS=8
+   35  export NITER=10
+   36  unset NITER 
+   37  export NITR=10
+   38  export CUDA_BLOCK_SIZE=32
+   39  ./pyctest_tomopy_rec.py        -o tomo_00001_sirt/block_${CUDA_BLOCK_SIZE}_threads_${TOMOPY_NUM_THREADS}        -i ${NITR}        /home/globus/tomo_00001/tomo_00001.h5
+   40  export CUDA_BLOCK_SIZE=64
+   41  export CUDA_BLOCK_SIZE=128
+   42  python setup.py --enable-nvtx install && ./pyctest_tomopy_rec.py -o tomo_00001_sirt/block_${CUDA_BLOCK_SIZE}_threads_${TOMOPY_NUM_THREADS} -i ${NITR} /home/globus/tomo_00001/tomo_00001.h5
+   43  ython setup.py --enable-nvtx install && ./pyctest_tomopy_rec.py -o tomo_00001_sirt/block_${CUDA_BLOCK_SIZE}_threads_${TOMOPY_NUM_THREADS} -i ${NITR} /home/globus/tomo_00001/tomo_00001.h5
+   44  export TOMOPY_NUM_THREADS=12
+   45  ? 3359.400/39.97
+   46  ? 3679.787/39.97
+   47  TIME=18.81; echo -e "Speed-up vs. Haswell: $(calc 3679.787/${TIME})"; echo -e "Speed-up vs. Edison: $(calc 3359.400/${TIME})" 
+   48  TIME=18.81; echo -e "  Speed-up vs. Haswell: $(calc 3679.787/${TIME})"; echo -e "   Speed-up vs. Edison: $(calc 3359.400/${TIME})" 
+   49  TIME=18.81; echo -e "  Speed-up vs. Haswell:\t $(calc 3679.787/${TIME})"; echo -e "   Speed-up vs. Edison:\t $(calc 3359.400/${TIME})" 
+   50  TIME=15.29; echo -e "  Speed-up vs. Haswell:\t $(calc 3679.787/${TIME})"; echo -e "   Speed-up vs. Edison:\t $(calc 3359.400/${TIME})" 
+   51  python setup.py --disable-nvtx install && ./pyctest_tomopy_rec.py -o tomo_00001_sirt/block_${CUDA_BLOCK_SIZE}_threads_${TOMOPY_NUM_THREADS} -i ${NITR} /home/globus/tomo_00001/tomo_00001.h5
+   52  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif ~/cubic.tif
+   53  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif ~/linear.tif
+   54  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif ~/nn.tif
+   55  mv ~/*.tif ./
+   56  export TOMOPY_USE_C_SIRT=1
+   57  python setup.py --disable-nvtx install && ./pyctest_tomopy_rec.py -o tomo_00001_sirt/block_${CUDA_BLOCK_SIZE}_threads_${TOMOPY_NUM_THREADS} -i ${NITR} /home/globus/tomo_00001/tomo_00001.h5 -f tif
+   58  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif ~/c.tif
+   59  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif c.tif
+   60  history >> ../.bash_history 

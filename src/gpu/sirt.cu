@@ -75,7 +75,6 @@ struct gpu_data
     typedef gpu_data this_type;
 
     int           m_device;
-    int           m_id;
     int           m_block;
     int           m_dy;
     int           m_dt;
@@ -87,13 +86,11 @@ struct gpu_data
     float*        m_update;
     float*        m_recon;
     float*        m_data;
-    int           m_num_streams = 2;
-    cudaStream_t* m_streams     = create_streams(m_num_streams);
+    int           m_num_streams = 1;
+    cudaStream_t* m_streams     = nullptr;
 
-    gpu_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
-             const float* cpu_data)
+    gpu_data(int device, int dy, int dt, int dx, int nx, int ny, const float* cpu_data)
     : m_device(device)
-    , m_id(id)
     , m_block(GetEnv<int>("CUDA_BLOCK_SIZE", 128))
     , m_dy(dy)
     , m_dt(dt)
@@ -107,11 +104,12 @@ struct gpu_data
     , m_data(nullptr)
     {
         cuda_set_device(m_device);
-        m_rot    = gpu_malloc<float>(m_nx * m_ny);
-        m_tmp    = gpu_malloc<float>(m_nx * m_ny);
-        m_update = gpu_malloc<float>(m_dy * m_nx * m_ny);
-        m_recon  = gpu_malloc<float>(m_dy * m_nx * m_ny);
-        m_data   = gpu_malloc<float>(m_dy * m_dt * m_dx);
+        m_streams = create_streams(m_num_streams);
+        m_rot     = gpu_malloc<float>(m_nx * m_ny);
+        m_tmp     = gpu_malloc<float>(m_nx * m_ny);
+        m_update  = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        m_recon   = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        m_data    = gpu_malloc<float>(m_dy * m_dt * m_dx);
         cudaMemcpy(m_data, cpu_data, m_dy * m_dt * m_dx * sizeof(float),
                    cudaMemcpyHostToDevice);
     }
@@ -146,24 +144,13 @@ struct gpu_data
 
     void reset()
     {
-        if(m_device != this_thread_device())
-        {
-            cuda_set_device(m_device);
-            cudaDeviceSynchronize();
-        }
-        cudaMemset(m_update, 0, m_dy * m_nx * m_ny * sizeof(float));
-        if(m_device != this_thread_device())
-            cuda_set_device(this_thread_device());
+        cudaMemsetAsync(m_update, 0, m_dy * m_nx * m_ny * sizeof(float), *m_streams);
     }
 
     void copy(const float* recon)
     {
-        if(m_device != this_thread_device())
-            cudaMemcpyPeer(m_recon, m_device, recon, this_thread_device(),
-                           m_dy * m_nx * m_ny * sizeof(float));
-        else
-            cudaMemcpy(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float),
-                       cudaMemcpyDeviceToDevice);
+        cudaMemcpyAsync(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float),
+                   cudaMemcpyDeviceToDevice, *m_streams);
     }
 
     int          device() const { return m_device; }
@@ -234,9 +221,13 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     auto       thread_number = GetThisThreadID() % nthreads;
     gpu_data*& _cache        = _gpu_data[thread_number];
 
+    cudaStream_t stream = _cache->stream(0);
     cuda_set_device(_cache->device());
-    cudaStream_t astream = _cache->stream(0);
-    cudaStream_t bstream = _cache->stream(1);
+
+#if defined(DEBUG)
+    printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
+           s, p, _cache->device());
+#endif
 
     // needed for recon to output at proper orientation
     float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
@@ -245,31 +236,40 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
     int   grid        = _cache->compute_grid(dx);
     int   smem        = 0;
 
-    const float* recon     = _cache->recon();
-    const float* data      = _cache->data();
-    float*       update    = _cache->update();
+    const float* recon     = _cache->recon() + s * nx * ny;
+    const float* data      = _cache->data() + s * dt * dx;
+    float*       update    = _cache->update() + s * nx * ny;
     float*       recon_rot = _cache->rot();
     float*       recon_tmp = _cache->tmp();
 
     // Rotate object
-    cudaMemsetAsync(recon_rot, 0, nx * ny * sizeof(float), astream);
-    cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, astream);
+    cudaMemsetAsync(recon_rot, 0, nx * ny * sizeof(float), stream);
+    CUDA_CHECK_LAST_ERROR();
+
+    cuda_rotate_ip(recon_rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
+    CUDA_CHECK_LAST_ERROR();
 
     NVTX_RANGE_PUSH(&nvtx_update);
-    cuda_sirt_pixels_kernel<<<grid, block, smem, astream>>>(p, nx, dx, recon_rot, data,
-                                                            recon_rot);
-    // cudaStreamSynchronize(astream);
-    NVTX_RANGE_POP(astream);
+    cuda_sirt_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, recon_rot, data,
+                                                           recon_rot);
+    CUDA_CHECK_LAST_ERROR();
+    NVTX_RANGE_POP(stream);
 
     // Back-Rotate object
-    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), astream);
-    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, astream);
+    cudaMemsetAsync(recon_tmp, 0, nx * ny * sizeof(float), stream);
+    CUDA_CHECK_LAST_ERROR();
+
+    cuda_rotate_ip(recon_tmp, recon_rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+    CUDA_CHECK_LAST_ERROR();
 
     // update shared update array
     float factor = 1.0f / static_cast<float>(dx);
-    cuda_sirt_atomic_sum_kernel<<<grid, block, smem, astream>>>(update, recon_tmp,
-                                                                nx * ny, factor);
-    cudaStreamSynchronize(astream);
+    cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(update, recon_tmp, nx * ny,
+                                                               factor);
+    CUDA_CHECK_LAST_ERROR();
+
+    cudaStreamSynchronize(stream);
+    CUDA_CHECK_LAST_ERROR();
 }
 
 //--------------------------------------------------------------------------------------//
@@ -289,14 +289,15 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     auto tid = GetThisThreadID();
 
-    // assign the thread to a device
-    set_this_thread_device();
-
     // get some properties
     int num_devices       = cuda_device_count();
     int nthreads          = GetEnv("TOMOPY_NUM_THREADS", 1);
     nthreads              = std::max(nthreads, 1);
     cudaStream_t* streams = create_streams(num_devices);
+
+    // assign the thread to a device
+    static std::atomic<int> ntid;
+    int                     thread_device = (ntid++) % num_devices;
 
 #if defined(TOMOPY_USE_PTL)
     TaskRunManager* run_man = cpu_run_manager();
@@ -308,8 +309,9 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("");
 
     // GPU allocated copies
-    int master_device = this_thread_device();
-    cuda_set_device(master_device);
+    cuda_set_device(thread_device);
+    printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
+
     float* tmp_recon = gpu_malloc<float>(dy * ngridx * ngridy);
     float* recon     = gpu_malloc<float>(dy * ngridx * ngridy);
     cudaMemcpy(recon, cpu_recon, dy * ngridx * ngridy * sizeof(float),
@@ -317,8 +319,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     gpu_data** _gpu_data = new gpu_data*[nthreads];
 
     for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii] =
-            new gpu_data(ii % num_devices, ii, dy, dt, dx, ngridx, ngridy, cpu_data);
+        _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, cpu_data);
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
@@ -328,8 +329,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         START_TIMER(t_start);
 
         // set "update" to zero, copy in "recon"
-        cuda_set_device(master_device);
-        cudaDeviceSynchronize();
         for(int ii = 0; ii < nthreads; ++ii)
         {
             _gpu_data[ii]->reset();
@@ -357,29 +356,16 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             NVTX_RANGE_POP(0);
         }
 
-        cuda_set_device(master_device);
-        cudaDeviceSynchronize();
         for(int ii = 0; ii < nthreads; ++ii)
         {
-            int    dst_device = master_device;
-            int    src_device = _gpu_data[ii]->m_device;
-            int    block      = _gpu_data[ii]->block();
-            int    grid       = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
-            float* src        = _gpu_data[ii]->update();
-            float* dst        = src;
-            if(src_device != dst_device)
-            {
-                cuda_set_device(src_device);
-                cudaDeviceSynchronize();
-                cuda_set_device(master_device);
-                dst = tmp_recon;
-                cudaMemcpyPeer(dst, dst_device, src, src_device, dy * ngridx * ngridy);
-            }
-            float factor = 1.0f;
-            cuda_sirt_sum_kernel<<<grid, block>>>(recon, dst, dy * ngridx * ngridy,
+            int    block  = _gpu_data[ii]->block();
+            int    grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
+            float* update = _gpu_data[ii]->update();
+            cudaStream_t stream = _gpu_data[ii]->stream();
+            float  factor = 1.0f;
+            cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(recon, update, dy * ngridx * ngridy,
                                                   factor);
         }
-        cudaDeviceSynchronize();
         REPORT_TIMER(t_start, "iteration", i, num_iter);
         NVTX_RANGE_POP(0);
     }
