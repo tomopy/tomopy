@@ -447,8 +447,8 @@ update_mutex()
 inline TaskRunManager*&
 cpu_run_manager()
 {
-    AutoLock               l(TypeMutex<TaskRunManager>());
-    static TaskRunManager* _instance =
+    AutoLock                            l(TypeMutex<TaskRunManager>());
+    static thread_local TaskRunManager* _instance =
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
 }

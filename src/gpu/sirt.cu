@@ -150,7 +150,7 @@ struct gpu_data
     void copy(const float* recon)
     {
         cudaMemcpyAsync(m_recon, recon, m_dy * m_nx * m_ny * sizeof(float),
-                   cudaMemcpyDeviceToDevice, *m_streams);
+                        cudaMemcpyDeviceToDevice, *m_streams);
     }
 
     int          device() const { return m_device; }
@@ -358,13 +358,14 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         for(int ii = 0; ii < nthreads; ++ii)
         {
-            int    block  = _gpu_data[ii]->block();
-            int    grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
-            float* update = _gpu_data[ii]->update();
+            int          block  = _gpu_data[ii]->block();
+            int          grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
+            float*       update = _gpu_data[ii]->update();
             cudaStream_t stream = _gpu_data[ii]->stream();
-            float  factor = 1.0f;
-            cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(recon, update, dy * ngridx * ngridy,
-                                                  factor);
+            float        factor = 1.0f;
+            cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(recon, update,
+                                                                    dy * ngridx * ngridy,
+                                                                    factor);
         }
         REPORT_TIMER(t_start, "iteration", i, num_iter);
         NVTX_RANGE_POP(0);
