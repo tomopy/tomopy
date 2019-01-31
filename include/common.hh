@@ -449,7 +449,7 @@ cpu_run_manager()
 {
     AutoLock l(TypeMutex<TaskRunManager>());
     // typedef std::shared_ptr<TaskRunManager> run_man_ptr;
-    static thread_local TaskRunManager* _instance =
+    static TaskRunManager* _instance =
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
 }

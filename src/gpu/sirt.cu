@@ -300,7 +300,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     int                     thread_device = (ntid++) % num_devices;
 
 #if defined(TOMOPY_USE_PTL)
-    TaskRunManager* run_man = cpu_run_manager();
+    TaskRunManager* run_man = gpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
     ThreadPool*  tp       = task_man->thread_pool();
