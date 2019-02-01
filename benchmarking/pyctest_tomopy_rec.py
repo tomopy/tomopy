@@ -130,7 +130,9 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     # Reconstruct object.
     with timemory.util.auto_timer(
         "[tomopy.recon(algorithm='{}')]".format(algorithm)):
+        print("Starting reconstruction with kwargs={}...".format(_kwargs))
         rec = tomopy.recon(proj, theta, **_kwargs)
+    print("Completed reconstruction...")
 
     # Mask each reconstructed slice with a circle.
     rec = tomopy.circ_mask(rec, axis=0, ratio=0.95)
@@ -230,6 +232,7 @@ def rec_partial(h5fname, rot_center, args, blocked_views, nchunks=1):
 
         sino = (int(sino_chunk_start), int(sino_chunk_end))
 
+        print("Starting reconstruction...")
         # Reconstruct.
         rec = reconstruct(h5fname, sino, rot_center, args, blocked_views)
 
