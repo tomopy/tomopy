@@ -53,6 +53,7 @@ Module for reconstruction algorithms.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import six
 import numpy as np
 import tomopy.util.mproc as mproc
@@ -362,6 +363,16 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
     ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
 
+    # check if ncore is limited by env variable
+    pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
+    if pythreads is not None and ncore > pythreads:
+        print("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{1}', which is less than"
+              " specified ncore={2}. Limiting ncore to {1}...".format(pythreads, ncore))
+        ncore = pythreads
+
+    # this is used internally to prevent oversubscription
+    os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
+
     if ncore == 1:
         for slc in slcs:
             # run in this thread (useful for debugging)
@@ -371,6 +382,14 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         with cf.ThreadPoolExecutor(ncore) as e:
             for slc in slcs:
                 e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
+
+    if pythreads is not None:
+        # reset to default
+        os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(pythreads)
+    elif os.environ.get("TOMOPY_PYTHON_THREADS"):
+        # if no default set, then
+        del os.environ["TOMOPY_PYTHON_THREADS"]
+
     return recon
 
 

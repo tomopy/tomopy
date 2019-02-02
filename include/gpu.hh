@@ -185,12 +185,12 @@ async_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 //======================================================================================//
 
 inline cudaStream_t*
-create_streams(const int nstreams)
+create_streams(const int nstreams, unsigned int flag = cudaStreamDefault)
 {
     cudaStream_t* streams = new cudaStream_t[nstreams];
     for(int i = 0; i < nstreams; ++i)
     {
-        cudaStreamCreate(&streams[i]);
+        cudaStreamCreateWithFlags(&streams[i], flag);
         CUDA_CHECK_LAST_ERROR();
     }
     return streams;

@@ -272,7 +272,7 @@ struct GpuOption
 
 struct cpu_rotate_data
 {
-    int          m_id;
+    uintmax_t    m_id;
     int          m_dy;
     int          m_dt;
     int          m_dx;
@@ -286,7 +286,7 @@ struct cpu_rotate_data
     float*       m_simdata;
     const float* m_data;
 
-    cpu_rotate_data(int id, int dy, int dt, int dx, int nx, int ny, float* recon,
+    cpu_rotate_data(uintmax_t id, int dy, int dt, int dx, int nx, int ny, float* recon,
                     float* simdata, const float* data)
     : m_id(id)
     , m_dy(dy)

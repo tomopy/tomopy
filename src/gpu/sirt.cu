@@ -104,7 +104,7 @@ struct gpu_data
     , m_data(nullptr)
     {
         cuda_set_device(m_device);
-        m_streams = create_streams(m_num_streams);
+        m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
         m_rot     = gpu_malloc<float>(m_nx * m_ny);
         m_tmp     = gpu_malloc<float>(m_nx * m_ny);
         m_update  = gpu_malloc<float>(m_dy * m_nx * m_ny);
@@ -275,7 +275,7 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
 //--------------------------------------------------------------------------------------//
 
 void
-sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
 {
     if(cuda_device_count() == 0)
@@ -287,17 +287,21 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    auto tid = GetThisThreadID();
+    auto                    tid = GetThisThreadID();
+    static std::atomic<int> ntid;
 
     // get some properties
-    int num_devices       = cuda_device_count();
-    int nthreads          = GetEnv("TOMOPY_NUM_THREADS", 1);
-    nthreads              = std::max(nthreads, 1);
-    cudaStream_t* streams = create_streams(num_devices);
+    // default number of threads == 1 to ensure an excess of threads are not created
+    // unless desired
+    decltype(HW_CONCURRENCY) min_threads = 1;
+    auto                     pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto                     nthreads =
+        std::max(GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY / pythreads), min_threads);
+    int           num_devices   = cuda_device_count();
+    int           thread_device = (ntid++) % num_devices;
+    cudaStream_t* streams       = create_streams(num_devices, cudaStreamNonBlocking);
 
     // assign the thread to a device
-    static std::atomic<int> ntid;
-    int                     thread_device = (ntid++) % num_devices;
 
 #if defined(TOMOPY_USE_PTL)
     TaskRunManager* run_man = gpu_run_manager();
@@ -312,10 +316,13 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    float* tmp_recon = gpu_malloc<float>(dy * ngridx * ngridy);
-    float* recon     = gpu_malloc<float>(dy * ngridx * ngridy);
-    cudaMemcpy(recon, cpu_recon, dy * ngridx * ngridy * sizeof(float),
-               cudaMemcpyHostToDevice);
+    float* cpu_data = new float[dy * dt * dx];
+    memcpy(cpu_data, data, dy * dt * dx * sizeof(float));
+    cudaHostRegister(cpu_recon, dy * ngridx * ngridy * sizeof(float),
+                     cudaHostRegisterMapped);
+    cudaHostRegister(cpu_data, dy * dt * dx * sizeof(float), cudaHostRegisterMapped);
+    float* recon;
+    cudaHostGetDevicePointer(&recon, cpu_recon, 0);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
 
     for(int ii = 0; ii < nthreads; ++ii)
@@ -375,16 +382,19 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cudaDeviceSynchronize();
     cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
                cudaMemcpyDeviceToHost);
-    cudaFree(recon);
-    cudaFree(tmp_recon);
+    cudaHostUnregister(cpu_recon);
+    cudaHostUnregister(cpu_data);
 
     for(int i = 0; i < nthreads; ++i)
         delete _gpu_data[i];
     delete[] _gpu_data;
+    delete[] cpu_data;
 
     cudaDeviceSynchronize();
     destroy_streams(streams, num_devices);
     NVTX_RANGE_POP(0);
+
+    cudaDeviceReset();
 }
 
 //======================================================================================//

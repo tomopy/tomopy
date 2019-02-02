@@ -46,6 +46,8 @@
 #include "common.hh"
 #include "utils.hh"
 
+#include <cuda.h>
+
 //======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
