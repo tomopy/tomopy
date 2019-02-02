@@ -403,7 +403,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     printf("\n");
 
-    cudaDeviceSynchronize();
     cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
                cudaMemcpyDeviceToHost);
     cudaFree(recon);
@@ -412,10 +411,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         delete _gpu_data[i];
     delete[] _gpu_data;
 
-    cudaDeviceSynchronize();
     NVTX_RANGE_POP(0);
-
-    cudaDeviceReset();
 }
 
 //======================================================================================//
