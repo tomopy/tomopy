@@ -107,7 +107,6 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    int eInterp = INTER_CUBIC, cudaStream_t stream = 0)
 {
     // cudaStreamSynchronize(stream);
-    nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
 
     auto getRotationMatrix2D = [&](double m[2][3], double scale) {
@@ -142,8 +141,9 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     printf("theta = %5.1f\n", theta_deg);
     print_array((double*) rot, 3, 2, "rot");
 #endif
+    // #define USE_NPPI_ROTATE
 
-// #define USE_NPPI_ROTATE
+    nppSetStream(stream);
 #if defined(USE_NPPI_ROTATE)
     NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
                                        rot[0][2], rot[1][2], eInterp);
@@ -151,8 +151,10 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     NppStatus ret =
         nppiWarpAffine_32f_C1R(src, siz, step, roi, dst, step, roi, rot, eInterp);
 #endif
+
     if(ret != NPP_SUCCESS)
-        printf("%s returned non-zero NPP status: %i\n", __FUNCTION__, ret);
+        printf("[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
+               __FUNCTION__, ret);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_ERROR();

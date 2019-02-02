@@ -225,14 +225,13 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
 //======================================================================================//
 
 void
-cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int s, int p,
-                        int nthreads, gpu_data** _gpu_data)
+cuda_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, int s,
+                        int p, int nthreads, gpu_data** _gpu_data)
 {
-    auto       thread_number = GetThisThreadID() % nthreads;
-    gpu_data*& _cache        = _gpu_data[thread_number];
-
-    uintmax_t    counter = ++(*_cache);
-    cudaStream_t stream  = _cache->stream(0);
+    auto         thread_number = GetThisThreadID() % nthreads;
+    gpu_data*&   _cache        = _gpu_data[thread_number];
+    uintmax_t    counter       = ++(*_cache);
+    cudaStream_t stream        = _cache->stream(0);
     cuda_set_device(_cache->device());
 
 #if defined(DEBUG)
@@ -241,17 +240,16 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
 #endif
 
     // needed for recon to output at proper orientation
-    float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
-    float theta_p_deg = theta_p_rad * degrees;
-    int   block       = _cache->block();
-    int   grid        = _cache->compute_grid(dx);
-    int   smem        = 0;
-
-    const float* recon     = _cache->recon() + s * nx * ny;
-    const float* data      = _cache->data() + s * dt * dx;
-    float*       update    = _cache->update() + s * nx * ny;
-    float*       recon_rot = _cache->rot();
-    float*       recon_tmp = _cache->tmp();
+    float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+    float        theta_p_deg = theta_p_rad * degrees;
+    int          block       = _cache->block();
+    int          grid        = _cache->compute_grid(dx);
+    int          smem        = 0;
+    const float* recon       = _cache->recon() + s * nx * ny;
+    const float* data        = _cache->data() + s * dt * dx;
+    float*       update      = _cache->update() + s * nx * ny;
+    float*       recon_rot   = _cache->rot();
+    float*       recon_tmp   = _cache->tmp();
 
     // Rotate object
     cudaMemsetAsync(recon_rot, 0, nx * ny * sizeof(float), stream);
@@ -332,15 +330,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    // float* cpu_data = new float[dy * dt * dx];
-    // memcpy(cpu_data, data, dy * dt * dx * sizeof(float));
-    // cudaHostRegister(cpu_recon, dy * ngridx * ngridy * sizeof(float),
-    //                  cudaHostRegisterMapped);
-    // cudaHostRegister(cpu_data, dy * dt * dx * sizeof(float), cudaHostRegisterMapped);
-    // cudaHostGetDevicePointer(&recon, cpu_recon, 0);
     float*     recon     = gpu_malloc<float>(dy * ngridx * ngridy);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
-
     for(int ii = 0; ii < nthreads; ++ii)
         _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, cpu_data,
                                      cpu_recon, sync_modulus);
@@ -356,26 +347,21 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         for(int ii = 0; ii < nthreads; ++ii)
             _gpu_data[ii]->reset();
 
-        // Loop over slices
-        for(int s = 0; s < dy; ++s)
-        {
-            NVTX_RANGE_PUSH(&nvtx_slice);
-
 #if defined(TOMOPY_USE_PTL)
-            TaskGroup<void> tg;
-            // For each projection angle
+        TaskGroup<void> tg;
+        // Loop over slices and projection angles
+        for(int s = 0; s < dy; ++s)
             for(int p = 0; p < dt; p++)
-                task_man->exec(tg, cuda_compute_projection, dt, dx, ngridx, ngridy, theta,
-                               s, p, nthreads, _gpu_data);
-            tg.join();
+                task_man->exec(tg, cuda_compute_projection, dy, dt, dx, ngridx, ngridy,
+                               theta, s, p, nthreads, _gpu_data);
+        tg.join();
 #else
-            // For each projection angle
+        // Loop over slices and projection angles
+        for(int s = 0; s < dy; ++s)
             for(int p = 0; p < dt; p++)
-                cuda_compute_projection(dt, dx, ngridx, ngridy, theta, s, p, nthreads,
+                cuda_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, nthreads,
                                         _gpu_data);
 #endif
-            NVTX_RANGE_POP(0);
-        }
 
         for(int ii = 0; ii < nthreads; ++ii)
         {
