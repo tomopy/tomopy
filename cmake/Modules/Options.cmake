@@ -97,7 +97,7 @@ endif()
 
 add_option(TOMOPY_USE_OPENACC "Enable OpenACC option for GPU execution" ${_USE_OPENACC})
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
-add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" ${_USE_CUDA})
+add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" OFF)
 
 if(TOMOPY_USE_GPU)
     list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_GPU)

@@ -42,8 +42,8 @@
 //      Here we copy the memory to GPU and call the GPU kernels
 //
 
-#include "gpu.hh"
 #include "common.hh"
+#include "gpu.hh"
 #include "utils.hh"
 
 #include <cuda.h>

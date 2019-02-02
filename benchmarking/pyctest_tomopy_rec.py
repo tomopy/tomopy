@@ -13,12 +13,12 @@ import json
 import argparse
 import traceback
 import numpy as np
+import timemory
 import collections
 
 import h5py
 import tomopy
 import dxchange
-import timemory
 from tomopy.misc.benchmark import *
 
 
