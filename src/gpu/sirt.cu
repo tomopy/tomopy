@@ -300,12 +300,11 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
     init_nvtx();
     cuda_device_query();
-
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
-
-    auto                    tid = GetThisThreadID();
     static std::atomic<int> ntid;
+    auto                    tid = GetThisThreadID();
+
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           tid, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     // get some properties
     // default number of threads == 1 to ensure an excess of threads are not created
