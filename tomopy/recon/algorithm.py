@@ -365,10 +365,10 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
 
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
-    if pythreads is not None and ncore > pythreads:
+    if pythreads is not None and ncore > int(pythreads):
         print("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{1}', which is less than"
               " specified ncore={2}. Limiting ncore to {1}...".format(pythreads, ncore))
-        ncore = pythreads
+        ncore = int(pythreads)
 
     # this is used internally to prevent oversubscription
     os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
