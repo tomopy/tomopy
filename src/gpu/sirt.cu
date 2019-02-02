@@ -85,14 +85,14 @@ struct gpu_data
     float*        m_tmp;
     float*        m_update;
     float*        m_recon;
-    const float*  m_data;
+    float*        m_data;
     uintmax_t     m_sync_modulus;
     uintmax_t     m_sync_counter;
     int           m_num_streams = 1;
     cudaStream_t* m_streams     = nullptr;
 
-    gpu_data(int device, int dy, int dt, int dx, int nx, int ny, const float* data,
-             uintmax_t sync_modulus)
+    gpu_data(int device, int dy, int dt, int dx, int nx, int ny, const float* cpu_data,
+             const float* cpu_recon, uintmax_t sync_modulus)
     : m_device(device)
     , m_block(GetEnv<int>("CUDA_BLOCK_SIZE", 32))
     , m_dy(dy)
@@ -104,7 +104,7 @@ struct gpu_data
     , m_tmp(nullptr)
     , m_update(nullptr)
     , m_recon(nullptr)
-    , m_data(data)
+    , m_data(nullptr)
     , m_sync_modulus(sync_modulus)
     {
         cuda_set_device(m_device);
@@ -113,6 +113,11 @@ struct gpu_data
         m_tmp     = gpu_malloc<float>(m_nx * m_ny);
         m_update  = gpu_malloc<float>(m_dy * m_nx * m_ny);
         m_recon   = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        m_data    = gpu_malloc<float>(m_dy * m_dt * m_dx);
+        cudaMemcpyAsync(m_data, cpu_data, m_dy * m_dt * m_dx * sizeof(float),
+                        cudaMemcpyHostToDevice, *m_streams);
+        cudaMemcpyAsync(m_recon, cpu_recon, m_dy * m_nx * m_ny * sizeof(float),
+                        cudaMemcpyHostToDevice, *m_streams);
     }
 
     ~gpu_data()
@@ -274,8 +279,8 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
                                                                factor);
     CUDA_CHECK_LAST_ERROR();
 
-    //cudaStreamSynchronize(stream);
-    //CUDA_CHECK_LAST_ERROR();
+    // cudaStreamSynchronize(stream);
+    // CUDA_CHECK_LAST_ERROR();
 
     if(counter % _cache->sync_modulus() == 0)
     {
@@ -334,14 +339,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     //                  cudaHostRegisterMapped);
     // cudaHostRegister(cpu_data, dy * dt * dx * sizeof(float), cudaHostRegisterMapped);
     // cudaHostGetDevicePointer(&recon, cpu_recon, 0);
-    float* recon = gpu_malloc<float>(dy * ngridx * ngridy);
-    float* data  = gpu_malloc<float>(dy * dt * dx);
-    cudaMemcpy(data, cpu_data, dy * dt * dx * sizeof(float), cudaMemcpyHostToDevice);
+    float*     recon     = gpu_malloc<float>(dy * ngridx * ngridy);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
 
     for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii] =
-            new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data, sync_modulus);
+        _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, cpu_data,
+                                     cpu_recon, sync_modulus);
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
@@ -352,10 +355,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         // set "update" to zero, copy in "recon"
         for(int ii = 0; ii < nthreads; ++ii)
-        {
             _gpu_data[ii]->reset();
-            _gpu_data[ii]->copy(recon);
-        }
 
         // Loop over slices
         for(int s = 0; s < dy; ++s)
@@ -380,17 +380,22 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         for(int ii = 0; ii < nthreads; ++ii)
         {
-            int          block  = std::max(_gpu_data[ii]->block(), 256);
+            int          smem   = 0;
+            int          block  = _gpu_data[ii]->block();
             int          grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
             float*       update = _gpu_data[ii]->update();
             cudaStream_t stream = _gpu_data[ii]->stream();
-            cuda_sirt_atomic_sum_kernel<<<grid, block, 0, stream>>>(recon, update,
-                                                                    dy * ngridx * ngridy,
-                                                                    1.0f);
+            cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(
+                recon, update, dy * ngridx * ngridy, 1.0f);
+            // _gpu_data[ii]->copy(recon);
+            float* _recon = _gpu_data[ii]->recon();
+            cuda_sirt_sum_kernel<<<grid, block, smem, stream>>>(_recon, update,
+                                                                dy * ngridx * ngridy,
+                                                                1.0f);
         }
 
-        REPORT_TIMER(t_start, "iteration", i, num_iter);
         NVTX_RANGE_POP(0);
+        REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
     for(int ii = 0; ii < nthreads; ++ii)
@@ -402,7 +407,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
                cudaMemcpyDeviceToHost);
     cudaFree(recon);
-    cudaFree(data);
 
     for(int i = 0; i < nthreads; ++i)
         delete _gpu_data[i];
