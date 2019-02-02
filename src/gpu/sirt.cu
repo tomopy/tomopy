@@ -274,15 +274,14 @@ cuda_compute_projection(int dt, int dx, int nx, int ny, const float* theta, int 
                                                                factor);
     CUDA_CHECK_LAST_ERROR();
 
-    cudaStreamSynchronize(stream);
-    CUDA_CHECK_LAST_ERROR();
+    //cudaStreamSynchronize(stream);
+    //CUDA_CHECK_LAST_ERROR();
 
-    /*
-    if(counter % _cache->sync_modulus())
+    if(counter % _cache->sync_modulus() == 0)
     {
         cudaStreamSynchronize(stream);
         CUDA_CHECK_LAST_ERROR();
-    }*/
+    }
 }
 
 //--------------------------------------------------------------------------------------//
@@ -312,7 +311,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         std::max(GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY / pythreads), min_threads);
     int  num_devices   = cuda_device_count();
     int  thread_device = (ntid++) % num_devices;
-    auto sync_modulus  = GetEnv("TOMOPY_STREAM_SYNC", nthreads);
+    auto sync_modulus  = GetEnv("TOMOPY_STREAM_SYNC", 4);
 
     // assign the thread to a device
 
@@ -402,11 +401,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cudaDeviceSynchronize();
     cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
                cudaMemcpyDeviceToHost);
+    cudaFree(recon);
+    cudaFree(data);
 
     for(int i = 0; i < nthreads; ++i)
         delete _gpu_data[i];
     delete[] _gpu_data;
-    delete[] cpu_data;
 
     cudaDeviceSynchronize();
     NVTX_RANGE_POP(0);
