@@ -64,6 +64,15 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 //======================================================================================//
 
+inline int
+GetInterpolationMode()
+{
+    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
+    return eInterp;
+}
+
+//======================================================================================//
+
 //  gridDim:    This variable contains the dimensions of the grid.
 //  blockIdx:   This variable contains the block index within the grid.
 //  blockDim:   This variable and contains the dimensions of the block.
@@ -212,15 +221,6 @@ cuda_rotate_internal_kernel(float* dst, const float* src, float theta, const int
             dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
         }
     }
-}
-
-//======================================================================================//
-
-inline int
-GetInterpolationMode()
-{
-    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
-    return eInterp;
 }
 
 //======================================================================================//

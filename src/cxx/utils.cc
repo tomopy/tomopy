@@ -69,6 +69,15 @@ using Vector = std::vector<_Tp>;
 
 //======================================================================================//
 #if defined(TOMOPY_USE_OPENCV)
+inline int
+GetInterpolationMode()
+{
+    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
+    return eInterp;
+}
+#endif
+//======================================================================================//
+#if defined(TOMOPY_USE_OPENCV)
 Mat
 cxx_affine_transform(const Mat& warp_src, float theta, const int nx, const int ny,
                      float scale)
@@ -78,7 +87,7 @@ cxx_affine_transform(const Mat& warp_src, float theta, const int nx, const int n
     float cy       = 0.5f * nx + ((nx % 2 == 0) ? 0.5f : 0.0f);
     Point center   = Point(cx, cy);
     Mat   rot      = getRotationMatrix2D(center, theta, scale);
-    warpAffine(warp_src, warp_dst, rot, warp_src.size(), INTER_CUBIC);
+    warpAffine(warp_src, warp_dst, rot, warp_src.size(), GetInterpolationMode());
     return warp_dst;
 }
 #endif

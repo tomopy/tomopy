@@ -89,6 +89,15 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
     REPORT_TIMER(cxx_timer, __FUNCTION__, 0, 0);
 
+    static std::atomic<int> _once;
+    if((++_once) == 1)
+    {
+        std::stringstream ss;
+        PrintEnv(ss);
+        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
+               ss.str().c_str());
+    }
+
     return scast<int>(true);
 }
 
@@ -151,9 +160,10 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
 
     // update shared update array
     _mutex.lock();
+    float* _update = update + s * nx * ny;
     for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
     {
-        update[i] += recon_tmp[i] / static_cast<float>(dx);
+        _update[i] += recon_tmp[i] / static_cast<float>(dx);
     }
     _mutex.unlock();
 }
@@ -181,40 +191,33 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     TIMEMORY_AUTO_TIMER("");
 
     //----------------------------------------------------------------------------------//
-    uintmax_t grid_size = scast<uintmax_t>(ngridx * ngridy);
+    uintmax_t grid_size = scast<uintmax_t>(dy * ngridx * ngridy);
     uintmax_t proj_size = scast<uintmax_t>(dy * dt * dx);
     for(int i = 0; i < num_iter; i++)
     {
         START_TIMER(t_start);
         // reset the simulation data
         farray_t simdata(proj_size, 0.0f);
-
+        farray_t update(grid_size, 0.0f);
+#if defined(TOMOPY_USE_PTL)
+        TaskGroup<void> tg;
         // For each slice
         for(int s = 0; s < dy; s++)
-        {
-            // for each thread, calculate all the offsets of the data
-            // for this slice
-            farray_t update(grid_size, 0.0f);
-
-#if defined(TOMOPY_USE_PTL)
-            TaskGroup<void> tg;
             for(int p = 0; p < dt; ++p)
                 task_man->exec(tg, compute_projection, dy, dt, dx, ngridx, ngridy, theta,
                                s, p, recon, simdata.data(), data, update.data());
-            tg.join();
+        tg.join();
 #else
+        // For each slice
+        for(int s = 0; s < dy; s++)
             for(int p = 0; p < dt; ++p)
             {
                 compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, recon,
                                    simdata.data(), data, update.data());
             }
 #endif
-            uintmax_t offset = scast<uintmax_t>(s * ngridx * ngridy);
-            for(uintmax_t j = 0; j < grid_size; ++j)
-            {
-                recon[j + offset] += update[j];
-            }
-        }
+        for(uintmax_t j = 0; j < grid_size; ++j)
+            recon[j] += update[j];
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 

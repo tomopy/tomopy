@@ -30,6 +30,8 @@ def generate(phantom="shepp3d", nsize=512, nangles=360):
 
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
         obj = getattr(tomopy.misc.phantom, phantom)(size=nsize)
+    obj = tomopy.misc.morph.pad(obj, axis=1, mode='constant')
+    obj = tomopy.misc.morph.pad(obj, axis=2, mode='constant')
     with timemory.util.auto_timer("[tomopy.angles]"):
         ang = tomopy.angles(nangles)
     with timemory.util.auto_timer("[tomopy.project]"):
@@ -72,6 +74,12 @@ def run(phantom, algorithm, args, get_recon=False):
                                   algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
 
+    obj_min = np.amin(obj)
+    rec_min = np.amin(rec)
+    obj_max = np.amax(obj)
+    rec_max = np.amax(rec)
+    print("obj bounds = [{:8.3f}, {:8.3f}], rec bounds = [{:8.3f}, {:8.3f}]".format(obj_min, obj_max,
+                                                              rec_min, rec_max))
 
     obj = normalize(obj)
     rec = normalize(rec)

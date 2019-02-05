@@ -452,14 +452,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             dim3         block(nblock, 1);
             float*       update = _gpu_data[ii]->update();
             cudaStream_t stream = _gpu_data[ii]->stream();
-            cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(recon, update,
-                                                                       dy * ngridx * ngridy,
-                                                                       1, 1.0f);
+            cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(
+                recon, update, dy * ngridx * ngridy, 1, 1.0f);
             // _gpu_data[ii]->copy(recon);
             float* _recon = _gpu_data[ii]->recon();
-            cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(_recon, update,
-                                                                dy * ngridx * ngridy, 1,
-                                                                1.0f);
+            cuda_sirt_atomic_sum_kernel<<<grid, block, smem, stream>>>(
+                _recon, update, dy * ngridx * ngridy, 1, 1.0f);
             _gpu_data[ii]->sync();
         }
 
@@ -479,15 +477,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     delete[] _gpu_data;
 
     NVTX_RANGE_POP(0);
-
-    static std::atomic<int> _once;
-    if((++_once) == 1)
-    {
-        std::stringstream ss;
-        PrintEnv(ss);
-        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
-               ss.str().c_str());
-    }
 }
 
 //======================================================================================//
