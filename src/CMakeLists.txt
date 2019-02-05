@@ -91,8 +91,3 @@ set_target_properties(libtomopy
 install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT development)
-
-# make sure the generated target gets put into the source tree for testing
-add_custom_command(TARGET libtomopy POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
-        ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
