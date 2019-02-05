@@ -6,7 +6,6 @@
 #SBATCH --gres=gpu:4
 #SBATCH --exclusive
 #SBATCH -t 02:00:00
-#SBATCH --reservation=N9_COE
 #SBATCH --job-name=gpu-edison
 #SBATCH --output=gpu-edison-%j.log
 
@@ -25,22 +24,40 @@ source activate tomopy-gpu
 cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu
 
 #python setup.py clean 
-python setup.py install --disable-openmp --disable-nvtx --enable-gpu --enable-cuda -- -DTOMOPY_USE_PYBIND11=OFF -DTOMOPY_USE_PTL=ON
+python setup.py install --disable-openmp --disable-nvtx --enable-gpu --enable-cuda --enable-arch -- -DTOMOPY_USE_PYBIND11=OFF -DTOMOPY_USE_PTL=ON
 
-#export TOMOPY_USE_C_SIRT=0
-#export TOMOPY_USE_CPU=0
-#export TOMOPY_GPU_TYPE=cuda
-export TOMOPY_NUM_THREADS=8
-export TOMOPY_INTER=1
-export CUDA_BLOCK_SIZE=32
 export NUMEXPR_MAX_THREADS=80
+
+# algorithm settings
+export TOMOPY_USE_C_SIRT=0
+export TOMOPY_USE_CPU=0
+export TOMOPY_GPU_TYPE=cuda
+export TOMOPY_INTER=4
+export TOMOPY_NUM_ITERATION=10
+
+# parallelism settings
+export PTL_CPU_AFFINITY=1
+export TOMOPY_NUM_GPU=4
+export TOMOPY_PYTHON_THREADS=8
+export TOMOPY_NUM_THREADS=12
+export TOMOPY_STREAM_SYNC=4
+export CUDA_BLOCK_SIZE=128
+export BLOCK_BEGIN=884
+export BLOCK_END=908
 
 cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu/benchmarking
 
-srun -c 64 $(which python) ./pyctest_tomopy_rec.py /project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5 \
-    -o gpu-cuda-partial-1-8-64 --type=partial \
-    -n 8 -i 10 -b 0 -e 24 \
-    -a sirt
+srun -c 80 \
+    $(which python) \
+    ./pyctest_tomopy_rec.py \
+    -o gpu-cuda-partial-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${CUDA_BLOCK_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS} \
+    --type=partial \
+    -n ${TOMOPY_PYTHON_THREADS} \
+    -i ${TOMOPY_NUM_ITERATION} \
+    -a sirt \
+    -b ${BLOCK_BEGIN} \
+    -e ${BLOCK_END} \
+    /project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5
 
 #python ./pyctest_tomopy_rec.py /global/cscratch1/sd/jrmadsen/globus/tomo_00001/tomo_00001.h5 \
 #    -o gpu-compare-slice-24 --type=slice -n 1 -i 1 \

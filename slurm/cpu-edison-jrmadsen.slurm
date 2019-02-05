@@ -12,20 +12,31 @@ source activate tomopy-gpu-dev
 
 set -o errexit
 
-export TOMOPY_USE_C_SIRT=1 
+# algorithm settings
+export TOMOPY_USE_C_SIRT=1
+export TOMOPY_USE_CPU=1
+export TOMOPY_NUM_ITERATION=10
+
+# parallelism settings
+export PTL_CPU_AFFINITY=1
+export TOMOPY_PYTHON_THREADS=24
 export TOMOPY_NUM_THREADS=1
+export BLOCK_BEGIN=884
+export BLOCK_END=908
 
 cd /global/cscratch1/sd/jrmadsen/software/tomopy/tomopy-edison-gpu
 
-python setup.py install --disable-gpu --disable-cuda --enable-openmp -- -DTOMOPY_USE_PTL=OFF
+python setup.py install --disable-gpu --disable-cuda --disable-openmp -- -DTOMOPY_USE_PTL=OFF
 
 cd /global/cscratch1/sd/jrmadsen/software/tomopy/tomopy-edison-gpu/benchmarking
 
-$(which python) ./pyctest_tomopy_rec.py /global/cscratch1/sd/jrmadsen/globus/tomo_00001/tomo_00001.h5 \
-    -o cpu-c-partial-24 --type=partial \
-    -n 24 -i 10 -b 0 -e 24 \
-    -a sirt
-
-#python ./pyctest_tomopy_rec.py /global/cscratch1/sd/jrmadsen/globus/tomo_00001/tomo_00001.h5 \
-#    -o cpu-compare-slice-24 --type=slice -n 1 -i 1 \
-#    -a sirt -g 4
+$(which python) \
+        ./pyctest_tomopy_rec.py \
+        -o cpu-partial-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS} \
+        --type=partial \
+        -n ${TOMOPY_PYTHON_THREADS} \
+        -i ${TOMOPY_NUM_ITERATION} \
+        -a sirt \
+        -b ${BLOCK_BEGIN} \
+        -e ${BLOCK_END} \
+	/global/cscratch1/sd/jrmadsen/globus/tomo_00001/tomo_00001.h5
