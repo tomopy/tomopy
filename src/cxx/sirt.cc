@@ -68,6 +68,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
     auto tid = GetThisThreadID();
     ConsumeParameters(tid);
+    static std::atomic<int> _once;
+    ++_once;
 
     START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
@@ -89,13 +91,18 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
     REPORT_TIMER(cxx_timer, __FUNCTION__, 0, 0);
 
-    static std::atomic<int> _once;
-    if((++_once) == 1)
+    auto remain = --_once;
+    if(remain == 0)
     {
         std::stringstream ss;
         PrintEnv(ss);
         printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
                ss.str().c_str());
+    }
+    else
+    {
+        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(),
+               remain);
     }
 
     return scast<int>(true);

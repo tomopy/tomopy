@@ -91,7 +91,7 @@
 #        if defined(DEBUG)
 #            define CUDA_CHECK_LAST_ERROR()                                              \
                 {                                                                        \
-                    cudaDeviceSynchronize();                                             \
+                    cudaStreamSynchronize(0);                                            \
                     cudaError err = cudaGetLastError();                                  \
                     if(cudaSuccess != err)                                               \
                     {                                                                    \

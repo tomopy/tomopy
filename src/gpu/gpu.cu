@@ -473,7 +473,7 @@ cuda_device_query()
     }
 
     printf("\n\n");
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     CUDA_CHECK_LAST_ERROR();
 }
 
