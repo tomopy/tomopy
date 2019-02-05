@@ -3,7 +3,6 @@ include LICENSE.txt
 include VERSION
 include CMakeLists.txt
 recursive-include cmake *
-recursive-include test *
 recursive-include include *
 recursive-include src *
 graft tomopy
