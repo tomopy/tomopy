@@ -1,9 +1,6 @@
 include README.rst
 include LICENSE.txt
 include VERSION
-include CMakeLists.txt
-recursive-include cmake *
-recursive-include include *
-recursive-include src *
 graft tomopy
+prune _skbuild
 global-exclude *.py[co]
