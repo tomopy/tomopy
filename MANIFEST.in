@@ -8,4 +8,4 @@ recursive-include tomopy/sharedlibs *
 recursive-include test *
 recursive-include include *
 recursive-include src *
-recursive-exclude * __pycache__ *.pyc
+global-exclude *.py[co]
