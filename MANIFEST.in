@@ -3,9 +3,8 @@ include LICENSE.txt
 include VERSION
 include CMakeLists.txt
 recursive-include cmake *
-recursive-include tomopy/data *.tif *.h5
-recursive-include tomopy/sharedlibs *
 recursive-include test *
 recursive-include include *
 recursive-include src *
+graft tomopy
 global-exclude *.py[co]
