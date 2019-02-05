@@ -53,12 +53,21 @@ END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//
 
+inline void
+stream_sync(cudaStream_t _stream)
+{
+    cudaStreamSynchronize(_stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//--------------------------------------------------------------------------------------//
+
 template <typename _Tp>
 _Tp*
 gpu_malloc(uintmax_t size)
 {
     _Tp* _gpu;
-    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
+    cudaMalloc(&_gpu, size * sizeof(_Tp));
     CUDA_CHECK_LAST_ERROR();
     return _gpu;
 }
@@ -67,17 +76,7 @@ gpu_malloc(uintmax_t size)
 
 template <typename _Tp>
 void
-gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size)
-{
-    cudaMemcpy(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice);
-    CUDA_CHECK_LAST_ERROR();
-}
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-void
-gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
+cpu2gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
     CUDA_CHECK_LAST_ERROR();
@@ -87,9 +86,9 @@ gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 
 template <typename _Tp>
 void
-cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t size)
+gpu2cpu_memcpy(_Tp* _cpu, const _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpy(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
     CUDA_CHECK_LAST_ERROR();
 }
 
@@ -97,9 +96,19 @@ cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t size)
 
 template <typename _Tp>
 void
-cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t size, cudaStream_t stream)
+gpu2gpu_memcpy(_Tp* _dst, const _Tp* _src, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
+    cudaMemcpyAsync(_dst, _src, size * sizeof(_Tp), cudaMemcpyDeviceToDevice, stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+void
+gpu_memset(_Tp* _gpu, int value, uintmax_t size, cudaStream_t stream)
+{
+    cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
     CUDA_CHECK_LAST_ERROR();
 }
 
@@ -107,12 +116,12 @@ cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 
 template <typename _Tp>
 _Tp*
-malloc_and_memcpy(const _Tp* _cpu, uintmax_t size)
+malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
     CUDA_CHECK_LAST_ERROR();
-    cudaMemcpy(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
     CUDA_CHECK_LAST_ERROR();
     return _gpu;
 }
@@ -121,21 +130,7 @@ malloc_and_memcpy(const _Tp* _cpu, uintmax_t size)
 
 template <typename _Tp>
 _Tp*
-malloc_and_memset(uintmax_t size, int value)
-{
-    _Tp* _gpu;
-    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
-    cudaMemset(_gpu, value, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
-    return _gpu;
-}
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-_Tp*
-malloc_and_async_memset(uintmax_t size, int value, cudaStream_t stream)
+malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
 {
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
@@ -149,37 +144,12 @@ malloc_and_async_memset(uintmax_t size, int value, cudaStream_t stream)
 
 template <typename _Tp>
 void
-memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size)
-{
-    cudaMemcpy(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost);
-    CUDA_CHECK_LAST_ERROR();
-    cudaFree(_gpu);
-    CUDA_CHECK_LAST_ERROR();
-}
-
-//======================================================================================//
-
-template <typename _Tp>
-_Tp*
-malloc_and_async_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
-{
-    _Tp* _gpu;
-    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
-    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
-    CUDA_CHECK_LAST_ERROR();
-    return _gpu;
-}
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-void
-async_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
+gpu2cpu_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
     CUDA_CHECK_LAST_ERROR();
     cudaFree(_gpu);
+    CUDA_CHECK_LAST_ERROR();
 }
 
 //======================================================================================//
@@ -238,73 +208,28 @@ transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
 #else  // not defined(TOMOPY_USE_CUDA)
 
 //======================================================================================//
-
+inline void stream_sync(cudaStream_t) {}
+//======================================================================================//
 template <typename _Tp>
-_Tp*
-gpu_malloc(uintmax_t size)
-{
-    return nullptr;
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-void
-gpu_memcpy(_Tp*, const _Tp*, uintmax_t)
+_Tp* gpu_malloc(uintmax_t)
 {
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
-gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
+cpu2gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
-cpu_memcpy(const _Tp*, _Tp*, uintmax_t)
+gpu2cpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
-cpu_memcpy(const _Tp*, _Tp*, uintmax_t, cudaStream_t)
-{
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-_Tp*
-malloc_and_memcpy(const _Tp*, uintmax_t)
-{
-    return nullptr;
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-_Tp*
-malloc_and_memset(uintmax_t size, int value)
-{
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-_Tp*
-malloc_and_async_memset(uintmax_t size, int value, cudaStream_t stream)
-{
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-void
-memcpy_and_free(_Tp*, _Tp*, uintmax_t)
-{
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-_Tp*
-malloc_and_async_memcpy(const _Tp*, uintmax_t, cudaStream_t)
-{
-    return nullptr;
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-void
-async_memcpy_and_free(_Tp*, _Tp*, uintmax_t, cudaStream_t)
+gpu2gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
 }
 //--------------------------------------------------------------------------------------//

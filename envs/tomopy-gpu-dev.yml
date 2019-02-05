@@ -2,7 +2,6 @@ name: tomopy-gpu-dev
 channels:
   - conda-forge
   - jrmadsen
-  - intel
   - defaults
 dependencies:
   - python=3.6
@@ -23,6 +22,3 @@ dependencies:
   - scipy
   - six
   - timemory
-  - opencv
-  - ipp-devel
-  - ipp-include
