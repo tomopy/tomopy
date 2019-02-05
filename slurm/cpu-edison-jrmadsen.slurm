@@ -21,8 +21,8 @@ export TOMOPY_NUM_ITERATION=10
 export PTL_CPU_AFFINITY=1
 export TOMOPY_PYTHON_THREADS=24
 export TOMOPY_NUM_THREADS=1
-export BLOCK_BEGIN=884
-export BLOCK_END=908
+export BLOCK_BEGIN=872
+export BLOCK_END=920
 
 cd /global/cscratch1/sd/jrmadsen/software/tomopy/tomopy-edison-gpu
 

@@ -32,18 +32,20 @@ export NUMEXPR_MAX_THREADS=80
 export TOMOPY_USE_C_SIRT=0
 export TOMOPY_USE_CPU=0
 export TOMOPY_GPU_TYPE=cuda
-export TOMOPY_INTER=4
+export TOMOPY_INTER=1
 export TOMOPY_NUM_ITERATION=10
 
 # parallelism settings
 export PTL_CPU_AFFINITY=1
+export PTL_VERBOSE=1
 export TOMOPY_NUM_GPU=4
 export TOMOPY_PYTHON_THREADS=8
-export TOMOPY_NUM_THREADS=12
-export TOMOPY_STREAM_SYNC=4
-export CUDA_BLOCK_SIZE=128
-export BLOCK_BEGIN=884
-export BLOCK_END=908
+export TOMOPY_NUM_THREADS=10
+export TOMOPY_STREAM_SYNC=1
+export CUDA_BLOCK_SIZE=32
+export BLOCK_BEGIN=872
+export BLOCK_END=920
+export PTL_NUM_THREADS=${TOMOPY_NUM_THREADS}
 
 cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu/benchmarking
 
