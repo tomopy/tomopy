@@ -72,7 +72,7 @@ print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr, const i
     ofs.open(fname.str().c_str());
     std::vector<_Tp> cpu_data(n, _Tp());
     std::cout << "printing to file " << fname.str() << "..." << std::endl;
-    cpu_memcpy<_Tp>(gpu_data, cpu_data.data(), n);
+    gpu2cpu_memcpy<_Tp>(gpu_data, cpu_data.data(), n, 0);
     if(!ofs)
         return;
     for(uintmax_t i = 0; i < n; ++i)

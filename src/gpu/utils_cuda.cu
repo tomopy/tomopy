@@ -243,6 +243,7 @@ cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float 
 {
     cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode(),
                        stream);
+    CUDA_CHECK_LAST_ERROR();
     /*
     int block = 128;
     int grid  = (ny + block - 1) / block;
