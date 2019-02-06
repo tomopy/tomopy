@@ -220,7 +220,7 @@ def run_pyctest():
     while "  " in pyctest.BUILD_NAME:
         pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
     # how to build the code
-    pyctest.BUILD_COMMAND = "{} setup.py develop".format(
+    pyctest.BUILD_COMMAND = "{} setup.py install".format(
         pyctest.PYTHON_EXECUTABLE)
     # generate the code coverage
     python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
