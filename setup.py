@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os, sys, glob, shutil, subprocess as sp
-from setuptools import find_packages
 from skbuild import setup
 from skbuild.setuptools_wrap import create_skbuild_argparser
 import argparse
@@ -62,7 +61,7 @@ if len(cmake_args) > 0:
 
 setup(
     name='tomopy',
-    packages=find_packages(exclude=['test*']),
+    packages=['tomopy'],
     version=open('VERSION').read().strip(),
     include_package_data=True,
     zip_safe=False,

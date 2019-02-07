@@ -24,16 +24,17 @@ requirements:
     - setuptools
     - scikit-build
   run:
-    - dxchange
     - futures  # [py2k]
-    - numexpr
     - mkl
     - mkl_fft
-    - python={{ python }}
+    - numexpr
     - numpy
+    - python={{ python }}
+    - pywavelets
     - scikit-image
     - scipy
     - six
+    - tifffile
 
 test:
   requires:
