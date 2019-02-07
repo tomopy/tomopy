@@ -39,11 +39,6 @@ macro(CONFIG_INSTALL RELATIVE_PATH)
     endforeach(_SOURCE_FILE ${ARGN})
 endmacro()
 
-# Update __version__ and copy init.py to install directory
-configure_file(${PROJECT_SOURCE_DIR}/tomopy/__init__.py.in
-    ${PYTHON_SITE_DIR}/tomopy/__init__.py
-    @ONLY)
-
 # Copy over pure python module, python testing, and setup files
 file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
 file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"

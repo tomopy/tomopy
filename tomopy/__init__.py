@@ -49,7 +49,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-__version__ = '@tomopy_VERSION@'
+from pkg_resources import get_distribution, DistributionNotFound
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    # package is not installed
+    pass
 
 from ._fft_loader import fft_impl
 from tomopy.misc.corr import *

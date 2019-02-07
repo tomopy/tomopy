@@ -4,4 +4,3 @@ include VERSION
 graft tomopy
 prune _skbuild
 global-exclude *.py[co]
-global-exclude *.in
