@@ -105,7 +105,6 @@ END_EXTERN_C
 #include "PTL/Utility.hh"
 
 #if defined(TOMOPY_USE_PTL)
-#    include "PTL/TBBTask.hh"
 #    include "PTL/TBBTaskGroup.hh"
 #    include "PTL/Task.hh"
 #    include "PTL/TaskGroup.hh"

@@ -1,7 +1,7 @@
 /.git
 /.vscode
 *__pycache__*
-/_skbuild
+*_skbuild*
 /tomopy.egg-info
 /benchmarking
 /binder

@@ -101,8 +101,7 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     }
     else
     {
-        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(),
-               remain);
+        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(), remain);
     }
 
     return scast<int>(true);

@@ -1,53 +1,49 @@
-#!/bin/bash
+#!/bin/bash -e
 
-set -o errexit
+mkdir -p /etc/bashrc.d
+
+#----------------------------------------------------------------------------------------#
+#
+#   Script that sets up Nsight Compute
+#
+#----------------------------------------------------------------------------------------#
 
 cat << EOF > /etc/profile.d/nsight-compute.sh
+#!/bin/sh
 
-__cuda_path=/usr/local/cuda
-
-if [ -z "${__cuda_path}" ]; then 
-   echo "No CUDA path found @ ${__cuda_path}!"
-else
-    __nsight_path=${__cuda_path}/NsightCompute-1.0
-    if [ -d "${__nsight_path}" ]; then
-        echo -e "Adding ${__nsight_path} to PATH..."
-        PATH=${__nsight_path}:${PATH} 
-    else
-        echo -e "${__nsight_path} not found!"
-    fi
-    unset __nsight_path
-fi
-
-unset __cuda_path
+PATH=/usr/local/cuda/NsightCompute-1.0:\${PATH}
 export PATH
- 
+
 EOF
+
+#----------------------------------------------------------------------------------------#
+#
+#   Script that sets up conda
+#
+#----------------------------------------------------------------------------------------#
 
 cat << EOF > /etc/profile.d/conda-libs.sh
 #!/bin/bash
 
-unset PYTHONPATH
-
-echo -e "Adding conda to path..."
-PATH=/opt/conda/bin:${PATH}
+PATH=/opt/conda/bin:\${PATH}
 export PATH
-
-echo -e "Initializing conda..."
-conda activate
+source activate base
 
 EOF
 
-mkdir -p /etc/bashrc.d
+#----------------------------------------------------------------------------------------#
+#
+#   Script that sets up tomopy
+#
+#----------------------------------------------------------------------------------------#
 
 cat << EOF > /etc/bashrc.d/conda-tomopy.sh
 #!/bin/bash
 
-if [ -z "$(which conda)" ]; then 
+if [ -z "\$(which conda)" ]; then
    . /etc/profile.d/conda-libs.sh
 fi
 
-echo -e "Activating tomopy..."
-conda activate tomopy
+source activate tomopy
 
 EOF
