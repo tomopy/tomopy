@@ -1,4 +1,6 @@
-#!/bin/bash -ve
+#!/bin/bash -e
+
+set -v
 
 SOURCE_DIR=${1}
 GCOV_CMD=$(which gcov)
