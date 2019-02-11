@@ -295,7 +295,7 @@ def create_phantom_test(args, bench_props, phantom):
     test_args = [
         "-A", "360",
         "-f", "jpeg",
-        "-S", "1"
+        "-S", "1",
         "-p", phantom,
         "-s", "{}".format(nsize),
         "-n", "{}".format(args.ncores),
