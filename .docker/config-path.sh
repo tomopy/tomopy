@@ -8,10 +8,10 @@ mkdir -p /etc/bashrc.d
 #
 #----------------------------------------------------------------------------------------#
 
-cat << EOF > /etc/profile.d/nsight-compute.sh
+cat << EOF > /etc/profile.d/cuda-path.sh
 #!/bin/sh
 
-PATH=/usr/local/cuda/NsightCompute-1.0:\${PATH}
+PATH=/usr/local/cuda/bin:/usr/local/cuda/NsightCompute-1.0:\${PATH}
 export PATH
 
 EOF
@@ -22,7 +22,7 @@ EOF
 #
 #----------------------------------------------------------------------------------------#
 
-cat << EOF > /etc/profile.d/conda-libs.sh
+cat << EOF > /etc/profile.d/conda-path.sh
 #!/bin/bash
 
 PATH=/opt/conda/bin:\${PATH}
@@ -37,11 +37,11 @@ EOF
 #
 #----------------------------------------------------------------------------------------#
 
-cat << EOF > /etc/bashrc.d/conda-tomopy.sh
+cat << EOF > /etc/bashrc.d/tomopy-conda-path.sh
 #!/bin/bash
 
 if [ -z "\$(which conda)" ]; then
-   . /etc/profile.d/conda-libs.sh
+   . /etc/profile.d/conda-path.sh
 fi
 
 source activate tomopy
