@@ -62,6 +62,7 @@ if len(cmake_args) > 0:
 setup(
     name='tomopy',
     packages=['tomopy'],
+    package_dir={"": "src"},
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
     include_package_data=True,

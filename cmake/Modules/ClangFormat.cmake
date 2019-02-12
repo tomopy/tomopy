@@ -12,8 +12,8 @@ find_program(CLANG_FORMATTER
         clang-format)
 
 if(CLANG_FORMATTER)
-    file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.h)
-    file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.c)
+    file(GLOB headers ${PROJECT_SOURCE_DIR}/src/include/*.h)
+    file(GLOB sources ${PROJECT_SOURCE_DIR}/src/libtomopy/c/*.c)
     add_custom_target(format
         COMMAND ${CLANG_FORMATTER} -i ${headers} ${sources}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
