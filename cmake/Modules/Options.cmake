@@ -11,7 +11,7 @@ include(MacroUtilities)
 add_feature(CMAKE_BUILD_TYPE "Build type (Debug, Release, RelWithDebInfo, MinSizeRel)")
 add_feature(CMAKE_INSTALL_PREFIX "Installation prefix")
 add_feature(${PROJECT_NAME}_C_FLAGS "C compiler flags")
-add_feature(CMAKE_C_STANDARD "C languae standard")
+add_feature(CMAKE_C_STANDARD "C language standard")
 
 # options (always available)
 add_option(TOMOPY_USE_GPERF "Enable Google perftools profiler" OFF)
