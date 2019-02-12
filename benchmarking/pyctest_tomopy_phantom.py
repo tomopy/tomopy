@@ -22,8 +22,10 @@ from tomopy.misc.benchmark import *
 
 
 def get_basepath(args, algorithm, phantom):
-    return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
-
+    basepath = os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
+    if not os.path.exists(basepath):
+        os.makedirs(basepath)
+    return basepath
 
 @timemory.util.auto_timer()
 def generate(phantom="shepp3d", nsize=512, nangles=360):
@@ -239,7 +241,9 @@ if __name__ == "__main__":
                         nargs='*', default=["none"], type=str)
     parser.add_argument("-i", "--num-iter", help="Number of iterations",
                         default=10, type=int)
-
+    parser.add_argument("-P", "--preserve-output-dir", help="Do not clean up output directory",
+                        action='store_true')
+    
     args = timemory.options.add_args_and_parse_known(parser)
 
     print("\nargs: {}\n".format(args))
@@ -252,19 +256,16 @@ if __name__ == "__main__":
     elif len(args.compare) == 1:
         args.compare = []
 
-    pdir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
-    if not os.path.exists(pdir):
-        os.makedirs(pdir)
-
-    alg = args.algorithm
-    if len(args.compare) > 0:
-        alg = "comparison"
-
-    adir = os.path.join(pdir, alg)
-    if not os.path.exists(adir):
-        os.makedirs(adir)
-
-    if len(args.compare) == 0:
+    # unique output directory w.r.t. phantom
+    adir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
+    # directory extension based on algorithms
+    dext = "comparison" if len(args.compare) > 0 else "{}".format(args.phantom)
+    # unique output directory w.r.t. phantom and extension
+    adir = os.path.join(adir, dext)
+    # reset as the output directory
+    args.output_directory = adir
+    
+    if not args.preserve_output_dir:
         try:
             import shutil
             if os.path.exists(adir):
@@ -273,14 +274,8 @@ if __name__ == "__main__":
         except:
             pass
     else:
-        try:
-            import shutil
-            if os.path.exists(adir):
-                shutil.rmtree(adir)
-                os.makedirs(adir)
-        except:
-            pass
-
+        os.makedirs(adir)
+        
     ret = 0
     try:
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):
