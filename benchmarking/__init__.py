@@ -280,8 +280,8 @@ def create_phantom_test(args, bench_props, phantom):
     psize = args.phantom_size
 
     # construct test name
-    name = (phantom + "_" + "".join(args.algorithms)
-            if nalgs == 1 else "comparison")
+    name = ((phantom + "_") +
+            ("".join(args.algorithms) if nalgs == 1 else "comparison"))
 
     # determine phantom size
     nsize = psize if phantom != "shepp3d" else psize // 2
