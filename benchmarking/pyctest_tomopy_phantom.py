@@ -263,12 +263,12 @@ if __name__ == "__main__":
     # unique output directory w.r.t. phantom and extension
     adir = os.path.join(adir, dext)
     # reset as the output directory
-    args.output_directory = adir
+    #args.output_dir = adir
     
     if not args.preserve_output_dir:
         try:
             import shutil
-            if os.path.exists(adir):
+            if os.path.exists(adir) and adir != os.getcwd():
                 shutil.rmtree(adir)
                 os.makedirs(adir)
         except:
