@@ -172,8 +172,9 @@ def main(args):
     # timing report to stdout
     print('{}\n'.format(manager))
 
+    _dir = os.path.abspath(args.output_dir)
     timemory.options.output_dir = "{}/{}/{}".format(
-        args.output_dir, args.phantom, algorithm)
+        _dir, args.phantom, algorithm)
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
@@ -195,6 +196,7 @@ def main(args):
                 "stack_{}_".format(algorithm), img_base)
             img_type = args.format
             img_path = imgs[i]
+            img_path = os.path.abspath(img_path)
             timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
     except Exception as e:
         print("Exception - {}".format(e))
