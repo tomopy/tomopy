@@ -2,9 +2,9 @@
 
 [run]
 source =
-    tomopy/
+    src/
 omit =
-    tomopy/sharedlibs/*
+    src/tomopy/sharedlibs/*
 
 [report]
 # Regexes for lines to exclude from consideration
