@@ -13,12 +13,12 @@ find_program(CLANG_FORMATTER
 
 if(CLANG_FORMATTER)
     file(GLOB headers
-        ${PROJECT_SOURCE_DIR}/include/*.h
-        ${PROJECT_SOURCE_DIR}/include/*.h
-        ${PROJECT_SOURCE_DIR}/include/*.hh
-        ${PROJECT_SOURCE_DIR}/include/*.hpp)
+        ${PROJECT_SOURCE_DIR}/source/include/*.h
+        ${PROJECT_SOURCE_DIR}/source/include/*.h
+        ${PROJECT_SOURCE_DIR}/source/include/*.hh
+        ${PROJECT_SOURCE_DIR}/source/include/*.hpp)
     file(GLOB sources
-        ${PROJECT_SOURCE_DIR}/source/*.c
+        ${PROJECT_SOURCE_DIR}/source/c/*.c
         ${PROJECT_SOURCE_DIR}/source/cxx/*.cc
         ${PROJECT_SOURCE_DIR}/source/cxx/*.cpp
         ${PROJECT_SOURCE_DIR}/source/gpu/*.cc

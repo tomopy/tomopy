@@ -79,7 +79,7 @@ cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
-        sum = (data[p * dx + d] - sum) / static_cast<float>(nx);
+        sum = (data[p * dx + d] - sum) / scast<float>(nx);
         for(int i = 0; i < nx; ++i)
             recon[d * nx + i] += sum;
     }
@@ -176,7 +176,8 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    float* recon   = gpu_malloc<float>(dy * ngridx * ngridy);
+    float* recon = gpu_malloc<float>(dy * ngridx * ngridy);
+    memset(cpu_recon, 0, dy * ngridx * ngridy * sizeof(float));
     float* data    = gpu_malloc<float>(dy * dt * dx);
     auto   streams = create_streams(2, cudaStreamNonBlocking);
     cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
@@ -188,7 +189,8 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     for(int ii = 0; ii < nthreads; ++ii)
         _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data,
                                      recon, sync_freq);
-
+    int block = GetBlockSize();
+    int grid  = ComputeGridSize(dy * ngridx * ngridy);
     NVTX_RANGE_PUSH(&nvtx_total);
 
     for(int i = 0; i < num_iter; i++)
@@ -221,6 +223,13 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         for(int ii = 0; ii < nthreads; ++ii)
             _gpu_data[ii]->sync();
 
+        /*
+        stream_sync(0);
+        const float factor = 1.0f / scast<float>(dt);
+        cuda_mult_kernel<<<grid, block>>>(recon, dy * ngridx * ngridy, factor);
+        stream_sync(0);
+        */
+
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
@@ -235,8 +244,8 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     for(int i = 0; i < dy; ++i)
     {
         auto offset = i * ngridx * ngridy;
-        cuda_rotate_ip(recon_rot + offset, recon + offset, pi, pi * degrees, ngridx,
-                       ngridy, streams[i]);
+        cuda_rotate_ip(recon_rot + offset, recon + offset, halfpi, halfpi * degrees,
+                       ngridx, ngridy, streams[i]);
     }
 
     for(int i = 0; i < dy; ++i)

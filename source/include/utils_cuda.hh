@@ -92,9 +92,9 @@ ComputeGridSize(int size, int block_size = GetBlockSize())
 
 //======================================================================================//
 // interpolation types
-#define NPP_INTER_NN NPPI_INTER_NN
-#define NPP_INTER_LINEAR NPPI_INTER_LINEAR
-#define NPP_INTER_CUBIC NPPI_INTER_CUBIC
+#    define NPP_INTER_NN NPPI_INTER_NN
+#    define NPP_INTER_LINEAR NPPI_INTER_LINEAR
+#    define NPP_INTER_CUBIC NPPI_INTER_CUBIC
 
 //======================================================================================//
 
@@ -187,7 +187,7 @@ struct gpu_data
     float*       rot() const { return m_rot; }
     float*       tmp() const { return m_tmp; }
     float*       update() const { return m_update; }
-    float*  recon() { return m_recon; }
+    float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
     uintmax_t    sync_freq() const { return m_sync_freq; }
@@ -234,6 +234,20 @@ cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float 
                const int nx, const int ny, cudaStream_t stream = 0);
 
 //======================================================================================//
+// mult kernels
+//======================================================================================//
+
+template <typename _Tp>
+__global__ void
+cuda_mult_kernel(_Tp* dst, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        dst[i] = factor * dst[i];
+}
+
+//======================================================================================//
 // sum kernels
 //======================================================================================//
 
@@ -260,6 +274,6 @@ cuda_atomic_sum_kernel(_Tp* dst, const _Tp* src, uintmax_t size, const _Tp facto
 }
 //--------------------------------------------------------------------------------------//
 
-#endif // __CUDACC__
+#endif  // __CUDACC__
 
 //--------------------------------------------------------------------------------------//

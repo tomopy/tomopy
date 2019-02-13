@@ -262,9 +262,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
             int          grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
             float*       update = _gpu_data[ii]->update();
             cudaStream_t stream = _gpu_data[ii]->stream();
-            cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(recon, update,
-                                                                  dy * ngridx * ngridy,
-                                                                  1.0f);
+            cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(
+                recon, update, dy * ngridx * ngridy, 1.0f / scast<float>(dy));
         }
 
         NVTX_RANGE_POP(0);
@@ -281,8 +280,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     for(int i = 0; i < dy; ++i)
     {
         auto offset = i * ngridx * ngridy;
-        cuda_rotate_ip(recon_rot + offset, recon + offset, pi, pi * degrees, ngridx,
-                       ngridy, streams[i]);
+        cuda_rotate_ip(recon_rot + offset, recon + offset, halfpi, halfpi * degrees,
+                       ngridx, ngridy, streams[i]);
     }
 
     for(int i = 0; i < dy; ++i)

@@ -521,17 +521,17 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
     }
 
     std::deque<DeviceOption> options;
-    int                   default_idx = 0;
-    std::string           default_key = "cpu";
+    int                      default_idx = 0;
+    std::string              default_key = "cpu";
 
     options.push_back(DeviceOption({ 0, "cpu", "Run on CPU" }));
 
 #if defined(TOMOPY_USE_GPU)
-#if defined(TOMOPY_USE_CUDA)
+#    if defined(TOMOPY_USE_CUDA)
     options.push_back(DeviceOption({ 1, "cuda", "Run on GPU with CUDA" }));
-#endif
+#    endif
 
-#if defined(TOMOPY_USE_OPENACC)
+#    if defined(TOMOPY_USE_OPENACC)
     options.push_back(DeviceOption({ 2, "openacc", "Run on GPU with OpenACC" }));
 #    endif
 
@@ -595,9 +595,9 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
     default_idx = default_itr->index;
     default_key = default_itr->key;
     auto key    = GetEnv("TOMOPY_DEVICE_TYPE", default_key);
-    #if defined(TOMOPY_USE_GPU)
-    key    = GetEnv("TOMOPY_GPU_TYPE", key);
-    #endif
+#if defined(TOMOPY_USE_GPU)
+    key = GetEnv("TOMOPY_GPU_TYPE", key);
+#endif
 
     int selection = default_idx;
     for(auto itr : options)
