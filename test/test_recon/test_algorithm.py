@@ -147,11 +147,11 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def test_sirt(self):
         r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
         c_sirt = read_file('sirt.npy')
-        comparison = image_comparison(
-            1, r_sirt.shape[0], r_sirt.shape[1],
-            r_sirt.shape[2], c_sirt)
-        comparison.assign('sirt', 0, r_sirt)
-        output_images(comparison.array, "test/sirt")
+        #comparison = image_comparison(
+        #    1, r_sirt.shape[0], r_sirt.shape[1],
+        #    r_sirt.shape[2], c_sirt)
+        #comparison.assign('sirt', 0, r_sirt)
+        #output_images(comparison.array, "test/sirt")
         assert_allclose(r_sirt, c_sirt, rtol=1e-2)
 
     def test_tv(self):

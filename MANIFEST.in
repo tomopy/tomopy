@@ -6,11 +6,10 @@ include CMakeLists.txt
 include tomopy/allocator/__init__.py
 recursive-include cmake *
 recursive-include tomopy/data *.tif *.h5
-recursive-include tomopy/sharedlibs *
-recursive-include test *
-recursive-include include *
-recursive-include src *
+recursive-include tomopy *
+recursive-include source *
 recursive-exclude * __pycache__ *.pyc
-recursive-exclude src/pybind11/docs *
-recursive-exclude src/pybind11/tests *.h *.cpp *.py
+recursive-exclude source/pybind11/docs *
+recursive-exclude source/pybind11/tests *.h *.cpp *.py
 recursive-exclude _skbuild *
+recursive-exclude benchmarking *

@@ -235,28 +235,13 @@ if(TOMOPY_USE_OPENCV)
     set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
     find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
 
-    foreach(_COMPONENT ${OpenCV_COMPONENTS})
-        if(OpenCV_${_COMPONENT}_FOUND)
-            list(APPEND _COMPONENT_LIBS ${_COMPONENT})
-        endif()
-    endforeach()
-
-    LIST(LENGTH OpenCV_COMPONENTS _NUM_TOTAL_COMPONENT_LIBS)
-    LIST(LENGTH _COMPONENT_LIBS _NUM_FOUND_COMPONENT_LIBS)
-
-    if(OpenCV_FOUND AND ${_NUM_FOUND_COMPONENT_LIBS} EQUAL ${_NUM_TOTAL_COMPONENT_LIBS})
+    if(OpenCV_FOUND)
+        message(STATUS "OpenCV ${OpenCV_VERSION} found: ${OpenCV_INSTALL_PATH}")
         list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
     else()
-        set(msg "     OpenCV found: ${_COMPONENT_LIBS} (${_NUM_FOUND_COMPONENT_LIBS})\n")
-        set(msg "${msg}    OpenCV needed: ${OpenCV_COMPONENTS} (${_NUM_FOUND_COMPONENT_LIBS})\n")
-        message(WARNING "${msg}")
-        unset(msg)
+        message(STATUS "OpenCV not found")
         set(TOMOPY_USE_OPENCV OFF)
     endif()
-
-    unset(_NUM_FOUND_COMPONENT_LIBS)
-    unset(_NUM_TOTAL_COMPONENT_LIBS)
 endif()
 
 

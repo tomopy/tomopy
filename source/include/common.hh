@@ -219,7 +219,7 @@ using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //======================================================================================//
 
-struct GpuOption
+struct DeviceOption
 {
     int         index;
     std::string key;
@@ -256,7 +256,7 @@ struct GpuOption
         os << ss.str();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const GpuOption& opt)
+    friend std::ostream& operator<<(std::ostream& os, const DeviceOption& opt)
     {
         std::stringstream ss;
         ss << "\t" << std::right << std::setw(5) << opt.index << "  \t" << std::left
@@ -502,23 +502,42 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 
 template <typename _Func, typename... _Args>
 void
-run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
-                  _Args... args)
+run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
+              _Args... args)
 {
-    std::deque<GpuOption> options;
+    bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
+    if(use_cpu)
+    {
+        try
+        {
+            cpu_func(_forward_args_t(_Args, args));
+        }
+        catch(const std::exception& e)
+        {
+            AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << e.what() << '\n';
+        }
+        return;
+    }
+
+    std::deque<DeviceOption> options;
     int                   default_idx = 0;
     std::string           default_key = "cpu";
 
+    options.push_back(DeviceOption({ 0, "cpu", "Run on CPU" }));
+
+#if defined(TOMOPY_USE_GPU)
 #if defined(TOMOPY_USE_CUDA)
-    options.push_back(GpuOption({ 1, "cuda", "Run with CUDA" }));
+    options.push_back(DeviceOption({ 1, "cuda", "Run on GPU with CUDA" }));
 #endif
 
 #if defined(TOMOPY_USE_OPENACC)
-    options.push_back(GpuOption({ 2, "openacc", "Run with OpenACC" }));
-#endif
+    options.push_back(DeviceOption({ 2, "openacc", "Run on GPU with OpenACC" }));
+#    endif
 
-#if defined(TOMOPY_USE_OPENMP)
-    options.push_back(GpuOption({ 3, "openmp", "Run with OpenMP" }));
+#    if defined(TOMOPY_USE_OPENMP)
+    options.push_back(DeviceOption({ 3, "openmp", "Run on GPU with OpenMP" }));
+#    endif
 #endif
 
     //------------------------------------------------------------------------//
@@ -530,16 +549,16 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
             first = false;
 
         std::stringstream ss;
-        GpuOption::header(ss);
+        DeviceOption::header(ss);
         for(const auto& itr : options)
             ss << itr << "\n";
-        GpuOption::footer(ss);
+        DeviceOption::footer(ss);
 
         AutoLock l(TypeMutex<decltype(std::cout)>());
         std::cout << "\n" << ss.str() << std::endl;
     };
     //------------------------------------------------------------------------//
-    auto print_selection = [&](GpuOption& selected_opt) {
+    auto print_selection = [&](DeviceOption& selected_opt) {
         static bool first = true;
         if(!first)
             return;
@@ -547,9 +566,9 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
             first = false;
 
         std::stringstream ss;
-        GpuOption::spacer(ss, '-');
+        DeviceOption::spacer(ss, '-');
         ss << "Selected device: " << selected_opt << "\n";
-        GpuOption::spacer(ss, '-');
+        DeviceOption::spacer(ss, '-');
 
         AutoLock l(TypeMutex<decltype(std::cout)>());
         std::cout << ss.str() << std::endl;
@@ -566,9 +585,19 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
     // print the GPU execution type options
     print_options();
 
-    default_idx = options.front().index;
-    default_key = options.front().key;
-    auto key    = GetEnv("TOMOPY_GPU_TYPE", default_key);
+    auto default_itr = options.begin();
+#if defined(TOMOPY_USE_GPU)
+    // if there are GPU options, set the default to first GPU option
+    if(options.size() > 1)
+        ++default_itr;
+#endif
+
+    default_idx = default_itr->index;
+    default_key = default_itr->key;
+    auto key    = GetEnv("TOMOPY_DEVICE_TYPE", default_key);
+    #if defined(TOMOPY_USE_GPU)
+    key    = GetEnv("TOMOPY_GPU_TYPE", key);
+    #endif
 
     int selection = default_idx;
     for(auto itr : options)
@@ -582,7 +611,11 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
 
     try
     {
-        if(selection == 1)
+        if(selection == 0)
+        {
+            cpu_func(_forward_args_t(_Args, args));
+        }
+        else if(selection == 1)
         {
             cuda_func(_forward_args_t(_Args, args));
         }
@@ -597,13 +630,17 @@ run_gpu_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_fun
     }
     catch(std::exception& e)
     {
+        if(selection != 0)
         {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << "[TID: " << GetThisThreadID() << "] " << e.what() << std::endl;
-            std::cerr << "[TID: " << GetThisThreadID() << "] "
-                      << "Falling back to CPU algorithm..." << std::endl;
+            {
+                AutoLock l(TypeMutex<decltype(std::cout)>());
+                std::cerr << "[TID: " << GetThisThreadID() << "] " << e.what()
+                          << std::endl;
+                std::cerr << "[TID: " << GetThisThreadID() << "] "
+                          << "Falling back to CPU algorithm..." << std::endl;
+            }
+            cpu_func(_forward_args_t(_Args, args));
         }
-        cpu_func(_forward_args_t(_Args, args));
     }
 }
 

@@ -44,11 +44,11 @@
 #include "common.hh"
 #include "gpu.hh"
 #include "utils.hh"
+#include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
 #include "mlem.h"
 #include "utils.h"
-#include "utils_cuda.h"
 #include "utils_openacc.h"
 #include "utils_openmp.h"
 END_EXTERN_C
@@ -58,10 +58,6 @@ END_EXTERN_C
 #include <cstdlib>
 #include <memory>
 #include <numeric>
-
-#if !defined(cast)
-#    define cast static_cast
-#endif
 
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_update;

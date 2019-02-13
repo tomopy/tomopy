@@ -232,7 +232,7 @@ def create_nosetest_test(args):
         "RUN_SERIAL": "ON",
         "LABEL": "unit",
         "WORKING_DIRECTORY": binary_dir,
-        "ENVIRONMENT": "TOMOPY_USE_C_SIRT=1;TOMOPY_USE_C_MLEM=1"
+        "ENVIRONMENT": "TOMOPY_USE_C_ALGORITHMS=1"
         }
 
     # test command: python $(which coverage) run $(which nosetest)

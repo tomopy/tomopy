@@ -39,11 +39,11 @@
 
 #include "common.hh"
 #include "utils.hh"
+#include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
 #include "sirt.h"
 #include "utils.h"
-#include "utils_cuda.h"
 #include "utils_openacc.h"
 #include "utils_openmp.h"
 END_EXTERN_C
@@ -62,14 +62,15 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 {
     // check to see if the C implementation is requested
     bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_SIRT", false);
+    use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
         return scast<int>(false);
 
     auto tid = GetThisThreadID();
     ConsumeParameters(tid);
-    static std::atomic<int> _once;
-    ++_once;
+    static std::atomic<int> active;
+    int                     count = active++;
 
     START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
@@ -77,21 +78,15 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
            __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-#if defined(TOMOPY_USE_GPU)
-    // TODO: select based on memory
-    bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
-    if(use_cpu)
-        sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    else
-        run_gpu_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp, data, dy, dt,
-                          dx, center, theta, recon, ngridx, ngridy, num_iter);
-#else
-    sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-#endif
+    {
+        TIMEMORY_AUTO_TIMER("");
+        run_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp, data, dy, dt, dx,
+                      center, theta, recon, ngridx, ngridy, num_iter);
+    }
 
-    REPORT_TIMER(cxx_timer, __FUNCTION__, 0, 0);
-
-    auto remain = --_once;
+    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto remain = --active;
+    REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
     if(remain == 0)
     {
         std::stringstream ss;

@@ -24,7 +24,6 @@ fi
 if [ -z "${GCOV_CMD}" ]; then exit 0; fi
 
 # GNU coverage
-
 mkdir -p ${OUTPUT_DIR}
 
 shopt -s nullglob
@@ -36,4 +35,4 @@ do
 done
 
 if [ ! -d "${SOURCE_DIR}/Testing" ]; then mkdir -p ${SOURCE_DIR}/Testing ; fi
-cp -r ${SOURCE_DIR}/src ${SOURCE_DIR}/Testing
+cp -r ${SOURCE_DIR}/source ${SOURCE_DIR}/Testing/

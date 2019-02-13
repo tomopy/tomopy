@@ -57,35 +57,43 @@ cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 {
     // check to see if the C implementation is requested
     bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_PROJECT", true);
+    use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
-        return static_cast<int>(false);
+        return scast<int>(false);
+
+    auto tid = GetThisThreadID();
+    ConsumeParameters(tid);
+    static std::atomic<int> active;
+    int                     count = active++;
+
+    START_TIMER(cxx_timer);
 
     printf("\n\t%s [oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i]\n\n",
            __FUNCTION__, oy, oz, oz, dy, dt, dx);
 
-#if defined(TOMOPY_USE_PTL)
-    auto tid = GetThisThreadID();
-    ConsumeParameters(tid);
-#endif
+    {
+        TIMEMORY_AUTO_TIMER("");
+        run_algorithm(project_cpu, project_cuda, project_openacc, project_openmp, obj, oy,
+                      ox, oz, data, dy, dt, dx, center, theta);
+    }
 
-    START_TIMER(cxx_start);
-    TIMEMORY_AUTO_TIMER("");
-
-#if defined(TOMOPY_USE_GPU)
-    bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
-    if(use_cpu)
-        project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
+    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto remain = --active;
+    REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
+    if(remain == 0)
+    {
+        std::stringstream ss;
+        PrintEnv(ss);
+        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
+               ss.str().c_str());
+    }
     else
-        run_gpu_algorithm(project_cpu, project_cuda, project_openacc, project_openmp, obj,
-                          oy, ox, oz, data, dy, dt, dx, center, theta);
-#else
-    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
-#endif
+    {
+        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(), remain);
+    }
 
-    REPORT_TIMER(cxx_start, __FUNCTION__, 0, 1);
-
-    return static_cast<int>(true);
+    return scast<int>(true);
 }
 
 //======================================================================================//

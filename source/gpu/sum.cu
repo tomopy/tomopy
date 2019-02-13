@@ -41,10 +41,10 @@
 
 #include "common.hh"
 #include "gpu.hh"
+#include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
 #include "gpu.h"
-#include "utils_cuda.h"
 END_EXTERN_C
 
 namespace cg = cooperative_groups;

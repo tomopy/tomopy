@@ -37,64 +37,224 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
+#include "common.hh"
 #include "gpu.hh"
+#include "utils.hh"
+#include "utils_cuda.hh"
 
-extern "C"
-{
+BEGIN_EXTERN_C
 #include "art.h"
 #include "utils.h"
-}
+#include "utils_openacc.h"
+#include "utils_openmp.h"
+END_EXTERN_C
 
-#if !defined(cast)
-#    define cast static_cast
-#endif
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <numeric>
+
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
+extern nvtxEventAttributes_t nvtx_total;
+extern nvtxEventAttributes_t nvtx_iteration;
+extern nvtxEventAttributes_t nvtx_slice;
+extern nvtxEventAttributes_t nvtx_projection;
 extern nvtxEventAttributes_t nvtx_update;
+extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
 //======================================================================================//
 
 __global__ void
-art_update_kernel(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
-                  const float* data, const float* simdata, const int* indi,
-                  const float* dist, const float* sum_dist, float* model)
+cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
 {
-    if(*sum_dist != 0.0f)
+    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int dstride = blockDim.x * gridDim.x;
+
+    for(int d = d0; d < dx; d += dstride)
     {
-        int size   = (*csize) - 1;
-        int i0     = blockIdx.x * blockDim.x + threadIdx.x;
-        int stride = blockDim.x * gridDim.x;
-
-        int index_model = s * ry * rz;
-        int idx         = d + p * dx + s * dt * dx;
-
-        float upd = (data[idx] - simdata[idx]) / (*sum_dist);
-        for(int i = i0; i < size; i += stride)
-        {
-            float value = upd * dist[i];
-            model[indi[i] + index_model] += value;
-        }
+        float sum = 0.0f;
+        for(int i = 0; i < nx; ++i)
+            sum += recon[d * nx + i];
+        sum = (data[p * dx + d] - sum) / static_cast<float>(nx);
+        for(int i = 0; i < nx; ++i)
+            recon[d * nx + i] += sum;
     }
+}
+
+//======================================================================================//
+
+void
+art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta,
+                           int s, int p, int nthreads, gpu_data** _gpu_data)
+{
+    auto       thread_number = GetThisThreadID() % nthreads;
+    gpu_data*& _cache        = _gpu_data[thread_number];
+
+#if defined(DEBUG)
+    printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
+           s, p, _cache->device());
+#endif
+
+    // ensure running on proper device
+    cuda_set_device(_cache->device());
+
+    // calculate some values
+    float        theta_p_rad = fmodf(theta[p], pi);
+    float        theta_p_deg = theta_p_rad * degrees;
+    float*       recon       = _cache->recon() + s * nx * ny;
+    const float* data        = _cache->data() + s * dt * dx;
+    float*       update      = _cache->update() + s * nx * ny;
+    float*       rot         = _cache->rot();
+    float*       tmp         = _cache->tmp();
+    int          smem        = 0;
+    const float  factor      = 1.0f / scast<float>(dx);
+    int          block       = _cache->block();
+    int          grid        = _cache->compute_grid(dx);
+    cudaStream_t stream      = _cache->stream();
+
+    gpu_memset<float>(rot, 0, nx * ny, stream);
+    gpu_memset<float>(tmp, 0, nx * ny, stream);
+
+    // forward-otate
+    cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
+    // compute simdata
+    cuda_art_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, rot, data);
+    // back-rotate
+    cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+    // update shared update array
+    cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(recon, tmp, nx * ny, factor);
+    // synchronize the stream (do this frequently to avoid backlog)
+    stream_sync(stream);
+    // if(++(*_cache) % _cache->sync_freq() == 0)
+    //    stream_sync(stream);
 }
 
 //--------------------------------------------------------------------------------------//
 
 void
-cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
-                const float* data, const float* simdata, const int* indi,
-                const float* dist, const float* sum, float* model, cudaStream_t* streams)
+art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
 {
-    NVTX_RANGE_PUSH(&nvtx_update);
-    int nb   = cuda_multi_processor_count();
-    int nt   = 16;
-    int smem = 0;
+    typedef decltype(HW_CONCURRENCY) nthread_type;
 
-    CUDA_CHECK_LAST_ERROR();
-    art_update_kernel<<<nb, nt, smem, streams[0]>>>(s, p, d, ry, rz, dt, dx, csize, data,
-                                                    simdata, indi, dist, sum, model);
-    CUDA_CHECK_LAST_ERROR();
-    NVTX_RANGE_POP(streams[0]);
+    if(cuda_device_count() == 0)
+        throw std::runtime_error("No CUDA device(s) available");
+
+    init_nvtx();
+    cuda_device_query();
+    static std::atomic<int> ntid;
+    auto                    tid = GetThisThreadID();
+
+    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           tid, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
+    // get some properties
+    // default number of threads == 1 to ensure an excess of threads are not created
+    // unless desired
+    auto min_threads   = nthread_type(1);
+    auto pythreads     = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads   = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads      = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    int  num_devices   = cuda_device_count();
+    int  thread_device = (ntid++) % num_devices;           // assign to device
+    auto sync_freq     = GetEnv("TOMOPY_STREAM_SYNC", 4);  // sync freq
+
+#if defined(TOMOPY_USE_PTL)
+    TaskRunManager* run_man = gpu_run_manager();
+    init_run_manager(run_man, nthreads);
+    TaskManager* task_man = run_man->GetTaskManager();
+    ThreadPool*  tp       = task_man->thread_pool();
+#endif
+
+    TIMEMORY_AUTO_TIMER("");
+
+    // GPU allocated copies
+    cuda_set_device(thread_device);
+    printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
+
+    float* recon   = gpu_malloc<float>(dy * ngridx * ngridy);
+    float* data    = gpu_malloc<float>(dy * dt * dx);
+    auto   streams = create_streams(2, cudaStreamNonBlocking);
+    cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
+    cpu2gpu_memcpy<float>(data, cpu_data, dy * dt * dx, streams[1]);
+    stream_sync(streams[0]);
+    stream_sync(streams[1]);
+    destroy_streams(streams, 2);
+    gpu_data** _gpu_data = new gpu_data*[nthreads];
+    for(int ii = 0; ii < nthreads; ++ii)
+        _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data,
+                                     recon, sync_freq);
+
+    NVTX_RANGE_PUSH(&nvtx_total);
+
+    for(int i = 0; i < num_iter; i++)
+    {
+        TIMEMORY_AUTO_TIMER("");
+        NVTX_RANGE_PUSH(&nvtx_iteration);
+        START_TIMER(t_start);
+
+        // set "update" to zero, copy in "recon"
+        for(int ii = 0; ii < nthreads; ++ii)
+        {
+            _gpu_data[ii]->reset();
+        }
+
+#if defined(TOMOPY_USE_PTL)
+        // Loop over slices and projection angles
+        TaskGroup<void> tg;
+        for(int s = 0; s < dy; ++s)
+            for(int p = 0; p < dt; ++p)
+                task_man->exec(tg, art_gpu_compute_projection, dy, dt, dx, ngridx, ngridy,
+                               theta, s, p, nthreads, _gpu_data);
+        tg.join();
+#else
+        // Loop over slices and projection angles
+        for(int s = 0; s < dy; ++s)
+            for(int p = 0; p < dt; p++)
+                art_gpu_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p,
+                                           nthreads, _gpu_data);
+#endif
+        for(int ii = 0; ii < nthreads; ++ii)
+            _gpu_data[ii]->sync();
+
+        NVTX_RANGE_POP(0);
+        REPORT_TIMER(t_start, "iteration", i, num_iter);
+    }
+
+    for(int ii = 0; ii < nthreads; ++ii)
+        _gpu_data[ii]->sync();
+
+    // create a rotated reconstruction
+    float* recon_rot = gpu_malloc<float>(dy * ngridx * ngridy);
+    streams          = create_streams(dy, cudaStreamNonBlocking);
+    // rotate reconstruction
+    for(int i = 0; i < dy; ++i)
+    {
+        auto offset = i * ngridx * ngridy;
+        cuda_rotate_ip(recon_rot + offset, recon + offset, pi, pi * degrees, ngridx,
+                       ngridy, streams[i]);
+    }
+
+    for(int i = 0; i < dy; ++i)
+        stream_sync(streams[i]);
+    destroy_streams(streams, dy);
+    cudaFree(recon);
+
+    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon_rot, dy * ngridx * ngridy, 0);
+    stream_sync(0);
+
+    for(int i = 0; i < nthreads; ++i)
+        delete _gpu_data[i];
+    delete[] _gpu_data;
+
+    cudaFree(recon_rot);
+    NVTX_RANGE_POP(0);
+
+    printf("\n");
 }
 
 //======================================================================================//

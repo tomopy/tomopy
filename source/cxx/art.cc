@@ -39,11 +39,11 @@
 
 #include "common.hh"
 #include "utils.hh"
+#include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
 #include "art.h"
 #include "utils.h"
-#include "utils_cuda.h"
 #include "utils_openacc.h"
 #include "utils_openmp.h"
 END_EXTERN_C
@@ -55,37 +55,50 @@ END_EXTERN_C
 
 //======================================================================================//
 
-void
+int
 cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    // check to see if the C implementation is requested
+    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_ART", true);
+    use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
+    // if C implementation is requested, return non-zero (failure)
+    if(use_c_algorithm)
+        return scast<int>(false);
+
     auto tid = GetThisThreadID();
     ConsumeParameters(tid);
+    static std::atomic<int> active;
+    int                     count = active++;
 
-#if defined(TOMOPY_USE_TIMEMORY)
-    tim::timer t(__FUNCTION__);
-    t.format().get()->width(10);
-    t.start();
-#endif
-
+    START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
 
-#if defined(TOMOPY_USE_GPU)
-    // TODO: select based on memory
-    bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
-    if(use_cpu)
-        art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    else
-        run_gpu_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt, dx,
-                          center, theta, recon, ngridx, ngridy, num_iter);
-#else
-    art_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-#endif
+    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-#if defined(TOMOPY_USE_TIMEMORY)
-    AutoLock l(TypeMutex<decltype(std::cout)>());
-    std::cout << "[" << tid << "]> " << t.stop_and_return() << std::endl;
-#endif
+    {
+        TIMEMORY_AUTO_TIMER("");
+        run_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt, dx, center,
+                      theta, recon, ngridx, ngridy, num_iter);
+    }
+
+    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto remain = --active;
+    REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
+    if(remain == 0)
+    {
+        std::stringstream ss;
+        PrintEnv(ss);
+        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
+               ss.str().c_str());
+    }
+    else
+    {
+        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(), remain);
+    }
+
+    return scast<int>(true);
 }
 
 //======================================================================================//
@@ -102,7 +115,7 @@ art_cpu(const float* data, int dy, int dt, int dx, const float* center,
 }
 
 //======================================================================================//
-
+#if !defined(TOMOPY_USE_CUDA)
 void
 art_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
@@ -152,7 +165,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
     });
     */
 }
-
+#endif
 //======================================================================================//
 
 void

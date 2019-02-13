@@ -43,6 +43,7 @@
 
 #include "art.h"
 #include "utils.h"
+#include "profiler.h"
 
 void
 art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
@@ -50,6 +51,15 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
+
+    if(cxx_art(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
+        return;
+
+    printf("\n\t%s (C) [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = "
+           "%i]\n\n",
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
+    void* timer = TIMEMORY_AUTO_TIMER("");
 
     float* gridx   = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy   = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -164,4 +174,6 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
     free(dist);
     free(indi);
     free(simdata);
+
+    FREE_TIMEMORY_AUTO_TIMER(timer);
 }

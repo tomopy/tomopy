@@ -47,7 +47,7 @@ BEGIN_EXTERN_C
 
 //======================================================================================//
 
-void
+int
 cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 

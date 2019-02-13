@@ -41,11 +41,13 @@
 
 #include "common.hh"
 #include "gpu.hh"
+#include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
 #include "gpu.h"
-#include "utils_cuda.h"
 END_EXTERN_C
+
+//======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_total;
@@ -55,21 +57,6 @@ extern nvtxEventAttributes_t nvtx_projection;
 extern nvtxEventAttributes_t nvtx_update;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
-
-//======================================================================================//
-// interpolation types
-#define INTER_NN NPPI_INTER_NN
-#define INTER_LINEAR NPPI_INTER_LINEAR
-#define INTER_CUBIC NPPI_INTER_CUBIC
-
-//======================================================================================//
-
-inline int
-GetInterpolationMode()
-{
-    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
-    return eInterp;
-}
 
 //======================================================================================//
 
@@ -113,7 +100,7 @@ print_array(const _Tp* data, int nx, int ny, const std::string& desc)
 void
 cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
-                   int eInterp = INTER_CUBIC, cudaStream_t stream = 0)
+                   int eInterp = NPP_INTER_CUBIC, cudaStream_t stream = 0)
 {
     // cudaStreamSynchronize(stream);
     nppSetStream(stream);
