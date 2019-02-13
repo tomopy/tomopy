@@ -217,7 +217,7 @@ cuda_rotate(const float* src, const float theta_rad, const float theta_deg, cons
             const int ny, cudaStream_t stream)
 {
     float* _dst = gpu_malloc<float>(nx * ny);
-    cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode(),
+    cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, GetNppInterpolationMode(),
                        stream);
     return _dst;
 }
@@ -228,7 +228,7 @@ void
 cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
                const int nx, const int ny, cudaStream_t stream)
 {
-    cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetInterpolationMode(),
+    cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, GetNppInterpolationMode(),
                        stream);
     CUDA_CHECK_LAST_ERROR();
     /*

@@ -48,6 +48,10 @@ def cleanup(path=None, exclude=[]):
 
 
 def configure():
+    # set site if set in environ
+    if os.environ.get("CTEST_SITE") is not None:
+        pyctest.CTEST_SITE = os.environ.get("CTEST_SITE")
+
     # Get pyctest argument parser that include PyCTest arguments
     parser = helpers.ArgumentParser(project_name="TomoPy",
                                     source_dir=os.getcwd(),
