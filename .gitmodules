@@ -1,6 +1,6 @@
 [submodule "src/pybind11"]
-	path = src/pybind11
+	path = source/pybind11
 	url = https://github.com/pybind/pybind11.git
 [submodule "src/PTL"]
-	path = src/PTL
+	path = source/PTL
 	url = https://github.com/jrmadsen/PTL.git

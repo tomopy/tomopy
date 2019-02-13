@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
 if(TOMOPY_USE_PYBIND11)
     # ensure the submodule is checked out
     checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH src/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+        RELATIVE_PATH source/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     add_subdirectory(pybind11)
 endif()
 
@@ -26,7 +26,7 @@ endif()
 #
 #------------------------------------------------------------------------------#
 checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-    RELATIVE_PATH src/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    RELATIVE_PATH source/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 if(TOMOPY_USE_PTL)
     add_subdirectory(PTL)
@@ -42,12 +42,12 @@ endif()
 
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers
-    ${PROJECT_SOURCE_DIR}/include/*.h
-    ${PROJECT_SOURCE_DIR}/include/*.hh
-    ${PROJECT_SOURCE_DIR}/include/*.hpp
-    ${PROJECT_SOURCE_DIR}/include/*.icc)
+    ${CMAKE_CURRENT_LIST_DIR}/include/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/*.hh
+    ${CMAKE_CURRENT_LIST_DIR}/include/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/*.icc)
 file(GLOB tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/*.c
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
 # core sources
@@ -88,13 +88,20 @@ add_library(libtomopy SHARED ${LIBRARY_SOURCES})
 # link library
 target_link_libraries(libtomopy ${EXTERNAL_LIBRARIES} ${EXTERNAL_CUDA_LIBRARIES})
 
+# where to place the library
+if(SKBUILD)
+    set(OUTPUT_PATH ${PROJECT_SOURCE_DIR})
+else()
+    set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
+endif()
+
 # target properties
 set_target_properties(libtomopy
     PROPERTIES
     PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy/sharedlibs
+    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
+    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
+    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
@@ -115,12 +122,6 @@ install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT development)
 
-# make sure the generated target gets put into the source tree for testing
-add_custom_command(TARGET libtomopy POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:libtomopy>
-    ${PROJECT_SOURCE_DIR}/tomopy/sharedlibs/)
-
-
 #------------------------------------------------------------------------------#
 #
 #   PyBind11 submodule
@@ -136,9 +137,9 @@ if(TOMOPY_USE_PYBIND11)
     target_link_libraries(tomocxx PRIVATE libtomopy ${EXTERNAL_LIBRARIES})
 
     set_target_properties(tomocxx PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
-        LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy
-        ARCHIVE_OUTPUT_DIRECTORY    ${CMAKE_BINARY_DIR}/tomopy)
+        RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy
+        LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy
+        ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy)
 
     target_compile_definitions(tomocxx PRIVATE
         ${${PROJECT_NAME}_DEFINITIONS})
@@ -155,10 +156,6 @@ if(TOMOPY_USE_PYBIND11)
     install(TARGETS tomocxx
         DESTINATION ${PYTHON_SITE_DIR}/tomopy
         COMPONENT development)
-
-    add_custom_command(TARGET tomocxx POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tomocxx>
-        ${PROJECT_SOURCE_DIR}/tomopy/)
 endif()
 
 
@@ -168,47 +165,48 @@ endif()
 #
 #------------------------------------------------------------------------------#
 
-# helper macro
-macro(CONFIG_INSTALL RELATIVE_PATH)
-    foreach(_SOURCE_FILE ${ARGN})
-        string(REPLACE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" _BINARY_FILE
-            "${_SOURCE_FILE}")
-        configure_file(${_SOURCE_FILE} ${_BINARY_FILE} COPYONLY)
-        install(FILES ${_BINARY_FILE}
-            DESTINATION ${PYTHON_SITE_DIR}/tomopy/${RELATIVE_PATH}
-            COMPONENT python)
-    endforeach(_SOURCE_FILE ${ARGN})
-endmacro()
+if(NOT SKBUILD)
+    # helper macro
+    macro(CONFIG_INSTALL RELATIVE_PATH)
+        foreach(_SOURCE_FILE ${ARGN})
+            string(REPLACE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" _BINARY_FILE
+                "${_SOURCE_FILE}")
+            configure_file(${_SOURCE_FILE} ${_BINARY_FILE} COPYONLY)
+            install(FILES ${_BINARY_FILE}
+                DESTINATION ${PYTHON_SITE_DIR}/tomopy/${RELATIVE_PATH}
+                COMPONENT python)
+        endforeach(_SOURCE_FILE ${ARGN})
+    endmacro()
 
-# Copy over pure python module, python testing, and setup files
-file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
-file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
-                   "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
-file(GLOB _MISC    "${PROJECT_SOURCE_DIR}/tomopy/misc/*.py")
-file(GLOB _PREP    "${PROJECT_SOURCE_DIR}/tomopy/prep/*.py")
-file(GLOB _RECON   "${PROJECT_SOURCE_DIR}/tomopy/recon/*.py")
-file(GLOB _SIM     "${PROJECT_SOURCE_DIR}/tomopy/sim/*.py")
-file(GLOB _UTIL    "${PROJECT_SOURCE_DIR}/tomopy/util/*.py")
+    # Copy over pure python module, python testing, and setup files
+    file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
+    file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
+                    "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
+    file(GLOB _MISC    "${PROJECT_SOURCE_DIR}/tomopy/misc/*.py")
+    file(GLOB _PREP    "${PROJECT_SOURCE_DIR}/tomopy/prep/*.py")
+    file(GLOB _RECON   "${PROJECT_SOURCE_DIR}/tomopy/recon/*.py")
+    file(GLOB _SIM     "${PROJECT_SOURCE_DIR}/tomopy/sim/*.py")
+    file(GLOB _UTIL    "${PROJECT_SOURCE_DIR}/tomopy/util/*.py")
 
-config_install("" ${_GENERAL})
-config_install("data"  ${_DATA})
-config_install("misc"  ${_MISC})
-config_install("prep"  ${_PREP})
-config_install("recon" ${_RECON})
-config_install("sim"   ${_SIM})
-config_install("util"  ${_UTIL})
+    config_install("" ${_GENERAL})
+    config_install("data"  ${_DATA})
+    config_install("misc"  ${_MISC})
+    config_install("prep"  ${_PREP})
+    config_install("recon" ${_RECON})
+    config_install("sim"   ${_SIM})
+    config_install("util"  ${_UTIL})
 
-# copy of test directory to build directory
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_SOURCE_DIR}/test ${PROJECT_BINARY_DIR}/test
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+    # copy of test directory to build directory
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_SOURCE_DIR}/test ${PROJECT_BINARY_DIR}/test
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
-# copy over setup.* files to build directory
-file(GLOB PYSETUP "${PROJECT_SOURCE_DIR}/setup.*")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${PYSETUP} ${PROJECT_BINARY_DIR}/
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-
+    # copy over setup.* files to build directory
+    file(GLOB PYSETUP "${PROJECT_SOURCE_DIR}/setup.*")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PYSETUP} ${PROJECT_BINARY_DIR}/
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+endif()
 
 #------------------------------------------------------------------------------#
 #

@@ -18,11 +18,11 @@ if(CLANG_FORMATTER)
         ${PROJECT_SOURCE_DIR}/include/*.hh
         ${PROJECT_SOURCE_DIR}/include/*.hpp)
     file(GLOB sources
-        ${PROJECT_SOURCE_DIR}/src/*.c
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.cc
-        ${PROJECT_SOURCE_DIR}/src/cxx/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.cc
-        ${PROJECT_SOURCE_DIR}/src/gpu/*.cu
+        ${PROJECT_SOURCE_DIR}/source/*.c
+        ${PROJECT_SOURCE_DIR}/source/cxx/*.cc
+        ${PROJECT_SOURCE_DIR}/source/cxx/*.cpp
+        ${PROJECT_SOURCE_DIR}/source/gpu/*.cc
+        ${PROJECT_SOURCE_DIR}/source/gpu/*.cu
         ${PROJECT_SOURCE_DIR}/test/*.cc
         ${PROJECT_SOURCE_DIR}/test/*.cu
         ${PROJECT_SOURCE_DIR}/test/*.cpp)

@@ -320,7 +320,7 @@ configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
 
 # include dirs
 set(TARGET_INCLUDE_DIRECTORIES
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/src/PTL/source
+    ${PROJECT_SOURCE_DIR}/source/include
+    ${PROJECT_SOURCE_DIR}/source/PTL/source
     ${EXTERNAL_INCLUDE_DIRS}
     ${EXTERNAL_CUDA_INCLUDE_DIRS})

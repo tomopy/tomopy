@@ -57,7 +57,7 @@ include(ClangFormat)
 #   tomopy source
 ################################################################################
 
-add_subdirectory(src)
+add_subdirectory(source)
 add_subdirectory(test)
 
 ################################################################################
