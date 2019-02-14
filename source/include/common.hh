@@ -169,8 +169,8 @@ END_EXTERN_C
 #endif
 
 #if defined(TOMOPY_USE_OPENCV)
-#    include <opencv2/highgui/highgui.hpp>
-#    include <opencv2/imgcodecs.hpp>
+#    include <opencv2/core.hpp>
+#    include <opencv2/imgproc.hpp>
 #    include <opencv2/imgproc/imgproc.hpp>
 #endif
 
@@ -563,7 +563,7 @@ struct DeviceOption
     static void footer(std::ostream& os)
     {
         std::stringstream ss;
-        ss << "\nTo select an option for runtime, set TOMOPY_GPU_TYPE "
+        ss << "\nTo select an option for runtime, set TOMOPY_DEVICE_TYPE "
            << "environment variable\n  to an INDEX or KEY above\n";
         spacer(ss, '=');
         os << ss.str();

@@ -23,15 +23,19 @@ module load cuda
 
 source activate tomopy-gpu
 
-cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu
+BASE_DIR=/global/cscratch1/sd/jrmadsen
+GLOBUS_DIR=${BASE_DIR}/globus
+SOURCE_DIR=${BASE_DIR}/software/tomopy/tomopy-edison-gpu
+
+cd ${SOURCE_DIR}
 
 LOG_DIR=${PWD}/logs
 mkdir -p ${LOG_DIR}
 
 # algorithm settings
-export TOMOPY_USE_C_SIRT=0
-export TOMOPY_USE_CPU=0
-export TOMOPY_DEVICE_TYPE=cuda
+export TOMOPY_USE_C_ALGORITHMS=1
+export TOMOPY_USE_CPU=1
+export TOMOPY_DEVICE_TYPE=cpu
 export TOMOPY_INTER=1
 export TOMOPY_NUM_ITERATION=50
 export DATA_TYPE=partial
@@ -63,7 +67,7 @@ OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${
 echo -e "\n### building... ###\n"
 run-verbose python setup.py install --enable-cuda --enable-arch --disable-openmp --disable-nvtx --enable-gpu --disable-timemory --disable-avx512 -- -DTOMOPY_USE_PYBIND11=OFF -DTOMOPY_USE_PTL=ON | tee ${LOG_DIR}/build-${OUT}.log
 
-run-verbose cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu/benchmarking
+run-verbose cd ${SOURCE_DIR}/benchmarking
 
 echo -e "\n### printing GPU info... ###\n"
 run-verbose srun nvidia-smi | tee ${LOG_DIR}/smi-${OUT}.log
@@ -83,7 +87,7 @@ run-recon()
 	-a sirt \
 	-r ${BLOCK_BEGIN} ${BLOCK_END} \
 	-f png \
-	/project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+	${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
 }
 
 run-recon partial

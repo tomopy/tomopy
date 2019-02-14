@@ -23,15 +23,19 @@ module load cuda
 
 source activate tomopy-gpu
 
-cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu
+BASE_DIR=/global/cscratch1/sd/jrmadsen
+GLOBUS_DIR=${BASE_DIR}/globus
+SOURCE_DIR=${BASE_DIR}/software/tomopy/tomopy-edison-gpu
+
+cd ${BASE_DIR}
 
 LOG_DIR=${PWD}/logs
 mkdir -p ${LOG_DIR}
 
 # algorithm settings
-export TOMOPY_USE_C_SIRT=0
-export TOMOPY_USE_CPU=0
-export TOMOPY_DEVICE_TYPE=cuda
+export TOMOPY_USE_C_ALGORITHMS=1
+export TOMOPY_USE_CPU=1
+export TOMOPY_DEVICE_TYPE=cpu
 export TOMOPY_INTER=1
 export TOMOPY_NUM_ITERATION=50
 export DATA_TYPE=partial
@@ -63,30 +67,31 @@ OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${
 echo -e "\n### building... ###\n"
 run-verbose python setup.py install --enable-cuda --enable-arch --disable-openmp --disable-nvtx --enable-gpu --disable-timemory --disable-avx512 -- -DTOMOPY_USE_PYBIND11=OFF -DTOMOPY_USE_PTL=ON | tee ${LOG_DIR}/build-${OUT}.log
 
-run-verbose cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu/benchmarking
+run-verbose cd ${SOURCE_DIR}/benchmarking
 
 echo -e "\n### printing GPU info... ###\n"
 run-verbose srun nvidia-smi | tee ${LOG_DIR}/smi-${OUT}.log
 
 echo -e "\n### running... ###\n"
-run-recon()
+run-phantom()
 {
-    DATA_TYPE=${1}
-    OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${CUDA_BLOCK_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_SIRT}-${TOMOPY_USE_CPU}"
+    PHANTOM=${1}
+    shift
     run-verbose srun -c 80 \
 	$(which python) \
-	./pyctest_tomopy_rec.py \
-	-o  ${OUT} \
-	--type=${DATA_TYPE} \
+	./pyctest_tomopy_phantom.py \
+	--output-dir ${OUT} \
 	-n ${TOMOPY_PYTHON_THREADS} \
 	-i ${TOMOPY_NUM_ITERATION} \
 	-a sirt \
-	-r ${BLOCK_BEGIN} ${BLOCK_END} \
-	-f png \
-	/project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+        -f png \
+	-p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log
 }
 
-run-recon partial
-run-recon slice
+run-phantom shepp3d --partial -r ${BLOCK_BEGIN} ${BLOCK_END}
+run-phantom shepp2d
+run-phantom cameraman
+run-phantom lena
+run-phantom peppers
 
 echo -e "Completed at $(date)"

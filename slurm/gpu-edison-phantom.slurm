@@ -69,24 +69,25 @@ echo -e "\n### printing GPU info... ###\n"
 run-verbose srun nvidia-smi | tee ${LOG_DIR}/smi-${OUT}.log
 
 echo -e "\n### running... ###\n"
-run-recon()
+run-phantom()
 {
-    DATA_TYPE=${1}
-    OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${CUDA_BLOCK_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_SIRT}-${TOMOPY_USE_CPU}"
+    PHANTOM=${1}
+    shift
     run-verbose srun -c 80 \
 	$(which python) \
-	./pyctest_tomopy_rec.py \
-	-o  ${OUT} \
-	--type=${DATA_TYPE} \
+	./pyctest_tomopy_phantom.py \
+	--output-dir ${OUT} \
 	-n ${TOMOPY_PYTHON_THREADS} \
 	-i ${TOMOPY_NUM_ITERATION} \
 	-a sirt \
-	-r ${BLOCK_BEGIN} ${BLOCK_END} \
-	-f png \
-	/project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+        -f png \
+	-p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log
 }
 
-run-recon partial
-run-recon slice
+run-phantom shepp3d --partial -r ${BLOCK_BEGIN} ${BLOCK_END}
+run-phantom shepp2d
+run-phantom cameraman
+run-phantom lena
+run-phantom peppers
 
 echo -e "Completed at $(date)"
