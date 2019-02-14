@@ -623,7 +623,6 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
     std::string default_key = "cuda";
 #else
     std::string default_key = "cpu";
-    throw std::runtime_error("here");
 #endif
 
     auto default_itr =

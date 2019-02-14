@@ -367,22 +367,18 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         ncore = int(len(slcs))
 
     # calculate how many real slices there are
-    _slcs = []
+    use_slcs = []
     nreal = 0
     for slc in slcs:
         _tomo = tomo[slc]
         _min = min(_tomo.shape)
-        print("_min = {} from {}".format(_min, _tomo.shape))
         if _min > 0:
             nreal += 1
-            _slcs.append(slc)
-    slcs = _slcs
+            use_slcs.append(slc)
 
     # if less real slices than ncores, reduce number of cores
     if nreal < ncore:
         ncore = int(nreal)
-
-    print("using {} threads for slices: {}".format(ncore, slcs))
 
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
@@ -397,13 +393,13 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
 
     if ncore == 1:
-        for slc in slcs:
+        for slc in use_slcs:
             # run in this thread (useful for debugging)
             algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
     else:
         # execute recon on ncore threads
         with cf.ThreadPoolExecutor(ncore) as e:
-            for slc in slcs:
+            for slc in use_slcs:
                 e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
 
     if pythreads is not None:

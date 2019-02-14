@@ -141,7 +141,7 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
         int   pix_offset = d * nx;  // pixel offset
         int   idx_data   = d + p * dx;
         float _sum       = 0.0f;
-        float _fngridx   = 0.0f;
+        int   _fnx       = 0;
         // instead of including all the offsets later in the index lookup, offset the
         // pointer itself. This should make it easier for compiler to apply SIMD
         const float* _data      = data + idx_data;
@@ -157,14 +157,17 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
 
         // Calculte the relevant pixels after rotation
         for(int n = 0; n < nx; ++n)
-            _fngridx += (_use_rot[n] != 0) ? 1 : 0;
+            _fnx += (_use_rot[n] != 0) ? 1 : 0;
 
-        // Make update by backprojecting error along x-axis
-        float upd = (*_data - *_simdata) / _fngridx;
+        if(_fnx != 0)
+        {
+            // Make update by backprojecting error along x-axis
+            float upd = (*_data - *_simdata) / scast<float>(_fnx);
 
-        // update rotation
-        for(int n = 0; n < nx; ++n)
-            _recon_rot[n] += upd;
+            // update rotation
+            for(int n = 0; n < nx; ++n)
+                _recon_rot[n] += upd;
+        }
     }
 
     // Back-Rotate object

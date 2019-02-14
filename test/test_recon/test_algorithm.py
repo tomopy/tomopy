@@ -49,6 +49,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import unittest
 from ..util import read_file
 from tomopy.recon.algorithm import recon
@@ -67,6 +68,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         self.ang = read_file('angle.npy').astype('float32')
 
     def test_art(self):
+        os.environ["TOMOPY_USE_C_ART"] = "1"
         assert_allclose(
             recon(self.prj, self.ang, algorithm='art', num_iter=4),
             read_file('art.npy'), rtol=1e-2)
@@ -115,6 +117,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
 
     def test_mlem(self):
+        os.environ["TOMOPY_USE_C_MLEM"] = "1"
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
             read_file('mlem.npy'), rtol=1e-2)
@@ -145,6 +148,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             read_file('pml_quad.npy'), rtol=1e-2)
 
     def test_sirt(self):
+        os.environ["TOMOPY_USE_C_SIRT"] = "1"
         r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
         c_sirt = read_file('sirt.npy')
         #comparison = image_comparison(
