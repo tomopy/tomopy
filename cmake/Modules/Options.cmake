@@ -44,7 +44,7 @@ add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ON)
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_PYBIND11 "Enable pybind11 binding" ${_USE_PYBIND})
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
-add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" ON)
+add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage" OFF)
 add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ${_USE_PTL})
 

@@ -69,17 +69,21 @@ extern nvtxEventAttributes_t nvtx_rotate;
 //======================================================================================//
 
 __global__ void
-cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
+cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
+                       const gpu_data::int_type* recon_use)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
 
     for(int d = d0; d < dx; d += dstride)
     {
+        int   fnx = 0;
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
-        sum = (data[p * dx + d] - sum) / scast<float>(nx);
+        for(int i = 0; i < nx; ++i)
+            fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
+        sum = (data[p * dx + d] - sum) / scast<float>(fnx);
         for(int i = 0; i < nx; ++i)
             recon[d * nx + i] += sum;
     }
@@ -91,6 +95,8 @@ void
 art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta,
                            int s, int p, int nthreads, gpu_data** _gpu_data)
 {
+    typedef gpu_data::int_type int_type;
+
     auto       thread_number = GetThisThreadID() % nthreads;
     gpu_data*& _cache        = _gpu_data[thread_number];
 
@@ -108,21 +114,25 @@ art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* 
     float*       recon       = _cache->recon() + s * nx * ny;
     const float* data        = _cache->data() + s * dt * dx;
     float*       update      = _cache->update() + s * nx * ny;
+    auto*        use_rot     = _cache->use_rot();
+    auto*        use_tmp     = _cache->use_tmp();
     float*       rot         = _cache->rot();
     float*       tmp         = _cache->tmp();
     int          smem        = 0;
-    const float  factor      = 1.0f / scast<float>(dx);
+    const float  factor      = 1.0f;
     int          block       = _cache->block();
     int          grid        = _cache->compute_grid(dx);
     cudaStream_t stream      = _cache->stream();
 
+    gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     gpu_memset<float>(rot, 0, nx * ny, stream);
     gpu_memset<float>(tmp, 0, nx * ny, stream);
 
-    // forward-otate
+    // forward-rotate
+    cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
     cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
     // compute simdata
-    cuda_art_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, rot, data);
+    cuda_art_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, rot, data, use_rot);
     // back-rotate
     cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
     // update shared update array
@@ -208,27 +218,26 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 #if defined(TOMOPY_USE_PTL)
         // Loop over slices and projection angles
         TaskGroup<void> tg;
-        for(int s = 0; s < dy; ++s)
-            for(int p = 0; p < dt; ++p)
+        for(int p = 0; p < dt; ++p)
+            for(int s = 0; s < dy; ++s)
                 task_man->exec(tg, art_gpu_compute_projection, dy, dt, dx, ngridx, ngridy,
                                theta, s, p, nthreads, _gpu_data);
         tg.join();
 #else
         // Loop over slices and projection angles
-        for(int s = 0; s < dy; ++s)
-            for(int p = 0; p < dt; p++)
+        for(int p = 0; p < dt; p++)
+            for(int s = 0; s < dy; ++s)
                 art_gpu_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p,
                                            nthreads, _gpu_data);
 #endif
         for(int ii = 0; ii < nthreads; ++ii)
             _gpu_data[ii]->sync();
 
-        /*
+
         stream_sync(0);
-        const float factor = 1.0f / scast<float>(dt);
+        const float factor = 1.0f / scast<float>(dx);
         cuda_mult_kernel<<<grid, block>>>(recon, dy * ngridx * ngridy, factor);
         stream_sync(0);
-        */
 
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);

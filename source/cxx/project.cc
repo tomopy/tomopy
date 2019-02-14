@@ -115,12 +115,11 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
         for(int p = 0; p < dt; p++)
         {
             // needed for recon to output at proper orientation
-            float    theta_rad_p = fmodf(theta[p] + halfpi, twopi);
-            float    theta_deg_p = theta_rad_p * degrees;
+            float    theta_p = fmodf(theta[p] + halfpi, twopi);
             farray_t obj_rot(ox * oz, 0.0f);
 
             // Forward-Rotate object
-            cxx_affine_transform(obj_rot, obj, -theta_rad_p, -theta_deg_p, oz, ox);
+            cxx_rotate_ip<float>(obj_rot, obj, -theta_p, oz, ox);
 
             for(int d = 0; d < ox; ++d)
             {

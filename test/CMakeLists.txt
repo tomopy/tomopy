@@ -1,13 +1,14 @@
 
-add_option(BUILD_TESTS "Build compiled tests" OFF)
-if(NOT BUILD_TESTS)
+add_option(TOMOPY_BUILD_TESTS "Build compiled tests" OFF)
+if(NOT TOMOPY_BUILD_TESTS)
     return()
 endif()
-  
+
+find_package(OpenCV COMPONENTS opencv_highgui)
+
 if(TOMOPY_USE_OPENCV AND OpenCV_FOUND)
     add_executable(test_opencv test_opencv.cc)
-    target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES})
-    target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES})
+    target_link_libraries(test_opencv ${EXTERNAL_LIBRARIES} opencv_highgui)
     target_compile_definitions(test_opencv PUBLIC
         ${${PROJECT_NAME}_DEFINITIONS})
 
@@ -19,7 +20,7 @@ if(TOMOPY_USE_OPENCV AND OpenCV_FOUND)
         $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 endif()
 
-if(TOMOPY_USE_CUDA)
+if(TOMOPY_USE_GPU AND TOMOPY_USE_CUDA)
     add_executable(test_nppi test_nppi.cu)
     target_link_libraries(test_nppi ${EXTERNAL_LIBRARIES} ${EXTERNAL_CUDA_LIBRARIES})
     target_compile_definitions(test_nppi PUBLIC

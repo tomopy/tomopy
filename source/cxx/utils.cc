@@ -44,67 +44,12 @@
 #include "utils.hh"
 #include "common.hh"
 
-#include <limits>
-#include <sstream>
-#include <stdexcept>
-#include <vector>
-
-#if defined(TOMOPY_USE_IPP)
-#    include <ipp.h>
-#    include <ippdefs.h>
-#    include <ippi.h>
-#endif
-
-#if defined(TOMOPY_USE_OPENCV)
-#    include <opencv2/highgui/highgui.hpp>
-#    include <opencv2/imgcodecs.hpp>
-#    include <opencv2/imgproc/imgproc.hpp>
-using namespace cv;
-#endif
-
 //======================================================================================//
-
-template <typename _Tp>
-using Vector = std::vector<_Tp>;
-
-//======================================================================================//
-#if defined(TOMOPY_USE_OPENCV)
-inline int
-GetInterpolationMode()
-{
-    static int eInterp = GetEnv<int>("TOMOPY_INTER", INTER_CUBIC);
-    return eInterp;
-}
-#endif
-//======================================================================================//
-#if defined(TOMOPY_USE_OPENCV)
-Mat
-cxx_affine_transform(const Mat& warp_src, float theta, const int nx, const int ny,
-                     float scale)
-{
-    Mat   warp_dst = Mat::zeros(nx, ny, warp_src.type());
-    float cx       = 0.5f * ny + ((ny % 2 == 0) ? 0.5f : 0.0f);
-    float cy       = 0.5f * nx + ((nx % 2 == 0) ? 0.5f : 0.0f);
-    Point center   = Point(cx, cy);
-    Mat   rot      = getRotationMatrix2D(center, theta, scale);
-    warpAffine(warp_src, warp_dst, rot, warp_src.size(), GetInterpolationMode());
-    return warp_dst;
-}
-#endif
-//======================================================================================//
-
+/*
 void
-cxx_affine_transform(farray_t& dst, const float* src, float theta_rad, float theta_deg,
+ipp_affine_transform(farray_t& dst, const float* src, float theta_rad, float theta_deg,
                      const int nx, const int ny, const float scale)
 {
-#if defined(TOMOPY_USE_OPENCV)
-
-    Mat warp_src = Mat::zeros(nx, ny, CV_32F);
-    memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
-    Mat warp_rot = cxx_affine_transform(warp_src, theta_deg, nx, ny, scale);
-    memcpy(dst.data(), warp_rot.ptr(), nx * ny * sizeof(float));
-
-#elif defined(TOMOPY_USE_IPP)
 
     auto getRotationMatrix2D = [&](double m[2][3]) {
         double alpha    = scale * cos(theta_rad);
@@ -125,11 +70,11 @@ cxx_affine_transform(farray_t& dst, const float* src, float theta_rad, float the
     siz.width  = nx;
     siz.height = ny;
 
-    /*IppiRect roi;
+    IppiRect roi;
     roi.x      = 0;
     roi.y      = 0;
     roi.width  = nx;
-    roi.height = ny;*/
+    roi.height = ny;
 
     double        rot[2][3];
     int           bufSize   = 0;
@@ -151,81 +96,7 @@ cxx_affine_transform(farray_t& dst, const float* src, float theta_rad, float the
 
     ippsFree(pSpec);
     ippsFree(pBuffer);
-
-#else
-
-    std::stringstream ss;
-    ss << __FUNCTION__ << " not implemented without OpenCV or Intel IPP!";
-    throw std::runtime_error(ss.str());
-
-#endif
 }
-
-//======================================================================================//
-
-farray_t
-cxx_rotate(const float* src, float theta, const int nx, const int ny)
-{
-    farray_t dst(nx * ny, 0.0);
-    cxx_rotate_ip(dst, src, theta, nx, ny);
-    return dst;
-}
-
-//======================================================================================//
-
-void
-cxx_rotate_ip(farray_t& dst, const float* src, float theta, const int nx, const int ny)
-{
-    memset(dst.data(), 0, nx * ny * sizeof(float));
-#if defined(TOMOPY_USE_OPENCV) || defined(TOMOPY_USE_IPP)
-    cxx_affine_transform(dst, src, theta, theta * degrees, nx, ny, 1);
-#else
-
-    // this is flawed and should not be production
-    int   src_size = nx * ny;
-    float xoff     = (0.5f * nx) - 0.5f;
-    float yoff     = (0.5f * ny) - 0.5f;
-
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = 0; i < nx; ++i)
-        {
-            // indices in 2D
-            float rx = float(i) - xoff;
-            float ry = float(j) - yoff;
-            // transformation
-            float tx = rx * cosf(theta) + -ry * sinf(theta);
-            float ty = rx * sinf(theta) + ry * cosf(theta);
-            // indices in 2D
-            float x = (tx + xoff);
-            float y = (ty + yoff);
-            // index in 1D array
-            int  rz    = j * nx + i;
-            auto index = [&](int _x, int _y) { return _y * nx + _x; };
-            // within bounds
-            int   x1    = floorf(tx + xoff);
-            int   y1    = floorf(ty + yoff);
-            int   x2    = x1 + 1;
-            int   y2    = y1 + 1;
-            float fxy1  = 0.0f;
-            float fxy2  = 0.0f;
-            int   ixy11 = index(x1, y1);
-            int   ixy21 = index(x2, y1);
-            int   ixy12 = index(x1, y2);
-            int   ixy22 = index(x2, y2);
-            if(ixy11 >= 0 && ixy11 < src_size)
-                fxy1 += (x2 - x) * src[ixy11];
-            if(ixy21 >= 0 && ixy21 < src_size)
-                fxy1 += (x - x1) * src[ixy21];
-            if(ixy12 >= 0 && ixy12 < src_size)
-                fxy2 += (x2 - x) * src[ixy12];
-            if(ixy22 >= 0 && ixy22 < src_size)
-                fxy2 += (x - x1) * src[ixy22];
-            dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
-        }
-    }
-#endif
-    return;
-}
+*/
 
 //======================================================================================//

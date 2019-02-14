@@ -121,9 +121,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-
     TIMEMORY_AUTO_TIMER("[cuda]");
-
     throw std::runtime_error("ART algorithm has not been implemented for CUDA");
 
     /*

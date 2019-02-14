@@ -109,63 +109,72 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
                    int p, float* m_recon, float* m_simdata, const float* m_data,
                    float* update)
 {
-    static thread_local cpu_rotate_data* _cache = nullptr;
-    static Mutex                         _mutex;
-    if(!_cache)
-    {
-        _cache = new cpu_rotate_data(GetThisThreadID(), dy, dt, dx, nx, ny, m_recon,
-                                     m_simdata, m_data);
-    }
+    static Mutex                                         _mutex;
+    static thread_local std::unique_ptr<cpu_rotate_data> _cache =
+        std::unique_ptr<cpu_rotate_data>(new cpu_rotate_data(GetThisThreadID(), dy, dt,
+                                                             dx, nx, ny, m_data, m_recon,
+                                                             m_simdata));
 
     // needed for recon to output at proper orientation
-    float theta_rad_p = fmodf(theta[p], pi) + halfpi;
-    float theta_deg_p = theta_rad_p * degrees;
+    float theta_p = fmodf(theta[p], pi) + halfpi;
     // these structures are cached and re-used
-    const float* data      = m_data + s * dt * dx;
-    float*       simdata   = m_simdata + s * dt * dx;
-    float*       recon     = m_recon + s * nx * ny;
-    farray_t&    recon_rot = _cache->rot();
-    farray_t&    recon_tmp = _cache->tmp();
-    float        fngridx   = static_cast<float>(nx);
+    const float* data    = m_data + s * dt * dx;
+    float*       simdata = m_simdata + s * dt * dx;
+    float*       recon   = m_recon + s * nx * ny;
+
+    // reset intermediate data
+    _cache->reset();
+
+    auto& use_rot   = _cache->use_rot();
+    auto& use_tmp   = _cache->use_tmp();
+    auto& recon_rot = _cache->rot();
+    auto& recon_tmp = _cache->tmp();
+
+    typedef cpu_rotate_data::int_type int_type;
 
     // Forward-Rotate object
-    memset(recon_rot.data(), 0, scast<uintmax_t>(nx * ny) * sizeof(float));
-    cxx_affine_transform(recon_rot, recon, -theta_rad_p, -theta_deg_p, nx, ny);
+    cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
+    cxx_rotate_ip<int_type>(use_rot, use_tmp.data(), -theta_p, nx, ny, CPU_NN);
 
     for(int d = 0; d < dx; d++)
     {
-        int pix_offset = d * nx;  // pixel offset
-        int idx_data   = d + p * dx;
-        // instead of including all the offsets later in the
-        // index lookup, offset the pointer itself
-        // this should make it easier for compiler to apply SIMD
+        int   pix_offset = d * nx;  // pixel offset
+        int   idx_data   = d + p * dx;
+        float _sum       = 0.0f;
+        float _fngridx   = 0.0f;
+        // instead of including all the offsets later in the index lookup, offset the
+        // pointer itself. This should make it easier for compiler to apply SIMD
         const float* _data      = data + idx_data;
         float*       _simdata   = simdata + idx_data;
         float*       _recon_rot = recon_rot.data() + pix_offset;
-        float        _sum       = 0.0f;
+        auto*        _use_rot   = use_rot.data() + pix_offset;
 
         // Calculate simulated data by summing up along x-axis
         for(int n = 0; n < nx; ++n)
             _sum += _recon_rot[n];
+
         *_simdata += _sum;
 
+        // Calculte the relevant pixels after rotation
+        for(int n = 0; n < nx; ++n)
+            _fngridx += (_use_rot[n] != 0) ? 1 : 0;
+
         // Make update by backprojecting error along x-axis
-        float upd = (*_data - *_simdata) / fngridx;
+        float upd = (*_data - *_simdata) / _fngridx;
+
+        // update rotation
         for(int n = 0; n < nx; ++n)
             _recon_rot[n] += upd;
     }
 
     // Back-Rotate object
-    memset(recon_tmp.data(), 0, scast<uintmax_t>(nx * ny) * sizeof(float));
-    cxx_affine_transform(recon_tmp, recon_rot.data(), theta_rad_p, theta_deg_p, nx, ny);
+    cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
     // update shared update array
     _mutex.lock();
     float* _update = update + s * nx * ny;
     for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
-    {
-        _update[i] += recon_tmp[i] / static_cast<float>(dx);
-    }
+        _update[i] += recon_tmp[i];
     _mutex.unlock();
 }
 
@@ -202,23 +211,23 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         farray_t update(grid_size, 0.0f);
 #if defined(TOMOPY_USE_PTL)
         TaskGroup<void> tg;
-        // For each slice
-        for(int s = 0; s < dy; s++)
-            for(int p = 0; p < dt; ++p)
+        // For each slice and projection angle
+        for(int p = 0; p < dt; ++p)
+            for(int s = 0; s < dy; s++)
                 task_man->exec(tg, compute_projection, dy, dt, dx, ngridx, ngridy, theta,
                                s, p, recon, simdata.data(), data, update.data());
         tg.join();
 #else
-        // For each slice
-        for(int s = 0; s < dy; s++)
-            for(int p = 0; p < dt; ++p)
-            {
+        // For each slice and projection angle
+        for(int p = 0; p < dt; ++p)
+            for(int s = 0; s < dy; s++)
                 compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, recon,
                                    simdata.data(), data, update.data());
-            }
 #endif
+
         for(uintmax_t j = 0; j < grid_size; ++j)
-            recon[j] += update[j];
+            recon[j] += update[j] / scast<float>(dx);
+
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 

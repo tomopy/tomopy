@@ -75,6 +75,7 @@ def run(phantom, algorithm, args, get_recon=False):
     with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
                                   algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
+    print("completed reconstruction...")
 
     obj_min = np.amin(obj)
     rec_min = np.amin(rec)
@@ -117,6 +118,8 @@ def run(phantom, algorithm, args, get_recon=False):
 
 
 def main(args):
+
+    print("using tomopy: {}".format(tomopy.__file__))
 
     global image_quality
 

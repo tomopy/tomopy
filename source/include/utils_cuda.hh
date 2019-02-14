@@ -92,16 +92,17 @@ ComputeGridSize(int size, int block_size = GetBlockSize())
 
 //======================================================================================//
 // interpolation types
-#    define NPP_INTER_NN NPPI_INTER_NN
-#    define NPP_INTER_LINEAR NPPI_INTER_LINEAR
-#    define NPP_INTER_CUBIC NPPI_INTER_CUBIC
+#    define GPU_NN NPPI_INTER_NN
+#    define GPU_LINEAR NPPI_INTER_LINEAR
+#    define GPU_CUBIC NPPI_INTER_CUBIC
 
 //======================================================================================//
 
 inline int
 GetNppInterpolationMode()
 {
-    static int eInterp = GetEnv<int>("TOMOPY_INTER", NPP_INTER_CUBIC);
+    static int eInterp =
+        GetEnv<int>("TOMOPY_NPP_INTER", GetEnv<int>("TOMOPY_INTER", GPU_CUBIC));
     return eInterp;
 }
 
@@ -110,6 +111,7 @@ GetNppInterpolationMode()
 struct gpu_data
 {
     typedef gpu_data this_type;
+    typedef int32_t  int_type;
 
     int           m_device;
     int           m_grid;
@@ -119,6 +121,8 @@ struct gpu_data
     int           m_dx;
     int           m_nx;
     int           m_ny;
+    int_type*     m_use_rot;
+    int_type*     m_use_tmp;
     float*        m_rot;
     float*        m_tmp;
     float*        m_update;
@@ -139,6 +143,8 @@ struct gpu_data
     , m_dx(dx)
     , m_nx(nx)
     , m_ny(ny)
+    , m_use_rot(nullptr)
+    , m_use_tmp(nullptr)
     , m_rot(nullptr)
     , m_tmp(nullptr)
     , m_update(nullptr)
@@ -148,13 +154,18 @@ struct gpu_data
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
+        m_use_rot = gpu_malloc<int_type>(m_nx * m_ny);
+        m_use_tmp = gpu_malloc<int_type>(m_nx * m_ny);
         m_rot     = gpu_malloc<float>(m_nx * m_ny);
         m_tmp     = gpu_malloc<float>(m_nx * m_ny);
         m_update  = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        gpu_memset<int_type>(m_use_tmp, 1, nx * ny, *m_streams);
     }
 
     ~gpu_data()
     {
+        cudaFree(m_use_rot);
+        cudaFree(m_use_tmp);
         cudaFree(m_rot);
         cudaFree(m_tmp);
         cudaFree(m_update);
@@ -184,6 +195,8 @@ struct gpu_data
     int          device() const { return m_device; }
     int          grid() const { return compute_grid(m_dx); }
     int          block() const { return m_block; }
+    int_type*    use_rot() const { return m_use_rot; }
+    int_type*    use_tmp() const { return m_use_tmp; }
     float*       rot() const { return m_rot; }
     float*       tmp() const { return m_tmp; }
     float*       update() const { return m_update; }
@@ -223,15 +236,31 @@ reduce(float* _in, float* _out, int size);
 //  rotate
 //======================================================================================//
 
+DLL gpu_data::int_type*
+    cuda_rotate(const gpu_data::int_type* src, const float theta_rad, const float theta_deg,
+                const int nx, const int ny, cudaStream_t stream = 0,
+                const int eInterp = GetNppInterpolationMode());
+
+//--------------------------------------------------------------------------------------//
+
 DLL float*
 cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
-            const int ny, cudaStream_t stream = 0);
+            const int ny, cudaStream_t stream = 0,
+            const int eInterp = GetNppInterpolationMode());
+
+//--------------------------------------------------------------------------------------//
+
+DLL void
+cuda_rotate_ip(gpu_data::int_type* dst, const gpu_data::int_type* src,
+               const float theta_rad, const float theta_deg, const int nx, const int ny,
+               cudaStream_t stream = 0, const int eInterp = GetNppInterpolationMode());
 
 //--------------------------------------------------------------------------------------//
 
 DLL void
 cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
-               const int nx, const int ny, cudaStream_t stream = 0);
+               const int nx, const int ny, cudaStream_t stream = 0,
+               const int eInterp = GetNppInterpolationMode());
 
 //======================================================================================//
 // mult kernels
