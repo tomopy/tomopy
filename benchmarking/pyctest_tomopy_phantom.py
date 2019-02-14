@@ -27,18 +27,39 @@ def get_basepath(args, algorithm, phantom):
         os.makedirs(basepath)
     return basepath
 
+
 @timemory.util.auto_timer()
-def generate(phantom="shepp3d", nsize=512, nangles=360):
+def generate(phantom, args):
 
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
-        obj = getattr(tomopy.misc.phantom, phantom)(size=nsize)
-    obj = tomopy.misc.morph.pad(obj, axis=1, mode='constant')
-    obj = tomopy.misc.morph.pad(obj, axis=2, mode='constant')
+        obj = getattr(tomopy.misc.phantom, phantom)(size=args.size)
+        obj = tomopy.misc.morph.pad(obj, axis=1, mode='constant')
+        obj = tomopy.misc.morph.pad(obj, axis=2, mode='constant')
+
+        if args.partial:
+            data_size = obj.shape[0]
+            subset = list(args.subset)
+            subset.sort()
+            nbeg, nend = subset[0], subset[1]
+            if nbeg == nend:
+                nend += 1
+            if not args.no_center:
+                ndiv = (nend - nbeg) // 2
+                offset = data_size // 2
+                nbeg = (offset - ndiv)
+                nend = (offset + ndiv)
+            print("[partial]> slices = {} ({}, {}) of {}".format(
+                nend - nbeg, nbeg, nend, data_size))
+            obj = obj[nbeg:nend,:,:]
+
     with timemory.util.auto_timer("[tomopy.angles]"):
-        ang = tomopy.angles(nangles)
+        ang = tomopy.angles(args.angles)
+
     with timemory.util.auto_timer("[tomopy.project]"):
         prj = tomopy.project(obj, ang)
 
+    print("[dims]> projection = {}, angles = {}, object = {}".format(
+        prj.shape, ang.shape, obj.shape))
     return [prj, ang, obj]
 
 
@@ -54,11 +75,10 @@ def run(phantom, algorithm, args, get_recon=False):
     fname = os.path.join(bname, "stack_{}_".format(algorithm))
     dname = os.path.join(bname, "diff_{}_".format(algorithm))
 
-    prj, ang, obj = generate(phantom, args.size, args.angles)
+    prj, ang, obj = generate(phantom, args)
     proj = np.zeros(shape=[prj.shape[1], prj.shape[0], prj.shape[2]], dtype=np.float)
     for i in range(0, prj.shape[1]):
         proj[i,:,:] = prj[:,i,:]
-    print(proj.shape)
     output_images(proj, pname, args.format, args.scale, args.ncol)
 
     # always add algorithm
@@ -248,7 +268,15 @@ if __name__ == "__main__":
                         default=10, type=int)
     parser.add_argument("-P", "--preserve-output-dir", help="Do not clean up output directory",
                         action='store_true')
-    
+    parser.add_argument("--partial", help="Enable partial reconstruction of 3D data",
+                        action='store_true')
+    parser.add_argument("-r", "--subset",
+                        help="Select subset (range) of slices (center enabled by default)",
+                        default=(0, 48), type=int, nargs=2)
+    parser.add_argument("--no-center",
+                        help="When used with '--subset', do no center subset",
+                        action='store_true')
+
     args = timemory.options.add_args_and_parse_known(parser)
 
     print("\nargs: {}\n".format(args))
@@ -263,15 +291,15 @@ if __name__ == "__main__":
 
     # unique output directory w.r.t. phantom
     adir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
-    # directory extension based on algorithms
-    dext = "comparison" if len(args.compare) > 0 else "{}".format(args.phantom)
     # unique output directory w.r.t. phantom and extension
-    adir = os.path.join(adir, dext)
-    # reset as the output directory
-    #args.output_dir = adir
+    if len(args.compare) > 0:
+        adir = os.path.join(adir, "comparison")
+    else:
+        adir = os.path.join(adir, args.algorithm)
     
     if not args.preserve_output_dir:
         try:
+            print("removing output from '{}' (if not '{}')...".format(adir, os.getcwd()))
             import shutil
             if os.path.exists(adir) and adir != os.getcwd():
                 shutil.rmtree(adir)

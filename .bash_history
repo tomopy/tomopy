@@ -128,3 +128,28 @@
    58  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif ~/c.tif
    59  cp tomo_00001_sirt/block_128_threads_12/rec_slice/recon_sirt_0.tif c.tif
    60  history >> ../.bash_history 
+    1  python setup.py clean
+    2  python setup.py install
+    3  cd benchmarking/
+    4  python -c "import tomopy; print(tomopy.__file__)"
+    5  ls /opt/conda/envs/tomopy/lib/python3.6/site-packages/tomopy-1.3.0-py3.6-linux-x86_64.egg/tomopy/
+    6  find /opt/conda/envs/tomopy/lib/python3.6/site-packages/tomopy-1.3.0-py3.6-linux-x86_64.egg/tomopy/
+    7  ls /opt/conda/envs/tomopy/lib/python3.6/site-packages/tomopy-1.3.0-py3.6-linux-x86_64.egg/
+    8  which python
+    9  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 100 -a sirt
+   10  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt
+   11  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt -p shepp3d
+   12  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt -p shepp3d -s 128
+   13  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt -p shepp2d -s 128
+   14  ? 42*4
+   15  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt -p shepp3d --partial
+   16  ps
+   17  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a sirt -p shepp3d --partial -s 128
+   18  python
+   19  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a gridrec sirt -p shepp3d --partial -s 128
+   20  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 --compare gridrec sirt -p shepp3d --partial -s 128
+   21  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 50 --compare gridrec art sirt -p shepp3d --partial
+   22  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 25 -a art -p shepp2d 
+   23  python setup.py install && $(which python) ./pyctest_tomopy_phantom.py -i 1 -a art -p shepp2d 
+   24  history
+   25  history >> ../.bash_history 

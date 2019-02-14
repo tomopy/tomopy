@@ -121,14 +121,17 @@ ipp_affine_transform(array_t<_Tp>& dst, const _Tp* src, double theta_rad,
                      double theta_deg, const intmax_t& nx, const intmax_t& ny,
                      double scale = 1.0)
 {
+    ConsumeParameters(dst, src, theta_rad, theta_deg, nx, ny, scale);
     std::stringstream ss;
     ss << __FUNCTION__ << " not implemented with Intel IPP!";
     throw std::runtime_error(ss.str());
 }
 
 //======================================================================================//
-
+//======================================================================================//
 #if defined(TOMOPY_USE_OPENCV)
+//======================================================================================//
+//======================================================================================//
 
 #    define CPU_NN CV_INTER_NN
 #    define CPU_LINEAR CV_INTER_LINEAR
@@ -188,8 +191,8 @@ GetOpenCVInterpolationMode()
 //--------------------------------------------------------------------------------------//
 
 inline cv::Mat
-opencv_affine_transform(const cv::Mat& warp_src, double theta, const intmax_t& nx,
-                        const intmax_t& ny, int eInterp = GetOpenCVInterpolationMode(),
+opencv_affine_transform(const cv::Mat& warp_src, double theta, const int& nx,
+                        const int& ny, int eInterp = GetOpenCVInterpolationMode(),
                         double scale = 1.0)
 {
     cv::Mat   warp_dst = cv::Mat::zeros(nx, ny, warp_src.type());
@@ -205,8 +208,8 @@ opencv_affine_transform(const cv::Mat& warp_src, double theta, const intmax_t& n
 
 template <typename _Tp>
 void
-cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const intmax_t& nx,
-              const intmax_t& ny, int eInterp = GetOpenCVInterpolationMode(),
+cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const int& nx,
+              const int& ny, int eInterp = GetOpenCVInterpolationMode(),
               double scale = 1.0)
 {
     memset(dst.data(), 0, nx * ny * sizeof(_Tp));
@@ -229,7 +232,11 @@ cxx_rotate(const _Tp* src, double theta, const intmax_t& nx, const intmax_t& ny,
     return dst;
 }
 
+//======================================================================================//
+//======================================================================================//
 #else  // TOMOPY_USE_OPENCV
+//======================================================================================//
+//======================================================================================//
 
 #    define CPU_NN 0
 #    define CPU_LINEAR 1
@@ -253,7 +260,9 @@ cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const intmax_t& n
     catch(std::exception& e)
 #    endif
     {
+#    if defined(TOMOPY_USE_IPP)
         std::cerr << e.what() << "\n";
+#    endif
         // this is flawed and should not be production
         int   src_size = nx * ny;
         float xoff     = (0.5f * nx) - 0.5f;
@@ -311,6 +320,9 @@ cxx_rotate(const _Tp* src, float theta, const intmax_t& nx, const intmax_t& ny, 
     cxx_rotate_ip(dst, src, theta, nx, ny, 0, scale);
     return dst;
 }
-#endif
 
+//======================================================================================//
+//======================================================================================//
+#endif  // TOMOPY_USE_OPENCV
+//======================================================================================//
 //======================================================================================//

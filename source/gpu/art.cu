@@ -69,7 +69,8 @@ extern nvtxEventAttributes_t nvtx_rotate;
 //======================================================================================//
 
 __global__ void
-cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
+cuda_art_pixels_kernel(int p, int nx, int dx, float* recon,
+                       const float* data,
                        const gpu_data::int_type* recon_use)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
@@ -83,9 +84,12 @@ cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
             fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
-        sum = (data[p * dx + d] - sum) / scast<float>(fnx);
-        for(int i = 0; i < nx; ++i)
-            recon[d * nx + i] += sum;
+        if(fnx != 0)
+        {
+            sum = (data[p * dx + d] - sum) / scast<float>(fnx);
+            for(int i = 0; i < nx; ++i)
+                recon[d * nx + i] += sum;
+        }
     }
 }
 
@@ -119,15 +123,16 @@ art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* 
     float*       rot         = _cache->rot();
     float*       tmp         = _cache->tmp();
     int          smem        = 0;
-    const float  factor      = 1.0f;
+    const float  factor      = 1.0f / scast<float>(dx);
     int          block       = _cache->block();
-    int          grid        = _cache->compute_grid(dx);
+    int          grid        = _cache->compute_grid(nx);
     cudaStream_t stream      = _cache->stream();
 
     gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     gpu_memset<float>(rot, 0, nx * ny, stream);
     gpu_memset<float>(tmp, 0, nx * ny, stream);
 
+    stream_sync(stream);
     // forward-rotate
     cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
     cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
@@ -159,8 +164,8 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     static std::atomic<int> ntid;
     auto                    tid = GetThisThreadID();
 
-    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           tid, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     // get some properties
     // default number of threads == 1 to ensure an excess of threads are not created
@@ -211,33 +216,32 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         // set "update" to zero, copy in "recon"
         for(int ii = 0; ii < nthreads; ++ii)
-        {
             _gpu_data[ii]->reset();
-        }
 
 #if defined(TOMOPY_USE_PTL)
         // Loop over slices and projection angles
         TaskGroup<void> tg;
-        for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; ++s)
+        for(int s = 0; s < dy; ++s)
+            for(int p = 0; p < dt; ++p)
                 task_man->exec(tg, art_gpu_compute_projection, dy, dt, dx, ngridx, ngridy,
                                theta, s, p, nthreads, _gpu_data);
         tg.join();
 #else
         // Loop over slices and projection angles
-        for(int p = 0; p < dt; p++)
-            for(int s = 0; s < dy; ++s)
+        for(int s = 0; s < dy; ++s)
+            for(int p = 0; p < dt; ++p)
                 art_gpu_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p,
                                            nthreads, _gpu_data);
 #endif
         for(int ii = 0; ii < nthreads; ++ii)
             _gpu_data[ii]->sync();
 
-
+        /*
         stream_sync(0);
         const float factor = 1.0f / scast<float>(dx);
         cuda_mult_kernel<<<grid, block>>>(recon, dy * ngridx * ngridy, factor);
         stream_sync(0);
+        */
 
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);

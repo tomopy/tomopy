@@ -75,8 +75,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
 
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     {
         TIMEMORY_AUTO_TIMER("");
@@ -184,8 +184,8 @@ void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
 #if defined(TOMOPY_USE_PTL)
     decltype(HW_CONCURRENCY) min_threads = 1;
@@ -249,8 +249,8 @@ void
 sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const float* theta,
              float* recon, int ngridx, int ngridy, int num_iter)
 {
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     TIMEMORY_AUTO_TIMER("[openacc]");
 
@@ -294,8 +294,8 @@ void
 sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float* theta,
             float* recon, int ngridx, int ngridy, int num_iter)
 {
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     TIMEMORY_AUTO_TIMER("[openmp]");
 

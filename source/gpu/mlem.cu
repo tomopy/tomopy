@@ -478,7 +478,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
 
     cuda_device_query();
 
-    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     auto tid = GetThisThreadID();

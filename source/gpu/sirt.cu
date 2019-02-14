@@ -82,45 +82,15 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            fnx += recon_use[d * nx + i];
-        sum = (data[p * dx + d] - sum) / scast<float>(fnx);
-        for(int i = 0; i < nx; ++i)
-            recon[d * nx + i] += sum;
+            fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
+        if(fnx != 0)
+        {
+            sum = (data[p * dx + d] - sum) / scast<float>(fnx);
+            for(int i = 0; i < nx; ++i)
+                recon[d * nx + i] += sum;
+        }
+
     }
-
-    /*
-    int cacheSize  = 32;
-    int remainSize = nx % cacheSize;
-    int nnx        = nx - remainSize;
-
-    // cache-blocking
-    for(int ii = 0; ii < nnx; ii += cacheSize)
-        for(int d = d0; d < dx; d += dstride)
-            for(int i = ii; i < ii + cacheSize; ++i)
-                sum[d] += recon[d * nx + i];
-
-    // remainder
-    if(nnx < nx)
-        for(int d = d0; d < nx; d += dstride)
-            for(int i = nnx; i < nx; ++i)
-                sum[d] += recon[d * nx + i];
-
-    // calculate
-    for(int d = d0; d < dx; d += dstride)
-        sum[d] = (data[p * dx + d] - sum[d]) / static_cast<float>(nx);
-
-    // cache-blocking
-    for(int ii = 0; ii < nnx; ii += cacheSize)
-        for(int d = d0; d < dx; d += dstride)
-            for(int i = ii; i < ii + cacheSize; ++i)
-                recon[d * nx + i] += sum[d];
-
-    // remainder
-    if(nnx < nx)
-        for(int d = d0; d < dx; d += dstride)
-            for(int i = nnx; i < nx; ++i)
-                recon[d * nx + i] += sum[d];
-    */
 }
 
 //======================================================================================//
@@ -155,7 +125,7 @@ sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float*
     int          smem        = 0;
     const float  factor      = 1.0f;
     int          block       = _cache->block();
-    int          grid        = _cache->compute_grid(dx);
+    int          grid        = _cache->compute_grid(nx);
     cudaStream_t stream      = _cache->stream();
 
     gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
@@ -193,8 +163,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     static std::atomic<int> ntid;
     auto                    tid = GetThisThreadID();
 
-    printf("\n\t[%lu] %s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           tid, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     // get some properties
     // default number of threads == 1 to ensure an excess of threads are not created
@@ -243,9 +213,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         // set "update" to zero, copy in "recon"
         for(int ii = 0; ii < nthreads; ++ii)
-        {
             _gpu_data[ii]->reset();
-        }
 
 #if defined(TOMOPY_USE_PTL)
         // Loop over slices and projection angles
@@ -257,7 +225,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         tg.join();
 #else
         // Loop over slices and projection angles
-        for(int p = 0; p < dt; p++)
+        for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
                 sirt_gpu_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p,
                                             nthreads, _gpu_data);

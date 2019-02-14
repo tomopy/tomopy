@@ -60,7 +60,7 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     // check to see if the C implementation is requested
-    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_ART", true);
+    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_ART", false);
     use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
@@ -74,8 +74,8 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
     START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
 
-    printf("\n\t%s [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     {
         TIMEMORY_AUTO_TIMER("");

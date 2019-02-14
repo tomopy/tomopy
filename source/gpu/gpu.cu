@@ -277,10 +277,8 @@ cuda_device_count()
 void
 cuda_device_query()
 {
-    static bool first = true;
-    if(first)
-        first = false;
-    else
+    static std::atomic<int16_t> once;
+    if(++once > 1)
         return;
 
     int         deviceCount    = 0;
@@ -313,6 +311,8 @@ cuda_device_query()
 
         return;
     }
+
+    AutoLock l(TypeMutex<decltype(std::cout)>());
 
     if(deviceCount == 0)
         printf("No available CUDA device(s) detected\n");
@@ -455,19 +455,18 @@ cuda_device_query()
         printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
                deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] = {
-            "Default (multiple host threads can use ::cudaSetDevice() with "
-            "device "
-            "simultaneously)",
-            "Exclusive (only one host thread in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Prohibited (no host thread can use ::cudaSetDevice() with this "
-            "device)",
-            "Exclusive Process (many threads in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Unknown",
-            NULL
-        };
+        const char* sComputeMode[] =
+            { "Default (multiple host threads can use ::cudaSetDevice() with "
+              "device "
+              "simultaneously)",
+              "Exclusive (only one host thread in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Prohibited (no host thread can use ::cudaSetDevice() with this "
+              "device)",
+              "Exclusive Process (many threads in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Unknown",
+              NULL };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }

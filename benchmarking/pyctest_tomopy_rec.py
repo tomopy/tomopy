@@ -199,14 +199,26 @@ def rec_full(h5fname, rot_center, args, blocked_views, nchunks=16):
 def rec_partial(h5fname, rot_center, args, blocked_views, nchunks=1):
 
     data_size = get_dx_dims(h5fname, 'data')
+    print("data size: {}".format(data_size))
 
-    output_dir = os.path.join(args.output_dir, 'rec_full')
+    output_dir = os.path.join(args.output_dir, 'rec_partial')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     # Select sinogram range to reconstruct.
-    sino_start = args.begin
-    sino_end = data_size[1] if args.end is None else min(args.end, data_size[1])
+    subset = list(args.subset)
+    subset.sort()
+    nbeg, nend = subset[0], subset[1]
+    if nbeg == nend:
+        nend += 1
+    if not args.no_center:
+        ndiv = (nend - nbeg) // 2
+        offset = data_size[1] // 2
+        nbeg = (offset - ndiv)
+        nend = (offset + ndiv)
+    print("[partial]> slices = {} ({}, {}) of {}".format(
+        nend - nbeg, nbeg, nend, data_size[1]))
+    sino_start, sino_end = nbeg, nend
 
     # The number of sinogram chunks to reconstruct. Only one chunk at the time
     # is reconstructed allowing for limited RAM machines to complete a full
@@ -318,8 +330,9 @@ def main(arg):
 
     import multiprocessing as mp
     default_ncores = mp.cpu_count()
-
+    default_type = "partial"
     type_choices = ["slice", "full", "partial"]
+
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",
                         help=("file name of a tmographic dataset: "
@@ -329,8 +342,8 @@ def main(arg):
                         help=("rotation axis location: 1024.0 "
                               "(default 1/2 image horizontal size)")
                         )
-    parser.add_argument("--type", nargs='?', type=str, default="slice",
-                        help="reconstruction type: full (default: slice)",
+    parser.add_argument("--type", nargs='?', type=str, default=default_type,
+                        help="reconstruction type (default: {})".format(default_type),
                         choices=type_choices)
     parser.add_argument("--nsino", nargs='?', type=restricted_float,
                         default=0.5,
@@ -356,12 +369,12 @@ def main(arg):
     parser.add_argument("-g", "--grainsize",
                         help="Granularity of slices to compute",
                         default=None, type=int)
-    parser.add_argument("-b", "--begin",
-                        help="Begin slice number (requires: --type=partial)",
-                        default=0, type=int)
-    parser.add_argument("-e", "--end",
-                        help="End slice number (requires: --type=partial)",
-                        default=24, type=int)
+    parser.add_argument("-r", "--subset",
+                        help="Select subset (range) of slices (center enabled by default)",
+                        default=(0, 24), type=int, nargs=2)
+    parser.add_argument("--no-center",
+                        help="When used with '--subset', do no center subset",
+                        action='store_true')
 
     args = parser.parse_args()
 

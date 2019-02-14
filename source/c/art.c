@@ -45,6 +45,8 @@
 #include "profiler.h"
 #include "utils.h"
 
+volatile unsigned long counter;
+
 void
 art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
     float* recon, int ngridx, int ngridy, int num_iter)
@@ -55,9 +57,9 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
     if(cxx_art(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
         return;
 
-    printf("\n\t%s (C) [nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = "
-           "%i]\n\n",
-           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    unsigned long count = counter++;
+    printf("[%lu] %s (C) : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
+           count, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     void* timer = TIMEMORY_AUTO_TIMER("");
 
@@ -177,4 +179,5 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
     free(simdata);
 
     FREE_TIMEMORY_AUTO_TIMER(timer);
+    counter--;
 }

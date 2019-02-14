@@ -45,6 +45,8 @@
 #include "profiler.h"
 #include "utils.h"
 
+volatile unsigned long counter;
+
 void
 project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
         const float* center, const float* theta)
@@ -52,8 +54,9 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, i
     if(cxx_project(obj, oy, ox, oz, data, dy, dt, dx, center, theta))
         return;
 
-    printf("\n\t%s (C) [oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i]\n\n",
-           __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    unsigned long count = counter++;
+    printf("[%lu]> %s (C) : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           count, __FUNCTION__, oy, oz, oz, dy, dt, dx);
 
     void* timer = TIMEMORY_AUTO_TIMER("");
 
@@ -140,6 +143,7 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, i
     free(indi);
 
     FREE_TIMEMORY_AUTO_TIMER(timer);
+    --counter;
 }
 
 void

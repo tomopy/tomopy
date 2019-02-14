@@ -69,8 +69,8 @@ cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 
     START_TIMER(cxx_timer);
 
-    printf("\n\t%s [oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i]\n\n",
-           __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
 
     {
         TIMEMORY_AUTO_TIMER("");
@@ -102,8 +102,8 @@ void
 project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
             const float* center, const float* theta)
 {
-    printf("\n\t%s [oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i]\n\n",
-           __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
 
     TIMEMORY_AUTO_TIMER("");
 
@@ -140,6 +140,9 @@ void
 project_cuda(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
              int dx, const float* center, const float* theta)
 {
+    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
 }
 
 //======================================================================================//
@@ -148,6 +151,9 @@ void
 project_openacc(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
                 int dx, const float* center, const float* theta)
 {
+    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
 }
 
 //======================================================================================//
@@ -156,6 +162,9 @@ void
 project_openmp(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
                int dx, const float* center, const float* theta)
 {
+    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
+           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
+    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
 }
 
 //======================================================================================//

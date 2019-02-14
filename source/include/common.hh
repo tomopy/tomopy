@@ -226,121 +226,6 @@ using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //======================================================================================//
 
-struct DeviceOption
-{
-    int         index;
-    std::string key;
-    std::string description;
-
-    static void spacer(std::ostream& os, const char c = '-')
-    {
-        std::stringstream ss;
-        ss.fill(c);
-        ss << std::setw(90) << ""
-           << "\n";
-        os << ss.str();
-    }
-
-    bool operator==(const int& _index) const { return _index == index; }
-    bool operator==(const std::string& _key) const { return _key == key; }
-
-    static void header(std::ostream& os)
-    {
-        std::stringstream ss;
-        ss << "\n";
-        spacer(ss, '=');
-        ss << "Available GPU options:\n";
-        ss << "\t" << std::left << std::setw(5) << "INDEX"
-           << "  \t" << std::left << std::setw(12) << "KEY"
-           << "  " << std::left << std::setw(40) << "DESCRIPTION"
-           << "\n";
-        os << ss.str();
-    }
-
-    static void footer(std::ostream& os)
-    {
-        std::stringstream ss;
-        ss << "\nTo select an option for runtime, set TOMOPY_GPU_TYPE "
-           << "environment variable\n  to an INDEX or KEY above\n";
-        spacer(ss, '=');
-        os << ss.str();
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const DeviceOption& opt)
-    {
-        std::stringstream ss;
-        ss << "\t" << std::right << std::setw(5) << opt.index << "  \t" << std::left
-           << std::setw(12) << opt.key << "  " << std::left << std::setw(40)
-           << opt.description;
-        os << ss.str();
-        return os;
-    }
-};
-
-//======================================================================================//
-
-struct cpu_rotate_data
-{
-    typedef iarray_t                         iarray_type;
-    typedef typename iarray_type::value_type int_type;
-
-    uintmax_t    m_id;
-    int          m_dy;
-    int          m_dt;
-    int          m_dx;
-    int          m_nx;
-    int          m_ny;
-    iarray_type  m_use_rot;
-    iarray_type  m_use_tmp;
-    farray_t     m_rot;
-    farray_t     m_tmp;
-    float*       m_recon;
-    float*       m_update;
-    float*       m_simdata;
-    const float* m_data;
-
-    cpu_rotate_data(uintmax_t id, int dy, int dt, int dx, int nx, int ny,
-                    const float* data, float* recon, float* simdata)
-    : m_id(id)
-    , m_dy(dy)
-    , m_dt(dt)
-    , m_dx(dx)
-    , m_nx(nx)
-    , m_ny(ny)
-    , m_use_rot(iarray_type(m_nx * m_ny, 0))
-    , m_use_tmp(iarray_type(m_nx * m_ny, 1))
-    , m_rot(farray_t(m_nx * m_ny, 0.0f))
-    , m_tmp(farray_t(m_nx * m_ny, 0.0f))
-    , m_recon(recon)
-    , m_update(nullptr)
-    , m_simdata(simdata)
-    , m_data(data)
-    {
-    }
-
-    ~cpu_rotate_data() { printf("deleting cpu_rotate_data @ %p...\n", (void*) this); }
-
-    farray_t&       rot() { return m_rot; }
-    farray_t&       tmp() { return m_tmp; }
-    const farray_t& rot() const { return m_rot; }
-    const farray_t& tmp() const { return m_tmp; }
-
-    iarray_type&       use_rot() { return m_use_rot; }
-    iarray_type&       use_tmp() { return m_use_tmp; }
-    const iarray_type& use_rot() const { return m_use_rot; }
-    const iarray_type& use_tmp() const { return m_use_tmp; }
-
-    void reset()
-    {
-        // reset temporaries to zero
-        memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
-        memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-        memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-    }
-};
-
-//======================================================================================//
-
 inline uintmax_t
 GetThisThreadID()
 {
@@ -393,7 +278,7 @@ this_thread_device()
 {
 #if defined(TOMOPY_USE_CUDA)
     static std::atomic<int> _ntid(0);
-    ThreadLocalStatic int   _instance =
+    static thread_local int _instance =
         (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
     return _instance;
 #else
@@ -421,8 +306,27 @@ template <typename _Tp>
 _Tp*
 cpu_malloc(uintmax_t size)
 {
-    _Tp* _cpu = (_Tp*) malloc(size * sizeof(_Tp));
-    return _cpu;
+    void* _cpu = malloc(size * sizeof(_Tp));
+    return scast<_Tp*>(_cpu);
+}
+
+//======================================================================================//
+
+inline bool
+is_numeric(const std::string& val)
+{
+    if(val.length() > 0)
+    {
+        auto f = val.find_first_of("0123456789");
+        if(f == std::string::npos)  // no numbers
+            return false;
+        auto l = val.find_last_of("0123456789");
+        if(val.length() <= 2)  // 1, 2., etc.
+            return true;
+        else
+            return (f != l);  // 1.0, 1e3, 23, etc.
+    }
+    return false;
 }
 
 //======================================================================================//
@@ -443,23 +347,11 @@ from_string(const std::string& val)
 inline std::string
 tolower(std::string val)
 {
-    for(uintmax_t i = 0; i < val.size(); ++i)
-        val[i] = tolower(val[i]);
+    for(auto& itr : val)
+        itr = scast<char>(tolower(itr));
     return val;
 }
 
-//======================================================================================//
-#if defined(TOMOPY_USE_PTL)
-inline void
-init_thread_data(ThreadPool* tp)
-{
-    ThreadData*& thread_data = ThreadData::GetInstance();
-    if(!thread_data)
-        thread_data = new ThreadData(tp);
-    thread_data->is_master   = false;
-    thread_data->within_task = false;
-}
-#endif
 //======================================================================================//
 
 inline Mutex&
@@ -470,7 +362,23 @@ update_mutex()
 }
 
 //======================================================================================//
+//======================================================================================//
 #if defined(TOMOPY_USE_PTL)
+//======================================================================================//
+//======================================================================================//
+
+inline void
+init_thread_data(ThreadPool* tp)
+{
+    ThreadData*& thread_data = ThreadData::GetInstance();
+    if(!thread_data)
+        thread_data = new ThreadData(tp);
+    thread_data->is_master   = false;
+    thread_data->within_task = false;
+}
+
+//======================================================================================//
+
 inline TaskRunManager*
 cpu_run_manager()
 {
@@ -525,7 +433,153 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
                   << "..." << std::endl;
     }
 }
-#endif
+//======================================================================================//
+//======================================================================================//
+#endif  // TOMOPY_USE_PTL
+//======================================================================================//
+//======================================================================================//
+
+struct cpu_rotate_data
+{
+    typedef iarray_t                         iarray_type;
+    typedef typename iarray_type::value_type int_type;
+
+    uintmax_t    m_id;
+    int          m_dy;
+    int          m_dt;
+    int          m_dx;
+    int          m_nx;
+    int          m_ny;
+    iarray_type  m_use_rot;
+    iarray_type  m_use_tmp;
+    farray_t     m_rot;
+    farray_t     m_tmp;
+    float*       m_recon;
+    float*       m_update;
+    float*       m_simdata;
+    const float* m_data;
+
+    cpu_rotate_data(uintmax_t id, int dy, int dt, int dx, int nx, int ny,
+                    const float* data, float* recon, float* simdata)
+    : m_id(id)
+    , m_dy(dy)
+    , m_dt(dt)
+    , m_dx(dx)
+    , m_nx(nx)
+    , m_ny(ny)
+    , m_use_rot(iarray_type(scast<uintmax_t>(m_nx * m_ny), 0))
+    , m_use_tmp(iarray_type(scast<uintmax_t>(m_nx * m_ny), 1))
+    , m_rot(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
+    , m_tmp(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
+    , m_recon(recon)
+    , m_update(nullptr)
+    , m_simdata(simdata)
+    , m_data(data)
+    {
+    }
+
+    ~cpu_rotate_data() {}
+
+    farray_t&       rot() { return m_rot; }
+    farray_t&       tmp() { return m_tmp; }
+    const farray_t& rot() const { return m_rot; }
+    const farray_t& tmp() const { return m_tmp; }
+
+    iarray_type&       use_rot() { return m_use_rot; }
+    iarray_type&       use_tmp() { return m_use_tmp; }
+    const iarray_type& use_rot() const { return m_use_rot; }
+    const iarray_type& use_tmp() const { return m_use_tmp; }
+
+    void reset()
+    {
+        // reset temporaries to zero
+        memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
+        memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
+        memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
+    }
+};
+
+//======================================================================================//
+
+struct DeviceOption
+{
+    typedef std::string     string_t;
+    typedef const string_t& crstring_t;
+
+    int      index;
+    string_t key;
+    string_t description;
+
+    DeviceOption(const int& _idx, crstring_t _key, crstring_t _desc)
+    : index(_idx)
+    , key(_key)
+    , description(_desc)
+    {
+    }
+
+    static void spacer(std::ostream& os, const char c = '-')
+    {
+        std::stringstream ss;
+        ss.fill(c);
+        ss << std::setw(90) << ""
+           << "\n";
+        os << ss.str();
+    }
+
+    friend bool operator==(const DeviceOption& lhs, const DeviceOption& rhs)
+    {
+        return (lhs.key == rhs.key && lhs.index == rhs.index);
+    }
+
+    friend bool operator==(const DeviceOption& itr, crstring_t cmp)
+    {
+        return (!is_numeric(cmp)) ? (itr.key == tolower(cmp))
+                                  : (itr.index == from_string<int>(cmp));
+    }
+
+    friend bool operator!=(const DeviceOption& lhs, const DeviceOption& rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    friend bool operator!=(const DeviceOption& itr, crstring_t cmp)
+    {
+        return !(itr == cmp);
+    }
+
+    static void header(std::ostream& os)
+    {
+        std::stringstream ss;
+        ss << "\n";
+        spacer(ss, '=');
+        ss << "Available GPU options:\n";
+        ss << "\t" << std::left << std::setw(5) << "INDEX"
+           << "  \t" << std::left << std::setw(12) << "KEY"
+           << "  " << std::left << std::setw(40) << "DESCRIPTION"
+           << "\n";
+        os << ss.str();
+    }
+
+    static void footer(std::ostream& os)
+    {
+        std::stringstream ss;
+        ss << "\nTo select an option for runtime, set TOMOPY_GPU_TYPE "
+           << "environment variable\n  to an INDEX or KEY above\n";
+        spacer(ss, '=');
+        os << ss.str();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const DeviceOption& opt)
+    {
+        std::stringstream ss;
+        ss << "\t" << std::right << std::setw(5) << opt.index << "  \t" << std::left
+           << std::setw(12) << opt.key << "  " << std::left << std::setw(40)
+           << opt.description;
+        os << ss.str();
+        return os;
+    }
+};
+
 //======================================================================================//
 
 template <typename _Func, typename... _Args>
@@ -549,30 +603,32 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
     }
 
     std::deque<DeviceOption> options;
-
-    options.push_back(DeviceOption({ 0, "cpu", "Run on CPU" }));
+    options.push_back(DeviceOption(0, "cpu", "Run on CPU"));
 
 #if defined(TOMOPY_USE_GPU)
 #    if defined(TOMOPY_USE_CUDA)
-    options.push_back(DeviceOption({ 1, "cuda", "Run on GPU with CUDA" }));
-    std::string default_key = "cuda";
-#    else
-    std::string default_key = "cpu";
+    options.push_back(DeviceOption(1, "cuda", "Run on GPU with CUDA"));
 #    endif
 
 #    if defined(TOMOPY_USE_OPENACC)
-    options.push_back(DeviceOption({ 2, "openacc", "Run on GPU with OpenACC" }));
+    options.push_back(DeviceOption(2, "openacc", "Run on GPU with OpenACC"));
 #    endif
 
 #    if defined(TOMOPY_USE_OPENMP)
-    options.push_back(DeviceOption({ 3, "openmp", "Run on GPU with OpenMP" }));
+    options.push_back(DeviceOption(3, "openmp", "Run on GPU with OpenMP"));
 #    endif
+#endif
+
+#if defined(TOMOPY_USE_GPU) && defined(TOMOPY_USE_CUDA)
+    std::string default_key = "cuda";
 #else
     std::string default_key = "cpu";
+    throw std::runtime_error("here");
 #endif
+
     auto default_itr =
         std::find_if(options.begin(), options.end(),
-                     [&](const DeviceOption& itr) { return itr == default_key; });
+                     [&](const DeviceOption& itr) { return (itr == default_key); });
 
     //------------------------------------------------------------------------//
     auto print_options = [&]() {
@@ -585,7 +641,12 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
         std::stringstream ss;
         DeviceOption::header(ss);
         for(const auto& itr : options)
-            ss << itr << "\n";
+        {
+            ss << itr;
+            if(itr == *default_itr)
+                ss << "\t(default)";
+            ss << "\n";
+        }
         DeviceOption::footer(ss);
 
         AutoLock l(TypeMutex<decltype(std::cout)>());
@@ -622,10 +683,8 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
     default_key = default_itr->key;
     auto key    = GetEnv("TOMOPY_DEVICE_TYPE", default_key);
 
-    auto selection =
-        std::find_if(options.begin(), options.end(), [&](const DeviceOption& itr) {
-            return (key == tolower(itr.key) || from_string<int>(key) == itr.index);
-        });
+    auto selection = std::find_if(options.begin(), options.end(),
+                                  [&](const DeviceOption& itr) { return (itr == key); });
 
     if(selection == options.end())
         selection =

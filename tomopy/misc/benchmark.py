@@ -187,6 +187,7 @@ def fill_border(rec, nimages, drow, dcol):
 def rescale_image(rec, nimages, scale, transform=True):
 
     rec_n = normalize(rec.copy())
+    resize_kwargs = {'anti_aliasing': False, 'mode': 'constant'}
     try:
         import skimage.transform
         if transform is True:
@@ -195,7 +196,9 @@ def rescale_image(rec, nimages, scale, transform=True):
             rec_tmp = np.ndarray([nimages, _nrows, _ncols])
             for i in range(nimages):
                 rec_tmp[i] = skimage.transform.resize(rec_n[i],
-                                                      (rec_n[i].shape[0] * scale, rec_n[i].shape[1] * scale))
+                                                      (rec_n[i].shape[0] * scale,
+                                                       rec_n[i].shape[1] * scale),
+                                                       **resize_kwargs)
             rec_n = rec_tmp
 
     except Exception as e:
