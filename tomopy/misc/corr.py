@@ -804,12 +804,9 @@ def sino_normalize_background_aps_1id(sino, beam_is_moving=True):
     # use median filter and gaussian filter to locate the sample region
     # -- median filter is to counter impulse noise
     # -- gaussian filter is for estimating the sample location
-    prof = np.gradient(np.sum(gaussian_filter(medfilt2d(sino, kernel_size=3),
-                                              sigma=50,
-                                              ),
-                              axis=0,
-                              ),
-                       )
+    _median = medfilt2d(sino, kernel_size=3)
+    _blurred = gaussian_filter(_median, sigma=50)
+    prof = np.gradient(np.sum(_blurred,axis=0))
 
     # find the left and right bound of the sample
     edgeLeft = max(prof.argmin(), 11)  #
