@@ -56,6 +56,12 @@ END_EXTERN_C
 
 //======================================================================================//
 
+typedef cpu_data::int_type     int_type;
+typedef cpu_data::init_data_t  init_data_t;
+typedef cpu_data::data_array_t data_array_t;
+
+//======================================================================================//
+
 int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
@@ -105,32 +111,25 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, int s,
-                   int p, float* m_recon, float* m_simdata, const float* m_data,
-                   float* update)
+sirt_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int dt, int dx,
+                            int nx, int ny, const float* theta)
 {
-    static Mutex                                         _mutex;
-    static thread_local std::unique_ptr<cpu_rotate_data> _cache =
-        std::unique_ptr<cpu_rotate_data>(new cpu_rotate_data(GetThisThreadID(), dy, dt,
-                                                             dx, nx, ny, m_data, m_recon,
-                                                             m_simdata));
+    ConsumeParameters(dy);
+    auto _cache = _cpu_data[GetThisThreadID() % _cpu_data.size()];
 
-    // needed for recon to output at proper orientation
-    float theta_p = fmodf(theta[p], pi) + halfpi;
-    // these structures are cached and re-used
-    const float* data    = m_data + s * dt * dx;
-    float*       simdata = m_simdata + s * dt * dx;
-    float*       recon   = m_recon + s * nx * ny;
+    // calculate some values
+    float        theta_p   = fmodf(theta[p] + halfpi, twopi);
+    const float* data      = _cache->data() + s * dt * dx;
+    const float* recon     = _cache->recon() + s * nx * ny;
+    float*       update    = _cache->update() + s * nx * ny;
+    float*       sum_dist  = _cache->sum_dist() + s * nx * ny;
+    auto&        use_rot   = _cache->use_rot();
+    auto&        use_tmp   = _cache->use_tmp();
+    auto&        recon_rot = _cache->rot();
+    auto&        recon_tmp = _cache->tmp();
 
     // reset intermediate data
-    _cache->reset();
-
-    auto& use_rot   = _cache->use_rot();
-    auto& use_tmp   = _cache->use_tmp();
-    auto& recon_rot = _cache->rot();
-    auto& recon_tmp = _cache->tmp();
-
-    typedef cpu_rotate_data::int_type int_type;
+    _cache->reset_slice();
 
     // Forward-Rotate object
     cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
@@ -138,35 +137,23 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
 
     for(int d = 0; d < dx; d++)
     {
-        int   pix_offset = d * nx;  // pixel offset
-        int   idx_data   = d + p * dx;
-        float _sum       = 0.0f;
-        int   _fnx       = 0;
-        // instead of including all the offsets later in the index lookup, offset the
-        // pointer itself. This should make it easier for compiler to apply SIMD
-        const float* _data      = data + idx_data;
-        float*       _simdata   = simdata + idx_data;
-        float*       _recon_rot = recon_rot.data() + pix_offset;
-        auto*        _use_rot   = use_rot.data() + pix_offset;
-
-        // Calculate simulated data by summing up along x-axis
-        for(int n = 0; n < nx; ++n)
-            _sum += _recon_rot[n];
-
-        *_simdata += _sum;
-
-        // Calculte the relevant pixels after rotation
-        for(int n = 0; n < nx; ++n)
-            _fnx += (_use_rot[n] != 0) ? 1 : 0;
-
-        if(_fnx != 0)
+        int   fnx = 0;
+        float sum = 0.0f;
+        for(int i = 0; i < nx; ++i)
+            sum += recon_rot[d * nx + i];
+        for(int i = 0; i < nx; ++i)
         {
-            // Make update by backprojecting error along x-axis
-            float upd = (*_data - *_simdata) / scast<float>(_fnx);
-
-            // update rotation
-            for(int n = 0; n < nx; ++n)
-                _recon_rot[n] += upd;
+            if(use_rot[d * nx + i] > 0)
+            {
+                fnx += 1;
+                sum_dist[d * nx + i] += 1.0f;
+            }
+        }
+        if(fnx != 0)
+        {
+            float upd = (data[p * dx + d] - sum);
+            for(int i = 0; i < nx; ++i)
+                recon_rot[d * nx + i] += upd;
         }
     }
 
@@ -174,11 +161,9 @@ compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta, i
     cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
     // update shared update array
-    _mutex.lock();
     float* _update = update + s * nx * ny;
     for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
         _update[i] += recon_tmp[i];
-    _mutex.unlock();
 }
 
 //======================================================================================//
@@ -187,50 +172,74 @@ void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
+    typedef decltype(HW_CONCURRENCY) nthread_type;
+
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
+    // compute some properties (expected python threads, max threads, device assignment)
+    auto min_threads = nthread_type(1);
+    auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads    = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+
 #if defined(TOMOPY_USE_PTL)
-    decltype(HW_CONCURRENCY) min_threads = 1;
-    auto                     pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto                     nthreads =
-        std::max(GetEnv("TOMOPY_NUM_THREADS", HW_CONCURRENCY / pythreads), min_threads);
-    TaskRunManager* run_man = cpu_run_manager();
+    typedef TaskManager manager_t;
+    TaskRunManager*     run_man = cpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
-    init_thread_data(run_man->GetThreadPool());
+#else
+    typedef void manager_t;
+    void*        task_man = nullptr;
 #endif
 
     TIMEMORY_AUTO_TIMER("");
 
+    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    farray_t    update(recon_pixels, 0.0f);
+    farray_t    sum_dist(recon_pixels, 0.0f);
+    init_data_t init_data =
+        cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data);
+    data_array_t _cpu_data = std::get<0>(init_data);
+    for(auto& itr : _cpu_data)
+    {
+        itr->alloc_sum_dist();
+        itr->alloc_update();
+    }
+
     //----------------------------------------------------------------------------------//
-    uintmax_t grid_size = scast<uintmax_t>(dy * ngridx * ngridy);
-    uintmax_t proj_size = scast<uintmax_t>(dy * dt * dx);
     for(int i = 0; i < num_iter; i++)
     {
         START_TIMER(t_start);
         // reset the simulation data
-        farray_t simdata(proj_size, 0.0f);
-        farray_t update(grid_size, 0.0f);
-#if defined(TOMOPY_USE_PTL)
-        TaskGroup<void> tg;
-        // For each slice and projection angle
-        for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; s++)
-                task_man->exec(tg, compute_projection, dy, dt, dx, ngridx, ngridy, theta,
-                               s, p, recon, simdata.data(), data, update.data());
-        tg.join();
-#else
-        // For each slice and projection angle
-        for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; s++)
-                compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p, recon,
-                                   simdata.data(), data, update.data());
-#endif
 
-        for(uintmax_t j = 0; j < grid_size; ++j)
-            recon[j] += update[j] / scast<float>(dx);
+        // reset global update and sum_dist
+        memset(update.data(), 0, recon_pixels * sizeof(float));
+        memset(sum_dist.data(), 0, recon_pixels * sizeof(float));
 
+        // sync and reset
+        cpu_data::reset(_cpu_data);
+
+        // execute the loop over slices and projection angles
+        execute<manager_t, data_array_t>(task_man, dy, dt, std::ref(_cpu_data),
+                                         sirt_cpu_compute_projection, dy, dt, dx, ngridx,
+                                         ngridy, theta);
+
+        for(auto& itr : _cpu_data)
+        {
+            for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
+                update[ii] += itr->update()[ii];
+
+            for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
+                sum_dist[ii] += itr->sum_dist()[ii];
+        }
+
+        // update the global recon with global update and sum_dist
+        for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
+        {
+            if(sum_dist[ii] != 0.0f)
+                recon[ii] += update[ii] / sum_dist[ii] / scast<float>(dx);
+        }
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
@@ -249,91 +258,23 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-sirt_openacc(const float* data, int dy, int dt, int dx, const float*, const float* theta,
-             float* recon, int ngridx, int ngridy, int num_iter)
+sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
+             const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
-
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
     TIMEMORY_AUTO_TIMER("[openacc]");
-
-    uintmax_t grid_size = scast<uintmax_t>(ngridx * ngridy);
-    uintmax_t proj_size = scast<uintmax_t>(dy * dt * dx);
-    for(int i = 0; i < num_iter; i++)
-    {
-        START_TIMER(t_start);
-        farray_t simdata(proj_size, 0.0f);
-        // For each slice
-        for(int s = 0; s < dy; s++)
-        {
-            farray_t update(grid_size, 0.0f);
-            farray_t recon_off(grid_size, 0.0f);
-
-            int    slice_offset = s * ngridx * ngridy;
-            float* _recon       = recon + slice_offset;
-
-            // recon offset for the slice
-            for(uintmax_t ii = 0; ii < recon_off.size(); ++ii)
-                recon_off[ii] = _recon[ii];
-
-            // For each projection angle
-            for(int p = 0; p < dt; p++)
-            {
-                openacc_compute_projection(dt, dx, ngridx, ngridy, data, theta, s, p,
-                                           simdata.data(), update.data(),
-                                           recon_off.data());
-            }
-
-            for(uintmax_t ii = 0; ii < grid_size; ++ii)
-                _recon[ii] += update[ii] / static_cast<float>(dx);
-        }
-        REPORT_TIMER(t_start, "iteration", i, num_iter);
-    }
+    throw std::runtime_error("SIRT algorithm has not been implemented for OpenACC");
 }
 
 //======================================================================================//
 
 void
-sirt_openmp(const float* data, int dy, int dt, int dx, const float*, const float* theta,
-            float* recon, int ngridx, int ngridy, int num_iter)
+sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
+            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
-
+    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
     TIMEMORY_AUTO_TIMER("[openmp]");
-
-    uintmax_t grid_size = scast<uintmax_t>(ngridx * ngridy);
-    uintmax_t proj_size = scast<uintmax_t>(dy * dt * dx);
-    for(int i = 0; i < num_iter; i++)
-    {
-        START_TIMER(t_start);
-        farray_t simdata(proj_size, 0.0f);
-        // For each slice
-        for(int s = 0; s < dy; s++)
-        {
-            farray_t update(grid_size, 0.0f);
-            farray_t recon_off(grid_size, 0.0f);
-
-            int    slice_offset = s * ngridx * ngridy;
-            float* _recon       = recon + slice_offset;
-
-            // recon offset for the slice
-            for(uintmax_t ii = 0; ii < recon_off.size(); ++ii)
-                recon_off[ii] = _recon[ii];
-
-            // For each projection angle
-            for(int p = 0; p < dt; p++)
-            {
-                openmp_compute_projection(dt, dx, ngridx, ngridy, data, theta, s, p,
-                                          simdata.data(), update.data(),
-                                          recon_off.data());
-            }
-
-            for(uintmax_t ii = 0; ii < grid_size; ++ii)
-                _recon[ii] += update[ii] / static_cast<float>(dx);
-        }
-        REPORT_TIMER(t_start, "iteration", i, num_iter);
-    }
+    throw std::runtime_error("SIRT algorithm has not been implemented for OpenMP");
 }
 
 //======================================================================================//

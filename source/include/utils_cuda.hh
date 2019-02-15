@@ -101,8 +101,12 @@ ComputeGridSize(int size, int block_size = GetBlockSize())
 inline int
 GetNppInterpolationMode()
 {
-    static int eInterp =
-        GetEnv<int>("TOMOPY_NPP_INTER", GetEnv<int>("TOMOPY_INTER", GPU_CUBIC));
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
+                                     GetEnv<int>("TOMOPY_INTER", choices, GPU_CUBIC));
     return eInterp;
 }
 
@@ -112,11 +116,11 @@ class gpu_data
 {
 public:
     // typedefs
-    typedef gpu_data                                     this_type;
-    typedef int32_t                                      int_type;
-    typedef std::shared_ptr<gpu_data>                    gpu_data_ptr_t;
-    typedef std::vector<gpu_data_ptr_t>                  gpu_data_array_t;
-    typedef std::tuple<gpu_data_array_t, float*, float*> init_data_t;
+    typedef gpu_data                                 this_type;
+    typedef int32_t                                  int_type;
+    typedef std::shared_ptr<gpu_data>                data_ptr_t;
+    typedef std::vector<data_ptr_t>                  data_array_t;
+    typedef std::tuple<data_array_t, float*, float*> init_data_t;
 
 public:
     // ctors, dtors, assignment
@@ -193,11 +197,11 @@ public:
     {
         auto _sync = [&](cudaStream_t _stream) { stream_sync(_stream); };
 
-        if(stream_id >= 0)
-            _sync(m_streams[stream_id % m_num_streams]);
-        else
+        if(stream_id < 0)
             for(int i = 0; i < m_num_streams; ++i)
                 _sync(m_streams[i]);
+        else
+            _sync(m_streams[stream_id % m_num_streams]);
     }
 
     void alloc_sum_dist()
@@ -224,24 +228,24 @@ public:
         auto   streams = create_streams(2, cudaStreamNonBlocking);
         cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
         cpu2gpu_memcpy<float>(data, cpu_data, dy * dt * dx, streams[1]);
-        gpu_data_array_t _gpu_data(nthreads);
+        data_array_t _gpu_data(nthreads);
         for(int ii = 0; ii < nthreads; ++ii)
-            _gpu_data[ii] = gpu_data_ptr_t(
-                new gpu_data(device, dy, dt, dx, ngridx, ngridy, data, recon));
+            _gpu_data[ii] =
+                data_ptr_t(new gpu_data(device, dy, dt, dx, ngridx, ngridy, data, recon));
         stream_sync(streams[0]);
         stream_sync(streams[1]);
         destroy_streams(streams, 2);
         return init_data_t(_gpu_data, recon, data);
     }
 
-    static void reset(gpu_data_array_t& data)
+    static void reset(data_array_t& data)
     {
         // reset "update" to zero
         for(auto& itr : data)
             itr->reset();
     }
 
-    static void sync(gpu_data_array_t& data)
+    static void sync(data_array_t& data)
     {
         // sync all the streams
         for(auto& itr : data)

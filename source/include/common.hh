@@ -439,28 +439,18 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 //======================================================================================//
 //======================================================================================//
 
-struct cpu_rotate_data
+class cpu_data
 {
-    typedef iarray_t                         iarray_type;
-    typedef typename iarray_type::value_type int_type;
+public:
+    typedef iarray_t                                       iarray_type;
+    typedef typename iarray_type::value_type               int_type;
+    typedef std::shared_ptr<cpu_data>                      data_ptr_t;
+    typedef std::vector<data_ptr_t>                        data_array_t;
+    typedef std::tuple<data_array_t, float*, const float*> init_data_t;
 
-    uintmax_t    m_id;
-    int          m_dy;
-    int          m_dt;
-    int          m_dx;
-    int          m_nx;
-    int          m_ny;
-    iarray_type  m_use_rot;
-    iarray_type  m_use_tmp;
-    farray_t     m_rot;
-    farray_t     m_tmp;
-    float*       m_recon;
-    float*       m_update;
-    float*       m_simdata;
-    const float* m_data;
-
-    cpu_rotate_data(uintmax_t id, int dy, int dt, int dx, int nx, int ny,
-                    const float* data, float* recon, float* simdata)
+public:
+    cpu_data(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
+             float* recon)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
@@ -473,13 +463,18 @@ struct cpu_rotate_data
     , m_tmp(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
     , m_recon(recon)
     , m_update(nullptr)
-    , m_simdata(simdata)
+    , m_sum_dist(nullptr)
     , m_data(data)
     {
     }
 
-    ~cpu_rotate_data() {}
+    ~cpu_data()
+    {
+        delete[] m_update;
+        delete[] m_sum_dist;
+    }
 
+public:
     farray_t&       rot() { return m_rot; }
     farray_t&       tmp() { return m_tmp; }
     const farray_t& rot() const { return m_rot; }
@@ -490,13 +485,71 @@ struct cpu_rotate_data
     const iarray_type& use_rot() const { return m_use_rot; }
     const iarray_type& use_tmp() const { return m_use_tmp; }
 
-    void reset()
+    float*       update() const { return m_update; }
+    float*       sum_dist() const { return m_sum_dist; }
+    float*       recon() { return m_recon; }
+    const float* recon() const { return m_recon; }
+    const float* data() const { return m_data; }
+
+    void reset_slice()
     {
         // reset temporaries to zero
         memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
         memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
         memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
     }
+
+    void reset()
+    {
+        // reset temporaries to zero
+        if(m_update)
+            memset(m_update, 0, scast<uintmax_t>(m_dy * m_nx * m_ny) * sizeof(float));
+        if(m_sum_dist)
+            memset(m_sum_dist, 0, scast<uintmax_t>(m_dy * m_nx * m_ny) * sizeof(float));
+    }
+
+    void alloc_update() { m_update = new float[scast<uintmax_t>(m_dy * m_nx * m_ny)]; }
+
+    void alloc_sum_dist()
+    {
+        m_sum_dist = new float[scast<uintmax_t>(m_dy * m_nx * m_ny)];
+    }
+
+public:
+    // static functions
+    static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
+                                  int ngridy, float* recon, const float* data)
+    {
+        data_array_t _cpu_data(nthreads);
+        for(unsigned ii = 0; ii < nthreads; ++ii)
+            _cpu_data[ii] =
+                data_ptr_t(new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data, recon));
+        return init_data_t(_cpu_data, recon, data);
+    }
+
+    static void reset(data_array_t& data)
+    {
+        // reset "update" to zero
+        for(auto& itr : data)
+            itr->reset();
+    }
+
+protected:
+    unsigned     m_id;
+    int          m_dy;
+    int          m_dt;
+    int          m_dx;
+    int          m_nx;
+    int          m_ny;
+    iarray_type  m_use_rot;
+    iarray_type  m_use_tmp;
+    farray_t     m_rot;
+    farray_t     m_tmp;
+    float*       m_recon;
+    float*       m_update;
+    float*       m_sum_dist;
+    float*       m_simdata;
+    const float* m_data;
 };
 
 //======================================================================================//
@@ -714,7 +767,20 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
                 std::cerr << "[TID: " << GetThisThreadID() << "] "
                           << "Falling back to CPU algorithm..." << std::endl;
             }
-            cpu_func(_forward_args_t(_Args, args));
+            try
+            {
+                cpu_func(_forward_args_t(_Args, args));
+            }
+            catch(std::exception& e)
+            {
+                std::stringstream ss;
+                ss << "\n\nError executing :: " << e.what() << "\n\n";
+                {
+                    AutoLock l(TypeMutex<decltype(std::cout)>());
+                    std::cerr << e.what() << std::endl;
+                }
+                throw std::runtime_error(ss.str().c_str());
+            }
         }
     }
 }
@@ -730,13 +796,11 @@ execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... 
 
     // Loop over slices and projection angles
     auto serial_exec = [&]() {
-        uintmax_t idx = 0;
         // Loop over slices and projection angles
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                auto cache = data[(idx++) % data.size()];
-                func(cache, s, p, args...);
+                func(data, s, p, _forward_args_t(_Args, args));
             }
     };
 
@@ -744,13 +808,11 @@ execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... 
 #if defined(TOMOPY_USE_PTL)
         if(!man)
             return false;
-        uintmax_t       idx = 0;
         TaskGroup<void> tg;
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                auto cache = data[(idx++) % data.size()];
-                man->exec(tg, func, cache, s, p, args...);
+                man->exec(tg, func, std::ref(data), s, p, _forward_args_t(_Args, args));
             }
         tg.join();
         return true;
@@ -767,8 +829,13 @@ execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... 
     }
     catch(const std::exception& e)
     {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cerr << e.what() << '\n';
+        std::stringstream ss;
+        ss << "\n\nError executing :: " << e.what() << "\n\n";
+        {
+            AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << e.what() << std::endl;
+        }
+        throw std::runtime_error(ss.str().c_str());
     }
 }
 

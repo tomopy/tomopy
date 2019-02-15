@@ -68,9 +68,15 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 //======================================================================================//
 
+typedef gpu_data::int_type     int_type;
+typedef gpu_data::init_data_t  init_data_t;
+typedef gpu_data::data_array_t data_array_t;
+
+//======================================================================================//
+
 __global__ void
 cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                        const gpu_data::int_type* recon_use, float* sum_dist)
+                        const int_type* recon_use, float* sum_dist)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
@@ -83,9 +89,11 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
         {
-            auto use = (recon_use[d * nx + i] > 0) ? 1 : 0;
-            fnx += use;
-            sum_dist[d * nx + i] += scast<float>(use);
+            if(recon_use[d * nx + i] > 0)
+            {
+                fnx += 1;
+                sum_dist[d * nx + i] += 1.0f;
+            }
         }
         if(fnx != 0)
         {
@@ -116,13 +124,10 @@ cuda_sirt_update_kernel(float* recon, const float* update, const float* sum_dist
 //======================================================================================//
 
 void
-sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* theta,
-                            int s, int p, int nthreads, gpu_data** _gpu_data)
+sirt_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int dt, int dx,
+                            int nx, int ny, const float* theta)
 {
-    typedef gpu_data::int_type int_type;
-
-    auto       thread_number = GetThisThreadID() % nthreads;
-    gpu_data*& _cache        = _gpu_data[thread_number];
+    auto _cache = _gpu_data[GetThisThreadID() % _gpu_data.size()];
 
 #if defined(DEBUG)
     printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
@@ -133,10 +138,10 @@ sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float*
     cuda_set_device(_cache->device());
 
     // calculate some values
-    float        theta_p_rad = fmodf(theta[p], pi);
+    float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float        theta_p_deg = theta_p_rad * degrees;
-    const float* recon       = _cache->recon() + s * nx * ny;
     const float* data        = _cache->data() + s * dt * dx;
+    const float* recon       = _cache->recon() + s * nx * ny;
     float*       update      = _cache->update() + s * nx * ny;
     float*       sum_dist    = _cache->sum_dist() + s * nx * ny;
     auto*        use_rot     = _cache->use_rot();
@@ -175,136 +180,128 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 {
     typedef decltype(HW_CONCURRENCY) nthread_type;
 
-    if(cuda_device_count() == 0)
+    auto num_devices = cuda_device_count();
+    if(num_devices == 0)
         throw std::runtime_error("No CUDA device(s) available");
-
-    init_nvtx();
-    cuda_device_query();
-    static std::atomic<int> ntid;
-    auto                    tid = GetThisThreadID();
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    // get some properties
-    // default number of threads == 1 to ensure an excess of threads are not created
-    // unless desired
-    auto min_threads   = nthread_type(1);
-    auto pythreads     = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto max_threads   = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads      = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    int  num_devices   = cuda_device_count();
-    int  thread_device = (ntid++) % num_devices;  // assign to device
+    // initialize nvtx data
+    init_nvtx();
+    // print device info
+    cuda_device_query();
+    // thread counter for device assignment
+    static std::atomic<int> ntid;
+
+    // compute some properties (expected python threads, max threads, device assignment)
+    auto min_threads = nthread_type(1);
+    auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads    = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    int  device      = (ntid++) % num_devices;  // assign to device
 
 #if defined(TOMOPY_USE_PTL)
-    TaskRunManager* run_man = gpu_run_manager();
+    typedef TaskManager manager_t;
+    TaskRunManager*     run_man = gpu_run_manager();
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
     ThreadPool*  tp       = task_man->thread_pool();
+#else
+    typedef void manager_t;
+    void*        task_man = nullptr;
 #endif
 
     TIMEMORY_AUTO_TIMER("");
 
     // GPU allocated copies
-    cuda_set_device(thread_device);
-    printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
+    cuda_set_device(device);
+    printf("[%lu] Running on device %i...\n", GetThisThreadID(), device);
 
-    float* recon   = gpu_malloc<float>(dy * ngridx * ngridy);
-    float* data    = gpu_malloc<float>(dy * dt * dx);
-    auto   streams = create_streams(2, cudaStreamNonBlocking);
-    cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
-    cpu2gpu_memcpy<float>(data, cpu_data, dy * dt * dx, streams[1]);
-    stream_sync(streams[0]);
-    stream_sync(streams[1]);
-    destroy_streams(streams, 2);
-    gpu_data** _gpu_data = new gpu_data*[nthreads];
-    for(int ii = 0; ii < nthreads; ++ii)
-    {
-        _gpu_data[ii] =
-            new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data, recon);
-        _gpu_data[ii]->alloc_sum_dist();
-    }
+    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    auto         block        = GetBlockSize();
+    auto         grid         = ComputeGridSize(recon_pixels, block);
+    auto         main_stream  = create_streams(1);
+    float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    float*       sum_dist  = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    init_data_t  init_data = gpu_data::initialize(device, nthreads, dy, dt, dx, ngridx,
+                                                 ngridy, cpu_recon, cpu_data);
+    data_array_t _gpu_data = std::get<0>(init_data);
+    float*       recon     = std::get<1>(init_data);
+    const float* data      = std::get<2>(init_data);
+    for(auto& itr : _gpu_data)
+        itr->alloc_sum_dist();
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
     for(int i = 0; i < num_iter; i++)
     {
+        // timing and profiling
         TIMEMORY_AUTO_TIMER("");
         NVTX_RANGE_PUSH(&nvtx_iteration);
         START_TIMER(t_start);
 
-        // set "update" to zero, copy in "recon"
-        for(int ii = 0; ii < nthreads; ++ii)
-            _gpu_data[ii]->reset();
+        // sync the main stream
+        stream_sync(*main_stream);
 
-#if defined(TOMOPY_USE_PTL)
-        // Loop over slices and projection angles
-        TaskGroup<void> tg;
-        for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; ++s)
-                task_man->exec(tg, sirt_gpu_compute_projection, dy, dt, dx, ngridx,
-                               ngridy, theta, s, p, nthreads, _gpu_data);
-        tg.join();
-#else
-        // Loop over slices and projection angles
-        for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; ++s)
-                sirt_gpu_compute_projection(dy, dt, dx, ngridx, ngridy, theta, s, p,
-                                            nthreads, _gpu_data);
-#endif
-        for(int ii = 0; ii < nthreads; ++ii)
-            _gpu_data[ii]->sync();
+        // reset global update and sum_dist
+        gpu_memset(update, 0, recon_pixels, *main_stream);
+        gpu_memset(sum_dist, 0, recon_pixels, *main_stream);
 
-        for(int ii = 0; ii < nthreads; ++ii)
+        // sync and reset
+        gpu_data::sync(_gpu_data);
+        gpu_data::reset(_gpu_data);
+
+        // execute the loop over slices and projection angles
+        execute<manager_t, data_array_t>(task_man, dy, dt, std::ref(_gpu_data),
+                                         sirt_gpu_compute_projection, dy, dt, dx, ngridx,
+                                         ngridy, theta);
+
+        // sync the thread streams
+        gpu_data::sync(_gpu_data);
+
+        // sync the main stream
+        stream_sync(*main_stream);
+
+        // have threads add to global update and sum_dist
+        for(auto& itr : _gpu_data)
         {
-            int    smem     = 0;
-            int    block    = _gpu_data[ii]->block();
-            int    grid     = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
-            float* update   = _gpu_data[ii]->update();
-            float* sum_dist = _gpu_data[ii]->sum_dist();
-            auto   stream   = _gpu_data[ii]->stream();
-            cuda_sirt_update_kernel<<<grid, block, smem, stream>>>(recon, update,
-                                                                   sum_dist, dx,
-                                                                   dy * ngridx * ngridy);
+            int block = itr->block();
+            int grid  = itr->compute_grid(recon_pixels);
+            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(0)>>>(update,
+                                                                       itr->update(),
+                                                                       recon_pixels,
+                                                                       1.0f);
+            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(1)>>>(sum_dist,
+                                                                       itr->sum_dist(),
+                                                                       recon_pixels,
+                                                                       1.0f);
         }
 
-        for(int ii = 0; ii < nthreads; ++ii)
-            _gpu_data[ii]->sync();
+        // sync the thread streams
+        gpu_data::sync(_gpu_data);
 
+        // update the global recon with global update and sum_dist
+        cuda_sirt_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,
+                                                                  dx, recon_pixels);
+
+        // stop profile range and report timing
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
-    for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii]->sync();
+    // sync the main stream
+    stream_sync(*main_stream);
 
-    // create a rotated reconstruction
-    float* recon_rot = gpu_malloc<float>(dy * ngridx * ngridy);
-    streams          = create_streams(dy, cudaStreamNonBlocking);
-    // rotate reconstruction
-    for(int i = 0; i < dy; ++i)
-    {
-        auto offset = i * ngridx * ngridy;
-        cuda_rotate_ip(recon_rot + offset, recon + offset, halfpi, halfpi * degrees,
-                       ngridx, ngridy, streams[i]);
-    }
+    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon, recon_pixels, *main_stream);
 
-    for(int i = 0; i < dy; ++i)
-        stream_sync(streams[i]);
-    destroy_streams(streams, dy);
-    cudaFree(recon);
+    // sync the main stream
+    stream_sync(*main_stream);
 
-    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon_rot, dy * ngridx * ngridy, 0);
-    stream_sync(0);
+    // destroy main stream
+    destroy_streams(main_stream, 1);
 
-    for(int i = 0; i < nthreads; ++i)
-        delete _gpu_data[i];
-    delete[] _gpu_data;
-
-    cudaFree(recon_rot);
     NVTX_RANGE_POP(0);
-
-    printf("\n");
 }
 
 //======================================================================================//

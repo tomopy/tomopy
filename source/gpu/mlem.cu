@@ -59,6 +59,8 @@ END_EXTERN_C
 #include <memory>
 #include <numeric>
 
+//======================================================================================//
+
 #if defined(TOMOPY_USE_NVTX)
 extern nvtxEventAttributes_t nvtx_total;
 extern nvtxEventAttributes_t nvtx_iteration;
@@ -70,9 +72,15 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 //======================================================================================//
 
+typedef gpu_data::int_type     int_type;
+typedef gpu_data::init_data_t  init_data_t;
+typedef gpu_data::data_array_t data_array_t;
+
+//======================================================================================//
+
 __global__ void
 cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                        const gpu_data::int_type* recon_use, float* sum_dist)
+                        const int_type* recon_use, float* sum_dist)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
@@ -117,10 +125,10 @@ cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist
 //======================================================================================//
 
 void
-mlem_gpu_compute_projection(gpu_data::gpu_data_ptr_t _cache, int s, int p, int dy, int dt,
-                            int dx, int nx, int ny, const float* theta)
+mlem_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int dt, int dx,
+                            int nx, int ny, const float* theta)
 {
-    typedef gpu_data::int_type int_type;
+    auto _cache = _gpu_data[GetThisThreadID() % _gpu_data.size()];
 
 #if defined(DEBUG)
     printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
@@ -209,20 +217,17 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    typedef gpu_data::init_data_t      init_data_t;
-    typedef gpu_data::gpu_data_array_t gpu_data_array_t;
-
-    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
-    auto        block        = GetBlockSize();
-    auto        grid         = ComputeGridSize(recon_pixels, block);
-    auto        main_stream  = create_streams(1);
-    float*      update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    float*      sum_dist  = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t init_data = gpu_data::initialize(thread_device, nthreads, dy, dt, dx,
+    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    auto         block        = GetBlockSize();
+    auto         grid         = ComputeGridSize(recon_pixels, block);
+    auto         main_stream  = create_streams(1);
+    float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    float*       sum_dist  = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    init_data_t  init_data = gpu_data::initialize(thread_device, nthreads, dy, dt, dx,
                                                  ngridx, ngridy, cpu_recon, cpu_data);
-    gpu_data_array_t _gpu_data = std::get<0>(init_data);
-    float*           recon     = std::get<1>(init_data);
-    const float*     data      = std::get<2>(init_data);
+    data_array_t _gpu_data = std::get<0>(init_data);
+    float*       recon     = std::get<1>(init_data);
+    const float* data      = std::get<2>(init_data);
     for(auto& itr : _gpu_data)
         itr->alloc_sum_dist();
 
@@ -235,14 +240,21 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         NVTX_RANGE_PUSH(&nvtx_iteration);
         START_TIMER(t_start);
 
+        // sync the main stream
+        stream_sync(*main_stream);
+
+        // reset global update and sum_dist
+        gpu_memset(update, 0, recon_pixels, *main_stream);
+        gpu_memset(sum_dist, 0, recon_pixels, *main_stream);
+
         // sync and reset
         gpu_data::sync(_gpu_data);
         gpu_data::reset(_gpu_data);
 
-        // execute
-        execute<manager_t, gpu_data_array_t>(task_man, dy, dt, std::ref(_gpu_data),
-                                             mlem_gpu_compute_projection, dy, dt, dx,
-                                             ngridx, ngridy, theta);
+        // execute the loop over slices and projection angles
+        execute<manager_t, data_array_t>(task_man, dy, dt, std::ref(_gpu_data),
+                                         mlem_gpu_compute_projection, dy, dt, dx, ngridx,
+                                         ngridy, theta);
 
         // sync the thread streams
         gpu_data::sync(_gpu_data);
@@ -255,41 +267,35 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         {
             auto nblock = itr->block();
             auto ngrid  = itr->compute_grid(recon_pixels);
-            /*
-            float factor = 1.0f / scast<float>(dx);
-            cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(0)>>>(update,
-                                                                         itr->update(),
-                                                                         recon_pixels,
-                                                                         factor);
-            cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(1)>>>(sum_dist,
-                                                                         itr->sum_dist(),
-                                                                         recon_pixels,
-                                                                         factor);
-            */
-            // update the global recon with global update and sum_dist
-            cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon,
-                                                                      itr->update(),
-                                                                      itr->sum_dist(), dx,
-                                                                      recon_pixels);
-            stream_sync(*main_stream);
+            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(0)>>>(update,
+                                                                       itr->update(),
+                                                                       recon_pixels,
+                                                                       1.0f);
+            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(1)>>>(sum_dist,
+                                                                       itr->sum_dist(),
+                                                                       recon_pixels,
+                                                                       1.0f);
         }
 
         // sync the thread streams
         gpu_data::sync(_gpu_data);
+
+        // update the global recon with global update and sum_dist
+        cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,
+                                                                  dx, recon_pixels);
 
         // stop profile range and report timing
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
-    // sync main stream
+    // sync the main stream
     stream_sync(*main_stream);
 
-    // copy to cpu
-    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon, dy * ngridx * ngridy, 0);
+    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon, recon_pixels, *main_stream);
 
-    // ensure copy finished
-    stream_sync(0);
+    // sync the main stream
+    stream_sync(*main_stream);
 
     // destroy main stream
     destroy_streams(main_stream, 1);
