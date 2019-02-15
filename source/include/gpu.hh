@@ -116,7 +116,7 @@ gpu_memset(_Tp* _gpu, int value, uintmax_t size, cudaStream_t stream)
 
 template <typename _Tp>
 _Tp*
-malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
+gpu_malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
@@ -130,7 +130,7 @@ malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 
 template <typename _Tp>
 _Tp*
-malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
+gpu_malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
 {
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, size * sizeof(_Tp));

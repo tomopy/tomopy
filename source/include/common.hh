@@ -720,3 +720,56 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
 }
 
 //======================================================================================//
+
+template <typename _Executor, typename _DataArray, typename _Func, typename... _Args>
+void
+execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... args)
+{
+    // does nothing except make sure there is no warning
+    ConsumeParameters(man);
+
+    // Loop over slices and projection angles
+    auto serial_exec = [&]() {
+        uintmax_t idx = 0;
+        // Loop over slices and projection angles
+        for(int p = 0; p < dt; ++p)
+            for(int s = 0; s < dy; ++s)
+            {
+                auto cache = data[(idx++) % data.size()];
+                func(cache, s, p, args...);
+            }
+    };
+
+    auto parallel_exec = [&]() {
+#if defined(TOMOPY_USE_PTL)
+        if(!man)
+            return false;
+        uintmax_t       idx = 0;
+        TaskGroup<void> tg;
+        for(int p = 0; p < dt; ++p)
+            for(int s = 0; s < dy; ++s)
+            {
+                auto cache = data[(idx++) % data.size()];
+                man->exec(tg, func, cache, s, p, args...);
+            }
+        tg.join();
+        return true;
+#else
+        return false;
+#endif
+    };
+
+    try
+    {
+        // if parallel execution fails, run serial
+        if(!parallel_exec())
+            serial_exec();
+    }
+    catch(const std::exception& e)
+    {
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cerr << e.what() << '\n';
+    }
+}
+
+//======================================================================================//

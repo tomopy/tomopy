@@ -108,33 +108,20 @@ GetNppInterpolationMode()
 
 //======================================================================================//
 
-struct gpu_data
+class gpu_data
 {
-    typedef gpu_data this_type;
-    typedef int32_t  int_type;
+public:
+    // typedefs
+    typedef gpu_data                                     this_type;
+    typedef int32_t                                      int_type;
+    typedef std::shared_ptr<gpu_data>                    gpu_data_ptr_t;
+    typedef std::vector<gpu_data_ptr_t>                  gpu_data_array_t;
+    typedef std::tuple<gpu_data_array_t, float*, float*> init_data_t;
 
-    int           m_device;
-    int           m_grid;
-    int           m_block;
-    int           m_dy;
-    int           m_dt;
-    int           m_dx;
-    int           m_nx;
-    int           m_ny;
-    int_type*     m_use_rot;
-    int_type*     m_use_tmp;
-    float*        m_rot;
-    float*        m_tmp;
-    float*        m_update;
-    float*        m_recon;
-    const float*  m_data;
-    uintmax_t     m_sync_freq;
-    uintmax_t     m_sync_counter;
-    int           m_num_streams = 1;
-    cudaStream_t* m_streams     = nullptr;
-
+public:
+    // ctors, dtors, assignment
     gpu_data(int device, int dy, int dt, int dx, int nx, int ny, const float* data,
-             float* recon, uintmax_t sync_freq)
+             float* recon)
     : m_device(device)
     , m_grid(GetGridSize())
     , m_block(GetBlockSize())
@@ -148,9 +135,9 @@ struct gpu_data
     , m_rot(nullptr)
     , m_tmp(nullptr)
     , m_update(nullptr)
+    , m_sum_dist(nullptr)
     , m_recon(recon)
     , m_data(data)
-    , m_sync_freq(sync_freq)
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
@@ -169,12 +156,35 @@ struct gpu_data
         cudaFree(m_rot);
         cudaFree(m_tmp);
         cudaFree(m_update);
+        cudaFree(m_sum_dist);
         destroy_streams(m_streams, m_num_streams);
     }
 
-    uintmax_t operator++() { return ++m_sync_counter; }
-    uintmax_t operator++(int) { return m_sync_counter++; }
-    int       compute_grid(int size) const
+    gpu_data(const this_type&) = delete;
+    gpu_data(this_type&&)      = default;
+
+    this_type& operator=(const this_type&) = delete;
+    this_type& operator=(this_type&&) = default;
+
+public:
+    // access functions
+    int          device() const { return m_device; }
+    int          grid() const { return compute_grid(m_dx); }
+    int          block() const { return m_block; }
+    int_type*    use_rot() const { return m_use_rot; }
+    int_type*    use_tmp() const { return m_use_tmp; }
+    float*       rot() const { return m_rot; }
+    float*       tmp() const { return m_tmp; }
+    float*       update() const { return m_update; }
+    float*       sum_dist() const { return m_sum_dist; }
+    float*       recon() { return m_recon; }
+    const float* recon() const { return m_recon; }
+    const float* data() const { return m_data; }
+    cudaStream_t stream(int n = 0) { return m_streams[n % m_num_streams]; }
+
+public:
+    // assistant functions
+    int compute_grid(int size) const
     {
         return (m_grid < 1) ? ((size + m_block - 1) / m_block) : m_grid;
     }
@@ -190,24 +200,74 @@ struct gpu_data
                 _sync(m_streams[i]);
     }
 
-    void reset() { gpu_memset<float>(m_update, 0, m_dy * m_nx * m_ny, *m_streams); }
-
-    int          device() const { return m_device; }
-    int          grid() const { return compute_grid(m_dx); }
-    int          block() const { return m_block; }
-    int_type*    use_rot() const { return m_use_rot; }
-    int_type*    use_tmp() const { return m_use_tmp; }
-    float*       rot() const { return m_rot; }
-    float*       tmp() const { return m_tmp; }
-    float*       update() const { return m_update; }
-    float*       recon() { return m_recon; }
-    const float* recon() const { return m_recon; }
-    const float* data() const { return m_data; }
-    uintmax_t    sync_freq() const { return m_sync_freq; }
-    cudaStream_t stream(int stream_id = 0)
+    void alloc_sum_dist()
     {
-        return m_streams[stream_id % m_num_streams];
+        cuda_set_device(m_device);
+        m_sum_dist = gpu_malloc<float>(m_dy * m_nx * m_ny);
     }
+
+    void reset()
+    {
+        gpu_memset<float>(m_update, 0, m_dy * m_nx * m_ny, *m_streams);
+        if(m_sum_dist)
+            gpu_memset<float>(m_sum_dist, 0, m_dy * m_nx * m_ny, *m_streams);
+    }
+
+public:
+    // static functions
+    static init_data_t initialize(int device, int nthreads, int dy, int dt, int dx,
+                                  int ngridx, int ngridy, float* cpu_recon,
+                                  const float* cpu_data)
+    {
+        float* recon   = gpu_malloc<float>(dy * ngridx * ngridy);
+        float* data    = gpu_malloc<float>(dy * dt * dx);
+        auto   streams = create_streams(2, cudaStreamNonBlocking);
+        cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
+        cpu2gpu_memcpy<float>(data, cpu_data, dy * dt * dx, streams[1]);
+        gpu_data_array_t _gpu_data(nthreads);
+        for(int ii = 0; ii < nthreads; ++ii)
+            _gpu_data[ii] = gpu_data_ptr_t(
+                new gpu_data(device, dy, dt, dx, ngridx, ngridy, data, recon));
+        stream_sync(streams[0]);
+        stream_sync(streams[1]);
+        destroy_streams(streams, 2);
+        return init_data_t(_gpu_data, recon, data);
+    }
+
+    static void reset(gpu_data_array_t& data)
+    {
+        // reset "update" to zero
+        for(auto& itr : data)
+            itr->reset();
+    }
+
+    static void sync(gpu_data_array_t& data)
+    {
+        // sync all the streams
+        for(auto& itr : data)
+            itr->sync();
+    }
+
+protected:
+    // data
+    int           m_device;
+    int           m_grid;
+    int           m_block;
+    int           m_dy;
+    int           m_dt;
+    int           m_dx;
+    int           m_nx;
+    int           m_ny;
+    int_type*     m_use_rot;
+    int_type*     m_use_tmp;
+    float*        m_rot;
+    float*        m_tmp;
+    float*        m_update;
+    float*        m_sum_dist;
+    float*        m_recon;
+    const float*  m_data;
+    int           m_num_streams = 2;
+    cudaStream_t* m_streams     = nullptr;
 };
 
 //======================================================================================//

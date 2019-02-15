@@ -60,519 +60,231 @@ END_EXTERN_C
 #include <numeric>
 
 #if defined(TOMOPY_USE_NVTX)
+extern nvtxEventAttributes_t nvtx_total;
+extern nvtxEventAttributes_t nvtx_iteration;
+extern nvtxEventAttributes_t nvtx_slice;
+extern nvtxEventAttributes_t nvtx_projection;
 extern nvtxEventAttributes_t nvtx_update;
+extern nvtxEventAttributes_t nvtx_rotate;
 #endif
 
 //======================================================================================//
 
 __global__ void
-cuda_preprocessing(int ry, int rz, int num_pixels, int s, float* center, float* mov,
-                   float* gridx, float* gridy)
+cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
+                        const gpu_data::int_type* recon_use, float* sum_dist)
 {
-    for(int i = 0; i <= ry; ++i)
+    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int dstride = blockDim.x * gridDim.x;
+
+    for(int d = d0; d < dx; d += dstride)
     {
-        gridx[i] = -ry * 0.5f + i;
-    }
-
-    for(int i = 0; i <= rz; ++i)
-    {
-        gridy[i] = -rz * 0.5f + i;
-    }
-
-    *mov = ((float) num_pixels - 1) * 0.5f - center[s];
-    if(*mov - floor(*mov) < 0.01f)
-    {
-        *mov += 0.01f;
-    }
-    *mov += 0.5;
-}
-
-//======================================================================================//
-
-__device__ int
-cuda_calc_quadrant(float theta_p)
-{
-    // here we cast the float to an integer and rescale the integer to
-    // near INT_MAX to retain the precision. This method was tested
-    // on 1M random random floating points between -2*pi and 2*pi and
-    // was found to produce a speed up of:
-    //
-    //  - 14.5x (Intel i7 MacBook)
-    //  - 2.2x  (NERSC KNL)
-    //  - 1.5x  (NERSC Edison)
-    //  - 1.7x  (NERSC Haswell)
-    //
-    // with a 0.0% incorrect quadrant determination rate
-    //
-    const int32_t ipi_c   = 340870420;
-    int32_t       theta_i = (int32_t)(theta_p * ipi_c);
-    theta_i += (theta_i < 0) ? (2.0f * M_PI * ipi_c) : 0;
-
-    return ((theta_i >= 0 && theta_i < 0.5f * M_PI * ipi_c) ||
-            (theta_i >= 1.0f * M_PI * ipi_c && theta_i < 1.5f * M_PI * ipi_c))
-               ? 1
-               : 0;
-}
-
-//======================================================================================//
-
-__device__ void
-cuda_calc_coords(int ry, int rz, float xi, float yi, float sin_p, float cos_p,
-                 const float* gridx, const float* gridy, float* coordx, float* coordy)
-{
-    float srcx = xi * cos_p - yi * sin_p;
-    float srcy = xi * sin_p + yi * cos_p;
-    float detx = -xi * cos_p - yi * sin_p;
-    float dety = -xi * sin_p + yi * cos_p;
-
-    float slope  = (srcy - dety) / (srcx - detx);
-    float islope = (srcx - detx) / (srcy - dety);
-
-    for(int n = 0; n <= ry; n++)
-    {
-        coordy[n] = slope * (gridx[n] - srcx) + srcy;
-    }
-    for(int n = 0; n <= rz; n++)
-    {
-        coordx[n] = islope * (gridy[n] - srcy) + srcx;
-    }
-}
-
-//======================================================================================//
-
-__device__ void
-cuda_trim_coords(int ry, int rz, const float* coordx, const float* coordy,
-                 const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
-                 int* bsize, float* bx, float* by)
-{
-    *asize         = 0;
-    *bsize         = 0;
-    float gridx_gt = gridx[0] + 0.01f;
-    float gridx_le = gridx[ry] - 0.01f;
-
-    for(int n = 0; n <= rz; ++n)
-    {
-        if(coordx[n] >= gridx_gt && coordx[n] <= gridx_le)
+        int fnx = 0;
+        for(int i = 0; i < nx; ++i)
+            sum_dist[d * nx + i] += recon[d * nx + i];
+        for(int i = 0; i < nx; ++i)
+            fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
+        if(fnx != 0)
         {
-            ax[*asize] = coordx[n];
-            ay[*asize] = gridy[n];
-            ++(*asize);
+            float sum = data[p * dx + d] / scast<float>(fnx);
+            for(int i = 0; i < nx; ++i)
+                recon[d * nx + i] += sum;
         }
-    }
-
-    float gridy_gt = gridy[0] + 0.01f;
-    float gridy_le = gridy[rz] - 0.01f;
-
-    for(int n = 0; n <= ry; ++n)
-    {
-        if(coordy[n] >= gridy_gt && coordy[n] <= gridy_le)
-        {
-            bx[*bsize] = gridx[n];
-            by[*bsize] = coordy[n];
-            ++(*bsize);
-        }
-    }
-}
-
-//======================================================================================//
-
-__device__ void
-cuda_sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
-                        int bsize, const float* bx, const float* by, int* csize,
-                        float* coorx, float* coory)
-{
-    int i = 0, j = 0, k = 0;
-    if(ind_condition == 0)
-    {
-        while(i < asize && j < bsize)
-        {
-            if(ax[asize - 1 - i] < bx[j])
-            {
-                coorx[k] = ax[asize - 1 - i];
-                coory[k] = ay[asize - 1 - i];
-                ++i;
-            }
-            else
-            {
-                coorx[k] = bx[j];
-                coory[k] = by[j];
-                ++j;
-            }
-            ++k;
-        }
-
-        while(i < asize)
-        {
-            coorx[k] = ax[asize - 1 - i];
-            coory[k] = ay[asize - 1 - i];
-            ++i;
-            ++k;
-        }
-        while(j < bsize)
-        {
-            coorx[k] = bx[j];
-            coory[k] = by[j];
-            ++j;
-            ++k;
-        }
-
-        (*csize) = asize + bsize;
-    }
-    else
-    {
-        while(i < asize && j < bsize)
-        {
-            if(ax[i] < bx[j])
-            {
-                coorx[k] = ax[i];
-                coory[k] = ay[i];
-                ++i;
-            }
-            else
-            {
-                coorx[k] = bx[j];
-                coory[k] = by[j];
-                ++j;
-            }
-            ++k;
-        }
-
-        while(i < asize)
-        {
-            coorx[k] = ax[i];
-            coory[k] = ay[i];
-            ++i;
-            ++k;
-        }
-        while(j < bsize)
-        {
-            coorx[k] = bx[j];
-            coory[k] = by[j];
-            ++j;
-            ++k;
-        }
-        (*csize) = asize + bsize;
-    }
-}
-
-//======================================================================================//
-
-__device__ void
-cuda_calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory,
-               int* indi, float* dist)
-{
-    const int _size = csize - 1;
-
-    //------------------------------------------------------------------------//
-    //              calculate dist
-    //------------------------------------------------------------------------//
-    for(int n = 0; n < _size; ++n)
-    {
-        float _diffx = (coorx[n + 1] - coorx[n]) * (coorx[n + 1] - coorx[n]);
-        float _diffy = (coory[n + 1] - coory[n]) * (coory[n + 1] - coory[n]);
-        dist[n]      = sqrtf(_diffx + _diffy);
-    }
-
-    //------------------------------------------------------------------------//
-    //              calculate indi
-    //------------------------------------------------------------------------//
-    for(int n = 0; n < _size; ++n)
-    {
-        float _midx = 0.5f * (coorx[n + 1] + coorx[n]);
-        float _midy = 0.5f * (coory[n + 1] + coory[n]);
-        float _x1   = _midx + 0.5f * ry;
-        float _x2   = _midy + 0.5f * rz;
-        int   _i1   = (int) (_midx + 0.5f * ry);
-        int   _i2   = (int) (_midy + 0.5f * rz);
-        int   _indx = _i1 - (_i1 > _x1);
-        int   _indy = _i2 - (_i2 > _x2);
-        indi[n]     = _indy + (_indx * rz);
-    }
-}
-
-//======================================================================================//
-
-__device__ void
-cuda_calc_simdata(int s, int p, int d, int ry, int rz, int dt, int dx, int csize,
-                  const int* indi, const float* dist, const float* model, float* simdata)
-{
-    int index_model = s * ry * rz;
-    for(int n = 0; n < csize - 1; ++n)
-    {
-        *simdata += model[indi[n] + index_model] * dist[n];
     }
 }
 
 //======================================================================================//
 
 __global__ void
-mlem_update_kernel(float* recon, const float* update, const float* sumdist, int offset,
-                   int size)
+cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist,
+                        int size)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
 
     for(int i = i0; i < size; i += istride)
     {
-        if(sumdist[i] != 0.0f)
-        {
-            recon[i + offset] *= update[i] / sumdist[i];
-        }
-    }
-}
-
-//======================================================================================//
-
-__global__ void
-cuda_mlem_compute_pixel(int ngridx, int ngridy, int dy, int dt, int dx, const float* mov,
-                        const float* gridx, const float* gridy, float* sum_dist,
-                        float* update, const float* data, const float* recon, int s,
-                        int p, int quadrant, float sin_p, float cos_p)
-{
-    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int dstride = gridDim.x * blockDim.x;
-
-    int ry = ngridx;
-    int rz = ngridy;
-    /*
-    float gridx_gt = gridx[0] + 0.01f;
-    float gridx_le = gridx[ngridx] - 0.01f;
-    float gridy_gt = gridy[0] + 0.01f;
-    float gridy_le = gridy[ngridy] - 0.01f;
-    */
-
-    float xoff = floorf(0.5f * ngridx) - ((ngridx % 2 == 0) ? 0.5f : 0.0f);
-    float yoff = floorf(0.5f * ngridy) - ((ngridy % 2 == 0) ? 0.5f : 0.0f);
-
-    // PRINT_HERE("");
-    for(int d = d0; d < dx - 1; d += dstride)
-    {
-        // Calculate coordinates
-        /*
-        float xi     = -ngridx - ngridy;
-        float yi     = 0.5f * (1 - dx) + d + *mov;
-        float srcx   = xi * cos_p - yi * sin_p;
-        float srcy   = xi * sin_p + yi * cos_p;
-        float detx   = -xi * cos_p - yi * sin_p;
-        float dety   = -xi * sin_p + yi * cos_p;
-        float slope  = (srcy - dety) / (srcx - detx);
-        float islope = (srcx - detx) / (srcy - dety);
-        */
-        int i = d;
-        for(int j = 0; j < ngridy - 1; ++j)
-        {
-            // centered coordinates
-            float cx0 = float(i) - xoff;
-            float cy0 = float(j) - yoff;
-            // transform coords and then offset to global coords
-            float x0 = (cx0 * cos_p - cy0 * sin_p);  // + xoff;
-            float y0 = (cx0 * sin_p + cy0 * cos_p);  // + yoff;
-            // centered coordinates
-            float mx = floorf(x0);
-            float my = floorf(y0);
-            float px = ceilf(x0);
-            float py = ceilf(y0);
-
-            // printf("x,y = [%8.3f, %8.3f], mx,my = [%8.3f, %8.3f], px,py = [%8.3f,
-            // %8.3f]\n",
-            //       x0, y0, mx, my, px, py);
-
-            //--------------------------------------------------------------------------//
-            auto compute_indi = [x0, y0, ry, rz](float x1, float y1) {
-                float _midx = 0.5f * (x1 + x0);
-                float _x1   = _midx + 0.5f * ry;
-                float _i1   = (int) (_midx + 0.5f * ry);
-                int   _indx = _i1 - (_i1 > _x1);
-
-                float _midy = 0.5f * (y1 + y0);
-                float _x2   = _midy + 0.5f * rz;
-                float _i2   = (int) (_midy + 0.5f * rz);
-                int   _indy = _i2 - (_i2 > _x2);
-
-                // compute index
-                int indi = _indy + (_indx * rz);
-                return indi;
-            };
-            //--------------------------------------------------------------------------//
-            auto update_indi = [&](int indi, float simdata, float dist) {
-                atomicAdd(&sum_dist[indi], dist);
-                if(simdata != 0.0f)
-                {
-                    int   index_data = d + p * dx + s * dt * dx;
-                    float upd        = data[index_data] / simdata;
-                    atomicAdd(&update[indi], upd * dist);
-                }
-            };
-            //--------------------------------------------------------------------------//
-
-            // data offset
-            int index_model = s * ry * rz;
-
-            int mindi = compute_indi(mx, my);
-            if(mindi >= 0 && mindi < ry * rz)
-            {
-                // compute distance
-                float mdist = sqrtf(powf(x0 - mx, 2.0f) + powf(y0 - my, 2.0f));
-                // Calculate simdata
-                float msimdata = recon[mindi + index_model] * mdist;
-                // Update
-                update_indi(mindi, msimdata, mdist);
-            }
-
-            int pindi = compute_indi(px, py);
-            if(pindi >= 0 && pindi < ry * rz)
-            {
-                // compute distance
-                float pdist = sqrtf(powf(px - x0, 2.0f) + powf(py - y0, 2.0f));
-                // Calculate simdata
-                float psimdata = recon[pindi + index_model] * pdist;
-                // Update
-                update_indi(pindi, psimdata, pdist);
-            }
-
-            // printf("[%2i, %2i]> [x,y] = [%8.3f, %8.3f], indi = %i, dist = %8.3f,
-            // sum_dist = %8.3f, update = %8.3f\n",
-            //       i, j, x0, y0, indi, dist, sum_dist[indi], update[indi]);
-        }
-    }
-}
-
-//======================================================================================//
-
-__global__ void
-cuda_mlem_compute_projection(int ngridx, int ngridy, int dy, int dt, int dx,
-                             const float* theta, const float* mov, const float* gridx,
-                             const float* gridy, const float* data, const float* recon,
-                             int s, float* sum_dist, float* update)
-{
-    int p0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int pstride = gridDim.x * blockDim.x;
-    int block   = 512;
-    int grid    = (dx + block - 1) / block;
-
-    float theta_offset = 0.5f * (float) M_PI;
-    for(int p = p0; p < dt; p += pstride)
-    {
-        // Calculate the sin and cos values
-        // of the projection angle and find
-        // at which quadrant on the cartesian grid.
-        float theta_p  = fmodf(theta[p] + theta_offset, 2.0f * (float) M_PI);
-        float sin_p    = sinf(theta_p);
-        float cos_p    = cosf(theta_p);
-        int   quadrant = cuda_calc_quadrant(theta_p);
-
-        cuda_mlem_compute_pixel<<<grid, block>>>(ngridx, ngridy, dy, dt, dx, mov, gridx,
-                                                 gridy, sum_dist, update, data, recon, s,
-                                                 p, quadrant, sin_p, cos_p);
+        if(sum_dist[i] != 0.0f)
+            recon[i] *= update[i] / sum_dist[i];
     }
 }
 
 //======================================================================================//
 
 void
-mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center,
-          const float* cpu_theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
+mlem_gpu_compute_projection(gpu_data::gpu_data_ptr_t _cache, int s, int p, int dy, int dt,
+                            int dx, int nx, int ny, const float* theta)
 {
-    if(cuda_device_count() == 0)
-        throw std::runtime_error("No CUDA device(s) available");
+    typedef gpu_data::int_type int_type;
 
-    cuda_device_query();
+#if defined(DEBUG)
+    printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
+           s, p, _cache->device());
+#endif
+
+    // ensure running on proper device
+    cuda_set_device(_cache->device());
+
+    // calculate some values
+    float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+    float        theta_p_deg = theta_p_rad * degrees;
+    const float* recon       = _cache->recon() + s * nx * ny;
+    const float* data        = _cache->data() + s * dt * dx;
+    float*       update      = _cache->update() + s * nx * ny;
+    float*       sum_dist    = _cache->sum_dist() + s * nx * ny;
+    auto*        use_rot     = _cache->use_rot();
+    auto*        use_tmp     = _cache->use_tmp();
+    float*       rot         = _cache->rot();
+    float*       tmp         = _cache->tmp();
+    int          block       = _cache->block();
+    int          grid        = _cache->compute_grid(nx);
+    cudaStream_t stream      = _cache->stream();
+
+    gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
+    gpu_memset<float>(rot, 0, nx * ny, stream);
+    gpu_memset<float>(tmp, 0, nx * ny, stream);
+
+    // forward-rotate
+    cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
+    cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
+    // compute simdata
+    cuda_mlem_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data, use_rot,
+                                                        sum_dist);
+    // back-rotate
+    cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+    // update shared update array
+    cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
+    // synchronize the stream (do this frequently to avoid backlog)
+    stream_sync(stream);
+}
+
+//======================================================================================//
+
+void
+mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center,
+          const float* theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
+{
+    typedef decltype(HW_CONCURRENCY) nthread_type;
+
+    auto num_devices = cuda_device_count();
+    if(num_devices == 0)
+        throw std::runtime_error("No CUDA device(s) available");
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    auto tid = GetThisThreadID();
+    // initialize nvtx data
+    init_nvtx();
+    // print device info
+    cuda_device_query();
+    // thread counter for device assignment
+    static std::atomic<int> ntid;
 
-    // assign the thread to a device
-    set_this_thread_device();
+    // compute some properties (expected python threads, max threads, device assignment)
+    auto min_threads   = nthread_type(1);
+    auto pythreads     = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads   = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads      = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    int  thread_device = (ntid++) % num_devices;  // assign to device
 
-    // get some properties
-    int num_devices = cuda_device_count();
+#if defined(TOMOPY_USE_PTL)
+    typedef TaskManager manager_t;
+    TaskRunManager*     run_man = gpu_run_manager();
+    init_run_manager(run_man, nthreads);
+    TaskManager* task_man = run_man->GetTaskManager();
+    ThreadPool*  tp       = task_man->thread_pool();
+#else
+    typedef void manager_t;
+    void*        task_man = nullptr;
+#endif
 
     TIMEMORY_AUTO_TIMER("");
 
     // GPU allocated copies
-    float* mov      = gpu_malloc<float>(1);
-    float* gridx    = gpu_malloc<float>(ngridx + 1);
-    float* gridy    = gpu_malloc<float>(ngridy + 1);
-    float* center   = gpu_malloc<float>(dy);
-    float* recon    = gpu_malloc<float>(dy * ngridx * ngridy);
-    float* data     = gpu_malloc<float>(dy * dt * dx);
-    float* update   = gpu_malloc<float>(ngridx * ngridy);
-    float* sum_dist = gpu_malloc<float>(ngridx * ngridy);
-    float* theta    = gpu_malloc<float>(dt);
+    cuda_set_device(thread_device);
+    printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    cudaMemcpy(recon, cpu_recon, dy * ngridx * ngridy * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(theta, cpu_theta, dt * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(center, cpu_center, dy * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(data, cpu_data, dy * dt * dx * sizeof(float), cudaMemcpyHostToDevice);
+    typedef gpu_data::init_data_t      init_data_t;
+    typedef gpu_data::gpu_data_array_t gpu_data_array_t;
 
-    int block = 512;
-    int grid  = (dx + block - 1) / block;
-    int smem  = 0;
+    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    auto        block        = GetBlockSize();
+    auto        grid         = ComputeGridSize(recon_pixels, block);
+    auto        main_stream  = create_streams(1);
+    float*      update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    float*      sum_dist  = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    init_data_t init_data = gpu_data::initialize(thread_device, nthreads, dy, dt, dx,
+                                                 ngridx, ngridy, cpu_recon, cpu_data);
+    gpu_data_array_t _gpu_data = std::get<0>(init_data);
+    float*           recon     = std::get<1>(init_data);
+    const float*     data      = std::get<2>(init_data);
+    for(auto& itr : _gpu_data)
+        itr->alloc_sum_dist();
+
+    NVTX_RANGE_PUSH(&nvtx_total);
 
     for(int i = 0; i < num_iter; i++)
     {
-        auto t_start = std::chrono::system_clock::now();
+        // timing and profiling
+        TIMEMORY_AUTO_TIMER("");
+        NVTX_RANGE_PUSH(&nvtx_iteration);
+        START_TIMER(t_start);
 
-        // For each slice
-        for(int s = 0; s < dy; s++)
+        // sync and reset
+        gpu_data::sync(_gpu_data);
+        gpu_data::reset(_gpu_data);
+
+        // execute
+        execute<manager_t, gpu_data_array_t>(task_man, dy, dt, std::ref(_gpu_data),
+                                             mlem_gpu_compute_projection, dy, dt, dx,
+                                             ngridx, ngridy, theta);
+
+        // sync the thread streams
+        gpu_data::sync(_gpu_data);
+
+        // sync the main stream
+        stream_sync(*main_stream);
+
+        // have threads add to global update and sum_dist
+        for(auto& itr : _gpu_data)
         {
-            auto s_start = std::chrono::system_clock::now();
-            cuda_preprocessing<<<grid, block, smem>>>(ngridx, ngridy, dx, s, center, mov,
-                                                      gridx, gridy);
-            // Outputs: mov, gridx, gridy
-            cudaStreamSynchronize(0);
-            CUDA_CHECK_LAST_ERROR();
-
-            // initialize sum_dist and update to zero
-            cudaMemset(sum_dist, 0, (ngridx * ngridy) * sizeof(float));
-            cudaMemset(update, 0, (ngridx * ngridy) * sizeof(float));
-
-            // For each projection angle
-            cuda_mlem_compute_projection<<<4, 4, smem>>>(ngridx, ngridy, dy, dt, dx,
-                                                         theta, mov, gridx, gridy, data,
-                                                         recon, s, sum_dist, update);
-            cudaStreamSynchronize(0);
-            CUDA_CHECK_LAST_ERROR();
-
-            int offset = s * ngridx * ngridy;
-            mlem_update_kernel<<<grid, block>>>(recon, update, sum_dist, offset,
-                                                ngridx * ngridy);
-            cudaStreamSynchronize(0);
-            CUDA_CHECK_LAST_ERROR();
-            auto                          s_end = std::chrono::system_clock::now();
-            std::chrono::duration<double> elapsed_seconds = s_end - s_start;
-            printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(),
-                   "slice", s, dy, elapsed_seconds.count());
+            auto nblock = itr->block();
+            auto ngrid  = itr->compute_grid(recon_pixels);
+            cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(0)>>>(update,
+                                                                         itr->update(),
+                                                                         recon_pixels,
+                                                                         1.0f);
+            cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(1)>>>(sum_dist,
+                                                                         itr->sum_dist(),
+                                                                         recon_pixels,
+                                                                         1.0f);
         }
-        auto                          t_end           = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = t_end - t_start;
-        printf("[%li]> %-12s %3i of %3i... %5.2f seconds\n", GetThisThreadID(),
-               "iteration", i, num_iter, elapsed_seconds.count());
+
+        // sync the thread streams
+        gpu_data::sync(_gpu_data);
+
+        // update the global recon with global update and sum_dist
+        cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,
+                                                                  recon_pixels);
+
+        // stop profile range and report timing
+        NVTX_RANGE_POP(0);
+        REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
-    cudaDeviceSynchronize();
-    CUDA_CHECK_LAST_ERROR();
+    // sync main stream
+    stream_sync(*main_stream);
 
-    cudaMemcpy(cpu_recon, recon, dy * ngridx * ngridy * sizeof(float),
-               cudaMemcpyDeviceToHost);
-    cudaStreamSynchronize(0);
-    CUDA_CHECK_LAST_ERROR();
+    // copy to cpu
+    gpu2cpu_memcpy_and_free<float>(cpu_recon, recon, dy * ngridx * ngridy, 0);
 
-    // cudaDeviceReset();
-    cudaFree(recon);
-    cudaFree(mov);
-    cudaFree(gridx);
-    cudaFree(gridy);
-    cudaFree(center);
-    cudaFree(data);
-    cudaFree(update);
-    cudaFree(sum_dist);
-    cudaFree(theta);
-    cudaDeviceSynchronize();
-    CUDA_CHECK_LAST_ERROR();
+    // ensure copy finished
+    stream_sync(0);
+
+    // destroy main stream
+    destroy_streams(main_stream, 1);
+
+    NVTX_RANGE_POP(0);
 }
 
 //======================================================================================//

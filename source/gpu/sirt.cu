@@ -89,7 +89,6 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
             for(int i = 0; i < nx; ++i)
                 recon[d * nx + i] += sum;
         }
-
     }
 }
 
@@ -143,8 +142,6 @@ sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float*
     cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(update, tmp, nx * ny, factor);
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
-    // if(++(*_cache) % _cache->sync_freq() == 0)
-    //    stream_sync(stream);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -174,8 +171,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     auto max_threads   = HW_CONCURRENCY / std::max(pythreads, min_threads);
     auto nthreads      = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
     int  num_devices   = cuda_device_count();
-    int  thread_device = (ntid++) % num_devices;           // assign to device
-    auto sync_freq     = GetEnv("TOMOPY_STREAM_SYNC", 4);  // sync freq
+    int  thread_device = (ntid++) % num_devices;  // assign to device
 
 #if defined(TOMOPY_USE_PTL)
     TaskRunManager* run_man = gpu_run_manager();
@@ -200,8 +196,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     destroy_streams(streams, 2);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
     for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii] = new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data,
-                                     recon, sync_freq);
+        _gpu_data[ii] =
+            new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data, recon);
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
