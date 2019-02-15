@@ -830,3 +830,34 @@ def sino_normalize_background_aps_1id(sino, beam_is_moving=True):
 
     return (sino/alpha)**2
 
+
+def tomo_normalize_background_aps_1id(tomo, beam_is_moving=True, ncore=None):
+    """
+    Normalize the background of the given tomo stack (before -log) to 
+    one (air, no attenuation).
+
+    Parameters
+    ----------
+    tomo: np.ndarray
+        tomopy images stacks (axis_0 is the oemga direction, before -log)
+    beam_is_moving: bool
+        If the beam is assumed to be moving (default Ture), linear interpolation
+        is required during background normalization
+    ncore: int
+        Number of cores to use
+
+    Returns
+    -------
+    Tomo image stack with background normalized to 1
+    """
+    ncore = mproc.mp.cpu_count()-1 if ncore is None else ncore
+
+    tmp = []
+    with cf.ProcessPoolExecutor(ncore) as e:
+        for n_sino in range(tomo.shape[1]):
+            tmp.append(e.submit(sino_normalize_background_aps_1id,
+                                tomo[:, n_sino, :],
+                                beam_is_moving=beam_is_moving,
+                                )
+                       )
+    return np.stack([me.result() for me in tmp], axis=1)
