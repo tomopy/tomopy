@@ -164,6 +164,7 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
     */
 }
 #endif
+
 //======================================================================================//
 
 void
@@ -171,9 +172,7 @@ art_openacc(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-
     TIMEMORY_AUTO_TIMER("[openacc]");
-
     throw std::runtime_error("ART algorithm has not been implemented for OpenACC");
 }
 
@@ -184,9 +183,7 @@ art_openmp(const float* data, int dy, int dt, int dx, const float* center,
            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-
     TIMEMORY_AUTO_TIMER("[openmp]");
-
     throw std::runtime_error("ART algorithm has not been implemented for OpenMP");
 }
 

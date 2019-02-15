@@ -4,7 +4,7 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - python=2.7
+  - python=3.7
   - gcc  # [linux]
   - libgcc  # [linux]
   - coverage
@@ -24,5 +24,4 @@ dependencies:
   - scipy
   - six
   - timemory
-  - futures
   - opencv

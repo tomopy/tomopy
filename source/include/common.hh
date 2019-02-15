@@ -805,7 +805,7 @@ execute(Executor* man, int dy, int dt, DataArray& data, const Func& func, Args..
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                invoker(func, data, s, p, args...);
+                invoker(func, data, s, p, std::forward<Args>(args)...);
             }
     };
 
@@ -817,7 +817,8 @@ execute(Executor* man, int dy, int dt, DataArray& data, const Func& func, Args..
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                auto _func = std::bind(func, std::ref(data), s, p, args...);
+                auto _func =
+                    std::bind(func, std::ref(data), s, p, std::forward<Args>(args)...);
                 man->exec(tg, _func);
             }
         tg.join();

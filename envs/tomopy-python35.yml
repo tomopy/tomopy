@@ -5,6 +5,8 @@ channels:
   - defaults
 dependencies:
   - python=3.5
+  - gcc  # [linux]
+  - libgcc  # [linux]
   - coverage
   - dxchange
   - h5py

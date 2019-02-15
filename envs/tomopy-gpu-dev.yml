@@ -5,6 +5,8 @@ channels:
   - defaults
 dependencies:
   - python=3.6
+  - gcc  # [linux]
+  - libgcc  # [linux]
   - coverage
   - dxchange
   - h5py
@@ -22,3 +24,4 @@ dependencies:
   - scipy
   - six
   - timemory
+  - opencv

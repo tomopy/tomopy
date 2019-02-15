@@ -7,6 +7,13 @@
 include(GNUInstallDirs)
 include(Compilers)
 
+# ---------------------------------------------------------------------------- #
+# compiler features
+set(CMAKE_CXX_COMPILE_FEATURES
+    cxx_std_11 cxx_lambdas cxx_thread_local cxx_constexpr
+    cxx_decltype cxx_nullptr
+    cxx_variable_templates cxx_template_template_parameters
+    cxx_deleted_functions cxx_auto_type cxx_alias_templates)
 
 # ---------------------------------------------------------------------------- #
 #
@@ -207,8 +214,16 @@ endif()
 
 # ---------------------------------------------------------------------------- #
 # user customization
-add(${PROJECT_NAME}_C_FLAGS "${CFLAGS}")
-add(${PROJECT_NAME}_C_FLAGS "$ENV{CFLAGS}")
-add(${PROJECT_NAME}_CXX_FLAGS "${CXXFLAGS}")
-add(${PROJECT_NAME}_CXX_FLAGS "$ENV{CXXFLAGS}")
+set(_CFLAGS ${CFLAGS} $ENV{CFLAGS})
+set(_CXXFLAGS ${CXXFLAGS} $ENV{CXXFLAGS})
+string(REPLACE " " ";" _CFLAGS "${_CFLAGS}")
+string(REPLACE " " ";" _CXXFLAGS "${_CXXFLAGS}")
+
+foreach(_FLAG ${_CFLAGS})
+    add_c_flag_if_avail("${_FLAG}")
+endforeach()
+
+foreach(_FLAG ${_CXXFLAGS})
+    add_cxx_flag_if_avail("${_FLAG}")
+endforeach()
 
