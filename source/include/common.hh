@@ -184,19 +184,7 @@ END_EXTERN_C
 #define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
 #define HW_CONCURRENCY std::thread::hardware_concurrency()
 #if !defined(_forward_args_t)
-#    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
-#endif
-
-#if defined(DEBUG)
-#    define PRINT_MAX_ITER 1
-#    define PRINT_MAX_SLICE 1
-#    define PRINT_MAX_ANGLE 1
-#    define PRINT_MAX_PIXEL 5
-#else
-#    define PRINT_MAX_ITER 0
-#    define PRINT_MAX_SLICE 0
-#    define PRINT_MAX_ANGLE 0
-#    define PRINT_MAX_PIXEL 0
+#    define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
 #endif
 
 //======================================================================================//
