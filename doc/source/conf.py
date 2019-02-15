@@ -70,7 +70,7 @@ master_doc = 'index'
 # General information about the project.
 Argonne = u'Argonne National Laboratory'
 project = u'TomoPy'
-copyright = u'2013-2015, ' + Argonne
+copyright = u'2013-2019, ' + Argonne
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -339,10 +339,10 @@ curFlags = Mock()
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py',
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
-    'spefile', 'scipy.ndimage', 'pywt', 'scikit-image', 'skimage',
+    'spefile', 'scipy.ndimage', 'scipy.signal', 'pywt', 'scikit-image', 'skimage',
     'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
     'skimage.transform', 'DM3lib', 'pyfftw', 'dxchange', 'numexpr', 'concurrent', 
-    'concurrent.futures',
+    'concurrent.futures', 'libtomopy', 
     ]
 
 for mod_name in MOCK_MODULES:
