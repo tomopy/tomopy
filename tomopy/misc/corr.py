@@ -84,7 +84,7 @@ __all__ = ['adjust_range',
            'remove_outlier_cuda',
            'remove_ring',
            'enhance_projs_aps_1id',
-           'selctive_median_filter',
+           'selective_median_filter',
            'sino_normalize_background_aps_1id',
            'tomo_normalize_background_aps_1id',
            ]
@@ -754,7 +754,7 @@ def _calc_histequal_wgt(img):
     return (np.sort(img.flatten()).searchsorted(img) + 1)/np.prod(img.shape)
 
 
-def selctive_median_filter(img, threshold=None, kernel_size=3):
+def selective_median_filter(img, threshold=None, kernel_size=3):
     """
     Use selective median filtering to remove impulse noises
 
