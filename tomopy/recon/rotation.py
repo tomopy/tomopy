@@ -225,8 +225,6 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
-    smooth : bool, optional
-        Whether to apply additional smoothing or not.
 
     Returns
     -------
