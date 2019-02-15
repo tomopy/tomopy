@@ -184,8 +184,16 @@ END_EXTERN_C
 #define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
 #define HW_CONCURRENCY std::thread::hardware_concurrency()
 #if !defined(_forward_args_t)
-#    define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
+#    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
 #endif
+
+//======================================================================================//
+
+template <typename _Func, typename... _Args>
+inline void invoker(_Func& func, _Args&&... args)
+{
+    func(args...);
+}
 
 //======================================================================================//
 
@@ -788,7 +796,7 @@ execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... 
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                func(data, s, p, _forward_args_t(_Args, args));
+                invoker(func, data, s, p, args...);
             }
     };
 
@@ -800,7 +808,8 @@ execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... 
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                man->exec(tg, func, std::ref(data), s, p, _forward_args_t(_Args, args));
+                auto _func = std::bind(func, std::ref(data), s, p, args...);
+                man->exec(tg, _func);
             }
         tg.join();
         return true;
