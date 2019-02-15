@@ -84,6 +84,9 @@ __all__ = ['adjust_range',
            'remove_outlier_cuda',
            'remove_ring',
            'enhance_projs_aps_1id',
+           'selctive_median_filter',
+           'sino_normalize_background_aps_1id',
+           'tomo_normalize_background_aps_1id',
            ]
 
 
