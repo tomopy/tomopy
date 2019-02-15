@@ -70,7 +70,7 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 __global__ void
 cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                        const gpu_data::int_type* recon_use)
+                        const gpu_data::int_type* recon_use, float* sum_dist)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
@@ -82,13 +82,34 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
+        {
+            auto use = (recon_use[d * nx + i] > 0) ? 1 : 0;
+            fnx += use;
+            sum_dist[d * nx + i] += scast<float>(use);
+        }
         if(fnx != 0)
         {
-            sum = (data[p * dx + d] - sum) / scast<float>(fnx);
+            float upd = (data[p * dx + d] - sum);
             for(int i = 0; i < nx; ++i)
-                recon[d * nx + i] += sum;
+                recon[d * nx + i] += upd;
         }
+    }
+}
+
+//======================================================================================//
+
+__global__ void
+cuda_sirt_update_kernel(float* recon, const float* update, const float* sum_dist, int dx,
+                        int size)
+{
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int istride = blockDim.x * gridDim.x;
+
+    float fdx = scast<float>(dx);
+    for(int i = i0; i < size; i += istride)
+    {
+        if(sum_dist[i] != 0.0f)
+            atomicAdd(&recon[i], update[i] / sum_dist[i] / fdx);
     }
 }
 
@@ -117,6 +138,7 @@ sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float*
     const float* recon       = _cache->recon() + s * nx * ny;
     const float* data        = _cache->data() + s * dt * dx;
     float*       update      = _cache->update() + s * nx * ny;
+    float*       sum_dist    = _cache->sum_dist() + s * nx * ny;
     auto*        use_rot     = _cache->use_rot();
     auto*        use_tmp     = _cache->use_tmp();
     float*       rot         = _cache->rot();
@@ -135,7 +157,8 @@ sirt_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float*
     cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
     cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
     // compute simdata
-    cuda_sirt_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, rot, data, use_rot);
+    cuda_sirt_pixels_kernel<<<grid, block, smem, stream>>>(p, nx, dx, rot, data, use_rot,
+                                                           sum_dist);
     // back-rotate
     cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
     // update shared update array
@@ -196,8 +219,11 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     destroy_streams(streams, 2);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
     for(int ii = 0; ii < nthreads; ++ii)
+    {
         _gpu_data[ii] =
             new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data, recon);
+        _gpu_data[ii]->alloc_sum_dist();
+    }
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
@@ -231,14 +257,19 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         for(int ii = 0; ii < nthreads; ++ii)
         {
-            int          smem   = 0;
-            int          block  = _gpu_data[ii]->block();
-            int          grid   = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
-            float*       update = _gpu_data[ii]->update();
-            cudaStream_t stream = _gpu_data[ii]->stream();
-            cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(
-                recon, update, dy * ngridx * ngridy, 1.0f / scast<float>(dx));
+            int    smem     = 0;
+            int    block    = _gpu_data[ii]->block();
+            int    grid     = _gpu_data[ii]->compute_grid(dy * ngridx * ngridy);
+            float* update   = _gpu_data[ii]->update();
+            float* sum_dist = _gpu_data[ii]->sum_dist();
+            auto   stream   = _gpu_data[ii]->stream();
+            cuda_sirt_update_kernel<<<grid, block, smem, stream>>>(recon, update,
+                                                                   sum_dist, dx,
+                                                                   dy * ngridx * ngridy);
         }
+
+        for(int ii = 0; ii < nthreads; ++ii)
+            _gpu_data[ii]->sync();
 
         NVTX_RANGE_POP(0);
         REPORT_TIMER(t_start, "iteration", i, num_iter);

@@ -79,16 +79,21 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
 
     for(int d = d0; d < dx; d += dstride)
     {
-        int fnx = 0;
+        int   fnx = 0;
+        float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
-            sum_dist[d * nx + i] += recon[d * nx + i];
+            sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            fnx += (recon_use[d * nx + i] != 0) ? 1 : 0;
+        {
+            auto use = (recon_use[d * nx + i] > 0) ? 1 : 0;
+            fnx += use;
+            sum_dist[d * nx + i] += scast<float>(use);
+        }
         if(fnx != 0)
         {
-            float sum = data[p * dx + d] / scast<float>(fnx);
+            float upd = data[p * dx + d] / sum;
             for(int i = 0; i < nx; ++i)
-                recon[d * nx + i] += sum;
+                recon[d * nx + i] += upd;
         }
     }
 }
@@ -96,7 +101,7 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
 //======================================================================================//
 
 __global__ void
-cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist,
+cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist, int dx,
                         int size)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
@@ -105,7 +110,7 @@ cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist
     for(int i = i0; i < size; i += istride)
     {
         if(sum_dist[i] != 0.0f)
-            recon[i] *= update[i] / sum_dist[i];
+            recon[i] *= update[i] / sum_dist[i] / scast<float>(dx);
     }
 }
 
@@ -250,22 +255,27 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         {
             auto nblock = itr->block();
             auto ngrid  = itr->compute_grid(recon_pixels);
+            /*
+            float factor = 1.0f / scast<float>(dx);
             cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(0)>>>(update,
                                                                          itr->update(),
                                                                          recon_pixels,
-                                                                         1.0f);
+                                                                         factor);
             cuda_atomic_sum_kernel<<<ngrid, nblock, 0, itr->stream(1)>>>(sum_dist,
                                                                          itr->sum_dist(),
                                                                          recon_pixels,
-                                                                         1.0f);
+                                                                         factor);
+            */
+            // update the global recon with global update and sum_dist
+            cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon,
+                                                                      itr->update(),
+                                                                      itr->sum_dist(), dx,
+                                                                      recon_pixels);
+            stream_sync(*main_stream);
         }
 
         // sync the thread streams
         gpu_data::sync(_gpu_data);
-
-        // update the global recon with global update and sum_dist
-        cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,
-                                                                  recon_pixels);
 
         // stop profile range and report timing
         NVTX_RANGE_POP(0);
