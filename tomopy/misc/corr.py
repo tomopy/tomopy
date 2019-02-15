@@ -776,3 +776,57 @@ def selctive_median_filter(img, threshold=None, kernel_size=3):
 
     return np.where(np.absolute(img - _img_median) < threshold, img, _img_median)
 
+
+def sino_normalize_background_aps_1id(sino, beam_is_moving=True):
+    """
+    Normalize the background (air) in each row of the sinogram (before 
+    minus_log)
+
+    Parameters
+    ----------
+    sino: ndarray
+        2D sinograms with the unit of counts
+    beam_is_moving: bool
+        If the beam is assumed to be moving (default Ture), linear interpolation
+        is required during background normalization
+
+    Returns
+    -------
+    ndarray
+        Sinogram with background normalized to 1 (air, no attenuation)
+    """
+    # amplify the variation in background
+    sino = np.sqrt(sino)
+
+    # use median filter and gaussian filter to locate the sample region
+    # -- median filter is to counter impulse noise
+    # -- gaussian filter is for estimating the sample location
+    prof = np.gradient(np.sum(gaussian_filter(medfilt2d(sino, kernel_size=3),
+                                              sigma=50,
+                                              ),
+                              axis=0,
+                              ),
+                       )
+
+    # find the left and right bound of the sample
+    edgeLeft = max(prof.argmin(), 11)  #
+    edgeRigth = min(prof.argmax(), sino.shape[1]-11)
+
+    # locate the left and right background
+    bgL = np.average(sino[:, 1:edgeLeft], axis=1)
+    bgR = np.average(sino[:, edgeRigth:-1], axis=1)
+
+    # calculate alpha
+    alpha = np.ones_like(sino)
+    # NOTE:
+    #   If the beam is wobbling horizontally, it is necessary
+    #   to perform the interpolation.
+    #   Otherwise, simple average would sufice.
+    if beam_is_moving:
+        for n in range(alpha.shape[0]):
+            alpha[n, :] = np.linspace(bgL[n], bgR[n], alpha.shape[1])
+    else:
+        alpha *= ((bgL+bgR)/2)[:, None]
+
+    return (sino/alpha)**2
+
