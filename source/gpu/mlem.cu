@@ -97,11 +97,12 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
             fnx += use;
             sum_dist[d * nx + i] += scast<float>(use);
         }
-        if(fnx != 0)
+        if(sum != 0.0f)
         {
             float upd = data[p * dx + d] / sum;
-            for(int i = 0; i < nx; ++i)
-                recon[d * nx + i] += upd;
+            if(upd == upd)
+                for(int i = 0; i < nx; ++i)
+                    recon[d * nx + i] += upd;
         }
     }
 }

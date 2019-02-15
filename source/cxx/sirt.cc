@@ -149,12 +149,10 @@ sirt_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int d
                 sum_dist[d * nx + i] += 1.0f;
             }
         }
-        if(fnx != 0)
-        {
-            float upd = (data[p * dx + d] - sum);
-            for(int i = 0; i < nx; ++i)
-                recon_rot[d * nx + i] += upd;
-        }
+
+        float upd = (data[p * dx + d] - sum);
+        for(int i = 0; i < nx; ++i)
+            recon_rot[d * nx + i] += upd;
     }
 
     // Back-Rotate object

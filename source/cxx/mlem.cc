@@ -149,11 +149,12 @@ mlem_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int d
                 sum_dist[d * nx + i] += 1.0f;
             }
         }
-        if(fnx != 0)
+        if(sum != 0.0f)
         {
             float upd = data[p * dx + d] / sum;
-            for(int i = 0; i < nx; ++i)
-                recon_rot[d * nx + i] += upd;
+            if(std::isfinite(upd))
+                for(int i = 0; i < nx; ++i)
+                    recon_rot[d * nx + i] += upd;
         }
     }
 
