@@ -40,6 +40,8 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+//  ---------------------------------------------------------------
+//   TOMOPY implementation
 
 #include "utils.hh"
 #include "common.hh"

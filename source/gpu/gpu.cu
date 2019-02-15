@@ -35,12 +35,7 @@
 //  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 //  ---------------------------------------------------------------
-//   TOMOPY implementation file
-//
-//  Description:
-//
-//      Here we copy the memory to GPU and call the GPU kernels
-//
+//   TOMOPY CUDA implementation
 
 #include "common.hh"
 #include "gpu.hh"

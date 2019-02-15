@@ -35,7 +35,7 @@
 //  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 //  ---------------------------------------------------------------
-//   TOMOPY class header
+//   TOMOPY header
 
 #pragma once
 
@@ -162,16 +162,16 @@ END_EXTERN_C
 #    endif
 #endif
 
-#if defined(TOMOPY_USE_IPP)
-#    include <ipp.h>
-#    include <ippdefs.h>
-#    include <ippi.h>
-#endif
-
 #if defined(TOMOPY_USE_OPENCV)
 #    include <opencv2/core.hpp>
 #    include <opencv2/imgproc.hpp>
 #    include <opencv2/imgproc/imgproc.hpp>
+#endif
+
+#if defined(TOMOPY_USE_IPP)
+#    include <ipp.h>
+#    include <ippdefs.h>
+#    include <ippi.h>
 #endif
 
 //======================================================================================//
@@ -180,20 +180,21 @@ END_EXTERN_C
 #    define scast static_cast
 #endif
 
-#define PRAGMA_SIMD _Pragma("omp simd")
-#define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
-#define HW_CONCURRENCY std::thread::hardware_concurrency()
+#if !defined(PRAGMA_SIMD)
+#    define PRAGMA_SIMD _Pragma("omp simd")
+#endif
+
+#if !defined(PRAGMA_SIMD_REDUCTION)
+#    define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
+#endif
+
+#if !defined(HW_CONCURRENCY)
+#    define HW_CONCURRENCY std::thread::hardware_concurrency()
+#endif
+
 #if !defined(_forward_args_t)
 #    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
 #endif
-
-//======================================================================================//
-
-template <typename _Func, typename... _Args>
-inline void invoker(_Func& func, _Args&&... args)
-{
-    func(args...);
-}
 
 //======================================================================================//
 
@@ -219,6 +220,15 @@ template <typename _Tp>
 using array_t = std::vector<_Tp>;
 template <typename _Tp>
 using cuda_device_info = std::unordered_map<int, _Tp>;
+
+//======================================================================================//
+
+template <typename Func, typename... Args>
+inline void
+invoker(const Func& func, Args&&... args)
+{
+    func(args...);
+}
 
 //======================================================================================//
 
@@ -544,7 +554,6 @@ protected:
     float*       m_recon;
     float*       m_update;
     float*       m_sum_dist;
-    float*       m_simdata;
     const float* m_data;
 };
 
@@ -767,13 +776,13 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
             {
                 cpu_func(_forward_args_t(_Args, args));
             }
-            catch(std::exception& e)
+            catch(std::exception& _e)
             {
                 std::stringstream ss;
-                ss << "\n\nError executing :: " << e.what() << "\n\n";
+                ss << "\n\nError executing :: " << _e.what() << "\n\n";
                 {
                     AutoLock l(TypeMutex<decltype(std::cout)>());
-                    std::cerr << e.what() << std::endl;
+                    std::cerr << _e.what() << std::endl;
                 }
                 throw std::runtime_error(ss.str().c_str());
             }
@@ -783,9 +792,9 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
 
 //======================================================================================//
 
-template <typename _Executor, typename _DataArray, typename _Func, typename... _Args>
+template <typename Executor, typename DataArray, typename Func, typename... Args>
 void
-execute(_Executor* man, int dy, int dt, _DataArray& data, _Func& func, _Args... args)
+execute(Executor* man, int dy, int dt, DataArray& data, const Func& func, Args... args)
 {
     // does nothing except make sure there is no warning
     ConsumeParameters(man);

@@ -35,9 +35,11 @@
 //  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 //  ---------------------------------------------------------------
-//   TOMOPY class header
+//   TOMOPY header
 
 #pragma once
+
+//--------------------------------------------------------------------------------------//
 
 #include "common.hh"
 #include "gpu.hh"
@@ -48,18 +50,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-
-#if defined(TOMOPY_USE_OPENCV)
-#    include <opencv2/highgui/highgui.hpp>
-#    include <opencv2/imgcodecs.hpp>
-#    include <opencv2/imgproc/imgproc.hpp>
-#endif
-
-#if defined(TOMOPY_USE_IPP)
-#    include <ipp.h>
-#    include <ippdefs.h>
-#    include <ippi.h>
-#endif
 
 //--------------------------------------------------------------------------------------//
 
@@ -183,10 +173,11 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode()
 {
-    static EnvChoiceList<int> choices =
-        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    static EnvChoiceList<int> choices = {
+        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
     static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, CPU_CUBIC));
     return eInterp;
