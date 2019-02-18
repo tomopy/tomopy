@@ -76,8 +76,8 @@ cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 
     {
         TIMEMORY_AUTO_TIMER("");
-        run_algorithm(project_cpu, project_cuda, project_openacc, project_openmp, obj, oy,
-                      ox, oz, data, dy, dt, dx, center, theta);
+        run_algorithm(project_cpu, project_cuda, obj, oy, ox, oz, data, dy, dt, dx,
+                      center, theta);
     }
 
     auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
@@ -141,28 +141,6 @@ project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 void
 project_cuda(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
              int dx, const float* center, const float* theta)
-{
-    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
-           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
-    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
-}
-
-//======================================================================================//
-
-void
-project_openacc(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-                int dx, const float* center, const float* theta)
-{
-    printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
-           GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);
-    project_cpu(obj, oy, ox, oz, data, dy, dt, dx, center, theta);
-}
-
-//======================================================================================//
-
-void
-project_openmp(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-               int dx, const float* center, const float* theta)
 {
     printf("[%lu]> %s : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
            GetThisThreadID(), __FUNCTION__, oy, oz, oz, dy, dt, dx);

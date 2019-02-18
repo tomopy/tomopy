@@ -46,10 +46,33 @@ BEGIN_EXTERN_C
 #include "utils.h"
 END_EXTERN_C
 
+#include <new>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+
 //======================================================================================//
 //  CUDA only
 
-#if defined(TOMOPY_USE_CUDA)
+#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
+
+//--------------------------------------------------------------------------------------//
+
+#    if !defined(CUDA_CHECK_CALL)
+#        define CUDA_CHECK_CALL(err)                                                     \
+            {                                                                            \
+                if(cudaSuccess != err)                                                   \
+                {                                                                        \
+                    std::stringstream ss;                                                \
+                    ss << "cudaCheckError() failed at " << __FUNCTION__ << "@'"          \
+                       << __FILE__ << "':" << __LINE__ << " : "                          \
+                       << cudaGetErrorString(err);                                       \
+                    fprintf(stderr, "%s\n", ss.str().c_str());                           \
+                    printf("%s\n", ss.str().c_str());                                    \
+                    throw std::runtime_error(ss.str().c_str());                          \
+                }                                                                        \
+            }
+#    endif
 
 //--------------------------------------------------------------------------------------//
 
@@ -67,8 +90,17 @@ _Tp*
 gpu_malloc(uintmax_t size)
 {
     _Tp* _gpu;
-    cudaMalloc(&_gpu, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_CALL(cudaMalloc(&_gpu, size * sizeof(_Tp)));
+    if(_gpu == nullptr)
+    {
+        int _device = 0;
+        cudaGetDevice(&_device);
+        std::stringstream ss;
+        ss << "Error allocating memory on GPU " << _device << " of size "
+           << (size * sizeof(_Tp)) << " and type " << typeid(_Tp).name()
+           << " (type size = " << sizeof(_Tp) << ")";
+        throw std::runtime_error(ss.str().c_str());
+    }
     return _gpu;
 }
 
@@ -118,9 +150,7 @@ template <typename _Tp>
 _Tp*
 gpu_malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
-    _Tp* _gpu;
-    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
+    _Tp* _gpu = gpu_malloc<_Tp>(size);
     cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
     CUDA_CHECK_LAST_ERROR();
     return _gpu;
@@ -132,9 +162,7 @@ template <typename _Tp>
 _Tp*
 gpu_malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
 {
-    _Tp* _gpu;
-    cudaMalloc((void**) &_gpu, size * sizeof(_Tp));
-    CUDA_CHECK_LAST_ERROR();
+    _Tp* _gpu = gpu_malloc<_Tp>(size);
     cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
     CUDA_CHECK_LAST_ERROR();
     return _gpu;
@@ -208,52 +236,71 @@ transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
 #else  // not defined(TOMOPY_USE_CUDA)
 
 //======================================================================================//
-inline void stream_sync(cudaStream_t) {}
+inline void stream_sync(cudaStream_t)
+{
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
+}
 //======================================================================================//
 template <typename _Tp>
 _Tp* gpu_malloc(uintmax_t)
 {
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
+    return nullptr;
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
 cpu2gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
 gpu2cpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
 }
 //--------------------------------------------------------------------------------------//
 template <typename _Tp>
 void
 gpu2gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
 {
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
 }
 //--------------------------------------------------------------------------------------//
 inline cudaStream_t*
 create_streams(const int)
 {
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
     return nullptr;
 }
 //--------------------------------------------------------------------------------------//
 inline void
 destroy_streams(cudaStream_t*, const int)
 {
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-_Tp
-reduce(_Tp*, _Tp, int, cudaStream_t)
-{
-}
-//--------------------------------------------------------------------------------------//
-template <typename _Tp>
-void
-transform_sum(_Tp*, int, _Tp*, cudaStream_t)
-{
+    std::stringstream ss;
+    ss << "Error! function '" << __FUNCTION__ << "' at line " << __LINE__
+       << " not available!";
+    throw std::runtime_error(ss.str().c_str());
 }
 //--------------------------------------------------------------------------------------//
 

@@ -121,17 +121,17 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = nitr
 
-    sname = os.path.join(args.output_dir, 'proj_{}_'.format(args.algorithm))
+    sname = os.path.join(args.output_dir, 'proj_{}'.format(args.algorithm))
     print(proj.shape)
     tmp = np.zeros((proj.shape[0], proj.shape[2]))
     tmp[:,:] = proj[:,0,:]
-    output_image(tmp, sname + ".jpeg")
+    output_image(tmp, sname + "." + args.format)
 
     # Reconstruct object.
     with timemory.util.auto_timer(
         "[tomopy.recon(algorithm='{}')]".format(algorithm)):
         print("Starting reconstruction with kwargs={}...".format(_kwargs))
-        rec = tomopy.recon(proj, theta, **_kwargs)
+        rec = tomopy.recon(data, theta, **_kwargs)
     print("Completed reconstruction...")
 
     # Mask each reconstructed slice with a circle.

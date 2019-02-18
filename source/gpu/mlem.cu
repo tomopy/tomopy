@@ -51,8 +51,6 @@
 BEGIN_EXTERN_C
 #include "mlem.h"
 #include "utils.h"
-#include "utils_openacc.h"
-#include "utils_openmp.h"
 END_EXTERN_C
 
 #include <algorithm>
@@ -82,7 +80,7 @@ typedef gpu_data::data_array_t data_array_t;
 
 __global__ void
 cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                        const int_type* recon_use, float* sum_dist)
+                        const int_type* recon_use, uint16_t* sum_dist)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
@@ -93,7 +91,7 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            sum_dist[d * nx + i] += (recon_use[d * nx + i] > 0) ? 1.0f : 0.0f;
+            sum_dist[d * nx + i] += (recon_use[d * nx + i] > 0) ? 1 : 0;
         if(sum != 0.0f)
         {
             float upd = data[p * dx + d] / sum;
@@ -107,8 +105,8 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
 //======================================================================================//
 
 __global__ void
-cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist, int dx,
-                        int size)
+cuda_mlem_update_kernel(float* recon, const float* update, const uint32_t* sum_dist,
+                        int dx, int size)
 {
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
@@ -116,7 +114,7 @@ cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist
     for(int i = i0; i < size; i += istride)
     {
         if(sum_dist[i] != 0.0f)
-            recon[i] *= update[i] / sum_dist[i] / scast<float>(dx);
+            recon[i] *= update[i] / scast<float>(sum_dist[i]) / scast<float>(dx);
     }
 }
 
@@ -124,7 +122,7 @@ cuda_mlem_update_kernel(float* recon, const float* update, const float* sum_dist
 
 void
 mlem_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int dt, int dx,
-                            int nx, int ny, const float* theta)
+                            int nx, int ny, const float* theta, uint32_t* global_sum_dist)
 {
     auto _cache = _gpu_data[GetThisThreadID() % _gpu_data.size()];
 
@@ -137,20 +135,25 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int d
     cuda_set_device(_cache->device());
 
     // calculate some values
-    float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
-    float        theta_p_deg = theta_p_rad * degrees;
-    const float* recon       = _cache->recon() + s * nx * ny;
-    const float* data        = _cache->data() + s * dt * dx;
-    float*       update      = _cache->update() + s * nx * ny;
-    float*       sum_dist    = _cache->sum_dist() + s * nx * ny;
-    auto*        use_rot     = _cache->use_rot();
-    auto*        use_tmp     = _cache->use_tmp();
-    float*       rot         = _cache->rot();
-    float*       tmp         = _cache->tmp();
-    int          block       = _cache->block();
-    int          grid        = _cache->compute_grid(nx);
-    cudaStream_t stream      = _cache->stream();
+    float        theta_p_rad  = fmodf(theta[p] + halfpi, twopi);
+    float        theta_p_deg  = theta_p_rad * degrees;
+    const float* recon        = _cache->recon() + s * nx * ny;
+    const float* data         = _cache->data() + s * dt * dx;
+    float*       update       = _cache->update() + s * nx * ny;
+    uint32_t*    sum_dist     = global_sum_dist + s * nx * ny;
+    uint16_t*    sum_dist_tmp = _cache->sum_dist();
+    auto*        use_rot      = _cache->use_rot();
+    auto*        use_tmp      = _cache->use_tmp();
+    float*       rot          = _cache->rot();
+    float*       tmp          = _cache->tmp();
+    int          block        = _cache->block();
+    int          grid         = _cache->compute_grid(dx);
+    cudaStream_t stream       = _cache->stream();
 
+    // synchronize the stream (do this frequently to avoid backlog)
+    stream_sync(stream);
+
+    gpu_memset<uint16_t>(sum_dist_tmp, 0, nx * ny, stream);
     gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     gpu_memset<float>(rot, 0, nx * ny, stream);
     gpu_memset<float>(tmp, 0, nx * ny, stream);
@@ -160,11 +163,15 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int d
     cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
     // compute simdata
     cuda_mlem_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data, use_rot,
-                                                        sum_dist);
+                                                        sum_dist_tmp);
     // back-rotate
     cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
     // update shared update array
-    cuda_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
+    cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
+    // update shared sum_dist array
+    cuda_atomic_sum_kernel<uint32_t, uint16_t>
+        <<<grid, block, 0, stream>>>(sum_dist, sum_dist_tmp, nx * ny, 1);
+
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 }
@@ -215,14 +222,15 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
-    auto         block        = GetBlockSize();
-    auto         grid         = ComputeGridSize(recon_pixels, block);
-    auto         main_stream  = create_streams(1);
-    float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    float*       sum_dist  = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t  init_data = gpu_data::initialize(thread_device, nthreads, dy, dt, dx,
-                                                 ngridx, ngridy, cpu_recon, cpu_data);
+    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    auto        block        = GetBlockSize();
+    auto        grid         = ComputeGridSize(recon_pixels, block);
+    auto        main_stream  = create_streams(1);
+    float*      update   = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    uint32_t*   sum_dist = gpu_malloc_and_memset<uint32_t>(recon_pixels, 0, *main_stream);
+    init_data_t init_data =
+        gpu_data::initialize(thread_device, nthreads, dy, dt, dx, ngridx, ngridy,
+                             cpu_recon, cpu_data, update);
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     const float* data      = std::get<2>(init_data);
@@ -252,31 +260,13 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         // execute the loop over slices and projection angles
         execute<manager_t, data_array_t>(task_man, dy, dt, std::ref(_gpu_data),
                                          mlem_gpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta);
+                                         ngridy, theta, sum_dist);
 
         // sync the thread streams
         gpu_data::sync(_gpu_data);
 
         // sync the main stream
         stream_sync(*main_stream);
-
-        // have threads add to global update and sum_dist
-        for(auto& itr : _gpu_data)
-        {
-            auto nblock = itr->block();
-            auto ngrid  = itr->compute_grid(recon_pixels);
-            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(0)>>>(update,
-                                                                       itr->update(),
-                                                                       recon_pixels,
-                                                                       1.0f);
-            cuda_atomic_sum_kernel<<<grid, block, 0, itr->stream(1)>>>(sum_dist,
-                                                                       itr->sum_dist(),
-                                                                       recon_pixels,
-                                                                       1.0f);
-        }
-
-        // sync the thread streams
-        gpu_data::sync(_gpu_data);
 
         // update the global recon with global update and sum_dist
         cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,

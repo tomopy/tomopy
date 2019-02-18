@@ -69,18 +69,6 @@ project_cuda(const float* obj, int oy, int ox, int oz, float* data, int dy, int 
 
 //======================================================================================//
 
-void
-project_openacc(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-                int dx, const float* center, const float* theta);
-
-//======================================================================================//
-
-void
-project_openmp(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
-               int dx, const float* center, const float* theta);
-
-//======================================================================================//
-
 END_EXTERN_C
 
 //======================================================================================//

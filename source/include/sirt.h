@@ -63,28 +63,6 @@ void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
-//--------------------------------------------------------------------------------------//
-
-void
-sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//--------------------------------------------------------------------------------------//
-
-void
-sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-//
-//      Specific utils functions for SIRT
-//
-//======================================================================================//
-
-void
-cuda_sirt_update(const float* data, const float simval, float* simdata, int ngrix,
-                 float* recon_rot, int size, cudaStream_t*);
-
 //======================================================================================//
 
 END_EXTERN_C

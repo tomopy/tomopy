@@ -63,18 +63,6 @@ void
 mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
-//--------------------------------------------------------------------------------------//
-
-void
-mlem_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//--------------------------------------------------------------------------------------//
-
-void
-mlem_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
 //======================================================================================//
 
 END_EXTERN_C

@@ -101,14 +101,65 @@ ComputeGridSize(int size, int block_size = GetBlockSize())
 inline int
 GetNppInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, GPU_CUBIC));
     return eInterp;
+}
+
+//======================================================================================//
+// mult kernels
+//======================================================================================//
+
+template <typename _Tp>
+__global__ void
+cuda_mult_kernel(_Tp* dst, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        dst[i] = factor * dst[i];
+}
+
+//======================================================================================//
+// sum kernels
+//======================================================================================//
+
+template <typename _Tp, typename _Up = _Tp>
+__global__ void
+cuda_sum_kernel(_Tp* dst, const _Up* src, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        dst[i] += static_cast<_Tp>(factor * src[i]);
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp, typename _Up = _Tp>
+__global__ void
+cuda_atomic_sum_kernel(_Tp* dst, const _Up* src, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        atomicAdd(&dst[i], static_cast<_Tp>(factor * src[i]));
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+__global__ void
+cuda_set_kernel(_Tp* dst, uintmax_t size, const _Tp& factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        dst[i] = factor;
 }
 
 //======================================================================================//
@@ -125,9 +176,10 @@ public:
 
 public:
     // ctors, dtors, assignment
-    gpu_data(int device, int dy, int dt, int dx, int nx, int ny, const float* data,
-             float* recon)
+    gpu_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
+             const float* data, float* recon, float* update)
     : m_device(device)
+    , m_id(id)
     , m_grid(GetGridSize())
     , m_block(GetBlockSize())
     , m_dy(dy)
@@ -139,7 +191,7 @@ public:
     , m_use_tmp(nullptr)
     , m_rot(nullptr)
     , m_tmp(nullptr)
-    , m_update(nullptr)
+    , m_update(update)
     , m_sum_dist(nullptr)
     , m_recon(recon)
     , m_data(data)
@@ -150,8 +202,7 @@ public:
         m_use_tmp = gpu_malloc<int_type>(m_nx * m_ny);
         m_rot     = gpu_malloc<float>(m_nx * m_ny);
         m_tmp     = gpu_malloc<float>(m_nx * m_ny);
-        m_update  = gpu_malloc<float>(m_dy * m_nx * m_ny);
-        gpu_memset<int_type>(m_use_tmp, 1, nx * ny, *m_streams);
+        gpu_memset<int_type>(m_use_tmp, 1, m_nx * m_ny, *m_streams);
     }
 
     ~gpu_data()
@@ -160,7 +211,6 @@ public:
         cudaFree(m_use_tmp);
         cudaFree(m_rot);
         cudaFree(m_tmp);
-        cudaFree(m_update);
         cudaFree(m_sum_dist);
         destroy_streams(m_streams, m_num_streams);
     }
@@ -181,7 +231,7 @@ public:
     float*       rot() const { return m_rot; }
     float*       tmp() const { return m_tmp; }
     float*       update() const { return m_update; }
-    float*       sum_dist() const { return m_sum_dist; }
+    uint16_t*    sum_dist() const { return m_sum_dist; }
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
@@ -208,34 +258,43 @@ public:
     void alloc_sum_dist()
     {
         cuda_set_device(m_device);
-        m_sum_dist = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        m_sum_dist = gpu_malloc<uint16_t>(m_nx * m_ny);
     }
 
     void reset()
     {
-        gpu_memset<float>(m_update, 0, m_dy * m_nx * m_ny, *m_streams);
+        // gpu_memset<float>(m_update, 0, m_dy * m_nx * m_ny, *m_streams);
         if(m_sum_dist)
-            gpu_memset<float>(m_sum_dist, 0, m_dy * m_nx * m_ny, *m_streams);
+            gpu_memset<uint16_t>(m_sum_dist, 0, m_nx * m_ny, *m_streams);
     }
 
 public:
     // static functions
     static init_data_t initialize(int device, int nthreads, int dy, int dt, int dx,
                                   int ngridx, int ngridy, float* cpu_recon,
-                                  const float* cpu_data)
+                                  const float* cpu_data, float* update,
+                                  bool alloc_sum_dist = true)
     {
-        float* recon   = gpu_malloc<float>(dy * ngridx * ngridy);
-        float* data    = gpu_malloc<float>(dy * dt * dx);
-        auto   streams = create_streams(2, cudaStreamNonBlocking);
-        cpu2gpu_memcpy<float>(recon, cpu_recon, dy * ngridx * ngridy, streams[0]);
-        cpu2gpu_memcpy<float>(data, cpu_data, dy * dt * dx, streams[1]);
+        uintmax_t nstreams = 3;
+        auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);
+        float*    recon =
+            gpu_malloc_and_memcpy<float>(cpu_recon, dy * ngridx * ngridy, streams[0]);
+        float* data = gpu_malloc_and_memcpy<float>(cpu_data, dy * dt * dx, streams[1]);
+
         data_array_t _gpu_data(nthreads);
         for(int ii = 0; ii < nthreads; ++ii)
-            _gpu_data[ii] =
-                data_ptr_t(new gpu_data(device, dy, dt, dx, ngridx, ngridy, data, recon));
-        stream_sync(streams[0]);
-        stream_sync(streams[1]);
-        destroy_streams(streams, 2);
+        {
+            _gpu_data[ii] = data_ptr_t(new gpu_data(device, ii, dy, dt, dx, ngridx,
+                                                    ngridy, data, recon, update));
+            if(alloc_sum_dist)
+                _gpu_data[ii]->alloc_sum_dist();
+        }
+
+        // synchronize
+        for(uintmax_t i = 0; i < nstreams; ++i)
+            stream_sync(streams[i]);
+        destroy_streams(streams, nstreams);
+
         return init_data_t(_gpu_data, recon, data);
     }
 
@@ -256,6 +315,7 @@ public:
 protected:
     // data
     int           m_device;
+    int           m_id;
     int           m_grid;
     int           m_block;
     int           m_dy;
@@ -268,7 +328,7 @@ protected:
     float*        m_rot;
     float*        m_tmp;
     float*        m_update;
-    float*        m_sum_dist;
+    uint16_t*     m_sum_dist;
     float*        m_recon;
     const float*  m_data;
     int           m_num_streams = 2;
@@ -326,47 +386,6 @@ DLL void
 cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
                const int nx, const int ny, cudaStream_t stream = 0,
                const int eInterp = GetNppInterpolationMode());
-
-//======================================================================================//
-// mult kernels
-//======================================================================================//
-
-template <typename _Tp>
-__global__ void
-cuda_mult_kernel(_Tp* dst, uintmax_t size, const _Tp factor)
-{
-    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    auto istride = blockDim.x * gridDim.x;
-    for(auto i = i0; i < size; i += istride)
-        dst[i] = factor * dst[i];
-}
-
-//======================================================================================//
-// sum kernels
-//======================================================================================//
-
-template <typename _Tp>
-__global__ void
-cuda_sum_kernel(_Tp* dst, const _Tp* src, uintmax_t size, const _Tp factor)
-{
-    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    auto istride = blockDim.x * gridDim.x;
-    for(auto i = i0; i < size; i += istride)
-        dst[i] += factor * src[i];
-}
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-__global__ void
-cuda_atomic_sum_kernel(_Tp* dst, const _Tp* src, uintmax_t size, const _Tp factor)
-{
-    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    auto istride = blockDim.x * gridDim.x;
-    for(auto i = i0; i < size; i += istride)
-        atomicAdd(&dst[i], factor * src[i]);
-}
-//--------------------------------------------------------------------------------------//
 
 #endif  // __CUDACC__
 

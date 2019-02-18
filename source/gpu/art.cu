@@ -45,8 +45,6 @@
 BEGIN_EXTERN_C
 #include "art.h"
 #include "utils.h"
-#include "utils_openacc.h"
-#include "utils_openmp.h"
 END_EXTERN_C
 
 #include <algorithm>
@@ -68,9 +66,15 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 //======================================================================================//
 
+typedef gpu_data::int_type     int_type;
+typedef gpu_data::init_data_t  init_data_t;
+typedef gpu_data::data_array_t data_array_t;
+
+//======================================================================================//
+
 __global__ void
 cuda_art_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                       const gpu_data::int_type* recon_use)
+                       const int_type* recon_use)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
@@ -198,8 +202,8 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     destroy_streams(streams, 2);
     gpu_data** _gpu_data = new gpu_data*[nthreads];
     for(int ii = 0; ii < nthreads; ++ii)
-        _gpu_data[ii] =
-            new gpu_data(thread_device, dy, dt, dx, ngridx, ngridy, data, recon);
+        _gpu_data[ii] = new gpu_data(thread_device, ii, dy, dt, dx, ngridx, ngridy, data,
+                                     recon, nullptr);
     int block = GetBlockSize();
     int grid  = ComputeGridSize(dy * ngridx * ngridy);
     NVTX_RANGE_PUSH(&nvtx_total);

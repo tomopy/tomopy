@@ -81,9 +81,8 @@ cxx_bart(const float* data, int dy, int dt, int dx, const float* center,
 
     {
         TIMEMORY_AUTO_TIMER("");
-        run_algorithm(bart_cpu, bart_cuda, bart_openacc, bart_openmp, data, dy, dt, dx,
-                      center, theta, recon, ngridx, ngridy, num_iter, num_block,
-                      ind_block);
+        run_algorithm(bart_cpu, bart_cuda, data, dy, dt, dx, center, theta, recon, ngridx,
+                      ngridy, num_iter, num_block, ind_block);
     }
 
     auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
@@ -113,9 +112,7 @@ bart_cpu(const float* data, int dy, int dt, int dx, const float* center,
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       num_block, ind_block);
-
     TIMEMORY_AUTO_TIMER("[cpu]");
-
     throw std::runtime_error("BART algorithm has not been implemented for CXX");
 }
 
@@ -128,42 +125,9 @@ bart_cuda(const float* data, int dy, int dt, int dx, const float* center,
 {
     ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       num_block, ind_block);
-
     throw std::runtime_error("BART algorithm has not been implemented for CUDA");
-
     TIMEMORY_AUTO_TIMER("[cuda]");
-
     // insert code here
-}
-
-//======================================================================================//
-
-void
-bart_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-             int num_block, const float* ind_block)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
-                      num_block, ind_block);
-
-    throw std::runtime_error("BART algorithm has not been implemented for OpenACC");
-
-    TIMEMORY_AUTO_TIMER("[openacc]");
-}
-
-//======================================================================================//
-
-void
-bart_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-            int num_block, const float* ind_block)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
-                      num_block, ind_block);
-
-    throw std::runtime_error("BART algorithm has not been implemented for OpenMP");
-
-    TIMEMORY_AUTO_TIMER("[openmp]");
 }
 
 //======================================================================================//

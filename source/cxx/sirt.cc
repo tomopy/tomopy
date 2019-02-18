@@ -44,8 +44,6 @@
 BEGIN_EXTERN_C
 #include "sirt.h"
 #include "utils.h"
-#include "utils_openacc.h"
-#include "utils_openmp.h"
 END_EXTERN_C
 
 #include <algorithm>
@@ -86,8 +84,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
     {
         TIMEMORY_AUTO_TIMER("");
-        run_algorithm(sirt_cpu, sirt_cuda, sirt_openacc, sirt_openmp, data, dy, dt, dx,
-                      center, theta, recon, ngridx, ngridy, num_iter);
+        run_algorithm(sirt_cpu, sirt_cuda, data, dy, dt, dx, center, theta, recon, ngridx,
+                      ngridy, num_iter);
     }
 
     auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
@@ -112,24 +110,25 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
 void
 sirt_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int dt, int dx,
-                            int nx, int ny, const float* theta)
+                            int nx, int ny, const float* theta, uint32_t* global_sum_dist)
 {
     ConsumeParameters(dy);
     auto _cache = _cpu_data[GetThisThreadID() % _cpu_data.size()];
 
     // calculate some values
-    float        theta_p   = fmodf(theta[p] + halfpi, twopi);
-    const float* data      = _cache->data() + s * dt * dx;
-    const float* recon     = _cache->recon() + s * nx * ny;
-    float*       update    = _cache->update() + s * nx * ny;
-    float*       sum_dist  = _cache->sum_dist() + s * nx * ny;
-    auto&        use_rot   = _cache->use_rot();
-    auto&        use_tmp   = _cache->use_tmp();
-    auto&        recon_rot = _cache->rot();
-    auto&        recon_tmp = _cache->tmp();
+    float        theta_p      = fmodf(theta[p] + halfpi, twopi);
+    const float* data         = _cache->data() + s * dt * dx;
+    const float* recon        = _cache->recon() + s * nx * ny;
+    float*       update       = _cache->update() + s * nx * ny;
+    uint16_t*    sum_dist_tmp = _cache->sum_dist();
+    uint32_t*    sum_dist     = global_sum_dist + s * nx * ny;
+    auto&        use_rot      = _cache->use_rot();
+    auto&        use_tmp      = _cache->use_tmp();
+    auto&        recon_rot    = _cache->rot();
+    auto&        recon_tmp    = _cache->tmp();
 
     // reset intermediate data
-    _cache->reset_slice();
+    _cache->reset();
 
     // Forward-Rotate object
     cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
@@ -141,7 +140,7 @@ sirt_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int d
         for(int i = 0; i < nx; ++i)
             sum += recon_rot[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            sum_dist[d * nx + i] += (use_rot[d * nx + i] > 0) ? 1.0f : 0.0f;
+            sum_dist_tmp[d * nx + i] += (use_rot[d * nx + i] > 0) ? 1 : 0;
         float upd = (data[p * dx + d] - sum);
         for(int i = 0; i < nx; ++i)
             recon_rot[d * nx + i] += upd;
@@ -150,10 +149,12 @@ sirt_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int d
     // Back-Rotate object
     cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
+    AutoLock l(TypeMutex<cpu_data>());
     // update shared update array
-    float* _update = update + s * nx * ny;
-    for(uintmax_t i = 0; i < recon_tmp.size(); ++i)
-        _update[i] += recon_tmp[i];
+    for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
+        update[i] += recon_tmp[i];
+    for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
+        sum_dist[i] += sum_dist_tmp[i];
 }
 
 //======================================================================================//
@@ -185,17 +186,12 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
 
     TIMEMORY_AUTO_TIMER("");
 
-    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
-    farray_t    update(recon_pixels, 0.0f);
-    farray_t    sum_dist(recon_pixels, 0.0f);
-    init_data_t init_data =
-        cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data);
+    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    farray_t     update(recon_pixels, 0.0f);
+    uarray_t     sum_dist(recon_pixels, 0);
+    init_data_t  init_data = cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy,
+                                                 recon, data, update.data());
     data_array_t _cpu_data = std::get<0>(init_data);
-    for(auto& itr : _cpu_data)
-    {
-        itr->alloc_sum_dist();
-        itr->alloc_update();
-    }
 
     //----------------------------------------------------------------------------------//
     for(int i = 0; i < num_iter; i++)
@@ -213,16 +209,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         // execute the loop over slices and projection angles
         execute<manager_t, data_array_t>(task_man, dy, dt, std::ref(_cpu_data),
                                          sirt_cpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta);
-
-        for(auto& itr : _cpu_data)
-        {
-            for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
-                update[ii] += itr->update()[ii];
-
-            for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
-                sum_dist[ii] += itr->sum_dist()[ii];
-        }
+                                         ngridy, theta, sum_dist.data());
 
         // update the global recon with global update and sum_dist
         for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
@@ -245,26 +232,4 @@ sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
     sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
 }
 #endif
-//======================================================================================//
-
-void
-sirt_openacc(const float* data, int dy, int dt, int dx, const float* center,
-             const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    TIMEMORY_AUTO_TIMER("[openacc]");
-    throw std::runtime_error("SIRT algorithm has not been implemented for OpenACC");
-}
-
-//======================================================================================//
-
-void
-sirt_openmp(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    TIMEMORY_AUTO_TIMER("[openmp]");
-    throw std::runtime_error("SIRT algorithm has not been implemented for OpenMP");
-}
-
 //======================================================================================//

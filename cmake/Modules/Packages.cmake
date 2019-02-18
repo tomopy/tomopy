@@ -191,10 +191,8 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_CUDA)
         add_feature(${PROJECT_NAME}_CUDA_FLAGS "CUDA NVCC compiler flags")
         add_feature(CUDA_ARCH "CUDA architecture (e.g. sm_35)")
-        add_feature(CUDA_MAX_REGISTER_COUNT "CUDA maximum register count")
 
         set(CUDA_ARCH "sm_35" CACHE STRING "CUDA architecture flag")
-        set(CUDA_MAX_REGISTER_COUNT "24" CACHE STRING "CUDA maximum register count")
 
         if(TOMOPY_USE_NVTX)
             find_library(NVTX_LIBRARY
@@ -213,8 +211,16 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
 
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
             -arch=${CUDA_ARCH}
-            --maxrregcount=${CUDA_MAX_REGISTER_COUNT}
             --default-stream per-thread)
+
+        add_option(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT "Enable setting maximum register count" OFF)
+        if(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT)
+            add_feature(CUDA_MAX_REGISTER_COUNT "CUDA maximum register count")
+            set(CUDA_MAX_REGISTER_COUNT "24" CACHE STRING "CUDA maximum register count")
+            list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
+            --maxrregcount=${CUDA_MAX_REGISTER_COUNT})
+        endif()
+
     endif()
 
     find_package(CUDA REQUIRED)

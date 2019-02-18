@@ -456,7 +456,7 @@ public:
 
 public:
     cpu_data(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
-             float* recon)
+             float* recon, float* update)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
@@ -468,17 +468,13 @@ public:
     , m_rot(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
     , m_tmp(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
     , m_recon(recon)
-    , m_update(nullptr)
+    , m_update(update)
     , m_sum_dist(nullptr)
     , m_data(data)
     {
     }
 
-    ~cpu_data()
-    {
-        delete[] m_update;
-        delete[] m_sum_dist;
-    }
+    ~cpu_data() { delete[] m_sum_dist; }
 
 public:
     farray_t&       rot() { return m_rot; }
@@ -492,44 +488,37 @@ public:
     const iarray_type& use_tmp() const { return m_use_tmp; }
 
     float*       update() const { return m_update; }
-    float*       sum_dist() const { return m_sum_dist; }
+    uint16_t*    sum_dist() const { return m_sum_dist; }
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
 
-    void reset_slice()
+    void reset()
     {
         // reset temporaries to zero
         memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
         memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
         memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-    }
-
-    void reset()
-    {
-        // reset temporaries to zero
-        if(m_update)
-            memset(m_update, 0, scast<uintmax_t>(m_dy * m_nx * m_ny) * sizeof(float));
         if(m_sum_dist)
-            memset(m_sum_dist, 0, scast<uintmax_t>(m_dy * m_nx * m_ny) * sizeof(float));
+            memset(m_sum_dist, 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(uint16_t));
     }
 
-    void alloc_update() { m_update = new float[scast<uintmax_t>(m_dy * m_nx * m_ny)]; }
-
-    void alloc_sum_dist()
-    {
-        m_sum_dist = new float[scast<uintmax_t>(m_dy * m_nx * m_ny)];
-    }
+    void alloc_sum_dist() { m_sum_dist = new uint16_t[scast<uintmax_t>(m_nx * m_ny)]; }
 
 public:
     // static functions
     static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
-                                  int ngridy, float* recon, const float* data)
+                                  int ngridy, float* recon, const float* data,
+                                  float* update, bool alloc_sum_dist = true)
     {
         data_array_t _cpu_data(nthreads);
         for(unsigned ii = 0; ii < nthreads; ++ii)
-            _cpu_data[ii] =
-                data_ptr_t(new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data, recon));
+        {
+            _cpu_data[ii] = data_ptr_t(
+                new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data, recon, update));
+            if(alloc_sum_dist)
+                _cpu_data[ii]->alloc_sum_dist();
+        }
         return init_data_t(_cpu_data, recon, data);
     }
 
@@ -553,7 +542,7 @@ protected:
     farray_t     m_tmp;
     float*       m_recon;
     float*       m_update;
-    float*       m_sum_dist;
+    uint16_t*    m_sum_dist;
     const float* m_data;
 };
 
@@ -642,8 +631,7 @@ struct DeviceOption
 
 template <typename _Func, typename... _Args>
 void
-run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
-              _Args... args)
+run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
 {
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
@@ -666,14 +654,6 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
 #if defined(TOMOPY_USE_GPU)
 #    if defined(TOMOPY_USE_CUDA)
     options.push_back(DeviceOption(1, "cuda", "Run on GPU with CUDA"));
-#    endif
-
-#    if defined(TOMOPY_USE_OPENACC)
-    options.push_back(DeviceOption(2, "openacc", "Run on GPU with OpenACC"));
-#    endif
-
-#    if defined(TOMOPY_USE_OPENMP)
-    options.push_back(DeviceOption(3, "openmp", "Run on GPU with OpenMP"));
 #    endif
 #endif
 
@@ -756,8 +736,6 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Func acc_func, _Func omp_func,
         {
             case 0: cpu_func(_forward_args_t(_Args, args)); break;
             case 1: cuda_func(_forward_args_t(_Args, args)); break;
-            case 2: acc_func(_forward_args_t(_Args, args)); break;
-            case 3: omp_func(_forward_args_t(_Args, args)); break;
             default: cpu_func(_forward_args_t(_Args, args)); break;
         }
     }

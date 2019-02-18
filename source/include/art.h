@@ -63,29 +63,6 @@ void
 art_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
-//--------------------------------------------------------------------------------------//
-
-void
-art_openacc(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//--------------------------------------------------------------------------------------//
-
-void
-art_openmp(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-//
-//      Specific utils functions for ART
-//
-//======================================================================================//
-
-void
-cuda_art_update(int s, int p, int d, int ry, int rz, int dt, int dx, const int* csize,
-                const float* data, const float* simdata, const int* indi,
-                const float* dist, const float* sum, float* model, cudaStream_t* streams);
-
 //======================================================================================//
 
 END_EXTERN_C

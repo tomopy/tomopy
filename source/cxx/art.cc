@@ -44,8 +44,6 @@
 BEGIN_EXTERN_C
 #include "art.h"
 #include "utils.h"
-#include "utils_openacc.h"
-#include "utils_openmp.h"
 END_EXTERN_C
 
 #include <algorithm>
@@ -79,8 +77,8 @@ cxx_art(const float* data, int dy, int dt, int dx, const float* center,
 
     {
         TIMEMORY_AUTO_TIMER("");
-        run_algorithm(art_cpu, art_cuda, art_openacc, art_cpu, data, dy, dt, dx, center,
-                      theta, recon, ngridx, ngridy, num_iter);
+        run_algorithm(art_cpu, art_cuda, data, dy, dt, dx, center, theta, recon, ngridx,
+                      ngridy, num_iter);
     }
 
     auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
@@ -164,27 +162,5 @@ art_cuda(const float* data, int dy, int dt, int dx, const float* center,
     */
 }
 #endif
-
-//======================================================================================//
-
-void
-art_openacc(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    TIMEMORY_AUTO_TIMER("[openacc]");
-    throw std::runtime_error("ART algorithm has not been implemented for OpenACC");
-}
-
-//======================================================================================//
-
-void
-art_openmp(const float* data, int dy, int dt, int dx, const float* center,
-           const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
-{
-    ConsumeParameters(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
-    TIMEMORY_AUTO_TIMER("[openmp]");
-    throw std::runtime_error("ART algorithm has not been implemented for OpenMP");
-}
 
 //======================================================================================//

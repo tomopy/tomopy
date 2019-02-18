@@ -10,6 +10,8 @@ endif()
 
 if(SKBUILD)
     message("Using scikit-build. cmake: ${CMAKE_COMMAND}...")
+else()
+    message("Using cmake: ${CMAKE_COMMAND}...")
 endif()
 
 ################################################################################
