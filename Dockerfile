@@ -48,6 +48,8 @@ RUN ./apt.sh && \
 SHELL [ "/bin/bash", "-lc" ]
 COPY ./ /work/tomopy-source/
 RUN cd /work/tomopy-source && \
+    export PATH=/opt/conda/bin:${PATH} && \
+    source activate tomopy && \
     python setup.py install && \
     cd / && \
     rm -rf /root/* /work/*
