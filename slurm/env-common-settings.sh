@@ -1,9 +1,15 @@
 #!/bin/bash
 
-module load python/3.6-anaconda-4.4
-module load gcc
-module load cuda
-source activate tomopy-gpu
+if [ "${NERSC_HOST}" = "edison" ]; then
+    module load edison
+    module load python/3.6-anaconda-4.4
+    source activate tomopy-cpu
+else
+    module load python/3.6-anaconda-4.4
+    module load gcc
+    module load cuda
+    source activate tomopy-gpu
+fi
 
 # algorithm settings
 : ${TOMOPY_INTER:=1}
