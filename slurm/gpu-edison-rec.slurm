@@ -44,7 +44,7 @@ run-recon()
         -n ${TOMOPY_PYTHON_THREADS} \
         -i ${TOMOPY_NUM_ITERATION} \
         -a ${ALGORITHM} \
-        -r ${BLOCK_BEGIN} ${BLOCK_END} \
+        -r ${BLOCK_BEG} ${BLOCK_END} \
         -f png \
         ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
 }

@@ -46,14 +46,23 @@ run-phantom()
         -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log
 }
 
-export ALGORITHM=sirt
-run-phantom shepp3d --partial -r ${BLOCK_BEGIN} ${BLOCK_END}
-run-phantom cameraman
-run-phantom lena
+for i in 32 128 256
+do
+    export CUDA_BLOCK_SIZE=${i}
+    for j in 0 16 32
+    do
+        export CUDA_GRID_SIZE=${j}
 
-export ALGORITHM=mlem
-run-phantom shepp3d --partial -r ${BLOCK_BEGIN} ${BLOCK_END}
-run-phantom cameraman
-run-phantom lena
+        export ALGORITHM=sirt
+        run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
+        run-phantom cameraman
+        run-phantom lena
+
+        export ALGORITHM=mlem
+        run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
+        run-phantom cameraman
+        run-phantom lena
+    done
+done
 
 echo -e "Completed at $(date)"
