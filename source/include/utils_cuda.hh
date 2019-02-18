@@ -164,6 +164,87 @@ cuda_set_kernel(_Tp* dst, uintmax_t size, const _Tp& factor)
 
 //======================================================================================//
 
+//  gridDim:    This variable contains the dimensions of the grid.
+//  blockIdx:   This variable contains the block index within the grid.
+//  blockDim:   This variable and contains the dimensions of the block.
+//  threadIdx:  This variable contains the thread index within the block.
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+__inline__ __device__ _Tp
+                      warp_reduce_sum(_Tp val)
+{
+    for(int offset = warpSize / 2; offset > 0; offset /= 2)
+        val += __shfl_down_sync(0xffffffff, val, offset);
+    return val;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+__inline__ __device__ _Tp
+                      block_reduce_sum(_Tp val)
+{
+    static __shared__ _Tp shared[32];  // Shared mem for 32 partial sums
+    int                   lane = threadIdx.x % warpSize;
+    int                   wid  = threadIdx.x / warpSize;
+
+    val = warp_reduce_sum<_Tp>(val);  // Each warp performs partial reduction
+
+    if(lane == 0)
+        shared[wid] = val;  // Write reduced value to shared memory
+
+    __syncthreads();  // Wait for all partial reductions
+
+    // read from shared memory only if that warp existed
+    val = (threadIdx.x < blockDim.x / warpSize) ? shared[lane] : 0;
+
+    if(wid == 0)
+        val = warp_reduce_sum<_Tp>(val);  // Final reduce within first warp
+
+    return val;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+__global__ void
+device_reduce_kernel(const _Tp* in, _Tp* out, int N)
+{
+    int i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int istride = blockDim.x * gridDim.x;
+    _Tp sum     = 0;
+
+    // reduce multiple elements per thread
+    for(int i = i0; i < N; i += istride)
+        sum += in[i];
+    sum = block_reduce_sum<_Tp>(sum);
+    if(threadIdx.x == 0)
+        out[blockIdx.x] = sum;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+_Tp
+device_reduce(const _Tp* in, _Tp* out, int N, cudaStream_t stream)
+{
+    int threads = 32;
+    int blocks  = min((N + threads - 1) / threads, 1024);
+    int smem    = 0;
+
+    device_reduce_kernel<_Tp><<<blocks, threads, smem, stream>>>(in, out, N);
+    device_reduce_kernel<_Tp><<<1, 1024, smem, stream>>>(out, out, blocks);
+
+    _Tp sum;
+    cudaMemcpyAsync(&sum, out, sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
+    cudaStreamSynchronize(stream);
+    return sum;
+}
+
+//======================================================================================//
+
 class gpu_data
 {
 public:

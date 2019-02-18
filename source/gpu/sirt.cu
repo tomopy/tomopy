@@ -74,22 +74,20 @@ typedef gpu_data::data_array_t data_array_t;
 
 __global__ void
 cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
-                        const int_type* recon_use, uint16_t* sum_dist)
+                        const int_type* recon_use, uint32_t* sum_dist)
 {
     int d0      = blockIdx.x * blockDim.x + threadIdx.x;
     int dstride = blockDim.x * gridDim.x;
 
     for(int d = d0; d < dx; d += dstride)
     {
+        for(int i = 0; i < nx; ++i)
+            atomicAdd(&sum_dist[d * nx + i], (recon_use[d * nx + i] > 0) ? 1 : 0);
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-            sum_dist[d * nx + i] += (recon_use[d * nx + i] > 0) ? 1 : 0;
-        float upd = (data[p * dx + d] - sum);
-        if(upd == upd)  // is finite
-            for(int i = 0; i < nx; ++i)
-                recon[d * nx + i] += upd;
+            recon[d * nx + i] += (data[p * dx + d] - sum);
     }
 }
 
@@ -102,11 +100,10 @@ cuda_sirt_update_kernel(float* recon, const float* update, const uint32_t* sum_d
     int i0      = blockIdx.x * blockDim.x + threadIdx.x;
     int istride = blockDim.x * gridDim.x;
 
-    float fdx = scast<float>(dx);
     for(int i = i0; i < size; i += istride)
     {
         if(sum_dist[i] != 0.0f)
-            atomicAdd(&recon[i], update[i] / scast<float>(sum_dist[i]) / fdx);
+            recon[i] += update[i] / scast<float>(sum_dist[i]) / scast<float>(dx);
     }
 }
 
@@ -142,7 +139,7 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int d
     int          grid         = _cache->compute_grid(dx);
     cudaStream_t stream       = _cache->stream();
 
-    gpu_memset<uint16_t>(sum_dist_tmp, 0, nx * ny, stream);
+    // gpu_memset<uint16_t>(sum_dist_tmp, 0, nx * ny, stream);
     gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     gpu_memset<float>(rot, 0, nx * ny, stream);
     gpu_memset<float>(tmp, 0, nx * ny, stream);
@@ -152,14 +149,11 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int d
     cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
     // compute simdata
     cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data, use_rot,
-                                                        sum_dist_tmp);
+                                                        sum_dist);
     // back-rotate
     cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
     // update shared update array
     cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
-    // update shared sum_dist array
-    cuda_atomic_sum_kernel<uint32_t, uint16_t>
-        <<<grid, block, 0, stream>>>(sum_dist, sum_dist_tmp, nx * ny, 1);
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 }
