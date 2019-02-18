@@ -49,7 +49,7 @@
 #include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
-#include "mlem.h"
+#include "cxx_extern.h"
 #include "utils.h"
 END_EXTERN_C
 

@@ -42,7 +42,7 @@
 #include "utils_cuda.hh"
 
 BEGIN_EXTERN_C
-#include "art.h"
+#include "cxx_extern.h"
 #include "utils.h"
 END_EXTERN_C
 

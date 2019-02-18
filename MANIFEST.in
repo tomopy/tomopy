@@ -8,8 +8,7 @@ recursive-include cmake *
 recursive-include tomopy/data *.tif *.h5
 recursive-include tomopy *
 recursive-include source *
+recursive-include test *
 recursive-exclude * __pycache__ *.pyc
-recursive-exclude source/pybind11/docs *
-recursive-exclude source/pybind11/tests *.h *.cpp *.py
 recursive-exclude _skbuild *
 recursive-exclude benchmarking *

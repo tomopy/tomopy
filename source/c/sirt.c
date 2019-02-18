@@ -41,7 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "sirt.h"
+#include "cxx_extern.h"
 #include "profiler.h"
 #include "utils.h"
 

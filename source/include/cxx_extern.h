@@ -46,24 +46,72 @@
 BEGIN_EXTERN_C
 
 //======================================================================================//
-
+//
+//  ART
+//
+//======================================================================================//
 int
 cxx_art(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
 //--------------------------------------------------------------------------------------//
-
 void
 art_cpu(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
 //--------------------------------------------------------------------------------------//
-
 void
 art_cuda(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
 //======================================================================================//
+//
+//  MLEM
+//
+//======================================================================================//
+int
+cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+//--------------------------------------------------------------------------------------//
+void
+mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+//--------------------------------------------------------------------------------------//
+void
+mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+
+//======================================================================================//
+//
+//  SIRT
+//
+//======================================================================================//
+int
+cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+//--------------------------------------------------------------------------------------//
+void
+sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+//--------------------------------------------------------------------------------------//
+void
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+
+//======================================================================================//
+//
+//  Project
+//
+//======================================================================================//
+int
+cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+            const float* center, const float* theta);
+//--------------------------------------------------------------------------------------//
+void
+project_cpu(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+            const float* center, const float* theta);
+//--------------------------------------------------------------------------------------//
+void
+project_cuda(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt,
+             int dx, const float* center, const float* theta);
 
 END_EXTERN_C
 

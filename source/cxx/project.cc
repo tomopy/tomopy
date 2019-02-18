@@ -47,7 +47,7 @@
 #include "utils.hh"
 
 BEGIN_EXTERN_C
-#include "project.h"
+#include "cxx_extern.h"
 #include "utils.h"
 END_EXTERN_C
 

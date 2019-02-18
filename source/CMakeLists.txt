@@ -5,8 +5,9 @@
 ################################################################################
 # ensure PIC flag is set
 set(PYTHON_SITE_DIR ${CMAKE_INSTALL_PREFIX})
-set(BUILD_STATIC_LIBS   ON  CACHE BOOL "Build static libraries" FORCE)
-set(BUILD_SHARED_LIBS   OFF CACHE BOOL "Build shared libraries" FORCE)
+set(BUILD_STATIC_LIBS     ON  CACHE BOOL "Build static libraries" FORCE)
+set(BUILD_SHARED_LIBS     OFF CACHE BOOL "Build shared libraries" FORCE)
+set(PTL_DEVELOPER_INSTALL OFF CACHE BOOL "Install headers, cmake export, and shared libs" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON
     CACHE BOOL "Position independent code" FORCE)
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
@@ -112,7 +113,7 @@ target_compile_options(libtomopy PUBLIC
 # Install the compiled library
 install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT development)
+    COMPONENT python)
 
 
 #------------------------------------------------------------------------------#
@@ -131,13 +132,13 @@ if(NOT SKBUILD)
             install(FILES ${_BINARY_FILE}
                 DESTINATION ${PYTHON_SITE_DIR}/tomopy/${RELATIVE_PATH}
                 COMPONENT python)
-        endforeach(_SOURCE_FILE ${ARGN})
+        endforeach()
     endmacro()
 
     # Copy over pure python module, python testing, and setup files
     file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
     file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
-                    "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
+                       "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
     file(GLOB _MISC    "${PROJECT_SOURCE_DIR}/tomopy/misc/*.py")
     file(GLOB _PREP    "${PROJECT_SOURCE_DIR}/tomopy/prep/*.py")
     file(GLOB _RECON   "${PROJECT_SOURCE_DIR}/tomopy/recon/*.py")

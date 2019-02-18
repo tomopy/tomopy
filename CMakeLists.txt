@@ -26,7 +26,7 @@ cmake_policy(SET CMP0053 NEW)
 project(tomopy LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules ${CMAKE_MODULE_PATH})
-set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME development)
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME python)
 
 ################################################################################
 

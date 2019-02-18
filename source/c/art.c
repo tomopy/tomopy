@@ -41,7 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "art.h"
+#include "cxx_extern.h"
 #include "profiler.h"
 #include "utils.h"
 
@@ -162,7 +162,7 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
                 }
             }
         }
-        printf("[c]> iteration %3i of %3i...\n", i, num_iter);
+        // printf("[c]> iteration %3i of %3i...\n", i, num_iter);
     }
     free(gridx);
     free(gridy);

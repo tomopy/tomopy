@@ -36,8 +36,6 @@ def add_option(lc_name, disp_name):
 
 add_option("gpu", "GPU")
 add_option("cuda", "CUDA")
-add_option("openacc", "OpenACC")
-add_option("openmp", "OpenMP")
 add_option("nvtx", "NVTX (NVIDIA Nsight)")
 add_option("arch", "Hardware optimized")
 add_option("avx512", "AVX-512 optimized")
@@ -59,8 +57,6 @@ sys.argv = sys.argv[:1]+left
 
 add_bool_opt("TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
 add_bool_opt("TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
-add_bool_opt("TOMOPY_USE_OPENACC", args.enable_openacc, args.disable_openacc)
-add_bool_opt("TOMOPY_USE_OPENMP", args.enable_openmp, args.disable_openmp)
 add_bool_opt("TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
 if args.enable_avx512 and not args.enable_arch:
     args.enable_arch = True
@@ -79,9 +75,9 @@ if len(cmake_args) > 0:
 
 setup(
     name='tomopy',
-    packages=find_packages(exclude=['test*']),
+    packages=find_packages(exclude=['test*', 'benchmarking*']),
     version=open('VERSION').read().strip(),
-    include_package_data=True,
+    include_package_data=False,
     zip_safe=False,
     author='Doga Gursoy',
     author_email='dgursoy@aps.anl.gov',

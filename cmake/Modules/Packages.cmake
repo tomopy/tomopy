@@ -300,15 +300,6 @@ foreach(_DIR ${EXTERNAL_INCLUDE_DIRS})
     include_directories(SYSTEM ${_DIR})
 endforeach()
 
-# configure package files
-configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
-    ${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py
-    @ONLY)
-
-configure_file(${PROJECT_SOURCE_DIR}/tomopy/allocator/__init__.py.in
-    ${PROJECT_BINARY_DIR}/tomopy/allocator/__init__.py
-    @ONLY)
-
 # include dirs
 set(TARGET_INCLUDE_DIRECTORIES
     ${PROJECT_SOURCE_DIR}/source/include

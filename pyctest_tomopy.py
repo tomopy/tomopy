@@ -167,8 +167,6 @@ def configure():
 
     add_option(parser, "gpu", "GPU")
     add_option(parser, "cuda", "CUDA")
-    add_option(parser, "openacc", "OpenACC")
-    add_option(parser, "openmp", "OpenMP")
     add_option(parser, "nvtx", "NVTX (NVIDIA Nsight)")
     add_option(parser, "arch", "Hardware optimized")
     add_option(parser, "avx512", "AVX-512 optimized")
@@ -184,8 +182,6 @@ def configure():
 
     add_bool_opt(args, "TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
     add_bool_opt(args, "TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
-    add_bool_opt(args, "TOMOPY_USE_OPENACC", args.enable_openacc, args.disable_openacc)
-    add_bool_opt(args, "TOMOPY_USE_OPENMP", args.enable_openmp, args.disable_openmp)
     add_bool_opt(args, "TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
     if args.enable_avx512 and not args.enable_arch:
         args.enable_arch = True
@@ -287,7 +283,7 @@ def run_pyctest():
 
 
     #   BUILD_COMMAND
-    pyctest.BUILD_COMMAND = "{} setup.py --hide-listing install".format(pyexe)
+    pyctest.BUILD_COMMAND = "{} setup.py --hide-listing -q install".format(pyexe)
     pyctest.BUILD_COMMAND += " --build-type=Debug" if args.coverage else ""
     pyctest.BUILD_COMMAND += " -- {}".format(" ".join(args.cmake_args))
 
