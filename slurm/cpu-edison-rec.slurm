@@ -12,7 +12,7 @@ echo -e "Starting at $(date)"
 BASE_DIR=/global/cscratch1/sd/jrmadsen
 GLOBUS_DIR=${BASE_DIR}/globus
 SOURCE_DIR=${BASE_DIR}/software/tomopy/tomopy-edison-gpu
-SCRIPT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+SCRIPT_DIR=${SOURCE_DIR}/slurm
 . ${SCRIPT_DIR}/env-common-settings.sh $@
 cd ${SOURCE_DIR}
 
@@ -43,7 +43,7 @@ run-recon()
         -a ${ALGORITHM} \
         -r ${BLOCK_BEG} ${BLOCK_END} \
         -f png \
-        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log &
+        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log &
     echo $!
 }
 

@@ -14,7 +14,7 @@ echo -e "Starting at $(date)"
 BASE_DIR=/project/projectdirs/m1759/jrmadsen
 GLOBUS_DIR=${BASE_DIR}/globus
 SOURCE_DIR=${BASE_DIR}/tomopy-edison-gpu
-SCRIPT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+SCRIPT_DIR=${SOURCE_DIR}/slurm
 . ${SCRIPT_DIR}/env-common-settings.sh $@
 cd ${SOURCE_DIR}
 
@@ -46,7 +46,7 @@ run-recon()
         -a ${ALGORITHM} \
         -r ${BLOCK_BEG} ${BLOCK_END} \
         -f png \
-        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log
 }
 
 for i in 32 128 256

@@ -12,7 +12,7 @@ echo -e "Starting at $(date)"
 BASE_DIR=/global/cscratch1/sd/jrmadsen
 GLOBUS_DIR=${BASE_DIR}/globus
 SOURCE_DIR=${BASE_DIR}/software/tomopy/tomopy-edison-gpu
-SCRIPT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+SCRIPT_DIR=${SOURCE_DIR}/slurm
 . ${SCRIPT_DIR}/env-common-settings.sh $@
 cd ${SOURCE_DIR}
 
@@ -41,7 +41,7 @@ run-phantom()
         -i ${TOMOPY_NUM_ITERATION} \
         -a ${ALGORITHM} \
         -f png \
-        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log &
+        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${ALGORITHM}-${OUT}.log &
     echo $!
 }
 

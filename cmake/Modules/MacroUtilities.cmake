@@ -40,6 +40,23 @@ ENDMACRO()
 
 
 #-----------------------------------------------------------------------
+# function - capitalize - make a string capitalized (first letter is capital)
+#   usage:
+#       capitalize("SHARED" CShared)
+#   message(STATUS "-- CShared is \"${CShared}\"")
+#   $ -- CShared is "Shared"
+FUNCTION(capitalize str var)
+    # make string lower
+    string(TOLOWER "${str}" str)
+    string(SUBSTRING "${str}" 0 1 _first)
+    string(TOUPPER "${_first}" _first)
+    string(SUBSTRING "${str}" 1 -1 _remainder)
+    string(CONCAT str "${_first}" "${_remainder}")
+    set(${var} "${str}" PARENT_SCOPE)
+ENDFUNCTION()
+
+
+#-----------------------------------------------------------------------
 # GENERAL
 #-----------------------------------------------------------------------
 # function add_feature(<NAME> <DOCSTRING>)
