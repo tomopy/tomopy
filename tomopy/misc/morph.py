@@ -132,6 +132,12 @@ def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     newshape[axis] += 2*npad
 
     slc_in, slc_l, slc_r, slc_l_v, slc_r_v = _get_slices(arr.shape, axis, npad)
+    # convert to tuples
+    slc_in = tuple(slc_in)
+    slc_l = tuple(slc_l)
+    slc_r = tuple(slc_r)
+    slc_l_v = tuple(slc_l_v)
+    slc_r_v = tuple(slc_r_v)
 
     out = np.empty(newshape, dtype=arr.dtype)
     if arr.dtype in [np.float32, np.float64, np.bool,

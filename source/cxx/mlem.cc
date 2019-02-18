@@ -137,18 +137,11 @@ mlem_cpu_compute_projection(data_array_t& _cpu_data, int s, int p, int dy, int d
 
     for(int d = 0; d < dx; d++)
     {
-        int   fnx = 0;
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon_rot[d * nx + i];
         for(int i = 0; i < nx; ++i)
-        {
-            if(use_rot[d * nx + i] > 0)
-            {
-                fnx += 1;
-                sum_dist[d * nx + i] += 1.0f;
-            }
-        }
+            sum_dist[d * nx + i] += (use_rot[d * nx + i] > 0) ? 1.0f : 0.0f;
         if(sum != 0.0f)
         {
             float upd = data[p * dx + d] / sum;

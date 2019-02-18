@@ -1,19 +1,20 @@
-#!/bin/bash
+#!/bin/bash -e
 
 : ${NUM_ITER:=35}
 : ${FORMAT:=png}
+: ${ALGORITHM:=mlem}
 
-export NUM_ITER FORMAT
+export NUM_ITER FORMAT ALGORITHM
 
 move-folder()
 {
-    mv ${1}/sirt ${1}/${1}_m${2}_p${3}_sirt
+    mv ${1}/${ALGORITHM} ${1}/${1}_m${2}_p${3}_${ALGORITHM}
 }
 
 exec-scripts()
 {
-    ./pyctest_tomopy_phantom.py -i ${NUM_ITER} -p shepp2d -f ${FORMAT}
-    ./pyctest_tomopy_phantom.py -i ${NUM_ITER} -p cameraman -f ${FORMAT}
+    ./pyctest_tomopy_phantom.py -i ${NUM_ITER} -p shepp2d -f ${FORMAT} -a ${ALGORITHM}
+    ./pyctest_tomopy_phantom.py -i ${NUM_ITER} -p cameraman -f ${FORMAT} -a ${ALGORITHM}
 }
 
 export TOMOPY_USE_C_SIRT=0

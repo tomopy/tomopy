@@ -83,19 +83,11 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
 
     for(int d = d0; d < dx; d += dstride)
     {
-        int   fnx = 0;
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-        {
-            if(recon_use[d * nx + i] > 0)
-            {
-                fnx += 1;
-                sum_dist[d * nx + i] += 1.0f;
-            }
-        }
-
+            sum_dist[d * nx + i] += (recon_use[d * nx + i] > 0) ? 1.0f : 0.0f;
         float upd = (data[p * dx + d] - sum);
         if(upd == upd)  // is finite
             for(int i = 0; i < nx; ++i)

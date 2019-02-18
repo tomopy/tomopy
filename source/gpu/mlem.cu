@@ -89,16 +89,11 @@ cuda_mlem_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
 
     for(int d = d0; d < dx; d += dstride)
     {
-        int   fnx = 0;
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
         for(int i = 0; i < nx; ++i)
-        {
-            auto use = (recon_use[d * nx + i] > 0) ? 1 : 0;
-            fnx += use;
-            sum_dist[d * nx + i] += scast<float>(use);
-        }
+            sum_dist[d * nx + i] += (recon_use[d * nx + i] > 0) ? 1.0f : 0.0f;
         if(sum != 0.0f)
         {
             float upd = data[p * dx + d] / sum;
@@ -169,7 +164,7 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int s, int p, int dy, int d
     // back-rotate
     cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
     // update shared update array
-    cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
+    cuda_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 }
