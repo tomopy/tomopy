@@ -214,15 +214,12 @@ endif()
 
 # ---------------------------------------------------------------------------- #
 # user customization
-set(_CFLAGS ${CFLAGS} $ENV{CFLAGS})
-set(_CXXFLAGS ${CXXFLAGS} $ENV{CXXFLAGS})
-string(REPLACE " " ";" _CFLAGS "${_CFLAGS}")
-string(REPLACE " " ";" _CXXFLAGS "${_CXXFLAGS}")
-
+to_list(_CFLAGS "${CFLAGS};$ENV{CFLAGS}")
 foreach(_FLAG ${_CFLAGS})
     add_c_flag_if_avail("${_FLAG}")
 endforeach()
 
+to_list(_CXXFLAGS "${CXXFLAGS};$ENV{CXXFLAGS}")
 foreach(_FLAG ${_CXXFLAGS})
     add_cxx_flag_if_avail("${_FLAG}")
 endforeach()

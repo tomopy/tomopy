@@ -5,6 +5,7 @@ python:
   - "3.6"
 os:
   - linux
+dist: xenial
 sudo: false
 env:
   global:
@@ -16,14 +17,18 @@ before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p ${HOME}/miniconda
   - export PATH="${HOME}/miniconda/bin:${PATH}"
+  - source activate base
   - conda config --set always_yes yes
+  - conda update -n base conda
 install:
   - PYTHON_TAG=$(echo ${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
   - conda env create -n tomopy -f envs/tomopy-python${PYTHON_TAG}.yml
-  - source activate tomopy
+  - conda activate tomopy
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --disable-phantom-tests --disable-gpu --disable-cuda ${PYCTEST_ARGS}
+  - echo "C compiler = ${CC}"
+  - echo "CXX compiler = ${CXX}"
+  - ./pyctest_tomopy.py --disable-phantom-tests --disable-gpu ${PYCTEST_ARGS}
 script:
   - coverage run $(which nosetests)
 after_success:

@@ -5,10 +5,6 @@ channels:
   - defaults
 dependencies:
   - python=2.7
-  - gcc_linux-64  # [linux]
-  - gxx_linux-64  # [linux]
-  - libstdcxx-ng  # [linux]
-  - libgcc-ng  # [linux]
   - coverage
   - dxchange
   - h5py

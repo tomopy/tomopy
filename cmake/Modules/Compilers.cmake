@@ -181,12 +181,10 @@ foreach(LANG C CXX)
     elseif(CMAKE_${LANG}_COMPILER_ID MATCHES "Intel")
 
         SET_COMPILER_VAR(       INTEL               ON)
-
         set(CTYPE ICC)
         if("${LANG}" STREQUAL "CXX")
             set(CTYPE ICPC)
-        endif("${LANG}" STREQUAL "CXX")
-
+        endif()
         SET_COMPILER_VAR(       INTEL_${CTYPE}      ON)
 
     elseif(CMAKE_${LANG}_COMPILER MATCHES "MSVC")

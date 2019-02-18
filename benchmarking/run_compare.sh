@@ -1,11 +1,9 @@
 #!/bin/bash -l
 
-cd /home/tomopy
-python setup.py install --build-type=Release -- -DTOMOPY_USE_TIMEMORY=ON &> /dev/null
-cd benchmarking
+python setup.py install --build-type=Release -- -DTOMOPY_USE_TIMEMORY=OFF &> /dev/null
 
 : ${NUM_ITER:=5}
-: ${NUM_THREADS:=8}
+: ${NUM_THREADS:=$(nproc)}
 
 if [ -n "${1}" ]; then NUM_ITER=$1; fi
 if [ -n "${2}" ]; then NUM_THREADS=$2; fi
