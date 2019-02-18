@@ -2,12 +2,10 @@
 
 #SBATCH -A nstaff
 #SBATCH -N 1
-#SBATCH -C gpu
-#SBATCH --gres=gpu:4
-#SBATCH --exclusive
-#SBATCH -t 02:00:00
-#SBATCH --job-name=gpu-edison
-#SBATCH --output=gpu-edison-%j.log
+#SBATCH -q priority
+#SBATCH -t 08:00:00
+#SBATCH --job-name=cpu-edison
+#SBATCH --output=cpu-edison-%j.log
 
 echo -e "Starting at $(date)"
 
@@ -43,26 +41,32 @@ run-phantom()
         -i ${TOMOPY_NUM_ITERATION} \
         -a ${ALGORITHM} \
         -f png \
-        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log
+        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${OUT}.log &
+    echo $!
 }
 
-for i in 32 128 256
-do
-    export CUDA_BLOCK_SIZE=${i}
-    for j in 0 16 32
-    do
-        export CUDA_GRID_SIZE=${j}
+export ALGORITHM=sirt
+pid=$(run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END} | awk '{print $NF}')
+wait $pid
 
-        export ALGORITHM=sirt
-        run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
-        run-phantom cameraman
-        run-phantom lena
+export ALGORITHM=mlem
+pid=$(run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END} | awk '{print $NF}')
+wait $pid
 
-        export ALGORITHM=mlem
-        run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
-        run-phantom cameraman
-        run-phantom lena
-    done
+export ALGORITHM=sirt
+pids[0]=$(run-phantom cameraman | awk '{print $NF}')
+sleep 10
+pids[1]=$(run-phantom lena | awk '{print $NF}')
+sleep 10
+
+pids[2]=$(run-phantom cameraman | awk '{print $NF}')
+sleep 10
+pids[3]=$(run-phantom lena | awk '{print $NF}')
+sleep 10
+
+# wait for all pids
+for pid in ${pids[*]}; do
+    wait $pid
 done
 
 echo -e "Completed at $(date)"

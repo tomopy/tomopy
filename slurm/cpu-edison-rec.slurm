@@ -2,12 +2,10 @@
 
 #SBATCH -A nstaff
 #SBATCH -N 1
-#SBATCH -C gpu
-#SBATCH --gres=gpu:4
-#SBATCH --exclusive
-#SBATCH -t 02:00:00
-#SBATCH --job-name=gpu-edison
-#SBATCH --output=gpu-edison-%j.log
+#SBATCH -q priority
+#SBATCH -t 08:00:00
+#SBATCH --job-name=cpu-edison
+#SBATCH --output=cpu-edison-%j.log
 
 echo -e "Starting at $(date)"
 
@@ -45,24 +43,28 @@ run-recon()
         -a ${ALGORITHM} \
         -r ${BLOCK_BEG} ${BLOCK_END} \
         -f png \
-        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log &
+    echo $!
 }
 
-for i in 32 128 256
-do
-    export CUDA_BLOCK_SIZE=${i}
-    for j in 0 16 32
-    do
-        export CUDA_GRID_SIZE=${j}
+export ALGORITHM=sirt
+pid=$(run-recon partial | awk '{print $NF}')
+wait $pid
 
-        export ALGORITHM=sirt
-        run-recon partial
-        run-recon slice
+export ALGORITHM=mlem
+pid=$(run-recon partial | awk '{print $NF}')
+wait $pid
 
-        export ALGORITHM=mlem
-        run-recon partial
-        run-recon slice
-    done
+export ALGORITHM=sirt
+pids[0]=$(run-recon slice | awk '{print $NF}')
+
+sleep 10
+export ALGORITHM=mlem
+pids[1]=$(run-recon slice | awk '{print $NF}')
+
+# wait for all pids
+for pid in ${pids[*]}; do
+    wait $pid
 done
 
 echo -e "Completed at $(date)"
