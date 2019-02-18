@@ -2,7 +2,7 @@
 
 #SBATCH -A nstaff
 #SBATCH -N 1
-#SBATCH -q priority
+#SBATCH -q regular
 #SBATCH -t 08:00:00
 #SBATCH --job-name=cpu-edison
 #SBATCH --output=cpu-edison-%j.log

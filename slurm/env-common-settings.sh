@@ -27,9 +27,13 @@ if [ -n "${1}" ]; then TOMOPY_NUM_ITERATION=${1}; shift; fi
 # parallelism settings
 : ${PTL_CPU_AFFINITY:=1}
 : ${PTL_VERBOSE:=1}
-: ${TOMOPY_NUM_GPU:=8}
-: ${TOMOPY_PYTHON_THREADS:=${TOMOPY_NUM_GPU}}
-: ${TOMOPY_NUM_THREADS:=$(( $(nproc) / ${TOMOPY_PYTHON_THREADS} + 2 ))}
+: ${TOMOPY_NUM_GPU:=4}
+if [ "${NERSC_HOST}" = "edison" ]; then
+    : ${TOMOPY_PYTHON_THREADS:=24}
+else
+    : ${TOMOPY_PYTHON_THREADS:=${TOMOPY_NUM_GPU}}
+fi
+: ${TOMOPY_NUM_THREADS:=$(( 64 / ${TOMOPY_PYTHON_THREADS} + 4 ))}
 : ${CUDA_BLOCK_SIZE:=32}
 : ${CUDA_GRID_SIZE:=0}
 

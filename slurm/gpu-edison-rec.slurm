@@ -3,7 +3,7 @@
 #SBATCH -A nstaff
 #SBATCH -N 1
 #SBATCH -C gpu
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:8
 #SBATCH --exclusive
 #SBATCH -t 02:00:00
 #SBATCH --job-name=gpu-edison
