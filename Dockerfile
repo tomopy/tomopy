@@ -24,6 +24,7 @@ WORKDIR /work
 #------------------------------------------------------------------------------#
 COPY ./.docker/apt.sh /work/apt.sh
 COPY ./.docker/conda.sh /work/conda.sh
+COPY ./.docker/config-path.sh /work/config-path.sh
 COPY ./envs /work/envs
 
 
@@ -34,50 +35,22 @@ ENV PYTHON_VERSION ${PYTHON_VERSION}
 
 
 #------------------------------------------------------------------------------#
-#   primary install
+#   dependency installation
 #------------------------------------------------------------------------------#
 RUN ./apt.sh && \
-    ./conda.sh
+    ./conda.sh && \
+    ./config-path.sh
 
 
 #------------------------------------------------------------------------------#
-#   PGI compiler
+#   tomopy installation
 #------------------------------------------------------------------------------#
-COPY ./.docker/pgilinux-2018-1810-x86-64.tar.gz /work/pgi/
-ENV PGI_ACCEPT_EULA accept
-ENV PGI_SILENT true
-RUN cd /work/pgi && \
-    tar -xzf pgilinux-2018-1810-x86-64.tar.gz && \
-    ./install
-
-
-#------------------------------------------------------------------------------#
-#   Path configuration
-#------------------------------------------------------------------------------#
-COPY ./.docker/config-path.sh /work/config-path.sh
-RUN ./config-path.sh
-
-
-#------------------------------------------------------------------------------#
-#   Repos (OpenCV)
-#------------------------------------------------------------------------------#
-COPY ./.docker/repos.sh /work/repos.sh
-RUN ./repos.sh
-
-
-#------------------------------------------------------------------------------#
-#   Cleanup
-#------------------------------------------------------------------------------#
-RUN rm -rf /root/* /work/*
-
-
-#------------------------------------------------------------------------------#
-#   copy files for runtime
-#------------------------------------------------------------------------------#
-COPY ./.docker/runtime-entrypoint.sh /tomopy-gpu-runtime-entrypoint.sh
-COPY ./.docker/compute-dir-size.py /etc/compute-dir-size.py
-COPY ./.docker/bash.bashrc /etc/bash.bashrc
-COPY ./.docker/bashrc /root/.bashrc
+SHELL [ "/bin/bash", "-lc" ]
+COPY ./ /work/tomopy-source/
+RUN cd /work/tomopy-source && \
+    python setup.py install && \
+    cd / && \
+    rm -rf /root/* /work/*
 
 
 ################################################################################
@@ -101,6 +74,14 @@ ENV CUDA_HOME "/usr/local/cuda"
 ENV NVIDIA_REQUIRE_CUDA "cuda>=${REQUIRE_CUDA_VERSION}"
 ENV NVIDIA_VISIBLE_DEVICES "all"
 ENV NVIDIA_DRIVER_CAPABILITIES "compute,utility"
+
+#------------------------------------------------------------------------------#
+#   copy files for runtime
+#------------------------------------------------------------------------------#
+COPY ./.docker/runtime-entrypoint.sh /tomopy-gpu-runtime-entrypoint.sh
+COPY ./.docker/compute-dir-size.py /etc/compute-dir-size.py
+COPY ./.docker/bash.bashrc /etc/bash.bashrc
+COPY ./.docker/bashrc /root/.bashrc
 
 USER root
 WORKDIR /home

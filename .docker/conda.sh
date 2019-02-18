@@ -8,11 +8,10 @@ bash miniconda.sh -b -p /opt/conda
 
 export PATH="/opt/conda/bin:${PATH}"
 
+conda config --set always_yes yes --set changeps1 yes
+conda update -c defaults -n base conda
 conda config --add channels jrmadsen
 conda config --add channels conda-forge
-conda config --set always_yes yes --set changeps1 yes
-
-conda update conda
 
 PYTHON_TAG=$(echo ${PYTHON_VERSION} | sed 's/\.//g')
 conda env create -n tomopy -f /work/envs/tomopy-python${PYTHON_TAG}.yml
