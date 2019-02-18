@@ -9,84 +9,61 @@
 #SBATCH --job-name=gpu-edison
 #SBATCH --output=gpu-edison-%j.log
 
-run-verbose()
-{
-    echo -e "\nRunning : '$@'...\n"
-    eval $@
-}
-
 echo -e "Starting at $(date)"
 
-module load python/3.6-anaconda-4.4
-module load gcc
-module load cuda
-
-source activate tomopy-gpu
-
-cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu
+BASE_DIR=/project/projectdirs/m1759/jrmadsen
+GLOBUS_DIR=${BASE_DIR}/globus
+SOURCE_DIR=${BASE_DIR}/tomopy-edison-gpu
+SCRIPT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+. ${SCRIPT_DIR}/env-common-settings.sh $@
+cd ${SOURCE_DIR}
 
 LOG_DIR=${PWD}/logs
 mkdir -p ${LOG_DIR}
 
 # algorithm settings
-export TOMOPY_USE_C_SIRT=0
+export TOMOPY_USE_C_ALGORITHMS=0
 export TOMOPY_USE_CPU=0
 export TOMOPY_DEVICE_TYPE=cuda
-export TOMOPY_INTER=1
-export TOMOPY_NUM_ITERATION=50
-export DATA_TYPE=partial
 
-if [ -n "${1}" ]; then TOMOPY_INTER=${1}; shift; fi
-if [ -n "${1}" ]; then TOMOPY_NUM_ITERATION=${1}; shift; fi
+OUT="$(configure-out)"
 
-# data settings
-export BLOCK_BEGIN=0
-export BLOCK_END=24
-export NUM_SLICES=$((${BLOCK_END} - ${BLOCK_BEGIN}))
-
-# parallelism settings
-export PTL_CPU_AFFINITY=1
-export PTL_VERBOSE=1
-export TOMOPY_NUM_GPU=8
-export TOMOPY_PYTHON_THREADS=8
-export TOMOPY_NUM_THREADS=10
-export TOMOPY_STREAM_SYNC=1
-export CUDA_BLOCK_SIZE=32
-export PTL_NUM_THREADS=${TOMOPY_NUM_THREADS}
-export NUMEXPR_MAX_THREADS=80
-
-OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${CUDA_BLOCK_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_SIRT}-${TOMOPY_USE_CPU}"
-
-# echo -e "\n### cleaning... ###\n"
-# python setup.py clean 
-
-echo -e "\n### building... ###\n"
-run-verbose python setup.py install --enable-cuda --enable-arch --disable-openmp --disable-nvtx --enable-gpu --disable-timemory --disable-avx512 -- -DTOMOPY_USE_PYBIND11=OFF -DTOMOPY_USE_PTL=ON | tee ${LOG_DIR}/build-${OUT}.log
-
-run-verbose cd /project/projectdirs/m1759/jrmadsen/tomopy-edison-gpu/benchmarking
-
-echo -e "\n### printing GPU info... ###\n"
+run-verbose python setup.py install --enable-arch --enable-cuda --enable-gpu | tee ${LOG_DIR}/build-${OUT}.log
+run-verbose cd ${SOURCE_DIR}/benchmarking
 run-verbose srun nvidia-smi | tee ${LOG_DIR}/smi-${OUT}.log
 
-echo -e "\n### running... ###\n"
 run-recon()
 {
-    DATA_TYPE=${1}
-    OUT="gpu-${TOMOPY_DEVICE_TYPE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${CUDA_BLOCK_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_SIRT}-${TOMOPY_USE_CPU}"
+    export DATA_TYPE=${1}
+    OUT="$(configure-out)"
     run-verbose srun -c 80 \
-	$(which python) \
-	./pyctest_tomopy_rec.py \
-	-o  ${OUT} \
-	--type=${DATA_TYPE} \
-	-n ${TOMOPY_PYTHON_THREADS} \
-	-i ${TOMOPY_NUM_ITERATION} \
-	-a sirt \
-	-r ${BLOCK_BEGIN} ${BLOCK_END} \
-	-f png \
-	/project/projectdirs/m1759/jrmadsen/globus/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
+        $(which python) \
+        ./pyctest_tomopy_rec.py \
+        -o ${OUT}-${ALGORITHM} \
+        --type=${DATA_TYPE} \
+        -n ${TOMOPY_PYTHON_THREADS} \
+        -i ${TOMOPY_NUM_ITERATION} \
+        -a ${ALGORITHM} \
+        -r ${BLOCK_BEGIN} ${BLOCK_END} \
+        -f png \
+        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${OUT}.log
 }
 
-run-recon partial
-run-recon slice
+for i in 32 128 256
+do
+    export CUDA_BLOCK_SIZE=${i}
+    for j in 0 16 32
+    do
+        export CUDA_GRID_SIZE=${j}
+
+        export ALGORITHM=sirt
+        run-recon partial
+        run-recon slice
+
+        export ALGORITHM=mlem
+        run-recon partial
+        run-recon slice
+    done
+done
 
 echo -e "Completed at $(date)"
