@@ -5,20 +5,12 @@
 ################################################################################
 # ensure PIC flag is set
 set(PYTHON_SITE_DIR ${CMAKE_INSTALL_PREFIX})
-set(PYBIND11_INSTALL    OFF CACHE BOOL "PyBind11 installation"  FORCE)
-set(PYBIND11_TEST       OFF CACHE BOOL "PyBind11 testing"       FORCE)
 set(BUILD_STATIC_LIBS   ON  CACHE BOOL "Build static libraries" FORCE)
 set(BUILD_SHARED_LIBS   OFF CACHE BOOL "Build shared libraries" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON
     CACHE BOOL "Position independent code" FORCE)
 set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     CACHE PATH "Installation directory of libraries" FORCE)
-if(TOMOPY_USE_PYBIND11)
-    # ensure the submodule is checked out
-    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-        RELATIVE_PATH source/pybind11 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    add_subdirectory(pybind11)
-endif()
 
 #------------------------------------------------------------------------------#
 #
@@ -121,42 +113,6 @@ target_compile_options(libtomopy PUBLIC
 install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT development)
-
-#------------------------------------------------------------------------------#
-#
-#   PyBind11 submodule
-#
-#------------------------------------------------------------------------------#
-if(TOMOPY_USE_PYBIND11)
-
-    file(GLOB TOMOCXX_SOURCES ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cpp)
-    file(GLOB TOMOCXX_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
-
-    pybind11_add_module(tomocxx ${TOMOCXX_HEADERS} ${TOMOCXX_SOURCES})
-
-    target_link_libraries(tomocxx PRIVATE libtomopy ${EXTERNAL_LIBRARIES})
-
-    set_target_properties(tomocxx PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy
-        LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy
-        ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy)
-
-    target_compile_definitions(tomocxx PRIVATE
-        ${${PROJECT_NAME}_DEFINITIONS})
-
-    get_target_property(_INCLUDE_DIRS tomocxx INCLUDE_DIRECTORIES)
-    target_include_directories(tomocxx PRIVATE
-        ${PYTHON_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}/pybind11/include
-        ${TARGET_INCLUDE_DIRECTORIES})
-
-    target_compile_options(tomocxx PRIVATE
-        $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
-
-    install(TARGETS tomocxx
-        DESTINATION ${PYTHON_SITE_DIR}/tomopy
-        COMPONENT development)
-endif()
 
 
 #------------------------------------------------------------------------------#

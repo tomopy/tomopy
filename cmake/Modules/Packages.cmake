@@ -242,7 +242,6 @@ if(TOMOPY_USE_OPENCV)
     find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
 
     if(OpenCV_FOUND)
-        message(STATUS "OpenCV ${OpenCV_VERSION} found: ${OpenCV_INSTALL_PATH}")
         list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
     else()

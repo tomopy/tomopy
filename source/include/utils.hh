@@ -173,10 +173,11 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode()
 {
-    static EnvChoiceList<int> choices =
-        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    static EnvChoiceList<int> choices = {
+        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
     static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, CPU_CUBIC));
     return eInterp;
