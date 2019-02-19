@@ -121,30 +121,29 @@ install(TARGETS libtomopy
 #   TomoPy Python file configuration
 #
 #------------------------------------------------------------------------------#
+# helper macro
+macro(CONFIG_INSTALL RELATIVE_PATH)
+    foreach(_SOURCE_FILE ${ARGN})
+        string(REPLACE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" _BINARY_FILE
+            "${_SOURCE_FILE}")
+        configure_file(${_SOURCE_FILE} ${_BINARY_FILE} COPYONLY)
+        install(FILES ${_BINARY_FILE}
+            DESTINATION ${PYTHON_SITE_DIR}/tomopy/${RELATIVE_PATH}
+            COMPONENT python)
+    endforeach()
+endmacro()
+
+# Copy over pure python module, python testing, and setup files
+file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
+file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
+                   "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
+file(GLOB _MISC    "${PROJECT_SOURCE_DIR}/tomopy/misc/*.py")
+file(GLOB _PREP    "${PROJECT_SOURCE_DIR}/tomopy/prep/*.py")
+file(GLOB _RECON   "${PROJECT_SOURCE_DIR}/tomopy/recon/*.py")
+file(GLOB _SIM     "${PROJECT_SOURCE_DIR}/tomopy/sim/*.py")
+file(GLOB _UTIL    "${PROJECT_SOURCE_DIR}/tomopy/util/*.py")
 
 if(NOT SKBUILD)
-    # helper macro
-    macro(CONFIG_INSTALL RELATIVE_PATH)
-        foreach(_SOURCE_FILE ${ARGN})
-            string(REPLACE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}" _BINARY_FILE
-                "${_SOURCE_FILE}")
-            configure_file(${_SOURCE_FILE} ${_BINARY_FILE} COPYONLY)
-            install(FILES ${_BINARY_FILE}
-                DESTINATION ${PYTHON_SITE_DIR}/tomopy/${RELATIVE_PATH}
-                COMPONENT python)
-        endforeach()
-    endmacro()
-
-    # Copy over pure python module, python testing, and setup files
-    file(GLOB _GENERAL "${PROJECT_SOURCE_DIR}/tomopy/*.py")
-    file(GLOB _DATA    "${PROJECT_SOURCE_DIR}/tomopy/data/*.tif"
-                       "${PROJECT_SOURCE_DIR}/tomopy/data/*.h5")
-    file(GLOB _MISC    "${PROJECT_SOURCE_DIR}/tomopy/misc/*.py")
-    file(GLOB _PREP    "${PROJECT_SOURCE_DIR}/tomopy/prep/*.py")
-    file(GLOB _RECON   "${PROJECT_SOURCE_DIR}/tomopy/recon/*.py")
-    file(GLOB _SIM     "${PROJECT_SOURCE_DIR}/tomopy/sim/*.py")
-    file(GLOB _UTIL    "${PROJECT_SOURCE_DIR}/tomopy/util/*.py")
-
     config_install("" ${_GENERAL})
     config_install("data"  ${_DATA})
     config_install("misc"  ${_MISC})
@@ -163,6 +162,8 @@ if(NOT SKBUILD)
     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PYSETUP} ${PROJECT_BINARY_DIR}/
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+else()
+    config_install("data"  ${_DATA})
 endif()
 
 #------------------------------------------------------------------------------#

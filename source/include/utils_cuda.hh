@@ -355,7 +355,7 @@ public:
     static init_data_t initialize(int device, int nthreads, int dy, int dt, int dx,
                                   int ngridx, int ngridy, float* cpu_recon,
                                   const float* cpu_data, float* update,
-                                  bool alloc_sum_dist = true)
+                                  bool alloc_sum_dist = false)
     {
         uintmax_t nstreams = 3;
         auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);

@@ -33,7 +33,7 @@ if [ "${NERSC_HOST}" = "edison" ]; then
 else
     : ${TOMOPY_PYTHON_THREADS:=${TOMOPY_NUM_GPU}}
 fi
-: ${TOMOPY_NUM_THREADS:=$(( 64 / ${TOMOPY_PYTHON_THREADS} + 4 ))}
+: ${TOMOPY_NUM_THREADS:=$(( 80 / ${TOMOPY_PYTHON_THREADS} + 4 ))}
 : ${CUDA_BLOCK_SIZE:=32}
 : ${CUDA_GRID_SIZE:=0}
 
@@ -53,6 +53,6 @@ configure-out()
 
 run-verbose()
 {
-    echo -e "\nRunning : '$@'...\n"
+    echo -e "\n### Running : '$@'... ###\n"
     eval $@
 }

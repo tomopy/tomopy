@@ -41,32 +41,21 @@ run-phantom()
         -i ${TOMOPY_NUM_ITERATION} \
         -a ${ALGORITHM} \
         -f png \
-        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${ALGORITHM}-${OUT}.log &
-    echo $!
+        -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${ALGORITHM}-${OUT}.log
 }
 
 export ALGORITHM=sirt
-pid=$(run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END} | awk '{print $NF}')
-wait $pid
+run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
 
 export ALGORITHM=mlem
-pid=$(run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END} | awk '{print $NF}')
-wait $pid
+run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
 
 export ALGORITHM=sirt
-pids[0]=$(run-phantom cameraman | awk '{print $NF}')
-sleep 10
-pids[1]=$(run-phantom lena | awk '{print $NF}')
-sleep 10
+run-phantom cameraman
+run-phantom lena
 
-pids[2]=$(run-phantom cameraman | awk '{print $NF}')
-sleep 10
-pids[3]=$(run-phantom lena | awk '{print $NF}')
-sleep 10
-
-# wait for all pids
-for pid in ${pids[*]}; do
-    wait $pid
-done
+export ALGORITHM=mlem
+run-phantom cameraman
+run-phantom lena
 
 echo -e "Completed at $(date)"

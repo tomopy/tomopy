@@ -48,23 +48,15 @@ run-recon()
 }
 
 export ALGORITHM=sirt
-pid=$(run-recon partial | awk '{print $NF}')
-wait $pid
+run-recon partial
 
 export ALGORITHM=mlem
-pid=$(run-recon partial | awk '{print $NF}')
-wait $pid
+run-recon partial
 
 export ALGORITHM=sirt
-pids[0]=$(run-recon slice | awk '{print $NF}')
+run-recon slice
 
-sleep 10
 export ALGORITHM=mlem
-pids[1]=$(run-recon slice | awk '{print $NF}')
-
-# wait for all pids
-for pid in ${pids[*]}; do
-    wait $pid
-done
+run-recon slice
 
 echo -e "Completed at $(date)"
