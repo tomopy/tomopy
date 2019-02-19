@@ -49,19 +49,28 @@ run-recon()
         ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log
 }
 
-for i in 32 128 256
+for j in 0 32 64
 do
-    export CUDA_BLOCK_SIZE=${i}
-    for j in 0 16 32
+    for i in 32 128
     do
+        export CUDA_BLOCK_SIZE=${i}
         export CUDA_GRID_SIZE=${j}
-
         export ALGORITHM=sirt
         run-recon partial
-        run-recon slice
-
         export ALGORITHM=mlem
         run-recon partial
+    done
+done
+
+for j in 0 32 64
+do
+    for i in 32 128
+    do
+        export CUDA_BLOCK_SIZE=${i}
+        export CUDA_GRID_SIZE=${j}
+        export ALGORITHM=sirt
+        run-recon slice
+        export ALGORITHM=mlem
         run-recon slice
     done
 done

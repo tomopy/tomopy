@@ -47,20 +47,29 @@ run-phantom()
         -p ${PHANTOM} $@ | tee ${LOG_DIR}/run-${PHANTOM}-${ALGORITHM}-${OUT}.log
 }
 
-for i in 32 128 256
+for j in 0 32 64
 do
-    export CUDA_BLOCK_SIZE=${i}
-    for j in 0 16 32
+    for i in 32 128
     do
+        export CUDA_BLOCK_SIZE=${i}
         export CUDA_GRID_SIZE=${j}
-
         export ALGORITHM=sirt
         run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
-        run-phantom cameraman
-        run-phantom lena
-
         export ALGORITHM=mlem
         run-phantom shepp3d --partial -r ${BLOCK_BEG} ${BLOCK_END}
+    done
+done
+
+for j in 0 32 64
+do
+    for i in 32 128
+    do
+        export CUDA_BLOCK_SIZE=${i}
+        export CUDA_GRID_SIZE=${j}
+        export ALGORITHM=sirt
+        run-phantom cameraman
+        run-phantom lena
+        export ALGORITHM=mlem
         run-phantom cameraman
         run-phantom lena
     done
