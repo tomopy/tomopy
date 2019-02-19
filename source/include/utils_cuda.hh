@@ -259,7 +259,7 @@ public:
 public:
     // ctors, dtors, assignment
     gpu_data(int device, int id, int dy, int dt, int dx, int nx, int ny,
-             const float* data, float* recon, float* update)
+             const float* data, float* recon, float* update, uint32_t* sum_dist)
     : m_device(device)
     , m_id(id)
     , m_grid(GetGridSize())
@@ -274,16 +274,16 @@ public:
     , m_rot(nullptr)
     , m_tmp(nullptr)
     , m_update(update)
-    , m_sum_dist(nullptr)
+    , m_sum_dist(sum_dist)
     , m_recon(recon)
     , m_data(data)
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
+        m_rot     = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        m_tmp     = gpu_malloc<float>(m_dy * m_nx * m_ny);
         m_use_rot = gpu_malloc<int_type>(m_nx * m_ny);
         m_use_tmp = gpu_malloc<int_type>(m_nx * m_ny);
-        m_rot     = gpu_malloc<float>(m_nx * m_ny);
-        m_tmp     = gpu_malloc<float>(m_nx * m_ny);
         gpu_memset<int_type>(m_use_tmp, 1, m_nx * m_ny, *m_streams);
     }
 
@@ -293,7 +293,6 @@ public:
         cudaFree(m_use_tmp);
         cudaFree(m_rot);
         cudaFree(m_tmp);
-        cudaFree(m_sum_dist);
         destroy_streams(m_streams, m_num_streams);
     }
 
@@ -313,7 +312,7 @@ public:
     float*       rot() const { return m_rot; }
     float*       tmp() const { return m_tmp; }
     float*       update() const { return m_update; }
-    uint16_t*    sum_dist() const { return m_sum_dist; }
+    uint32_t*    sum_dist() const { return m_sum_dist; }
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
@@ -337,17 +336,12 @@ public:
             _sync(m_streams[stream_id % m_num_streams]);
     }
 
-    void alloc_sum_dist()
-    {
-        cuda_set_device(m_device);
-        m_sum_dist = gpu_malloc<uint16_t>(m_nx * m_ny);
-    }
-
     void reset()
     {
-        // gpu_memset<float>(m_update, 0, m_dy * m_nx * m_ny, *m_streams);
-        if(m_sum_dist)
-            gpu_memset<uint16_t>(m_sum_dist, 0, m_nx * m_ny, *m_streams);
+        // reset destination arrays (NECESSARY!)
+        gpu_memset<int_type>(m_use_rot, 0, m_nx * m_ny, *m_streams);
+        gpu_memset<float>(m_rot, 0, m_dy * m_nx * m_ny, *m_streams);
+        gpu_memset<float>(m_tmp, 0, m_dy * m_nx * m_ny, *m_streams);
     }
 
 public:
@@ -355,7 +349,7 @@ public:
     static init_data_t initialize(int device, int nthreads, int dy, int dt, int dx,
                                   int ngridx, int ngridy, float* cpu_recon,
                                   const float* cpu_data, float* update,
-                                  bool alloc_sum_dist = false)
+                                  uint32_t* sum_dist)
     {
         uintmax_t nstreams = 3;
         auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);
@@ -366,10 +360,9 @@ public:
         data_array_t _gpu_data(nthreads);
         for(int ii = 0; ii < nthreads; ++ii)
         {
-            _gpu_data[ii] = data_ptr_t(new gpu_data(device, ii, dy, dt, dx, ngridx,
-                                                    ngridy, data, recon, update));
-            if(alloc_sum_dist)
-                _gpu_data[ii]->alloc_sum_dist();
+            _gpu_data[ii] =
+                data_ptr_t(new gpu_data(device, ii, dy, dt, dx, ngridx, ngridy, data,
+                                        recon, update, sum_dist));
         }
 
         // synchronize
@@ -410,7 +403,7 @@ protected:
     float*        m_rot;
     float*        m_tmp;
     float*        m_update;
-    uint16_t*     m_sum_dist;
+    uint32_t*     m_sum_dist;
     float*        m_recon;
     const float*  m_data;
     int           m_num_streams = 2;

@@ -203,7 +203,7 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     gpu_data** _gpu_data = new gpu_data*[nthreads];
     for(int ii = 0; ii < nthreads; ++ii)
         _gpu_data[ii] = new gpu_data(thread_device, ii, dy, dt, dx, ngridx, ngridy, data,
-                                     recon, nullptr);
+                                     recon, nullptr, nullptr);
     int block = GetBlockSize();
     int grid  = ComputeGridSize(dy * ngridx * ngridy);
     NVTX_RANGE_PUSH(&nvtx_total);

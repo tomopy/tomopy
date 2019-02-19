@@ -122,8 +122,7 @@ cuda_mlem_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 
 void
 mlem_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int dt,
-                            int dx, int nx, int ny, const float* theta,
-                            uint32_t* global_sum_dist)
+                            int dx, int nx, int ny, const float* theta)
 {
     auto _cache = _gpu_data[GetThisThreadID() % _gpu_data.size()];
 
@@ -136,22 +135,21 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     cuda_set_device(_cache->device());
 
     // calculate some values
-    float        theta_p_rad  = fmodf(theta[p] + halfpi, twopi);
-    float        theta_p_deg  = theta_p_rad * degrees;
-    uint16_t*    sum_dist_tmp = _cache->sum_dist();
-    auto*        use_rot      = _cache->use_rot();
-    auto*        use_tmp      = _cache->use_tmp();
-    float*       rot          = _cache->rot();
-    float*       tmp          = _cache->tmp();
-    int          block        = _cache->block();
-    int          grid         = _cache->compute_grid(dx);
-    cudaStream_t stream       = _cache->stream();
+    float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+    float        theta_p_deg = theta_p_rad * degrees;
+    auto*        use_rot     = _cache->use_rot();
+    auto*        use_tmp     = _cache->use_tmp();
+    int          block       = _cache->block();
+    int          grid        = _cache->compute_grid(dx);
+    cudaStream_t stream      = _cache->stream();
 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
+    // reset destination arrays (NECESSARY!)
+    _cache->reset();
+
     // forward-rotate
-    gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
 
     for(int s = 0; s < dy; ++s)
@@ -159,11 +157,9 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         const float* recon    = _cache->recon() + s * nx * ny;
         const float* data     = _cache->data() + s * dt * dx;
         float*       update   = _cache->update() + s * nx * ny;
-        uint32_t*    sum_dist = global_sum_dist + s * nx * ny;
-
-        // reset destination arrays (NECESSARY!)
-        gpu_memset<float>(rot, 0, nx * ny, stream);
-        gpu_memset<float>(tmp, 0, nx * ny, stream);
+        float*       rot      = _cache->rot() + s * nx * ny;
+        float*       tmp      = _cache->tmp() + s * nx * ny;
+        uint32_t*    sum_dist = _cache->sum_dist() + s * nx * ny;
 
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
         // compute simdata
@@ -232,7 +228,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     uint32_t*   sum_dist = gpu_malloc_and_memset<uint32_t>(recon_pixels, 0, *main_stream);
     init_data_t init_data =
         gpu_data::initialize(thread_device, nthreads, dy, dt, dx, ngridx, ngridy,
-                             cpu_recon, cpu_data, update);
+                             cpu_recon, cpu_data, update, sum_dist);
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     const float* data      = std::get<2>(init_data);
@@ -260,7 +256,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         // execute the loop over slices and projection angles
         execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(_gpu_data),
                                          mlem_gpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta, sum_dist);
+                                         ngridy, theta);
 
         // sync the thread streams
         gpu_data::sync(_gpu_data);

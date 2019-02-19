@@ -185,7 +185,7 @@ END_EXTERN_C
 #endif
 
 #if !defined(PRAGMA_SIMD_REDUCTION)
-#    define PRAGMA_SIMD_REDUCTION(var) _Pragma("omp simd reducton(+ : var)")
+#    define PRAGMA(statement) _Pragma(statement)
 #endif
 
 #if !defined(HW_CONCURRENCY)
@@ -209,15 +209,43 @@ constexpr float degrees  = 180.0f / pi;
 
 //======================================================================================//
 
-typedef std::vector<int16_t>  sarray_t;
-typedef std::vector<uint16_t> usarray_t;
-typedef std::vector<uint32_t> uarray_t;
-typedef std::vector<int32_t>  iarray_t;
-typedef std::vector<float>    farray_t;
-typedef std::vector<double>   darray_t;
+#if defined(TOMOPY_USE_TBB)
+#    include "tbb/cache_aligned_allocator.h"
+template <typename _Tp>
+using TomopyAllocator_t = tbb::cache_aligned_allocator<_Tp>;
+#else
+#    include <memory>
+template <typename _Tp>
+using TomopyAllocator_t = std::allocator<_Tp>;
+
+#endif
+
+//======================================================================================//
 
 template <typename _Tp>
-using array_t = std::vector<_Tp>;
+_Tp*
+allocate_aligned(std::size_t n, std::size_t a = alignof(_Tp))
+{
+    std::size_t sz = n * sizeof(int64_t);
+    void*       p  = malloc(sz);  // create buffer of 64-bits
+    if(std::align(a, n * sizeof(_Tp), p, sz))
+        return reinterpret_cast<_Tp*>(p);
+    free(p);
+    return new _Tp[n];
+}
+
+//======================================================================================//
+
+template <typename _Tp>
+using array_t = std::vector<_Tp, TomopyAllocator_t<_Tp>>;
+
+typedef array_t<int16_t>  sarray_t;
+typedef array_t<uint16_t> usarray_t;
+typedef array_t<uint32_t> uarray_t;
+typedef array_t<int32_t>  iarray_t;
+typedef array_t<float>    farray_t;
+typedef array_t<double>   darray_t;
+
 template <typename _Tp>
 using cuda_device_info = std::unordered_map<int, _Tp>;
 
@@ -307,13 +335,12 @@ set_this_thread_device()
 }
 
 //======================================================================================//
-
+#include <stdlib.h>
 template <typename _Tp>
 _Tp*
 cpu_malloc(uintmax_t size)
 {
-    void* _cpu = malloc(size * sizeof(_Tp));
-    return scast<_Tp*>(_cpu);
+    return allocate_aligned<_Tp>(size, 64);
 }
 
 //======================================================================================//
@@ -503,7 +530,7 @@ public:
             memset(m_sum_dist, 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(uint16_t));
     }
 
-    void alloc_sum_dist() { m_sum_dist = new uint16_t[scast<uintmax_t>(m_nx * m_ny)]; }
+    void alloc_sum_dist() { m_sum_dist = new uint16_t[m_nx * m_ny]; }
 
 public:
     // static functions

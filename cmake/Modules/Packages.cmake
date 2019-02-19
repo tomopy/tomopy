@@ -26,6 +26,24 @@ endif()
 
 ################################################################################
 #
+#        Prefix path to Anaconda installation
+#
+################################################################################
+#
+find_package(PythonInterp)
+if(PYTHON_EXECUTABLE)
+    get_filename_component(PYTHON_ROOT_DIR ${PYTHON_EXECUTABLE} DIRECTORY)
+    get_filename_component(PYTHON_ROOT_DIR ${PYTHON_ROOT_DIR} DIRECTORY)
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}
+        ${PYTHON_ROOT_DIR}
+        ${PYTHON_ROOT_DIR}/bin
+        ${PYTHON_ROOT_DIR}/lib
+        ${PYTHON_ROOT_DIR}/include)
+endif()
+
+
+################################################################################
+#
 #        GCov
 #
 ################################################################################
@@ -67,7 +85,7 @@ endif()
 ################################################################################
 
 if(TOMOPY_USE_GPERF)
-    find_package(GPerfTools COMPONENTS profiler tcmalloc)
+    find_package(GPerfTools COMPONENTS profiler)
 
     if(GPerfTools_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
@@ -110,6 +128,9 @@ if(TOMOPY_USE_OPENMP)
         if(TOMOPY_USE_GPU)
             list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENMP)
         endif()
+    else()
+        message(WARNING "OpenMP not found")
+        set(TOMOPY_USE_OPENMP OFF)
     endif()
 
 endif()
@@ -124,12 +145,17 @@ endif()
 if(TOMOPY_USE_OPENACC AND TOMOPY_USE_GPU)
     find_package(OpenACC)
 
-    foreach(LANG C CXX)
-        if(OpenACC_${LANG}_FOUND)
-            list(APPEND ${PROJECT_NAME}_${LANG}_FLAGS ${OpenACC_${LANG}_FLAGS})
-            list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENACC)
-        endif()
-    endforeach()
+    if(OpenACC_FOUND)
+        foreach(LANG C CXX)
+            if(OpenACC_${LANG}_FOUND)
+                list(APPEND ${PROJECT_NAME}_${LANG}_FLAGS ${OpenACC_${LANG}_FLAGS})
+                list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENACC)
+            endif()
+        endforeach()
+    else()
+        message(WARNING "OpenACC not found")
+        set(TOMOPY_USE_OPENACC OFF)
+    endif()
 
 endif()
 
@@ -141,12 +167,16 @@ endif()
 ################################################################################
 
 if(TOMOPY_USE_TBB)
-    find_package(TBB COMPONENTS malloc malloc_proxy)
+    set(TBB_ROOT_DIR ${PYTHON_ROOT_DIR})
+    find_package(TBB COMPONENTS malloc)
 
-    if(TBB_FOUND)
+    if(TBB_malloc_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
         list(APPEND EXTERNAL_LIBRARIES ${TBB_LIBRARIES})
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_TBB)
+    else()
+        message(WARNING "TBB not found")
+        set(TOMOPY_USE_TBB OFF)
     endif()
 
 endif()
@@ -157,15 +187,6 @@ endif()
 #        MKL
 #
 ################################################################################
-
-find_package(PythonInterp)
-
-# anaconda should have installed MKL under this prefix
-if(PYTHON_EXECUTABLE)
-    get_filename_component(_MKL_PREFIX ${PYTHON_EXECUTABLE} DIRECTORY)
-    get_filename_component(_MKL_PREFIX ${_MKL_PREFIX} DIRECTORY)
-    list(APPEND CMAKE_PREFIX_PATH ${_MKL_PREFIX} ${_MKL_PREFIX}/lib ${_MKL_PREFIX}/include)
-endif()
 
 find_package(MKL REQUIRED)
 
@@ -228,6 +249,8 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
         list(APPEND EXTERNAL_CUDA_LIBRARIES ${CUDA_npp_LIBRARY})
         list(APPEND EXTERNAL_CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
             ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    else()
+        set(TOMOPY_USE_CUDA OFF)
     endif()
 endif()
 

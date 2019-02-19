@@ -14,7 +14,7 @@ dependencies:
   - nose
   - numexpr
   - numpy
-  - pyctest
+  - pyctest>0.0.10
   - python-coveralls
   - pywavelets
   - scikit-build
@@ -24,3 +24,4 @@ dependencies:
   - timemory
   - futures
   - opencv
+  - tbb-devel
