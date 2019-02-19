@@ -36,7 +36,7 @@ run-recon()
 {
     export DATA_TYPE=${1}
     OUT="$(configure-out)"
-    run-verbose srun -c 80 \
+    run-verbose srun -n 1 -c 80 \
         $(which python) \
         ./pyctest_tomopy_rec.py \
         -o ${OUT}-${ALGORITHM} \

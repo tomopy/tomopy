@@ -33,7 +33,7 @@ run-phantom()
 {
     PHANTOM=${1}
     shift
-    run-verbose srun -c ${TOMOPY_PYTHON_THREADS} \
+    run-verbose srun -n 1 -c ${TOMOPY_PYTHON_THREADS} \
         $(which python) \
         ./pyctest_tomopy_phantom.py \
         -o ${OUT}-${ALGORITHM} \

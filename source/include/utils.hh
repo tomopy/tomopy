@@ -207,7 +207,6 @@ cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const int& nx,
               const int& ny, int eInterp = GetOpenCVInterpolationMode(),
               double scale = 1.0)
 {
-    memset(dst.data(), 0, nx * ny * sizeof(_Tp));
     cv::Mat warp_src = cv::Mat::zeros(nx, ny, OpenCVDataType<_Tp>::value());
     memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
     cv::Mat warp_rot =
