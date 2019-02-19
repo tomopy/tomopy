@@ -25,7 +25,7 @@ if [ -n "${1}" ]; then TOMOPY_NUM_ITERATION=${1}; shift; fi
 : ${NUM_SLICES:=$((${BLOCK_END} - ${BLOCK_BEG}))}
 
 # parallelism settings
-: ${PTL_CPU_AFFINITY:=1}
+: ${PTL_CPU_AFFINITY:=0}
 : ${PTL_VERBOSE:=1}
 : ${TOMOPY_NUM_GPU:=4}
 if [ "${NERSC_HOST}" = "edison" ]; then

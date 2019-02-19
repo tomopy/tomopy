@@ -86,8 +86,10 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data,
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
-        for(int i = 0; i < nx; ++i)
-            recon[d * nx + i] += (data[p * dx + d] - sum);
+        float upd = (data[p * dx + d] - sum);
+        if(upd == upd)
+            for(int i = 0; i < nx; ++i)
+                recon[d * nx + i] += upd;
     }
 }
 
@@ -102,7 +104,7 @@ cuda_sirt_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 
     for(int i = i0; i < size; i += istride)
     {
-        if(sum_dist[i] != 0.0f)
+        if(sum_dist[i] != 0 && dx != 0 && update[i] == update[i])
             recon[i] += update[i] / scast<float>(sum_dist[i]) / scast<float>(dx);
     }
 }
@@ -138,19 +140,20 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
-    // gpu_memset<uint16_t>(sum_dist_tmp, 0, nx * ny, stream);
-    // gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
-    // gpu_memset<float>(rot, 0, nx * ny, stream);
-    // gpu_memset<float>(tmp, 0, nx * ny, stream);
-
     // forward-rotate
+    gpu_memset<int_type>(use_rot, 0, nx * ny, stream);
     cuda_rotate_ip(use_rot, use_tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
+
     for(int s = 0; s < dy; ++s)
     {
         const float* data     = _cache->data() + s * dt * dx;
         const float* recon    = _cache->recon() + s * nx * ny;
         float*       update   = _cache->update() + s * nx * ny;
         uint32_t*    sum_dist = global_sum_dist + s * nx * ny;
+
+        // reset destination arrays (NECESSARY!)
+        gpu_memset<float>(rot, 0, nx * ny, stream);
+        gpu_memset<float>(tmp, 0, nx * ny, stream);
 
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
         // compute simdata
