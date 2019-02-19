@@ -43,7 +43,7 @@ run-recon()
         -a ${ALGORITHM} \
         -r ${BLOCK_BEG} ${BLOCK_END} \
         -f png \
-        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log &
+        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log
     echo $!
 }
 
