@@ -1,11 +1,5 @@
 # .coveragerc to control coverage.py
 
-[run]
-source =
-    src/
-omit =
-    src/tomopy/sharedlibs/*
-
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =
