@@ -14,7 +14,7 @@ dependencies:
   - nose
   - numexpr
   - numpy
-  - pyctest>0.0.10
+  - pyctest
   - python-coveralls
   - pywavelets
   - scikit-build
