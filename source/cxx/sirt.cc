@@ -108,6 +108,25 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
 //======================================================================================//
 
+template <typename Func>
+void
+execute_functions(const Func& func)
+{
+    func();
+}
+
+//======================================================================================//
+
+template <typename Func, typename... Funcs>
+void
+execute_functions(const Func& func, Funcs... others)
+{
+    func();
+    execute_functions(std::forward<Funcs>(others)...);
+}
+
+//======================================================================================//
+
 void
 sirt_cpu_compute_projection(data_array_t& _cpu_data, int _s, int p, int dy, int dt,
                             int dx, int nx, int ny, const float* theta,
@@ -126,6 +145,9 @@ sirt_cpu_compute_projection(data_array_t& _cpu_data, int _s, int p, int dy, int 
     // Forward-Rotate object
     cxx_rotate_ip<int_type>(use_rot, use_tmp.data(), -theta_p, nx, ny, CPU_NN);
 
+    static Mutex msum;
+    AutoLock     lsum(msum, std::defer_lock);
+
     for(int s = 0; s < dy; ++s)
     {
         const float* data         = _cache->data() + s * dt * dx;
@@ -140,25 +162,32 @@ sirt_cpu_compute_projection(data_array_t& _cpu_data, int _s, int p, int dy, int 
         cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
         for(int d = 0; d < dx; ++d)
         {
-            float sum = 0.0f;
-            for(int i = 0; i < nx; ++i)
-                sum += recon_rot[d * nx + i];
             for(int i = 0; i < nx; ++i)
                 sum_dist_tmp[d * nx + i] += (use_rot[d * nx + i] > 0) ? 1 : 0;
+
+            float sum = 0.0f;
+            PRAGMA("omp simd reduction(+:sum)")
+            for(int i = 0; i < nx; ++i)
+                sum += recon_rot[d * nx + i];
             float upd = (data[p * dx + d] - sum);
+            PRAGMA_SIMD
             for(int i = 0; i < nx; ++i)
                 recon_rot[d * nx + i] += upd;
         }
-
         // Back-Rotate object
         cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
-        AutoLock l(TypeMutex<cpu_data>());
         // update shared update array
+        _cache->upd_mutex()->lock();
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
             update[i] += recon_tmp[i];
+        _cache->upd_mutex()->unlock();
+
+        // update shared sum_dist array
+        _cache->sum_mutex()->lock();
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
             sum_dist[i] += sum_dist_tmp[i];
+        _cache->sum_mutex()->unlock();
     }
 }
 
@@ -172,6 +201,10 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+
+    // explicitly set OpenMP number of threads to 1 so OpenCV doesn't try to
+    // create (HW_CONCURRENCY * PYTHON_NUM_THREADS * TOMOPY_NUM_THREADS) threads
+    setenv("OMP_NUM_THREADS", "1", 1);
 
     // compute some properties (expected python threads, max threads, device assignment)
     auto min_threads = nthread_type(1);
@@ -191,11 +224,14 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
 
     TIMEMORY_AUTO_TIMER("");
 
-    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
-    farray_t     update(recon_pixels, 0.0f);
-    uarray_t     sum_dist(recon_pixels, 0);
-    init_data_t  init_data = cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy,
-                                                 recon, data, update.data());
+    Mutex       upd_mutex;
+    Mutex       sum_mutex;
+    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    farray_t    update(recon_pixels, 0.0f);
+    uarray_t    sum_dist(recon_pixels, 0);
+    init_data_t init_data =
+        cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data,
+                             update.data(), &upd_mutex, &sum_mutex);
     data_array_t _cpu_data = std::get<0>(init_data);
 
     //----------------------------------------------------------------------------------//

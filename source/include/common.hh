@@ -417,7 +417,7 @@ cpu_run_manager()
 {
     AutoLock l(TypeMutex<TaskRunManager>());
     // typedef std::shared_ptr<TaskRunManager> run_man_ptr;
-    static TaskRunManager* _instance =
+    static thread_local TaskRunManager* _instance =
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
     return _instance;
 }
@@ -483,7 +483,7 @@ public:
 
 public:
     cpu_data(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
-             float* recon, float* update)
+             float* recon, float* update, Mutex* upd_mutex, Mutex* sum_mutex)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
@@ -498,7 +498,11 @@ public:
     , m_update(update)
     , m_sum_dist(nullptr)
     , m_data(data)
+    , m_upd_mutex(upd_mutex)
+    , m_sum_mutex(sum_mutex)
     {
+        // we don't want null pointers here
+        assert(m_upd_mutex && m_sum_mutex);
     }
 
     ~cpu_data() { delete[] m_sum_dist; }
@@ -520,9 +524,14 @@ public:
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
 
+    Mutex* upd_mutex() const { return m_upd_mutex; }
+    Mutex* sum_mutex() const { return m_sum_mutex; }
+
     void reset()
     {
-        // reset temporaries to zero
+        // reset temporaries to zero (NECESSARY!)
+        // -- note: the OpenCV effectively ensures that we overwrite all values
+        //          because we use cv::Mat::zeros and copy that to destination
         // memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
         // memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
         // memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
@@ -536,13 +545,14 @@ public:
     // static functions
     static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
                                   int ngridy, float* recon, const float* data,
-                                  float* update, bool alloc_sum_dist = true)
+                                  float* update, Mutex* upd_mtx, Mutex* sum_mtx,
+                                  bool alloc_sum_dist = true)
     {
         data_array_t _cpu_data(nthreads);
         for(unsigned ii = 0; ii < nthreads; ++ii)
         {
-            _cpu_data[ii] = data_ptr_t(
-                new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data, recon, update));
+            _cpu_data[ii] = data_ptr_t(new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data,
+                                                    recon, update, upd_mtx, sum_mtx));
             if(alloc_sum_dist)
                 _cpu_data[ii]->alloc_sum_dist();
         }
@@ -571,6 +581,8 @@ protected:
     float*       m_update;
     uint16_t*    m_sum_dist;
     const float* m_data;
+    Mutex*       m_upd_mutex;
+    Mutex*       m_sum_mutex;
 };
 
 //======================================================================================//
