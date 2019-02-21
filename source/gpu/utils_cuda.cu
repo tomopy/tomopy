@@ -103,10 +103,11 @@ cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int_type* ones,
 uint32_t*
 cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    static int ns      = GetEnv<int>("TOMOPY_SUM_DIST_STREAMS", 2);
+    static int min_ns  = 1;
+    static int ns      = std::max(GetEnv<int>("TOMOPY_SUM_DIST_STREAMS", 2), min_ns);
     static int xblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_X", 32);
-    static int yblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Y", 32);
-    static int zblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Z", 32);
+    static int yblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Y", std::min(dx, 32));
+    static int zblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Z", std::min(dy, 32));
     auto       streams = create_streams(ns);
     auto       block   = dim3(xblock, yblock, zblock);
     auto       grid    = dim3(ComputeGridSize(xblock, nx), ComputeGridSize(yblock, dx),
@@ -119,12 +120,13 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     };
     //----------------------------------------------------------------------------------//
 
-    int_type* rot      = gpu_malloc<int_type>(ns * nx * ny);
-    int_type* tmp      = gpu_malloc_and_memset<int_type>(nx * ny, 1, streams[0]);
-    uint32_t* sum_dist = gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1]);
+    int_type* rot = gpu_malloc<int_type>(ns * nx * ny);
+    int_type* tmp = gpu_malloc_and_memset<int_type>(nx * ny, 1, streams[0 % ns]);
+    uint32_t* sum_dist =
+        gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1 % ns]);
 
-    stream_sync(streams[0]);
-    stream_sync(streams[1]);
+    stream_sync(streams[0 % ns]);
+    stream_sync(streams[1 % ns]);
 
     for(int p = 0; p < dt; ++p)
     {
