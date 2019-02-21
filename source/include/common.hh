@@ -692,12 +692,13 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
 
 #if defined(TOMOPY_USE_GPU)
 #    if defined(TOMOPY_USE_CUDA)
-    options.push_back(DeviceOption(1, "cuda", "Run on GPU with CUDA"));
+    options.push_back(DeviceOption(1, "gpu", "Run on GPU with CUDA"));
+    options.push_back(DeviceOption(2, "cuda", "Run on GPU with CUDA (deprecated)"));
 #    endif
 #endif
 
 #if defined(TOMOPY_USE_GPU) && defined(TOMOPY_USE_CUDA)
-    std::string default_key = "cuda";
+    std::string default_key = "gpu";
 #else
     std::string default_key = "cpu";
 #endif
@@ -757,7 +758,7 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
     print_options();
 
     default_key = default_itr->key;
-    auto key    = GetEnv("TOMOPY_DEVICE_TYPE", default_key);
+    auto key    = GetEnv("TOMOPY_DEVICE", default_key);
 
     auto selection = std::find_if(options.begin(), options.end(),
                                   [&](const DeviceOption& itr) { return (itr == key); });

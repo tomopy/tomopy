@@ -103,15 +103,10 @@ cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int_type* ones,
 uint32_t*
 cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    static int min_ns  = 1;
-    static int ns      = std::max(GetEnv<int>("TOMOPY_SUM_DIST_STREAMS", 2), min_ns);
-    static int xblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_X", 32);
-    static int yblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Y", std::min(dx, 32));
-    static int zblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Z", std::min(dy, 32));
-    auto       streams = create_streams(ns);
-    auto       block   = dim3(xblock, yblock, zblock);
-    auto       grid    = dim3(ComputeGridSize(xblock, nx), ComputeGridSize(yblock, dx),
-                     ComputeGridSize(zblock, dy));
+    auto ns      = GetNumMasterStreams(2);
+    auto streams = create_streams(ns);
+    auto block   = GetBlockDims(dim3(32, 32, 32));
+    auto grid    = ComputeGridDims(dim3(nx, dt, dy), block);
 
     //----------------------------------------------------------------------------------//
     auto sync = [&]() {

@@ -11,60 +11,26 @@
 
 echo -e "Starting at $(date)"
 
-BASE_DIR=/project/projectdirs/m1759/jrmadsen
-GLOBUS_DIR=${BASE_DIR}/globus
-SOURCE_DIR=${BASE_DIR}/tomopy-edison-gpu
-SCRIPT_DIR=${SOURCE_DIR}/slurm
-. ${SCRIPT_DIR}/env-common-settings.sh $@
+. ${PWD}/slurm/env-common-settings.sh $@
+
 cd ${SOURCE_DIR}
 
-LOG_DIR=${PWD}/logs
+LOG_DIR=${SOURCE_DIR}/logs
 mkdir -p ${LOG_DIR}
-
-# algorithm settings
-export TOMOPY_USE_C_ALGORITHMS=0
-export TOMOPY_USE_CPU=0
-export TOMOPY_DEVICE_TYPE=cuda
-
 OUT="$(configure-out)"
 
-run-verbose python setup.py install --enable-arch --enable-cuda --enable-gpu | tee ${LOG_DIR}/build-${OUT}.log
+run-verbose python setup.py install ${BUILD_ARGS} | tee ${LOG_DIR}/build-${OUT}.log
 run-verbose cd ${SOURCE_DIR}/benchmarking
-run-verbose srun nvidia-smi | tee ${LOG_DIR}/smi-${OUT}.log
+run-verbose-smi
 
-run-recon()
-{
-    export DATA_TYPE=${1}
-    OUT="$(configure-out)"
-    run-verbose srun -n 1 -c 80 \
-        $(which python) \
-        ./pyctest_tomopy_rec.py \
-        -o ${OUT}-${ALGORITHM} \
-        --type=${DATA_TYPE} \
-        -n ${TOMOPY_PYTHON_THREADS} \
-        -i ${TOMOPY_NUM_ITERATION} \
-        -a ${ALGORITHM} \
-        -r ${BLOCK_BEG} ${BLOCK_END} \
-        -f png \
-        ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log
-}
+: ${ALGORITHM:="sirt"}
 
-for j in nn linear cubic
+for j in slice partial
 do
-    export TOMOPY_INTER=${j}
-    export ALGORITHM=sirt
-    run-recon slice
-    export ALGORITHM=mlem
-    run-recon slice
-done
-
-for j in nn linear cubic
-do
-    export TOMOPY_INTER=${j}
-    export ALGORITHM=sirt
-    run-recon partial
-    export ALGORITHM=mlem
-    run-recon partial
+    for i in nn linear cubic
+    do
+        run-recon-rec ${i} ${ALGORITHM} ${j}
+    done
 done
 
 echo -e "Completed at $(date)"
