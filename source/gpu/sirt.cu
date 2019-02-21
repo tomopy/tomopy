@@ -131,6 +131,10 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
+    // reset destination arrays (NECESSARY! or will cause NaNs)
+    // only do once bc for same theta, same pixels get overwritten
+    _cache->reset();
+
     for(int s = 0; s < dy; ++s)
     {
         const float* recon  = _cache->recon() + s * nx * ny;
@@ -139,8 +143,7 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         float*       rot    = _cache->rot() + s * nx * ny;
         float*       tmp    = _cache->tmp() + s * nx * ny;
 
-        // reset destination arrays (NECESSARY!)
-        _cache->reset();
+        // forward-rotate
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
         // compute simdata
         cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
