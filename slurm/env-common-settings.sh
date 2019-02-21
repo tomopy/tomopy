@@ -106,12 +106,13 @@ export TOMOPY_BLOCK_SIZE TOMOPY_GRID_SIZE
 
 export LOG_DIR=${SOURCE_DIR}/logs
 mkdir -p ${LOG_DIR}
-export OUT="$(configure-out)"
 
 configure-out()
 {
     echo "${TOMOPY_DEVICE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${TOMOPY_BLOCK_SIZE}-${TOMOPY_GRID_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_ALGORITHMS}-${TOMOPY_USE_CPU}"
 }
+
+export OUT="$(configure-out)"
 
 run-verbose()
 {
