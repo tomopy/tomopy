@@ -49,30 +49,22 @@ run-recon()
         ${GLOBUS_DIR}/tomo_00001/tomo_00001.h5 | tee ${LOG_DIR}/run-${ALGORITHM}-${OUT}.log
 }
 
-for j in 0 32 64
+for j in nn linear cubic
 do
-    for i in 32 128
-    do
-        export CUDA_BLOCK_SIZE=${i}
-        export CUDA_GRID_SIZE=${j}
-        export ALGORITHM=sirt
-        run-recon partial
-        export ALGORITHM=mlem
-        run-recon partial
-    done
+    export TOMOPY_INTER=${j}
+    export ALGORITHM=sirt
+    run-recon slice
+    export ALGORITHM=mlem
+    run-recon slice
 done
 
-for j in 0 32 64
+for j in nn linear cubic
 do
-    for i in 32 128
-    do
-        export CUDA_BLOCK_SIZE=${i}
-        export CUDA_GRID_SIZE=${j}
-        export ALGORITHM=sirt
-        run-recon slice
-        export ALGORITHM=mlem
-        run-recon slice
-    done
+    export TOMOPY_INTER=${j}
+    export ALGORITHM=sirt
+    run-recon partial
+    export ALGORITHM=mlem
+    run-recon partial
 done
 
 echo -e "Completed at $(date)"
