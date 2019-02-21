@@ -65,6 +65,85 @@ extern nvtxEventAttributes_t nvtx_rotate;
 //  blockDim:   This variable and contains the dimensions of the block.
 //  threadIdx:  This variable contains the thread index within the block.
 
+typedef gpu_data::int_type int_type;
+
+//======================================================================================//
+//
+//  compute sum_dist
+//
+//======================================================================================//
+
+__global__ void
+cuda_sum_dist_compute(int p, int nx, int dx, const int_type* ones, uint32_t* sum_dist)
+{
+    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int dstride = blockDim.x * gridDim.x;
+    int n0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int nstride = blockDim.y * gridDim.y;
+
+    for(int d = d0; d < dx; d += dstride)
+    {
+        for(int i = n0; i < nx; i += nstride)
+            atomicAdd(&sum_dist[d * nx + i], (ones[d * nx + i] > 0) ? 1 : 0);
+    }
+}
+
+//======================================================================================//
+
+uint32_t*
+cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
+{
+    int       num_streams = 16;
+    auto      streams     = create_streams(num_streams);
+    uint32_t* sum_dist    = gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[0]);
+    int_type* rot_ones    = gpu_malloc_and_memset<int_type>(dt * nx * ny, 0, streams[1]);
+    int_type* tmp_ones    = gpu_malloc_and_memset<int_type>(nx * ny, 1, streams[2]);
+
+    auto block = dim3(32, 32);
+    auto grid  = dim3(ComputeGridSize(block.x, dx), ComputeGridSize(block.y, nx));
+
+    //----------------------------------------------------------------------------------//
+    auto sync = [&]() {
+        for(int i = 0; i < num_streams; ++i)
+            stream_sync(streams[i]);
+    };
+    //----------------------------------------------------------------------------------//
+
+    sync();
+
+    for(int p = 0; p < dt; ++p)
+    {
+        auto      stream      = streams[p % num_streams];
+        float     theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+        float     theta_p_deg = theta_p_rad * degrees;
+        int_type* _rot_ones   = rot_ones + p * nx * ny;
+        cuda_rotate_ip(_rot_ones, tmp_ones, -theta_p_rad, -theta_p_deg, nx, ny, stream,
+                       GPU_NN);
+    }
+
+    sync();
+
+    for(int p = 0; p < dt; ++p)
+    {
+        auto      stream    = streams[p % num_streams];
+        int_type* _rot_ones = rot_ones + p * nx * ny;
+        for(int s = 0; s < dy; ++s)
+        {
+            uint32_t* _sum_dist = sum_dist + s * nx * ny;
+            cuda_sum_dist_compute<<<grid, block, 0, stream>>>(p, nx, dx, _rot_ones,
+                                                              _sum_dist);
+        }
+    }
+
+    sync();
+
+    destroy_streams(streams, num_streams);
+    cudaFree(rot_ones);
+    cudaFree(tmp_ones);
+
+    return sum_dist;
+}
+
 //======================================================================================//
 //
 //  rotate

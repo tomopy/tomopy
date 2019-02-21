@@ -115,14 +115,13 @@ art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* 
     // ensure running on proper device
     cuda_set_device(_cache->device());
 
+    /*
     // calculate some values
     float        theta_p_rad = fmodf(theta[p], pi);
     float        theta_p_deg = theta_p_rad * degrees;
     float*       recon       = _cache->recon() + s * nx * ny;
     const float* data        = _cache->data() + s * dt * dx;
     float*       update      = _cache->update() + s * nx * ny;
-    auto*        use_rot     = _cache->use_rot();
-    auto*        use_tmp     = _cache->use_tmp();
     float*       rot         = _cache->rot();
     float*       tmp         = _cache->tmp();
     int          smem        = 0;
@@ -147,6 +146,7 @@ art_gpu_compute_projection(int dy, int dt, int dx, int nx, int ny, const float* 
     cuda_atomic_sum_kernel<<<grid, block, smem, stream>>>(recon, tmp, nx * ny, factor);
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
+    */
 }
 
 //--------------------------------------------------------------------------------------//
@@ -203,7 +203,7 @@ art_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     gpu_data** _gpu_data = new gpu_data*[nthreads];
     for(int ii = 0; ii < nthreads; ++ii)
         _gpu_data[ii] = new gpu_data(thread_device, ii, dy, dt, dx, ngridx, ngridy, data,
-                                     recon, nullptr, nullptr);
+                                     recon, nullptr);
     int block = GetBlockSize();
     int grid  = ComputeGridSize(dy * ngridx * ngridy);
     NVTX_RANGE_PUSH(&nvtx_total);
