@@ -199,6 +199,10 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cuda_set_device(device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), device);
 
+    auto* warm = gpu_malloc<uint64_t>(1);
+    cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
+    cudaFree(warm);
+
     auto sum_dist_future =
         std::async(cuda_compute_sum_dist, dy, dt, dx, ngridx, ngridy, theta);
 

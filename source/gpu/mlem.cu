@@ -209,8 +209,9 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cuda_set_device(thread_device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
 
-    auto sum_dist_future =
-        std::async(cuda_compute_sum_dist, dy, dt, dx, ngridx, ngridy, theta);
+    auto* warm = gpu_malloc<uint64_t>(1);
+    cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
+    cudaFree(warm);
 
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     auto        block        = GetBlockSize();
@@ -223,7 +224,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);
-    uint32_t*    sum_dist  = sum_dist_future.get();
+    uint32_t*    sum_dist  = cuda_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
@@ -253,10 +254,6 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
 
         // sync the main stream
         stream_sync(*main_stream);
-
-        // force sum_dist to be calculated if not already
-        if(!sum_dist)
-            sum_dist = sum_dist_future.get();
 
         // update the global recon with global update and sum_dist
         cuda_mlem_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,

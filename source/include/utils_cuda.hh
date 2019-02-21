@@ -172,6 +172,20 @@ cuda_mult_kernel(_Tp* dst, uintmax_t size, const _Tp factor)
 }
 
 //======================================================================================//
+// warm up
+//======================================================================================//
+
+template <typename _Tp>
+__global__ void
+cuda_warmup_kernel(_Tp* _dst, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        *_dst += static_cast<_Tp>(factor);
+}
+
+//======================================================================================//
 // sum kernels
 //======================================================================================//
 
