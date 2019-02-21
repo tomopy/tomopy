@@ -120,8 +120,7 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     uint32_t* sum_dist =
         gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1 % ns]);
 
-    stream_sync(streams[0 % ns]);
-    stream_sync(streams[1 % ns]);
+    sync();
 
     for(int p = 0; p < dt; ++p)
     {
@@ -150,10 +149,11 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
                                                               sum_dist, p);
         }
     }
-    sync();
+
+    // synchronize and destroy
+    destroy_streams(streams, ns);
     cudaFree(tmp);
     cudaFree(rot);
-    destroy_streams(streams, ns);
 
     return sum_dist;
 }

@@ -201,6 +201,7 @@ destroy_streams(cudaStream_t* streams, const int nstreams)
 {
     for(int i = 0; i < nstreams; ++i)
     {
+        cudaStreamSynchronize(streams[i]);
         cudaStreamDestroy(streams[i]);
         CUDA_CHECK_LAST_ERROR();
     }

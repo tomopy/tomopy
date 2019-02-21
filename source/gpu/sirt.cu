@@ -153,7 +153,7 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     }
 }
 
-//--------------------------------------------------------------------------------------//
+//======================================================================================//
 
 void
 sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
@@ -258,15 +258,10 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }
 
-    // sync the main stream
-    stream_sync(*main_stream);
-
+    // copy to cpu
     gpu2cpu_memcpy<float>(cpu_recon, recon, recon_pixels, *main_stream);
 
-    // sync the main stream
-    stream_sync(*main_stream);
-
-    // destroy main stream
+    // sync and destroy main stream
     destroy_streams(main_stream, 1);
 
     // cleanup
