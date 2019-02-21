@@ -212,7 +212,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);
-    uint32_t*    sum_dist  = nullptr;
+    uint32_t*    sum_dist  = sum_dist_future.get();
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
