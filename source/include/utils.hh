@@ -179,7 +179,7 @@ GetOpenCVInterpolationMode()
         EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
     static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
-                                     GetEnv<int>("TOMOPY_INTER", choices, CPU_CUBIC));
+                                     GetEnv<int>("TOMOPY_INTER", choices, CPU_NN));
     return eInterp;
 }
 

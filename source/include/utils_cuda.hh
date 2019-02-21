@@ -147,7 +147,7 @@ GetNppInterpolationMode()
         EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
     static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
-                                     GetEnv<int>("TOMOPY_INTER", choices, GPU_CUBIC));
+                                     GetEnv<int>("TOMOPY_INTER", choices, GPU_NN));
     return eInterp;
 }
 
