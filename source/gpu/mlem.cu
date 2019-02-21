@@ -186,11 +186,12 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     static std::atomic<int> ntid;
 
     // compute some properties (expected python threads, max threads, device assignment)
-    auto min_threads   = nthread_type(1);
-    auto pythreads     = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto max_threads   = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads      = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    int  thread_device = (ntid++) % num_devices;  // assign to device
+    auto min_threads  = nthread_type(1);
+    auto pythreads    = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads  = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads     = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    int  pythread_num = ntid++;
+    int  device       = pythread_num % num_devices;  // assign to device
 
 #if defined(TOMOPY_USE_PTL)
     typedef TaskManager manager_t;
@@ -206,21 +207,24 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     TIMEMORY_AUTO_TIMER("");
 
     // GPU allocated copies
-    cuda_set_device(thread_device);
-    printf("[%lu] Running on device %i...\n", GetThisThreadID(), thread_device);
+    cuda_set_device(device);
+    printf("[%lu] Running on device %i...\n", GetThisThreadID(), device);
 
-    auto* warm = gpu_malloc<uint64_t>(1);
-    cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
-    cudaFree(warm);
+    // if another thread has not already warmed up
+    if(pythread_num < num_devices)
+    {
+        auto* warm = gpu_malloc<uint64_t>(1);
+        cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
+        cudaFree(warm);
+    }
 
-    uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
-    auto        block        = GetBlockSize();
-    auto        grid         = ComputeGridSize(recon_pixels, block);
-    auto        main_stream  = create_streams(1);
-    float*      update = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t init_data =
-        gpu_data::initialize(thread_device, nthreads, dy, dt, dx, ngridx, ngridy,
-                             cpu_recon, cpu_data, update);
+    uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
+    auto         block        = GetBlockSize();
+    auto         grid         = ComputeGridSize(recon_pixels, block);
+    auto         main_stream  = create_streams(1);
+    float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
+    init_data_t  init_data = gpu_data::initialize(device, nthreads, dy, dt, dx, ngridx,
+                                                 ngridy, cpu_recon, cpu_data, update);
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);

@@ -176,11 +176,12 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     static std::atomic<int> ntid;
 
     // compute some properties (expected python threads, max threads, device assignment)
-    auto min_threads = nthread_type(1);
-    auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads    = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    int  device      = (ntid++) % num_devices;  // assign to device
+    auto min_threads  = nthread_type(1);
+    auto pythreads    = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto max_threads  = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads     = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    int  pythread_num = ntid++;
+    int  device       = pythread_num % num_devices;  // assign to device
 
 #if defined(TOMOPY_USE_PTL)
     typedef TaskManager manager_t;
@@ -199,12 +200,13 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     cuda_set_device(device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), device);
 
-    auto* warm = gpu_malloc<uint64_t>(1);
-    cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
-    cudaFree(warm);
-
-    auto sum_dist_future =
-        std::async(cuda_compute_sum_dist, dy, dt, dx, ngridx, ngridy, theta);
+    // if another thread has not already warmed up
+    if(pythread_num < num_devices)
+    {
+        auto* warm = gpu_malloc<uint64_t>(1);
+        cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
+        cudaFree(warm);
+    }
 
     uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     auto         block        = GetBlockSize();
@@ -216,7 +218,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     data_array_t _gpu_data = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);
-    uint32_t*    sum_dist  = sum_dist_future.get();
+    uint32_t*    sum_dist  = cuda_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
 
     NVTX_RANGE_PUSH(&nvtx_total);
 
@@ -246,10 +248,6 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
 
         // sync the main stream
         stream_sync(*main_stream);
-
-        // force sum_dist to be calculated if not already
-        if(!sum_dist)
-            sum_dist = sum_dist_future.get();
 
         // update the global recon with global update and sum_dist
         cuda_sirt_update_kernel<<<grid, block, 0, *main_stream>>>(recon, update, sum_dist,

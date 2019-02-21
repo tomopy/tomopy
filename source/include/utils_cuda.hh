@@ -101,7 +101,7 @@ ComputeGridSize(const int& size, const int& block_size = GetBlockSize())
 //======================================================================================//
 
 inline dim3
-GetBlockDims(const dim3& init = dim3(32, 32, 32))
+GetBlockDims(const dim3& init = dim3(32, 32, 1))
 {
     int _x = GetEnv<int>("TOMOPY_BLOCK_SIZE_X", init.x);
     int _y = GetEnv<int>("TOMOPY_BLOCK_SIZE_Y", init.y);
