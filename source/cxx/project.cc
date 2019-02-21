@@ -59,7 +59,6 @@ cxx_project(const float* obj, int oy, int ox, int oz, float* data, int dy, int d
 {
     // check to see if the C implementation is requested
     bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_PROJECT", true);
-    use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
         return scast<int>(false);
