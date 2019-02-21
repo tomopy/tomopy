@@ -398,11 +398,11 @@ public:
                                   int ngridx, int ngridy, float* cpu_recon,
                                   const float* cpu_data, float* update)
     {
-        uintmax_t nstreams = 3;
+        uintmax_t nstreams = 1;
         auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);
         float*    recon =
-            gpu_malloc_and_memcpy<float>(cpu_recon, dy * ngridx * ngridy, streams[0]);
-        float* data = gpu_malloc_and_memcpy<float>(cpu_data, dy * dt * dx, streams[1]);
+            gpu_malloc_and_memcpy<float>(cpu_recon, dy * ngridx * ngridy, *streams);
+        float* data = gpu_malloc_and_memcpy<float>(cpu_data, dy * dt * dx, *streams);
         data_array_t _gpu_data(nthreads);
         for(int ii = 0; ii < nthreads; ++ii)
         {
@@ -411,8 +411,7 @@ public:
         }
 
         // synchronize
-        for(uintmax_t i = 0; i < nstreams; ++i)
-            stream_sync(streams[i]);
+        stream_sync(*streams);
         destroy_streams(streams, nstreams);
 
         return init_data_t(_gpu_data, recon, data);
@@ -448,7 +447,7 @@ protected:
     float*        m_update;
     float*        m_recon;
     const float*  m_data;
-    int           m_num_streams = 2;
+    int           m_num_streams = 1;
     cudaStream_t* m_streams     = nullptr;
 };
 
