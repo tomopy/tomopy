@@ -68,7 +68,7 @@ fi
 
 export BASE_DIR GLOBUS_DIR SOURCE_DIR SCRIPT_DIR
 
-if [ -n "${CONDA_ENVIRON}" ];
+if [ -n "${CONDA_ENVIRON}" ]; then
     source activate ${CONDA_ENVIRON}
 fi
 
@@ -104,6 +104,10 @@ export PTL_CPU_AFFINITY PTL_VERBOSE PTL_NUM_THREADS NUMEXPR_MAX_THREADS
 export TOMOPY_NUM_GPU TOMOPY_PYTHON_THREADS TOMOPY_NUM_THREADS
 export TOMOPY_BLOCK_SIZE TOMOPY_GRID_SIZE
 
+export LOG_DIR=${SOURCE_DIR}/logs
+mkdir -p ${LOG_DIR}
+export OUT="$(configure-out)"
+
 configure-out()
 {
     echo "${TOMOPY_DEVICE}-${DATA_TYPE}-${TOMOPY_NUM_GPU}-${TOMOPY_INTER}-${TOMOPY_BLOCK_SIZE}-${TOMOPY_GRID_SIZE}-${TOMOPY_PYTHON_THREADS}-${TOMOPY_NUM_THREADS}-${TOMOPY_USE_C_ALGORITHMS}-${TOMOPY_USE_CPU}"
@@ -119,9 +123,9 @@ run-recon-phantom()
 {
     export TOMOPY_INTER=${1}
     shift
-    ALGORITHM=${2}
+    ALGORITHM=${1}
     shift
-    PHANTOM=${3}
+    PHANTOM=${1}
     shift
     EXTRA=""
     if [ "${PHANTOM}" = "shepp3d" ]; then EXTRA="--partial"; fi
@@ -143,9 +147,9 @@ run-recon-rec()
 {
     export TOMOPY_INTER=${1}
     shift
-    ALGORITHM=${2}
+    ALGORITHM=${1}
     shift
-    export DATA_TYPE=${3}
+    export DATA_TYPE=${1}
     shift
 
     OUT="$(configure-out)"
