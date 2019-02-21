@@ -74,17 +74,27 @@ typedef gpu_data::int_type int_type;
 //======================================================================================//
 
 __global__ void
-cuda_sum_dist_compute(int p, int nx, int dx, const int_type* ones, uint32_t* sum_dist)
+cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int_type* ones,
+                      uint32_t* sum_dist, int p)
 {
-    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int dstride = blockDim.x * gridDim.x;
-    int n0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int nstride = blockDim.y * gridDim.y;
+    int nx0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int nxstride = blockDim.x * gridDim.x;
+    int dx0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int dxstride = blockDim.y * gridDim.y;
+    int dy0      = blockIdx.z * blockDim.z + threadIdx.z;
+    int dystride = blockDim.z * gridDim.z;
 
-    for(int d = d0; d < dx; d += dstride)
+    for(int s = dy0; s < dy; s += dystride)
     {
-        for(int i = n0; i < nx; i += nstride)
-            atomicAdd(&sum_dist[d * nx + i], (ones[d * nx + i] > 0) ? 1 : 0);
+        for(int d = dx0; d < dx; d += dxstride)
+        {
+            uint32_t*       _sum_dist = sum_dist + (s * nx * ny) + (d * nx);
+            const int_type* _ones     = ones + (d * nx);
+            for(int n = nx0; n < nx; n += nxstride)
+            {
+                atomicAdd(&_sum_dist[n], (_ones[n] > 0) ? 1 : 0);
+            }
+        }
     }
 }
 
@@ -93,10 +103,14 @@ cuda_sum_dist_compute(int p, int nx, int dx, const int_type* ones, uint32_t* sum
 uint32_t*
 cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    int  ns      = 4;
-    auto streams = create_streams(ns);
-    auto block   = dim3(32, 32);
-    auto grid    = dim3(ComputeGridSize(block.x, dx), ComputeGridSize(block.y, nx));
+    static int ns      = GetEnv<int>("TOMOPY_SUM_DIST_STREAMS", 2);
+    static int xblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_X", 32);
+    static int yblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Y", 32);
+    static int zblock  = GetEnv<int>("TOMOPY_SUM_DIST_BLOCK_Z", 32);
+    auto       streams = create_streams(ns);
+    auto       block   = dim3(xblock, yblock, zblock);
+    auto       grid    = dim3(ComputeGridSize(xblock, nx), ComputeGridSize(yblock, dx),
+                     ComputeGridSize(zblock, dy));
 
     //----------------------------------------------------------------------------------//
     auto sync = [&]() {
@@ -105,27 +119,38 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     };
     //----------------------------------------------------------------------------------//
 
-    uint32_t* sum_dist = gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[0]);
-    int_type* rot      = gpu_malloc_and_memset<int_type>(ns * nx * ny, 0, streams[1]);
-    int_type* tmp      = gpu_malloc_and_memset<int_type>(ns * nx * ny, 1, streams[2]);
+    int_type* rot      = gpu_malloc<int_type>(ns * nx * ny);
+    int_type* tmp      = gpu_malloc_and_memset<int_type>(nx * ny, 1, streams[0]);
+    uint32_t* sum_dist = gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1]);
 
-    sync();
+    stream_sync(streams[0]);
+    stream_sync(streams[1]);
+
     for(int p = 0; p < dt; ++p)
     {
         float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
         float theta_p_deg = theta_p_rad * degrees;
+
         for(int q = 0; q < ns; ++q)
         {
             auto      stream = streams[q];
             int_type* _rot   = rot + q * nx * ny;
             gpu_memset<int_type>(_rot, 0, nx * nx, stream);
+        }
+
+        for(int q = 0; q < ns; ++q)
+        {
+            auto      stream = streams[q];
+            int_type* _rot   = rot + q * nx * ny;
             cuda_rotate_ip(_rot, tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
-            for(int s = 0; s < dy; ++s)
-            {
-                uint32_t* _sum_dist = sum_dist + s * nx * ny;
-                cuda_sum_dist_compute<<<grid, block, 0, stream>>>(p, nx, dx, _rot,
-                                                                  _sum_dist);
-            }
+        }
+
+        for(int q = 0; q < ns; ++q)
+        {
+            auto      stream = streams[q];
+            int_type* _rot   = rot + q * nx * ny;
+            cuda_sum_dist_compute<<<grid, block, 0, stream>>>(dy, dx, nx, ny, _rot,
+                                                              sum_dist, p);
         }
     }
     sync();
