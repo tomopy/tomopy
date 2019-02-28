@@ -232,7 +232,8 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
 
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
             -arch=${CUDA_ARCH}
-            --default-stream per-thread)
+            --default-stream per-thread
+            --compiler-bindir=${CMAKE_CXX_COMPILER})
 
         add_option(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT "Enable setting maximum register count" OFF)
         if(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT)
