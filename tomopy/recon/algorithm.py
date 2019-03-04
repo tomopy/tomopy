@@ -324,38 +324,18 @@ def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
     return recon
 
 
-# TODO: replace with dict, then users could easily add their own functions
 def _get_func(algorithm):
-    if algorithm == 'art':
-        func = extern.c_art
-    elif algorithm == 'bart':
-        func = extern.c_bart
-    elif algorithm == 'fbp':
-        func = extern.c_fbp
-    elif algorithm == 'gridrec':
-        func = extern.c_gridrec
-    elif algorithm == 'mlem':
-        func = extern.c_mlem
-    elif algorithm == 'osem':
-        func = extern.c_osem
-    elif algorithm == 'ospml_hybrid':
-        func = extern.c_ospml_hybrid
-    elif algorithm == 'ospml_quad':
-        func = extern.c_ospml_quad
-    elif algorithm == 'pml_hybrid':
-        func = extern.c_pml_hybrid
-    elif algorithm == 'pml_quad':
-        func = extern.c_pml_quad
-    elif algorithm == 'sirt':
-        func = extern.c_sirt
-    elif algorithm == 'tv':
-        func = extern.c_tv
-    elif algorithm == 'grad':
-        func = extern.c_grad
+    """Return the c function for the given algorithm.
 
-    else:
-        func = algorithm
-    return func
+    Raises
+    ------
+    AttributeError
+        If 'c_' + algorithm is not a function defined in tomopy.util.extern.
+    """
+    try:
+        return getattr(extern, 'c_' + algorithm)
+    except TypeError:  # algorithm is not a string
+        return algorithm
 
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
