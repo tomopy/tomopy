@@ -75,9 +75,10 @@ algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
 image_quality = {}
 
 
+@timemory.util.auto_timer()
 def output_image(image, fname):
 
-    img = pylab.imsave(fname, image, cmap='gray')
+    pylab.imsave(fname, image, cmap='gray')
 
     if os.path.exists(fname):
         print("  --> Image file found @ '{}'...".format(fname))
@@ -94,6 +95,7 @@ def print_size(rec, msg=""):
         rec.shape[0]))
 
 
+@timemory.util.auto_timer()
 def convert_image(fname, current_format, new_format):
 
     _fext = new_format
@@ -181,6 +183,7 @@ def fill_border(rec, nimages, drow, dcol):
     return rec_n
 
 
+@timemory.util.auto_timer()
 def rescale_image(rec, nimages, scale, transform=True):
 
     rec_n = normalize(rec.copy())
