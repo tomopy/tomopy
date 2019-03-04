@@ -71,6 +71,27 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['recon', 'init_tomo']
 
 
+allowed_kwargs = {
+    'art': ['num_gridx', 'num_gridy', 'num_iter'],
+    'bart': ['num_gridx', 'num_gridy', 'num_iter',
+             'num_block', 'ind_block'],
+    'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+    'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+    'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
+    'osem': ['num_gridx', 'num_gridy', 'num_iter',
+             'num_block', 'ind_block'],
+    'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
+                     'reg_par', 'num_block', 'ind_block'],
+    'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
+                   'reg_par', 'num_block', 'ind_block'],
+    'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
+    'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+}
+
+
 def recon(
         tomo, theta, center=None, sinogram_order=False, algorithm=None,
         init_recon=None, ncore=None, nchunk=None, **kwargs):
@@ -221,26 +242,6 @@ def recon(
 
     # Initialize tomography data.
     tomo = init_tomo(tomo, sinogram_order, sharedmem=False)
-
-    allowed_kwargs = {
-        'art': ['num_gridx', 'num_gridy', 'num_iter'],
-        'bart': ['num_gridx', 'num_gridy', 'num_iter',
-                 'num_block', 'ind_block'],
-        'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
-        'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
-        'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
-        'osem': ['num_gridx', 'num_gridy', 'num_iter',
-                 'num_block', 'ind_block'],
-        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
-                         'reg_par', 'num_block', 'ind_block'],
-        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
-                       'reg_par', 'num_block', 'ind_block'],
-        'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
-        'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-    }
 
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
 
