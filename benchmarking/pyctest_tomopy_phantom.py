@@ -49,9 +49,11 @@
 """TomoPy script to reconstruct a built-in phantom."""
 
 import sys
+import shutil
 import os
 import argparse
 import traceback
+import multiprocessing as mp
 
 import tomopy
 import timemory
@@ -59,65 +61,72 @@ import timemory.options as options
 
 try:
     from pyctest_tomopy_utils import *
-except:
+except ImportError:
     from benchmarking.pyctest_tomopy_utils import *
 
 
 def get_basepath(args, algorithm, phantom):
+    """Return the folder where data for a given reconstruction goes."""
     return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
 
 
 @timemory.util.auto_timer()
 def generate(phantom="shepp3d", nsize=512, nangles=360):
-
+    """Return the simulated data for the given phantom."""
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
         obj = getattr(tomopy.misc.phantom, phantom)(size=nsize)
     with timemory.util.auto_timer("[tomopy.angles]"):
         ang = tomopy.angles(nangles)
     with timemory.util.auto_timer("[tomopy.project]"):
         prj = tomopy.project(obj, ang)
-
     return [prj, ang, obj]
 
 
 @timemory.util.auto_timer()
 def run(phantom, algorithm, args, get_recon=False):
+    """Run reconstruction benchmarks for phantoms.
 
-    global image_quality
+    Parameters
+    ----------
+        phantom : string
+            The name of the phantom to use.
+        algorithm : string
+            The name of the algorithm to test.
+        args : argparser args
 
-    imgs = []
-    bname = get_basepath(args, algorithm, phantom)
-    oname = os.path.join(bname, "orig_{}_".format(algorithm))
-    fname = os.path.join(bname, "stack_{}_".format(algorithm))
-    dname = os.path.join(bname, "diff_{}_".format(algorithm))
-
+    Returns
+    -------
+    Either rec or imgs
+    rec : np.ndarray
+        The reconstructed image.
+    imgs : list
+        A list of the original, reconstructed, and difference image
+    """
     prj, ang, obj = generate(phantom, args.size, args.angles)
-
-    # always add algorithm
-    _kwargs = {"algorithm": algorithm}
-
-    # assign number of cores
-    _kwargs["ncore"] = ncores
-
+    # always add algorithm and ncores
+    _kwargs = {
+        "algorithm": algorithm,
+        "ncore": args.ncores,
+    }
     # don't assign "num_iter" if gridrec or fbp
     if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = args.num_iter
-
     print("kwargs: {}".format(_kwargs))
+
     with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
                                   algorithm)):
         rec = tomopy.recon(prj, ang, **_kwargs)
-
-    obj = normalize(obj)
-    rec = normalize(rec)
-
+    # trim rec because the data was padded to keep the entire object in the
+    # field of view
     rec = trim_border(rec, rec.shape[0],
-                      rec[0].shape[0] - obj[0].shape[0],
-                      rec[0].shape[1] - obj[0].shape[1])
+                      rec.shape[1] - obj.shape[1],
+                      rec.shape[2] - obj.shape[2])
 
     label = "{} @ {}".format(algorithm.upper(), phantom.upper())
 
     quantify_difference(label, obj, rec)
+
+    global image_quality
 
     if "orig" not in image_quality:
         image_quality["orig"] = obj
@@ -127,6 +136,12 @@ def run(phantom, algorithm, args, get_recon=False):
 
     if get_recon is True:
         return rec
+
+    imgs = []
+    bname = get_basepath(args, algorithm, phantom)
+    oname = os.path.join(bname, "orig_{}_".format(algorithm))
+    fname = os.path.join(bname, "stack_{}_".format(algorithm))
+    dname = os.path.join(bname, "diff_{}_".format(algorithm))
 
     print("oname = {}, fname = {}, dname = {}".format(oname, fname, dname))
     imgs.extend(output_images(obj, oname, args.format, args.scale, args.ncol))
@@ -142,39 +157,31 @@ def main(args):
 
     manager = timemory.manager()
 
-    algorithm = args.algorithm
-    if len(args.compare) > 0:
-        algorithm = "comparison"
-
     print(("\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n"
-          "{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n").format(
+          "{} = {}\n{} = {}\n{} = {}\n{} = {}\n").format(
           "\tPhantom", args.phantom,
-          "\tAlgorithm", algorithm,
+          "\tAlgorithm", args.algorithm,
           "\tSize", args.size,
           "\tAngles", args.angles,
           "\tFormat", args.format,
           "\tScale", args.scale,
-          "\tcomparison", args.compare,
           "\tnumber of cores", args.ncores,
           "\tnumber of columns", args.ncol,
           "\tnumber iterations", args.num_iter))
 
-    if len(args.compare) > 0:
-        args.ncol = 1
-        args.scale = 1
-        nitr = 1
+    algorithm = "comparison" if len(args.algorithm) > 1 else args.algorithm[0]
+
+    if algorithm is "comparison":
         comparison = None
-        for alg in args.compare:
+        for nitr, alg in enumerate(args.algorithm):
             print("Reconstructing {} with {}...".format(args.phantom, alg))
             tmp = run(args.phantom, alg, args, get_recon=True)
-            tmp = rescale_image(tmp, args.size, args.scale, transform=False)
             if comparison is None:
-                comparison = image_comparison(
-                    len(args.compare), tmp.shape[0], tmp[0].shape[0],
+                comparison = ImageComparison(
+                    len(args.algorithm), tmp.shape[0], tmp[0].shape[0],
                     tmp[0].shape[1], image_quality["orig"]
                     )
-            comparison.assign(alg, nitr, tmp)
-            nitr += 1
+            comparison.assign(alg, nitr+1, tmp)
         bname = get_basepath(args, algorithm, args.phantom)
         fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
         dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
@@ -186,8 +193,8 @@ def main(args):
             output_images(comparison.delta, dname,
                           args.format, args.scale, args.ncol))
     else:
-        print("Reconstructing with {}...".format(args.algorithm))
-        imgs = run(args.phantom, args.algorithm, args)
+        print("Reconstructing with {}...".format(algorithm))
+        imgs = run(args.phantom, algorithm, args)
 
     # timing report to stdout
     print('{}\n'.format(manager))
@@ -230,89 +237,79 @@ def main(args):
 
 
 if __name__ == "__main__":
+    """Parse inputs then call main function."""
 
     parser = argparse.ArgumentParser()
-
-    # phantom choices
-    phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
-                       "lena", "peppers", "shepp2d", "shepp3d"]
-
-    import multiprocessing as mp
-    ncores = mp.cpu_count()
-
-    parser.add_argument("-p", "--phantom", help="Phantom to use",
-                        default="lena", choices=phantom_choices, type=str)
-    parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="art", choices=algorithms, type=str)
-    parser.add_argument("-A", "--angles", help="number of angles",
-                        default=360, type=int)
-    parser.add_argument("-s", "--size", help="size of image",
-                        default=512, type=int)
-    parser.add_argument("-n", "--ncores", help="number of cores",
-                        default=ncores, type=int)
-    parser.add_argument("-f", "--format", help="output image format",
-                        default="jpeg", type=str)
-    parser.add_argument("-S", "--scale",
-                        help="scale image by a positive factor",
-                        default=1, type=int)
-    parser.add_argument("-c", "--ncol", help="Number of images per row",
-                        default=1, type=int)
-    parser.add_argument("--compare", help="Generate comparison",
-                        nargs='*', default=["none"], type=str)
-    parser.add_argument("-i", "--num-iter", help="Number of iterations",
-                        default=10, type=int)
+    parser.add_argument(
+        "-p", "--phantom",
+        help="name a phantom to use for the benchmark(s)",
+        default="lena", choices=phantom_choices, type=str)
+    parser.add_argument(
+        "-a", "--algorithm",
+        help=("name one or more reconstruction algorithm to use for the "
+              "benchmark(s)"),
+        default=["art"], choices=algorithm_choices + ["all"], type=str,
+        nargs='+')
+    parser.add_argument(
+        "-A", "--angles",
+        help="specify the number projection angles for the simulation(s)",
+        default=360, type=int)
+    parser.add_argument(
+        "-s", "--size",
+        help="specify the edge length in pixels of the reconstructed image(s)",
+        default=512, type=int)
+    parser.add_argument(
+        "-n", "--ncores", help="specify the number of cpu cores to use",
+        default=mp.cpu_count(), type=int)
+    parser.add_argument(
+        "-f", "--format",
+        help="specify the file format of the output images",
+        default="jpeg", type=str)
+    parser.add_argument(
+        "-S", "--scale",
+        help="scale size of the output images by this positive factor",
+        default=1, type=int)
+    # FIXME: Add better docstring for ncol. What rows?
+    parser.add_argument(
+        "-c", "--ncol", help="Number of images per row",
+        default=1, type=int)
+    parser.add_argument(
+        "-i", "--num-iter",
+        help="specify a number of iterations for iterative algorithms",
+        default=10, type=int)
 
     args = timemory.options.add_args_and_parse_known(parser)
 
     print("\nargs: {}\n".format(args))
 
+    # FIXME: unnecessary? timemory already sets output_dir to "."
     if args.output_dir is None:
         args.output_dir = "."
 
-    if len(args.compare) == 1 and args.compare[0].lower() == "all":
-        args.compare = list(algorithms)
-    elif len(args.compare) == 1:
-        args.compare = []
-
+    # create a folder for the phantom
     pdir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
     if not os.path.exists(pdir):
         os.makedirs(pdir)
 
-    alg = args.algorithm
-    if len(args.compare) > 0:
+    # Check if algorithm is "all"
+    if len(args.algorithm) == 1 and args.algorithm[0].lower() == "all":
+        args.algorithm = list(algorithm_choices)
+
+    # Make the folder for output images; remove existing
+    if len(args.algorithm) > 1:
         alg = "comparison"
-
-    adir = os.path.join(pdir, alg)
-    if not os.path.exists(adir):
-        os.makedirs(adir)
-
-    if len(args.compare) == 0:
-        try:
-            import shutil
-            if os.path.exists(adir):
-                shutil.rmtree(adir)
-                os.makedirs(adir)
-        except:
-            pass
     else:
-        try:
-            import shutil
-            if os.path.exists(adir):
-                shutil.rmtree(adir)
-                os.makedirs(adir)
-        except:
-            pass
+        alg = args.algorithm[0]
+    adir = os.path.join(pdir, alg)
+    shutil.rmtree(adir, ignore_errors=True)
+    os.makedirs(adir)
 
-    ret = 0
     try:
-
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):
             main(args)
-
+        sys.exit(0)
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5)
         print('Exception - {}'.format(e))
-        ret = 2
-
-    sys.exit(ret)
+        sys.exit(2)

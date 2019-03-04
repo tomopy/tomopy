@@ -46,14 +46,12 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-"""
-Utilities for TomoPy + PyCTest
-"""
+"""Utilities for TomoPy + PyCTest."""
 
-import os
+import os.path
 import timemory
 import numpy as np
-import pylab
+import matplotlib.pyplot as plt
 import scipy.ndimage as ndimage
 import numpy.linalg as LA
 
@@ -67,19 +65,20 @@ def exit_action(errcode):
     f.close()
 
 
-algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-              'tv', 'grad']
+algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
+                     'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+                     'tv', 'grad']
 
+phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
+                   "lena", "peppers", "shepp2d", "shepp3d"]
 
 image_quality = {}
 
 
 @timemory.util.auto_timer()
-def output_image(image, fname):
-
-    pylab.imsave(fname, image, cmap='gray')
-
+def save_image(image, fname):
+    """Save an image and check that it exists afterward."""
+    plt.imsave(fname, image, cmap='gray')
     if os.path.exists(fname):
         print("  --> Image file found @ '{}'...".format(fname))
     else:
@@ -87,128 +86,133 @@ def output_image(image, fname):
         print("  --> No image file at @ '{}' (expected) ...".format(fname))
 
 
-def print_size(rec, msg=""):
-    print("{} Image size: {} x {} x {}".format(
-        msg,
-        rec[0].shape[0],
-        rec[0].shape[1],
-        rec.shape[0]))
-
-
 @timemory.util.auto_timer()
-def convert_image(fname, current_format, new_format):
+def convert_image(fname, current_format, new_format="jpeg"):
+    """Create a copy of an image in a new_format.
 
+    Parameters
+    ----------
+    fname : string
+        The current image filename sans extension.
+    current_format : string
+        The current image file extension.
+    new_fromat : string
+        The new image file extension.
+
+    """
     _fext = new_format
     _success = True
-
     try:
-
         from PIL import Image
         _cur_img = "{}.{}".format(fname, current_format)
         img = Image.open(_cur_img)
-        out = img.convert("RGB")
-        out.save(fname, "jpeg", quality=95)
-        print("  --> Converted '{}' to {} format...".format(fname,
-                                                            new_format.upper()))
-
+        out = img.convert(mode="RGB")
+        out.save(fname, format=new_format, quality=95)
+        print("  --> Converted '{}' to {} format...".format(
+              fname, new_format.upper()))
     except Exception as e:
         print("  --> ##### {}...".format(e))
         print("  --> ##### Exception occurred converting "
               "'{}' to {} format...".format(fname, new_format.upper()))
-
         _fext = current_format
         _success = False
-
-    _fname = "{}.{}".format(fname, _fext)
-    return [_fname, _success, _fext]
+        _fname = "{}.{}".format(fname, _fext)
+        return [_fname, _success, _fext]
 
 
 def normalize(rec):
-    rec_n = rec.copy()
+    """Normalize rec to the range [-1, 1]."""
+    rec_n = np.asarray(rec).copy()
     try:
         _min = np.amin(rec_n)
-        rec_n -= _min
+        rec_n -= _min  # shift sp range min is zero
         _max = np.amax(rec_n)
-        if _max > 0.0:
-            rec_n /= 0.5 * _max
-        rec_n -= 1
+        if _max > 0.0:  # prevent division by zero
+            rec_n /= 0.5 * _max  # rescale to range [0, 2]
+        rec_n -= 1  # shift to range [-1, 1]
     except Exception as e:
         print("  --> ##### {}...".format(e))
         rec_n = rec.copy()
-
     return rec_n
 
 
 def trim_border(rec, nimages, drow, dcol):
+    """Crop rec along three dimensions.
 
-    rec_n = rec.copy()
-    nrows = rec[0].shape[0] - drow
-    ncols = rec[0].shape[1] - dcol
+    Axes 1 and 2 are trimmed from both sides with half stripped
+    from each end.
 
+    Parameters
+    ----------
+    rec : np.ndarray
+    nimages : int
+        The new length of axis 0.
+    drow, dcol : int
+        The number of indices along axes 1 and 2 to remove.
+
+    """
+    rec_n = np.asarray(rec).copy()
+    # compute new dimensions
+    nrows = rec.shape[1] - drow
+    ncols = rec.shape[2] - dcol
+    # compute starting and ending coords of trimmed array
+    _xb = drow // 2
+    _xe = _xb + nrows
+    _yb = dcol // 2
+    _ye = _yb + ncols
     try:
-        rec_tmp = np.ndarray([nimages, nrows, ncols])
-        for i in range(nimages):
-            _xb = int(0.5*drow)
-            _xe = _xb + nrows
-            _yb = int(0.5*dcol)
-            _ye = _yb + ncols
-            rec_tmp[i, :, :] = rec_n[i, _xb:_xe, _yb:_ye]
-        rec_n = rec_tmp
+        return rec_n[:nimages, _xb:_xe, _yb:_ye]
     except Exception as e:
         print("  --> ##### {}...".format(e))
-        rec_n = rec.copy()
-
-    return rec_n
+        return rec_n
 
 
 def fill_border(rec, nimages, drow, dcol):
+    """Pad rec along axes 1 and 2 by drow and dcol. Crop axes 0 to nimages.
 
-    rec_n = rec.copy()
-    nrows = rec[0].shape[0] + drow
-    ncols = rec[0].shape[1] + dcol
-
+    The padding along axes 1 and 2 is split evenly between before and after
+    the array.
+    """
+    rec_n = np.asarray(rec).copy()
+    # compute new dimensions
+    nrows = rec.shape[1] + drow
+    ncols = rec.shape[2] + dcol
+    # compute starting and ending coords of padded array
+    _xb = drow // 2
+    _xe = _xb + rec_n[i].shape[0]
+    _yb = dcol // 2
+    _ye = _yb + rec_n[i].shape[1]
     try:
-        rec_tmp = np.ndarray([nimages, nrows, ncols])
-        for i in range(nimages):
-            _xb = int(0.5*drow)
-            _xe = _xb + rec_n[i].shape[0]
-            _yb = int(0.5*dcol)
-            _ye = _yb + rec_n[i].shape[1]
-            rec_tmp[i, _xb:_xe, _yb:_ye] = rec_n[i, :, :]
-        rec_n = rec_tmp
+        rec_tmp = np.empty([nimages, nrows, ncols])
+        rec_tmp[:, _xb:_xe, _yb:_ye] = rec_n[0:nimages, :, :]
+        return rec_tmp
     except Exception as e:
         print("  --> ##### {}...".format(e))
-        rec_n = rec.copy()
-
-    return rec_n
+        return rec_n
 
 
 @timemory.util.auto_timer()
-def rescale_image(rec, nimages, scale, transform=True):
-
-    rec_n = normalize(rec.copy())
-    try:
-        import skimage.transform
-        if transform is True:
-            _nrows = rec[0].shape[0] * scale
-            _ncols = rec[0].shape[1] * scale
-            rec_tmp = np.ndarray([nimages, _nrows, _ncols])
-            for i in range(nimages):
-                rec_tmp[i] = skimage.transform.resize(
-                    rec_n[i],
-                    (rec_n[i].shape[0] * scale, rec_n[i].shape[1] * scale)
-                    )
-            rec_n = rec_tmp
-
-    except Exception as e:
-        print("  --> ##### {}...".format(e))
-        rec_n = rec.copy()
-
-    return rec_n
+def resize_image(stack, scale=1):
+    """Resize a stack of images by positive scale."""
+    if scale > 1:
+        try:
+            import skimage.transform
+            return skimage.transform.resize(
+                image=stack,
+                output_shape=(
+                    stack.shape[0],
+                    stack.shape[1] * scale,
+                    stack.shape[2] * scale,
+                ),
+            )
+        except Exception as e:
+            print("  --> ##### {}...".format(e))
+    return stack.copy()
 
 
 def quantify_difference(label, img, rec):
-
+    """Return the L1,L2 norms of the diff and and grad diff of the two images.
+    """
     _img = normalize(img)
     _rec = normalize(rec)
 
@@ -247,58 +251,40 @@ def quantify_difference(label, img, rec):
 
 
 @timemory.util.auto_timer()
-def output_images(rec, fpath, format="jpeg", scale=1, ncol=1):
+def output_images(rec, fpath, img_format="jpeg", scale=1, ncol=1):
+    """Save an image stack as a series of concatenated images.
 
-    imgs = []
-    nitr = 0
-    nimages = rec.shape[0]
-    rec_i = None
-    fname = "{}".format(fpath)
+    Each set of ncol images are concatenated horizontally and saved together
+    into files named {fpath}_0_{ncol}.{img_format},
+    {fpath}_{ncol}_{2*ncol}.{img_format}, {fpath}_{ncol}_{3*ncol}.{img_format},
+    ...
 
-    if nimages < ncol:
-        ncol = nimages
+    """
 
-    rec_n = rec.copy()
-    if scale > 1:
-        rescale_image(rec, nimages, scale)
-
+    rec_n = resize_image(rec, scale)
     print("Image size: {} x {} x {}".format(
-        rec[0].shape[0],
-        rec[0].shape[1],
-        rec.shape[0]))
+        rec.shape[1],
+        rec.shape[2],
+        rec.shape[0],
+    ))
+    print("Resized image size: {} x {} x {}".format(
+        rec_n.shape[1],
+        rec_n.shape[2],
+        rec_n.shape[0],
+    ))
 
-    print("Scaled Image size: {} x {} x {}".format(
-        rec_n[0].shape[0],
-        rec_n[0].shape[1],
-        rec_n.shape[0]))
-
-    for i in range(nimages):
-        nitr += 1
-
-        _f = "{}{}".format(fpath, i)
-        _fimg = "{}.{}".format(_f, format)
-
-        if rec_i is None:
-            rec_i = rec_n[i]
-        else:
-            rec_i = np.concatenate((rec_i, rec_n[i]), axis=1)
-
-        if nitr % ncol == 0 or i+1 == nimages:
-            fname = "{}{}.{}".format(fname, i, format)
-            output_image(rec_i, fname)
-            imgs.append(fname)
-            rec_i = None
-            fname = "{}".format(fpath)
-        else:
-            fname = "{}{}_".format(fname, i)
-
-    return imgs
+    filenames = list()
+    for lo in range(0, len(rec_n), ncol):
+        hi = min(lo + ncol, len(rec_n))
+        rec_row = np.concatenate(rec_n[lo:hi], axis=1)
+        fname = "{}{}_{}.{}".format(fpath, lo, hi, img_format)
+        save_image(rec_row, fname)
+        filenames.append(fname)
+    return filenames
 
 
-class image_comparison(object):
-    """
-    A class for combining image slices into a column comparison
-    """
+class ImageComparison(object):
+    """A class for combining image slices into a column comparison."""
 
     def __init__(self, ncompare, nslice, nrows, ncols, solution=None,
                  dtype=float):

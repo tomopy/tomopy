@@ -66,7 +66,7 @@ import dxchange
 import timemory
 try:
     from pyctest_tomopy_utils import *
-except:
+except ImportError:
     from benchmarking.pyctest_tomopy_utils import *
 
 
@@ -322,7 +322,7 @@ def main(arg):
                               "(default 0.5)")
                         )
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
-                        default="gridrec", choices=algorithms, type=str)
+                        default="gridrec", choices=algorithm_choices, type=str)
     parser.add_argument("-n", "--ncores", help="number of cores",
                         default=default_ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
