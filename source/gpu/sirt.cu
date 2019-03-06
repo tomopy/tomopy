@@ -162,7 +162,7 @@ cuda_sirt_pixels_kernel_opt(int p, int nx, int dx, float* recon, const float* da
     for(int d = d0; d < dx; d += dstride)
     {
         float sum = 0.0f;
-        device_reduce_block_atomic_kernel(recon + d * nx, &sum, nx);
+        device_reduce_warp_atomic_kernel(recon + d * nx, &sum, nx);
         float upd = data[p * dx + d] - sum;
         for(int i = 0; i < nx; ++i)
             recon[d * nx + i] += upd;
