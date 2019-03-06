@@ -108,8 +108,8 @@ __device__ void
 device_reduce_warp_atomic_kernel(float* in, float* out, int N)
 {
     float sum     = 0.0f;
-    int   i0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int   istride = blockDim.y * gridDim.y;
+    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int   istride = blockDim.x * gridDim.x;
     for(int i = i0; i < N; i += istride)
         sum += in[i];
     sum = warp_reduce_sum(sum);
@@ -123,12 +123,12 @@ __device__ void
 device_reduce_block_atomic_kernel(float* in, float* out, int N)
 {
     float sum     = 0.0f;
-    int   i0      = blockIdx.y * blockDim.y + threadIdx.y;
-    int   istride = blockDim.y * gridDim.y;
+    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int   istride = blockDim.x * gridDim.x;
     for(int i = i0; i < N; i += istride)
         sum += in[i];
     sum = block_reduce_sum(sum);
-    if(threadIdx.y == 0)
+    if(threadIdx.x == 0)
         atomicAdd(out, sum);
 }
 
