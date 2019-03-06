@@ -70,6 +70,68 @@ typedef gpu_data::int_type     int_type;
 typedef gpu_data::init_data_t  init_data_t;
 typedef gpu_data::data_array_t data_array_t;
 
+#define TILE_DIM 16
+#define FULL_MASK 0xffffffff
+
+//--------------------------------------------------------------------------------------//
+
+__inline__ __device__ float
+warp_reduce_sum(float val)
+{
+    for(int offset = warpSize / 2; offset > 0; offset /= 2)
+        val += __shfl_down_sync(FULL_MASK, val, offset);
+    return val;
+}
+
+//--------------------------------------------------------------------------------------//
+
+__inline__ __device__ float
+block_reduce_sum(float val)
+{
+    static __shared__ float shared[32];  // Shared mem for 32 partial sums
+    int                     lane = threadIdx.x % warpSize;
+    int                     wid  = threadIdx.x / warpSize;
+    val = warp_reduce_sum(val);  // Each warp performs partial reduction
+    if(lane == 0)
+        shared[wid] = val;  // Write reduced value to shared memory
+    __syncthreads();        // Wait for all partial reductions
+    // read from shared memory only if that warp existed
+    val = (threadIdx.x < blockDim.x / warpSize) ? shared[lane] : 0;
+    if(wid == 0)
+        val = warp_reduce_sum(val);  // Final reduce within first warp
+    return val;
+}
+
+//--------------------------------------------------------------------------------------//
+
+__device__ void
+device_reduce_warp_atomic_kernel(float* in, float* out, int N)
+{
+    float sum     = 0.0f;
+    int   i0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int   istride = blockDim.y * gridDim.y;
+    for(int i = i0; i < N; i += istride)
+        sum += in[i];
+    sum = warp_reduce_sum(sum);
+    if((threadIdx.x & (warpSize - 1)) == 0)
+        atomicAdd(out, sum);
+}
+
+//--------------------------------------------------------------------------------------//
+
+__device__ void
+device_reduce_block_atomic_kernel(float* in, float* out, int N)
+{
+    float sum     = 0.0f;
+    int   i0      = blockIdx.y * blockDim.y + threadIdx.y;
+    int   istride = blockDim.y * gridDim.y;
+    for(int i = i0; i < N; i += istride)
+        sum += in[i];
+    sum = block_reduce_sum(sum);
+    if(threadIdx.y == 0)
+        atomicAdd(out, sum);
+}
+
 //======================================================================================//
 
 __global__ void
@@ -83,6 +145,24 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
+        float upd = data[p * dx + d] - sum;
+        for(int i = 0; i < nx; ++i)
+            recon[d * nx + i] += upd;
+    }
+}
+
+//======================================================================================//
+
+__global__ void
+cuda_sirt_pixels_kernel_opt(int p, int nx, int dx, float* recon, const float* data)
+{
+    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
+    int dstride = blockDim.x * gridDim.x;
+
+    for(int d = d0; d < dx; d += dstride)
+    {
+        float sum = 0.0f;
+        device_reduce_block_atomic_kernel(recon + d * nx, &sum, nx);
         float upd = data[p * dx + d] - sum;
         for(int i = 0; i < nx; ++i)
             recon[d * nx + i] += upd;
@@ -111,7 +191,8 @@ void
 sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int dt,
                             int dx, int nx, int ny, const float* theta)
 {
-    auto _cache = _gpu_data[GetThisThreadID() % _gpu_data.size()];
+    static bool use_opt = GetEnv<bool>("TOMOPY_USE_OPT_SUM", false);
+    auto        _cache  = _gpu_data[GetThisThreadID() % _gpu_data.size()];
 
 #if defined(DEBUG)
     printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
@@ -124,9 +205,13 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // calculate some values
     float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float        theta_p_deg = theta_p_rad * degrees;
-    int          block       = _cache->block();
-    int          grid        = _cache->compute_grid(dx);
+    int          _block      = _cache->block();
+    int          _grid       = _cache->compute_grid(dx);
     cudaStream_t stream      = _cache->stream();
+
+    dim3 block3 = GetBlockDims();
+    dim3 block(_block, (use_opt) ? block3.y : 1);
+    dim3 grid(_grid, (use_opt) ? ComputeGridSize(nx, block3.y) : 1);
 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
@@ -146,7 +231,10 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         // forward-rotate
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
         // compute simdata
-        cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
+        if(use_opt)
+            cuda_sirt_pixels_kernel_opt<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
+        else
+            cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
         // back-rotate
         cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
         // update shared update array
@@ -178,7 +266,8 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     // thread counter for device assignment
     static std::atomic<int> ntid;
 
-    // compute some properties (expected python threads, max threads, device assignment)
+    // compute some properties (expected python threads, max threads, device
+    // assignment)
     auto min_threads  = nthread_type(1);
     auto pythreads    = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
     auto max_threads  = HW_CONCURRENCY / std::max(pythreads, min_threads);

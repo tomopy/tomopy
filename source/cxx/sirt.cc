@@ -238,7 +238,7 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     for(int i = 0; i < num_iter; i++)
     {
         START_TIMER(t_start);
-        // reset the simulation data
+        TIMEMORY_AUTO_TIMER();
 
         // reset global update and sum_dist
         memset(update.data(), 0, recon_pixels * sizeof(float));
