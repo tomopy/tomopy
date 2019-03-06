@@ -86,6 +86,7 @@ def save_image(image, fname):
         print("  --> No image file at @ '{}' (expected) ...".format(fname))
 
 
+# FIXME: convert_image is unused
 @timemory.util.auto_timer()
 def convert_image(fname, current_format, new_format="jpeg"):
     """Create a copy of an image in a new_format.
@@ -167,6 +168,7 @@ def trim_border(rec, nimages, drow, dcol):
         return rec_n
 
 
+#  FIXME: fill_border is unused
 def fill_border(rec, nimages, drow, dcol):
     """Pad rec along axes 1 and 2 by drow and dcol. Crop axes 0 to nimages.
 
@@ -190,7 +192,8 @@ def fill_border(rec, nimages, drow, dcol):
         print("  --> ##### {}...".format(e))
         return rec_n
 
-
+#  FIXME: is this decorator necessary when there is no `with timemory...`
+# statement?
 @timemory.util.auto_timer()
 def resize_image(stack, scale=1):
     """Resize a stack of images by positive scale."""
@@ -258,9 +261,10 @@ def output_images(rec, fpath, img_format="jpeg", scale=1, ncol=1):
     into files named {fpath}_0_{ncol}.{img_format},
     {fpath}_{ncol}_{2*ncol}.{img_format}, {fpath}_{ncol}_{3*ncol}.{img_format},
     ...
+    FIXME: What is the naming scheme supposed to be when there is more than one
+    row?
 
     """
-
     rec_n = resize_image(rec, scale)
     print("Image size: {} x {} x {}".format(
         rec.shape[1],
@@ -284,7 +288,10 @@ def output_images(rec, fpath, img_format="jpeg", scale=1, ncol=1):
 
 
 class ImageComparison(object):
-    """A class for combining image slices into a column comparison."""
+    """A class for combining image slices into a column comparison.
+
+    FIXME: Document how this class is supposed to work.
+    """
 
     def __init__(self, ncompare, nslice, nrows, ncols, solution=None,
                  dtype=float):

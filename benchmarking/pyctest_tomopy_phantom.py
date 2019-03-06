@@ -152,6 +152,11 @@ def run(phantom, algorithm, args, get_recon=False):
 
 
 def main(args):
+    """
+    FIXME: Document the expected filestructure, types of files that are
+    created, and what information they contain.
+
+    """
 
     global image_quality
 
