@@ -50,7 +50,7 @@
 TomoPy script to reconstruct a TomoBank file
 """
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import os
 import sys
@@ -64,10 +64,8 @@ import h5py
 import tomopy
 import dxchange
 import timemory
-try:
-    from pyctest_tomopy_utils import *
-except ImportError:
-    from benchmarking.pyctest_tomopy_utils import *
+
+from benchmarking.utils import *
 
 
 def get_dx_dims(fname, dataset):

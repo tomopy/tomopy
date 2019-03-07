@@ -48,6 +48,8 @@
 
 """TomoPy script to reconstruct a built-in phantom."""
 
+from __future__ import absolute_import
+
 import sys
 import shutil
 import os
@@ -59,10 +61,7 @@ import tomopy
 import timemory
 import timemory.options as options
 
-try:
-    from pyctest_tomopy_utils import *
-except ImportError:
-    from benchmarking.pyctest_tomopy_utils import *
+from benchmarking.utils import *
 
 
 def get_basepath(args, algorithm, phantom):

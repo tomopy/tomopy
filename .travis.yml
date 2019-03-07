@@ -33,9 +33,8 @@ install:
     fi
   - conda info -a
   - conda list --explicit
-  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS} -- -VV
+  - python -m benchmarking --disable-phantom-tests ${PYCTEST_ARGS} -- -VV
 script:
-  - cd test/
   - coverage run $(which nosetests)
 after_success:
   - coveralls

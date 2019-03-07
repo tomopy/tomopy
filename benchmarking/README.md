@@ -25,12 +25,12 @@ $ pip install -v pyctest timemory
 
 ## Execution
 
-- Submission is invoke by running `./pyctest_tomopy.py` from the main directory
-- Run `./pyctest_tomopy.py --help` to view the list of available configuration options
+- Submission is invoke by running `python -m benchmarking` from the main directory
+- Run `python -m benchmarking --help` to view the list of available configuration options
 - Supplementary files
-    - `./benchmarking/pyctest_tomopy_rec.py` is a TomoPy reconstruction script for TomoBank data
+    - `./benchmarking/rec.py` is a TomoPy reconstruction script for TomoBank data
         - When the option `--globus-path` is specified, PyCTest will reconstruct `tomo_00001/tomo_00001.h5` with all the specified algorithms
-    - `./benchmarking/pyctest_tomopy_phantom.py` is a TomoPy reconstruction script for built-in phantoms
+    - `./benchmarking/phantom.py` is a TomoPy reconstruction script for built-in phantoms
 - The default assumption is that the current Python environment has all of the required packages for TomoPy
 
 ### Example
@@ -44,6 +44,6 @@ $ conda install -n ${CONDA_ENV} -c conda-forge -c jrmadsen python=${PYTHON_VERSI
 
 $ source activate ${CONDA_ENV}
 
-$ ./pyctest_tomopy.py --globus-path=${HOME}/devel/globus --num-iter=10 --pyctest-site="Cori-Haswell" --pyctest-token-file="${HOME}/.tokens/nersc-cdash"
+$ python -m benchmarking --globus-path=${HOME}/devel/globus --num-iter=10 --pyctest-site="Cori-Haswell" --pyctest-token-file="${HOME}/.tokens/nersc-cdash"
 
 ```
