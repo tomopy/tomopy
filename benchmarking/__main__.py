@@ -101,6 +101,7 @@ def configure():
                        "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
     # number of iterations
     default_nitr = 10
+    default_phantom_size = 512
     # number of cores
     default_ncores = mp.cpu_count()
     # default algorithm choices
@@ -128,8 +129,8 @@ def configure():
     parser.add_argument("--phantom-size",
                         type=int,
                         help="Size parameter for the phantom reconstructions",
-                        default=None)
-    parser.add_argument("--algorithms",
+                        default=default_phantom_size)
+    parser.add_argument("-a", "--algorithms",
                         help="Algorithms to use",
                         type=str,
                         nargs='*',
@@ -206,7 +207,7 @@ def configure():
 def run_pyctest():
     # run argparse, checkout source, copy over files
     args = configure()
-    # Change the build name to somthing other than default
+    # Change the build name to something other than default
     pyctest.BUILD_NAME = "[{}] [{} {} {}] [Python ({}) {}]".format(
         pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
         platform.uname()[0],
@@ -325,7 +326,7 @@ def run_pyctest():
 
             else:
                 test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                ".//benchmarking/pyctest_tomopy_rec.py",
+                                "-m", "benchmarking.rec",
                                 h5file,
                                 "-a", algorithm,
                                 "--type", "slice",
@@ -337,46 +338,40 @@ def run_pyctest():
                                 "-i", "{}".format(args.num_iter)])
     # loop over args.phantoms, skip when generating C coverage (too long)
     if not args.coverage and not args.disable_phantom_tests:
+        name_algo = (args.algorithms[0] if len(args.algorithms) == 1
+                     else "comparison")
         for phantom in args.phantoms:
             # create a test comparing all the args.algorithms
-            test = pyctest.test()
-            if len(args.algorithms) == 1:
-                test_args = ["-a"]
-                name = "{}_{}".format(phantom, "".join(args.algorithms))
-            else:
-                test_args = ["--compare"]
-                name = "{}_{}".format(phantom, "comparison")
-
-            nsize = 512 if phantom != "shepp3d" else 128
+            name = "{}_{}".format(phantom, name_algo)
+            nsize = (args.phantom_size if phantom != "shepp3d"
+                     else args.phantom_size // 4)
             # if size customized, create unique test-name
-            if args.phantom_size is not None and args.phantom_size != 512:
-                nsize = (args.phantom_size if phantom != "shepp3d" else
-                         int(args.phantom_size / 4))
+            if args.phantom_size != default_phantom_size:
                 name = "{}_pix{}".format(name, nsize)
             # original number of iterations before num-iter added to test name
-            if args.num_iter != 10:
+            if args.num_iter != default_nitr:
                 name = "{}_itr{}".format(name, args.num_iter)
-
+            test = pyctest.test()
             test.SetName(name)
             test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
             test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
             test.SetProperty("TIMEOUT", "10800")  # 3 hours
             test.SetProperty("DEPENDS", "nosetests")
-            ncores = args.ncores
-            niters = args.num_iter
             if phantom == "shepp3d":
                 test.SetProperty("RUN_SERIAL", "ON")
-            test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                            "./benchmarking/pyctest_tomopy_phantom.py",
-                            "-p", phantom,
-                            "-s", "{}".format(nsize),
-                            "-A", "360",
-                            "-f", "jpeg",
-                            "-S", "1",
-                            "-n", "{}".format(ncores),
-                            "-i", "{}".format(niters),
-                            "--output-dir", "benchmarking/{}".format(name)]
-                            + test_args + args.algorithms)
+            test.SetCommand([
+                    pyctest.PYTHON_EXECUTABLE,
+                    "-m", "benchmarking.phantom",
+                    "-p", phantom,
+                    "-a", *args.algorithms,
+                    "-s", "{}".format(nsize),
+                    "-A", "360",
+                    "-f", "jpeg",
+                    "-S", "1",
+                    "-n", "{}".format(args.ncores),
+                    "-i", "{}".format(args.num_iter),
+                    "--output-dir", "test",
+                ])
     # generate the CTestConfig.cmake and CTestCustom.cmake
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
     # generate the CTestTestfile.cmake file
