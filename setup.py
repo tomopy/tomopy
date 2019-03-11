@@ -63,7 +63,7 @@ setup(
     name='tomopy',
     packages=['tomopy'],
     package_dir={"": "src"},
-    setup_requires=['setuptools_scm'],
+    setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
     use_scm_version=True,
     include_package_data=True,
     zip_safe=False,
