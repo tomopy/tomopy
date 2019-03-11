@@ -218,9 +218,8 @@ def run_pyctest():
     # so that the history of test timing is not affected
     if args.coverage:
         pyctest.BUILD_NAME = "{} [coverage]".format(pyctest.BUILD_NAME)
-    # remove any consecutive spaces
-    while "  " in pyctest.BUILD_NAME:
-        pyctest.BUILD_NAME = pyctest.BUILD_NAME.replace("  ", " ")
+    # replace any type of whitespace with single space
+    pyctest.BUILD_NAME = " ".join(pyctest.BUILD_NAME.split())
     # how to build the code
     pyctest.BUILD_COMMAND = "{} setup.py install".format(
         pyctest.PYTHON_EXECUTABLE)
