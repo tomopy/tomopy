@@ -14,9 +14,12 @@ endif()
 #
 ################################################################################
 
-file(READ "${CMAKE_CURRENT_LIST_DIR}/VERSION" VERSION_STRING LIMIT_COUNT 1)
+execute_process(COMMAND git describe --tags
+    OUTPUT_VARIABLE VERSION_STRING
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 string(REGEX REPLACE "(\n|\r)" "" VERSION_STRING "${VERSION_STRING}")
-string(REGEX REPLACE "[A-Za-z].*" "" VERSION_STRING "${VERSION_STRING}")
+string(REGEX REPLACE "-" "." VERSION_STRING "${VERSION_STRING}")
+string(REGEX REPLACE ".g.*" "" VERSION_STRING "${VERSION_STRING}")
 
 set(tomopy_VERSION "${VERSION_STRING}" CACHE STRING "Version of tomopy project" FORCE)
 message(STATUS "tomopy version ${tomopy_VERSION}")
