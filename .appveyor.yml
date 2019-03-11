@@ -7,7 +7,7 @@ skip_commits:
    - docs/*
    - '**/*.html'
 skip_branch_with_pr: true
-max_jobs: 1
+max_jobs: 6
 image: Visual Studio 2015
 init:
   - git config --global core.autocrlf input
