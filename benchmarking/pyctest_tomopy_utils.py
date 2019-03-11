@@ -51,16 +51,7 @@ Utilities for TomoPy + PyCTest
 """
 
 import os
-import sys
-import signal
-import argparse
-
-import tomopy
-import dxchange
-import tornado
-import matplotlib
 import timemory
-import timemory.options as options
 import numpy as np
 import pylab
 import scipy.ndimage as ndimage

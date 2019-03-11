@@ -4,6 +4,7 @@ mkl_fft
 numexpr
 numpy
 pywavelets
+scikit-build
 scikit-image
 scipy
 six

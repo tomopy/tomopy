@@ -54,15 +54,8 @@ import argparse
 import traceback
 
 import tomopy
-import dxchange
-import tornado
-import matplotlib
 import timemory
 import timemory.options as options
-import signal
-import numpy as np
-import time as t
-import pylab
 
 try:
     from pyctest_tomopy_utils import *
