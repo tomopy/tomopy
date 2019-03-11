@@ -54,6 +54,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndimage
 import numpy.linalg as LA
+import multiprocessing as mp
 
 
 def exit_action(errcode):
@@ -71,7 +72,9 @@ algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
 
 phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
                    "lena", "peppers", "shepp2d", "shepp3d"]
-
+default_nitr = 10  # number of iterations
+default_phantom_size = 512
+default_ncores = mp.cpu_count()  # number of cores
 image_quality = {}
 
 

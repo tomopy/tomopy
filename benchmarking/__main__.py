@@ -60,11 +60,12 @@ import platform
 import argparse
 import traceback
 import subprocess as sp
-import multiprocessing as mp
 
 import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
+
+from benchmarking.utils import *
 
 
 def cleanup(path=None, exclude=[]):
@@ -85,32 +86,6 @@ def configure():
                                     python_exe=sys.executable,
                                     submit=False,
                                     ctest_args=["-V"])
-    # default algorithm choices
-    available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
-                            'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                            'pml_quad', 'tv', 'grad']
-    # default phantom choices
-    available_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
-                          "lena", "peppers", "shepp2d", "shepp3d"]
-    # choices for algorithms
-    algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
-                         'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                         'pml_quad', 'tv', 'grad', 'none', 'all']
-    # phantom choices
-    phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
-                       "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
-    # number of iterations
-    default_nitr = 10
-    default_phantom_size = 512
-    # number of cores
-    default_ncores = mp.cpu_count()
-    # default algorithm choices
-    default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
-                          'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                          'pml_quad', 'tv', 'grad']
-    # default phantom choices
-    default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
-                        "lena", "peppers", "shepp2d", "shepp3d"]
 
     parser.add_argument("-n", "--ncores",
                         help="number of cores",
@@ -120,12 +95,12 @@ def configure():
                         help="number of iterations",
                         type=int,
                         default=default_nitr)
-    parser.add_argument("--phantoms",
+    parser.add_argument("-p", "--phantoms",
                         help="Phantoms to simulate",
                         type=str,
                         nargs='*',
                         choices=phantom_choices,
-                        default=default_phantoms)
+                        default=phantom_choices)
     parser.add_argument("--phantom-size",
                         type=int,
                         help="Size parameter for the phantom reconstructions",
@@ -135,7 +110,7 @@ def configure():
                         type=str,
                         nargs='*',
                         choices=algorithm_choices,
-                        default=default_algorithms)
+                        default=algorithm_choices)
     parser.add_argument("--globus-path",
                         help="Path to tomobank datasets",
                         type=str,
@@ -191,6 +166,7 @@ def configure():
     remove_duplicates(args.phantoms)
 
     if args.coverage:
+        # FIXME: Are these still necessary with cmake buildsystem?
         # read by Makefile.linux and Makefile.darwin
         pyctest.set(
             "ENV{CFLAGS}", "-g -O0 -fprofile-arcs -ftest-coverage")
