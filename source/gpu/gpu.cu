@@ -461,7 +461,7 @@ cuda_device_query()
               "Exclusive Process (many threads in one process is able to use "
               "::cudaSetDevice() with this device)",
               "Unknown",
-              NULL };
+              nullptr };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }
