@@ -313,7 +313,7 @@ def run_pyctest():
 
             else:
                 test.SetCommand([pyctest.PYTHON_EXECUTABLE,
-                                "-m", "benchmarking.rec",
+                                "-m", "benchmarking.tomobank",
                                 h5file,
                                 "-a", algorithm,
                                 "--type", "slice",
