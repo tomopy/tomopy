@@ -56,6 +56,7 @@ import os
 import argparse
 import traceback
 import multiprocessing as mp
+import xdesign as xd
 
 import tomopy
 import timemory
@@ -64,90 +65,138 @@ import timemory.options as options
 from benchmarking.utils import *
 
 
-def get_basepath(args, algorithm, phantom):
+def get_basepath(
+    output_dir="", phantom="", algorithm="", filter_name="", **kwargs
+):
     """Return the folder where data for a given reconstruction goes."""
-    return os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
+    return os.path.join(
+        os.getcwd(), output_dir, phantom, algorithm, filter_name,
+    )
 
 
 @timemory.util.auto_timer()
-def generate(phantom="shepp3d", nsize=512, nangles=360):
-    """Return the simulated data for the given phantom."""
+def generate_phantom(
+    phantom="shepp3d", nsize=512, nangles=360, output_dir="", format="png",
+    **kwargs,
+):
+    """Simulate data acquisition for tomography using TomoPy.
+
+    Reorder the projections optimally and save a numpyz file with the original,
+    sinogram, and angles to the disk. Return the original.
+    """
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
-        obj = getattr(tomopy.misc.phantom, phantom)(size=nsize)
-    with timemory.util.auto_timer("[tomopy.angles]"):
-        ang = tomopy.angles(nangles)
+        original = getattr(tomopy.misc.phantom, phantom)(size=nsize)
+    angles = tomopy.angles(nangles)
+    # Reorder projections optimally
+    p = multilevel_order(len(angles)).astype(np.int32)
+    angles = angles[p, ...]
     with timemory.util.auto_timer("[tomopy.project]"):
-        prj = tomopy.project(obj, ang)
-    return [prj, ang, obj]
+        sinogram = tomopy.project(original, angles, pad=True)
+
+    basepath = get_basepath(output_dir, phantom=phantom, algorithm="")
+    os.makedirs(basepath, exist_ok=True)
+    dynam_range = np.max(original) - np.min(original)
+    plt.imsave(
+        os.path.join(basepath, "original.{}".format(format.lower())),
+        original[0, ...],
+        cmap=plt.cm.cividis,
+        vmin=0, vmax=1.1*dynam_range,
+        )
+    np.savez(
+        os.path.join(basepath, "simulated_data.npz"),
+        original=original, angles=angles, sinogram=sinogram
+    )
+    return original
 
 
 @timemory.util.auto_timer()
-def run(phantom, algorithm, args, get_recon=False):
-    """Run reconstruction benchmarks for phantoms.
-
-    Parameters
-    ----------
-        phantom : string
-            The name of the phantom to use.
-        algorithm : string
-            The name of the algorithm to test.
-        args : argparser args
+def run(
+    phantom, algorithm, ncores, num_iter,
+    output_dir="", filter_name="", format="png", **kwargs
+):
+    """Run reconstruction benchmarks for phantoms using algorithm.
 
     Returns
     -------
-    Either rec or imgs
-    rec : np.ndarray
-        The reconstructed image.
-    imgs : list
-        A list of the original, reconstructed, and difference image
+    best_rec : np.ndarray
+        The best reconstructed image.
     """
-    prj, ang, obj = generate(phantom, args.size, args.angles)
-    # always add algorithm and ncores
+    # Load the simulated from the disk
+    basepath = get_basepath(output_dir=output_dir, phantom=phantom)
+    simdata = np.load(os.path.join(basepath, "simulated_data.npz"))
+    obj = simdata["original"]
+    dynamic_range = np.max(obj) - np.min(obj)
+
+    # Set kwargs for tomopy.recon
     _kwargs = {
         "algorithm": algorithm,
-        "ncore": args.ncores,
+        "ncore": ncores,
     }
     # don't assign "num_iter" if gridrec or fbp
+    step = 1
     if algorithm not in ["fbp", "gridrec"]:
-        _kwargs["num_iter"] = args.num_iter
-    print("kwargs: {}".format(_kwargs))
+        _kwargs["num_iter"] = step
+    else:
+        num_iter = 1
 
-    with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
-                                  algorithm)):
-        rec = tomopy.recon(prj, ang, **_kwargs)
-    # trim rec because the data was padded to keep the entire object in the
-    # field of view
-    rec = trim_border(rec, rec.shape[0],
-                      rec.shape[1] - obj.shape[1],
-                      rec.shape[2] - obj.shape[2])
+    print("Reconstructing {} with {}...".format(phantom, _kwargs))
 
-    label = "{} @ {}".format(algorithm.upper(), phantom.upper())
-
-    quantify_difference(label, obj, rec)
+    # initial reconstruction guess; use defaults unique to each algorithm
+    recon = None
+    basepath = get_basepath(output_dir, phantom, algorithm, filter_name)
+    os.makedirs(basepath, exist_ok=True)
+    for i in range(1, num_iter+1, step):
+        filename = os.path.join(basepath, "{:03d}".format(i))
+        # look for the ouput; only reconstruct if it doesn't exist
+        if False:  # os.path.isfile(filename + '.npz'):
+            existing_data = np.load(filename + '.npz')
+            recon = existing_data['recon']
+        else:
+            with timemory.util.auto_timer(
+                "[tomopy.recon(algorithm='{}')]".format(algorithm)
+            ):
+                recon = tomopy.recon(
+                    init_recon=recon,
+                    tomo=simdata['sinogram'],
+                    theta=simdata['angles'],
+                    **_kwargs,
+                )
+        # padding was added to keep square image in the field of view
+        rec = trim_border(
+            recon, recon.shape[0],
+            recon.shape[1] - obj.shape[1],
+            recon.shape[2] - obj.shape[2],
+        )
+        for z in range(len(obj)):
+            # compute the reconstructed image quality metrics
+            scales, msssim, quality_maps = xd.msssim(
+                obj[z],
+                rec[z],
+                L=dynamic_range,
+            )
+            print("[{phantom} {algo} @ {i}] : ms-ssim = {msssim:05.3f}".format(
+                algo=algorithm.upper(),
+                phantom=phantom.upper(),
+                msssim=msssim,
+                i=i,
+            ))
+        # save all information
+        np.savez(
+            filename + ".npz",
+            recon=rec,
+            msssim=msssim,
+        )
+        plt.imsave(
+            "{}.{}".format(filename, format.lower()),
+            rec[0],
+            cmap=plt.cm.cividis,
+            vmin=0, vmax=1.1*dynamic_range,
+        )
 
     global image_quality
+    image_quality[algorithm] = rec - obj
 
-    if "orig" not in image_quality:
-        image_quality["orig"] = obj
-
-    dif = obj - rec
-    image_quality[algorithm] = dif
-
-    if get_recon is True:
-        return rec
-
-    imgs = []
-    bname = get_basepath(args, algorithm, phantom)
-    oname = os.path.join(bname, "orig_{}_".format(algorithm))
-    fname = os.path.join(bname, "stack_{}_".format(algorithm))
-    dname = os.path.join(bname, "diff_{}_".format(algorithm))
-
-    print("oname = {}, fname = {}, dname = {}".format(oname, fname, dname))
-    imgs.extend(output_images(obj, oname, args.format, args.scale, args.ncol))
-    imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
-    imgs.extend(output_images(dif, dname, args.format, args.scale, args.ncol))
-
-    return imgs
+    return rec
 
 
 def main(args):
@@ -156,9 +205,6 @@ def main(args):
     created, and what information they contain.
 
     """
-
-    global image_quality
-
     manager = timemory.manager()
 
     print(("\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n"
@@ -173,38 +219,37 @@ def main(args):
           "\tnumber of columns", args.ncol,
           "\tnumber iterations", args.num_iter))
 
-    algorithm = "comparison" if len(args.algorithm) > 1 else args.algorithm[0]
+    original = generate_phantom(**vars(args))
 
-    if algorithm is "comparison":
-        comparison = None
-        for nitr, alg in enumerate(args.algorithm):
-            print("Reconstructing {} with {}...".format(args.phantom, alg))
-            tmp = run(args.phantom, alg, args, get_recon=True)
-            if comparison is None:
-                comparison = ImageComparison(
-                    len(args.algorithm), tmp.shape[0], tmp[0].shape[0],
-                    tmp[0].shape[1], image_quality["orig"]
-                    )
-            comparison.assign(alg, nitr+1, tmp)
-        bname = get_basepath(args, algorithm, args.phantom)
-        fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
-        dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
-        imgs = []
-        imgs.extend(
-            output_images(comparison.array, fname,
-                          args.format, args.scale, args.ncol))
-        imgs.extend(
-            output_images(comparison.delta, dname,
-                          args.format, args.scale, args.ncol))
-    else:
-        print("Reconstructing with {}...".format(algorithm))
-        imgs = run(args.phantom, algorithm, args)
+    comparison = ImageComparison(
+        len(args.algorithm),
+        original.shape[0], original.shape[1], original.shape[2],
+        original
+        )
+
+    for nitr, alg in enumerate(args.algorithm):
+        params = vars(args).copy()
+        params["algorithm"] = alg
+        comparison.assign(alg, nitr+1, run(get_recon=True, **params))
+
+    bname = get_basepath(output_dir=args.output_dir, phantom=args.phantom)
+    fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
+    dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
+    imgs = []
+    imgs.extend(
+        output_images(comparison.array, fname,
+                      args.format, args.scale, args.ncol))
+    imgs.extend(
+        output_images(comparison.delta, dname,
+                      args.format, args.scale, args.ncol))
 
     # timing report to stdout
     print('{}\n'.format(manager))
 
-    timemory.options.output_dir = "{}/{}/{}".format(
-        args.output_dir, args.phantom, algorithm)
+    timemory.options.output_dir = get_basepath(
+        output_dir=args.output_dir,
+        phantom=args.phantom,
+    )
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
@@ -219,6 +264,7 @@ def main(args):
 
     # provide results to dashboard
     try:
+        algorithm = 'compare'
         for i in range(0, len(imgs)):
             img_base = "{}_{}_stack_{}".format(args.phantom, algorithm, i)
             img_name = os.path.basename(imgs[i]).replace(
@@ -233,8 +279,7 @@ def main(args):
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
-            directory="{}/{}/{}".format(args.output_dir, args.phantom,
-                                        algorithm))
+            directory=timemory.options.output_dir)
         print('"{}" wrote CTest notes file : {}'.format(__file__, notes))
     except Exception as e:
         print("Exception - {}".format(e))
@@ -284,29 +329,23 @@ if __name__ == "__main__":
 
     args = timemory.options.add_args_and_parse_known(parser)
 
-    print("\nargs: {}\n".format(args))
+    # Replace "all" with list of all algorithms
+    if len(args.algorithm) == 1 and args.algorithm[0].lower() == "all":
+        args.algorithm = list(algorithm_choices)
 
     # FIXME: unnecessary? timemory already sets output_dir to "."
     if args.output_dir is None:
         args.output_dir = "."
 
+    print("\nargs: {}\n".format(args))
+
     # create a folder for the phantom
-    pdir = os.path.join(os.getcwd(), args.output_dir, args.phantom)
-    if not os.path.exists(pdir):
-        os.makedirs(pdir)
-
-    # Check if algorithm is "all"
-    if len(args.algorithm) == 1 and args.algorithm[0].lower() == "all":
-        args.algorithm = list(algorithm_choices)
-
-    # Make the folder for output images; remove existing
-    if len(args.algorithm) > 1:
-        alg = "comparison"
-    else:
-        alg = args.algorithm[0]
-    adir = os.path.join(pdir, alg)
-    shutil.rmtree(adir, ignore_errors=True)
-    os.makedirs(adir)
+    pdir = get_basepath(output_dir=args.output_dir, phantom=args.phantom)
+    if os.path.exists(pdir):
+        raise FileExistsError(
+            "{} exists. Choose another output directory "
+            "to prevent overwriting exisiting data.".format(pdir)
+        )
 
     try:
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):
