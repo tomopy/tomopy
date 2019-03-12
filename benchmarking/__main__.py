@@ -69,12 +69,19 @@ from benchmarking.utils import *
 
 
 def cleanup(path=None, exclude=[]):
-    files = [ "coverage.xml", "pyctest_tomopy_rec.py",
-              "pyctest_tomopy_phantom.py", "pyctest_tomopy_utils.py"]
-
+    """Remove all files generated from this test."""
     sp.call((sys.executable, os.path.join(os.getcwd(), "setup.py"), "clean"))
-    helpers.RemovePath(os.path.join(os.getcwd(), "tomopy.egg-info"))
-    helpers.RemovePath(os.path.join(os.getcwd(), "MANIFEST"))
+    helpers.RemovePath(os.path.join(os.getcwd(), "_skbuild"))
+    helpers.RemovePath(os.path.join(os.getcwd(), "dist"))
+    helpers.RemovePath(os.path.join(os.getcwd(), "Testing"))
+    helpers.RemovePath(os.path.join(os.getcwd(), "src/tomopy.egg-info"))
+    files = [
+        ".coverage",
+        "coverage.xml",
+        "CTestConfig.cmake",
+        "CTestCustom.cmake",
+        "CTestTestfile.cmake",
+    ]
     helpers.Cleanup(path, extra=files, exclude=exclude)
 
 
@@ -86,7 +93,8 @@ def configure():
                                     python_exe=sys.executable,
                                     submit=False,
                                     ctest_args=["-V"])
-
+    # TODO: Remove duplicate argument definitions in __main__ and phantom by
+    # enumerating arguments as dictionaries which can be imported.
     parser.add_argument("-n", "--ncores",
                         help="number of cores",
                         type=int,
@@ -213,12 +221,14 @@ def run_pyctest():
     else:
         # assign to just generate python coverage
         pyctest.COVERAGE_COMMAND = "{};xml".format(cover_exe)
+    # FIXME: Is the copy operation necessary now that we call
+    # benchmarking as a module?
     # copy over files from os.getcwd() to pyctest.BINARY_DIR
     # (implicitly copies over PyCTest{Pre,Post}Init.cmake if they exist)
-    copy_files = [os.path.join("benchmarking", "pyctest_tomopy_utils.py"),
-                  os.path.join("benchmarking", "pyctest_tomopy_phantom.py"),
-                  os.path.join("benchmarking", "pyctest_tomopy_rec.py")]
-    pyctest.copy_files(copy_files)
+    # copy_files = [os.path.join("benchmarking", "pyctest_tomopy_utils.py"),
+    #               os.path.join("benchmarking", "pyctest_tomopy_phantom.py"),
+    #               os.path.join("benchmarking", "pyctest_tomopy_rec.py")]
+    # pyctest.copy_files(copy_files)
     # find the CTEST_TOKEN_FILE
     home = helpers.GetHomePath()
     if home is not None:
@@ -309,7 +319,7 @@ def run_pyctest():
                                 "-f", "jpeg",
                                 "-S", "1",
                                 "-c", "4",
-                                "-o", "benchmarking/{}".format(name),
+                                "-o", "Testing/{}".format(name),
                                 "-n", "{}".format(args.ncores),
                                 "-i", "{}".format(args.num_iter)])
     # loop over args.phantoms, skip when generating C coverage (too long)
@@ -346,7 +356,7 @@ def run_pyctest():
                     "-S", "1",
                     "-n", "{}".format(args.ncores),
                     "-i", "{}".format(args.num_iter),
-                    "--output-dir", "test",
+                    "--output-dir", "Testing",
                 ])
     # generate the CTestConfig.cmake and CTestCustom.cmake
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
