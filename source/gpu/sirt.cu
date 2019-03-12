@@ -210,7 +210,7 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     cudaStream_t stream      = _cache->stream();
 
     dim3 block3 = GetBlockDims();
-    dim3 grid3 = GetGridDims();
+    dim3 grid3  = GetGridDims();
     dim3 block(_block, block3.y);
     dim3 grid(_grid, (grid3.y == 0) ? 1 : grid3.y);
 

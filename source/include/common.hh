@@ -143,18 +143,6 @@ END_EXTERN_C
 #    include <cuda_runtime_api.h>
 #    include <npp.h>
 #    include <nppi.h>
-#    include <thrust/device_vector.h>
-#    include <thrust/execution_policy.h>
-#    include <thrust/fill.h>
-#    include <thrust/functional.h>
-#    include <thrust/host_vector.h>
-#    include <thrust/partition.h>
-#    include <thrust/reduce.h>
-#    include <thrust/sequence.h>
-#    include <thrust/system/cpp/execution_policy.h>
-#    include <thrust/system/cuda/execution_policy.h>
-#    include <thrust/system/omp/execution_policy.h>
-#    include <thrust/transform.h>
 #    include <vector_types.h>
 #else
 #    if !defined(cudaStream_t)
@@ -831,13 +819,13 @@ execute(Executor* man, int dy, int dt, DataArray& data, const Func& func, Args..
 #if defined(TOMOPY_USE_PTL)
         if(!man)
             return false;
-        TaskGroup<void> tg;
+        TaskGroup<void> tg(man->thread_pool());
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
                 auto _func =
                     std::bind(func, std::ref(data), s, p, std::forward<Args>(args)...);
-                man->exec(tg, _func);
+                tg.run(_func);
             }
         tg.join();
         return true;
