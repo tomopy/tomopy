@@ -50,7 +50,8 @@
 PyCTest driver for TomoPy
 """
 
-from __future__ import absolute_import
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import os
 import sys
@@ -349,7 +350,6 @@ def run_pyctest():
                     pyctest.PYTHON_EXECUTABLE,
                     "-m", "benchmarking.phantom",
                     "-p", phantom,
-                    "-a", *args.algorithms,
                     "-s", "{}".format(nsize),
                     "-A", "360",
                     "-f", "jpeg",
@@ -357,7 +357,8 @@ def run_pyctest():
                     "-n", "{}".format(args.ncores),
                     "-i", "{}".format(args.num_iter),
                     "--output-dir", "Testing",
-                ])
+                    "-a"] + args.algorithms,  # py27 has no list unpacking
+                )
     # generate the CTestConfig.cmake and CTestCustom.cmake
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
     # generate the CTestTestfile.cmake file
