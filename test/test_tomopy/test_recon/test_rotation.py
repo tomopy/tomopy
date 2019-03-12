@@ -67,7 +67,7 @@ __docformat__ = 'restructuredtext en'
 
 class CenterFindingTestCase(unittest.TestCase):
     def test_write_center(self):
-        dpath = os.path.join('test', 'tmp')
+        dpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
         cen_range = (5, 7, 0.5)
         cen = np.arange(*cen_range)
         write_center(
@@ -79,7 +79,7 @@ class CenterFindingTestCase(unittest.TestCase):
             assert_equals(
                 os.path.isfile(
                     os.path.join(
-                        os.path.join('test', 'tmp'),
+                        dpath,
                         str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
         shutil.rmtree(dpath)
 
