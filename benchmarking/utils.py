@@ -82,9 +82,9 @@ image_quality = {}
 
 
 @timemory.util.auto_timer()
-def save_image(image, fname):
+def save_image(image, fname, **kwargs):
     """Save an image and check that it exists afterward."""
-    plt.imsave(fname, image, cmap='gray')
+    plt.imsave(fname, image, cmap=plt.cm.cividis, **kwargs)
     if os.path.exists(fname):
         print("  --> Image file found @ '{}'...".format(fname))
     else:
@@ -198,15 +198,21 @@ def fill_border(rec, nimages, drow, dcol):
         print("  --> ##### {}...".format(e))
         return rec_n
 
+
 #  FIXME: is this decorator necessary when there is no `with timemory...`
 # statement?
 @timemory.util.auto_timer()
 def resize_image(stack, scale=1):
     """Resize a stack of images by positive scale."""
     if scale > 1:
+        print("Image size: {} x {} x {}".format(
+            stack.shape[1],
+            stack.shape[2],
+            stack.shape[0],
+        ))
         try:
             import skimage.transform
-            return skimage.transform.resize(
+            stack_resized = skimage.transform.resize(
                 image=stack,
                 output_shape=(
                     stack.shape[0],
@@ -214,6 +220,11 @@ def resize_image(stack, scale=1):
                     stack.shape[2] * scale,
                 ),
             )
+            print("Resized image size: {} x {} x {}".format(
+                stack_resized.shape[1],
+                stack_resized.shape[2],
+                stack_resized.shape[0],
+            ))
         except Exception as e:
             print("  --> ##### {}...".format(e))
     return stack.copy()
@@ -272,17 +283,6 @@ def output_images(rec, fpath, img_format="jpeg", scale=1, ncol=1):
 
     """
     rec_n = resize_image(rec, scale)
-    print("Image size: {} x {} x {}".format(
-        rec.shape[1],
-        rec.shape[2],
-        rec.shape[0],
-    ))
-    print("Resized image size: {} x {} x {}".format(
-        rec_n.shape[1],
-        rec_n.shape[2],
-        rec_n.shape[0],
-    ))
-
     filenames = list()
     for lo in range(0, len(rec_n), ncol):
         hi = min(lo + ncol, len(rec_n))

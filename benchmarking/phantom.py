@@ -96,10 +96,9 @@ def generate_phantom(
     basepath = get_basepath(output_dir, phantom=phantom, algorithm="")
     os.makedirs(basepath, exist_ok=True)
     dynam_range = np.max(original) - np.min(original)
-    plt.imsave(
-        os.path.join(basepath, "original.{}".format(format.lower())),
+    save_image(
         original[0, ...],
-        cmap=plt.cm.cividis,
+        os.path.join(basepath, "original.{}".format(format.lower())),
         vmin=0, vmax=1.1*dynam_range,
         )
     np.savez(
@@ -186,10 +185,9 @@ def run(
             recon=rec,
             msssim=msssim,
         )
-        plt.imsave(
-            "{}.{}".format(filename, format.lower()),
+        save_image(
             rec[0],
-            cmap=plt.cm.cividis,
+            "{}.{}".format(filename, format.lower()),
             vmin=0, vmax=1.1*dynamic_range,
         )
 
