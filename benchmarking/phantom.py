@@ -117,7 +117,7 @@ def run(
     """Run reconstruction benchmarks for phantoms using algorithm.
 
     Save each iteration's reconstructed image to the algorithms folder along
-    with the MS-SSIM rating for that image. Return the best best reconstructed
+    with the MS-SSIM rating for that image. Return the best reconstructed
     image.
     """
     # Load the simulated from the disk
@@ -140,6 +140,8 @@ def run(
 
     print("Reconstructing {} with {}...".format(phantom, _kwargs))
 
+    best_quality = np.zeros(len(obj))
+    best_rec = np.zeros_like(obj)
     # initial reconstruction guess; use defaults unique to each algorithm
     recon = None
     basepath = get_basepath(output_dir, phantom, algorithm, filter_name)
@@ -166,19 +168,23 @@ def run(
             recon.shape[1] - obj.shape[1],
             recon.shape[2] - obj.shape[2],
         )
+        msssim = np.empty(len(obj))
         for z in range(len(obj)):
             # compute the reconstructed image quality metrics
-            scales, msssim, quality_maps = xd.msssim(
+            scales, msssim[z], quality_maps = xd.msssim(
                 obj[z],
                 rec[z],
                 L=dynamic_range,
             )
-            print("[{phantom} {algo} @ {i}] : ms-ssim = {msssim:05.3f}".format(
-                algo=algorithm.upper(),
-                phantom=phantom.upper(),
-                msssim=msssim,
-                i=i,
-            ))
+            if msssim[z] > best_quality[z]:
+                best_quality[z] = msssim[z]
+                best_rec[z] = rec[z]
+        print("[{phantom} {algo} @ {i}] : ms-ssim = {msssim:05.3f}".format(
+            algo=algorithm.upper(),
+            phantom=phantom.upper(),
+            msssim=np.mean(msssim),
+            i=i,
+        ))
         # save all information
         np.savez(
             filename + ".npz",
@@ -190,8 +196,7 @@ def run(
             "{}.{}".format(filename, format.lower()),
             vmin=0, vmax=1.1*dynamic_range,
         )
-    # TODO: Return the best reconstruction not the last reconstruction
-    return rec
+    return best_rec
 
 
 def main(args):
