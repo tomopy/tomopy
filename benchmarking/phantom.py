@@ -71,7 +71,7 @@ def get_basepath(
 ):
     """Return the folder where data for a given reconstruction goes."""
     return os.path.join(
-        os.getcwd(), output_dir, phantom, algorithm, filter_name,
+        output_dir, phantom, algorithm, filter_name,
     )
 
 
@@ -355,10 +355,8 @@ if __name__ == "__main__":
     # Replace "all" with list of all algorithms
     if len(args.algorithm) == 1 and args.algorithm[0].lower() == "all":
         args.algorithm = list(algorithm_choices)
-
-    # FIXME: unnecessary? timemory already sets output_dir to "."
-    if args.output_dir is None:
-        args.output_dir = "."
+    # Replace relative paths with full paths
+    args.output_dir = os.path.abspath(args.output_dir)
 
     # "Pretty print" the input arguments
     print("Arguments:")
