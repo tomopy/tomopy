@@ -78,21 +78,29 @@ def get_basepath(
 @timemory.util.auto_timer()
 def generate_phantom(
     phantom="shepp3d", nsize=512, nangles=360, output_dir="", format="png",
+    noise=False, trials=1,
     **kwargs,
 ):
     """Simulate data acquisition for tomography using TomoPy.
 
     Reorder the projections optimally and save a numpyz file with the original,
     sinogram, and angles to the disk. Return the original.
+
+    When noise is true, poisson noise is added to the data. When trials is
+    greater than 1, the number of slices is multiplied.
     """
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
         original = getattr(tomopy.misc.phantom, phantom)(size=nsize)
+    if trials > 1:
+        original = np.tile(original, reps=(trials, 1, 1))
     angles = tomopy.angles(nangles)
     # Reorder projections optimally
     p = multilevel_order(len(angles)).astype(np.int32)
     angles = angles[p, ...]
     with timemory.util.auto_timer("[tomopy.project]"):
         sinogram = tomopy.project(original, angles, pad=True)
+    if noise:
+        sinogram = np.random.poisson(sinogram)
 
     basepath = get_basepath(output_dir, phantom=phantom, algorithm="")
     os.makedirs(basepath, exist_ok=True)
@@ -188,7 +196,7 @@ def run(
         # save all information
         np.savez(
             filename + ".npz",
-            recon=rec,
+            recon=rec,  # TODO: Is keeping this really necessary?
             msssim=msssim,
         )
         save_image(
@@ -349,6 +357,14 @@ if __name__ == "__main__":
         "-i", "--num-iter",
         help="specify a number of iterations for iterative algorithms",
         default=10, type=int)
+    parser.add_argument(
+        "--noise",
+        help="add Poisson noise to simulation",
+        action='store_true')
+    parser.add_argument(
+        "--trials",
+        help="run this many trials of the same phantom simultaneously",
+        default=1, type=int)
 
     args = timemory.options.add_args_and_parse_known(parser)
 
