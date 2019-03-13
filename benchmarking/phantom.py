@@ -247,8 +247,8 @@ def main(args):
 
     # Save results and diff images from each reconstruction algorithm
     bname = get_basepath(output_dir=args.output_dir, phantom=args.phantom)
-    fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
-    dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
+    fname = os.path.join(bname, "stack_{}".format(comparison.tagname()))
+    dname = os.path.join(bname, "diff_{}".format(comparison.tagname()))
     imgs = []
     imgs.extend(
         output_images(comparison.results, fname,
