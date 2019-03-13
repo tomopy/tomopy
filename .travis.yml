@@ -1,18 +1,19 @@
+dist: xenial
 language: python
+python:
+  - "2.7"
+  - "3.6"
+  - "3.7"
 os:
   - linux
 sudo: false
 env:
-  matrix:
-    - PYTHON_VERSION="2.7"
-    - PYTHON_VERSION="3.6"
-    - PYTHON_VERSION="3.7"
   global:
     - PATH=${HOME}/miniconda/bin:${PATH}
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
     - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
 before_install:
-  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -23,27 +24,27 @@ before_install:
 install:
   - conda config --add channels jrmadsen
   - conda config --add channels conda-forge
-  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      conda install python=$PYTHON_VERSION
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      conda install python=$TRAVIS_PYTHON_VERSION python-coveralls
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
       --file envs/requirements-py27.txt;
     else
-      conda install python=$PYTHON_VERSION python-coveralls
+      conda install python=$TRAVIS_PYTHON_VERSION
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
       --file envs/requirements-bench.txt;
     fi;
   - conda info -a
   - conda list --explicit
-  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       python setup.py install;
     else
       python -m benchmarking --disable-phantom-tests ${PYCTEST_ARGS} -- -VV;
     fi;
 script:
-  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      nosetests;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      coverage run $(which nosetests);
     fi;
 after_success:
   - coveralls
