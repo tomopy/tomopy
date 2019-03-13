@@ -23,18 +23,27 @@ before_install:
 install:
   - conda config --add channels jrmadsen
   - conda config --add channels conda-forge
-  - >
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       conda install python=$PYTHON_VERSION
       --file envs/requirements-all.txt
       --file envs/requirements-unix-build.txt
-      --file envs/requirements-bench.txt
-  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      conda install python-coveralls --file envs/requirements-py27.txt;
-    fi
+      --file envs/requirements-py27.txt;
+    else
+      conda install python=$PYTHON_VERSION python-coveralls
+      --file envs/requirements-all.txt
+      --file envs/requirements-unix-build.txt
+      --file envs/requirements-bench.txt;
+    fi;
   - conda info -a
   - conda list --explicit
-  - python -m benchmarking --disable-phantom-tests ${PYCTEST_ARGS} -- -VV
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      python setup.py install;
+    else
+      python -m benchmarking --disable-phantom-tests ${PYCTEST_ARGS} -- -VV;
+    fi;
 script:
-  - coverage run $(which nosetests)
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      nosetests;
+    fi;
 after_success:
   - coveralls
