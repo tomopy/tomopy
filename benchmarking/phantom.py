@@ -57,6 +57,7 @@ import argparse
 import traceback
 import multiprocessing as mp
 import xdesign as xd
+import pprint
 
 import tomopy
 import timemory
@@ -223,18 +224,6 @@ def main(args):
     """
     manager = timemory.manager()
 
-    print(("\nArguments:\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n{} = {}\n"
-          "{} = {}\n{} = {}\n{} = {}\n{} = {}\n").format(
-          "\tPhantom", args.phantom,
-          "\tAlgorithm", args.algorithm,
-          "\tSize", args.size,
-          "\tAngles", args.angles,
-          "\tFormat", args.format,
-          "\tScale", args.scale,
-          "\tnumber of cores", args.ncores,
-          "\tnumber of columns", args.ncol,
-          "\tnumber iterations", args.num_iter))
-
     original = generate_phantom(**vars(args))
 
     comparison = ImageComparison(
@@ -366,7 +355,9 @@ if __name__ == "__main__":
     if args.output_dir is None:
         args.output_dir = "."
 
-    print("\nargs: {}\n".format(args))
+    # "Pretty print" the input arguments
+    print("Arguments:")
+    pprint.pprint(vars(args), indent=4)
 
     # create a folder for the phantom
     # FIXME: Should we overwrite exisiting data or raise an error?
