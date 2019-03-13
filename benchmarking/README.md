@@ -28,7 +28,7 @@ $ pip install -v pyctest timemory
 - Submission is invoke by running `python -m benchmarking` from the main directory
 - Run `python -m benchmarking --help` to view the list of available configuration options
 - Supplementary files
-    - `./benchmarking/rec.py` is a TomoPy reconstruction script for TomoBank data
+    - `./benchmarking/tomobank.py` is a TomoPy reconstruction script for TomoBank data
         - When the option `--globus-path` is specified, PyCTest will reconstruct `tomo_00001/tomo_00001.h5` with all the specified algorithms
     - `./benchmarking/phantom.py` is a TomoPy reconstruction script for built-in phantoms
 - The default assumption is that the current Python environment has all of the required packages for TomoPy
