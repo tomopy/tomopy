@@ -115,10 +115,9 @@ def run(
 ):
     """Run reconstruction benchmarks for phantoms using algorithm.
 
-    Returns
-    -------
-    best_rec : np.ndarray
-        The best reconstructed image.
+    Save each iteration's reconstructed image to the algorithms folder along
+    with the MS-SSIM rating for that image. Return the best best reconstructed
+    image.
     """
     # Load the simulated from the disk
     basepath = get_basepath(output_dir=output_dir, phantom=phantom)
@@ -190,18 +189,37 @@ def run(
             "{}.{}".format(filename, format.lower()),
             vmin=0, vmax=1.1*dynamic_range,
         )
-
-    global image_quality
-    image_quality[algorithm] = rec - obj
-
+    # TODO: Return the best reconstruction not the last reconstruction
     return rec
 
 
 def main(args):
-    """
+    """Run benchmarks and publish reports.
+
+    Create the following file structure to organize the results.
+    ```
+    /{output_dir}
+        /{phantom}
+            /{algorithm[0]}
+                001.{format}  # RGB reconstruction after 1 iteration
+                001.npz  # float reconstruction and quality rating
+                ...
+            /{algorithm[1]}
+                001.{format}
+                001.npz
+                ...
+            ...
+            diff_soln-{algoritms}_0.{format}  # comparison of difference images
+            ...
+            original.{format}  # the original phantom
+            # other benchmarking artifacts here
+            simulated_data.npz  # contains sinogram and angles
+            stack_soln-{algorithms}_0.{format}   # comparison of best images
+            ...
+    ```
+
     FIXME: Document the expected filestructure, types of files that are
     created, and what information they contain.
-
     """
     manager = timemory.manager()
 
@@ -222,24 +240,36 @@ def main(args):
     comparison = ImageComparison(
         len(args.algorithm),
         original.shape[0], original.shape[1], original.shape[2],
-        original
+        solution=original
         )
 
+    # For each algorithm run benchmarks
     for nitr, alg in enumerate(args.algorithm):
         params = vars(args).copy()
         params["algorithm"] = alg
         comparison.assign(alg, nitr+1, run(get_recon=True, **params))
 
+    # Publish reports
+
+    # Save results and diff images from each reconstruction algorithm
     bname = get_basepath(output_dir=args.output_dir, phantom=args.phantom)
     fname = os.path.join(bname, "stack_{}_".format(comparison.tagname()))
     dname = os.path.join(bname, "diff_{}_".format(comparison.tagname()))
     imgs = []
     imgs.extend(
-        output_images(comparison.array, fname,
-                      args.format, args.scale, args.ncol))
+        output_images(comparison.results, fname,
+                      args.format, args.scale,
+                      # scale images with range of original
+                      vmin=0, vmax=np.max(original),
+                      )
+    )
     imgs.extend(
         output_images(comparison.delta, dname,
-                      args.format, args.scale, args.ncol))
+                      args.format, args.scale,
+                      # scale images =/- range of original
+                      vmin=-np.max(original), vmax=np.max(original)
+                      )
+    )
 
     # timing report to stdout
     print('{}\n'.format(manager))
@@ -262,15 +292,16 @@ def main(args):
 
     # provide results to dashboard
     try:
-        algorithm = 'compare'
         for i in range(0, len(imgs)):
-            img_base = "{}_{}_stack_{}".format(args.phantom, algorithm, i)
-            img_name = os.path.basename(imgs[i]).replace(
-                ".{}".format(args.format), "").replace(
-                "stack_{}_".format(algorithm), img_base)
-            img_type = args.format
-            img_path = imgs[i]
-            timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
+            # remove file extension
+            img_name = os.path.splitext(imgs[i])[0]
+            # remove file path
+            img_name = os.path.basename(img_name)
+            # prepend phantom name
+            img_name = "_".join([args.phantom, img_name])
+            timemory.plotting.echo_dart_tag(
+                img_name, filepath=imgs[i], img_type=args.format
+            )
     except Exception as e:
         print("Exception - {}".format(e))
 
@@ -338,12 +369,14 @@ if __name__ == "__main__":
     print("\nargs: {}\n".format(args))
 
     # create a folder for the phantom
+    # FIXME: Should we overwrite exisiting data or raise an error?
     pdir = get_basepath(output_dir=args.output_dir, phantom=args.phantom)
     if os.path.exists(pdir):
-        raise FileExistsError(
-            "{} exists. Choose another output directory "
-            "to prevent overwriting exisiting data.".format(pdir)
-        )
+        # raise FileExistsError(
+        #     "{} exists. Choose another output directory "
+        #     "to prevent overwriting exisiting data.".format(pdir)
+        # )
+        shutil.rmtree(pdir, ignore_errors=True)
 
     try:
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):

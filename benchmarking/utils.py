@@ -72,13 +72,11 @@ def exit_action(errcode):
 algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
                      'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
                      'tv', 'grad']
-
 phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
                    "lena", "peppers", "shepp2d", "shepp3d"]
 default_nitr = 10  # number of iterations
 default_phantom_size = 512
 default_ncores = mp.cpu_count()  # number of cores
-image_quality = {}
 
 
 @timemory.util.auto_timer()
@@ -174,7 +172,7 @@ def trim_border(rec, nimages, drow, dcol):
         return rec_n
 
 
-#  FIXME: fill_border is unused
+# FIXME: fill_border is unused
 def fill_border(rec, nimages, drow, dcol):
     """Pad rec along axes 1 and 2 by drow and dcol. Crop axes 0 to nimages.
 
@@ -199,7 +197,7 @@ def fill_border(rec, nimages, drow, dcol):
         return rec_n
 
 
-#  FIXME: is this decorator necessary when there is no `with timemory...`
+# FIXME: is this decorator necessary when there is no `with timemory...`
 # statement?
 @timemory.util.auto_timer()
 def resize_image(stack, scale=1):
@@ -231,8 +229,7 @@ def resize_image(stack, scale=1):
 
 
 def quantify_difference(label, img, rec):
-    """Return L1, L2 norms of the diff and and grad diff of the two images.
-    """
+    """Return L1, L2 norms of the diff and and grad diff of the two images."""
     _img = normalize(img)
     _rec = normalize(rec)
 
@@ -271,68 +268,108 @@ def quantify_difference(label, img, rec):
 
 
 @timemory.util.auto_timer()
-def output_images(rec, fpath, img_format="jpeg", scale=1, ncol=1):
-    """Save an image stack as a series of concatenated images.
+def output_images(rec, fpath, img_format="jpeg", scale=1, **kwargs):
+    """Save each slice of rec as an image.
 
-    Each set of ncol images are concatenated horizontally and saved together
-    into files named {fpath}_0_{ncol}.{img_format},
-    {fpath}_{ncol}_{2*ncol}.{img_format}, {fpath}_{ncol}_{3*ncol}.{img_format},
-    ...
-    FIXME: What is the naming scheme supposed to be when there is more than one
-    row?
-
+    Return the filenames of these image slices.
     """
     rec_n = resize_image(rec, scale)
     filenames = list()
-    for lo in range(0, len(rec_n), ncol):
-        hi = min(lo + ncol, len(rec_n))
-        rec_row = np.concatenate(rec_n[lo:hi], axis=1)
-        fname = "{}{}_{}.{}".format(fpath, lo, hi, img_format)
-        save_image(rec_row, fname)
+    for row in range(len(rec_n)):
+        fname = "{}_{}.{}".format(fpath, row, img_format)
+        save_image(rec[row], fname, **kwargs)
         filenames.append(fname)
     return filenames
 
 
 class ImageComparison(object):
-    """A class for combining image slices into a column comparison.
+    """A class for combining 3D images into a column comparison by slice.
 
-    FIXME: Document how this class is supposed to work.
+    Given data organized as with dimensions slice, row, col. We rearrange the
+    data into the shape so that it may be quickly printed as slice-by-slice
+    comparison horizontally.
+
+    For example, we want to compare the 0th slice of a reference, R[0], with
+    options A[0], B[0], C[0] such that each slice is concatenated horizontally
+    with the other slices: R[0] A[0] B[0] C[0]. This means the the combined
+    data set, X, should be organized such that
+    X[0] = np.concatenate([R[0], A[0], B[0], C[0]], axis=1).
+
+    Attributes
+    ----------
+    solution : ndimage
+        The ground truth image.
+    input_dims : 3-tuple
+        The dimensions of the images.
+    store_dims : 3-tuple
+        The size of storage necessary to keep all the images
+    tags : list
+        The names of the images
+    results :
+        Concatendated results images
+    delta :
+        Concatenates difference images
+
     """
 
     def __init__(self, ncompare, nslice, nrows, ncols, solution=None,
                  dtype=float):
+        """.
+
+        Parameters
+        ----------
+        ncompare : int
+            The number of images to compare with the solution.
+        nslice, nrows, cnols : int
+            The dimensions of the images.
+        solution : ndarray
+            The reference image for all comparisons
+        dtype : type
+            Images are converted to this data type for comparison
+
+        """
         self.input_dims = [nslice, nrows, ncols]
         self.store_dims = [nslice, nrows, ncols * (ncompare + 1)]
         self.tags = ["soln"]
         if solution is None:
+            # FIXME: Why would solution ever be none? The solution MUST be
+            # added before all other images otherwise, self.delta is incorrect.
             self.solution = np.zeros(self.input_dims, dtype=dtype)
         else:
-            self.solution = normalize(solution)
+            self.solution = solution
         # array of results
-        self.array = np.ndarray(self.store_dims, dtype=dtype)
-        self.array[:, :, 0:ncols] = self.solution[:, :, :]
-        # difference
-        self.delta = np.ndarray(self.store_dims, dtype=dtype)
-        self.delta[:, :, 0:ncols] = self.solution[:, :, :]
+        self.results = np.ndarray(self.store_dims, dtype=dtype)
+        self.results[:, :, 0:ncols] = self.solution
+        # array of difference
+        self.delta = np.zeros(self.store_dims, dtype=dtype)
+        # no difference betweeen solution and solution
 
-    def assign(self, label, block, array):
-        self.tags.append(label)
-        array = normalize(array)
-        _b = (self.input_dims[2] * block)
-        _e = (self.input_dims[2] * (block+1))
+    def assign(self, tag, block, image):
+        """Add an image to the ImageComparison.
+
+        Parameters
+        ----------
+        tag : string
+            The name of this image.
+        block : int
+            The index location to add this image.
+        """
+        self.tags.append(tag)
+        _b = self.input_dims[2] * block
+        _e = self.input_dims[2] + _b
         try:
-            self.array[:, :, _b:_e] = array[:, :, :]
+            self.results[:, :, _b:_e] = image
         except Exception as e:
             print("storage: {}".format(self.store_dims))
-            print("label: {}, block: {}".format(label, block))
+            print("tag: {}, block: {}".format(tag, block))
             print("target = [{}, {}, {}:{}]".format(
                 self.input_dims[0],
                 self.input_dims[1],
                 _b, _e))
             print(e)
-            print("array: {}".format(array))
+            print("array: {}".format(image))
             raise
-        delta = array - self.solution
+        delta = image - self.solution
         self.delta[:, :, _b:_e] = delta
 
     def tagname(self):

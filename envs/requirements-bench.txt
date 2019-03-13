@@ -4,3 +4,4 @@ numpy
 pyctest
 scipy
 timemory
+xdesign
