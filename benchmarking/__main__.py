@@ -158,12 +158,10 @@ def configure():
         container = list(set(container))
 
     if "all" in args.algorithms:
-        remove_entry("all", args.algorithms)
-        args.algorithms.extend(available_algorithms)
+        args.algorithms = algorithm_choices
 
     if "all" in args.phantoms:
-        remove_entry("all", args.phantoms)
-        args.phantoms.extend(available_phantoms)
+        args.phantoms = phantom_choices
 
     if "none" in args.algorithms:
         args.algorithms = []
