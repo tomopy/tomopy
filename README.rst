@@ -13,7 +13,7 @@ TomoPy
    :target: https://ci.appveyor.com/project/tomopy/tomopy
    :alt: Appyveyor
 
-.. image:: https://coveralls.io/repos/dgursoy/tomopy/badge.svg?branch=master 
+.. image:: https://coveralls.io/repos/tomopy/tomopy/badge.svg?branch=master
    :target: https://coveralls.io/r/tomopy/tomopy?branch=master
    :alt: Coveralls
 
@@ -21,8 +21,8 @@ TomoPy
    :target: https://codeclimate.com/github/tomopy/tomopy
    :alt: Code Climate
 
-.. image:: https://anaconda.org/dgursoy/tomopy/badges/downloads.svg
-   :target: https://anaconda.org/dgursoy/tomopy
+.. image:: https://anaconda.org/conda-forge/tomopy/badges/downloads.svg
+   :target: https://anaconda.org/conda-forge/tomopy
    :alt: Anaconda downloads
 
 .. image:: https://mybinder.org/badge.svg 
