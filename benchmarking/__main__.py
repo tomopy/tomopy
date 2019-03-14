@@ -203,14 +203,18 @@ def run_pyctest():
     else:
         # assign to just generate python coverage
         pyctest.COVERAGE_COMMAND = "{};xml".format(cover_exe)
-    # FIXME: Is the copy operation necessary now that we call
-    # benchmarking as a module?
+
     # copy over files from os.getcwd() to pyctest.BINARY_DIR
     # (implicitly copies over PyCTest{Pre,Post}Init.cmake if they exist)
-    # copy_files = [os.path.join("benchmarking", "pyctest_tomopy_utils.py"),
-    #               os.path.join("benchmarking", "pyctest_tomopy_phantom.py"),
-    #               os.path.join("benchmarking", "pyctest_tomopy_rec.py")]
-    # pyctest.copy_files(copy_files)
+    try:
+        shutil.copytree(
+            os.path.join(pyctest.SOURCE_DIRECTORY, "benchmarking"),
+            os.path.join(pyctest.BINARY_DIRECTORY, "benchmarking"),
+            symlinks=False
+        )
+    except FileExistsError:
+        pass
+
     # find the CTEST_TOKEN_FILE
     home = helpers.GetHomePath()
     if home is not None:
