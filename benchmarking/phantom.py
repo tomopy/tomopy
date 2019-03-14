@@ -64,6 +64,7 @@ import timemory
 import timemory.options as options
 
 from benchmarking.utils import *
+from benchmarking.plot import image_quality_vs_time_plot
 
 
 def get_basepath(
@@ -283,6 +284,17 @@ def main(args):
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
+
+    # provide quality vs time plots
+    quality_vs_time_name = os.path.join(bname, "quality_vs_wall_time.svg")
+    image_quality_vs_time_plot(
+        plot_name=quality_vs_time_name
+        json_filename=os.path.join(timemory.options.output_dir,
+                                   "run_tomopy.json"),
+        algo_folder_dir=bname,
+    )
+    # include this image on the dashboard
+    imgs.append(quality_vs_time_name)
 
     # provide timing plots
     try:
