@@ -188,10 +188,14 @@ def run_pyctest():
     # replace any type of whitespace with single space
     pyctest.BUILD_NAME = " ".join(pyctest.BUILD_NAME.split())
     # how to build the code
-    pyctest.BUILD_COMMAND = "{} setup.py install".format(
-        pyctest.PYTHON_EXECUTABLE)
-    # generate the code coverage
+    pyctest.BUILD_COMMAND = " ".join([
+        pyctest.PYTHON_EXECUTABLE, "-m",
+        "pip", "install", pyctest.SOURCE_DIRECTORY, "-vvv",
+        # "--target", pyctest.BINARY_DIRECTORY,
+    ])
+    # find the python path
     python_path = os.path.dirname(pyctest.PYTHON_EXECUTABLE)
+    # generate the code coverage
     cover_exe = helpers.FindExePath("coverage", path=python_path)
     if args.coverage:
         gcov_cmd = helpers.FindExePath("gcov")
