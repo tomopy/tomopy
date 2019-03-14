@@ -81,6 +81,38 @@ __all__ = ['align_seq',
            ]
 
 
+def write_tiff(data, fname='tmp/data', digit=None, ext='tiff'):
+    """
+    Write image data to a tiff file.
+
+    Overwrite existing data and infer data-type from the data.
+
+    Parameters
+    ----------
+    data : ndarray
+        Array data to be saved.
+    fname : str
+        File name to which the data is saved. ``.tiff`` extension
+        will be appended even if it already has one.
+    digit : int
+        Append this number to fname using a dash. e.g. {fname}-{digit}.{ext}
+    """
+    # Add the extension and digit.
+    if digit is None:
+        fname = '{}.{}'.format(fname, ext)
+    else:
+        fname = '{}-{:d}.{}'.format(fname, digit, ext)
+    # Convert to absolute path.
+    fname = os.path.abspath(fname)
+    # Create the directory if it doesn't exist.
+    dname = os.path.dirname(os.path.abspath(fname))
+    if not os.path.exists(dname):
+        os.makedirs(dname)
+    # Save the file.
+    import tifffile
+    tifffile.imsave(fname, data)
+
+
 def align_seq(
         prj, ang, fdir='.', iters=10, pad=(0, 0),
         blur=True, center=None, algorithm='sirt',
@@ -136,7 +168,7 @@ def align_seq(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration. Requires the dxchange package.
+        for each algorithm iteration.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -199,10 +231,9 @@ def align_seq(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            import dxchange
-            dxchange.write_tiff(prj, fdir + '/tmp/iters/prj/prj')
-            dxchange.write_tiff(sim, fdir + '/tmp/iters/sim/sim')
-            dxchange.write_tiff(rec, fdir + '/tmp/iters/rec/rec')
+            write_tiff(prj, fdir + '/tmp/iters/prj/prj', n)
+            write_tiff(sim, fdir + '/tmp/iters/sim/sim', n)
+            write_tiff(rec, fdir + '/tmp/iters/rec/rec', n)
 
     # Re-normalize data
     prj *= scl
@@ -264,7 +295,7 @@ def align_joint(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration. Requires the dxchange package.
+        for each algorithm iteration.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -335,10 +366,9 @@ def align_joint(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            import dxchange
-            dxchange.write_tiff(prj, 'tmp/iters/prj/prj')
-            dxchange.write_tiff(sim, 'tmp/iters/sim/sim')
-            dxchange.write_tiff(rec, 'tmp/iters/rec/rec')
+            write_tiff(prj, 'tmp/iters/prj/prj', n)
+            write_tiff(sim, 'tmp/iters/sim/sim', n)
+            write_tiff(rec, 'tmp/iters/rec/rec', n)
 
     # Re-normalize data
     prj *= scl
