@@ -55,8 +55,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import logging
 import warnings
+import tifffile
 from .. import fft_impl
-
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['deprecated', 'fft2', 'ifft2', 'fft', 'ifft']
+__all__ = ['deprecated', 'write_tiff', 'fft2', 'ifft2', 'fft', 'ifft']
 
 
 def deprecated(func, msg=None):
@@ -84,6 +84,37 @@ def deprecated(func, msg=None):
     new_func.__doc__ = func.__doc__
     new_func.__dict__.update(func.__dict__)
     return new_func
+
+
+def write_tiff(data, fname='tmp/data', digit=None, ext='tiff'):
+    """
+    Write image data to a tiff file.
+
+    Overwrite existing data and infer data-type from the data.
+
+    Parameters
+    ----------
+    data : ndarray
+        Array data to be saved.
+    fname : str
+        File name to which the data is saved. ``.tiff`` extension
+        will be appended even if it already has one.
+    digit : int
+        Append this number to fname using a dash. e.g. {fname}-{digit}.{ext}
+    """
+    # Add the extension and digit.
+    if digit is None:
+        fname = '{}.{}'.format(fname, ext)
+    else:
+        fname = '{}-{}.{}'.format(fname, digit, ext)
+    # Convert to absolute path.
+    fname = os.path.abspath(fname)
+    # Create the directory if it doesn't exist.
+    dname = os.path.dirname(os.path.abspath(fname))
+    if not os.path.exists(dname):
+        os.makedirs(dname)
+    # Save the file.
+    tifffile.imsave(fname, data)
 
 
 if fft_impl == 'mkl_fft':
@@ -117,7 +148,7 @@ elif fft_impl == 'pyfftw':
         return pyfftw.interfaces.numpy_fft.fft(x, n=n, axis=axis,
                                                overwrite_input=overwrite_input,
                                                planner_effort=_plan_effort(extra_info))
-    
+
 
     def ifft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
         return pyfftw.interfaces.numpy_fft.ifft(x, n=n, axis=axis,
@@ -129,7 +160,7 @@ elif fft_impl == 'pyfftw':
         return pyfftw.interfaces.numpy_fft.fft2(x, s=s, axes=axes,
                                                 overwrite_input=overwrite_input,
                                                 planner_effort=_plan_effort(extra_info))
-    
+
 
     def ifft2(x, s=None, axes=(-2,-1), overwrite_input=False, extra_info=None):
         return pyfftw.interfaces.numpy_fft.ifft2(x, s=s, axes=axes,

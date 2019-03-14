@@ -56,6 +56,7 @@ from skimage.feature import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
+from tomopy.util.misc import write_tiff
 from scipy.signal import medfilt, medfilt2d
 from scipy.optimize import curve_fit
 from scipy.ndimage import affine_transform
@@ -79,38 +80,6 @@ __all__ = ['align_seq',
            'calc_slit_box_aps_1id',
            'remove_slits_aps_1id',
            ]
-
-
-def write_tiff(data, fname='tmp/data', digit=None, ext='tiff'):
-    """
-    Write image data to a tiff file.
-
-    Overwrite existing data and infer data-type from the data.
-
-    Parameters
-    ----------
-    data : ndarray
-        Array data to be saved.
-    fname : str
-        File name to which the data is saved. ``.tiff`` extension
-        will be appended even if it already has one.
-    digit : int
-        Append this number to fname using a dash. e.g. {fname}-{digit}.{ext}
-    """
-    # Add the extension and digit.
-    if digit is None:
-        fname = '{}.{}'.format(fname, ext)
-    else:
-        fname = '{}-{:d}.{}'.format(fname, digit, ext)
-    # Convert to absolute path.
-    fname = os.path.abspath(fname)
-    # Create the directory if it doesn't exist.
-    dname = os.path.dirname(os.path.abspath(fname))
-    if not os.path.exists(dname):
-        os.makedirs(dname)
-    # Save the file.
-    import tifffile
-    tifffile.imsave(fname, data)
 
 
 def align_seq(
