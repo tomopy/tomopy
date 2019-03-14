@@ -143,31 +143,14 @@ def configure():
     # calls PyCTest.helpers.ArgumentParser.parse_args()
     args = parser.parse_args()
 
-    if args.cleanup:
-        cleanup(pyctest.BINARY_DIRECTORY)
-        sys.exit(0)
-
     if not args.skip_cleanup:
         cleanup(pyctest.BINARY_DIRECTORY)
 
-    def remove_entry(entry, container):
-        if entry in container:
-            container.remove(entry)
+    if args.cleanup:  # this flag means cleanup only then exit
+        sys.exit(0)
 
     def remove_duplicates(container):
         container = list(set(container))
-
-    if "all" in args.algorithms:
-        args.algorithms = algorithm_choices
-
-    if "all" in args.phantoms:
-        args.phantoms = phantom_choices
-
-    if "none" in args.algorithms:
-        args.algorithms = []
-
-    if "none" in args.phantoms:
-        args.phantoms = []
 
     remove_duplicates(args.algorithms)
     remove_duplicates(args.phantoms)
