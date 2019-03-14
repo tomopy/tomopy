@@ -225,7 +225,22 @@ def run_pyctest():
         token_path = os.path.join(home, ".tokens", "nersc-tomopy")
         if os.path.exists(token_path):
             pyctest.set("CTEST_TOKEN_FILE", token_path)
-    # create a CTest that checks we imported the correct module
+
+    generate_ctest_correct_module(args)
+    generate_ctest_nosetests(args, python_path)
+    generate_ctest_tomobank(args)
+    generate_ctest_phantom(args)
+
+    # generate the CTestConfig.cmake and CTestCustom.cmake
+    pyctest.generate_config(pyctest.BINARY_DIRECTORY)
+    # generate the CTestTestfile.cmake file
+    pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
+    # run CTest
+    pyctest.run(pyctest.ARGUMENTS, pyctest.BINARY_DIRECTORY)
+
+
+def generate_ctest_correct_module(args):
+    """Create a CTest that checks we imported the correct module."""
     test = pyctest.test()
     test.SetName("correct_module")
     test.SetCommand([pyctest.PYTHON_EXECUTABLE, "-c",
@@ -237,22 +252,26 @@ def run_pyctest():
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
     test.SetProperty("LABEL", "unit")
-    # create a CTest that wraps "nosetest"
+
+
+def generate_ctest_nosetests(args, python_path):
+    """Create a CTest that wraps nosetests."""
     test = pyctest.test()
     test.SetName("nosetests")
     test.SetProperty("DEPENDS", "correct_module")
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetProperty("LABEL", "unit")
+    # find `nosetests` preferring the one on PYTHON_PATH
     nosetest_exe = helpers.FindExePath("nosetests", path=python_path)
     if nosetest_exe is None:
         nosetest_exe = helpers.FindExePath("nosetests")
+    # find `coverage` preferring the one on PYTHON_PATH
     coverage_exe = helpers.FindExePath("coverage", path=python_path)
     if coverage_exe is None:
         coverage_exe = helpers.FindExePath("coverage")
     # python $(which coverage) run $(which nosetests)
     test.SetCommand([pyctest.PYTHON_EXECUTABLE, coverage_exe, "run",
                     nosetest_exe])
-    # set directory to run test
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
     # Generating C code coverage is enabled
@@ -274,6 +293,10 @@ def run_pyctest():
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
         test.SetProperty("DEPENDS", "nosetests")
         test.SetCommand(coverage_cmd)
+
+
+def generate_ctest_tomobank(args):
+    """Create CTest(s) for TomoBank tests."""
     # If path to globus is provided, skip when generating C coverage (too long)
     if not args.coverage and args.globus_path is not None:
         phantom = "tomo_00001"
@@ -312,23 +335,30 @@ def run_pyctest():
                                 "-o", "Testing/{}".format(name),
                                 "-n", "{}".format(args.ncores),
                                 "-i", "{}".format(args.num_iter)])
+
+
+def generate_ctest_phantom(args):
+    """Create CTest(s) for phantom tests."""
     # loop over args.phantoms, skip when generating C coverage (too long)
     if not args.coverage and not args.disable_phantom_tests:
+
         name_algo = (args.algorithms[0] if len(args.algorithms) == 1
                      else "comparison")
+
         for phantom in args.phantoms:
-            # create a test comparing all the args.algorithms
-            name = "{}_{}".format(phantom, name_algo)
+            name_test = "{}_{}".format(phantom, name_algo)
+            # shepp3d gets special size treatment because it's 3D
             nsize = (args.phantom_size if phantom != "shepp3d"
                      else args.phantom_size // 4)
             # if size customized, create unique test-name
             if args.phantom_size != default_phantom_size:
-                name = "{}_pix{}".format(name, nsize)
+                name_test = "{}_pix{}".format(name_test, nsize)
             # original number of iterations before num-iter added to test name
             if args.num_iter != default_nitr:
-                name = "{}_itr{}".format(name, args.num_iter)
+                name_test = "{}_itr{}".format(name_test, args.num_iter)
+            # create a test comparing all the args.algorithms
             test = pyctest.test()
-            test.SetName(name)
+            test.SetName(name_test)
             test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
             test.SetProperty("ENVIRONMENT", "OMP_NUM_THREADS=1")
             test.SetProperty("TIMEOUT", "10800")  # 3 hours
@@ -348,12 +378,6 @@ def run_pyctest():
                     "--output-dir", "Testing",
                     "-a"] + args.algorithms,  # py27 has no list unpacking
                 )
-    # generate the CTestConfig.cmake and CTestCustom.cmake
-    pyctest.generate_config(pyctest.BINARY_DIRECTORY)
-    # generate the CTestTestfile.cmake file
-    pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
-    # run CTest
-    pyctest.run(pyctest.ARGUMENTS, pyctest.BINARY_DIRECTORY)
 
 
 if __name__ == "__main__":
