@@ -288,7 +288,7 @@ def main(args):
     # provide quality vs time plots
     quality_vs_time_name = os.path.join(bname, "quality_vs_wall_time.svg")
     image_quality_vs_time_plot(
-        plot_name=quality_vs_time_name
+        plot_name=quality_vs_time_name,
         json_filename=os.path.join(timemory.options.output_dir,
                                    "run_tomopy.json"),
         algo_folder_dir=bname,
