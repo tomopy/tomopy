@@ -71,7 +71,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['recon', 'init_tomo']
 
 
-allowed_kwargs = {
+allowed_recon_kwargs = {
     'art': ['num_gridx', 'num_gridy', 'num_iter'],
     'bart': ['num_gridx', 'num_gridy', 'num_iter',
              'num_block', 'ind_block'],
@@ -251,17 +251,17 @@ def recon(
     if isinstance(algorithm, six.string_types):
 
         # Check whether we have an allowed method
-        if algorithm not in allowed_kwargs:
+        if algorithm not in allowed_recon_kwargs:
             raise ValueError(
                 'Keyword "algorithm" must be one of %s, or a Python method.' %
-                (list(allowed_kwargs.keys()),))
+                (list(allowed_recon_kwargs.keys()),))
 
         # Make sure have allowed kwargs appropriate for algorithm.
         for key, value in list(kwargs.items()):
-            if key not in allowed_kwargs[algorithm]:
+            if key not in allowed_recon_kwargs[algorithm]:
                 raise ValueError(
                     '%s keyword not in allowed keywords %s' %
-                    (key, allowed_kwargs[algorithm]))
+                    (key, allowed_recon_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
                 if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
@@ -273,7 +273,7 @@ def recon(
                         kwargs[key] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
-        for kw in allowed_kwargs[algorithm]:
+        for kw in allowed_recon_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
 
     elif hasattr(algorithm, '__call__'):
@@ -283,7 +283,7 @@ def recon(
     else:
         raise ValueError(
             'Keyword "algorithm" must be one of %s, or a Python method.' %
-            (list(allowed_kwargs.keys()),))
+            (list(allowed_recon_kwargs.keys()),))
 
     # Generate args for the algorithm.
     center_arr = get_center(tomo.shape, center)
