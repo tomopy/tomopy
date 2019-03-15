@@ -99,15 +99,15 @@ def write_tiff(data, fname='tmp/data', digit=None, ext='tiff'):
         Array data to be saved.
     fname : str
         File name to which the data is saved. ``.tiff`` extension
-        will be appended even if it already has one.
+        will be appended if it doesn't already have one.
     digit : int
         Append this number to fname using a folder e.g. {fname}/{digit}.{ext}
     """
     # Add the extension and digit.
-    if digit is None:
-        fname = '{}.{}'.format(fname, ext)
-    else:
-        fname = os.path.join(fname, '{}.{}'.format(digit, ext))
+    if digit is not None:
+        fname = os.path.join(fname, str(digit))
+    if not str(fname).endswith(ext):
+        fname = ".".join([fname, ext])
     # Convert to absolute path.
     fname = os.path.abspath(fname)
     # Create the directory if it doesn't exist.
