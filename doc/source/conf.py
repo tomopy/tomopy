@@ -301,5 +301,5 @@ texinfo_documents = [
 
 # picked from http://read-the-docs.readthedocs.org/en/latest/faq.html
 
-autodoc_mock_imports = "numpy scipy matplotlib tifffile pywt skimage DM3lib pyfftw dxchange numexpr concurrent libtomopy".split()
+autodoc_mock_imports = "numpy scipy matplotlib tifffile pywt skimage DM3lib pyfftw numexpr concurrent libtomopy".split()
 
