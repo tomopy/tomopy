@@ -1,5 +1,3 @@
-dxchange
-h5py
 mkl
 mkl-devel
 mkl_fft
@@ -9,3 +7,4 @@ pywavelets
 scikit-image
 scipy
 six
+tifffile

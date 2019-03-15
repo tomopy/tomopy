@@ -82,7 +82,7 @@ DATA_PATH = os.path.abspath(
 
 try:
     resize_kwargs = {'anti_aliasing': False}
-    ignore = skimage.transform.resize(np.zeros(5), 2, mode='constant',
+    ignore = skimage.transform.resize(np.zeros(5), [2], mode='constant',
                                       **resize_kwargs)
 except TypeError:
     logger.debug("Determined that the anti_aliasing keyword is not needed.")
