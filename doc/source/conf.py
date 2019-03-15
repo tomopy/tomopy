@@ -299,7 +299,6 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #ztexinfo_no_detailmenu = False
 
-# picked from http://read-the-docs.readthedocs.org/en/latest/faq.html
-
+# http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports
 autodoc_mock_imports = "numpy scipy matplotlib tifffile pywt skimage DM3lib pyfftw numexpr concurrent libtomopy".split()
 
