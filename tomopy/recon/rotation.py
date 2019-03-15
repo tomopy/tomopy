@@ -55,7 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy import ndimage
-from tomopy.util.misc import fft2
+from tomopy.util.misc import fft2, write_tiff
 from scipy.optimize import minimize
 from skimage.feature import register_translation
 from tomopy.misc.corr import circ_mask

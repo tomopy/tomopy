@@ -56,6 +56,7 @@ from __future__ import (absolute_import, division, print_function,
 import logging
 import warnings
 import tifffile
+import os
 from .. import fft_impl
 
 
@@ -100,13 +101,13 @@ def write_tiff(data, fname='tmp/data', digit=None, ext='tiff'):
         File name to which the data is saved. ``.tiff`` extension
         will be appended even if it already has one.
     digit : int
-        Append this number to fname using a dash. e.g. {fname}-{digit}.{ext}
+        Append this number to fname using a folder e.g. {fname}/{digit}.{ext}
     """
     # Add the extension and digit.
     if digit is None:
         fname = '{}.{}'.format(fname, ext)
     else:
-        fname = '{}-{}.{}'.format(fname, digit, ext)
+        fname = os.path.join(fname, '{}.{}'.format(digit, ext))
     # Convert to absolute path.
     fname = os.path.abspath(fname)
     # Create the directory if it doesn't exist.

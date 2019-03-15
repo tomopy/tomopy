@@ -200,9 +200,9 @@ def align_seq(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            write_tiff(prj, fdir + '/tmp/iters/prj/prj', n)
-            write_tiff(sim, fdir + '/tmp/iters/sim/sim', n)
-            write_tiff(rec, fdir + '/tmp/iters/rec/rec', n)
+            write_tiff(prj, fdir + '/tmp/iters/prj', n)
+            write_tiff(sim, fdir + '/tmp/iters/sim', n)
+            write_tiff(rec, fdir + '/tmp/iters/rec', n)
 
     # Re-normalize data
     prj *= scl
@@ -335,9 +335,9 @@ def align_joint(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            write_tiff(prj, 'tmp/iters/prj/prj', n)
-            write_tiff(sim, 'tmp/iters/sim/sim', n)
-            write_tiff(rec, 'tmp/iters/rec/rec', n)
+            write_tiff(prj, 'tmp/iters/prj', n)
+            write_tiff(sim, 'tmp/iters/sim', n)
+            write_tiff(rec, 'tmp/iters/rec', n)
 
     # Re-normalize data
     prj *= scl
