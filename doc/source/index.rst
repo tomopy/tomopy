@@ -1,4 +1,4 @@
-.. image:: img/tomopy-logo.png
+.. image:: img/tomopy-logo-wide.svg
    :width: 320px
    :alt: TomoPy
 
