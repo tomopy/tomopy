@@ -210,30 +210,6 @@ destroy_streams(cudaStream_t* streams, const int nstreams)
 
 //======================================================================================//
 
-template <typename _Tp>
-_Tp
-reduce(_Tp* data, _Tp init, int nitems, cudaStream_t stream)
-{
-    _Tp* beg = data;
-    _Tp* end = data + nitems;
-    return thrust::reduce(thrust::system::cuda::par.on(stream), beg, end, init,
-                          thrust::plus<_Tp>());
-}
-
-//======================================================================================//
-
-template <typename _Tp>
-void
-transform_sum(_Tp* input_data, int nitems, _Tp* result, cudaStream_t stream)
-{
-    _Tp* beg = input_data;
-    _Tp* end = input_data + nitems;
-    thrust::transform(thrust::system::cuda::par.on(stream), beg, end, result, result,
-                      thrust::plus<_Tp>());
-}
-
-//======================================================================================//
-
 #else  // not defined(TOMOPY_USE_CUDA)
 
 //======================================================================================//

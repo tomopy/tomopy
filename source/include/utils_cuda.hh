@@ -141,11 +141,10 @@ ComputeGridDims(const dim3& dims, const dim3& blocks = GetBlockDims())
 inline int
 GetNppInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, GPU_NN));
     return eInterp;
