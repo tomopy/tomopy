@@ -218,6 +218,8 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     stream_sync(stream);
 
     cudaStreamBeginCapture(stream);
+    cudaEvent_t event;
+    cudaEventCreate(&event);
 
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
@@ -244,12 +246,21 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
         // synchronize the stream (do this frequently to avoid backlog)
         stream_sync(stream);
+        if(s + 1 == dy)
+            cudaEventRecord(event, stream);
     }
 
     // create the graph
     cudaGraph_t graph;
     // convert stream to graph
     cudaStreamEndCapture(stream, &graph);
+    cudaGraphExec_t graph_exec;
+    char*           log = new char[2048];
+    cudaGraphInstantiate(&graph_exec, graph, nullptr, log, 2048);
+    cudaGraphLaunch(graph_exec, stream);
+    stream_sync(stream);
+    cudaEventSynchronize(event);
+    delete[] log;
 }
 
 //======================================================================================//
