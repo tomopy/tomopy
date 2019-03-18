@@ -217,6 +217,8 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
+    cudaStreamBeginCapture(stream);
+
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
     _cache->reset();
@@ -243,6 +245,11 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         // synchronize the stream (do this frequently to avoid backlog)
         stream_sync(stream);
     }
+
+    // create the graph
+    cudaGraph_t graph;
+    // convert stream to graph
+    cudaStreamEndCapture(stream, &graph);
 }
 
 //======================================================================================//
