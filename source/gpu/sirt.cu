@@ -99,8 +99,7 @@ void
 sirt_gpu_compute_projection(data_array_t& gpu_data, int s, int p, int dy, int dt, int dx,
                             int nx, int ny, const float* theta)
 {
-    static bool use_opt = GetEnv<bool>("TOMOPY_USE_OPT_SUM", false);
-    auto        cache   = gpu_data[GetThisThreadID() % gpu_data.size()];
+    auto cache = gpu_data[GetThisThreadID() % gpu_data.size()];
 
 #if defined(DEBUG)
     printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
