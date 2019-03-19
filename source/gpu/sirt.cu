@@ -96,7 +96,7 @@ cuda_sirt_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 //======================================================================================//
 
 void
-sirt_gpu_compute_projection(data_array_t& gpu_data, int _s, int p, int dy, int dt, int dx,
+sirt_gpu_compute_projection(data_array_t& gpu_data, int s, int p, int dy, int dt, int dx,
                             int nx, int ny, const float* theta)
 {
     static bool use_opt = GetEnv<bool>("TOMOPY_USE_OPT_SUM", false);
