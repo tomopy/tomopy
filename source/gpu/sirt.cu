@@ -205,21 +205,27 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // calculate some values
     float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float        theta_p_deg = theta_p_rad * degrees;
-    int          _block      = _cache->block();
-    int          _grid       = _cache->compute_grid(dx);
+    int          block       = _cache->block();
+    int          grid        = _cache->compute_grid(dx);
     cudaStream_t stream      = _cache->stream();
-
-    dim3 block3 = GetBlockDims();
-    dim3 grid3  = GetGridDims();
-    dim3 block(_block, block3.y);
-    dim3 grid(_grid, (grid3.y == 0) ? 1 : grid3.y);
 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
-    cudaStreamBeginCapture(stream);
-    cudaEvent_t event;
-    cudaEventCreate(&event);
+    static bool     use_graph = GetEnv<bool>("TOMOPY_USE_GRAPH", false);
+    cudaEvent_t     event;
+    cudaGraph_t     graph;
+    cudaGraphNode_t error_node;
+    cudaGraphExec_t graph_exec;
+
+    if(use_graph)
+    {
+        static std::atomic_uintmax_t ncount;
+        if(ncount++ == 0)
+            printf("> TomoPy is using CUDA graphs...\n");
+        cudaStreamBeginCapture(stream);
+        cudaEventCreate(&event);
+    }
 
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
@@ -236,31 +242,28 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         // forward-rotate
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
         // compute simdata
-        if(use_opt)
-            cuda_sirt_pixels_kernel_opt<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
-        else
-            cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
+        cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
         // back-rotate
         cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
         // update shared update array
         cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
         // synchronize the stream (do this frequently to avoid backlog)
-        stream_sync(stream);
-        if(s + 1 == dy)
+        if(!use_graph)
+            stream_sync(stream);
+        else if(use_graph && s + 1 == dy)
             cudaEventRecord(event, stream);
     }
 
-    // create the graph
-    cudaGraph_t graph;
-    // convert stream to graph
-    cudaStreamEndCapture(stream, &graph);
-    cudaGraphExec_t graph_exec;
-    char*           log = new char[2048];
-    cudaGraphInstantiate(&graph_exec, graph, nullptr, log, 2048);
-    cudaGraphLaunch(graph_exec, stream);
-    stream_sync(stream);
-    cudaEventSynchronize(event);
-    delete[] log;
+    if(use_graph)
+    {
+        constexpr int log_size = 2048;
+        char          log[log_size];
+        cudaStreamEndCapture(stream, &graph);
+        cudaGraphInstantiate(&graph_exec, graph, &error_node, log, log_size);
+        cudaGraphLaunch(graph_exec, stream);
+        stream_sync(stream);
+        cudaEventSynchronize(event);
+    }
 }
 
 //======================================================================================//

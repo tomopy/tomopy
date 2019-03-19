@@ -135,6 +135,21 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
+    static bool     use_graph = GetEnv<bool>("TOMOPY_USE_GRAPH", false);
+    cudaEvent_t     event;
+    cudaGraph_t     graph;
+    cudaGraphNode_t error_node;
+    cudaGraphExec_t graph_exec;
+
+    if(use_graph)
+    {
+        static std::atomic_uintmax_t ncount;
+        if(ncount++ == 0)
+            printf("> TomoPy is using CUDA graphs...\n");
+        cudaStreamBeginCapture(stream);
+        cudaEventCreate(&event);
+    }
+
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
     _cache->reset();
@@ -156,7 +171,21 @@ mlem_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         // update shared update array
         cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
         // synchronize the stream (do this frequently to avoid backlog)
+        if(!use_graph)
+            stream_sync(stream);
+        else if(use_graph && s + 1 == dy)
+            cudaEventRecord(event, stream);
+    }
+
+    if(use_graph)
+    {
+        constexpr int log_size = 2048;
+        char          log[log_size];
+        cudaStreamEndCapture(stream, &graph);
+        cudaGraphInstantiate(&graph_exec, graph, &error_node, log, log_size);
+        cudaGraphLaunch(graph_exec, stream);
         stream_sync(stream);
+        cudaEventSynchronize(event);
     }
 }
 
