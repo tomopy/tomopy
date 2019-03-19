@@ -122,3 +122,84 @@ cuda_shared_memory_per_block();
 END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//
+
+#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
+#    include <cuda.h>
+#    include <cuda_runtime_api.h>
+#    include <vector_types.h>
+
+#    if !defined(CUDA_CHECK_LAST_ERROR)
+#        if defined(DEBUG)
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    cudaStreamSynchronize(0);                                            \
+                    cudaError err = cudaGetLastError();                                  \
+                    if(cudaSuccess != err)                                               \
+                    {                                                                    \
+                        fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",  \
+                                __FUNCTION__, __FILE__, __LINE__,                        \
+                                cudaGetErrorString(err));                                \
+                        printf("cudaCheckError() failed at %s@'%s':%i : %s\n",           \
+                               __FUNCTION__, __FILE__, __LINE__,                         \
+                               cudaGetErrorString(err));                                 \
+                        exit(1);                                                         \
+                    }                                                                    \
+                }
+#        else
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    ;                                                                    \
+                }
+#        endif
+#    endif
+#endif
+
+//--------------------------------------------------------------------------------------//
+
+//======================================================================================//
+//
+//      NVTX macros
+//
+//======================================================================================//
+
+#if defined(TOMOPY_USE_NVTX)
+#    include <nvToolsExt.h>
+
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)                                                      \
+            cudaStreamSynchronize(obj);                                                  \
+            nvtxRangePop()
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg) nvtxMark(name)
+#    endif
+
+void
+init_nvtx();
+
+#else
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg)
+#    endif
+
+inline void
+init_nvtx()
+{
+}
+
+#endif

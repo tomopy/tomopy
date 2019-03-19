@@ -41,11 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "cxx_extern.h"
 #include "profiler.h"
 #include "utils.h"
-
-volatile unsigned long counter;
 
 void
 art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
@@ -53,15 +50,6 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
-
-    if(cxx_art(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
-        return;
-
-    unsigned long count = counter++;
-    printf("[%lu] %s (C) : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           count, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
-
-    void* timer = TIMEMORY_AUTO_TIMER("");
 
     float* gridx   = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy   = (float*) malloc((ngridy + 1) * sizeof(float));
@@ -177,7 +165,4 @@ art(const float* data, int dy, int dt, int dx, const float* center, const float*
     free(dist);
     free(indi);
     free(simdata);
-
-    FREE_TIMEMORY_AUTO_TIMER(timer);
-    counter--;
 }

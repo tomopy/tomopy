@@ -39,48 +39,32 @@
 
 #pragma once
 
-#include "common.h"
+#include "macros.hh"
 
 //======================================================================================//
 
-BEGIN_EXTERN_C
-
-//======================================================================================//
-//
-//  MLEM
-//
-//======================================================================================//
-int
-cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-//
-//  SIRT
-//
-//======================================================================================//
-int
-cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#if defined(TOMOPY_USE_TBB)
+#    include "tbb/cache_aligned_allocator.h"
+template <typename _Tp>
+using TomopyAllocator_t = tbb::cache_aligned_allocator<_Tp>;
+#else
+template <typename _Tp>
+using TomopyAllocator_t = std::allocator<_Tp>;
+#endif
 
 //======================================================================================//
 
-END_EXTERN_C
+template <typename _Tp>
+using array_t = std::vector<_Tp, TomopyAllocator_t<_Tp>>;
+
+typedef array_t<int16_t>  sarray_t;
+typedef array_t<uint16_t> usarray_t;
+typedef array_t<uint32_t> uarray_t;
+typedef array_t<int32_t>  iarray_t;
+typedef array_t<float>    farray_t;
+typedef array_t<double>   darray_t;
+
+template <typename _Tp>
+using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //======================================================================================//

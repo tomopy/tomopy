@@ -39,375 +39,27 @@
 
 #pragma once
 
-//======================================================================================//
-
-#ifdef __cplusplus
-#    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                           \
-            extern "C"                                                                   \
-            {
-#    endif
-#    ifndef END_EXTERN_C
-#        define END_EXTERN_C }
-#    endif
-#else
-#    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C
-#    endif
-#    ifndef END_EXTERN_C
-#        define END_EXTERN_C
-#    endif
-#endif
+#include "constants.hh"
+#include "macros.hh"
+#include "typedefs.hh"
 
 //======================================================================================//
-//  C headers
-
-#include <cinttypes>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-
-BEGIN_EXTERN_C
-#include "common.h"
-END_EXTERN_C
-
-//======================================================================================//
-//  C++ headers
-
-#include <algorithm>
-#include <atomic>
-#include <chrono>
-#include <complex>
-#include <cstdint>
-#include <deque>
-#include <fstream>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <ostream>
-#include <set>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
-#ifdef TOMOPY_USE_TIMEMORY
-#    include <timemory/timemory.hpp>
-#else
-#    include "profiler.hh"
-#endif
-
-#include "PTL/AutoLock.hh"
-#include "PTL/Types.hh"
-#include "PTL/Utility.hh"
-
+//
+//  The following section provides functions for the initialization of the tasking library
+//
 #if defined(TOMOPY_USE_PTL)
-#    include "PTL/TBBTaskGroup.hh"
-#    include "PTL/Task.hh"
-#    include "PTL/TaskGroup.hh"
-#    include "PTL/TaskManager.hh"
-#    include "PTL/TaskRunManager.hh"
-#    include "PTL/ThreadData.hh"
-#    include "PTL/ThreadPool.hh"
-#    include "PTL/Threading.hh"
-#endif
-
-//--------------------------------------------------------------------------------------//
-
-#ifndef DLL
-#    ifdef WIN32
-#        define DLL __declspec(dllexport)
-#    else
-#        define DLL
-#    endif
-#endif
-
-//--------------------------------------------------------------------------------------//
-
-#ifdef __cplusplus
-#    include <cstdio>
-#    include <cstring>
-#else
-#    include <stdio.h>
-#    include <string.h>
-#endif
-
-//--------------------------------------------------------------------------------------//
-
-#if defined(TOMOPY_USE_CUDA)
-#    include <cooperative_groups.h>
-#    include <cuda.h>
-#    include <cuda_runtime_api.h>
-#    include <npp.h>
-#    include <nppi.h>
-#    include <vector_types.h>
-#else
-#    if !defined(cudaStream_t)
-#        define cudaStream_t int
-#    endif
-#endif
-
-#if defined(TOMOPY_USE_OPENCV)
-#    include <opencv2/core.hpp>
-#    include <opencv2/imgproc.hpp>
-#    include <opencv2/imgproc/imgproc.hpp>
-#endif
-
-#if defined(TOMOPY_USE_IPP)
-#    include <ipp.h>
-#    include <ippdefs.h>
-#    include <ippi.h>
-#endif
-
-//======================================================================================//
-
-#if !defined(scast)
-#    define scast static_cast
-#endif
-
-#if !defined(PRAGMA_SIMD)
-#    define PRAGMA_SIMD _Pragma("omp simd")
-#endif
-
-#if !defined(PRAGMA_SIMD_REDUCTION)
-#    define PRAGMA(statement) _Pragma(statement)
-#endif
-
-#if !defined(HW_CONCURRENCY)
-#    define HW_CONCURRENCY std::thread::hardware_concurrency()
-#endif
-
-#if !defined(_forward_args_t)
-#    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
-#endif
-
-//======================================================================================//
-
-namespace
-{
-constexpr float pi       = static_cast<float>(M_PI);
-constexpr float halfpi   = 0.5f * pi;
-constexpr float twopi    = 2.0f * pi;
-constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
-constexpr float degrees  = 180.0f / pi;
-}
-
-//======================================================================================//
-
-#if defined(TOMOPY_USE_TBB)
-#    include "tbb/cache_aligned_allocator.h"
-template <typename _Tp>
-using TomopyAllocator_t = tbb::cache_aligned_allocator<_Tp>;
-#else
-#    include <memory>
-template <typename _Tp>
-using TomopyAllocator_t = std::allocator<_Tp>;
-
-#endif
-
-//======================================================================================//
-
-template <typename _Tp>
-_Tp*
-allocate_aligned(std::size_t n, std::size_t a = alignof(_Tp))
-{
-    std::size_t sz = n * sizeof(int64_t);
-    void*       p  = malloc(sz);  // create buffer of 64-bits
-    if(std::align(a, n * sizeof(_Tp), p, sz))
-        return reinterpret_cast<_Tp*>(p);
-    free(p);
-    return new _Tp[n];
-}
-
-//======================================================================================//
-
-template <typename _Tp>
-using array_t = std::vector<_Tp, TomopyAllocator_t<_Tp>>;
-
-typedef array_t<int16_t>  sarray_t;
-typedef array_t<uint16_t> usarray_t;
-typedef array_t<uint32_t> uarray_t;
-typedef array_t<int32_t>  iarray_t;
-typedef array_t<float>    farray_t;
-typedef array_t<double>   darray_t;
-
-template <typename _Tp>
-using cuda_device_info = std::unordered_map<int, _Tp>;
-
-//======================================================================================//
-
-template <typename Func, typename... Args>
-inline void
-invoker(const Func& func, Args&&... args)
-{
-    func(args...);
-}
-
-//======================================================================================//
-
-inline uintmax_t
-GetThisThreadID()
-{
-#if defined(TOMOPY_USE_PTL)
-    return ThreadPool::GetThisThreadID();
-#else
-    static std::atomic<uintmax_t> tcounter;
-    static thread_local auto      tid = tcounter++;
-    return tid;
-#endif
-}
-
-//======================================================================================//
-
-#if !defined(PRINT_HERE)
-#    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
-               __LINE__, extra)
-#endif
-
-//======================================================================================//
-
-#if !defined(GPU_PRINT_HERE)
-#    define GPU_PRINT_HERE(extra)                                                        \
-        printf("[GPU]> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
-#endif
-
-//======================================================================================//
-
-#if !defined(START_TIMER)
-#    define START_TIMER(var) auto var = std::chrono::system_clock::now()
-#endif
-
-//======================================================================================//
-
-#if !defined(REPORT_TIMER)
-#    define REPORT_TIMER(start_time, note, counter, total_count)                         \
-        {                                                                                \
-            auto                          end_time = std::chrono::system_clock::now();   \
-            std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
-            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n", GetThisThreadID(),   \
-                   note, counter, total_count, elapsed_seconds.count());                 \
-        }
-#endif
-
-//======================================================================================//
-
-inline int&
-this_thread_device()
-{
-#if defined(TOMOPY_USE_CUDA)
-    static std::atomic<int> _ntid(0);
-    static thread_local int _instance =
-        (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
-    return _instance;
-#else
-    static thread_local int _instance = 0;
-    return _instance;
-#endif
-}
-
-//======================================================================================//
-
-inline void
-set_this_thread_device()
-{
-#if defined(TOMOPY_USE_CUDA)
-    auto devid = this_thread_device();
-    auto thrid = GetThisThreadID();
-    cuda_set_device(devid);
-    printf("[%lu] Running on GPU %i\n", thrid, devid);
-#endif
-}
-
-//======================================================================================//
-#include <stdlib.h>
-template <typename _Tp>
-_Tp*
-cpu_malloc(uintmax_t size)
-{
-    return allocate_aligned<_Tp>(size, 64);
-}
-
-//======================================================================================//
-
-inline bool
-is_numeric(const std::string& val)
-{
-    if(val.length() > 0)
-    {
-        auto f = val.find_first_of("0123456789");
-        if(f == std::string::npos)  // no numbers
-            return false;
-        auto l = val.find_last_of("0123456789");
-        if(val.length() <= 2)  // 1, 2., etc.
-            return true;
-        else
-            return (f != l);  // 1.0, 1e3, 23, etc.
-    }
-    return false;
-}
-
-//======================================================================================//
-
-template <typename _Tp>
-_Tp
-from_string(const std::string& val)
-{
-    std::stringstream ss;
-    _Tp               ret;
-    ss << val;
-    ss >> ret;
-    return ret;
-}
-
-//======================================================================================//
-
-inline std::string
-tolower(std::string val)
-{
-    for(auto& itr : val)
-        itr = scast<char>(tolower(itr));
-    return val;
-}
-
-//======================================================================================//
-
-inline Mutex&
-update_mutex()
-{
-    static Mutex _instance;
-    return _instance;
-}
-
-//======================================================================================//
-//======================================================================================//
-#if defined(TOMOPY_USE_PTL)
-//======================================================================================//
-//======================================================================================//
-
-inline void
-init_thread_data(ThreadPool* tp)
-{
-    ThreadData*& thread_data = ThreadData::GetInstance();
-    if(!thread_data)
-        thread_data = new ThreadData(tp);
-    thread_data->is_master   = false;
-    thread_data->within_task = false;
-}
-
+//
 //======================================================================================//
 
 inline TaskRunManager*
 cpu_run_manager()
 {
     AutoLock l(TypeMutex<TaskRunManager>());
-    // typedef std::shared_ptr<TaskRunManager> run_man_ptr;
-    static thread_local TaskRunManager* _instance =
-        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend"));
-    return _instance;
+    // use shared pointer so manager gets deleted when thread gets deleted
+    typedef std::shared_ptr<TaskRunManager> pointer;
+    static thread_local pointer             _instance = pointer(
+        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
+    return _instance.get();
 }
 
 //======================================================================================//
@@ -415,7 +67,8 @@ cpu_run_manager()
 inline TaskRunManager*
 gpu_run_manager()
 {
-    AutoLock                                l(TypeMutex<TaskRunManager>());
+    AutoLock l(TypeMutex<TaskRunManager>());
+    // use shared pointer so manager gets deleted when thread gets deleted
     typedef std::shared_ptr<TaskRunManager> pointer;
     static thread_local pointer             _instance = pointer(
         new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
@@ -427,7 +80,9 @@ gpu_run_manager()
 inline void
 init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 {
+    // ensure this thread is assigned id, assign variable so no unused result warning
     auto tid = GetThisThreadID();
+    // don't warn about unused variable
     ConsumeParameters(tid);
 
     {
@@ -440,143 +95,29 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
             run_man->Initialize(nthreads);
         }
     }
-    TaskManager* task_man = run_man->GetTaskManager();
-    ThreadPool*  tp       = task_man->thread_pool();
-    init_thread_data(tp);
 
-    if(GetEnv<int>("TASKING_VERBOSE", 0) > 0)
-    {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << "> " << __FUNCTION__ << "@" << __LINE__ << " -- "
-                  << "run manager = " << run_man << ", "
-                  << "task manager = " << task_man << ", "
-                  << "thread pool = " << tp << ", "
-                  << "..." << std::endl;
-    }
+    ThreadPool* tp = run_man->GetThreadPool();
+    // initialize the thread-local data information
+    ThreadData*& thread_data = ThreadData::GetInstance();
+    if(!thread_data)
+        thread_data = new ThreadData(tp);
+    thread_data->is_master   = false;
+    thread_data->within_task = false;
 }
 //======================================================================================//
-//======================================================================================//
+//
+//
 #endif  // TOMOPY_USE_PTL
-//======================================================================================//
-//======================================================================================//
-
-class cpu_data
-{
-public:
-    typedef iarray_t                                       iarray_type;
-    typedef typename iarray_type::value_type               int_type;
-    typedef std::shared_ptr<cpu_data>                      data_ptr_t;
-    typedef std::vector<data_ptr_t>                        data_array_t;
-    typedef std::tuple<data_array_t, float*, const float*> init_data_t;
-
-public:
-    cpu_data(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
-             float* recon, float* update, Mutex* upd_mutex, Mutex* sum_mutex)
-    : m_id(id)
-    , m_dy(dy)
-    , m_dt(dt)
-    , m_dx(dx)
-    , m_nx(nx)
-    , m_ny(ny)
-    , m_use_rot(iarray_type(scast<uintmax_t>(m_nx * m_ny), 0))
-    , m_use_tmp(iarray_type(scast<uintmax_t>(m_nx * m_ny), 1))
-    , m_rot(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
-    , m_tmp(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
-    , m_recon(recon)
-    , m_update(update)
-    , m_sum_dist(nullptr)
-    , m_data(data)
-    , m_upd_mutex(upd_mutex)
-    , m_sum_mutex(sum_mutex)
-    {
-        // we don't want null pointers here
-        assert(m_upd_mutex && m_sum_mutex);
-    }
-
-    ~cpu_data() { delete[] m_sum_dist; }
-
-public:
-    farray_t&       rot() { return m_rot; }
-    farray_t&       tmp() { return m_tmp; }
-    const farray_t& rot() const { return m_rot; }
-    const farray_t& tmp() const { return m_tmp; }
-
-    iarray_type&       use_rot() { return m_use_rot; }
-    iarray_type&       use_tmp() { return m_use_tmp; }
-    const iarray_type& use_rot() const { return m_use_rot; }
-    const iarray_type& use_tmp() const { return m_use_tmp; }
-
-    float*       update() const { return m_update; }
-    uint16_t*    sum_dist() const { return m_sum_dist; }
-    float*       recon() { return m_recon; }
-    const float* recon() const { return m_recon; }
-    const float* data() const { return m_data; }
-
-    Mutex* upd_mutex() const { return m_upd_mutex; }
-    Mutex* sum_mutex() const { return m_sum_mutex; }
-
-    void reset()
-    {
-        // reset temporaries to zero (NECESSARY!)
-        // -- note: the OpenCV effectively ensures that we overwrite all values
-        //          because we use cv::Mat::zeros and copy that to destination
-        // memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int_type));
-        // memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-        // memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-        if(m_sum_dist)
-            memset(m_sum_dist, 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(uint16_t));
-    }
-
-    void alloc_sum_dist() { m_sum_dist = new uint16_t[m_nx * m_ny]; }
-
-public:
-    // static functions
-    static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
-                                  int ngridy, float* recon, const float* data,
-                                  float* update, Mutex* upd_mtx, Mutex* sum_mtx,
-                                  bool alloc_sum_dist = true)
-    {
-        data_array_t _cpu_data(nthreads);
-        for(unsigned ii = 0; ii < nthreads; ++ii)
-        {
-            _cpu_data[ii] = data_ptr_t(new cpu_data(ii, dy, dt, dx, ngridx, ngridy, data,
-                                                    recon, update, upd_mtx, sum_mtx));
-            if(alloc_sum_dist)
-                _cpu_data[ii]->alloc_sum_dist();
-        }
-        return init_data_t(_cpu_data, recon, data);
-    }
-
-    static void reset(data_array_t& data)
-    {
-        // reset "update" to zero
-        for(auto& itr : data)
-            itr->reset();
-    }
-
-protected:
-    unsigned     m_id;
-    int          m_dy;
-    int          m_dt;
-    int          m_dx;
-    int          m_nx;
-    int          m_ny;
-    iarray_type  m_use_rot;
-    iarray_type  m_use_tmp;
-    farray_t     m_rot;
-    farray_t     m_tmp;
-    float*       m_recon;
-    float*       m_update;
-    uint16_t*    m_sum_dist;
-    const float* m_data;
-    Mutex*       m_upd_mutex;
-    Mutex*       m_sum_mutex;
-};
-
+//
+//
 //======================================================================================//
 
 struct DeviceOption
 {
+    //
+    //  This class enables the selection of a device at runtime
+    //
+public:
     typedef std::string     string_t;
     typedef const string_t& crstring_t;
 
@@ -651,6 +192,42 @@ struct DeviceOption
            << opt.description;
         os << ss.str();
         return os;
+    }
+
+    // helper function for converting to lower-case
+    inline static std::string tolower(std::string val)
+    {
+        for(auto& itr : val)
+            itr = scast<char>(::tolower(itr));
+        return val;
+    }
+
+    // helper function to convert string to another type
+    template <typename _Tp>
+    static _Tp from_string(const std::string& val)
+    {
+        std::stringstream ss;
+        _Tp               ret;
+        ss << val;
+        ss >> ret;
+        return ret;
+    }
+
+    // helper function to determine if numeric represented as string
+    inline static bool is_numeric(const std::string& val)
+    {
+        if(val.length() > 0)
+        {
+            auto f = val.find_first_of("0123456789");
+            if(f == std::string::npos)  // no numbers
+                return false;
+            auto l = val.find_last_of("0123456789");
+            if(val.length() <= 2)  // 1, 2., etc.
+                return true;
+            else
+                return (f != l);  // 1.0, 1e3, 23, etc.
+        }
+        return false;
     }
 };
 
@@ -823,7 +400,8 @@ execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... a
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                tg.run(std::forward<Func>(func), std::ref(data), s, p, std::forward<Args>(args)...);
+                tg.run(std::forward<Func>(func), std::ref(data), s, p,
+                       std::forward<Args>(args)...);
             }
         tg.join();
         return true;

@@ -40,12 +40,8 @@
 //======================================================================================//
 
 #include "common.hh"
-#include "gpu.hh"
-#include "utils_cuda.hh"
-
-BEGIN_EXTERN_C
-#include "gpu.h"
-END_EXTERN_C
+#include "data.hh"
+#include "utils.hh"
 
 //======================================================================================//
 
@@ -65,8 +61,6 @@ extern nvtxEventAttributes_t nvtx_rotate;
 //  blockDim:   This variable and contains the dimensions of the block.
 //  threadIdx:  This variable contains the thread index within the block.
 
-typedef gpu_data::int_type int_type;
-
 //======================================================================================//
 //
 //  compute sum_dist
@@ -74,7 +68,7 @@ typedef gpu_data::int_type int_type;
 //======================================================================================//
 
 __global__ void
-cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int_type* ones,
+cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int32_t* ones,
                       uint32_t* sum_dist, int p)
 {
     int nx0      = blockIdx.x * blockDim.x + threadIdx.x;
@@ -88,8 +82,8 @@ cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int_type* ones,
     {
         for(int d = dx0; d < dx; d += dxstride)
         {
-            uint32_t*       _sum_dist = sum_dist + (s * nx * ny) + (d * nx);
-            const int_type* _ones     = ones + (d * nx);
+            uint32_t*      _sum_dist = sum_dist + (s * nx * ny) + (d * nx);
+            const int32_t* _ones     = ones + (d * nx);
             for(int n = nx0; n < nx; n += nxstride)
             {
                 atomicAdd(&_sum_dist[n], (_ones[n] > 0) ? 1 : 0);
@@ -115,8 +109,8 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     };
     //----------------------------------------------------------------------------------//
 
-    int_type* rot = gpu_malloc<int_type>(ns * nx * ny);
-    int_type* tmp = gpu_malloc_and_memset<int_type>(nx * ny, 1, streams[0 % ns]);
+    int32_t*  rot = gpu_malloc<int32_t>(ns * nx * ny);
+    int32_t*  tmp = gpu_malloc_and_memset<int32_t>(nx * ny, 1, streams[0 % ns]);
     uint32_t* sum_dist =
         gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1 % ns]);
 
@@ -129,22 +123,22 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
 
         for(int q = 0; q < ns; ++q)
         {
-            auto      stream = streams[q];
-            int_type* _rot   = rot + q * nx * ny;
-            gpu_memset<int_type>(_rot, 0, nx * nx, stream);
+            auto     stream = streams[q];
+            int32_t* _rot   = rot + q * nx * ny;
+            gpu_memset<int32_t>(_rot, 0, nx * nx, stream);
         }
 
         for(int q = 0; q < ns; ++q)
         {
-            auto      stream = streams[q];
-            int_type* _rot   = rot + q * nx * ny;
+            auto     stream = streams[q];
+            int32_t* _rot   = rot + q * nx * ny;
             cuda_rotate_ip(_rot, tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
         }
 
         for(int q = 0; q < ns; ++q)
         {
-            auto      stream = streams[q];
-            int_type* _rot   = rot + q * nx * ny;
+            auto     stream = streams[q];
+            int32_t* _rot   = rot + q * nx * ny;
             cuda_sum_dist_compute<<<grid, block, 0, stream>>>(dy, dx, nx, ny, _rot,
                                                               sum_dist, p);
         }
@@ -190,10 +184,8 @@ print_array(const _Tp* data, int nx, int ny, const std::string& desc)
 //
 //======================================================================================//
 
-typedef gpu_data::int_type int_type;
-
 void
-cuda_rotate_kernel(int_type* dst, const int_type* src, const float theta_rad,
+cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = GPU_NN, cudaStream_t stream = 0)
 {
@@ -225,7 +217,7 @@ cuda_rotate_kernel(int_type* dst, const int_type* src, const float theta_rad,
     roi.width  = nx;
     roi.height = ny;
 
-    int    step = nx * sizeof(int_type);
+    int    step = nx * sizeof(int32_t);
     double rot[2][3];
     getRotationMatrix2D(rot, 1.0);
 
@@ -372,11 +364,11 @@ cuda_rotate_internal_kernel(float* dst, const float* src, float theta, const int
 
 //======================================================================================//
 
-int_type*
-cuda_rotate(const int_type* src, const float theta_rad, const float theta_deg,
+int32_t*
+cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
             const int nx, const int ny, cudaStream_t stream, const int eInterp)
 {
-    int_type* _dst = gpu_malloc<int_type>(nx * ny);
+    int32_t* _dst = gpu_malloc<int32_t>(nx * ny);
     cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, eInterp, stream);
     return _dst;
 }
@@ -384,7 +376,7 @@ cuda_rotate(const int_type* src, const float theta_rad, const float theta_deg,
 //======================================================================================//
 
 void
-cuda_rotate_ip(int_type* dst, const int_type* src, const float theta_rad,
+cuda_rotate_ip(int32_t* dst, const int32_t* src, const float theta_rad,
                const float theta_deg, const int nx, const int ny, cudaStream_t stream,
                const int eInterp)
 {

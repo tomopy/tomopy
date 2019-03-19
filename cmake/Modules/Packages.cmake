@@ -162,28 +162,6 @@ endif()
 
 ################################################################################
 #
-#        TBB
-#
-################################################################################
-
-if(TOMOPY_USE_TBB)
-    set(TBB_ROOT_DIR ${PYTHON_ROOT_DIR})
-    find_package(TBB COMPONENTS malloc)
-
-    if(TBB_malloc_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${TBB_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_TBB)
-    else()
-        message(WARNING "TBB not found")
-        set(TOMOPY_USE_TBB OFF)
-    endif()
-
-endif()
-
-
-################################################################################
-#
 #        MKL
 #
 ################################################################################

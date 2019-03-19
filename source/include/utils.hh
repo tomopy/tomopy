@@ -42,66 +42,13 @@
 //--------------------------------------------------------------------------------------//
 
 #include "common.hh"
-#include "gpu.hh"
+#include "macros.hh"
+#include "utils.hh"
 
-//--------------------------------------------------------------------------------------//
-
-#include <limits>
-#include <sstream>
-#include <stdexcept>
-#include <vector>
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-void
-print_gpu_array(const uintmax_t& n, const _Tp* gpu_data, const int& itr, const int& slice,
-                const int& angle, const int& pixel, const std::string& tag)
-{
-    std::ofstream     ofs;
-    std::stringstream fname;
-    fname << "outputs/gpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
-          << pixel << ".dat";
-    ofs.open(fname.str().c_str());
-    std::vector<_Tp> cpu_data(n, _Tp());
-    std::cout << "printing to file " << fname.str() << "..." << std::endl;
-    gpu2cpu_memcpy<_Tp>(gpu_data, cpu_data.data(), n, 0);
-    if(!ofs)
-        return;
-    for(uintmax_t i = 0; i < n; ++i)
-        ofs << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
-            << cpu_data[i] << std::endl;
-    ofs.close();
-}
-
-//--------------------------------------------------------------------------------------//
-
-template <typename _Tp>
-void
-print_cpu_array(const uintmax_t& nx, const uintmax_t& ny, const _Tp* data, const int& itr,
-                const int& slice, const int& angle, const int& pixel,
-                const std::string& tag)
-{
-    std::ofstream     ofs;
-    std::stringstream fname;
-    fname << "outputs/cpu/" << tag << "_" << itr << "_" << slice << "_" << angle << "_"
-          << pixel << ".dat";
-    std::stringstream ss;
-    for(uintmax_t j = 0; j < ny; ++j)
-    {
-        for(uintmax_t i = 0; i < nx; ++i)
-        {
-            ss << std::setw(6) << i << " \t " << std::setw(12) << std::setprecision(8)
-               << data[i + j * nx] << std::endl;
-        }
-        ss << std::endl;
-    }
-    ofs.open(fname.str().c_str());
-    if(!ofs)
-        return;
-    ofs << ss.str() << std::endl;
-    ofs.close();
-}
+BEGIN_EXTERN_C
+#include "cxx_extern.h"
+#include "utils.h"
+END_EXTERN_C
 
 //======================================================================================//
 
@@ -173,10 +120,11 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode()
 {
-    static EnvChoiceList<int> choices =
-        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    static EnvChoiceList<int> choices = {
+        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
     static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, CPU_NN));
     return eInterp;
@@ -226,96 +174,363 @@ cxx_rotate(const _Tp* src, double theta, const intmax_t& nx, const intmax_t& ny,
 }
 
 //======================================================================================//
-//======================================================================================//
-#else  // TOMOPY_USE_OPENCV
-//======================================================================================//
+//
+#endif  // TOMOPY_USE_OPENCV
+//
 //======================================================================================//
 
-#    define CPU_NN 0
-#    define CPU_LINEAR 1
-#    define CPU_AREA 3
-#    define CPU_CUBIC 4
-#    define CPU_LANCZOS 5
+//======================================================================================//
+//
+#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
+//
+//======================================================================================//
+
+inline int
+GetNumMasterStreams(const int& init = 1)
+{
+    return std::max(GetEnv<int>("TOMOPY_NUM_STREAMS", init), 1);
+}
+
+//======================================================================================//
+
+inline int
+GetBlockSize(const int& init = 32)
+{
+    static thread_local int _instance = GetEnv<int>("TOMOPY_BLOCK_SIZE", init);
+    return _instance;
+}
+
+//======================================================================================//
+
+inline int
+GetGridSize(const int& init = 0)
+{
+    // default value of zero == calculated according to block and loop size
+    static thread_local int _instance = GetEnv<int>("TOMOPY_GRID_SIZE", init);
+    return _instance;
+}
+
+//======================================================================================//
+
+inline int
+ComputeGridSize(const int& size, const int& block_size = GetBlockSize())
+{
+    return (size + block_size - 1) / block_size;
+}
+
+//======================================================================================//
+
+inline dim3
+GetBlockDims(const dim3& init = dim3(32, 32, 1))
+{
+    int _x = GetEnv<int>("TOMOPY_BLOCK_SIZE_X", init.x);
+    int _y = GetEnv<int>("TOMOPY_BLOCK_SIZE_Y", init.y);
+    int _z = GetEnv<int>("TOMOPY_BLOCK_SIZE_Z", init.z);
+    return dim3(_x, _y, _z);
+}
+
+//======================================================================================//
+
+inline dim3
+GetGridDims(const dim3& init = dim3(0, 0, 0))
+{
+    // default value of zero == calculated according to block and loop size
+    int _x = GetEnv<int>("TOMOPY_GRID_SIZE_X", init.x);
+    int _y = GetEnv<int>("TOMOPY_GRID_SIZE_Y", init.y);
+    int _z = GetEnv<int>("TOMOPY_GRID_SIZE_Z", init.z);
+    return dim3(_x, _y, _z);
+}
+
+//======================================================================================//
+
+inline dim3
+ComputeGridDims(const dim3& dims, const dim3& blocks = GetBlockDims())
+{
+    return dim3(ComputeGridSize(dims.x, blocks.x), ComputeGridSize(dims.y, blocks.y),
+                ComputeGridSize(dims.z, blocks.z));
+}
+
+//======================================================================================//
+// interpolation types
+#    define GPU_NN NPPI_INTER_NN
+#    define GPU_LINEAR NPPI_INTER_LINEAR
+#    define GPU_CUBIC NPPI_INTER_CUBIC
+
+//======================================================================================//
+
+inline int
+GetNppInterpolationMode()
+{
+    static EnvChoiceList<int> choices = {
+        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
+    static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
+                                     GetEnv<int>("TOMOPY_INTER", choices, GPU_NN));
+    return eInterp;
+}
+
+//======================================================================================//
+
+inline int&
+this_thread_device()
+{
+    // this creates a globally accessible function for determining the device
+    // the thread is assigned to
+    //
+#    if defined(TOMOPY_USE_CUDA)
+    static std::atomic<int> _ntid(0);
+    static thread_local int _instance =
+        (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
+    return _instance;
+#    else
+    static thread_local int _instance = 0;
+    return _instance;
+#    endif
+}
+
+//======================================================================================//
+
+inline void
+stream_sync(cudaStream_t _stream)
+{
+    cudaStreamSynchronize(_stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//======================================================================================//
+
+inline void
+event_sync(cudaEvent_t _event)
+{
+    cudaEventSynchronize(_event);
+    CUDA_CHECK_LAST_ERROR();
+}
 
 //======================================================================================//
 
 template <typename _Tp>
-void
-cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const intmax_t& nx,
-              const intmax_t& ny, int = 0, double scale = 1.0)
+_Tp*
+gpu_malloc(uintmax_t size)
 {
-    memset(dst.data(), 0, nx * ny * sizeof(_Tp));
-#    if defined(TOMOPY_USE_IPP)
-    try
+    _Tp* _gpu;
+    CUDA_CHECK_CALL(cudaMalloc(&_gpu, size * sizeof(_Tp)));
+    if(_gpu == nullptr)
     {
-        ipp_affine_transform(dst, src, theta, theta * degrees, nx, ny, scale);
+        int _device = 0;
+        cudaGetDevice(&_device);
+        std::stringstream ss;
+        ss << "Error allocating memory on GPU " << _device << " of size "
+           << (size * sizeof(_Tp)) << " and type " << typeid(_Tp).name()
+           << " (type size = " << sizeof(_Tp) << ")";
+        throw std::runtime_error(ss.str().c_str());
     }
-    catch(std::exception& e)
-#    endif
-    {
-#    if defined(TOMOPY_USE_IPP)
-        std::cerr << e.what() << "\n";
-#    endif
-        // this is flawed and should not be production
-        int   src_size = nx * ny;
-        float xoff     = (0.5f * nx) - 0.5f;
-        float yoff     = (0.5f * ny) - 0.5f;
-
-        for(int j = 0; j < ny; ++j)
-        {
-            for(int i = 0; i < nx; ++i)
-            {
-                // indices in 2D
-                float rx = float(i) - xoff;
-                float ry = float(j) - yoff;
-                // transformation
-                float tx = rx * cosf(theta) + -ry * sinf(theta);
-                float ty = rx * sinf(theta) + ry * cosf(theta);
-                // indices in 2D
-                float x = (tx + xoff);
-                float y = (ty + yoff);
-                // index in 1D array
-                int  rz    = j * nx + i;
-                auto index = [&](int _x, int _y) { return _y * nx + _x; };
-                // within bounds
-                int   x1    = floorf(tx + xoff);
-                int   y1    = floorf(ty + yoff);
-                int   x2    = x1 + 1;
-                int   y2    = y1 + 1;
-                float fxy1  = 0.0f;
-                float fxy2  = 0.0f;
-                int   ixy11 = index(x1, y1);
-                int   ixy21 = index(x2, y1);
-                int   ixy12 = index(x1, y2);
-                int   ixy22 = index(x2, y2);
-                if(ixy11 >= 0 && ixy11 < src_size)
-                    fxy1 += (x2 - x) * src[ixy11];
-                if(ixy21 >= 0 && ixy21 < src_size)
-                    fxy1 += (x - x1) * src[ixy21];
-                if(ixy12 >= 0 && ixy12 < src_size)
-                    fxy2 += (x2 - x) * src[ixy12];
-                if(ixy22 >= 0 && ixy22 < src_size)
-                    fxy2 += (x - x1) * src[ixy22];
-                dst[rz] += (y2 - y) * fxy1 + (y - y1) * fxy2;
-            }
-        }
-    }
+    return _gpu;
 }
 
 //--------------------------------------------------------------------------------------//
 
 template <typename _Tp>
-array_t<_Tp>
-cxx_rotate(const _Tp* src, float theta, const intmax_t& nx, const intmax_t& ny, int = 0,
-           double scale = 1.0)
+void
+cpu2gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
-    array_t<_Tp> dst(nx * ny, _Tp());
-    cxx_rotate_ip(dst, src, theta, nx, ny, 0, scale);
-    return dst;
+    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+void
+gpu2cpu_memcpy(_Tp* _cpu, const _Tp* _gpu, uintmax_t size, cudaStream_t stream)
+{
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+void
+gpu2gpu_memcpy(_Tp* _dst, const _Tp* _src, uintmax_t size, cudaStream_t stream)
+{
+    cudaMemcpyAsync(_dst, _src, size * sizeof(_Tp), cudaMemcpyDeviceToDevice, stream);
+    CUDA_CHECK_LAST_ERROR();
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+void
+gpu_memset(_Tp* _gpu, int value, uintmax_t size, cudaStream_t stream)
+{
+    cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
+    CUDA_CHECK_LAST_ERROR();
 }
 
 //======================================================================================//
+
+template <typename _Tp>
+_Tp*
+gpu_malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
+{
+    _Tp* _gpu = gpu_malloc<_Tp>(size);
+    cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
+    CUDA_CHECK_LAST_ERROR();
+    return _gpu;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+_Tp*
+gpu_malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
+{
+    _Tp* _gpu = gpu_malloc<_Tp>(size);
+    cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
+    CUDA_CHECK_LAST_ERROR();
+    return _gpu;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp>
+void
+gpu2cpu_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
+{
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
+    CUDA_CHECK_LAST_ERROR();
+    cudaFree(_gpu);
+    CUDA_CHECK_LAST_ERROR();
+}
+
 //======================================================================================//
-#endif  // TOMOPY_USE_OPENCV
+
+inline cudaStream_t*
+create_streams(const int nstreams, unsigned int flag = cudaStreamDefault)
+{
+    cudaStream_t* streams = new cudaStream_t[nstreams];
+    for(int i = 0; i < nstreams; ++i)
+    {
+        cudaStreamCreateWithFlags(&streams[i], flag);
+        CUDA_CHECK_LAST_ERROR();
+    }
+    return streams;
+}
+
 //======================================================================================//
+
+inline void
+destroy_streams(cudaStream_t* streams, const int nstreams)
+{
+    for(int i = 0; i < nstreams; ++i)
+    {
+        cudaStreamSynchronize(streams[i]);
+        cudaStreamDestroy(streams[i]);
+        CUDA_CHECK_LAST_ERROR();
+    }
+    delete[] streams;
+}
+
 //======================================================================================//
+// compute the sum_dist for the rotations
+
+uint32_t*
+cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta);
+
+//======================================================================================//
+// warm up
+//======================================================================================//
+
+template <typename _Tp>
+__global__ void
+cuda_warmup_kernel(_Tp* _dst, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        *_dst += static_cast<_Tp>(factor);
+}
+
+//======================================================================================//
+// sum kernels
+//======================================================================================//
+
+template <typename _Tp, typename _Up = _Tp>
+__global__ void
+cuda_sum_kernel(_Tp* dst, const _Up* src, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        dst[i] += static_cast<_Tp>(factor * src[i]);
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename _Tp, typename _Up = _Tp>
+__global__ void
+cuda_atomic_sum_kernel(_Tp* dst, const _Up* src, uintmax_t size, const _Tp factor)
+{
+    auto i0      = blockIdx.x * blockDim.x + threadIdx.x;
+    auto istride = blockDim.x * gridDim.x;
+    for(auto i = i0; i < size; i += istride)
+        atomicAdd(&dst[i], static_cast<_Tp>(factor * src[i]));
+}
+
+//======================================================================================//
+//  reduction
+//======================================================================================//
+
+__global__ void
+deviceReduceKernel(const float* in, float* out, int N);
+
+//--------------------------------------------------------------------------------------//
+
+__global__ void
+sum_kernel_block(float* sum, const float* input, int n);
+
+//--------------------------------------------------------------------------------------//
+
+DLL float
+deviceReduce(const float* in, float* out, int N);
+
+//--------------------------------------------------------------------------------------//
+
+DLL float
+reduce(float* _in, float* _out, int size);
+
+//======================================================================================//
+//  rotate
+//======================================================================================//
+
+DLL int32_t*
+    cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
+                const int nx, const int ny, cudaStream_t stream = 0,
+                const int eInterp = GetNppInterpolationMode());
+
+//--------------------------------------------------------------------------------------//
+
+DLL float*
+cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
+            const int ny, cudaStream_t stream = 0,
+            const int eInterp = GetNppInterpolationMode());
+
+//--------------------------------------------------------------------------------------//
+
+DLL void
+cuda_rotate_ip(int32_t* dst, const int32_t* src, const float theta_rad,
+               const float theta_deg, const int nx, const int ny, cudaStream_t stream = 0,
+               const int eInterp = GetNppInterpolationMode());
+
+//--------------------------------------------------------------------------------------//
+
+DLL void
+cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
+               const int nx, const int ny, cudaStream_t stream = 0,
+               const int eInterp = GetNppInterpolationMode());
+
+//======================================================================================//
+
+#endif  // NVCC and TOMOPY_USE_CUDA

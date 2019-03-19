@@ -47,6 +47,9 @@ void
 fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
     float* recon, int ngridx, int ngridy, const char* fname, const float* filter_par)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx = (float*) malloc((ngridy + 1) * sizeof(float));

@@ -48,6 +48,9 @@ ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
            const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
            const float* reg_pars, int num_block, const float* ind_block)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
     float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
     float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
     float* coordx = (float*) malloc((ngridy + 1) * sizeof(float));

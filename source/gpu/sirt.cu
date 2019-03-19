@@ -38,20 +38,9 @@
 //   TOMOPY CUDA implementation
 
 #include "common.hh"
-#include "gpu.hh"
+#include "constants.hh"
+#include "data.hh"
 #include "utils.hh"
-#include "utils_cuda.hh"
-
-BEGIN_EXTERN_C
-#include "cxx_extern.h"
-#include "utils.h"
-END_EXTERN_C
-
-#include <algorithm>
-#include <chrono>
-#include <cstdlib>
-#include <memory>
-#include <numeric>
 
 //======================================================================================//
 
@@ -66,71 +55,8 @@ extern nvtxEventAttributes_t nvtx_rotate;
 
 //======================================================================================//
 
-typedef gpu_data::int_type     int_type;
-typedef gpu_data::init_data_t  init_data_t;
-typedef gpu_data::data_array_t data_array_t;
-
-#define TILE_DIM 16
-#define FULL_MASK 0xffffffff
-
-//--------------------------------------------------------------------------------------//
-
-__inline__ __device__ float
-warp_reduce_sum(float val)
-{
-    for(int offset = warpSize / 2; offset > 0; offset /= 2)
-        val += __shfl_down_sync(FULL_MASK, val, offset);
-    return val;
-}
-
-//--------------------------------------------------------------------------------------//
-
-__inline__ __device__ float
-block_reduce_sum(float val)
-{
-    static __shared__ float shared[32];  // Shared mem for 32 partial sums
-    int                     lane = threadIdx.x % warpSize;
-    int                     wid  = threadIdx.x / warpSize;
-    val = warp_reduce_sum(val);  // Each warp performs partial reduction
-    if(lane == 0)
-        shared[wid] = val;  // Write reduced value to shared memory
-    __syncthreads();        // Wait for all partial reductions
-    // read from shared memory only if that warp existed
-    val = (threadIdx.x < blockDim.x / warpSize) ? shared[lane] : 0;
-    if(wid == 0)
-        val = warp_reduce_sum(val);  // Final reduce within first warp
-    return val;
-}
-
-//--------------------------------------------------------------------------------------//
-
-__device__ void
-device_reduce_warp_atomic_kernel(float* in, float* out, int N)
-{
-    float sum     = 0.0f;
-    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int   istride = blockDim.x * gridDim.x;
-    for(int i = i0; i < N; i += istride)
-        sum += in[i];
-    sum = warp_reduce_sum(sum);
-    if((threadIdx.x & (warpSize - 1)) == 0)
-        atomicAdd(out, sum);
-}
-
-//--------------------------------------------------------------------------------------//
-
-__device__ void
-device_reduce_block_atomic_kernel(float* in, float* out, int N)
-{
-    float sum     = 0.0f;
-    int   i0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int   istride = blockDim.x * gridDim.x;
-    for(int i = i0; i < N; i += istride)
-        sum += in[i];
-    sum = block_reduce_sum(sum);
-    if(threadIdx.x == 0)
-        atomicAdd(out, sum);
-}
+typedef GpuData::init_data_t  init_data_t;
+typedef GpuData::data_array_t data_array_t;
 
 //======================================================================================//
 
@@ -145,24 +71,6 @@ cuda_sirt_pixels_kernel(int p, int nx, int dx, float* recon, const float* data)
         float sum = 0.0f;
         for(int i = 0; i < nx; ++i)
             sum += recon[d * nx + i];
-        float upd = data[p * dx + d] - sum;
-        for(int i = 0; i < nx; ++i)
-            recon[d * nx + i] += upd;
-    }
-}
-
-//======================================================================================//
-
-__global__ void
-cuda_sirt_pixels_kernel_opt(int p, int nx, int dx, float* recon, const float* data)
-{
-    int d0      = blockIdx.x * blockDim.x + threadIdx.x;
-    int dstride = blockDim.x * gridDim.x;
-
-    for(int d = d0; d < dx; d += dstride)
-    {
-        float sum = 0.0f;
-        device_reduce_warp_atomic_kernel(recon + d * nx, &sum, nx);
         float upd = data[p * dx + d] - sum;
         for(int i = 0; i < nx; ++i)
             recon[d * nx + i] += upd;
@@ -188,56 +96,41 @@ cuda_sirt_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 //======================================================================================//
 
 void
-sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int dt,
-                            int dx, int nx, int ny, const float* theta)
+sirt_gpu_compute_projection(data_array_t& gpu_data, int _s, int p, int dy, int dt, int dx,
+                            int nx, int ny, const float* theta)
 {
     static bool use_opt = GetEnv<bool>("TOMOPY_USE_OPT_SUM", false);
-    auto        _cache  = _gpu_data[GetThisThreadID() % _gpu_data.size()];
+    auto        cache   = gpu_data[GetThisThreadID() % gpu_data.size()];
 
 #if defined(DEBUG)
     printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
-           s, p, _cache->device());
+           s, p, cache->device());
 #endif
 
     // ensure running on proper device
-    cuda_set_device(_cache->device());
+    cuda_set_device(cache->device());
 
     // calculate some values
     float        theta_p_rad = fmodf(theta[p] + halfpi, twopi);
     float        theta_p_deg = theta_p_rad * degrees;
-    int          block       = _cache->block();
-    int          grid        = _cache->compute_grid(dx);
-    cudaStream_t stream      = _cache->stream();
+    int          block       = cache->block();
+    int          grid        = cache->compute_grid(dx);
+    cudaStream_t stream      = cache->stream();
 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
 
-    static bool     use_graph = GetEnv<bool>("TOMOPY_USE_GRAPH", false);
-    cudaEvent_t     event;
-    cudaGraph_t     graph;
-    cudaGraphNode_t error_node;
-    cudaGraphExec_t graph_exec;
-
-    if(use_graph)
-    {
-        static std::atomic_uintmax_t ncount;
-        if(ncount++ == 0)
-            printf("> TomoPy is using CUDA graphs...\n");
-        cudaStreamBeginCapture(stream);
-        cudaEventCreate(&event);
-    }
-
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
-    _cache->reset();
+    cache->reset();
 
     for(int s = 0; s < dy; ++s)
     {
-        const float* recon  = _cache->recon() + s * nx * ny;
-        const float* data   = _cache->data() + s * dt * dx;
-        float*       update = _cache->update() + s * nx * ny;
-        float*       rot    = _cache->rot() + s * nx * ny;
-        float*       tmp    = _cache->tmp() + s * nx * ny;
+        const float* recon  = cache->recon() + s * nx * ny;
+        const float* data   = cache->data() + s * dt * dx;
+        float*       update = cache->update() + s * nx * ny;
+        float*       rot    = cache->rot() + s * nx * ny;
+        float*       tmp    = cache->tmp() + s * nx * ny;
 
         // forward-rotate
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
@@ -248,21 +141,7 @@ sirt_gpu_compute_projection(data_array_t& _gpu_data, int _s, int p, int dy, int 
         // update shared update array
         cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
         // synchronize the stream (do this frequently to avoid backlog)
-        if(!use_graph)
-            stream_sync(stream);
-        else if(use_graph && s + 1 == dy)
-            cudaEventRecord(event, stream);
-    }
-
-    if(use_graph)
-    {
-        constexpr int log_size = 2048;
-        char          log[log_size];
-        cudaStreamEndCapture(stream, &graph);
-        cudaGraphInstantiate(&graph_exec, graph, &error_node, log, log_size);
-        cudaGraphLaunch(graph_exec, stream);
         stream_sync(stream);
-        cudaEventSynchronize(event);
     }
 }
 
@@ -327,9 +206,9 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     auto         grid         = ComputeGridSize(recon_pixels, block);
     auto         main_stream  = create_streams(1);
     float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t  init_data = gpu_data::initialize(device, nthreads, dy, dt, dx, ngridx,
-                                                 ngridy, cpu_recon, cpu_data, update);
-    data_array_t _gpu_data = std::get<0>(init_data);
+    init_data_t  init_data = GpuData::initialize(device, nthreads, dy, dt, dx, ngridx,
+                                                ngridy, cpu_recon, cpu_data, update);
+    data_array_t gpu_data  = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);
     uint32_t*    sum_dist  = cuda_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
@@ -350,15 +229,15 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         gpu_memset(update, 0, recon_pixels, *main_stream);
 
         // sync
-        gpu_data::sync(_gpu_data);
+        GpuData::sync(gpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(_gpu_data),
+        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(gpu_data),
                                          sirt_gpu_compute_projection, dy, dt, dx, ngridx,
                                          ngridy, theta);
 
         // sync the thread streams
-        gpu_data::sync(_gpu_data);
+        GpuData::sync(gpu_data);
 
         // sync the main stream
         stream_sync(*main_stream);

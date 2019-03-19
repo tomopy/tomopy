@@ -38,25 +38,13 @@
 //   TOMOPY implementation
 
 #include "common.hh"
+#include "data.hh"
 #include "utils.hh"
-#include "utils_cuda.hh"
-
-BEGIN_EXTERN_C
-#include "cxx_extern.h"
-#include "utils.h"
-END_EXTERN_C
-
-#include <algorithm>
-#include <chrono>
-#include <cstdlib>
-#include <memory>
-#include <numeric>
 
 //======================================================================================//
 
-typedef cpu_data::int_type     int_type;
-typedef cpu_data::init_data_t  init_data_t;
-typedef cpu_data::data_array_t data_array_t;
+typedef CpuData::init_data_t  init_data_t;
+typedef CpuData::data_array_t data_array_t;
 
 //======================================================================================//
 
@@ -109,33 +97,32 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-mlem_cpu_compute_projection(data_array_t& _cpu_data, int _s, int p, int dy, int dt,
-                            int dx, int nx, int ny, const float* theta,
-                            uint32_t* global_sum_dist)
+mlem_cpu_compute_projection(data_array_t& cpu_data, int _s, int p, int dy, int dt, int dx,
+                            int nx, int ny, const float* theta, uint32_t* global_sum_dist)
 {
     ConsumeParameters(dy);
-    auto _cache = _cpu_data[GetThisThreadID() % _cpu_data.size()];
+    auto cache = cpu_data[GetThisThreadID() % cpu_data.size()];
 
     // calculate some values
     float theta_p   = fmodf(theta[p] + halfpi, twopi);
-    auto& use_rot   = _cache->use_rot();
-    auto& use_tmp   = _cache->use_tmp();
-    auto& recon_rot = _cache->rot();
-    auto& recon_tmp = _cache->tmp();
+    auto& use_rot   = cache->use_rot();
+    auto& use_tmp   = cache->use_tmp();
+    auto& recon_rot = cache->rot();
+    auto& recon_tmp = cache->tmp();
 
     // Forward-Rotate object
-    cxx_rotate_ip<int_type>(use_rot, use_tmp.data(), -theta_p, nx, ny, CPU_NN);
+    cxx_rotate_ip<int32_t>(use_rot, use_tmp.data(), -theta_p, nx, ny, CPU_NN);
 
     for(int s = 0; s < dy; ++s)
     {
-        const float* data         = _cache->data() + s * dt * dx;
-        const float* recon        = _cache->recon() + s * nx * ny;
-        float*       update       = _cache->update() + s * nx * ny;
+        const float* data         = cache->data() + s * dt * dx;
+        const float* recon        = cache->recon() + s * nx * ny;
+        float*       update       = cache->update() + s * nx * ny;
         uint32_t*    sum_dist     = global_sum_dist + s * nx * ny;
-        uint16_t*    sum_dist_tmp = _cache->sum_dist();
+        uint16_t*    sum_dist_tmp = cache->sum_dist();
 
         // reset intermediate data
-        _cache->reset();
+        cache->reset();
 
         cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
         for(int d = 0; d < dx; ++d)
@@ -157,16 +144,16 @@ mlem_cpu_compute_projection(data_array_t& _cpu_data, int _s, int p, int dy, int 
         cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
         // update shared update array
-        _cache->upd_mutex()->lock();
+        cache->upd_mutex()->lock();
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
             update[i] += recon_tmp[i];
-        _cache->upd_mutex()->unlock();
+        cache->upd_mutex()->unlock();
 
         // update shared sum_dist array
-        _cache->sum_mutex()->lock();
+        cache->sum_mutex()->lock();
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
             sum_dist[i] += sum_dist_tmp[i];
-        _cache->sum_mutex()->unlock();
+        cache->sum_mutex()->unlock();
     }
 }
 
@@ -209,9 +196,9 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     farray_t    update(recon_pixels, 0.0f);
     uarray_t    sum_dist(recon_pixels, 0);
     init_data_t init_data =
-        cpu_data::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data,
-                             update.data(), &upd_mutex, &sum_mutex);
-    data_array_t _cpu_data = std::get<0>(init_data);
+        CpuData::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data,
+                            update.data(), &upd_mutex, &sum_mutex);
+    data_array_t cpu_data = std::get<0>(init_data);
 
     //----------------------------------------------------------------------------------//
     for(int i = 0; i < num_iter; i++)
@@ -224,10 +211,10 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         memset(sum_dist.data(), 0, recon_pixels * sizeof(float));
 
         // sync and reset
-        cpu_data::reset(_cpu_data);
+        CpuData::reset(cpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(_cpu_data),
+        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(cpu_data),
                                          mlem_cpu_compute_projection, dy, dt, dx, ngridx,
                                          ngridy, theta, sum_dist.data());
 

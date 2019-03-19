@@ -39,48 +39,46 @@
 
 #pragma once
 
-#include "common.h"
-
 //======================================================================================//
 
-BEGIN_EXTERN_C
+#ifdef __cplusplus
+#    ifndef BEGIN_EXTERN_C
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
+            {
+#    endif
+#    ifndef END_EXTERN_C
+#        define END_EXTERN_C }
+#    endif
+#else
+#    ifndef BEGIN_EXTERN_C
+#        define BEGIN_EXTERN_C
+#    endif
+#    ifndef END_EXTERN_C
+#        define END_EXTERN_C
+#    endif
+#endif
 
-//======================================================================================//
-//
-//  MLEM
-//
-//======================================================================================//
-int
-cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 //--------------------------------------------------------------------------------------//
-void
-mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
-//======================================================================================//
-//
-//  SIRT
-//
-//======================================================================================//
-int
-cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+#ifndef DLL
+#    ifdef WIN32
+#        define DLL __declspec(dllexport)
+#    else
+#        define DLL
+#    endif
+#endif
 
 //======================================================================================//
 
-END_EXTERN_C
+#if !defined(PRAGMA_SIMD)
+#    define PRAGMA_SIMD _Pragma("omp simd")
+#endif
+
+//======================================================================================//
+
+#if !defined(PRAGMA_SIMD_REDUCTION)
+#    define PRAGMA(statement) _Pragma(statement)
+#endif
 
 //======================================================================================//

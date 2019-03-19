@@ -37,11 +37,12 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
-#include "common.hh"
-#include "gpu.hh"
+#include "macros.hh"
 #include "utils.hh"
 
-#include <cuda.h>
+BEGIN_EXTERN_C
+#include "common.h"
+END_EXTERN_C
 
 //======================================================================================//
 
@@ -450,18 +451,19 @@ cuda_device_query()
         printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
                deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] =
-            { "Default (multiple host threads can use ::cudaSetDevice() with "
-              "device "
-              "simultaneously)",
-              "Exclusive (only one host thread in one process is able to use "
-              "::cudaSetDevice() with this device)",
-              "Prohibited (no host thread can use ::cudaSetDevice() with this "
-              "device)",
-              "Exclusive Process (many threads in one process is able to use "
-              "::cudaSetDevice() with this device)",
-              "Unknown",
-              nullptr };
+        const char* sComputeMode[] = {
+            "Default (multiple host threads can use ::cudaSetDevice() with "
+            "device "
+            "simultaneously)",
+            "Exclusive (only one host thread in one process is able to use "
+            "::cudaSetDevice() with this device)",
+            "Prohibited (no host thread can use ::cudaSetDevice() with this "
+            "device)",
+            "Exclusive Process (many threads in one process is able to use "
+            "::cudaSetDevice() with this device)",
+            "Unknown",
+            nullptr
+        };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }

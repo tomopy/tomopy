@@ -39,48 +39,17 @@
 
 #pragma once
 
-#include "common.h"
+#include "macros.hh"
 
 //======================================================================================//
 
-BEGIN_EXTERN_C
-
-//======================================================================================//
-//
-//  MLEM
-//
-//======================================================================================//
-int
-cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-//
-//  SIRT
-//
-//======================================================================================//
-int
-cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-//======================================================================================//
-
-END_EXTERN_C
+namespace
+{
+constexpr float pi       = static_cast<float>(M_PI);
+constexpr float halfpi   = 0.5f * pi;
+constexpr float twopi    = 2.0f * pi;
+constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
+constexpr float degrees  = 180.0f / pi;
+}
 
 //======================================================================================//

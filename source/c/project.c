@@ -41,7 +41,6 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "cxx_extern.h"
 #include "profiler.h"
 #include "utils.h"
 
@@ -51,14 +50,8 @@ void
 project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
         const float* center, const float* theta)
 {
-    if(cxx_project(obj, oy, ox, oz, data, dy, dt, dx, center, theta))
+    if(dy == 0 || dt == 0 || dx == 0)
         return;
-
-    unsigned long count = counter++;
-    printf("[%lu]> %s (C) : oy = %i, ox = %i, oz = %i, dy = %i, dt = %i, dx = %i\n",
-           count, __FUNCTION__, oy, oz, oz, dy, dt, dx);
-
-    void* timer = TIMEMORY_AUTO_TIMER("");
 
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
@@ -141,15 +134,15 @@ project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, i
     free(coory);
     free(dist);
     free(indi);
-
-    FREE_TIMEMORY_AUTO_TIMER(timer);
-    --counter;
 }
 
 void
 project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
          int dy, int dt, int dx, const float* center, const float* theta)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
     float* coordx = (float*) malloc((oz + 1) * sizeof(float));
@@ -252,6 +245,9 @@ project3(const float* objx, const float* objy, const float* objz, int oy, int ox
          float* data, int dy, int dt, int dx, const float* center, const float* theta,
          int axis)
 {
+    if(dy == 0 || dt == 0 || dx == 0)
+        return;
+
     float* gridx  = (float*) malloc((ox + 1) * sizeof(float));
     float* gridy  = (float*) malloc((oz + 1) * sizeof(float));
     float* coordx = (float*) malloc((oz + 1) * sizeof(float));
