@@ -388,7 +388,9 @@ execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... a
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                func(data, s, p, std::forward<Args>(args)...);
+                auto _func = std::bind(std::forward<Func>(func), std::ref(data), s, p,
+                                       std::forward<Args>(args)...);
+                _func();
             }
     };
 
@@ -400,7 +402,8 @@ execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... a
         for(int p = 0; p < dt; ++p)
             for(int s = 0; s < dy; ++s)
             {
-                auto _func = [&]() { func(data, s, p, std::forward<Args>(args)...); };
+                auto _func = std::bind(std::forward<Func>(func), std::ref(data), s, p,
+                                       std::forward<Args>(args)...);
                 tg.run(_func);
             }
         tg.join();
