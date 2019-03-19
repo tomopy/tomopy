@@ -377,7 +377,7 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
 
 template <typename Executor, typename DataArray, typename Func, typename... Args>
 void
-execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... args)
+execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
 {
     // does nothing except make sure there is no warning
     ConsumeParameters(man);
@@ -386,12 +386,11 @@ execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... a
     auto serial_exec = [&]() {
         // Loop over slices and projection angles
         for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; ++s)
-            {
-                auto _func = std::bind(std::forward<Func>(func), std::ref(data), s, p,
-                                       std::forward<Args>(args)...);
-                _func();
-            }
+        {
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data), p,
+                                   std::forward<Args>(args)...);
+            _func();
+        }
     };
 
     auto parallel_exec = [&]() {
@@ -400,12 +399,11 @@ execute(Executor* man, int dy, int dt, DataArray& data, Func&& func, Args&&... a
             return false;
         TaskGroup<void> tg(man->thread_pool());
         for(int p = 0; p < dt; ++p)
-            for(int s = 0; s < dy; ++s)
-            {
-                auto _func = std::bind(std::forward<Func>(func), std::ref(data), s, p,
-                                       std::forward<Args>(args)...);
-                tg.run(_func);
-            }
+        {
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data), p,
+                                   std::forward<Args>(args)...);
+            tg.run(_func);
+        }
         tg.join();
         return true;
 #else

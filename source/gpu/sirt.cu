@@ -96,15 +96,10 @@ cuda_sirt_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 //======================================================================================//
 
 void
-sirt_gpu_compute_projection(data_array_t& gpu_data, int s, int p, int dy, int dt, int dx,
+sirt_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int dx,
                             int nx, int ny, const float* theta)
 {
     auto cache = gpu_data[GetThisThreadID() % gpu_data.size()];
-
-#if defined(DEBUG)
-    printf("[%lu] Running slice %i, projection %i on device %i...\n", GetThisThreadID(),
-           s, p, cache->device());
-#endif
 
     // ensure running on proper device
     cuda_set_device(cache->device());
@@ -231,7 +226,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
         GpuData::sync(gpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(gpu_data),
+        execute<manager_t, data_array_t>(task_man, dt, std::ref(gpu_data),
                                          sirt_gpu_compute_projection, dy, dt, dx, ngridx,
                                          ngridy, theta);
 

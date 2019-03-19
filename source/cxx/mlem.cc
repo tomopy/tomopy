@@ -97,7 +97,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
 //======================================================================================//
 
 void
-mlem_cpu_compute_projection(data_array_t& cpu_data, int _s, int p, int dy, int dt, int dx,
+mlem_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx,
                             int nx, int ny, const float* theta, uint32_t* global_sum_dist)
 {
     ConsumeParameters(dy);
@@ -214,7 +214,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         CpuData::reset(cpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, 1, dt, std::ref(cpu_data),
+        execute<manager_t, data_array_t>(task_man, dt, std::ref(cpu_data),
                                          mlem_cpu_compute_projection, dy, dt, dx, ngridx,
                                          ngridy, theta, sum_dist.data());
 
