@@ -379,12 +379,14 @@ def main(arg):
     args = parser.parse_args()
 
     print("\nargs: {}\n".format(args))
-
+    
     if args.output_dir is None:
         fpath = os.path.basename(os.path.dirname(args.fname))
         args.output_dir = os.path.join(fpath + "_output", args.algorithm)
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
+            
+    args.output_dir = os.path.abspath(args.output_dir)
 
     manager = timemory.manager()
 
