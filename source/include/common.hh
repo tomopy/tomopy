@@ -306,10 +306,10 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     }
 
     std::deque<DeviceOption> options;
-    options.push_back(DeviceOption(0, "cpu", "Run on CPU"));
+    options.push_back(DeviceOption(0, "cpu", "Run on CPU (OpenCV)"));
 
 #if defined(TOMOPY_USE_CUDA)
-    options.push_back(DeviceOption(1, "gpu", "Run on GPU with CUDA"));
+    options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
     std::string default_key = "gpu";
 #else
     std::string default_key = "cpu";
