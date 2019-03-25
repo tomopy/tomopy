@@ -37,6 +37,13 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
+/** \file data.hh
+ * \headerfile data.hh "include/data.hh"
+ * C++ class for storing thread-specific data when doing rotation-based reconstructions
+ * CpuData == rotation-based reconstruction with OpenCV
+ * GpuData == rotation-based reconstruction with NPP
+ */
+
 #pragma once
 
 #include "common.hh"
@@ -63,13 +70,10 @@ public:
     , m_dx(dx)
     , m_nx(nx)
     , m_ny(ny)
-    , m_use_rot(iarray_t(scast<uintmax_t>(m_nx * m_ny), 0))
-    , m_use_tmp(iarray_t(scast<uintmax_t>(m_nx * m_ny), 1))
     , m_rot(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
     , m_tmp(farray_t(scast<uintmax_t>(m_nx * m_ny), 0.0f))
-    , m_recon(recon)
     , m_update(update)
-    , m_sum_dist(nullptr)
+    , m_recon(recon)
     , m_data(data)
     , m_upd_mutex(upd_mutex)
     , m_sum_mutex(sum_mutex)
@@ -78,7 +82,7 @@ public:
         assert(m_upd_mutex && m_sum_mutex);
     }
 
-    ~CpuData() { delete[] m_sum_dist; }
+    ~CpuData() {}
 
 public:
     farray_t&       rot() { return m_rot; }
@@ -86,13 +90,7 @@ public:
     const farray_t& rot() const { return m_rot; }
     const farray_t& tmp() const { return m_tmp; }
 
-    iarray_t&       use_rot() { return m_use_rot; }
-    iarray_t&       use_tmp() { return m_use_tmp; }
-    const iarray_t& use_rot() const { return m_use_rot; }
-    const iarray_t& use_tmp() const { return m_use_tmp; }
-
     float*       update() const { return m_update; }
-    uint16_t*    sum_dist() const { return m_sum_dist; }
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
@@ -105,29 +103,21 @@ public:
         // reset temporaries to zero (NECESSARY!)
         // -- note: the OpenCV effectively ensures that we overwrite all values
         //          because we use cv::Mat::zeros and copy that to destination
-        // memset(m_use_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(int32_t));
-        // memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-        // memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
-        if(m_sum_dist)
-            memset(m_sum_dist, 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(uint16_t));
+        memset(m_rot.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
+        memset(m_tmp.data(), 0, scast<uintmax_t>(m_nx * m_ny) * sizeof(float));
     }
-
-    void alloc_sum_dist() { m_sum_dist = new uint16_t[m_nx * m_ny]; }
 
 public:
     // static functions
     static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
                                   int ngridy, float* recon, const float* data,
-                                  float* update, Mutex* upd_mtx, Mutex* sum_mtx,
-                                  bool alloc_sum_dist = true)
+                                  float* update, Mutex* upd_mtx, Mutex* sum_mtx)
     {
         data_array_t cpu_data(nthreads);
         for(unsigned ii = 0; ii < nthreads; ++ii)
         {
             cpu_data[ii] = data_ptr_t(new CpuData(ii, dy, dt, dx, ngridx, ngridy, data,
                                                   recon, update, upd_mtx, sum_mtx));
-            if(alloc_sum_dist)
-                cpu_data[ii]->alloc_sum_dist();
         }
         return init_data_t(cpu_data, recon, data);
     }
@@ -146,13 +136,10 @@ protected:
     int          m_dx;
     int          m_nx;
     int          m_ny;
-    iarray_t     m_use_rot;
-    iarray_t     m_use_tmp;
     farray_t     m_rot;
     farray_t     m_tmp;
-    float*       m_recon;
     float*       m_update;
-    uint16_t*    m_sum_dist;
+    float*       m_recon;
     const float* m_data;
     Mutex*       m_upd_mutex;
     Mutex*       m_sum_mutex;

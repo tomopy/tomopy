@@ -37,6 +37,11 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
+/** \file constants.hh
+ * \headerfile constants.hh "include/constants.hh"
+ * physical constants available to C++
+ */
+
 #pragma once
 
 #include "macros.hh"
@@ -45,11 +50,15 @@
 
 namespace
 {
-constexpr float pi       = static_cast<float>(M_PI);
-constexpr float halfpi   = 0.5f * pi;
-constexpr float twopi    = 2.0f * pi;
+// pi numbers
+constexpr float pi     = static_cast<float>(M_PI);
+constexpr float halfpi = 0.5f * pi;
+constexpr float twopi  = 2.0f * pi;
+// 2 * the hardware epsilon for floating point numbers
 constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
-constexpr float degrees  = 180.0f / pi;
+// convert radians to degrees: theta_in_radians * degrees
+// convert degrees to radians: theta_in_degrees / degrees
+constexpr float degrees = 180.0f / pi;
 }
 
 //======================================================================================//

@@ -100,8 +100,8 @@ cuda_mlem_update_kernel(float* recon, const float* update, const uint32_t* sum_d
 //======================================================================================//
 
 void
-mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int dx,
-                            int nx, int ny, const float* theta)
+mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int dx, int nx,
+                            int ny, const float* theta)
 {
     auto cache = gpu_data[GetThisThreadID() % gpu_data.size()];
 

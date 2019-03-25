@@ -55,25 +55,7 @@
 #    define M_PI 3.14159265358979323846264338327
 #endif
 
-#ifdef WIN32
-#    define DLL __declspec(dllexport)
-#else
-#    define DLL
-#endif
-
-#include "common.h"
 #include "macros.h"
-
-//======================================================================================//
-
-#if !defined(TOMOPY_USE_CUDA)
-#    if !defined(cudaStream_t)
-#        define cudaStream_t int
-#    endif
-#else
-#    include <cuda.h>
-#    include <cuda_runtime_api.h>
-#endif
 
 //======================================================================================//
 // Data simulation

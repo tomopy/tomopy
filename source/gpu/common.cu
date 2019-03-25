@@ -37,12 +37,9 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
+#include "common.hh"
 #include "macros.hh"
 #include "utils.hh"
-
-BEGIN_EXTERN_C
-#include "common.h"
-END_EXTERN_C
 
 //======================================================================================//
 
@@ -54,11 +51,6 @@ nvtxEventAttributes_t nvtx_slice;
 nvtxEventAttributes_t nvtx_projection;
 nvtxEventAttributes_t nvtx_update;
 nvtxEventAttributes_t nvtx_rotate;
-
-nvtxEventAttributes_t nvtx_sort_intersections;
-nvtxEventAttributes_t nvtx_sum_dist;
-nvtxEventAttributes_t nvtx_trim_coords;
-nvtxEventAttributes_t nvtx_calc_sum_sqr;
 
 //--------------------------------------------------------------------------------------//
 
@@ -111,34 +103,6 @@ init_nvtx()
     nvtx_rotate.color         = 0xff0000ff; /* blue? */
     nvtx_rotate.messageType   = NVTX_MESSAGE_TYPE_ASCII;
     nvtx_rotate.message.ascii = "time rotating";
-
-    nvtx_sort_intersections.version       = NVTX_VERSION;
-    nvtx_sort_intersections.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_sort_intersections.colorType     = NVTX_COLOR_ARGB;
-    nvtx_sort_intersections.color         = 0xffff0000; /* red */
-    nvtx_sort_intersections.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_sort_intersections.message.ascii = "sort_intersections";
-
-    nvtx_sum_dist.version       = NVTX_VERSION;
-    nvtx_sum_dist.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_sum_dist.colorType     = NVTX_COLOR_ARGB;
-    nvtx_sum_dist.color         = 0xffff0000; /* light purple */
-    nvtx_sum_dist.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_sum_dist.message.ascii = "sum_dist2";
-
-    nvtx_trim_coords.version       = NVTX_VERSION;
-    nvtx_trim_coords.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_trim_coords.colorType     = NVTX_COLOR_ARGB;
-    nvtx_trim_coords.color         = 0xff00ff00; /* green */
-    nvtx_trim_coords.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_trim_coords.message.ascii = "trim_coords";
-
-    nvtx_calc_sum_sqr.version       = NVTX_VERSION;
-    nvtx_calc_sum_sqr.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
-    nvtx_calc_sum_sqr.colorType     = NVTX_COLOR_ARGB;
-    nvtx_calc_sum_sqr.color         = 0xffffa500; /* orange */
-    nvtx_calc_sum_sqr.messageType   = NVTX_MESSAGE_TYPE_ASCII;
-    nvtx_calc_sum_sqr.message.ascii = "calc_sum_sqr";
 }
 
 #endif

@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+# need CUDA as a first-class language
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     set(MSG "")
@@ -44,7 +45,6 @@ include(ClangFormat)
 ################################################################################
 
 add_subdirectory(source)
-add_subdirectory(test)
 
 ################################################################################
 #   Information

@@ -37,6 +37,11 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
+/** \file macros.hh
+ * \headerfile macros.hh "include/macros.hh"
+ * Include files + some standard macros available to C++
+ */
+
 #pragma once
 
 extern "C"
@@ -146,25 +151,19 @@ GetThisThreadID()
 }
 
 //======================================================================================//
-
+// short hand for static_cast
 #if !defined(scast)
 #    define scast static_cast
 #endif
 
 //======================================================================================//
-
+// get the number of hardware threads
 #if !defined(HW_CONCURRENCY)
 #    define HW_CONCURRENCY std::thread::hardware_concurrency()
 #endif
 
 //======================================================================================//
-
-#if !defined(_forward_args_t)
-#    define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
-#endif
-
-//======================================================================================//
-
+// debugging
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
         printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
@@ -172,13 +171,13 @@ GetThisThreadID()
 #endif
 
 //======================================================================================//
-
+// start a timer
 #if !defined(START_TIMER)
 #    define START_TIMER(var) auto var = std::chrono::system_clock::now()
 #endif
 
 //======================================================================================//
-
+// report a timer
 #if !defined(REPORT_TIMER)
 #    define REPORT_TIMER(start_time, note, counter, total_count)                         \
         {                                                                                \
@@ -203,7 +202,7 @@ GetThisThreadID()
 #if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
 
 //--------------------------------------------------------------------------------------//
-
+// this is always defined, even in release mode
 #    if !defined(CUDA_CHECK_CALL)
 #        define CUDA_CHECK_CALL(err)                                                     \
             {                                                                            \
@@ -218,6 +217,31 @@ GetThisThreadID()
                     throw std::runtime_error(ss.str().c_str());                          \
                 }                                                                        \
             }
+#    endif
+// this is only defined in debug mode
+#    if !defined(CUDA_CHECK_LAST_ERROR)
+#        if defined(DEBUG)
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    cudaStreamSynchronize(0);                                            \
+                    cudaError err = cudaGetLastError();                                  \
+                    if(cudaSuccess != err)                                               \
+                    {                                                                    \
+                        fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",  \
+                                __FUNCTION__, __FILE__, __LINE__,                        \
+                                cudaGetErrorString(err));                                \
+                        printf("cudaCheckError() failed at %s@'%s':%i : %s\n",           \
+                               __FUNCTION__, __FILE__, __LINE__,                         \
+                               cudaGetErrorString(err));                                 \
+                        exit(1);                                                         \
+                    }                                                                    \
+                }
+#        else
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    ;                                                                    \
+                }
+#        endif
 #    endif
 
 #endif  // NVCC and TOMOPY_USE_CUDA

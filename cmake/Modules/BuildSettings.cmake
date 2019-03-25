@@ -19,10 +19,10 @@ set(CMAKE_CXX_COMPILE_FEATURES
 #
 set(CMAKE_INSTALL_MESSAGE LAZY)
 set(CMAKE_C_STANDARD 11 CACHE STRING "C language standard")
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "CXX language standard")
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "CXX language standard")
 set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "Require the C language standard")
 set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "Require the CXX language standard")
-set(CMAKE_CUDA_STANDARD 11 CACHE STRING "CUDA language standard")
+set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD} CACHE STRING "CUDA language standard")
 set(CMAKE_CUDA_STANDARD_REQUIRED ON CACHE BOOL "Require the CUDA language standard")
 
 # ---------------------------------------------------------------------------- #
@@ -90,34 +90,6 @@ endif(TOMOPY_PGI_INFO)
 # Intel floating-point model
 add_c_flag_if_avail("-fp-model=precise")
 add_cxx_flag_if_avail("-fp-model=precise")
-
-# OpenACC
-if(TOMOPY_USE_OPENACC)
-    # C
-    add_c_flag_if_avail("-acc")
-    add_c_flag_if_avail("-h acc")
-    add_c_flag_if_avail("-acclibs")
-    add_c_flag_if_avail("-fopenacc")
-    add_c_flag_if_avail("-ta=tesla:cc50,cc60,cc70")
-    #add_c_flag_if_avail("--nvcchost")
-    #add_c_flag_if_avail("-cudalibs")
-
-    # CXX
-    add_cxx_flag_if_avail("-acc")
-    add_cxx_flag_if_avail("-h acc")
-    add_cxx_flag_if_avail("-acclibs")
-    add_cxx_flag_if_avail("-fopenacc")
-    add_cxx_flag_if_avail("-ta=tesla:cc50,cc60,cc70")
-    #add_cxx_flag_if_avail("--nvcchost")
-    #add_cxx_flag_if_avail("-cudalibs")
-
-    # sometimes OpenACC is not found, this adds the
-    # definition in case it does
-    if((c_fopenacc OR c_acc OR c_h_acc) AND
-       (cxx_fopenacc OR cxx_acc OR cxx_h_acc))
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENACC)
-    endif()
-endif(TOMOPY_USE_OPENACC)
 
 add_cxx_flag_if_avail("-W")
 add_cxx_flag_if_avail("-Wall")

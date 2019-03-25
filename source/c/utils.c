@@ -45,11 +45,6 @@
 #include <float.h>
 #include <stdint.h>
 
-#ifndef PRINT_HERE
-#    define PRINT_HERE(extra)                                                            \
-        printf("> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
-#endif  // !PRINT_HERE
-
 // for windows build
 #ifdef WIN32
 #    ifdef PY3K

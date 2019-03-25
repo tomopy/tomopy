@@ -51,20 +51,6 @@ BEGIN_EXTERN_C
 END_EXTERN_C
 
 //======================================================================================//
-
-template <typename _Tp>
-void
-ipp_affine_transform(array_t<_Tp>& dst, const _Tp* src, double theta_rad,
-                     double theta_deg, const intmax_t& nx, const intmax_t& ny,
-                     double scale = 1.0)
-{
-    ConsumeParameters(dst, src, theta_rad, theta_deg, nx, ny, scale);
-    std::stringstream ss;
-    ss << __FUNCTION__ << " not implemented with Intel IPP!";
-    throw std::runtime_error(ss.str());
-}
-
-//======================================================================================//
 //======================================================================================//
 #if defined(TOMOPY_USE_OPENCV)
 //======================================================================================//
@@ -171,6 +157,56 @@ cxx_rotate(const _Tp* src, double theta, const intmax_t& nx, const intmax_t& ny,
     array_t<_Tp> dst(nx * ny, _Tp());
     cxx_rotate_ip(dst, src, theta, nx, ny, eInterp, scale);
     return dst;
+}
+
+//--------------------------------------------------------------------------------------//
+
+inline iarray_t
+cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
+{
+    auto compute = [&](const iarray_t& ones, iarray_t& sum_dist, int p) {
+        for(int s = 0; s < dy; ++s)
+        {
+            for(int d = 0; d < dx; ++d)
+            {
+                int32_t*       _sum_dist = sum_dist.data() + (s * nx * ny) + (d * nx);
+                const int32_t* _ones     = ones.data() + (d * nx);
+                for(int n = 0; n < nx; ++n)
+                {
+                    _sum_dist[n] += (_ones[n] > 0) ? 1 : 0;
+                }
+            }
+        }
+    };
+
+    iarray_t rot(nx * ny, 0);
+    iarray_t tmp(nx * ny, 1);
+    iarray_t sum_dist(dy * nx * ny, 0);
+
+    for(int p = 0; p < dt; ++p)
+    {
+        float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+        float theta_p_deg = theta_p_rad * degrees;
+
+        cxx_rotate_ip(rot, tmp.data(), -theta_p_rad, nx, ny, CPU_NN);
+        compute(rot, sum_dist, p);
+    }
+
+    /*std::cout << "sum_dist:\n" << std::endl;
+    for(int s = 0; s < dy; ++s)
+    {
+        for(int d = 0; d < dx; ++d)
+        {
+            for(int n = 0; n < nx; ++n)
+            {
+                std::cout << sum_dist[s * nx * ny + d * nx + n] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }*/
+
+    return sum_dist;
 }
 
 //======================================================================================//

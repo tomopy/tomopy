@@ -13,13 +13,12 @@ include(FindPackageHandleStandardArgs)
 
 if(CMAKE_C_COMPILER_IS_INTEL OR CMAKE_CXX_COMPILER_IS_INTEL)
     if(NOT WIN32)
-        set(CMAKE_THREAD_PREFER_PTHREAD ON)
         set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
     endif()
 
     find_package(Threads)
     if(Threads_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
+        list(APPEND EXTERNAL_PRIVATE_LIBRARIES Threads::Threads)
     endif()
 endif()
 
@@ -123,38 +122,9 @@ if(TOMOPY_USE_OPENMP)
         if(OpenMP_CXX_FOUND)
             list(APPEND ${PROJECT_NAME}_CXX_FLAGS ${OpenMP_CXX_FLAGS})
         endif()
-
-        # only define if GPU enabled
-        if(TOMOPY_USE_GPU)
-            list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENMP)
-        endif()
     else()
         message(WARNING "OpenMP not found")
         set(TOMOPY_USE_OPENMP OFF)
-    endif()
-
-endif()
-
-
-################################################################################
-#
-#        OpenACC
-#
-################################################################################
-
-if(TOMOPY_USE_OPENACC AND TOMOPY_USE_GPU)
-    find_package(OpenACC)
-
-    if(OpenACC_FOUND)
-        foreach(LANG C CXX)
-            if(OpenACC_${LANG}_FOUND)
-                list(APPEND ${PROJECT_NAME}_${LANG}_FLAGS ${OpenACC_${LANG}_FLAGS})
-                list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENACC)
-            endif()
-        endforeach()
-    else()
-        message(WARNING "OpenACC not found")
-        set(TOMOPY_USE_OPENACC OFF)
     endif()
 
 endif()
@@ -171,8 +141,6 @@ find_package(MKL REQUIRED)
 if(MKL_FOUND)
     list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
     list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_MKL)
-    list(APPEND ${PROJECT_NAME}_DEFINITIONS USE_MKL)
 endif()
 
 
@@ -182,7 +150,7 @@ endif()
 #
 ################################################################################
 
-if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
+if(TOMOPY_USE_CUDA)
 
     get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 
@@ -204,7 +172,7 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
         endif()
 
         if(NVTX_LIBRARY)
-            list(APPEND EXTERNAL_CUDA_LIBRARIES ${NVTX_LIBRARY})
+            list(APPEND EXTERNAL_LIBRARIES ${NVTX_LIBRARY})
             list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_NVTX)
         endif()
 
@@ -225,8 +193,8 @@ if(TOMOPY_USE_CUDA AND TOMOPY_USE_GPU)
 
     find_package(CUDA REQUIRED)
     if(CUDA_FOUND)
-        list(APPEND EXTERNAL_CUDA_LIBRARIES ${CUDA_npp_LIBRARY})
-        list(APPEND EXTERNAL_CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
+        list(APPEND EXTERNAL_LIBRARIES ${CUDA_npp_LIBRARY})
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
             ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     else()
         set(TOMOPY_USE_CUDA OFF)
@@ -306,5 +274,4 @@ endforeach()
 set(TARGET_INCLUDE_DIRECTORIES
     ${PROJECT_SOURCE_DIR}/source/include
     ${PROJECT_SOURCE_DIR}/source/PTL/source
-    ${EXTERNAL_INCLUDE_DIRS}
-    ${EXTERNAL_CUDA_INCLUDE_DIRS})
+    ${EXTERNAL_INCLUDE_DIRS})

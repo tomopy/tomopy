@@ -35,30 +35,82 @@
 //  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 //  ---------------------------------------------------------------
-//   TOMOPY header
+//   TOMOPY CUDA implementation
 
-/** \file typedefs.hh
- * \headerfile typedefs.hh "include/typedefs.hh"
- * typedef (shorthand type definitions) used by C++ code
- */
-
-#pragma once
-
+#include "common.hh"
 #include "macros.hh"
+#include "utils.hh"
+
+#if !defined(TOMOPY_USE_CUDA)
 
 //======================================================================================//
 
-template <typename _Tp>
-using array_t = std::vector<_Tp>;
-
-typedef array_t<int16_t>  sarray_t;
-typedef array_t<uint16_t> usarray_t;
-typedef array_t<uint32_t> uarray_t;
-typedef array_t<int32_t>  iarray_t;
-typedef array_t<float>    farray_t;
-typedef array_t<double>   darray_t;
-
-template <typename _Tp>
-using cuda_device_info = std::unordered_map<int, _Tp>;
+int
+cuda_set_device(int device)
+{
+    return 0;
+}
 
 //======================================================================================//
+
+int
+cuda_multi_processor_count()
+{
+    return 0;
+}
+
+//======================================================================================//
+
+int
+cuda_max_threads_per_block()
+{
+    return 0;
+}
+
+//======================================================================================//
+
+int
+cuda_warp_size()
+{
+    return 0;
+}
+
+//======================================================================================//
+
+int
+cuda_shared_memory_per_block()
+{
+    return 0;
+}
+
+//======================================================================================//
+
+int
+cuda_device_count()
+{
+    return 0;
+}
+
+//======================================================================================//
+
+void
+cuda_device_query()
+{
+    static std::atomic<int16_t> once;
+    if(++once > 1)
+        return;
+
+    printf("No CUDA support enabled\n");
+}
+
+//======================================================================================//
+
+#else
+
+namespace
+{
+// add a symbol to avoid warnings about compiled file had no symbols
+static int cxx_common_symbol = 0;
+}
+
+#endif

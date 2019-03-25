@@ -96,86 +96,59 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 
 //======================================================================================//
 
-template <typename Func>
 void
-execute_functions(const Func& func)
-{
-    func();
-}
-
-//======================================================================================//
-
-template <typename Func, typename... Funcs>
-void
-execute_functions(const Func& func, Funcs... others)
-{
-    func();
-    execute_functions(std::forward<Funcs>(others)...);
-}
-
-//======================================================================================//
-
-void
-sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx,
-                            int nx, int ny, const float* theta, uint32_t* global_sum_dist)
+sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx, int nx,
+                            int ny, const float* theta)
 {
     ConsumeParameters(dy);
     auto cache = cpu_data[GetThisThreadID() % cpu_data.size()];
 
     // calculate some values
-    float theta_p   = fmodf(theta[p] + halfpi, twopi);
-    auto& use_rot   = cache->use_rot();
-    auto& use_tmp   = cache->use_tmp();
-    auto& recon_rot = cache->rot();
-    auto& recon_tmp = cache->tmp();
-
-    // Forward-Rotate object
-    cxx_rotate_ip<int32_t>(use_rot, use_tmp.data(), -theta_p, nx, ny, CPU_NN);
-
-    static Mutex msum;
-    AutoLock     lsum(msum, std::defer_lock);
+    float    theta_p = fmodf(theta[p] + halfpi, twopi);
+    farray_t tmp_update(dy * nx * ny, 0.0);
 
     for(int s = 0; s < dy; ++s)
     {
-        const float* data         = cache->data() + s * dt * dx;
-        const float* recon        = cache->recon() + s * nx * ny;
-        float*       update       = cache->update() + s * nx * ny;
-        uint16_t*    sum_dist_tmp = cache->sum_dist();
-        uint32_t*    sum_dist     = global_sum_dist + s * nx * ny;
+        const float* data  = cache->data() + s * dt * dx;
+        const float* recon = cache->recon() + s * nx * ny;
+        auto&        rot   = cache->rot();
+        auto&        tmp   = cache->tmp();
 
         // reset intermediate data
         cache->reset();
 
-        cxx_rotate_ip<float>(recon_rot, recon, -theta_p, nx, ny);
+        // forward-rotate
+        cxx_rotate_ip<float>(rot, recon, -theta_p, nx, ny);
+
+        // compute simdata
         for(int d = 0; d < dx; ++d)
         {
-            for(int i = 0; i < nx; ++i)
-                sum_dist_tmp[d * nx + i] += (use_rot[d * nx + i] > 0) ? 1 : 0;
-
             float sum = 0.0f;
-            PRAGMA("omp simd reduction(+:sum)")
             for(int i = 0; i < nx; ++i)
-                sum += recon_rot[d * nx + i];
+                sum += rot[d * nx + i];
             float upd = (data[p * dx + d] - sum);
-            PRAGMA_SIMD
             for(int i = 0; i < nx; ++i)
-                recon_rot[d * nx + i] += upd;
+                rot[d * nx + i] += upd;
         }
-        // Back-Rotate object
-        cxx_rotate_ip<float>(recon_tmp, recon_rot.data(), theta_p, nx, ny);
 
-        // update shared update array
-        cache->upd_mutex()->lock();
-        for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
-            update[i] += recon_tmp[i];
-        cache->upd_mutex()->unlock();
+        // back-rotate object
+        cxx_rotate_ip<float>(tmp, rot.data(), theta_p, nx, ny);
 
-        // update shared sum_dist array
-        cache->sum_mutex()->lock();
+        // update local update array
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
-            sum_dist[i] += sum_dist_tmp[i];
-        cache->sum_mutex()->unlock();
+            tmp_update[(s * nx * ny) + i] += tmp[i];
     }
+
+    cache->upd_mutex()->lock();
+    for(int s = 0; s < dy; ++s)
+    {
+        // update shared update array
+        float* update = cache->update() + s * nx * ny;
+        float* tmp    = tmp_update.data() + s * nx * ny;
+        for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
+            update[i] += tmp[i];
+    }
+    cache->upd_mutex()->unlock();
 }
 
 //======================================================================================//
@@ -215,11 +188,11 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     Mutex       sum_mutex;
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     farray_t    update(recon_pixels, 0.0f);
-    uarray_t    sum_dist(recon_pixels, 0);
     init_data_t init_data =
         CpuData::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data,
                             update.data(), &upd_mutex, &sum_mutex);
     data_array_t cpu_data = std::get<0>(init_data);
+    iarray_t     sum_dist = cxx_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
 
     //----------------------------------------------------------------------------------//
     for(int i = 0; i < num_iter; i++)
@@ -227,9 +200,8 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         START_TIMER(t_start);
         TIMEMORY_AUTO_TIMER();
 
-        // reset global update and sum_dist
+        // reset global update
         memset(update.data(), 0, recon_pixels * sizeof(float));
-        memset(sum_dist.data(), 0, recon_pixels * sizeof(float));
 
         // sync and reset
         CpuData::reset(cpu_data);
@@ -237,13 +209,18 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         // execute the loop over slices and projection angles
         execute<manager_t, data_array_t>(task_man, dt, std::ref(cpu_data),
                                          sirt_cpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta, sum_dist.data());
+                                         ngridy, theta);
 
         // update the global recon with global update and sum_dist
         for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
         {
-            if(sum_dist[ii] != 0.0f)
+            if(sum_dist[ii] != 0.0f && dx != 0 && std::isfinite(update[ii]))
                 recon[ii] += update[ii] / sum_dist[ii] / scast<float>(dx);
+            else if(!std::isfinite(update[ii]))
+            {
+                std::cout << "update[" << ii << "] is not finite : " << update[ii]
+                          << std::endl;
+            }
         }
         REPORT_TIMER(t_start, "iteration", i, num_iter);
     }

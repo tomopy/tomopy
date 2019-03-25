@@ -45,8 +45,6 @@
 #include "profiler.h"
 #include "utils.h"
 
-volatile unsigned long counter;
-
 void
 mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
      float* recon, int ngridx, int ngridy, int num_iter)
@@ -56,10 +54,6 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
 
     if(cxx_mlem(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter))
         return;
-
-    unsigned long count = counter++;
-    printf("[%lu] %s (C) : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           count, __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     void* timer = TIMEMORY_AUTO_TIMER("");
 
@@ -126,13 +120,7 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     yi = 0.5f * (1 - dx) + d + mov;
                     calc_coords(ngridx, ngridy, xi, yi, sin_p, cos_p, gridx, gridy,
                                 coordx, coordy);
-                    /*
-                    printf("\n");
-                    for(int n = 0; n <= ngridx; ++n)
-                        printf("\tgridx[%2i] = %8.3f, gridy[%2i] = %8.3f, coordx[%2i] = "
-                               "%8.3f, coordy[%2i] = %8.3f\n",
-                               n, gridx[n], n, gridy[n], n, coordx[n], n, coordy[n]);
-                    */
+
                     // Merge the (coordx, gridy) and (gridx, coordy)
                     trim_coords(ngridx, ngridy, coordx, coordy, gridx, gridy, &asize, ax,
                                 ay, &bsize, bx, by);
@@ -160,7 +148,6 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     {
                         sum_dist2 += dist[n] * dist[n];
                         sum_dist[indi[n]] += dist[n];
-                        // printf("sum_dist[%i] = %f\n", indi[n], sum_dist[indi[n]]);
                     }
 
                     // Update
@@ -171,7 +158,6 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                         for(n = 0; n < csize - 1; n++)
                         {
                             update[indi[n]] += upd * dist[n];
-                            // printf("update[%i] = %f\n", indi[n], update[indi[n]]);
                         }
                     }
                 }
@@ -206,5 +192,4 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
     free(update);
 
     FREE_TIMEMORY_AUTO_TIMER(timer);
-    counter--;
 }

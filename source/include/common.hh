@@ -45,6 +45,54 @@
 
 //======================================================================================//
 //
+//      NVTX macros
+//
+//======================================================================================//
+
+#if defined(TOMOPY_USE_NVTX)
+#    include <nvToolsExt.h>
+
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)                                                      \
+            cudaStreamSynchronize(obj);                                                  \
+            nvtxRangePop()
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg) nvtxMark(name)
+#    endif
+
+static void
+init_nvtx();
+
+#else
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg)
+#    endif
+
+inline void
+init_nvtx()
+{
+}
+
+#endif
+
+//======================================================================================//
+//
 //  The following section provides functions for the initialization of the tasking library
 //
 #if defined(TOMOPY_USE_PTL)
@@ -55,10 +103,10 @@ inline TaskRunManager*
 cpu_run_manager()
 {
     AutoLock l(TypeMutex<TaskRunManager>());
-    // use shared pointer so manager gets deleted when thread gets deleted
-    typedef std::shared_ptr<TaskRunManager> pointer;
-    static thread_local pointer             _instance = pointer(
-        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
+    // use unique pointer so manager gets deleted when thread gets deleted
+    typedef std::unique_ptr<TaskRunManager> pointer;
+    // first argument ensures we do not use TBB backend to PTL
+    static thread_local pointer _instance = pointer(new TaskRunManager(false));
     return _instance.get();
 }
 
@@ -69,9 +117,10 @@ gpu_run_manager()
 {
     AutoLock l(TypeMutex<TaskRunManager>());
     // use shared pointer so manager gets deleted when thread gets deleted
-    typedef std::shared_ptr<TaskRunManager> pointer;
-    static thread_local pointer             _instance = pointer(
-        new TaskRunManager(GetEnv<bool>("TOMOPY_USE_TBB", false, "Enable TBB backend")));
+    typedef std::unique_ptr<TaskRunManager> pointer;
+    // first argument ensures we do not use TBB backend to PTL
+    static thread_local pointer _instance = pointer(new TaskRunManager(false));
+    // return pointer
     return _instance.get();
 }
 
@@ -89,10 +138,10 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
         AutoLock l(TypeMutex<TaskRunManager>());
         if(!run_man->IsInitialized())
         {
-            std::cout << "\n"
-                      << "[" << tid << "] Initializing tasking run manager with "
-                      << nthreads << " threads..." << std::endl;
             run_man->Initialize(nthreads);
+            std::cout << "\n"
+                      << "[" << tid << "] Initialized tasking run manager with "
+                      << run_man->GetThreadPool()->size() << " threads..." << std::endl;
         }
     }
 
@@ -101,9 +150,13 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
     ThreadData*& thread_data = ThreadData::GetInstance();
     if(!thread_data)
         thread_data = new ThreadData(tp);
-    thread_data->is_master   = false;
+    // tell thread that initialized thread-pool to process tasks
+    // (typically master thread will only wait for other threads)
+    thread_data->is_master = true;
+    // tell thread that it is not currently within task
     thread_data->within_task = false;
 }
+
 //======================================================================================//
 //
 //
@@ -235,14 +288,14 @@ public:
 
 template <typename _Func, typename... _Args>
 void
-run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
+run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
 {
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
     if(use_cpu)
     {
         try
         {
-            cpu_func(_forward_args_t(_Args, args));
+            cpu_func(std::forward<_Args>(args)...);
         }
         catch(const std::exception& e)
         {
@@ -255,14 +308,8 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
     std::deque<DeviceOption> options;
     options.push_back(DeviceOption(0, "cpu", "Run on CPU"));
 
-#if defined(TOMOPY_USE_GPU)
-#    if defined(TOMOPY_USE_CUDA)
+#if defined(TOMOPY_USE_CUDA)
     options.push_back(DeviceOption(1, "gpu", "Run on GPU with CUDA"));
-    options.push_back(DeviceOption(2, "cuda", "Run on GPU with CUDA (deprecated)"));
-#    endif
-#endif
-
-#if defined(TOMOPY_USE_GPU) && defined(TOMOPY_USE_CUDA)
     std::string default_key = "gpu";
 #else
     std::string default_key = "cpu";
@@ -315,7 +362,7 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
     // Run on CPU if nothing available
     if(options.size() <= 1)
     {
-        cpu_func(_forward_args_t(_Args, args));
+        cpu_func(std::forward<_Args>(args)...);
         return;
     }
 
@@ -339,13 +386,14 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
     {
         switch(selection->index)
         {
-            case 0: cpu_func(_forward_args_t(_Args, args)); break;
-            case 1: cuda_func(_forward_args_t(_Args, args)); break;
-            default: cpu_func(_forward_args_t(_Args, args)); break;
+            case 0: cpu_func(std::forward<_Args>(args)...); break;
+            case 1: cuda_func(std::forward<_Args>(args)...); break;
+            default: cpu_func(std::forward<_Args>(args)...); break;
         }
     }
     catch(std::exception& e)
     {
+        // typically reached here if no GPU devices available
         if(selection != options.end() && selection->index != 0)
         {
             {
@@ -357,7 +405,7 @@ run_algorithm(_Func cpu_func, _Func cuda_func, _Args... args)
             }
             try
             {
-                cpu_func(_forward_args_t(_Args, args));
+                cpu_func(std::forward<_Args>(args)...);
             }
             catch(std::exception& _e)
             {
@@ -387,8 +435,8 @@ execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
         // Loop over slices and projection angles
         for(int p = 0; p < dt; ++p)
         {
-            auto _func = std::bind(std::forward<Func>(func), std::ref(data), p,
-                                   std::forward<Args>(args)...);
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
+                                   std::forward<int>(p), std::forward<Args>(args)...);
             _func();
         }
     };
@@ -400,8 +448,8 @@ execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
         TaskGroup<void> tg(man->thread_pool());
         for(int p = 0; p < dt; ++p)
         {
-            auto _func = std::bind(std::forward<Func>(func), std::ref(data), p,
-                                   std::forward<Args>(args)...);
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
+                                   std::forward<int>(p), std::forward<Args>(args)...);
             tg.run(_func);
         }
         tg.join();

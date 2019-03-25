@@ -34,7 +34,6 @@ def add_option(lc_name, disp_name):
     parser.add_argument("--disable-{}".format(lc_name), action='store_true',
                         help="Explicitly disnable {} build".format(disp_name))
 
-add_option("gpu", "GPU")
 add_option("cuda", "CUDA")
 add_option("nvtx", "NVTX (NVIDIA Nsight)")
 add_option("arch", "Hardware optimized")
@@ -55,7 +54,6 @@ if args.help:
     left.append("--help")
 sys.argv = sys.argv[:1]+left
 
-add_bool_opt("TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
 add_bool_opt("TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
 add_bool_opt("TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
 if args.enable_avx512 and not args.enable_arch:

@@ -37,9 +37,14 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
+/** \file cxx_extern.h
+ * \headerfile cxx_extern.h "include/cxx_extern.h"
+ * C++ functions that are available to C code (available for Python binding)
+ */
+
 #pragma once
 
-#include "common.h"
+#include "macros.h"
 
 //======================================================================================//
 
@@ -47,18 +52,58 @@ BEGIN_EXTERN_C
 
 //======================================================================================//
 //
+//  CUDA
+//      - definitions in gpu/common.cu when CUDA enabled
+//      - definitions in cxx/common.cc when CUDA not enabled
+//
+//======================================================================================//
+// print info about devices available (only does this once per process)
+DLL void
+cuda_device_query();
+
+// get the number of devices available
+DLL int
+cuda_device_count();
+
+// sets the thread to a specific device
+DLL int
+cuda_set_device(int device);
+
+// get the number of CUDA multiprocessors
+DLL int
+cuda_multi_processor_count();
+
+// get the maximum number of threads per block
+DLL int
+cuda_max_threads_per_block();
+
+// get the size of the warps
+DLL int
+cuda_warp_size();
+
+// get the maximum amount of shared memory per block
+DLL int
+cuda_shared_memory_per_block();
+
+//======================================================================================//
+//
 //  MLEM
 //
 //======================================================================================//
-int
+
+// generic decision of whether to use CPU or GPU version
+//     NOTE: if compiled with GPU support but no devices, will call CPU version
+DLL int
 cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
+
+// directly call the CPU version
+DLL void
 mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
+
+// directly call the GPU version
+DLL void
 mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 
@@ -67,15 +112,20 @@ mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
 //  SIRT
 //
 //======================================================================================//
-int
+
+// generic decision of whether to use CPU or GPU version
+//     NOTE: if compiled with GPU support but no devices, will call CPU version
+DLL int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
+
+// directly call the CPU version
+DLL void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-//--------------------------------------------------------------------------------------//
-void
+
+// directly call the GPU version
+DLL void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
           const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
 

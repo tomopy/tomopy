@@ -37,6 +37,11 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
+/** \file macros.h
+ * \headerfile macros.h "include/macros.h"
+ * Include files + some standard macros available to C and C++
+ */
+
 #pragma once
 
 //======================================================================================//
@@ -67,6 +72,16 @@
 #    else
 #        define DLL
 #    endif
+#endif
+
+//--------------------------------------------------------------------------------------//
+
+#ifdef __cplusplus
+#    include <cstdio>
+#    include <cstring>
+#else
+#    include <stdio.h>
+#    include <string.h>
 #endif
 
 //======================================================================================//
