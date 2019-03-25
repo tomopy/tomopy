@@ -28,7 +28,7 @@ install:
   - conda list --explicit
   - echo "C compiler = ${CC}"
   - echo "CXX compiler = ${CXX}"
-  - ./pyctest_tomopy.py --disable-phantom-tests --disable-gpu ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --disable-phantom-tests --disable-cuda ${PYCTEST_ARGS}
 script:
   - coverage run $(which nosetests)
 after_success:
