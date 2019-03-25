@@ -103,7 +103,8 @@ void
 mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int dx, int nx,
                             int ny, const float* theta)
 {
-    auto cache = gpu_data[GetThisThreadID() % gpu_data.size()];
+    static std::atomic<uintmax_t> idx;
+    auto cache = gpu_data[(idx++) % gpu_data.size()];
 
     // ensure running on proper device
     cuda_set_device(cache->device());

@@ -308,7 +308,8 @@ if __name__ == "__main__":
             pass
     else:
         os.makedirs(adir)
-        
+
+    args.output_dir = os.path.abspath(args.output_dir)
     ret = 0
     try:
         with timemory.util.timer('\nTotal time for "{}"'.format(__file__)):
