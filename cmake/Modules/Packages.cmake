@@ -157,9 +157,18 @@ if(TOMOPY_USE_CUDA)
     if("CUDA" IN_LIST LANGUAGES)
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_CUDA)
         add_feature(${PROJECT_NAME}_CUDA_FLAGS "CUDA NVCC compiler flags")
-        add_feature(CUDA_ARCH "CUDA architecture (e.g. sm_35)")
+        add_feature(CUDA_ARCH "CUDA architecture (e.g. '35' means '-gencode arch=compute_35,code=sm_35')")
 
-        set(CUDA_ARCH "sm_35" CACHE STRING "CUDA architecture flag")
+        #   30, 32      + Kepler support
+        #               + Unified memory programming
+        #   35          + Dynamic parallelism support
+        #   50, 52, 53  + Maxwell support
+        #   60, 61, 62  + Pascal support
+        #   70, 72      + Volta support
+        #   75          + Turing support
+        if(NOT DEFINED CUDA_ARCH)
+            set(CUDA_ARCH "53")
+        endif()
 
         if(TOMOPY_USE_NVTX)
             find_library(NVTX_LIBRARY
@@ -177,7 +186,7 @@ if(TOMOPY_USE_CUDA)
         endif()
 
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
-            -arch=${CUDA_ARCH}
+            -gencode arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH}
             --default-stream per-thread
             --compiler-bindir=${CMAKE_CXX_COMPILER})
 

@@ -45,6 +45,8 @@ add_option("sanitizer", "Enable sanitizer (default=leak)")
 parser.add_argument("--sanitizer-type", default="leak",
                     help="Set the sanitizer type",
                     type=str, choices=["leak", "thread", "address", "memory"])
+parser.add_argument("--cuda-arch", help="CUDA architecture flag",
+                    type=int, default=35)
 
 args, left = parser.parse_known_args()
 # if help was requested, print these options and then add '--help' back
@@ -64,6 +66,9 @@ add_bool_opt("TOMOPY_USE_AVX512", args.enable_avx512, args.disable_avx512)
 add_bool_opt("TOMOPY_USE_GPERF", args.enable_gperf, args.disable_gperf)
 add_bool_opt("TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
 add_bool_opt("TOMOPY_USE_SANITIZER", args.enable_sanitizer, args.disable_sanitizer)
+
+if args.enable_cuda:
+    cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
 
 if args.enable_sanitizer:
     cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))

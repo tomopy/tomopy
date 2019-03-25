@@ -143,6 +143,8 @@ def configure():
                         help="CMake arguments passed to build",
                         type=str,
                         default=[])
+    parser.add_argument("--cuda-arch", help="CUDA architecture flag",
+                        type=int, default=53)
 
     def add_bool_opt(args, opt, enable_opt, disable_opt):
         if enable_opt and disable_opt:
@@ -165,7 +167,6 @@ def configure():
         parser.add_argument("--disable-{}".format(lc_name), action='store_true',
                             help="Explicitly disnable {} build".format(disp_name))
 
-    add_option(parser, "gpu", "GPU")
     add_option(parser, "cuda", "CUDA")
     add_option(parser, "nvtx", "NVTX (NVIDIA Nsight)")
     add_option(parser, "arch", "Hardware optimized")
@@ -180,7 +181,6 @@ def configure():
 
     args = parser.parse_args()
 
-    add_bool_opt(args, "TOMOPY_USE_GPU", args.enable_gpu, args.disable_gpu)
     add_bool_opt(args, "TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
     add_bool_opt(args, "TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
     if args.enable_avx512 and not args.enable_arch:
@@ -195,6 +195,9 @@ def configure():
 
     if args.enable_sanitizer:
         args.cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))
+
+    if args.enable_cuda:
+        args.cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
 
     if len(args.cmake_args) > 0:
         print("\n\n\tCMake arguments set via command line: {}\n".format(
