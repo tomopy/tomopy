@@ -10,7 +10,6 @@ include(Compilers)
 
 set(_USE_OMP ON)
 set(_USE_CUDA ON)
-set(_USE_TIDY ON)
 
 # GNU compiler will enable OpenMP SIMD with -fopenmp-simd
 if(CMAKE_C_COMPILER_IS_GNU)
@@ -29,13 +28,6 @@ if(CUDA_FOUND)
     endif()
 else()
     set(_USE_CUDA OFF)
-endif()
-
-find_program(CLANG_TIDY_COMMAND NAMES clang-tidy)
-if(CLANG_TIDY_COMMAND)
-    add_feature(CLANG_TIDY_COMMAND "Path to clang-tidy command")
-else()
-    set(_USE_TIDY OFF)
 endif()
 
 # features
@@ -59,7 +51,7 @@ add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage for C/C++" OFF)
 add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
-add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" ${_USE_TIDY})
+add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 
 if(TOMOPY_USE_CUDA)
