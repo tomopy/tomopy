@@ -85,6 +85,13 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
         PrintEnv(ss);
         printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
                ss.str().c_str());
+#if defined(TOMOPY_USE_CUDA)
+        for(int i = 0; i < cuda_device_count(); ++i)
+        {
+            cudaSetDevice(i);
+            cudaDeviceReset();
+        }
+#endif
     }
     else
     {
