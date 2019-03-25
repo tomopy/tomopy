@@ -128,6 +128,7 @@ extern "C"
 #    include <opencv2/core.hpp>
 #    include <opencv2/imgproc.hpp>
 #    include <opencv2/imgproc/imgproc.hpp>
+#    include <opencv2/imgproc/types_c.h>
 #endif
 
 #if defined(TOMOPY_USE_IPP)
