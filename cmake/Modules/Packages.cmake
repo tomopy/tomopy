@@ -157,7 +157,7 @@ if(TOMOPY_USE_CUDA)
     if("CUDA" IN_LIST LANGUAGES)
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_CUDA)
         add_feature(${PROJECT_NAME}_CUDA_FLAGS "CUDA NVCC compiler flags")
-        add_feature(CUDA_ARCH "CUDA architecture (e.g. '35' means '-gencode arch=compute_35,code=sm_35')")
+        add_feature(CUDA_ARCH "CUDA architecture (e.g. '35' means '-arch=sm_35')")
 
         #   30, 32      + Kepler support
         #               + Unified memory programming
@@ -186,7 +186,7 @@ if(TOMOPY_USE_CUDA)
         endif()
 
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
-            -gencode arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH}
+            -arch=sm_${CUDA_ARCH}
             --default-stream per-thread
             --compiler-bindir=${CMAKE_CXX_COMPILER})
 
