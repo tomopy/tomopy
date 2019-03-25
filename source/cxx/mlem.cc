@@ -88,7 +88,11 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
 #if defined(TOMOPY_USE_CUDA)
         for(int i = 0; i < cuda_device_count(); ++i)
         {
+            // set the device
             cudaSetDevice(i);
+            // sync the device
+            cudaDeviceSynchronize();
+            // reset the device
             cudaDeviceReset();
         }
 #endif

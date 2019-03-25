@@ -262,6 +262,9 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cudaFree(sum_dist);
 
     NVTX_RANGE_POP(0);
+
+    // sync the device
+    cudaDeviceSynchronize();
 }
 
 //======================================================================================//
