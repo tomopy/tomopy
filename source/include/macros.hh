@@ -112,7 +112,6 @@ extern "C"
 //--------------------------------------------------------------------------------------//
 
 #if defined(TOMOPY_USE_CUDA)
-#    include <cooperative_groups.h>
 #    include <cuda.h>
 #    include <cuda_runtime_api.h>
 #    include <npp.h>
@@ -124,18 +123,10 @@ extern "C"
 #    endif
 #endif
 
-#if defined(TOMOPY_USE_OPENCV)
-#    include <opencv2/core.hpp>
-#    include <opencv2/imgproc.hpp>
-#    include <opencv2/imgproc/imgproc.hpp>
-#    include <opencv2/imgproc/types_c.h>
-#endif
-
-#if defined(TOMOPY_USE_IPP)
-#    include <ipp.h>
-#    include <ippdefs.h>
-#    include <ippi.h>
-#endif
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/types_c.h>
 
 //======================================================================================//
 // this function is used by a macro -- returns a unique identifier to the thread

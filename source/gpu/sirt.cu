@@ -100,7 +100,7 @@ sirt_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
                             int ny, const float* theta)
 {
     static std::atomic<uintmax_t> idx;
-    auto cache = gpu_data[(idx++) % gpu_data.size()];
+    auto                          cache = gpu_data[(idx++) % gpu_data.size()];
 
     // ensure running on proper device
     cuda_set_device(cache->device());

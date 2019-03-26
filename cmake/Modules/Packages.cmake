@@ -216,18 +216,10 @@ endif()
 #        OpenCV
 #
 ################################################################################
-if(TOMOPY_USE_OPENCV)
-    set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-    find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
-
-    if(OpenCV_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
-    else()
-        message(STATUS "OpenCV not found")
-        set(TOMOPY_USE_OPENCV OFF)
-    endif()
-endif()
+set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
+list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
 
 
 ################################################################################

@@ -50,17 +50,13 @@ BEGIN_EXTERN_C
 #include "utils.h"
 END_EXTERN_C
 
-//======================================================================================//
-//======================================================================================//
-#if defined(TOMOPY_USE_OPENCV)
-//======================================================================================//
-//======================================================================================//
+//--------------------------------------------------------------------------------------//
 
-#    define CPU_NN CV_INTER_NN
-#    define CPU_LINEAR CV_INTER_LINEAR
-#    define CPU_AREA CV_INTER_AREA
-#    define CPU_CUBIC CV_INTER_CUBIC
-#    define CPU_LANCZOS CV_INTER_LANCZOS4
+#define CPU_NN CV_INTER_NN
+#define CPU_LINEAR CV_INTER_LINEAR
+#define CPU_AREA CV_INTER_AREA
+#define CPU_CUBIC CV_INTER_CUBIC
+#define CPU_LANCZOS CV_INTER_LANCZOS4
 
 //--------------------------------------------------------------------------------------//
 
@@ -75,16 +71,16 @@ struct OpenCVDataType
     }
 };
 
-#    define DEFINE_OPENCV_DATA_TYPE(pod_type, opencv_type)                               \
-        template <>                                                                      \
-        struct OpenCVDataType<pod_type>                                                  \
+#define DEFINE_OPENCV_DATA_TYPE(pod_type, opencv_type)                                   \
+    template <>                                                                          \
+    struct OpenCVDataType<pod_type>                                                      \
+    {                                                                                    \
+        template <typename _Up = pod_type>                                               \
+        static constexpr int value()                                                     \
         {                                                                                \
-            template <typename _Up = pod_type>                                           \
-            static constexpr int value()                                                 \
-            {                                                                            \
-                return opencv_type;                                                      \
-            }                                                                            \
-        };
+            return opencv_type;                                                          \
+        }                                                                                \
+    };
 
 // floating point types
 DEFINE_OPENCV_DATA_TYPE(float, CV_32F)
@@ -99,7 +95,7 @@ DEFINE_OPENCV_DATA_TYPE(int32_t, CV_32S)
 DEFINE_OPENCV_DATA_TYPE(uint8_t, CV_8U)
 DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 
-#    undef DEFINE_OPENCV_DATA_TYPE  // don't pollute
+#undef DEFINE_OPENCV_DATA_TYPE  // don't pollute
 
 //--------------------------------------------------------------------------------------//
 
@@ -192,28 +188,8 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
         compute(rot, sum_dist, p);
     }
 
-    /*std::cout << "sum_dist:\n" << std::endl;
-    for(int s = 0; s < dy; ++s)
-    {
-        for(int d = 0; d < dx; ++d)
-        {
-            for(int n = 0; n < nx; ++n)
-            {
-                std::cout << sum_dist[s * nx * ny + d * nx + n] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }*/
-
     return sum_dist;
 }
-
-//======================================================================================//
-//
-#endif  // TOMOPY_USE_OPENCV
-//
-//======================================================================================//
 
 //======================================================================================//
 //
