@@ -55,8 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from scipy import ndimage
-import tifffile
-from tomopy.util.misc import fft2
+from tomopy.util.misc import fft2, write_tiff
 from scipy.optimize import minimize
 from skimage.feature import register_translation
 from tomopy.misc.corr import circ_mask
@@ -556,9 +555,7 @@ def write_center(
     if not os.path.exists(dpath):
         os.makedirs(dpath)
     for m in range(len(center)):
-        fname = os.path.join(
-            dpath, str('{0:.2f}'.format(center[m]) + '.tiff'))
-        tifffile.imsave(file=fname, data=rec[m])
+        write_tiff(data=rec[m], fname=dpath, digit='{0:.2f}'.format(center[m]))
 
 
 def mask_empty_slice(tomo, threshold=0.25):

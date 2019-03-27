@@ -56,6 +56,7 @@ from skimage.feature import register_translation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
+from tomopy.util.misc import write_tiff
 from scipy.signal import medfilt, medfilt2d
 from scipy.optimize import curve_fit
 from scipy.ndimage import affine_transform
@@ -136,7 +137,7 @@ def align_seq(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration. Requires the dxchange package.
+        for each algorithm iteration.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -199,10 +200,9 @@ def align_seq(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            import dxchange
-            dxchange.write_tiff(prj, fdir + '/tmp/iters/prj/prj')
-            dxchange.write_tiff(sim, fdir + '/tmp/iters/sim/sim')
-            dxchange.write_tiff(rec, fdir + '/tmp/iters/rec/rec')
+            write_tiff(prj, fdir + '/tmp/iters/prj', n)
+            write_tiff(sim, fdir + '/tmp/iters/sim', n)
+            write_tiff(rec, fdir + '/tmp/iters/rec', n)
 
     # Re-normalize data
     prj *= scl
@@ -264,7 +264,7 @@ def align_joint(
         rout is set to zero.
     save : bool, optional
         Saves projections and corresponding reconstruction
-        for each algorithm iteration. Requires the dxchange package.
+        for each algorithm iteration.
     debug : book, optional
         Provides debugging info such as iterations and error.
 
@@ -335,10 +335,9 @@ def align_joint(
             conv[n] = np.linalg.norm(err)
 
         if save:
-            import dxchange
-            dxchange.write_tiff(prj, 'tmp/iters/prj/prj')
-            dxchange.write_tiff(sim, 'tmp/iters/sim/sim')
-            dxchange.write_tiff(rec, 'tmp/iters/rec/rec')
+            write_tiff(prj, 'tmp/iters/prj', n)
+            write_tiff(sim, 'tmp/iters/sim', n)
+            write_tiff(rec, 'tmp/iters/rec', n)
 
     # Re-normalize data
     prj *= scl

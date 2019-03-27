@@ -333,16 +333,16 @@ class Mock(object):
         return Mock()
     def __or__(self, other):
         return Mock()
-    
+
 curFlags = Mock()
-   
+
 MOCK_MODULES = [
     'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py',
     'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
     'spefile', 'scipy.ndimage', 'scipy.signal', 'pywt', 'scikit-image', 'skimage',
     'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
-    'skimage.transform', 'DM3lib', 'pyfftw', 'dxchange', 'numexpr', 'concurrent', 
-    'concurrent.futures', 'libtomopy', 
+    'skimage.transform', 'DM3lib', 'dxchange', 'numexpr', 'concurrent', 
+    'concurrent.futures', 'libtomopy',
     ]
 
 for mod_name in MOCK_MODULES:
