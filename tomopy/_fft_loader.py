@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2015-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2015-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -71,28 +71,12 @@ def import_mkl_fft():
     fft_impl = 'mkl_fft'
 
 
-def import_pyfftw():
-    if os.name == 'nt':
-        import pyfftw
-    else:
-        # Import pyfftw as soon as possible with RTLD_NOW|RTLD_DEEPBIND
-        # to minimize chance of MKL overriding fftw functions
-        import ctypes
-        import sys
-        curFlags = sys.getdlopenflags()
-        sys.setdlopenflags(curFlags | ctypes.RTLD_GLOBAL)
-        import pyfftw
-        sys.setdlopenflags(curFlags)
-        del curFlags
-    fft_impl = 'pyfftw'
-
-
 def import_numpy_fft():
     import numpy.fft
     fft_impl = 'numpy.fft'
 
 
-fft_options = [import_mkl_fft, import_pyfftw, import_numpy_fft]
+fft_options = [import_mkl_fft, import_numpy_fft]
 if 'TOMOPY_FFT_IMPL' in os.environ:
     # Let the user choose the implementation
     fft_impl = os.environ['TOMOPY_FFT_IMPL']

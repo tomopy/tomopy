@@ -1,12 +1,6 @@
 include README.rst
 include LICENSE.txt
 include VERSION
-include CMakeLists.txt
-recursive-include cmake *
-recursive-include tomopy/data *.tif *.h5
-recursive-include tomopy *
-recursive-include source *
-recursive-include test *
-recursive-exclude * __pycache__ *.pyc
-recursive-exclude _skbuild *
-recursive-exclude benchmarking *
+graft src/tomopy
+prune _skbuild
+global-exclude *.py[co]

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2019, UChicago Argonne, LLC. All rights reserved.         #
 #                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2019. UChicago Argonne, LLC. This software was produced       #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -46,27 +46,16 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import
-
-__version__ = '1.2.1'
-
-__all__ = ['algorithms', 'image_quality', 'exit_action',
-           'output_image', 'print_size', 'convert_image',
-           'normalize', 'trim_border', 'fill_border',
-           'rescale_image', 'quantify_difference', 'output_images',
-           'image_comparison']
+"""
+Utilities for TomoPy + PyCTest
+"""
 
 import os
-import pylab
+import timemory
 import numpy as np
+import pylab
 import scipy.ndimage as ndimage
 import numpy.linalg as LA
-import timemory
-
-algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
-              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-              'tv', 'grad']
-image_quality = {}
 
 
 def exit_action(errcode):
@@ -78,12 +67,21 @@ def exit_action(errcode):
     f.close()
 
 
-@timemory.util.auto_timer()
+algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
+              'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
+              'tv', 'grad']
+
+
+image_quality = {}
+
+
 def output_image(image, fname):
 
-    pylab.imsave(fname, image, cmap='gray')
+    img = pylab.imsave(fname, image, cmap='gray')
 
-    if not os.path.exists(fname):
+    if os.path.exists(fname):
+        print("  --> Image file found @ '{}'...".format(fname))
+    else:
         print("  ##################### WARNING #####################")
         print("  --> No image file at @ '{}' (expected) ...".format(fname))
 
@@ -96,25 +94,25 @@ def print_size(rec, msg=""):
         rec.shape[0]))
 
 
-@timemory.util.auto_timer()
 def convert_image(fname, current_format, new_format):
 
     _fext = new_format
     _success = True
 
     try:
+
         from PIL import Image
         _cur_img = "{}.{}".format(fname, current_format)
         img = Image.open(_cur_img)
         out = img.convert("RGB")
         out.save(fname, "jpeg", quality=95)
-        # print("  --> Converted '{}' to {} format...".format(fname, new_format.upper()))
+        print("  --> Converted '{}' to {} format...".format(fname,
+                                                            new_format.upper()))
 
     except Exception as e:
-
         print("  --> ##### {}...".format(e))
-        print("  --> ##### Exception occurred converting '{}' to {} format...".format(
-            fname, new_format.upper()))
+        print("  --> ##### Exception occurred converting "
+              "'{}' to {} format...".format(fname, new_format.upper()))
 
         _fext = current_format
         _success = False
@@ -183,11 +181,9 @@ def fill_border(rec, nimages, drow, dcol):
     return rec_n
 
 
-@timemory.util.auto_timer()
 def rescale_image(rec, nimages, scale, transform=True):
 
     rec_n = normalize(rec.copy())
-    resize_kwargs = {'anti_aliasing': False, 'mode': 'constant'}
     try:
         import skimage.transform
         if transform is True:
@@ -195,10 +191,10 @@ def rescale_image(rec, nimages, scale, transform=True):
             _ncols = rec[0].shape[1] * scale
             rec_tmp = np.ndarray([nimages, _nrows, _ncols])
             for i in range(nimages):
-                rec_tmp[i] = skimage.transform.resize(rec_n[i],
-                                                      (rec_n[i].shape[0] * scale,
-                                                       rec_n[i].shape[1] * scale),
-                                                       **resize_kwargs)
+                rec_tmp[i] = skimage.transform.resize(
+                    rec_n[i],
+                    (rec_n[i].shape[0] * scale, rec_n[i].shape[1] * scale)
+                    )
             rec_n = rec_tmp
 
     except Exception as e:
@@ -223,11 +219,11 @@ def quantify_difference(label, img, rec):
     # pixel diff
     _sub = _img - _rec
     # x-gradient diff
-    _sx = ndimage.sobel(_img, axis=0, mode='reflect') - \
-        ndimage.sobel(_rec, axis=0, mode='reflect')
+    _sx = ndimage.sobel(_img, axis=0, mode='constant') - \
+        ndimage.sobel(_rec, axis=0, mode='constant')
     # y-gradient diff
-    _sy = ndimage.sobel(_img, axis=1, mode='reflect') - \
-        ndimage.sobel(_rec, axis=1, mode='reflect')
+    _sy = ndimage.sobel(_img, axis=1, mode='constant') - \
+        ndimage.sobel(_rec, axis=1, mode='constant')
 
     _l1_pix = LA.norm(_sub, ord=1)
     _l2_pix = LA.norm(_sub, ord=2)
@@ -301,7 +297,8 @@ class image_comparison(object):
     A class for combining image slices into a column comparison
     """
 
-    def __init__(self, ncompare, nslice, nrows, ncols, solution=None, dtype=float):
+    def __init__(self, ncompare, nslice, nrows, ncols, solution=None,
+                 dtype=float):
         self.input_dims = [nslice, nrows, ncols]
         self.store_dims = [nslice, nrows, ncols * (ncompare + 1)]
         self.tags = ["soln"]

@@ -1,35 +1,44 @@
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
 os:
   - linux
-dist: xenial
 sudo: false
 env:
+  matrix:
+    - PYTHON_VERSION="2.7"
+    - PYTHON_VERSION="3.6"
+    - PYTHON_VERSION="3.7"
   global:
     - PATH=${HOME}/miniconda/bin:${PATH}
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
-    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis -- -VV'
+    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis'
     - TOMOPY_USE_C_ALGORITHMS=1
 before_install:
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
   - bash miniconda.sh -b -p ${HOME}/miniconda
   - export PATH="${HOME}/miniconda/bin:${PATH}"
-  - source activate base
   - conda config --set always_yes yes
-  - conda update -n base conda
 install:
-  - PYTHON_TAG=$(echo ${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
-  - conda env create -n tomopy -f envs/tomopy-python${PYTHON_TAG}.yml
-  - conda activate tomopy
+  - conda config --add channels jrmadsen
+  - conda config --add channels conda-forge
+  - >
+      conda install python=$PYTHON_VERSION
+      --file envs/requirements-all.txt
+      --file envs/requirements-unix-build.txt
+      --file envs/requirements-bench.txt
+  - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+      conda install python-coveralls --file envs/requirements-py27.txt;
+    fi
   - conda info -a
   - conda list --explicit
   - echo "C compiler = ${CC}"
   - echo "CXX compiler = ${CXX}"
-  - ./pyctest_tomopy.py --disable-phantom-tests --disable-cuda ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --disable-phantom-tests ${PYCTEST_ARGS} -- -VV
 script:
+  - cd test/
   - coverage run $(which nosetests)
 after_success:
   - coveralls

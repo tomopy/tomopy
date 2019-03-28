@@ -1,5 +1,5 @@
 ======================
-Tomographic data files
+How to read tomographic data
 ======================
 
 For reading tomography files formatted in different ways, please 
