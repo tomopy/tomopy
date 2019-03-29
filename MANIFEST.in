@@ -1,6 +1,5 @@
 include README.rst
 include LICENSE.txt
 include VERSION
-graft src/tomopy
-prune _skbuild
+graft source/tomopy
 global-exclude *.py[co]
