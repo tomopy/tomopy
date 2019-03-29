@@ -266,7 +266,7 @@ def run_pyctest():
 
     # properties
     bench_props = {
-        "WORKING_DIRECTORY" : os.path.join(pyctest.SOURCE_DIRECTORY, "benchmarking"),
+        "WORKING_DIRECTORY" : pyctest.SOURCE_DIRECTORY,
         "DEPENDS" : "nosetests",
         "TIMEOUT" : "10800"
     }

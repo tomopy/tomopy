@@ -10,7 +10,10 @@
 
 !.gitignore
 !__init__.py
-!pyctest_*.py
+!__main__.py
+!phantom.py
+!rec.py
+!util.py
 !*.sh
 !README.md
 !profile.sh

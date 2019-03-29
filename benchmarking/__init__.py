@@ -68,6 +68,9 @@ import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
 
+import benchmarking.phantom
+import benchmarking.rec
+import benchmarking.util
 
 __version__ = '1.3.0'
 __all__ = [
@@ -312,7 +315,7 @@ def create_phantom_test(args, bench_props, phantom):
         test_props["RUN_SERIAL"] = "ON"
 
     # test command
-    cmd = [pyexe, "./pyctest_tomopy_phantom.py"] + test_args
+    cmd = [pyexe, "-Om", "benchmarking.phantom"] + test_args
 
     # create test
     pyctest.test(name, cmd, properties=test_props)
@@ -356,7 +359,7 @@ def create_globus_test(args, bench_props, algorithm, phantom):
                "print(\"No valid path to '{}'\")".format(h5file)]
         h5file = None
     else:
-        cmd = [pyexe, "./pyctest_tomopy_rec.py", h5file]
+        cmd = [pyexe, "-Om", "benchmarking.rec", h5file]
         cmd += (global_args +
                 ["-a", algorithm,
                 "-o", "{}".format(name)])

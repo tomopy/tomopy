@@ -18,7 +18,7 @@ import signal
 import numpy as np
 import time as t
 import pylab
-from tomopy.misc.benchmark import *
+from benchmarking.util import *
 
 
 def get_basepath(args, algorithm, phantom):
@@ -296,7 +296,7 @@ if __name__ == "__main__":
         adir = os.path.join(adir, "comparison")
     else:
         adir = os.path.join(adir, args.algorithm)
-    
+
     if not args.preserve_output_dir:
         try:
             print("removing output from '{}' (if not '{}')...".format(adir, os.getcwd()))
