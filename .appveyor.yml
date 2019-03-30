@@ -7,6 +7,8 @@ skip_commits:
 skip_branch_with_pr: true
 max_jobs: 6
 image: Visual Studio 2015
+platform: x64
+configuration: Debug
 init:
   - git config --global core.autocrlf input
 shallow_clone: true
@@ -21,9 +23,18 @@ environment:
 matrix:
   fast_finish: true
 install:
-  - "%MINICONDA%\\Scripts\\activate.bat"
-  - conda activate base
-  - conda config --set always_yes True
+  # conda 4.5.11 seems to expect that this directory exists already
+  - mkdir C:\Users\appveyor\.conda
+  - call %MINICONDA%\Scripts\activate.bat
+  # The safety checks are simply intended to ensure that there is enough disk space
+  # and the user has the necessary permissions to make environment changes. In a CI
+  # environment these are not necessary and slow things down noticeably on Windows.
+  - >
+    conda config
+    --set always_yes yes
+    --set changeps1 no
+    --set auto_update_conda no
+    --set safety_checks disabled
   - conda update -n base conda
   - conda env create -n tomopy -f envs/win-%PYTHON_VERSION%.yml
   - conda activate tomopy
@@ -32,11 +43,10 @@ install:
   # Check the compilers
   - where gcc
   - where g++
-platform: x64
-configuration: Debug
-build_script:
   - set CC=gcc
   - set CXX=g++
   - python setup.py install
+# Not a .NET project, we build in the install step instead
+build: false
 test_script:
   - nosetests

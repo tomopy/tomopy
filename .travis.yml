@@ -22,7 +22,11 @@ before_install:
   - bash miniconda.sh -b -p ${HOME}/miniconda
   - source ${HOME}/miniconda/etc/profile.d/conda.sh
   - conda activate
-  - conda config --set always_yes True
+  - >
+    conda config
+    --set always_yes yes
+    --set changeps1 no
+    --set auto_update_conda no
   - conda update -n base conda
 install:
   - PYTHON_TAG=$(echo ${PYTHON_VERSION} | sed 's/\.//g')
@@ -33,8 +37,7 @@ install:
   # Check the compilers
   - echo "C compiler = ${CC}"
   - echo "CXX compiler = ${CXX}"
-  - ./pyctest_tomopy.py --disable-phantom-tests --disable-cuda ${PYCTEST_ARGS}
 script:
-  - coverage run $(which nosetests)
+  - ./pyctest_tomopy.py --disable-phantom-tests --disable-cuda ${PYCTEST_ARGS}
 after_success:
   - coveralls
