@@ -4,23 +4,26 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - python=3.5
   - coverage
   - dxchange
   - h5py
+  - m2w64-gcc
+  - make
   - mkl
   - mkl-devel
   - mkl_fft
   - nose
   - numexpr
   - numpy
-  - pyctest
+  - opencv
+  - python=3.6
   - python-coveralls
   - pywavelets
   - scikit-build
   - scikit-image
   - scipy
+  - setuptools_scm
+  - setuptools_scm_git_archive
   - six
-  - timemory
-  - opencv
   - tbb-devel
+  - timemory

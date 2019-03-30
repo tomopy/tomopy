@@ -4,27 +4,29 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - python=3.7
-  - gcc_linux-64  # [linux]
-  - gxx_linux-64  # [linux]
-  - libstdcxx-ng  # [linux]
-  - libgcc-ng  # [linux]
   - coverage
   - dxchange
+  - gcc_linux-64
+  - gxx_linux-64
   - h5py
+  - libstdcxx-ng
+  - libgcc-ng
   - mkl
   - mkl-devel
   - mkl_fft
   - nose
   - numexpr
   - numpy
+  - opencv
   - pyctest>0.0.10
+  - python=3.7
   - python-coveralls
   - pywavelets
   - scikit-build
   - scikit-image
   - scipy
+  - setuptools_scm
+  - setuptools_scm_git_archive
   - six
-  - timemory
-  - opencv
   - tbb-devel
+  - timemory

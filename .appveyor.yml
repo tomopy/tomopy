@@ -3,6 +3,7 @@ skip_commits:
  files:
    - docs/*
    - '**/*.html'
+   - .travis.yml
 skip_branch_with_pr: true
 max_jobs: 6
 image: Visual Studio 2015
@@ -13,32 +14,29 @@ environment:
   # these variables are common to all jobs
   TOMOPY_USE_C_ALGORITHMS: "1"
   matrix:
-    - PYTHON_VERSION: "3.6"
+    - PYTHON_VERSION: "36"
       MINICONDA: "C:\\Miniconda36-x64"
-    - PYTHON_VERSION: "3.7"
+    - PYTHON_VERSION: "37"
       MINICONDA: "C:\\Miniconda37-x64"
 matrix:
   fast_finish: true
 install:
   - "%MINICONDA%\\Scripts\\activate.bat"
+  - conda activate base
   - conda config --set always_yes True
-  - conda config --add channels jrmadsen
-  - conda config --add channels conda-forge
-  - conda update conda  # required in order to find mkl-devel
-  - >
-      conda install python=%PYTHON_VERSION%
-      --file envs/requirements-all.txt
-      --file envs/requirements-win-build.txt
-  # Check that we have the expected version and architecture for Python
+  - conda update -n base conda
+  - conda env create -n tomopy -f envs/win-%PYTHON_VERSION%.yml
+  - conda activate tomopy
   - conda info -a
-  - "python --version"
+  - conda list --explicit
+  # Check the compilers
   - where gcc
+  - where g++
 platform: x64
 configuration: Debug
 build_script:
   - set CC=gcc
+  - set CXX=g++
   - python setup.py install
-before_test:
-  - cd test/
 test_script:
-  - nosetests -v
+  - nosetests

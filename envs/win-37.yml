@@ -6,11 +6,9 @@ channels:
 dependencies:
   - coverage
   - dxchange
-  - gcc_linux-64
-  - gxx_linux-64
   - h5py
-  - libstdcxx-ng
-  - libgcc-ng
+  - m2w64-gcc
+  - make
   - mkl
   - mkl-devel
   - mkl_fft
@@ -18,8 +16,7 @@ dependencies:
   - numexpr
   - numpy
   - opencv
-  - pyctest>0.0.10
-  - python=3.6
+  - python=3.7
   - python-coveralls
   - pywavelets
   - scikit-build
