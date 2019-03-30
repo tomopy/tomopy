@@ -68,9 +68,6 @@ import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
 
-import benchmarking.phantom
-import benchmarking.rec
-import benchmarking.util
 
 __version__ = '1.3.0'
 __all__ = [
