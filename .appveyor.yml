@@ -11,7 +11,7 @@ platform: x64
 configuration: Debug
 init:
   - git config --global core.autocrlf input
-shallow_clone: true
+clone_depth: 1
 environment:
   # these variables are common to all jobs
   TOMOPY_USE_C_ALGORITHMS: "1"
