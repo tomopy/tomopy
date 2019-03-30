@@ -15,7 +15,7 @@ dependencies:
   - nose
   - numexpr
   - numpy
-  - opencv
+  - libopencv
   - python=3.6
   - python-coveralls
   - pywavelets
