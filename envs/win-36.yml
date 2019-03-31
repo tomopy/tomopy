@@ -6,6 +6,7 @@ channels:
 dependencies:
   - coverage
   - dxchange
+  - git
   - h5py
   - m2w64-gcc
   - make

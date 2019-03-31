@@ -8,6 +8,7 @@ dependencies:
   - dxchange
   - futures
   - gcc_linux-64
+  - git
   - gxx_linux-64
   - h5py
   - libstdcxx-ng
