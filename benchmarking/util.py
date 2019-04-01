@@ -80,7 +80,7 @@ def exit_action(errcode):
 
 @timemory.util.auto_timer()
 def output_image(image, fname):
-
+    """Save an image and check that it exists afterward."""
     pylab.imsave(fname, image, cmap='gray')
 
     if not os.path.exists(fname):
@@ -98,7 +98,18 @@ def print_size(rec, msg=""):
 
 @timemory.util.auto_timer()
 def convert_image(fname, current_format, new_format):
+    """Create a copy of an image in a new_format.
 
+    Parameters
+    ----------
+    fname : string
+        The current image filename sans extension.
+    current_format : string
+        The current image file extension.
+    new_fromat : string
+        The new image file extension.
+
+    """
     _fext = new_format
     _success = True
 
@@ -124,14 +135,15 @@ def convert_image(fname, current_format, new_format):
 
 
 def normalize(rec):
+    """Normalize rec to the range [-1, 1]."""
     rec_n = rec.copy()
     try:
-        _min = np.amin(rec_n)
+        _min = np.amin(rec_n)  # shift so range min is zero
         rec_n -= _min
         _max = np.amax(rec_n)
-        if _max > 0.0:
-            rec_n /= 0.5 * _max
-        rec_n -= 1
+        if _max > 0.0:  # prevent division by zero
+            rec_n /= 0.5 * _max  # rescale to range [0, 2]
+        rec_n -= 1  # shift to range [-1, 1]
     except Exception as e:
         print("  --> ##### {}...".format(e))
         rec_n = rec.copy()
@@ -140,7 +152,20 @@ def normalize(rec):
 
 
 def trim_border(rec, nimages, drow, dcol):
+    """Crop rec along three dimensions.
 
+    Axes 1 and 2 are trimmed from both sides with half stripped
+    from each end.
+
+    Parameters
+    ----------
+    rec : np.ndarray
+    nimages : int
+        The new length of axis 0.
+    drow, dcol : int
+        The number of indices along axes 1 and 2 to remove.
+
+    """
     rec_n = rec.copy()
     nrows = rec[0].shape[0] - drow
     ncols = rec[0].shape[1] - dcol
@@ -162,7 +187,11 @@ def trim_border(rec, nimages, drow, dcol):
 
 
 def fill_border(rec, nimages, drow, dcol):
+    """Pad rec along axes 1 and 2 by drow and dcol. Crop axes 0 to nimages.
 
+    The padding along axes 1 and 2 is split evenly between before and after
+    the array.
+    """
     rec_n = rec.copy()
     nrows = rec[0].shape[0] + drow
     ncols = rec[0].shape[1] + dcol
@@ -185,7 +214,7 @@ def fill_border(rec, nimages, drow, dcol):
 
 @timemory.util.auto_timer()
 def rescale_image(rec, nimages, scale, transform=True):
-
+    """Resize a stack of images by positive scale."""
     rec_n = normalize(rec.copy())
     resize_kwargs = {'anti_aliasing': False, 'mode': 'constant'}
     try:
@@ -209,7 +238,8 @@ def rescale_image(rec, nimages, scale, transform=True):
 
 
 def quantify_difference(label, img, rec):
-
+    """Return the L1,L2 norms of the diff and and grad diff of the two images.
+    """
     _img = normalize(img)
     _rec = normalize(rec)
 
@@ -249,7 +279,13 @@ def quantify_difference(label, img, rec):
 
 @timemory.util.auto_timer()
 def output_images(rec, fpath, format="jpeg", scale=1, ncol=1):
+    """Save an image stack as a series of concatenated images.
 
+    Each set of ncol images are concatenated horizontally and saved together
+    into files named {fpath}_0_{ncol}.{img_format},
+    {fpath}_{ncol}_{2*ncol}.{img_format}, {fpath}_{ncol}_{3*ncol}.{img_format},
+    ...
+    """
     imgs = []
     nitr = 0
     nimages = rec.shape[0]
