@@ -181,7 +181,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
 
     // explicitly set OpenMP number of threads to 1 so OpenCV doesn't try to
     // create (HW_CONCURRENCY * PYTHON_NUM_THREADS * TOMOPY_NUM_THREADS) threads
-    setenv("OMP_NUM_THREADS", "1", 1);
+    cv::setNumThreads(0);
 
     // compute some properties (expected python threads, max threads, device assignment)
     auto min_threads = nthread_type(1);
