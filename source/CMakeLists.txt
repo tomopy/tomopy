@@ -49,8 +49,7 @@ set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 # target properties based on build
 if(TOMOPY_USE_CUDA)
     file(GLOB CUDA_LIBRARY_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cc"
-        "${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu")
+        ${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu)
 
     list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
 
@@ -61,8 +60,7 @@ if(TOMOPY_USE_CUDA)
         CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
         CUDA_STANDARD_REQUIRED      ON
         CUDA_SEPARABLE_COMPILATION  ON
-        CUDA_RESOLVE_DEVICE_SYMBOLS ON
-        )
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 
 # create library

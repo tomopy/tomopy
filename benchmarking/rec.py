@@ -19,7 +19,7 @@ import collections
 import h5py
 import tomopy
 import dxchange
-from benchmarking.util import *
+from utilities import *
 
 
 def get_dx_dims(fname, dataset):

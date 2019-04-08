@@ -43,6 +43,31 @@ endif()
 
 ################################################################################
 #
+#        MKL (required)
+#
+################################################################################
+
+find_package(MKL REQUIRED)
+
+if(MKL_FOUND)
+    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+endif()
+
+
+################################################################################
+#
+#        OpenCV (required)
+#
+################################################################################
+
+set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
+list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+
+
+################################################################################
+#
 #        GCov
 #
 ################################################################################
@@ -102,45 +127,37 @@ endif()
 ################################################################################
 
 if(TOMOPY_USE_OPENMP)
-    find_package(OpenMP)
 
-    if(OpenMP_FOUND)
-        if(CMAKE_C_COMPILER_IS_PGI)
-            string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_C_FLAGS "${OpenMP_C_FLAGS}")
-        endif()
+    if(NOT c_fopenmp_simd)
+        find_package(OpenMP)
 
-        if(CMAKE_CXX_COMPILER_IS_PGI)
-            string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
-        endif()
+        if(OpenMP_FOUND)
+            if(CMAKE_C_COMPILER_IS_PGI)
+                string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_C_FLAGS "${OpenMP_C_FLAGS}")
+            endif()
 
-        # C
-        if(OpenMP_C_FOUND)
-            list(APPEND ${PROJECT_NAME}_C_FLAGS ${OpenMP_C_FLAGS})
-        endif()
+            if(CMAKE_CXX_COMPILER_IS_PGI)
+                string(REPLACE "-mp" "-mp${OpenMP_C_IMPL}" OpenMP_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
+            endif()
 
-        # C++
-        if(OpenMP_CXX_FOUND)
-            list(APPEND ${PROJECT_NAME}_CXX_FLAGS ${OpenMP_CXX_FLAGS})
+            # C
+            if(OpenMP_C_FOUND)
+                list(APPEND ${PROJECT_NAME}_C_FLAGS ${OpenMP_C_FLAGS})
+            endif()
+
+            # C++
+            if(OpenMP_CXX_FOUND)
+                list(APPEND ${PROJECT_NAME}_CXX_FLAGS ${OpenMP_CXX_FLAGS})
+            endif()
+        else()
+            message(WARNING "OpenMP not found")
+            set(TOMOPY_USE_OPENMP OFF)
         endif()
     else()
-        message(WARNING "OpenMP not found")
+        message(STATUS "Ignoring TOMOPY_USE_OPENMP=ON because '-fopenmp-simd' is supported")
         set(TOMOPY_USE_OPENMP OFF)
     endif()
 
-endif()
-
-
-################################################################################
-#
-#        MKL
-#
-################################################################################
-
-find_package(MKL REQUIRED)
-
-if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
 endif()
 
 
@@ -167,7 +184,7 @@ if(TOMOPY_USE_CUDA)
         #   70, 72      + Volta support
         #   75          + Turing support
         if(NOT DEFINED CUDA_ARCH)
-            set(CUDA_ARCH "53")
+            set(CUDA_ARCH "35")
         endif()
 
         if(TOMOPY_USE_NVTX)
@@ -207,53 +224,6 @@ if(TOMOPY_USE_CUDA)
             ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     else()
         set(TOMOPY_USE_CUDA OFF)
-    endif()
-endif()
-
-
-################################################################################
-#
-#        OpenCV
-#
-################################################################################
-set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
-list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
-
-
-################################################################################
-#
-#        Intel IPP
-#
-################################################################################
-
-if(TOMOPY_USE_IPP)
-    find_package(IPP COMPONENTS core i s cv)
-
-    if(IPP_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${IPP_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${IPP_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_IPP)
-    else()
-        set(TOMOPY_USE_IPP OFF)
-    endif()
-endif()
-
-
-################################################################################
-#
-#        ITTNOTIFY (for VTune)
-#
-################################################################################
-if(TOMOPY_USE_ITTNOTIFY)
-    find_package(ittnotify)
-
-    if(ittnotify_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${ITTNOTIFY_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${ITTNOTIFY_LIBRARIES})
-    else()
-        message(WARNING "ittnotify not found. Set \"VTUNE_AMPLIFIER_201{7,8,9}_DIR\" or \"VTUNE_AMPLIFIER_XE_201{7,8,9}_DIR\" in environment")
     endif()
 endif()
 

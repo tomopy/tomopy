@@ -11,8 +11,7 @@ include(Compilers)
 # compiler features
 set(CMAKE_CXX_COMPILE_FEATURES
     cxx_std_11 cxx_lambdas cxx_thread_local cxx_constexpr
-    cxx_decltype cxx_nullptr
-    cxx_variable_templates cxx_template_template_parameters
+    cxx_decltype cxx_nullptr cxx_variable_templates
     cxx_deleted_functions cxx_auto_type cxx_alias_templates)
 
 # ---------------------------------------------------------------------------- #
@@ -76,17 +75,6 @@ add_c_flag_if_avail("-Wunused-but-set-parameter")
 add_c_flag_if_avail("-fopenmp-simd")
 add_cxx_flag_if_avail("-fopenmp-simd")
 
-# OpenMP (non-SIMD)
-if(TOMOPY_USE_OPENMP)
-    add_c_flag_if_avail("-mp=nonuma")
-    add_cxx_flag_if_avail("-mp=nonuma")
-endif(TOMOPY_USE_OPENMP)
-
-if(TOMOPY_PGI_INFO)
-    add_c_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
-    add_cxx_flag_if_avail("-Minfo=${PGI_INFO_TYPE}")
-endif(TOMOPY_PGI_INFO)
-
 # Intel floating-point model
 add_c_flag_if_avail("-fp-model=precise")
 add_cxx_flag_if_avail("-fp-model=precise")
@@ -97,7 +85,6 @@ add_cxx_flag_if_avail("-Wextra")
 add_cxx_flag_if_avail("-Wno-attributes")
 add_cxx_flag_if_avail("-Wno-unused-value")
 add_cxx_flag_if_avail("-Wno-unused-variable")
-add_cxx_flag_if_avail("-Wno-unknown-pragmas")
 add_cxx_flag_if_avail("-Wno-unknown-pragmas")
 add_cxx_flag_if_avail("-Wno-unused-parameter")
 add_cxx_flag_if_avail("-Wno-reserved-id-macro")
@@ -169,6 +156,21 @@ endif()
 if(TOMOPY_USE_SANITIZER)
     add_c_flag_if_avail("-fsanitize=${SANITIZER_TYPE}")
     add_cxx_flag_if_avail("-fsanitize=${SANITIZER_TYPE}")
+
+    if(c_fsanitize_${SANITIZER_TYPE} AND cxx_fsanitize_${SANITIZER_TYPE})
+        if("${SANITIZER_TYPE}" STREQUAL "address")
+            list(APPEND EXTERNAL_LIBRARIES asan)
+        elseif("${SANITIZER_TYPE}" STREQUAL "memory")
+            list(APPEND EXTERNAL_LIBRARIES msan)
+        elseif("${SANITIZER_TYPE}" STREQUAL "thread")
+            list(APPEND EXTERNAL_LIBRARUES tsan)
+        elseif("${SANITIZER_TYPE}" STREQUAL "leak")
+            list(APPEND EXTERNAL_LIBRARIES lsan)
+        endif()
+    else()
+        unset(SANITIZER_TYPE CACHE)
+        set(TOMOPY_USE_SANITIZER OFF)
+    endif()
 endif()
 
 if(TOMOPY_USE_COVERAGE)

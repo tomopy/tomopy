@@ -1,0 +1,32 @@
+name: tomopy
+channels:
+  - conda-forge
+  - jrmadsen
+  - defaults
+dependencies:
+  - coverage
+  - dxchange
+  - gcc_linux-64
+  - git
+  - gxx_linux-64
+  - h5py
+  - libstdcxx-ng
+  - libgcc-ng
+  - mkl
+  - mkl-devel
+  - mkl_fft
+  - nose
+  - numexpr
+  - numpy
+  - opencv>=3.4
+  - pyctest>0.0.10
+  - python=3.6
+  - python-coveralls
+  - pywavelets
+  - scikit-build
+  - scikit-image
+  - scipy
+  - setuptools_scm
+  - setuptools_scm_git_archive
+  - six
+  - timemory

@@ -18,8 +18,7 @@ import signal
 import numpy as np
 import time as t
 import pylab
-from benchmarking.util import *
-
+from utilities import *
 
 def get_basepath(args, algorithm, phantom):
     basepath = os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)

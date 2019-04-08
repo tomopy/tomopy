@@ -6,6 +6,7 @@ from skbuild import setup
 from skbuild.setuptools_wrap import create_skbuild_argparser
 import argparse
 import warnings
+import platform
 
 cmake_args = []
 parser = argparse.ArgumentParser(add_help=False)
@@ -74,6 +75,12 @@ if args.enable_sanitizer:
 
 if len(cmake_args) > 0:
     print("\n\n\tCMake arguments set via command line: {}\n".format(cmake_args))
+
+if platform.system() == "Darwin":
+    # scikit-build will set this to 10.6 and C++ compiler check will fail
+    version = platform.mac_ver()[0].split('.')
+    version = ".".join([version[0], version[1]])
+    cmake_args += ["-DCMAKE_OSX_DEPLOYMENT_TARGET={}".format(version)]
 
 setup(
     name='tomopy',

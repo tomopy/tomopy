@@ -31,7 +31,7 @@ build
 _skbuild
 _cmake_test_compile
 /build-*
-eggs
+.eggs
 parts
 bin
 var

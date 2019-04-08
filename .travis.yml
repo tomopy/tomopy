@@ -30,7 +30,7 @@ before_install:
   - conda update -n base conda
 install:
   - PYTHON_TAG=$(echo ${PYTHON_VERSION} | sed 's/\.//g')
-  - conda env create -n tomopy -f envs/tomopy-python${PYTHON_TAG}.yml
+  - conda env create -n tomopy -f envs/linux-${PYTHON_TAG}.yml
   - conda activate tomopy
   - conda info -a
   - conda list --explicit

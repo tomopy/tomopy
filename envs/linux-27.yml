@@ -19,7 +19,7 @@ dependencies:
   - nose
   - numexpr
   - numpy
-  - libopencv
+  - opencv>=3.4
   - pyctest>0.0.10
   - python=2.7
   - python-coveralls
@@ -30,5 +30,4 @@ dependencies:
   - setuptools_scm
   - setuptools_scm_git_archive
   - six
-  - tbb-devel
   - timemory
