@@ -29,7 +29,7 @@ def get_basepath(args, algorithm, phantom):
 
 @timemory.util.auto_timer()
 def generate(phantom, args):
-
+    """Return the simulated data for the given phantom."""
     with timemory.util.auto_timer("[tomopy.misc.phantom.{}]".format(phantom)):
         obj = getattr(tomopy.misc.phantom, phantom)(size=args.size)
         obj = tomopy.misc.morph.pad(obj, axis=1, mode='constant')
@@ -64,7 +64,24 @@ def generate(phantom, args):
 
 @timemory.util.auto_timer()
 def run(phantom, algorithm, args, get_recon=False):
+    """Run reconstruction benchmarks for phantoms.
 
+    Parameters
+    ----------
+    phantom : string
+        The name of the phantom to use.
+    algorithm : string
+        The name of the algorithm to test.
+    args : argparser args
+
+    Returns
+    -------
+    Either rec or imgs
+    rec : np.ndarray
+        The reconstructed image.
+    imgs : list
+        A list of the original, reconstructed, and difference image
+    """
     global image_quality
 
     imgs = []
