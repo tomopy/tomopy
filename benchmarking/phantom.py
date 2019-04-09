@@ -96,7 +96,6 @@ def run(phantom, algorithm, args, get_recon=False):
     proj = np.zeros(shape=[prj.shape[1], prj.shape[0], prj.shape[2]], dtype=np.float)
     for i in range(0, prj.shape[1]):
         proj[i,:,:] = prj[:,i,:]
-    output_images(proj, pname, args.format, args.scale, args.ncol)
 
     # always add algorithm
     _kwargs = {"algorithm": algorithm}
@@ -146,7 +145,8 @@ def run(phantom, algorithm, args, get_recon=False):
         return rec
 
 
-    print("oname = {}, fname = {}, dname = {}".format(oname, fname, dname))
+    print("pname = {}, oname = {}, fname = {}, dname = {}".format(pname, oname, fname, dname))
+    imgs.extend(output_images(proj, pname, args.format, args.scale, args.ncol))
     imgs.extend(output_images(obj, oname, args.format, args.scale, args.ncol))
     imgs.extend(output_images(rec, fname, args.format, args.scale, args.ncol))
     imgs.extend(output_images(dif, dname, args.format, args.scale, args.ncol))
