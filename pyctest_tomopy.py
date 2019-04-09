@@ -105,7 +105,7 @@ def configure():
                         type=str,
                         nargs='*',
                         choices=default_phantoms,
-                        default=None)
+                        default=[])
     parser.add_argument("--phantom-size",
                         type=int,
                         help="Size parameter for the phantom reconstructions",
