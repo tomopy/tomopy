@@ -18,7 +18,7 @@ import signal
 import numpy as np
 import time as t
 import pylab
-from utilities import *
+from tomopy.misc.benchmark import *
 
 def get_basepath(args, algorithm, phantom):
     basepath = os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)

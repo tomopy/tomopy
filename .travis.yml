@@ -11,7 +11,7 @@ env:
   global:
     - PATH=${HOME}/miniconda/bin:${PATH}
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib
-    - PYCTEST_ARGS='--pyctest-submit --pyctest-jobs=1 --pyctest-site=Travis -- -VV'
+    - PYCTEST_ARGS='-SF --pyctest-jobs=1 --pyctest-site=Travis --exclude-phantoms shepp3d -- -VV'
     - TOMOPY_USE_C_ALGORITHMS=1
 before_install:
   - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
@@ -38,6 +38,7 @@ install:
   - echo "C compiler = ${CC}"
   - echo "CXX compiler = ${CXX}"
 script:
-  - ./pyctest_tomopy.py --disable-phantom-tests --disable-cuda ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --enable-tasking --disable-cuda --phantom-size 128 ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --disable-tasking --disable-cuda --coverage ${PYCTEST_ARGS}
 after_success:
   - coveralls
