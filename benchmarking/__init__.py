@@ -271,6 +271,7 @@ def create_phantom_test(args, bench_props, phantom):
     Create test(s) for the specified algorithms
     """
     pyexe = pyctest.PYTHON_EXECUTABLE
+    this_dir = os.path.dirname(__file__)
 
     # skip when generating C coverage
     if args.coverage or args.disable_phantom_tests:
@@ -301,7 +302,7 @@ def create_phantom_test(args, bench_props, phantom):
         "-s", "{}".format(nsize),
         "-n", "{}".format(args.ncores),
         "-i", "{}".format(args.num_iter),
-        "--output-dir", name
+        "--output-dir", os.path.join(this_dir, name)
     ]
     test_args.append("-a" if nalgs == 1 else "--compare")
     test_args.extend(args.algorithms)
