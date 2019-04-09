@@ -424,7 +424,7 @@ def remove_stripe_based_filtering(
         tomo, sigma=3, size=None, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
-    approach :cite:'Vo:18'
+    approach :cite:`Vo:18`
     Algorithm 2 in the paper. Remove stripes using the filtering technique.
 
     Parameters
@@ -502,7 +502,7 @@ def remove_stripe_based_fitting(
         tomo, order=3, sigma=(5, 20), ncore=None, nchunk=None):
     """
     Remove horizontal stripes from sinogram using Nghia Vo's
-    approach :cite:'Vo:18'
+    approach :cite:`Vo:18`
     Algorithm 1 in the paper. Remove stripes using the fitting technique.
 
     Parameters
@@ -631,7 +631,7 @@ def _remove_stripe_based_fitting(tomo, order, sigma):
 def remove_large_stripe(tomo, snr=3, size=51, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
-    approach :cite:'Vo:18'
+    approach :cite:`Vo:18`
     Algorithm 5 in the paper. Remove large stripes.
 
     Parameters
@@ -729,7 +729,7 @@ def _remove_large_stripe(tomo, snr, size):
 def remove_dead_stripe(tomo, snr=3, size=51, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
-    approach :cite:'Vo:18'
+    approach :cite:`Vo:18`
     Algorithm 6 in the paper. Remove unresponsive and fluctuating stripes.
 
     Parameters
@@ -800,7 +800,7 @@ def _remove_dead_stripe(tomo, snr, size):
 def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
-    approach :cite:'Vo:18'
+    approach :cite:`Vo:18`
     Combine algorithms 6,5,4,3 to remove all types of stripes.
 
     Parameters
