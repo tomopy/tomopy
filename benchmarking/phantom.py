@@ -20,6 +20,7 @@ import time as t
 import pylab
 from tomopy.misc.benchmark import *
 
+
 def get_basepath(args, algorithm, phantom):
     basepath = os.path.join(os.getcwd(), args.output_dir, phantom, algorithm)
     if not os.path.exists(basepath):
