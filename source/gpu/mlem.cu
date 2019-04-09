@@ -150,40 +150,15 @@ void
 mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center,
           const float* theta, float* cpu_recon, int ngridx, int ngridy, int num_iter)
 {
-    typedef decltype(HW_CONCURRENCY) nthread_type;
-
-    auto num_devices = cuda_device_count();
-    if(num_devices == 0)
-        throw std::runtime_error("No CUDA device(s) available");
-
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    // initialize nvtx data
-    init_nvtx();
-    // print device info
-    cuda_device_query();
     // thread counter for device assignment
     static std::atomic<int> ntid;
 
     // compute some properties (expected python threads, max threads, device assignment)
-    auto min_threads  = nthread_type(1);
-    auto pythreads    = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto max_threads  = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads     = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    int  pythread_num = ntid++;
-    int  device       = pythread_num % num_devices;  // assign to device
-
-#if defined(TOMOPY_USE_PTL)
-    typedef TaskManager manager_t;
-    TaskRunManager*     run_man = gpu_run_manager();
-    init_run_manager(run_man, nthreads);
-    TaskManager* task_man = run_man->GetTaskManager();
-    ThreadPool*  tp       = task_man->thread_pool();
-#else
-    typedef void manager_t;
-    void*        task_man = nullptr;
-#endif
+    int pythread_num = ntid++;
+    int device       = pythread_num % cuda_device_count();  // assign to device
 
     TIMEMORY_AUTO_TIMER("");
 
@@ -191,21 +166,13 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
     cuda_set_device(device);
     printf("[%lu] Running on device %i...\n", GetThisThreadID(), device);
 
-    // if another thread has not already warmed up
-    if(pythread_num < num_devices)
-    {
-        auto* warm = gpu_malloc<uint64_t>(1);
-        cuda_warmup_kernel<uint64_t><<<512, 1>>>(warm, 32, 1);
-        cudaFree(warm);
-    }
-
     uintmax_t    recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     auto         block        = GetBlockSize();
     auto         grid         = ComputeGridSize(recon_pixels, block);
     auto         main_stream  = create_streams(1);
     float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t  init_data = GpuData::initialize(device, nthreads, dy, dt, dx, ngridx,
-                                                ngridy, cpu_recon, cpu_data, update);
+    init_data_t  init_data = GpuData::initialize(device, dy, dt, dx, ngridx, ngridy,
+                                                cpu_recon, cpu_data, update);
     data_array_t gpu_data  = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
     float*       data      = std::get<2>(init_data);
@@ -230,9 +197,8 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float* cpu_center
         GpuData::sync(gpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, dt, std::ref(gpu_data),
-                                         mlem_gpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta);
+        execute<data_array_t>(dt, std::ref(gpu_data), mlem_gpu_compute_projection, dy, dt,
+                              dx, ngridx, ngridy, theta);
 
         // sync the thread streams
         GpuData::sync(gpu_data);

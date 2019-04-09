@@ -63,7 +63,7 @@ public:
 
 public:
     CpuData(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
-            float* recon, float* update, Mutex* upd_mutex, Mutex* sum_mutex)
+            float* recon, float* update)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
@@ -75,11 +75,7 @@ public:
     , m_update(update)
     , m_recon(recon)
     , m_data(data)
-    , m_upd_mutex(upd_mutex)
-    , m_sum_mutex(sum_mutex)
     {
-        // we don't want null pointers here
-        assert(m_upd_mutex && m_sum_mutex);
     }
 
     ~CpuData() {}
@@ -95,8 +91,11 @@ public:
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
 
-    Mutex* upd_mutex() const { return m_upd_mutex; }
-    Mutex* sum_mutex() const { return m_sum_mutex; }
+    Mutex* upd_mutex() const
+    {
+        static Mutex mtx;
+        return &mtx;
+    }
 
     void reset()
     {
@@ -109,15 +108,15 @@ public:
 
 public:
     // static functions
-    static init_data_t initialize(unsigned nthreads, int dy, int dt, int dx, int ngridx,
-                                  int ngridy, float* recon, const float* data,
-                                  float* update, Mutex* upd_mtx, Mutex* sum_mtx)
+    static init_data_t initialize(int dy, int dt, int dx, int ngridx, int ngridy,
+                                  float* recon, const float* data, float* update)
     {
+        auto         nthreads = GetNumThreads();
         data_array_t cpu_data(nthreads);
         for(unsigned ii = 0; ii < nthreads; ++ii)
         {
-            cpu_data[ii] = data_ptr_t(new CpuData(ii, dy, dt, dx, ngridx, ngridy, data,
-                                                  recon, update, upd_mtx, sum_mtx));
+            cpu_data[ii] = data_ptr_t(
+                new CpuData(ii, dy, dt, dx, ngridx, ngridy, data, recon, update));
         }
         return init_data_t(cpu_data, recon, data);
     }
@@ -141,8 +140,6 @@ protected:
     float*       m_update;
     float*       m_recon;
     const float* m_data;
-    Mutex*       m_upd_mutex;
-    Mutex*       m_sum_mutex;
 };
 
 //======================================================================================//
@@ -162,10 +159,9 @@ public:
 
 public:
     // ctors, dtors, assignment
-    GpuData(int device, int id, int dy, int dt, int dx, int nx, int ny, const float* data,
+    GpuData(int device, int dy, int dt, int dx, int nx, int ny, const float* data,
             float* recon, float* update)
     : m_device(device)
-    , m_id(id)
     , m_grid(GetGridSize())
     , m_block(GetBlockSize())
     , m_dy(dy)
@@ -238,10 +234,11 @@ public:
 
 public:
     // static functions
-    static init_data_t initialize(int device, int nthreads, int dy, int dt, int dx,
-                                  int ngridx, int ngridy, float* cpu_recon,
-                                  const float* cpu_data, float* update)
+    static init_data_t initialize(int device, int dy, int dt, int dx, int ngridx,
+                                  int ngridy, float* cpu_recon, const float* cpu_data,
+                                  float* update)
     {
+        auto      nthreads = GetNumThreads();
         uintmax_t nstreams = 2;
         auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);
         float*    recon =
@@ -251,7 +248,7 @@ public:
         for(int ii = 0; ii < nthreads; ++ii)
         {
             gpu_data[ii] = data_ptr_t(
-                new GpuData(device, ii, dy, dt, dx, ngridx, ngridy, data, recon, update));
+                new GpuData(device, dy, dt, dx, ngridx, ngridy, data, recon, update));
         }
 
         // synchronize and destroy
@@ -277,7 +274,6 @@ public:
 protected:
     // data
     int           m_device;
-    int           m_id;
     int           m_grid;
     int           m_block;
     int           m_dy;

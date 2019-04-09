@@ -61,4 +61,6 @@ typedef array_t<double>   darray_t;
 template <typename _Tp>
 using cuda_device_info = std::unordered_map<int, _Tp>;
 
+using num_threads_t = decltype(HW_CONCURRENCY);
+
 //======================================================================================//

@@ -174,40 +174,15 @@ void
 mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    typedef decltype(HW_CONCURRENCY) nthread_type;
-
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
-    // explicitly set OpenMP number of threads to 1 so OpenCV doesn't try to
-    // create (HW_CONCURRENCY * PYTHON_NUM_THREADS * TOMOPY_NUM_THREADS) threads
-    cv::setNumThreads(0);
-
-    // compute some properties (expected python threads, max threads, device assignment)
-    auto min_threads = nthread_type(1);
-    auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads    = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-
-#if defined(TOMOPY_USE_PTL)
-    typedef TaskManager manager_t;
-    TaskRunManager*     run_man = cpu_run_manager();
-    init_run_manager(run_man, nthreads);
-    TaskManager* task_man = run_man->GetTaskManager();
-#else
-    typedef void manager_t;
-    void*        task_man = nullptr;
-#endif
-
     TIMEMORY_AUTO_TIMER("");
 
-    Mutex       upd_mutex;
-    Mutex       sum_mutex;
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     farray_t    update(recon_pixels, 0.0f);
     init_data_t init_data =
-        CpuData::initialize(nthreads, dy, dt, dx, ngridx, ngridy, recon, data,
-                            update.data(), &upd_mutex, &sum_mutex);
+        CpuData::initialize(dy, dt, dx, ngridx, ngridy, recon, data, update.data());
     data_array_t cpu_data = std::get<0>(init_data);
     iarray_t     sum_dist = cxx_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
 
@@ -224,9 +199,8 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         CpuData::reset(cpu_data);
 
         // execute the loop over slices and projection angles
-        execute<manager_t, data_array_t>(task_man, dt, std::ref(cpu_data),
-                                         mlem_cpu_compute_projection, dy, dt, dx, ngridx,
-                                         ngridy, theta);
+        execute<data_array_t>(dt, std::ref(cpu_data), mlem_cpu_compute_projection, dy, dt,
+                              dx, ngridx, ngridy, theta);
 
         // update the global recon with global update and sum_dist
         for(uintmax_t ii = 0; ii < recon_pixels; ++ii)

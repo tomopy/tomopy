@@ -107,6 +107,8 @@ extern "C"
 #    include "PTL/ThreadData.hh"
 #    include "PTL/ThreadPool.hh"
 #    include "PTL/Threading.hh"
+#else
+class ThreadPool;  // dummy
 #endif
 
 //--------------------------------------------------------------------------------------//

@@ -43,6 +43,10 @@
 #include "macros.hh"
 #include "typedefs.hh"
 
+BEGIN_EXTERN_C
+#include "cxx_extern.h"
+END_EXTERN_C
+
 //======================================================================================//
 //
 //      NVTX macros
@@ -95,74 +99,62 @@ init_nvtx()
 //
 //  The following section provides functions for the initialization of the tasking library
 //
-#if defined(TOMOPY_USE_PTL)
-//
 //======================================================================================//
 
-inline TaskRunManager*
-cpu_run_manager()
+inline num_threads_t
+GetNumThreads()
 {
-    AutoLock l(TypeMutex<TaskRunManager>());
-    // use unique pointer so manager gets deleted when thread gets deleted
-    typedef std::unique_ptr<TaskRunManager> pointer;
-    // first argument ensures we do not use TBB backend to PTL
-    static thread_local pointer _instance = pointer(new TaskRunManager(false));
-    return _instance.get();
+#if defined(TOMOPY_USE_PTL)
+    // compute some properties (expected python threads, max threads, device assignment)
+    static auto min_threads = num_threads_t(1);
+    static auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    static auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    static auto nthreads =
+        std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    return nthreads;
+#else
+    return 1;
+#endif
 }
 
 //======================================================================================//
 
-inline TaskRunManager*
-gpu_run_manager()
+inline ThreadPool*
+GetThreadPool(intmax_t num_threads = GetNumThreads())
 {
-    AutoLock l(TypeMutex<TaskRunManager>());
+#if defined(TOMOPY_USE_PTL)
     // use shared pointer so manager gets deleted when thread gets deleted
-    typedef std::unique_ptr<TaskRunManager> pointer;
+    typedef std::unique_ptr<ThreadPool> pointer;
     // first argument ensures we do not use TBB backend to PTL
-    static thread_local pointer _instance = pointer(new TaskRunManager(false));
+    static thread_local pointer _instance = nullptr;
+    if(!_instance)
+    {
+        // ensure this thread is assigned id, assign variable so no unused result warning
+        auto tid = GetThisThreadID();
+        // create the thread-pool
+        _instance.reset(new ThreadPool(num_threads));
+        // initialize the thread-local data information
+        // ThreadData*& thread_data = ThreadData::GetInstance();
+        // if(!thread_data)
+        //    thread_data = new ThreadData(tp);
+        // tell thread that initialized thread-pool to process tasks
+        // (typically master thread will only wait for other threads)
+        // thread_data->is_master = true;
+        // tell thread that it is not currently within task
+        // thread_data->within_task = false;
+        // notify
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cout << "\n"
+                  << "[" << tid << "] Initialized tasking run manager with "
+                  << _instance->size() << " threads..." << std::endl;
+    }
     // return pointer
     return _instance.get();
+#else
+    return nullptr;
+#endif
 }
 
-//======================================================================================//
-
-inline void
-init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
-{
-    // ensure this thread is assigned id, assign variable so no unused result warning
-    auto tid = GetThisThreadID();
-    // don't warn about unused variable
-    ConsumeParameters(tid);
-
-    {
-        AutoLock l(TypeMutex<TaskRunManager>());
-        if(!run_man->IsInitialized())
-        {
-            run_man->Initialize(nthreads);
-            std::cout << "\n"
-                      << "[" << tid << "] Initialized tasking run manager with "
-                      << run_man->GetThreadPool()->size() << " threads..." << std::endl;
-        }
-    }
-
-    ThreadPool* tp = run_man->GetThreadPool();
-    // initialize the thread-local data information
-    ThreadData*& thread_data = ThreadData::GetInstance();
-    if(!thread_data)
-        thread_data = new ThreadData(tp);
-    // tell thread that initialized thread-pool to process tasks
-    // (typically master thread will only wait for other threads)
-    thread_data->is_master = true;
-    // tell thread that it is not currently within task
-    thread_data->within_task = false;
-}
-
-//======================================================================================//
-//
-//
-#endif  // TOMOPY_USE_PTL
-//
-//
 //======================================================================================//
 
 struct DeviceOption
@@ -171,14 +163,13 @@ struct DeviceOption
     //  This class enables the selection of a device at runtime
     //
 public:
-    typedef std::string     string_t;
-    typedef const string_t& crstring_t;
+    using string_t = std::string;
 
     int      index;
     string_t key;
     string_t description;
 
-    DeviceOption(const int& _idx, crstring_t _key, crstring_t _desc)
+    DeviceOption(const int& _idx, const string_t& _key, const string_t& _desc)
     : index(_idx)
     , key(_key)
     , description(_desc)
@@ -199,7 +190,7 @@ public:
         return (lhs.key == rhs.key && lhs.index == rhs.index);
     }
 
-    friend bool operator==(const DeviceOption& itr, crstring_t cmp)
+    friend bool operator==(const DeviceOption& itr, const string_t& cmp)
     {
         return (!is_numeric(cmp)) ? (itr.key == tolower(cmp))
                                   : (itr.index == from_string<int>(cmp));
@@ -210,7 +201,7 @@ public:
         return !(lhs == rhs);
     }
 
-    friend bool operator!=(const DeviceOption& itr, crstring_t cmp)
+    friend bool operator!=(const DeviceOption& itr, const string_t& cmp)
     {
         return !(itr == cmp);
     }
@@ -291,6 +282,17 @@ void
 run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
 {
     bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
+
+    // explicitly set number of threads to 1 so OpenCV doesn't try to create threads
+    cv::setNumThreads(1);
+
+    // compute number of threads
+    auto nthreads = GetNumThreads();
+    // initialize thread-pool
+    auto* tp = GetThreadPool(nthreads);
+    // no warning about unused variable
+    ConsumeParameters(tp);
+
     if(use_cpu)
     {
         try
@@ -307,12 +309,24 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
 
     std::deque<DeviceOption> options;
     options.push_back(DeviceOption(0, "cpu", "Run on CPU (OpenCV)"));
+    std::string default_key = "cpu";
 
 #if defined(TOMOPY_USE_CUDA)
-    options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
-    std::string default_key = "gpu";
-#else
-    std::string default_key = "cpu";
+    auto num_devices = cuda_device_count();
+    if(num_devices > 0)
+    {
+        options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
+        default_key = "gpu";
+        // initialize nvtx data
+        init_nvtx();
+        // print device info
+        cuda_device_query();
+    }
+    else
+    {
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cerr << "##### No CUDA device(s) available #####" << std::endl;
+    }
 #endif
 
     auto default_itr =
@@ -423,12 +437,14 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
 
 //======================================================================================//
 
-template <typename Executor, typename DataArray, typename Func, typename... Args>
+template <typename DataArray, typename Func, typename... Args>
 void
-execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
+execute(int dt, DataArray& data, Func&& func, Args&&... args)
 {
+    // get the thread pool
+    auto* tp = GetThreadPool();
     // does nothing except make sure there is no warning
-    ConsumeParameters(man);
+    ConsumeParameters(tp);
 
     // Loop over slices and projection angles
     auto serial_exec = [&]() {
@@ -443,9 +459,9 @@ execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
 
     auto parallel_exec = [&]() {
 #if defined(TOMOPY_USE_PTL)
-        if(!man)
+        if(!tp)
             return false;
-        TaskGroup<void> tg(man->thread_pool());
+        TaskGroup<void> tg(tp);
         for(int p = 0; p < dt; ++p)
         {
             auto _func = std::bind(std::forward<Func>(func), std::ref(data),

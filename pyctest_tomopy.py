@@ -100,6 +100,12 @@ def configure():
                         nargs='*',
                         choices=phantom_choices,
                         default=default_phantoms)
+    parser.add_argument("--exclude-phantoms",
+                        help="Phantoms to simulate",
+                        type=str,
+                        nargs='*',
+                        choices=default_phantoms,
+                        default=None)
     parser.add_argument("--phantom-size",
                         type=int,
                         help="Size parameter for the phantom reconstructions",
@@ -174,6 +180,7 @@ def configure():
     add_option(parser, "gperf", "gperftools")
     add_option(parser, "timemory", "TiMemory")
     add_option(parser, "sanitizer", "Enable sanitizer (default=leak)")
+    add_option(parser, "tasking", "Tasking library (PTL)")
 
     parser.add_argument("--sanitizer-type", default="leak",
                         help="Set the sanitizer type",
@@ -192,6 +199,7 @@ def configure():
     add_bool_opt(args, "TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
     add_bool_opt(args, "TOMOPY_USE_SANITIZER",
                  args.enable_sanitizer, args.disable_sanitizer)
+    add_bool_opt(args, "TOMOPY_USE_PTL", args.enable_tasking, args.disable_tasking)
 
     if args.enable_sanitizer:
         args.cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))
@@ -230,6 +238,10 @@ def configure():
 
     if "none" in args.phantoms:
         args.phantoms = []
+
+    for p in args.exclude_phantoms:
+        if p in args.phantoms:
+            args.phantoms.remove(p)
 
     remove_duplicates(args.algorithms)
     remove_duplicates(args.phantoms)
@@ -281,6 +293,7 @@ def run_pyctest():
     build_name_append(platform.uname()[4], separate=False, prefix="")
     build_name_append(platform.python_version(), prefix="[Python ")
     build_name_append(args.sanitizer_type.lower(), check=args.enable_sanitizer)
+    build_name_append("PTL", check=args.enable_tasking)
     build_name_append(args.customize_build_name)
     build_name_append("coverage", check=args.coverage)
 
@@ -293,6 +306,7 @@ def run_pyctest():
     build_option_append(args.enable_sanitizer, "TOMOPY_USE_SANITIZER", "ON")
     build_option_append(args.enable_sanitizer, "SANITIZER_TYPE", args.sanitizer_type)
     build_option_append(args.coverage, "TOMOPY_USE_COVERAGE", "ON")
+
     print("TomoPy BUILD_COMMAND: '{}'...".format(pyctest.BUILD_COMMAND))
 
     #   COVERAGE_COMMAND

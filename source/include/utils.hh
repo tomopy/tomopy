@@ -182,8 +182,6 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
     for(int p = 0; p < dt; ++p)
     {
         float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
-        float theta_p_deg = theta_p_rad * degrees;
-
         cxx_rotate_ip(rot, tmp.data(), -theta_p_rad, nx, ny, CPU_NN);
         compute(rot, sum_dist, p);
     }

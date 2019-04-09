@@ -41,6 +41,7 @@ add_option("avx512", "AVX-512 optimized")
 add_option("gperf", "gperftools")
 add_option("timemory", "TiMemory")
 add_option("sanitizer", "Enable sanitizer (default=leak)")
+add_option("tasking", "Tasking library (PTL)")
 
 parser.add_argument("--sanitizer-type", default="leak",
                     help="Set the sanitizer type",
@@ -66,6 +67,7 @@ add_bool_opt("TOMOPY_USE_AVX512", args.enable_avx512, args.disable_avx512)
 add_bool_opt("TOMOPY_USE_GPERF", args.enable_gperf, args.disable_gperf)
 add_bool_opt("TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
 add_bool_opt("TOMOPY_USE_SANITIZER", args.enable_sanitizer, args.disable_sanitizer)
+add_bool_opt("TOMOPY_USE_PTL", args.enable_tasking, args.disable_tasking)
 
 if args.enable_cuda:
     cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
