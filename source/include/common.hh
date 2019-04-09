@@ -461,12 +461,13 @@ execute(int dt, DataArray& data, Func&& func, Args&&... args)
 #if defined(TOMOPY_USE_PTL)
         if(!tp)
             return false;
+        TaskManager tman(tp);
         TaskGroup<void> tg(tp);
         for(int p = 0; p < dt; ++p)
         {
             auto _func = std::bind(std::forward<Func>(func), std::ref(data),
                                    std::forward<int>(p), std::forward<Args>(args)...);
-            tg.run(_func);
+            tman.exec(tg, _func);
         }
         tg.join();
         return true;
