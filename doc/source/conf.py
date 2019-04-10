@@ -299,51 +299,6 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #ztexinfo_no_detailmenu = False
 
-# picked from http://read-the-docs.readthedocs.org/en/latest/faq.html
-class Mock(object):
+# http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports
+autodoc_mock_imports = "numpy scipy matplotlib tifffile pywt skimage DM3lib pyfftw numexpr concurrent libtomopy".split()
 
-    __all__ = []
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        return Mock()
-
-    @classmethod
-    def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name == 'c_byte':
-            return 0
-        else:
-            return Mock()
-    # https://docs.python.org/2/library/operator.html
-    def __mul__(self, other):
-        return Mock()
-    def __rmul__(self, other):
-        return Mock()
-    def __pow__(self, other):
-        return Mock()
-    def __div__(self, other):
-        return Mock()
-    def __add__(self, other):
-        return Mock()
-    def __radd__(self, other):
-        return Mock()
-    def __or__(self, other):
-        return Mock()
-    
-curFlags = Mock()
-   
-MOCK_MODULES = [
-    'numpy', 'scipy', 'scipy.misc', 'scipy.optimize', 'h5py',
-    'matplotlib', 'matplotlib.pylab', 'tifffile', 'EdfFile', 'netCDF4',
-    'spefile', 'scipy.ndimage', 'scipy.signal', 'pywt', 'scikit-image', 'skimage',
-    'skimage.io', 'skimage.filter', 'skimage.morphology', 'skimage.feature',
-    'skimage.transform', 'DM3lib', 'pyfftw', 'dxchange', 'numexpr', 'concurrent', 
-    'concurrent.futures', 'libtomopy', 
-    ]
-
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
