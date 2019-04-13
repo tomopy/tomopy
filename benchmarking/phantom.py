@@ -267,13 +267,13 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--algorithm", help="Select the algorithm",
                         default="sirt", choices=algorithms, type=str)
     parser.add_argument("-A", "--angles", help="number of angles",
-                        default=360, type=int)
+                        default=1501, type=int)
     parser.add_argument("-s", "--size", help="size of image",
                         default=512, type=int)
     parser.add_argument("-n", "--ncores", help="number of cores",
                         default=ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
-                        default="jpeg", type=str)
+                        default="png", type=str)
     parser.add_argument("-S", "--scale",
                         help="scale image by a positive factor",
                         default=1, type=int)
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     parser.add_argument("--compare", help="Generate comparison",
                         nargs='*', default=["none"], type=str)
     parser.add_argument("-i", "--num-iter", help="Number of iterations",
-                        default=10, type=int)
+                        default=50, type=int)
     parser.add_argument("-P", "--preserve-output-dir", help="Do not clean up output directory",
                         action='store_true')
     parser.add_argument("--partial", help="Enable partial reconstruction of 3D data",

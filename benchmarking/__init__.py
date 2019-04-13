@@ -328,6 +328,7 @@ def create_globus_test(args, bench_props, algorithm, phantom):
         return
 
     pyexe = pyctest.PYTHON_EXECUTABLE
+    this_dir = os.path.dirname(__file__)
 
     name = "{}_{}".format(phantom, algorithm)
     # original number of iterations before num-iter added to test name
@@ -360,6 +361,6 @@ def create_globus_test(args, bench_props, algorithm, phantom):
         cmd = [pyexe, "-Om", "benchmarking.rec", h5file]
         cmd += (global_args +
                 ["-a", algorithm,
-                "-o", "{}".format(name)])
+                "-o", os.path.join(this_dir, name)])
 
     pyctest.test(name, cmd, properties=bench_props)

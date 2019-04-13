@@ -71,7 +71,7 @@ END_EXTERN_C
 #        define NVTX_MARK(msg) nvtxMark(name)
 #    endif
 
-static void
+extern void
 init_nvtx();
 
 #else
@@ -87,11 +87,6 @@ init_nvtx();
 #    ifndef NVTX_MARK
 #        define NVTX_MARK(msg)
 #    endif
-
-inline void
-init_nvtx()
-{
-}
 
 #endif
 
@@ -127,21 +122,21 @@ GetThreadPool(intmax_t num_threads = GetNumThreads())
     typedef std::unique_ptr<ThreadPool> pointer;
     // first argument ensures we do not use TBB backend to PTL
     static thread_local pointer _instance = nullptr;
-    if(!_instance)
+    if(!_instance.get())
     {
         // ensure this thread is assigned id, assign variable so no unused result warning
         auto tid = GetThisThreadID();
         // create the thread-pool
         _instance.reset(new ThreadPool(num_threads));
         // initialize the thread-local data information
-        // ThreadData*& thread_data = ThreadData::GetInstance();
-        // if(!thread_data)
-        //    thread_data = new ThreadData(tp);
+        ThreadData*& thread_data = ThreadData::GetInstance();
+        if(!thread_data)
+            thread_data = new ThreadData(_instance.get());
         // tell thread that initialized thread-pool to process tasks
         // (typically master thread will only wait for other threads)
-        // thread_data->is_master = true;
+        thread_data->is_master = true;
         // tell thread that it is not currently within task
-        // thread_data->within_task = false;
+        thread_data->within_task = false;
         // notify
         AutoLock l(TypeMutex<decltype(std::cout)>());
         std::cout << "\n"
@@ -317,8 +312,10 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     {
         options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
         default_key = "gpu";
+#    if defined(TOMOPY_USE_NVTX)
         // initialize nvtx data
         init_nvtx();
+#    endif
         // print device info
         cuda_device_query();
     }
@@ -443,8 +440,6 @@ execute(int dt, DataArray& data, Func&& func, Args&&... args)
 {
     // get the thread pool
     auto* tp = GetThreadPool();
-    // does nothing except make sure there is no warning
-    ConsumeParameters(tp);
 
     // Loop over slices and projection angles
     auto serial_exec = [&]() {
@@ -460,18 +455,27 @@ execute(int dt, DataArray& data, Func&& func, Args&&... args)
     auto parallel_exec = [&]() {
 #if defined(TOMOPY_USE_PTL)
         if(!tp)
+        {
+            PRINT_ERROR_HERE("nullptr to thread-pool");
             return false;
-        TaskManager tman(tp);
+        }
+#    if defined(TOMOPY_USE_CUDA)
+        auto            _join = [&]() { cudaStreamSynchronize(0); };
+        TaskGroup<void> tg(_join, tp);
+#    else
         TaskGroup<void> tg(tp);
+#    endif
         for(int p = 0; p < dt; ++p)
         {
             auto _func = std::bind(std::forward<Func>(func), std::ref(data),
                                    std::forward<int>(p), std::forward<Args>(args)...);
-            tman.exec(tg, _func);
+            tg.run(_func);
         }
         tg.join();
         return true;
 #else
+        // does nothing except make sure there is no warning
+        ConsumeParameters(tp);
         return false;
 #endif
     };

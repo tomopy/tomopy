@@ -42,6 +42,13 @@
 #include "data.hh"
 #include "utils.hh"
 
+#include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <numeric>
+
 //======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
@@ -99,8 +106,7 @@ void
 sirt_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int dx, int nx,
                             int ny, const float* theta)
 {
-    static std::atomic<uintmax_t> idx;
-    auto                          cache = gpu_data[(idx++) % gpu_data.size()];
+    auto cache = gpu_data[GetThisThreadID() % gpu_data.size()];
 
     // ensure running on proper device
     cuda_set_device(cache->device());
@@ -129,12 +135,20 @@ sirt_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
 
         // forward-rotate
         cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
+        CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
         // compute simdata
         cuda_sirt_pixels_kernel<<<grid, block, 0, stream>>>(p, nx, dx, rot, data);
+        CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
         // back-rotate
         cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+        CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
         // update shared update array
         cuda_atomic_sum_kernel<<<grid, block, 0, stream>>>(update, tmp, nx * ny, 1.0f);
+        CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
         // synchronize the stream (do this frequently to avoid backlog)
         stream_sync(stream);
     }

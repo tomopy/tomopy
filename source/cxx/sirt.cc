@@ -53,7 +53,7 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
     // check to see if the C implementation is requested
-    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_SIRT", false);
+    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_MLEM", false);
     use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
     // if C implementation is requested, return non-zero (failure)
     if(use_c_algorithm)
@@ -137,9 +137,15 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
             float sum = 0.0f;
             for(int i = 0; i < nx; ++i)
                 sum += rot[d * nx + i];
-            float upd = (data[p * dx + d] - sum);
-            for(int i = 0; i < nx; ++i)
-                rot[d * nx + i] += upd;
+            if(sum != 0.0f)
+            {
+                float upd = data[p * dx + d] - sum;
+                if(std::isfinite(upd))
+                {
+                    for(int i = 0; i < nx; ++i)
+                        rot[d * nx + i] += upd;
+                }
+            }
         }
 
         // back-rotate object
@@ -165,8 +171,8 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
 //======================================================================================//
 
 void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* theta,
+         float* recon, int ngridx, int ngridy, int num_iter)
 {
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);

@@ -171,8 +171,8 @@ mlem_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
 //======================================================================================//
 
 void
-mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+mlem_cpu(const float* data, int dy, int dt, int dx, const float*, const float* theta,
+         float* recon, int ngridx, int ngridy, int num_iter)
 {
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
@@ -198,7 +198,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         // sync and reset
         CpuData::reset(cpu_data);
 
-        // execute the loop over slices and projection angles
+        // execute the loop over projection angles
         execute<data_array_t>(dt, std::ref(cpu_data), mlem_cpu_compute_projection, dy, dt,
                               dx, ngridx, ngridy, theta);
 

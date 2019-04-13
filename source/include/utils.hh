@@ -102,11 +102,10 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, CPU_NN));
     return eInterp;
@@ -271,11 +270,10 @@ ComputeGridDims(const dim3& dims, const dim3& blocks = GetBlockDims())
 inline int
 GetNppInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
                                      GetEnv<int>("TOMOPY_INTER", choices, GPU_NN));
     return eInterp;
@@ -306,7 +304,7 @@ inline void
 stream_sync(cudaStream_t _stream)
 {
     cudaStreamSynchronize(_stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(_stream);
 }
 
 //======================================================================================//
@@ -346,7 +344,7 @@ void
 cpu2gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -356,7 +354,7 @@ void
 gpu2cpu_memcpy(_Tp* _cpu, const _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -366,7 +364,7 @@ void
 gpu2gpu_memcpy(_Tp* _dst, const _Tp* _src, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_dst, _src, size * sizeof(_Tp), cudaMemcpyDeviceToDevice, stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -376,7 +374,7 @@ void
 gpu_memset(_Tp* _gpu, int value, uintmax_t size, cudaStream_t stream)
 {
     cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //======================================================================================//
@@ -387,7 +385,7 @@ gpu_malloc_and_memcpy(const _Tp* _cpu, uintmax_t size, cudaStream_t stream)
 {
     _Tp* _gpu = gpu_malloc<_Tp>(size);
     cudaMemcpyAsync(_gpu, _cpu, size * sizeof(_Tp), cudaMemcpyHostToDevice, stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
     return _gpu;
 }
 
@@ -399,7 +397,7 @@ gpu_malloc_and_memset(uintmax_t size, int value, cudaStream_t stream)
 {
     _Tp* _gpu = gpu_malloc<_Tp>(size);
     cudaMemsetAsync(_gpu, value, size * sizeof(_Tp), stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
     return _gpu;
 }
 
@@ -410,7 +408,7 @@ void
 gpu2cpu_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
     cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
     cudaFree(_gpu);
     CUDA_CHECK_LAST_ERROR();
 }
@@ -424,7 +422,7 @@ create_streams(const int nstreams, unsigned int flag = cudaStreamDefault)
     for(int i = 0; i < nstreams; ++i)
     {
         cudaStreamCreateWithFlags(&streams[i], flag);
-        CUDA_CHECK_LAST_ERROR();
+        CUDA_CHECK_LAST_STREAM_ERROR(streams[i]);
     }
     return streams;
 }
@@ -437,6 +435,7 @@ destroy_streams(cudaStream_t* streams, const int nstreams)
     for(int i = 0; i < nstreams; ++i)
     {
         cudaStreamSynchronize(streams[i]);
+        CUDA_CHECK_LAST_STREAM_ERROR(streams[i]);
         cudaStreamDestroy(streams[i]);
         CUDA_CHECK_LAST_ERROR();
     }

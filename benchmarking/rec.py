@@ -356,7 +356,7 @@ def main(arg):
     parser.add_argument("-n", "--ncores", help="number of cores",
                         default=default_ncores, type=int)
     parser.add_argument("-f", "--format", help="output image format",
-                        default="jpeg", type=str)
+                        default="png", type=str)
     parser.add_argument("-S", "--scale",
                         help="scale image by a positive factor",
                         default=1, type=int)

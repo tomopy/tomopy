@@ -105,14 +105,19 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     //----------------------------------------------------------------------------------//
     auto sync = [&]() {
         for(int i = 0; i < ns; ++i)
+        {
             stream_sync(streams[i]);
+            CUDA_CHECK_LAST_STREAM_ERROR(streams[i]);  // debug mode only
+        }
     };
     //----------------------------------------------------------------------------------//
 
-    int32_t*  rot = gpu_malloc<int32_t>(ns * nx * ny);
-    int32_t*  tmp = gpu_malloc_and_memset<int32_t>(nx * ny, 1, streams[0 % ns]);
+    int32_t* rot = gpu_malloc<int32_t>(ns * nx * ny);
+    int32_t* tmp = gpu_malloc_and_memset<int32_t>(nx * ny, 1, streams[0 % ns]);
+    CUDA_CHECK_LAST_STREAM_ERROR(streams[1 % ns]);  // debug mode only
     uint32_t* sum_dist =
         gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1 % ns]);
+    CUDA_CHECK_LAST_STREAM_ERROR(streams[1 % ns]);  // debug mode only
 
     sync();
 
@@ -133,6 +138,7 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
             auto     stream = streams[q];
             int32_t* _rot   = rot + q * nx * ny;
             cuda_rotate_ip(_rot, tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
+            CUDA_CHECK_LAST_STREAM_ERROR(stream);  // debug mode only
         }
 
         for(int q = 0; q < ns; ++q)
@@ -141,6 +147,7 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
             int32_t* _rot   = rot + q * nx * ny;
             cuda_sum_dist_compute<<<grid, block, 0, stream>>>(dy, dx, nx, ny, _rot,
                                                               sum_dist, p);
+            CUDA_CHECK_LAST_STREAM_ERROR(stream);  // debug mode only
         }
     }
 
@@ -221,12 +228,7 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
     double rot[2][3];
     getRotationMatrix2D(rot, 1.0);
 
-#if defined(DEBUG)
-    printf("theta = %5.1f\n", theta_deg);
-    print_array((double*) rot, 3, 2, "rot");
-#endif
     // #define USE_NPPI_ROTATE
-
 #if defined(USE_NPPI_ROTATE)
     NppStatus ret = nppiRotate_32s_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
                                        rot[0][2], rot[1][2], eInterp);
@@ -236,11 +238,11 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
 #endif
 
     if(ret != NPP_SUCCESS)
-        printf("[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
-               __FUNCTION__, ret);
+        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
+                __FUNCTION__, ret);
 
     NVTX_RANGE_POP(stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //======================================================================================//
@@ -286,12 +288,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     double rot[2][3];
     getRotationMatrix2D(rot, 1.0);
 
-#if defined(DEBUG)
-    printf("theta = %5.1f\n", theta_deg);
-    print_array((double*) rot, 3, 2, "rot");
-#endif
     // #define USE_NPPI_ROTATE
-
 #if defined(USE_NPPI_ROTATE)
     NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
                                        rot[0][2], rot[1][2], eInterp);
@@ -301,11 +298,11 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
 #endif
 
     if(ret != NPP_SUCCESS)
-        printf("[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
-               __FUNCTION__, ret);
+        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
+                __FUNCTION__, ret);
 
     NVTX_RANGE_POP(stream);
-    CUDA_CHECK_LAST_ERROR();
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //======================================================================================//
@@ -370,6 +367,7 @@ cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
 {
     int32_t* _dst = gpu_malloc<int32_t>(nx * ny);
     cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, eInterp, stream);
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
     return _dst;
 }
 
@@ -381,13 +379,7 @@ cuda_rotate_ip(int32_t* dst, const int32_t* src, const float theta_rad,
                const int eInterp)
 {
     cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, eInterp, stream);
-    CUDA_CHECK_LAST_ERROR();
-    /*
-    int block = 128;
-    int grid  = (ny + block - 1) / block;
-    cuda_rotate_internal_kernel<<<grid, block, 0, stream>>>(dst, src, theta_rad, nx, ny);
-    CUDA_CHECK_LAST_ERROR();
-    */
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //======================================================================================//
@@ -398,6 +390,7 @@ cuda_rotate(const float* src, const float theta_rad, const float theta_deg, cons
 {
     float* _dst = gpu_malloc<float>(nx * ny);
     cuda_rotate_kernel(_dst, src, theta_rad, theta_deg, nx, ny, eInterp, stream);
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
     return _dst;
 }
 
@@ -408,13 +401,7 @@ cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float 
                const int nx, const int ny, cudaStream_t stream, const int eInterp)
 {
     cuda_rotate_kernel(dst, src, theta_rad, theta_deg, nx, ny, eInterp, stream);
-    CUDA_CHECK_LAST_ERROR();
-    /*
-    int block = 128;
-    int grid  = (ny + block - 1) / block;
-    cuda_rotate_internal_kernel<<<grid, block, 0, stream>>>(dst, src, theta_rad, nx, ny);
-    CUDA_CHECK_LAST_ERROR();
-    */
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 }
 
 //======================================================================================//

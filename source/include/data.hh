@@ -174,11 +174,14 @@ public:
     , m_update(update)
     , m_recon(recon)
     , m_data(data)
+    , m_num_streams(
+          GetEnv<int>("TOMOPY_STREAMS_PER_THREAD", 1, "Number of streams per thread"))
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
         m_rot     = gpu_malloc<float>(m_dy * m_nx * m_ny);
         m_tmp     = gpu_malloc<float>(m_dy * m_nx * m_ny);
+        CUDA_CHECK_LAST_ERROR();
     }
 
     ~GpuData()
@@ -205,7 +208,15 @@ public:
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
-    cudaStream_t stream(int n = 0) { return m_streams[n % m_num_streams]; }
+    cudaStream_t stream(int n = -1)
+    {
+        if(n < 0)
+        {
+            // increment to next stream
+            n = m_num_stream_requests++;
+        }
+        return m_streams[n % m_num_streams];
+    }
 
 public:
     // assistant functions
@@ -281,13 +292,14 @@ protected:
     int           m_dx;
     int           m_nx;
     int           m_ny;
-    float*        m_rot;
-    float*        m_tmp;
-    float*        m_update;
-    float*        m_recon;
-    const float*  m_data;
-    int           m_num_streams = 1;
-    cudaStream_t* m_streams     = nullptr;
+    float*        m_rot         = nullptr;
+    float*        m_tmp         = nullptr;
+    float*        m_update      = nullptr;
+    float*        m_recon       = nullptr;
+    const float*  m_data        = nullptr;
+    int           m_num_streams = 0;
+    int           m_num_stream_requests;
+    cudaStream_t* m_streams = nullptr;
 };
 
 #endif  // NVCC and TOMOPY_USE_CUDA
