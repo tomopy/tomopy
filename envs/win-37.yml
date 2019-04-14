@@ -8,8 +8,6 @@ dependencies:
   - dxchange
   - git
   - h5py
-  - m2w64-gcc
-  - make
   - mkl
   - mkl-devel
   - mkl_fft
@@ -25,5 +23,5 @@ dependencies:
   - setuptools_scm
   - setuptools_scm_git_archive
   - six
-  - tbb-devel
   - timemory
+  - vs2015_win-64

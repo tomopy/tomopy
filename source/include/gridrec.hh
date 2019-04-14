@@ -88,6 +88,12 @@ typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
 //===========================================================================//
 
+float*
+cxx_malloc_vector_f(size_t n);
+
+void
+cxx_free_vector_f(float*& v);
+
 std::complex<float>*
 cxx_malloc_vector_c(size_t n);
 

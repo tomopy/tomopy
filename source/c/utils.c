@@ -259,14 +259,16 @@ void
 calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int* indi,
           float* dist)
 {
+    if(csize < 2)
+        return;
     const int _size = csize - 1;
 
     //------------------------------------------------------------------------//
     //              calculate dist
     //------------------------------------------------------------------------//
     {
-        float _diffx[_size];
-        float _diffy[_size];
+        float* _diffx = malloc(_size * sizeof(float));
+        float* _diffy = malloc(_size * sizeof(float));
 
 #pragma omp simd
         for(int n = 0; n < _size; ++n)
@@ -285,14 +287,17 @@ calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int
         {
             dist[n] = sqrtf(_diffx[n] + _diffy[n]);
         }
+
+        free(_diffx);
+        free(_diffy);
     }
 
     //------------------------------------------------------------------------//
     //              calculate indi
     //------------------------------------------------------------------------//
 
-    int _indx[_size];
-    int _indy[_size];
+    int* _indx = malloc(_size * sizeof(int));
+    int* _indy = malloc(_size * sizeof(int));
 
 #pragma omp simd
     for(int n = 0; n < _size; ++n)
@@ -315,6 +320,9 @@ calc_dist(int ry, int rz, int csize, const float* coorx, const float* coory, int
     {
         indi[n] = _indy[n] + (_indx[n] * rz);
     }
+
+    free(_indx);
+    free(_indy);
 }
 
 //======================================================================================//

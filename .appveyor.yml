@@ -39,11 +39,6 @@ install:
   - conda activate tomopy
   - conda info -a
   - conda list --explicit
-  # Check the compilers
-  - where gcc
-  - where g++
-  - set CC=gcc
-  - set CXX=g++
   - python setup.py install
 # Not a .NET project, we build in the install step instead
 build: false

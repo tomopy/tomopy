@@ -128,7 +128,7 @@ endif()
 
 if(TOMOPY_USE_OPENMP)
 
-    if(NOT c_fopenmp_simd)
+    if(NOT c_fopenmp_simd AND NOT WIN32)
         find_package(OpenMP)
 
         if(OpenMP_FOUND)
@@ -153,6 +153,9 @@ if(TOMOPY_USE_OPENMP)
             message(WARNING "OpenMP not found")
             set(TOMOPY_USE_OPENMP OFF)
         endif()
+    elseif(WIN32)
+        message(STATUS "Ignoring TOMOPY_USE_OPENMP=ON because Windows + omp simd is supported")
+        set(TOMOPY_USE_OPENMP OFF)
     else()
         message(STATUS "Ignoring TOMOPY_USE_OPENMP=ON because '-fopenmp-simd' is supported")
         set(TOMOPY_USE_OPENMP OFF)

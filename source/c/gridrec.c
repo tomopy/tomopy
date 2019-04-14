@@ -447,6 +447,11 @@ set_filter_tables(int dt, int pd, float center,
     // consists of a real filter factor [obtained from the function,
     // (*pf)()], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments.
+#if defined(TOMOPY_CXX_GRIDREC) && defined(_MSC_VER)
+    // MSVC has an issue with line:
+    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
+    // below
+#else
 
     const float norm  = M_PI / pd / dt;
     const float rtmp1 = 2 * M_PI * center / pd;
@@ -487,6 +492,8 @@ set_filter_tables(int dt, int pd, float center,
             }
         }
     }
+
+#endif
 }
 
 void
@@ -577,6 +584,9 @@ malloc_64bytes_aligned(size_t sz)
 {
 #ifdef __MINGW32__
     return __mingw_aligned_malloc(sz, 64);
+#elif defined(_MSC_VER)
+    void* r = _aligned_malloc(sz, 64);
+    return r;
 #else
     void* r   = NULL;
     int   err = posix_memalign(&r, 64, sz);

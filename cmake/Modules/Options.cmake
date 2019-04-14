@@ -10,6 +10,12 @@ include(Compilers)
 
 set(_USE_OMP ON)
 set(_USE_CUDA ON)
+set(_USE_CXX_GRIDREC OFF)
+
+# if Windows MSVC compiler, use C++ version of gridrec
+if(WIN32)
+    set(_USE_CXX_GRIDREC ON)
+endif()
 
 # GNU compiler will enable OpenMP SIMD with -fopenmp-simd
 if(CMAKE_C_COMPILER_IS_GNU)
@@ -50,7 +56,7 @@ add_option(TOMOPY_USE_OPENMP "Enable OpenMP (for SIMD -- GNU will enable without
 add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ON)
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
-add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" OFF)
+add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" ${_USE_CXX_GRIDREC})
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage for C/C++" OFF)
 add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
 add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)

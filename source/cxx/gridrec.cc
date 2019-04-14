@@ -60,6 +60,13 @@
 using namespace std::literals::complex_literals;
 #endif
 
+#if defined(_MSC_VER)
+#    if defined(__LIKELY)
+#        undef __LIKELY
+#    endif
+#    define __LIKELY(EXPR) EXPR
+#endif
+
 //===========================================================================//
 
 void
@@ -115,21 +122,21 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
     __ASSSUME_64BYTES_ALIGNED(filphase);
     H = cxx_malloc_matrix_c(pdim, pdim);
     __ASSSUME_64BYTES_ALIGNED(H);
-    wtbl = malloc_vector_f(ltbl + 1);
+    wtbl = cxx_malloc_vector_f(ltbl + 1);
     __ASSSUME_64BYTES_ALIGNED(wtbl);
-    winv = malloc_vector_f(pdim - 1);
+    winv = cxx_malloc_vector_f(pdim - 1);
     __ASSSUME_64BYTES_ALIGNED(winv);
-    J_z = malloc_vector_f(pdim2 * dt);
+    J_z = cxx_malloc_vector_f(pdim2 * dt);
     __ASSSUME_64BYTES_ALIGNED(J_z);
-    P_z = malloc_vector_f(pdim2 * dt);
+    P_z = cxx_malloc_vector_f(pdim2 * dt);
     __ASSSUME_64BYTES_ALIGNED(P_z);
     U_d = cxx_malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(U_d);
     V_d = cxx_malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(V_d);
-    work = malloc_vector_f(L + 1);
+    work = cxx_malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);
-    work2 = malloc_vector_f(L + 1);
+    work2 = cxx_malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work2);
 
     // Set up table of sines and cosines.
@@ -402,16 +409,16 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
         }
     }
 
-    free_vector_f(sine);
-    free_vector_f(cose);
+    cxx_free_vector_f(sine);
+    cxx_free_vector_f(cose);
     cxx_free_vector_c(sino);
-    free_vector_f(wtbl);
+    cxx_free_vector_f(wtbl);
     cxx_free_vector_c(filphase);
-    free_vector_f(winv);
-    free_vector_f(work);
+    cxx_free_vector_f(winv);
+    cxx_free_vector_f(work);
     cxx_free_matrix_c(H);
-    free_vector_f(J_z);
-    free_vector_f(P_z);
+    cxx_free_vector_f(J_z);
+    cxx_free_vector_f(P_z);
     cxx_free_matrix_c(U_d);
     cxx_free_matrix_c(V_d);
     DftiFreeDescriptor(&reverse_1d);
@@ -481,6 +488,23 @@ cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
 
 //===========================================================================//
 
+float*
+cxx_malloc_vector_f(size_t n)
+{
+    return new float[n];
+}
+
+//===========================================================================//
+
+void
+cxx_free_vector_f(float*& v)
+{
+    delete[] v;
+    v = nullptr;
+}
+
+//===========================================================================//
+
 std::complex<float>*
 cxx_malloc_vector_c(size_t n)
 {
@@ -492,7 +516,7 @@ cxx_malloc_vector_c(size_t n)
 void
 cxx_free_vector_c(std::complex<float>*& v)
 {
-    delete v;
+    delete[] v;
     v = nullptr;
 }
 
@@ -500,8 +524,11 @@ cxx_free_vector_c(std::complex<float>*& v)
 void*
 cxx_malloc_64bytes_aligned(size_t sz)
 {
-#ifdef __MINGW32__
+#if defined(__MINGW32__)
     return __mingw_aligned_malloc(sz, 64);
+#elif defined(_MSC_VER)
+    void* r = _aligned_malloc(sz, 64);
+    return r;
 #else
     void* r   = NULL;
     int   err = posix_memalign(&r, 64, sz);
@@ -536,12 +563,13 @@ cxx_malloc_matrix_c(size_t nr, size_t nc)
 void
 cxx_free_matrix_c(std::complex<float>**& m)
 {
-    delete m[0];
-    m[0] = nullptr;
-#ifdef __MINGW32__
+	cxx_free_vector_c(m[0]);
+#if defined(__MINGW32__)
     __mingw_aligned_free(m);
+#elif defined(_MSC_VER)
+	_aligned_free(m);
 #else
-    free(m);
+	free(m);
 #endif
     m = nullptr;
 }
