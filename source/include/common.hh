@@ -103,7 +103,12 @@ GetNumThreads()
     // compute some properties (expected python threads, max threads, device assignment)
     static auto min_threads = num_threads_t(1);
     static auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+#    if defined(TOMOPY_USE_CUDA)
+    static auto max_threads =
+        (HW_CONCURRENCY + HW_CONCURRENCY) / std::max(pythreads, min_threads);
+#    else
     static auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+#    endif
     static auto nthreads =
         std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
     return nthreads;

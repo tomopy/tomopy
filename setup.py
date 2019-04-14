@@ -84,36 +84,41 @@ if platform.system() == "Darwin":
     version = ".".join([version[0], version[1]])
     cmake_args += ["-DCMAKE_OSX_DEPLOYMENT_TARGET={}".format(version)]
 
-setup(
-    name='tomopy',
-    packages=['tomopy'],
-    package_dir={"": "source"},
-    setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
-    use_scm_version=True,
-    include_package_data=True,
-    zip_safe=False,
-    author='Doga Gursoy',
-    author_email='dgursoy@aps.anl.gov',
-    description='Tomographic Reconstruction in Python.',
-    keywords=['tomography', 'reconstruction', 'imaging'],
-    url='http://tomopy.readthedocs.org',
-    download_url='http://github.com/tomopy/tomopy.git',
-    license='BSD-3',
-    cmake_args=cmake_args,
-    cmake_languages=('C'),
-    platforms='Any',
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: BSD License',
-        'Intended Audience :: Science/Research',
-        'Intended Audience :: Education',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: C']
-)
+# suppress:
+#  "setuptools_scm/git.py:68: UserWarning: "/.../tomopy" is shallow and may cause errors"
+# since 'error' in output causes CDash to interpret warning as error
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    setup(
+        name='tomopy',
+        packages=['tomopy'],
+        package_dir={"": "source"},
+        setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
+        use_scm_version=True,
+        include_package_data=True,
+        zip_safe=False,
+        author='Doga Gursoy',
+        author_email='dgursoy@aps.anl.gov',
+        description='Tomographic Reconstruction in Python.',
+        keywords=['tomography', 'reconstruction', 'imaging'],
+        url='http://tomopy.readthedocs.org',
+        download_url='http://github.com/tomopy/tomopy.git',
+        license='BSD-3',
+        cmake_args=cmake_args,
+        cmake_languages=('C'),
+        platforms='Any',
+        classifiers=[
+            'Development Status :: 4 - Beta',
+            'License :: OSI Approved :: BSD License',
+            'Intended Audience :: Science/Research',
+            'Intended Audience :: Education',
+            'Intended Audience :: Developers',
+            'Natural Language :: English',
+            'Operating System :: OS Independent',
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
+            'Programming Language :: C']
+    )

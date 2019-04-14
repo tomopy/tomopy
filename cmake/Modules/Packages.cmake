@@ -203,12 +203,20 @@ if(TOMOPY_USE_CUDA)
         if(NVTX_LIBRARY)
             list(APPEND EXTERNAL_LIBRARIES ${NVTX_LIBRARY})
             list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_NVTX)
+        else()
+            if(TOMOPY_USE_NVTX)
+                set(TOMOPY_USE_NVTX OFF)
+            endif()
         endif()
 
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
             -arch=sm_${CUDA_ARCH}
-            --default-stream per-thread
-            --compiler-bindir=${CMAKE_CXX_COMPILER})
+            --default-stream per-thread)
+
+        if(NOT WIN32)
+            list(APPEND ${PROJECT_NAME}_CUDA_FLAGS}
+                --compiler-bindir=${CMAKE_CXX_COMPILER})
+        endif()
 
         add_option(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT "Enable setting maximum register count" OFF)
         if(TOMOPY_USE_CUDA_MAX_REGISTER_COUNT)

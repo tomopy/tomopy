@@ -178,7 +178,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     cv::setNumThreads(1);
-    
+
     TIMEMORY_AUTO_TIMER("");
 
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);

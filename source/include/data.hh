@@ -174,8 +174,7 @@ public:
     , m_update(update)
     , m_recon(recon)
     , m_data(data)
-    , m_num_streams(
-          GetEnv<int>("TOMOPY_STREAMS_PER_THREAD", 1, "Number of streams per thread"))
+    , m_num_streams(GetEnv<int>("TOMOPY_STREAMS_PER_THREAD", 1))
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);

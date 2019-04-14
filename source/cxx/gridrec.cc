@@ -563,13 +563,13 @@ cxx_malloc_matrix_c(size_t nr, size_t nc)
 void
 cxx_free_matrix_c(std::complex<float>**& m)
 {
-	cxx_free_vector_c(m[0]);
+    cxx_free_vector_c(m[0]);
 #if defined(__MINGW32__)
     __mingw_aligned_free(m);
 #elif defined(_MSC_VER)
-	_aligned_free(m);
+    _aligned_free(m);
 #else
-	free(m);
+    free(m);
 #endif
     m = nullptr;
 }
