@@ -95,17 +95,9 @@ cuda_shared_memory_per_block();
 //     NOTE: if compiled with GPU support but no devices, will call CPU version
 DLL int
 cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-// directly call the CPU version
-DLL void
-mlem_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-// directly call the GPU version
-DLL void
-mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+         int pool_size, const char* interp, const char* device, int* grid_size,
+         int* block_size);
 
 //======================================================================================//
 //
@@ -117,17 +109,9 @@ mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
 //     NOTE: if compiled with GPU support but no devices, will call CPU version
 DLL int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-// directly call the CPU version
-DLL void
-sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
-
-// directly call the GPU version
-DLL void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter);
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+         int pool_size, const char* interp, const char* device, int* grid_size,
+         int* block_size);
 
 //======================================================================================//
 

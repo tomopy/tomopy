@@ -107,6 +107,9 @@ def run(phantom, algorithm, args, get_recon=False):
     if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = args.num_iter
 
+    # use the accelerated version
+    _kwargs["accelerated"] = True
+
     print("kwargs: {}".format(_kwargs))
     with timemory.util.auto_timer("[tomopy.recon(algorithm='{}')]".format(
                                   algorithm)):

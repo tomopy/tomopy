@@ -97,7 +97,7 @@ cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int32_t* ones,
 uint32_t*
 cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    auto ns      = GetNumMasterStreams(1);
+    auto ns      = 1;
     auto streams = create_streams(ns, cudaStreamNonBlocking);
     auto block   = GetBlockDims(dim3(32, 32, 1));
     auto grid    = ComputeGridDims(dim3(nx, dt, dy), block);

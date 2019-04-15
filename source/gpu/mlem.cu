@@ -138,7 +138,8 @@ mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
         float*       tmp    = cache->tmp() + s * nx * ny;
 
         // forward-rotate
-        cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream);
+        cuda_rotate_ip(rot, recon, -theta_p_rad, -theta_p_deg, nx, ny, stream,
+                       cache->interpolation());
         CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
         // compute simdata
@@ -146,7 +147,8 @@ mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
         CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
         // back-rotate
-        cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream);
+        cuda_rotate_ip(tmp, rot, theta_p_rad, theta_p_deg, nx, ny, stream,
+                       cache->interpolation());
         CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
         // update shared update array
@@ -162,7 +164,7 @@ mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
 
 void
 mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float*, const float* theta,
-          float* cpu_recon, int ngridx, int ngridy, int num_iter)
+          float* cpu_recon, int ngridx, int ngridy, int num_iter, RuntimeOptions* opts)
 {
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
@@ -185,7 +187,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float*, const flo
     auto         grid         = ComputeGridSize(recon_pixels, block);
     auto         main_stream  = create_streams(1);
     float*       update    = gpu_malloc_and_memset<float>(recon_pixels, 0, *main_stream);
-    init_data_t  init_data = GpuData::initialize(device, dy, dt, dx, ngridx, ngridy,
+    init_data_t  init_data = GpuData::initialize(opts, device, dy, dt, dx, ngridx, ngridy,
                                                 cpu_recon, cpu_data, update);
     data_array_t gpu_data  = std::get<0>(init_data);
     float*       recon     = std::get<1>(init_data);
@@ -211,8 +213,8 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float*, const flo
         GpuData::sync(gpu_data);
 
         // execute the loop over slices and projection angles
-        execute<data_array_t>(dt, std::ref(gpu_data), mlem_gpu_compute_projection, dy, dt,
-                              dx, ngridx, ngridy, theta);
+        execute<data_array_t>(opts, dt, std::ref(gpu_data), mlem_gpu_compute_projection,
+                              dy, dt, dx, ngridx, ngridy, theta);
 
         // sync the thread streams
         GpuData::sync(gpu_data);

@@ -117,6 +117,9 @@ def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
     # assign number of cores
     _kwargs["ncore"] = ncores
 
+    # use the accelerated version
+    _kwargs["accelerated"] = True
+
     # don't assign "num_iter" if gridrec or fbp
     if algorithm not in ["fbp", "gridrec"]:
         _kwargs["num_iter"] = nitr

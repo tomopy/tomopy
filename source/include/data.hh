@@ -52,6 +52,205 @@
 #include "typedefs.hh"
 #include "utils.hh"
 
+#include <array>
+#include <atomic>
+
+//======================================================================================//
+
+struct RuntimeOptions
+{
+    num_threads_t        pool_size     = HW_CONCURRENCY;
+    int                  interpolation = -1;
+    DeviceOption         device;
+    std::array<int, 3>   block_size = { 32, 32, 1 };
+    std::array<int, 3>   grid_size  = { 0, 0, 0 };
+    unique_thread_pool_t thread_pool;
+
+    RuntimeOptions(int _pool_size, const char* _interp, const char* _device,
+                   int* _grid_size, int* _block_size)
+    : pool_size(scast<num_threads_t>(_pool_size))
+    , device(GetDevice(_device))
+    {
+        memcpy(grid_size.data(), _grid_size, 3 * sizeof(int));
+        memcpy(block_size.data(), _block_size, 3 * sizeof(int));
+        CreateThreadPool(thread_pool, pool_size);
+
+        if(device.key == "gpu")
+        {
+#if defined(TOMOPY_USE_CUDA)
+            interpolation = GetNppInterpolationMode(_interp);
+#else
+            interpolation = GetOpenCVInterpolationMode(_interp);
+#endif
+        }
+        else
+        {
+            interpolation = GetOpenCVInterpolationMode(_interp);
+        }
+    }
+
+    ~RuntimeOptions() {}
+
+    // disable copying and copy assignment
+    RuntimeOptions(const RuntimeOptions&) = delete;
+    RuntimeOptions& operator=(const RuntimeOptions&) = delete;
+
+    // invoke the generic printer defined in common.hh
+    template <typename... _Descriptions, typename... _Objects>
+    void print(std::tuple<_Descriptions...>&& _descripts, std::tuple<_Objects...>&& _objs,
+               std::ostream& os, intmax_t _prefix_width, intmax_t _obj_width,
+               std::ios_base::fmtflags format_flags, bool endline) const
+    {
+        // tuple of descriptions
+        using DescriptType = std::tuple<_Descriptions...>;
+        // tuple of objects to print
+        using ObjectType = std::tuple<_Objects...>;
+        // the operator that does the printing (see end of
+        using UnrollType = std::tuple<internal::GenericPrinter<_Objects>...>;
+
+        internal::apply::unroll<UnrollType>(std::forward<DescriptType>(_descripts),
+                                            std::forward<ObjectType>(_objs), std::ref(os),
+                                            _prefix_width, _obj_width, format_flags,
+                                            endline);
+    }
+
+    // overload the output operator for the class
+    friend std::ostream& operator<<(std::ostream& os, const RuntimeOptions& opts)
+    {
+        std::stringstream ss;
+        opts.print(std::make_tuple("Thread-pool size", "Interpolation mode", "Device",
+                                   "Grid size", "Block size"),
+                   std::make_tuple(opts.pool_size, opts.interpolation, opts.device,
+                                   opts.block_size, opts.grid_size),
+                   ss, 30, 20, std::ios::boolalpha, true);
+        os << ss.str();
+        return os;
+    }
+};
+
+//======================================================================================//
+
+struct Registration
+{
+    Registration() {}
+
+    int initialize()
+    {
+        // make sure this thread has a registered thread-id
+        GetThisThreadID();
+        // count the active threads
+        return active()++;
+    }
+
+    void cleanup(RuntimeOptions* opts)
+    {
+        auto tid    = GetThisThreadID();
+        auto remain = --active();
+
+        if(remain == 0)
+        {
+            std::stringstream ss;
+            ss << *opts << std::endl;
+#if defined(TOMOPY_USE_CUDA)
+            for(int i = 0; i < cuda_device_count(); ++i)
+            {
+                // set the device
+                cudaSetDevice(i);
+                // sync the device
+                cudaDeviceSynchronize();
+                // reset the device
+                cudaDeviceReset();
+            }
+#endif
+        }
+        else
+        {
+            printf("[%lu] Threads remaining: %i...\n", tid, remain);
+        }
+    }
+
+    static std::atomic<int>& active()
+    {
+        static std::atomic<int> _active;
+        return _active;
+    }
+};
+
+//======================================================================================//
+
+#if defined(TOMOPY_USE_PTL)
+
+//--------------------------------------------------------------------------------------//
+// when PTL thread-pool is available
+//
+template <typename DataArray, typename Func, typename... Args>
+void
+execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... args)
+{
+    // get the thread pool
+    auto& tp   = ops->thread_pool;
+    auto  join = [&]() { stream_sync(0); };
+    assert(tp != nullptr);
+
+    try
+    {
+        tomopy::TaskGroup<void> tg(join, tp.get());
+        for(int p = 0; p < dt; ++p)
+        {
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
+                                   std::forward<int>(p), std::forward<Args>(args)...);
+            tg.run(_func);
+        }
+        tg.join();
+    }
+    catch(const std::exception& e)
+    {
+        std::stringstream ss;
+        ss << "\n\nError executing :: " << e.what() << "\n\n";
+        {
+            AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << e.what() << std::endl;
+        }
+        throw std::runtime_error(ss.str().c_str());
+    }
+}
+
+#else
+
+//--------------------------------------------------------------------------------------//
+// when PTL thread-pool is not available
+//
+template <typename DataArray, typename Func, typename... Args>
+void
+execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... args)
+{
+    // sync streams
+    auto join = [&]() { stream_sync(0); };
+
+    try
+    {
+        for(int p = 0; p < dt; ++p)
+        {
+            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
+                                   std::forward<int>(p), std::forward<Args>(args)...);
+            _func();
+        }
+        join();
+    }
+    catch(const std::exception& e)
+    {
+        std::stringstream ss;
+        ss << "\n\nError executing :: " << e.what() << "\n\n";
+        {
+            AutoLock l(TypeMutex<decltype(std::cout)>());
+            std::cerr << e.what() << std::endl;
+        }
+        throw std::runtime_error(ss.str().c_str());
+    }
+}
+
+#endif
+
 //======================================================================================//
 
 class CpuData
@@ -63,7 +262,7 @@ public:
 
 public:
     CpuData(unsigned id, int dy, int dt, int dx, int nx, int ny, const float* data,
-            float* recon, float* update)
+            float* recon, float* update, int interp)
     : m_id(id)
     , m_dy(dy)
     , m_dt(dt)
@@ -75,6 +274,7 @@ public:
     , m_update(update)
     , m_recon(recon)
     , m_data(data)
+    , m_interp(interp)
     {
     }
 
@@ -90,6 +290,8 @@ public:
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
+
+    int interpolation() const { return m_interp; }
 
     Mutex* upd_mutex() const
     {
@@ -108,15 +310,16 @@ public:
 
 public:
     // static functions
-    static init_data_t initialize(int dy, int dt, int dx, int ngridx, int ngridy,
-                                  float* recon, const float* data, float* update)
+    static init_data_t initialize(RuntimeOptions* opts, int dy, int dt, int dx,
+                                  int ngridx, int ngridy, float* recon, const float* data,
+                                  float* update)
     {
-        auto         nthreads = GetNumThreads();
+        auto         nthreads = opts->pool_size;
         data_array_t cpu_data(nthreads);
-        for(unsigned ii = 0; ii < nthreads; ++ii)
+        for(num_threads_t ii = 0; ii < nthreads; ++ii)
         {
-            cpu_data[ii] = data_ptr_t(
-                new CpuData(ii, dy, dt, dx, ngridx, ngridy, data, recon, update));
+            cpu_data[ii] = data_ptr_t(new CpuData(ii, dy, dt, dx, ngridx, ngridy, data,
+                                                  recon, update, opts->interpolation));
         }
         return init_data_t(cpu_data, recon, data);
     }
@@ -140,6 +343,7 @@ protected:
     float*       m_update;
     float*       m_recon;
     const float* m_data;
+    int          m_interp;
 };
 
 //======================================================================================//
@@ -159,11 +363,11 @@ public:
 
 public:
     // ctors, dtors, assignment
-    GpuData(int device, int dy, int dt, int dx, int nx, int ny, const float* data,
-            float* recon, float* update)
+    GpuData(int device, int grid_size, int block_size, int dy, int dt, int dx, int nx,
+            int ny, const float* data, float* recon, float* update, int interp)
     : m_device(device)
-    , m_grid(GetGridSize())
-    , m_block(GetBlockSize())
+    , m_grid(grid_size)
+    , m_block(block_size)
     , m_dy(dy)
     , m_dt(dt)
     , m_dx(dx)
@@ -174,7 +378,8 @@ public:
     , m_update(update)
     , m_recon(recon)
     , m_data(data)
-    , m_num_streams(GetEnv<int>("TOMOPY_STREAMS_PER_THREAD", 1))
+    , m_num_streams(1)
+    , m_interp(interp)
     {
         cuda_set_device(m_device);
         m_streams = create_streams(m_num_streams, cudaStreamNonBlocking);
@@ -207,6 +412,7 @@ public:
     float*       recon() { return m_recon; }
     const float* recon() const { return m_recon; }
     const float* data() const { return m_data; }
+    int          interpolation() const { return m_interp; }
     cudaStream_t stream(int n = -1)
     {
         if(n < 0)
@@ -244,21 +450,22 @@ public:
 
 public:
     // static functions
-    static init_data_t initialize(int device, int dy, int dt, int dx, int ngridx,
-                                  int ngridy, float* cpu_recon, const float* cpu_data,
-                                  float* update)
+    static init_data_t initialize(RuntimeOptions* opts, int device, int dy, int dt,
+                                  int dx, int ngridx, int ngridy, float* cpu_recon,
+                                  const float* cpu_data, float* update)
     {
-        auto      nthreads = GetNumThreads();
+        auto      nthreads = opts->pool_size;
         uintmax_t nstreams = 2;
         auto      streams  = create_streams(nstreams, cudaStreamNonBlocking);
         float*    recon =
             gpu_malloc_and_memcpy<float>(cpu_recon, dy * ngridx * ngridy, streams[0]);
         float* data = gpu_malloc_and_memcpy<float>(cpu_data, dy * dt * dx, streams[1]);
         data_array_t gpu_data(nthreads);
-        for(int ii = 0; ii < nthreads; ++ii)
+        for(num_threads_t ii = 0; ii < nthreads; ++ii)
         {
             gpu_data[ii] = data_ptr_t(
-                new GpuData(device, dy, dt, dx, ngridx, ngridy, data, recon, update));
+                new GpuData(device, opts->grid_size[0], opts->block_size[0], dy, dt, dx,
+                            ngridx, ngridy, data, recon, update, opts->interpolation));
         }
 
         // synchronize and destroy
@@ -299,6 +506,7 @@ protected:
     int           m_num_streams = 0;
     int           m_num_stream_requests;
     cudaStream_t* m_streams = nullptr;
+    int           m_interp;
 };
 
 #endif  // NVCC and TOMOPY_USE_CUDA

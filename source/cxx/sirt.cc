@@ -40,6 +40,7 @@
 #include "common.hh"
 #include "data.hh"
 #include "utils.hh"
+#include <cstdlib>
 
 //======================================================================================//
 
@@ -48,61 +49,70 @@ typedef CpuData::data_array_t data_array_t;
 
 //======================================================================================//
 
+// directly call the CPU version
+DLL void
+sirt_cpu(const float* data, int dy, int dt, int dx, const float* center,
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+         RuntimeOptions*);
+
+// directly call the GPU version
+DLL void
+sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+          RuntimeOptions*);
+
+//======================================================================================//
+
 int
 cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+         int pool_size, const char* interp, const char* device, int* grid_size,
+         int* block_size)
 {
-    // check to see if the C implementation is requested
-    bool use_c_algorithm = GetEnv<bool>("TOMOPY_USE_C_MLEM", false);
-    use_c_algorithm      = GetEnv<bool>("TOMOPY_USE_C_ALGORITHMS", use_c_algorithm);
-    // if C implementation is requested, return non-zero (failure)
-    if(use_c_algorithm)
-        return scast<int>(false);
-
     auto tid = GetThisThreadID();
-    ConsumeParameters(tid);
-    static std::atomic<int> active;
-    int                     count = active++;
+    // registration
+    static Registration registration;
+    // local count for the thread
+    int count = registration.initialize();
+    // number of threads started at Python level
+    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+
+    // configured runtime options
+    RuntimeOptions opts(pool_size, interp, device, grid_size, block_size);
 
     START_TIMER(cxx_timer);
     TIMEMORY_AUTO_TIMER("");
 
-    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+    printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n", tid,
+           __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
+    try
     {
-        TIMEMORY_AUTO_TIMER("");
-        run_algorithm(sirt_cpu, sirt_cuda, data, dy, dt, dx, center, theta, recon, ngridx,
-                      ngridy, num_iter);
-    }
-
-    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    auto remain = --active;
-    REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
-    if(remain == 0)
-    {
-        std::stringstream ss;
-        PrintEnv(ss);
-        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
-               ss.str().c_str());
-#if defined(TOMOPY_USE_CUDA)
-        for(int i = 0; i < cuda_device_count(); ++i)
+        if(opts.device.key == "gpu")
         {
-            // set the device
-            cudaSetDevice(i);
-            // sync the device
-            cudaDeviceSynchronize();
-            // reset the device
-            cudaDeviceReset();
+            sirt_cuda(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                      &opts);
         }
-#endif
+        else
+        {
+            sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
+                     &opts);
+        }
     }
-    else
+    catch(std::exception& e)
     {
-        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(), remain);
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        std::cerr << "[TID: " << tid << "] " << e.what()
+                  << "\nFalling back to CPU algorithm..." << std::endl;
+        // return failure code
+        return EXIT_FAILURE;
     }
 
-    return scast<int>(true);
+    registration.cleanup(&opts);
+    REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
+
+    // return successful code
+    return EXIT_SUCCESS;
 }
 
 //======================================================================================//
@@ -129,7 +139,7 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
         cache->reset();
 
         // forward-rotate
-        cxx_rotate_ip<float>(rot, recon, -theta_p, nx, ny);
+        cxx_rotate_ip<float>(rot, recon, -theta_p, nx, ny, cache->interpolation());
 
         // compute simdata
         for(int d = 0; d < dx; ++d)
@@ -149,7 +159,7 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
         }
 
         // back-rotate object
-        cxx_rotate_ip<float>(tmp, rot.data(), theta_p, nx, ny);
+        cxx_rotate_ip<float>(tmp, rot.data(), theta_p, nx, ny, cache->interpolation());
 
         // update local update array
         for(uintmax_t i = 0; i < scast<uintmax_t>(nx * ny); ++i)
@@ -172,19 +182,17 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
 
 void
 sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* theta,
-         float* recon, int ngridx, int ngridy, int num_iter)
+         float* recon, int ngridx, int ngridy, int num_iter, RuntimeOptions* opts)
 {
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
-
-    cv::setNumThreads(1);
 
     TIMEMORY_AUTO_TIMER("");
 
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
     farray_t    update(recon_pixels, 0.0f);
     init_data_t init_data =
-        CpuData::initialize(dy, dt, dx, ngridx, ngridy, recon, data, update.data());
+        CpuData::initialize(opts, dy, dt, dx, ngridx, ngridy, recon, data, update.data());
     data_array_t cpu_data = std::get<0>(init_data);
     iarray_t     sum_dist = cxx_compute_sum_dist(dy, dt, dx, ngridx, ngridy, theta);
 
@@ -201,8 +209,8 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
         CpuData::reset(cpu_data);
 
         // execute the loop over projection angles
-        execute<data_array_t>(dt, std::ref(cpu_data), sirt_cpu_compute_projection, dy, dt,
-                              dx, ngridx, ngridy, theta);
+        execute<data_array_t>(opts, dt, std::ref(cpu_data), sirt_cpu_compute_projection,
+                              dy, dt, dx, ngridx, ngridy, theta);
 
         // update the global recon with global update and sum_dist
         for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
@@ -225,9 +233,10 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
 #if !defined(TOMOPY_USE_CUDA)
 void
 sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
+          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
+          RuntimeOptions* opts)
 {
-    sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter);
+    sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter, opts);
 }
 #endif
 //======================================================================================//

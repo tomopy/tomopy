@@ -100,23 +100,20 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 //--------------------------------------------------------------------------------------//
 
 inline int
-GetOpenCVInterpolationMode()
+GetOpenCVInterpolationMode(const std::string& preferred)
 {
-    static EnvChoiceList<int> choices =
+    EnvChoiceList<int> choices =
         { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
           EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
           EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
-    static int eInterp = GetEnv<int>("TOMOPY_OPENCV_INTER", choices,
-                                     GetEnv<int>("TOMOPY_INTER", choices, CPU_NN));
-    return eInterp;
+    return GetChoice<int>(choices, preferred);
 }
 
 //--------------------------------------------------------------------------------------//
 
 inline cv::Mat
 opencv_affine_transform(const cv::Mat& warp_src, double theta, const int& nx,
-                        const int& ny, int eInterp = GetOpenCVInterpolationMode(),
-                        double scale = 1.0)
+                        const int& ny, int eInterp, double scale = 1.0)
 {
     cv::Mat   warp_dst = cv::Mat::zeros(nx, ny, warp_src.type());
     double    cx       = 0.5 * ny + ((ny % 2 == 0) ? 0.5 : 0.0);
@@ -132,8 +129,7 @@ opencv_affine_transform(const cv::Mat& warp_src, double theta, const int& nx,
 template <typename _Tp>
 void
 cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const int& nx,
-              const int& ny, int eInterp = GetOpenCVInterpolationMode(),
-              double scale = 1.0)
+              const int& ny, int eInterp, double scale = 1.0)
 {
     cv::Mat warp_src = cv::Mat::zeros(nx, ny, OpenCVDataType<_Tp>::value());
     memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
@@ -147,7 +143,7 @@ cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const int& nx,
 template <typename _Tp>
 array_t<_Tp>
 cxx_rotate(const _Tp* src, double theta, const intmax_t& nx, const intmax_t& ny,
-           int eInterp = GetOpenCVInterpolationMode(), double scale = 1.0)
+           int eInterp, double scale = 1.0)
 {
     array_t<_Tp> dst(nx * ny, _Tp());
     cxx_rotate_ip(dst, src, theta, nx, ny, eInterp, scale);
@@ -190,16 +186,30 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 
 //======================================================================================//
 //
-#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
-//
+#if defined(TOMOPY_USE_CUDA)
+
+//======================================================================================//
+// interpolation types
+#    define GPU_NN NPPI_INTER_NN
+#    define GPU_LINEAR NPPI_INTER_LINEAR
+#    define GPU_CUBIC NPPI_INTER_CUBIC
+
 //======================================================================================//
 
 inline int
-GetNumMasterStreams(const int& init = 1)
+GetNppInterpolationMode(const std::string& preferred)
 {
-    return std::max(GetEnv<int>("TOMOPY_NUM_STREAMS", init), 1);
+    EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    return GetChoice<int>(choices, preferred);
 }
 
+//======================================================================================//
+//
+#    if defined(__NVCC__)
+//
 //======================================================================================//
 
 inline int
@@ -260,26 +270,6 @@ ComputeGridDims(const dim3& dims, const dim3& blocks = GetBlockDims())
 }
 
 //======================================================================================//
-// interpolation types
-#    define GPU_NN NPPI_INTER_NN
-#    define GPU_LINEAR NPPI_INTER_LINEAR
-#    define GPU_CUBIC NPPI_INTER_CUBIC
-
-//======================================================================================//
-
-inline int
-GetNppInterpolationMode()
-{
-    static EnvChoiceList<int> choices =
-        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
-    static int eInterp = GetEnv<int>("TOMOPY_NPP_INTER", choices,
-                                     GetEnv<int>("TOMOPY_INTER", choices, GPU_NN));
-    return eInterp;
-}
-
-//======================================================================================//
 
 inline int&
 this_thread_device()
@@ -287,24 +277,15 @@ this_thread_device()
     // this creates a globally accessible function for determining the device
     // the thread is assigned to
     //
-#    if defined(TOMOPY_USE_CUDA)
+#        if defined(TOMOPY_USE_CUDA)
     static std::atomic<int> _ntid(0);
     static thread_local int _instance =
         (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
     return _instance;
-#    else
+#        else
     static thread_local int _instance = 0;
     return _instance;
-#    endif
-}
-
-//======================================================================================//
-
-inline void
-stream_sync(cudaStream_t _stream)
-{
-    cudaStreamSynchronize(_stream);
-    CUDA_CHECK_LAST_STREAM_ERROR(_stream);
+#        endif
 }
 
 //======================================================================================//
@@ -516,30 +497,29 @@ reduce(float* _in, float* _out, int size);
 
 DLL int32_t*
     cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
-                const int nx, const int ny, cudaStream_t stream = 0,
-                const int eInterp = GetNppInterpolationMode());
+                const int nx, const int ny, cudaStream_t stream, const int eInterp);
 
 //--------------------------------------------------------------------------------------//
 
 DLL float*
 cuda_rotate(const float* src, const float theta_rad, const float theta_deg, const int nx,
-            const int ny, cudaStream_t stream = 0,
-            const int eInterp = GetNppInterpolationMode());
+            const int ny, cudaStream_t stream, const int eInterp);
 
 //--------------------------------------------------------------------------------------//
 
 DLL void
 cuda_rotate_ip(int32_t* dst, const int32_t* src, const float theta_rad,
-               const float theta_deg, const int nx, const int ny, cudaStream_t stream = 0,
-               const int eInterp = GetNppInterpolationMode());
+               const float theta_deg, const int nx, const int ny, cudaStream_t stream,
+               const int eInterp);
 
 //--------------------------------------------------------------------------------------//
 
 DLL void
 cuda_rotate_ip(float* dst, const float* src, const float theta_rad, const float theta_deg,
-               const int nx, const int ny, cudaStream_t stream = 0,
-               const int eInterp = GetNppInterpolationMode());
+               const int nx, const int ny, cudaStream_t stream, const int eInterp);
 
 //======================================================================================//
 
-#endif  // NVCC and TOMOPY_USE_CUDA
+#    endif  // NVCC
+
+#endif  // TOMOPY_USE_CUDA

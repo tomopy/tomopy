@@ -55,6 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import six
+import copy
 import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
@@ -71,6 +72,10 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['recon', 'init_tomo']
 
+allowed_accelerated_kwargs = {
+    'mlem': ['pool_size', 'interpolation', 'device', 'grid_size', 'block_size'],
+    'sirt': ['pool_size', 'interpolation', 'device', 'grid_size', 'block_size'],
+}
 
 allowed_recon_kwargs = {
     'art': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -78,7 +83,7 @@ allowed_recon_kwargs = {
              'num_block', 'ind_block'],
     'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
     'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
-    'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
+    'mlem': ['num_gridx', 'num_gridy', 'num_iter', 'accelerated'],
     'osem': ['num_gridx', 'num_gridy', 'num_iter',
              'num_block', 'ind_block'],
     'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
@@ -87,7 +92,7 @@ allowed_recon_kwargs = {
                    'reg_par', 'num_block', 'ind_block'],
     'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-    'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
+    'sirt': ['num_gridx', 'num_gridy', 'num_iter', 'accelerated'],
     'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
 }
@@ -251,18 +256,22 @@ def recon(
 
     if isinstance(algorithm, six.string_types):
 
+        allowed_kwargs = copy.copy(allowed_recon_kwargs)
+        if algorithm in allowed_accelerated_kwargs:
+            allowed_kwargs[algorithm] += allowed_accelerated_kwargs[algorithm]
+
         # Check whether we have an allowed method
-        if algorithm not in allowed_recon_kwargs:
+        if algorithm not in allowed_kwargs:
             raise ValueError(
                 'Keyword "algorithm" must be one of %s, or a Python method.' %
-                (list(allowed_recon_kwargs.keys()),))
+                (list(allowed_kwargs.keys()),))
 
         # Make sure have allowed kwargs appropriate for algorithm.
         for key, value in list(kwargs.items()):
-            if key not in allowed_recon_kwargs[algorithm]:
+            if key not in allowed_kwargs[algorithm]:
                 raise ValueError(
                     '%s keyword not in allowed keywords %s' %
-                    (key, allowed_recon_kwargs[algorithm]))
+                    (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
                 if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
@@ -274,7 +283,7 @@ def recon(
                         kwargs[key] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
-        for kw in allowed_recon_kwargs[algorithm]:
+        for kw in allowed_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
 
     elif hasattr(algorithm, '__call__'):
@@ -410,4 +419,10 @@ def _get_algorithm_kwargs(shape):
         'num_block': dtype.as_int32(1),
         'ind_block': np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
         'options': {},
+        'accelerated': False,
+        'pool_size': 0, # if zero, calculate based on threads started at Python level
+        'interpolation': 'NN', # interpolation method (NN = nearest-neighbor, LINEAR, CUBIC)
+        'device': 'gpu',
+        'grid_size': np.array([0, 0, 0], dtype='int32'), # CUDA grid size. If zero, dynamically computed
+        'block_size': np.array([32, 32, 1], dtype='int32'), # CUDA threads per block
     }

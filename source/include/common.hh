@@ -49,125 +49,81 @@ END_EXTERN_C
 
 //======================================================================================//
 //
-//      NVTX macros
-//
-//======================================================================================//
-
-#if defined(TOMOPY_USE_NVTX)
-#    include <nvToolsExt.h>
-
-#    ifndef NVTX_RANGE_PUSH
-#        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
-#    endif
-#    ifndef NVTX_RANGE_POP
-#        define NVTX_RANGE_POP(obj)                                                      \
-            cudaStreamSynchronize(obj);                                                  \
-            nvtxRangePop()
-#    endif
-#    ifndef NVTX_NAME_THREAD
-#        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)
-#    endif
-#    ifndef NVTX_MARK
-#        define NVTX_MARK(msg) nvtxMark(name)
-#    endif
-
-extern void
-init_nvtx();
-
-#else
-#    ifndef NVTX_RANGE_PUSH
-#        define NVTX_RANGE_PUSH(obj)
-#    endif
-#    ifndef NVTX_RANGE_POP
-#        define NVTX_RANGE_POP(obj)
-#    endif
-#    ifndef NVTX_NAME_THREAD
-#        define NVTX_NAME_THREAD(num, name)
-#    endif
-#    ifndef NVTX_MARK
-#        define NVTX_MARK(msg)
-#    endif
-
-#endif
-
-//======================================================================================//
-//
 //  The following section provides functions for the initialization of the tasking library
 //
 //======================================================================================//
 
-inline num_threads_t
-GetNumThreads()
+// get a unique pointer to a thread-pool
+//
+inline void
+CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
 {
-#if defined(TOMOPY_USE_PTL)
-    // compute some properties (expected python threads, max threads, device assignment)
-    static auto min_threads = num_threads_t(1);
-    static auto pythreads   = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-#    if defined(TOMOPY_USE_CUDA)
-    static auto max_threads =
-        (HW_CONCURRENCY + HW_CONCURRENCY) / std::max(pythreads, min_threads);
-#    else
-    static auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
-#    endif
-    static auto nthreads =
-        std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    return nthreads;
-#else
-    return 1;
-#endif
-}
-
-//======================================================================================//
-
-inline ThreadPool*
-GetThreadPool(intmax_t num_threads = GetNumThreads())
-{
-#if defined(TOMOPY_USE_PTL)
-    // use shared pointer so manager gets deleted when thread gets deleted
-    typedef std::unique_ptr<ThreadPool> pointer;
-    // first argument ensures we do not use TBB backend to PTL
-    static thread_local pointer _instance = nullptr;
-    if(!_instance.get())
+    auto min_threads = num_threads_t(1);
+    if(pool_size <= 0)
     {
-        // ensure this thread is assigned id, assign variable so no unused result warning
-        auto tid = GetThisThreadID();
-        // create the thread-pool
-        _instance.reset(new ThreadPool(num_threads));
-        // initialize the thread-local data information
-        ThreadData*& thread_data = ThreadData::GetInstance();
-        if(!thread_data)
-            thread_data = new ThreadData(_instance.get());
-        // tell thread that initialized thread-pool to process tasks
-        // (typically master thread will only wait for other threads)
-        thread_data->is_master = true;
-        // tell thread that it is not currently within task
-        thread_data->within_task = false;
-        // notify
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cout << "\n"
-                  << "[" << tid << "] Initialized tasking run manager with "
-                  << _instance->size() << " threads..." << std::endl;
-    }
-    // return pointer
-    return _instance.get();
+#if defined(TOMOPY_USE_PTL)
+        // compute some properties (expected python threads, max threads)
+        auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+#    if defined(TOMOPY_USE_CUDA)
+        // general oversubscription when CUDA is enabled
+        auto max_threads =
+            (HW_CONCURRENCY + HW_CONCURRENCY) / std::max(pythreads, min_threads);
+#    else
+        // if known that CPU only, just try to use all cores
+        auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+#    endif
+        auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+        pool_size     = nthreads;
 #else
-    return nullptr;
+        pool_size = 1;
+#endif
+    }
+    // always specify at least one thread even if not creating threads
+    pool_size = std::max(pool_size, min_threads);
+
+    // explicitly set number of threads to 0 so OpenCV doesn't try to create threads
+    cv::setNumThreads(0);
+
+    // use unique pointer per-thread so manager gets deleted when thread gets deleted
+    // create the thread-pool instance
+    tp = unique_thread_pool_t(new tomopy::ThreadPool(pool_size));
+
+#if defined(TOMOPY_USE_PTL)
+    // ensure this thread is assigned id, assign variable so no unused result warning
+    auto tid = GetThisThreadID();
+
+    // initialize the thread-local data information
+    ThreadData*& thread_data = ThreadData::GetInstance();
+    if(!thread_data)
+        thread_data = new ThreadData(tp.get());
+
+    // tell thread that initialized thread-pool to process tasks
+    // (typically master thread will only wait for other threads)
+    thread_data->is_master = true;
+
+    // tell thread that it is not currently within task
+    thread_data->within_task = false;
+
+    // notify
+    AutoLock l(TypeMutex<decltype(std::cout)>());
+    std::cout << "\n"
+              << "[" << tid << "] Initialized tasking run manager with " << tp->size()
+              << " threads..." << std::endl;
 #endif
 }
 
 //======================================================================================//
-
+//  This class enables the selection of a device at runtime
+//
 struct DeviceOption
 {
-    //
-    //  This class enables the selection of a device at runtime
-    //
 public:
-    using string_t = std::string;
+    using string_t       = std::string;
+    int      index       = -1;
+    string_t key         = "";
+    string_t description = "";
 
-    int      index;
-    string_t key;
-    string_t description;
+    DeviceOption() {}
 
     DeviceOption(const int& _idx, const string_t& _key, const string_t& _desc)
     : index(_idx)
@@ -222,8 +178,8 @@ public:
     static void footer(std::ostream& os)
     {
         std::stringstream ss;
-        ss << "\nTo select an option for runtime, set TOMOPY_DEVICE_TYPE "
-           << "environment variable\n  to an INDEX or KEY above\n";
+        ss << "\nTo select an option for runtime, set 'device' parameter to an "
+           << "INDEX or KEY above\n";
         spacer(ss, '=');
         os << ss.str();
     }
@@ -276,40 +232,15 @@ public:
 };
 
 //======================================================================================//
+// this function selects the device to run the reconstruction on
+//
 
-template <typename _Func, typename... _Args>
-void
-run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
+inline DeviceOption
+GetDevice(const std::string& preferred)
 {
-    bool use_cpu = GetEnv<bool>("TOMOPY_USE_CPU", false);
-
-    // explicitly set number of threads to 1 so OpenCV doesn't try to create threads
-    cv::setNumThreads(1);
-
-    // compute number of threads
-    auto nthreads = GetNumThreads();
-    // initialize thread-pool
-    auto* tp = GetThreadPool(nthreads);
-    // no warning about unused variable
-    ConsumeParameters(tp);
-
-    if(use_cpu)
-    {
-        try
-        {
-            cpu_func(std::forward<_Args>(args)...);
-        }
-        catch(const std::exception& e)
-        {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << e.what() << '\n';
-        }
-        return;
-    }
-
-    std::deque<DeviceOption> options;
-    options.push_back(DeviceOption(0, "cpu", "Run on CPU (OpenCV)"));
-    std::string default_key = "cpu";
+    using DeviceOptionList       = std::deque<DeviceOption>;
+    DeviceOptionList options     = { DeviceOption(0, "cpu", "Run on CPU (OpenCV)") };
+    std::string      default_key = "cpu";
 
 #if defined(TOMOPY_USE_CUDA)
     auto num_devices = cuda_device_count();
@@ -327,15 +258,17 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     else
     {
         AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cerr << "##### No CUDA device(s) available #####" << std::endl;
+        std::cerr << "\n##### No CUDA device(s) available #####\n" << std::endl;
     }
 #endif
 
+    // find the default entry
     auto default_itr =
         std::find_if(options.begin(), options.end(),
                      [&](const DeviceOption& itr) { return (itr == default_key); });
 
     //------------------------------------------------------------------------//
+    // print the options the first time it is encountered
     auto print_options = [&]() {
         static bool first = true;
         if(!first)
@@ -358,6 +291,7 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
         std::cout << "\n" << ss.str() << std::endl;
     };
     //------------------------------------------------------------------------//
+    // print the option selection first time it is encountered
     auto print_selection = [&](DeviceOption& selected_opt) {
         static bool first = true;
         if(!first)
@@ -375,18 +309,11 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     };
     //------------------------------------------------------------------------//
 
-    // Run on CPU if nothing available
-    if(options.size() <= 1)
-    {
-        cpu_func(std::forward<_Args>(args)...);
-        return;
-    }
-
     // print the GPU execution type options
     print_options();
 
     default_key = default_itr->key;
-    auto key    = GetEnv("TOMOPY_DEVICE", default_key);
+    auto key    = preferred;
 
     auto selection = std::find_if(options.begin(), options.end(),
                                   [&](const DeviceOption& itr) { return (itr == key); });
@@ -398,109 +325,134 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
 
     print_selection(*selection);
 
-    try
-    {
-        switch(selection->index)
-        {
-            case 0: cpu_func(std::forward<_Args>(args)...); break;
-            case 1: cuda_func(std::forward<_Args>(args)...); break;
-            default: cpu_func(std::forward<_Args>(args)...); break;
-        }
-    }
-    catch(std::exception& e)
-    {
-        // typically reached here if no GPU devices available
-        if(selection != options.end() && selection->index != 0)
-        {
-            {
-                AutoLock l(TypeMutex<decltype(std::cout)>());
-                std::cerr << "[TID: " << GetThisThreadID() << "] " << e.what()
-                          << std::endl;
-                std::cerr << "[TID: " << GetThisThreadID() << "] "
-                          << "Falling back to CPU algorithm..." << std::endl;
-            }
-            try
-            {
-                cpu_func(std::forward<_Args>(args)...);
-            }
-            catch(std::exception& _e)
-            {
-                std::stringstream ss;
-                ss << "\n\nError executing :: " << _e.what() << "\n\n";
-                {
-                    AutoLock l(TypeMutex<decltype(std::cout)>());
-                    std::cerr << _e.what() << std::endl;
-                }
-                throw std::runtime_error(ss.str().c_str());
-            }
-        }
-    }
+    return *selection;
+}
+
+//======================================================================================//
+// synchronize a CUDA stream
+inline void
+stream_sync(cudaStream_t _stream)
+{
+#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
+    cudaStreamSynchronize(_stream);
+    CUDA_CHECK_LAST_STREAM_ERROR(_stream);
+#else
+    ConsumeParameters(_stream);
+#endif
 }
 
 //======================================================================================//
 
-template <typename DataArray, typename Func, typename... Args>
-void
-execute(int dt, DataArray& data, Func&& func, Args&&... args)
+// function for printing an array
+//
+template <typename _Tp, std::size_t _N>
+std::ostream&
+operator<<(std::ostream& os, const std::array<_Tp, _N>& arr)
 {
-    // get the thread pool
-    auto* tp = GetThreadPool();
-
-    // Loop over slices and projection angles
-    auto serial_exec = [&]() {
-        // Loop over slices and projection angles
-        for(int p = 0; p < dt; ++p)
-        {
-            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
-                                   std::forward<int>(p), std::forward<Args>(args)...);
-            _func();
-        }
-    };
-
-    auto parallel_exec = [&]() {
-#if defined(TOMOPY_USE_PTL)
-        if(!tp)
-        {
-            PRINT_ERROR_HERE("nullptr to thread-pool");
-            return false;
-        }
-#    if defined(TOMOPY_USE_CUDA)
-        auto            _join = [&]() { cudaStreamSynchronize(0); };
-        TaskGroup<void> tg(_join, tp);
-#    else
-        TaskGroup<void> tg(tp);
-#    endif
-        for(int p = 0; p < dt; ++p)
-        {
-            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
-                                   std::forward<int>(p), std::forward<Args>(args)...);
-            tg.run(_func);
-        }
-        tg.join();
-        return true;
-#else
-        // does nothing except make sure there is no warning
-        ConsumeParameters(tp);
-        return false;
-#endif
-    };
-
-    try
+    std::stringstream ss;
+    ss.setf(os.flags());
+    for(std::size_t i = 0; i < _N; ++i)
     {
-        // if parallel execution fails, run serial
-        if(!parallel_exec())
-            serial_exec();
+        ss << arr[i];
+        if(i + 1 < _N)
+        {
+            ss << ", ";
+        }
     }
-    catch(const std::exception& e)
+    os << ss.str();
+    return os;
+}
+
+//======================================================================================//
+// for generic printing operations in a clean fashion
+//
+namespace internal
+{
+//
+//----------------------------------------------------------------------------------//
+/// Alias template for enable_if
+template <bool B, typename T>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
+/// Alias template for decay
+template <class T>
+using decay_t = typename std::decay<T>::type;
+
+struct apply_impl
+{
+    //----------------------------------------------------------------------------------//
+    //  end of recursive expansion
+    //
+    template <std::size_t _N, std::size_t _Nt, typename _Operator, typename _TupleA,
+              typename _TupleB, typename... _Args, enable_if_t<(_N == _Nt), int> = 0>
+    static void unroll(_TupleA&& _tupA, _TupleB&& _tupB, _Args&&... _args)
+    {
+        // call constructor
+        using TypeA        = decltype(std::get<_N>(_tupA));
+        using TypeB        = decltype(std::get<_N>(_tupB));
+        using OperatorType = typename std::tuple_element<_N, _Operator>::type;
+        OperatorType(std::forward<TypeA>(std::get<_N>(_tupA)),
+                     std::forward<TypeB>(std::get<_N>(_tupB)),
+                     std::forward<_Args>(_args)...);
+    }
+
+    //----------------------------------------------------------------------------------//
+    //  recursive expansion until _N == _Nt
+    //
+    template <std::size_t _N, std::size_t _Nt, typename _Operator, typename _TupleA,
+              typename _TupleB, typename... _Args, enable_if_t<(_N < _Nt), int> = 0>
+    static void unroll(_TupleA&& _tupA, _TupleB&& _tupB, _Args&&... _args)
+    {
+        // call constructor
+        using TypeA        = decltype(std::get<_N>(_tupA));
+        using TypeB        = decltype(std::get<_N>(_tupB));
+        using OperatorType = typename std::tuple_element<_N, _Operator>::type;
+        OperatorType(std::forward<TypeA>(std::get<_N>(_tupA)),
+                     std::forward<TypeB>(std::get<_N>(_tupB)),
+                     std::forward<_Args>(_args)...);
+        // recursive call
+        unroll<_N + 1, _Nt, _Operator, _TupleA, _TupleB, _Args...>(
+            std::forward<_TupleA>(_tupA), std::forward<_TupleB>(_tupB),
+            std::forward<_Args>(_args)...);
+    }
+};
+
+//======================================================================================//
+
+struct apply
+{
+    //----------------------------------------------------------------------------------//
+    // invoke the recursive expansion
+    template <typename _Operator, typename _TupleA, typename _TupleB, typename... _Args,
+              std::size_t _N  = std::tuple_size<decay_t<_TupleA>>::value,
+              std::size_t _Nb = std::tuple_size<decay_t<_TupleB>>::value>
+    static void unroll(_TupleA&& _tupA, _TupleB&& _tupB, _Args&&... _args)
+    {
+        static_assert(_N == _Nb, "tuple_size A must match tuple_size B");
+        apply_impl::template unroll<0, _N - 1, _Operator, _TupleA, _TupleB, _Args...>(
+            std::forward<_TupleA>(_tupA), std::forward<_TupleB>(_tupB),
+            std::forward<_Args>(_args)...);
+    }
+};
+
+//--------------------------------------------------------------------------------------//
+// generic operator for printing
+//
+template <typename Type>
+struct GenericPrinter
+{
+    GenericPrinter(const std::string& _prefix, const Type& obj, std::ostream& os,
+                   intmax_t _prefix_width, intmax_t _obj_width,
+                   std::ios_base::fmtflags format_flags, bool endline)
     {
         std::stringstream ss;
-        ss << "\n\nError executing :: " << e.what() << "\n\n";
-        {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << e.what() << std::endl;
-        }
-        throw std::runtime_error(ss.str().c_str());
+        ss.setf(format_flags);
+        ss << std::setw(_prefix_width) << std::right << _prefix << " = "
+           << std::setw(_obj_width) << obj;
+        if(endline)
+            ss << std::endl;
+        os << ss.str();
     }
-}
+};
 
-//======================================================================================//
+}  // end namespace internal

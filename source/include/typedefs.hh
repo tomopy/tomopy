@@ -46,21 +46,24 @@
 
 #include "macros.hh"
 
+#include <cstdint>
+#include <memory>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+
 //======================================================================================//
 
 template <typename _Tp>
 using array_t = std::vector<_Tp>;
-
-typedef array_t<int16_t>  sarray_t;
-typedef array_t<uint16_t> usarray_t;
-typedef array_t<uint32_t> uarray_t;
-typedef array_t<int32_t>  iarray_t;
-typedef array_t<float>    farray_t;
-typedef array_t<double>   darray_t;
-
 template <typename _Tp>
 using cuda_device_info = std::unordered_map<int, _Tp>;
 
-using num_threads_t = decltype(HW_CONCURRENCY);
+using uarray_t             = array_t<uint32_t>;
+using iarray_t             = array_t<int32_t>;
+using farray_t             = array_t<float>;
+using darray_t             = array_t<double>;
+using num_threads_t        = decltype(std::thread::hardware_concurrency());
+using unique_thread_pool_t = std::unique_ptr<tomopy::ThreadPool>;
 
 //======================================================================================//

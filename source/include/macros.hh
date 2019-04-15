@@ -84,6 +84,7 @@ extern "C"
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -94,10 +95,16 @@ extern "C"
 #    include "profiler.hh"
 #endif
 
+//--------------------------------------------------------------------------------------//
+// always include these because they contain header-only implementations
+//
 #include "PTL/AutoLock.hh"
 #include "PTL/Types.hh"
 #include "PTL/Utility.hh"
 
+//--------------------------------------------------------------------------------------//
+// contain compiled implementations
+//
 #if defined(TOMOPY_USE_PTL)
 #    include "PTL/TBBTaskGroup.hh"
 #    include "PTL/Task.hh"
@@ -107,12 +114,11 @@ extern "C"
 #    include "PTL/ThreadData.hh"
 #    include "PTL/ThreadPool.hh"
 #    include "PTL/Threading.hh"
-#else
-class ThreadPool;  // dummy
 #endif
 
 //--------------------------------------------------------------------------------------//
-
+// CUDA headers
+//
 #if defined(TOMOPY_USE_CUDA)
 #    include <cuda.h>
 #    include <cuda_runtime_api.h>
@@ -125,6 +131,16 @@ class ThreadPool;  // dummy
 #    endif
 #endif
 
+//--------------------------------------------------------------------------------------//
+// NVTX headers
+//
+#if defined(TOMOPY_USE_NVTX)
+#    include <nvToolsExt.h>
+#endif
+
+//--------------------------------------------------------------------------------------//
+// relevant OpenCV headers
+//
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -185,8 +201,9 @@ GetThisThreadID()
         {                                                                                \
             auto                          end_time = std::chrono::system_clock::now();   \
             std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
-            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n", GetThisThreadID(),   \
-                   note, counter, total_count, elapsed_seconds.count());                 \
+            printf("[%lu]> %-16s :: %3i of %3i... %5.2f seconds\n",                      \
+                   scast<unsigned long>(GetThisThreadID()), note, counter, total_count,  \
+                   elapsed_seconds.count());                                             \
         }
 #endif
 
@@ -200,6 +217,50 @@ GetThisThreadID()
 #        define __device__
 #    endif
 #endif
+
+//======================================================================================//
+//
+//      NVTX macros
+//
+//======================================================================================//
+
+#if defined(TOMOPY_USE_NVTX)
+
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)                                                      \
+            cudaStreamSynchronize(obj);                                                  \
+            nvtxRangePop()
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name) nvtxNameOsThread(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg) nvtxMark(name)
+#    endif
+
+extern void
+init_nvtx();
+
+#else
+#    ifndef NVTX_RANGE_PUSH
+#        define NVTX_RANGE_PUSH(obj)
+#    endif
+#    ifndef NVTX_RANGE_POP
+#        define NVTX_RANGE_POP(obj)
+#    endif
+#    ifndef NVTX_NAME_THREAD
+#        define NVTX_NAME_THREAD(num, name)
+#    endif
+#    ifndef NVTX_MARK
+#        define NVTX_MARK(msg)
+#    endif
+
+#endif
+
+//======================================================================================//
 
 #if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
 
@@ -278,5 +339,102 @@ GetThisThreadID()
 #    endif
 
 #endif  // NVCC and TOMOPY_USE_CUDA
+
+//======================================================================================//
+// begin tomopy namespace
+namespace tomopy
+{
+//--------------------------------------------------------------------------------------//
+
+// trait that signifies that an implementation (e.g. PTL thread-pool) is available
+// default is false
+template <typename _Tp>
+struct implementation_available : std::false_type
+{
+};
+
+//--------------------------------------------------------------------------------------//
+
+// used to mark cuda algorithms are available
+struct cuda_algorithms
+{
+};
+
+//--------------------------------------------------------------------------------------//
+
+// Create a ThreadPool class in so we can refer to it safely when PTL is
+// not enabled. Do this within a namespace in case a header later includes
+// "PTL/ThreadPool.hh" and PTL is not enabled.
+// --> When PTL is enabled, tomopy::ThreadPool is an alias to PTL ThreadPool
+// --> When PTL is disabled, tomopy::ThreadPool is an alias to dummy class
+
+#if defined(TOMOPY_USE_PTL)
+
+//--------------------------------------------------------------------------------------//
+
+using ThreadPool = ::ThreadPool;
+template <typename _Ret, typename _Arg = _Ret>
+using TaskGroup = ::TaskGroup<_Ret, _Arg>;
+
+//--------------------------------------------------------------------------------------//
+
+// when compiled with PTL, mark tomopy::ThreadPool as implemented
+template <>
+struct implementation_available<ThreadPool> : std::true_type
+{
+};
+
+//--------------------------------------------------------------------------------------//
+
+#else
+
+//--------------------------------------------------------------------------------------//
+// dummy thread pool impl
+
+class ThreadPool
+{
+public:
+    ThreadPool(intmax_t = 1, bool = false) {}
+    intmax_t size() const { return 1; }
+};
+
+template <typename _Ret, typename _Arg = _Ret>
+class TaskGroup
+{
+public:
+    template <typename _Func>
+    TaskGroup(_Func&& _join, ThreadPool* = nullptr)
+    : m_join(std::forward<_Func>(_join))
+    {
+    }
+
+    template <typename _Func, typename... _Args>
+    void run(_Func&& func, _Args&&... args)
+    {
+        std::forward<_Func>(func)(std::forward<_Args>(args)...);
+    }
+
+    void join() { m_join(); }
+
+private:
+    std::function<void()> m_join;
+};
+
+//--------------------------------------------------------------------------------------//
+
+#endif
+
+//--------------------------------------------------------------------------------------//
+
+#if defined(TOMOPY_USE_CUDA)
+
+template <>
+struct implementation_available<cuda_algorithms> : std::true_type
+{
+};
+
+#endif
+
+}  // end namespace tomopy
 
 //======================================================================================//
