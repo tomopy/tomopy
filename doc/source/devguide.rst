@@ -37,12 +37,11 @@ computer and feel comfortable with making modifications in the code.
 Installing dependencies
 =======================
 To build and run TomoPy, you will need to install at least the dependencies
-listed in ``env/requirements-all.txt`` plus additional dependencies based
+listed in ``envs/{platform}-{version}.yml`` plus additional dependencies based
 on your build environment. For example, installing requirements for building
-the Python 2.7 version on Unix can be accomplished as follows::
+the Python 3.6 version on Unix can be accomplished as follows::
 
-    $ conda install --file requirements-all.txt --file requirements-27.txt --file requirements-unix-build.txt
-
+    $ conda env create -f envs/linux-36.yml
 
 Building TomoPy
 ===============
