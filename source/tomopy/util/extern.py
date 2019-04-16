@@ -59,6 +59,7 @@ import ctypes
 import numpy as np
 import tomopy.util.dtype as dtype
 import logging
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,11 @@ def c_shared_lib(lib_name, do_warn=True):
         logger.warning('OSError: The following shared lib is missing!\n{}'.format(
                        sharedlib))
 
+
+# PTL is typically built statically so don't warn if not found
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    LIB_PTL = c_shared_lib('libptl', do_warn=False)
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
 

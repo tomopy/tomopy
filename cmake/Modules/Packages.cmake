@@ -245,6 +245,12 @@ endif()
 #
 ################################################################################
 
+# user customization to force link libs
+to_list(_LINKLIBS "${TOMOPY_USER_LIBRARIES};$ENV{TOMOPY_USER_LIBRARIES}")
+foreach(_LIB ${_LINKLIBS})
+    list(APPEND EXTERNAL_LIBRARIES ${_LIB})
+endforeach()
+
 # including the directories
 safe_remove_duplicates(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS})
 safe_remove_duplicates(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES})
