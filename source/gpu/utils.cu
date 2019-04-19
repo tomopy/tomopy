@@ -97,62 +97,44 @@ cuda_sum_dist_compute(int dy, int dx, int nx, int ny, const int32_t* ones,
 uint32_t*
 cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    auto ns      = 1;
-    auto streams = create_streams(ns, cudaStreamNonBlocking);
-    auto block   = GetBlockDims(dim3(32, 32, 1));
-    auto grid    = ComputeGridDims(dim3(nx, dt, dy), block);
+    // due to some really strange issue with streams, we use the default stream here
+    // because after this has been executed more than once (i.e. we do SIRT and then
+    // MLEM or MLEM and then SIRT), NPP returns error code -1000.
+    // it has nothing to do with algorithm strangely... and only occurs here
+    // where we rotate integers. This does not affect floats...
 
-    //----------------------------------------------------------------------------------//
-    auto sync = [&]() {
-        for(int i = 0; i < ns; ++i)
-        {
-            stream_sync(streams[i]);
-            CUDA_CHECK_LAST_STREAM_ERROR(streams[i]);  // debug mode only
-        }
-    };
-    //----------------------------------------------------------------------------------//
+    auto block = GetBlockDims(dim3(32, 32, 1));
+    auto grid  = ComputeGridDims(dim3(nx, dt, dy), block);
 
-    int32_t* rot = gpu_malloc<int32_t>(ns * nx * ny);
-    int32_t* tmp = gpu_malloc_and_memset<int32_t>(nx * ny, 1, streams[0 % ns]);
-    CUDA_CHECK_LAST_STREAM_ERROR(streams[1 % ns]);  // debug mode only
-    uint32_t* sum_dist =
-        gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, streams[1 % ns]);
-    CUDA_CHECK_LAST_STREAM_ERROR(streams[1 % ns]);  // debug mode only
+    int32_t*  rot      = gpu_malloc<int32_t>(nx * ny);
+    int32_t*  tmp      = gpu_malloc_and_memset<int32_t>(nx * ny, 1, 0);
+    uint32_t* sum_dist = gpu_malloc_and_memset<uint32_t>(dy * nx * ny, 0, 0);
+    CUDA_CHECK_LAST_ERROR();
 
-    sync();
+    assert(rot != nullptr);
+    assert(tmp != nullptr);
+    assert(sum_dist != nullptr);
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     for(int p = 0; p < dt; ++p)
     {
         float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
         float theta_p_deg = theta_p_rad * degrees;
 
-        for(int q = 0; q < ns; ++q)
-        {
-            auto     stream = streams[q];
-            int32_t* _rot   = rot + q * nx * ny;
-            gpu_memset<int32_t>(_rot, 0, nx * nx, stream);
-        }
+        gpu_memset<int32_t>(rot, 0, nx * nx, 0);
+        CUDA_CHECK_LAST_ERROR();  // debug mode only
 
-        for(int q = 0; q < ns; ++q)
-        {
-            auto     stream = streams[q];
-            int32_t* _rot   = rot + q * nx * ny;
-            cuda_rotate_ip(_rot, tmp, -theta_p_rad, -theta_p_deg, nx, ny, stream, GPU_NN);
-            CUDA_CHECK_LAST_STREAM_ERROR(stream);  // debug mode only
-        }
+        cuda_rotate_ip(rot, tmp, -theta_p_rad, -theta_p_deg, nx, ny, 0, GPU_NN);
+        CUDA_CHECK_LAST_ERROR();  // debug mode only
 
-        for(int q = 0; q < ns; ++q)
-        {
-            auto     stream = streams[q];
-            int32_t* _rot   = rot + q * nx * ny;
-            cuda_sum_dist_compute<<<grid, block, 0, stream>>>(dy, dx, nx, ny, _rot,
-                                                              sum_dist, p);
-            CUDA_CHECK_LAST_STREAM_ERROR(stream);  // debug mode only
-        }
+        cuda_sum_dist_compute<<<grid, block, 0, 0>>>(dy, dx, nx, ny, rot, sum_dist, p);
+        CUDA_CHECK_LAST_ERROR();  // debug mode only
+
+        stream_sync(0);
     }
 
-    // synchronize and destroy
-    destroy_streams(streams, ns);
+    // destroy
     cudaFree(tmp);
     cudaFree(rot);
 
@@ -196,9 +178,10 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = GPU_NN, cudaStream_t stream = 0)
 {
-    // cudaStreamSynchronize(stream);
+    stream_sync(stream);
     nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
     auto getRotationMatrix2D = [&](double m[2][3], double scale) {
         double alpha    = scale * cos(theta_rad);
@@ -228,18 +211,14 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
     double rot[2][3];
     getRotationMatrix2D(rot, 1.0);
 
-    // #define USE_NPPI_ROTATE
-#if defined(USE_NPPI_ROTATE)
-    NppStatus ret = nppiRotate_32s_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
-                                       rot[0][2], rot[1][2], eInterp);
-#else
     NppStatus ret =
         nppiWarpAffine_32s_C1R(src, siz, step, roi, dst, step, roi, rot, eInterp);
-#endif
+
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
     if(ret != NPP_SUCCESS)
-        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
-                __FUNCTION__, ret);
+        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
+                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
@@ -256,9 +235,10 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = GPU_CUBIC, cudaStream_t stream = 0)
 {
-    // cudaStreamSynchronize(stream);
+    stream_sync(stream);
     nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
     auto getRotationMatrix2D = [&](double m[2][3], double scale) {
         double alpha    = scale * cos(theta_rad);
@@ -288,7 +268,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
     double rot[2][3];
     getRotationMatrix2D(rot, 1.0);
 
-    // #define USE_NPPI_ROTATE
+#define USE_NPPI_ROTATE
 #if defined(USE_NPPI_ROTATE)
     NppStatus ret = nppiRotate_32f_C1R(src, siz, step, roi, dst, step, roi, theta_deg,
                                        rot[0][2], rot[1][2], eInterp);
@@ -297,9 +277,11 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
         nppiWarpAffine_32f_C1R(src, siz, step, roi, dst, step, roi, rot, eInterp);
 #endif
 
+    CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
     if(ret != NPP_SUCCESS)
-        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i\n", GetThisThreadID(),
-                __FUNCTION__, ret);
+        fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
+                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);

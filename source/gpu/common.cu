@@ -237,8 +237,12 @@ cuda_device_count()
 void
 cuda_device_query()
 {
-    static std::atomic<int16_t> once;
-    if(++once > 1)
+    auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    static std::atomic<int16_t> _once;
+    auto                        _count = _once++;
+    if(_count + 1 == pythreads)
+        _once.store(0);
+    if(_count > 0)
         return;
 
     int         deviceCount    = 0;

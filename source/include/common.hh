@@ -238,6 +238,7 @@ public:
 inline DeviceOption
 GetDevice(const std::string& preferred)
 {
+    auto pythreads               = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
     using DeviceOptionList       = std::deque<DeviceOption>;
     DeviceOptionList options     = { DeviceOption(0, "cpu", "Run on CPU (OpenCV)") };
     std::string      default_key = "cpu";
@@ -270,11 +271,16 @@ GetDevice(const std::string& preferred)
     //------------------------------------------------------------------------//
     // print the options the first time it is encountered
     auto print_options = [&]() {
-        static bool first = true;
-        if(!first)
+        static std::atomic_uint _once;
+        auto                    _count = _once++;
+        if(_count % pythreads > 0)
+        {
+            if(_count + 1 == pythreads)
+            {
+                _once.store(0);
+            }
             return;
-        else
-            first = false;
+        }
 
         std::stringstream ss;
         DeviceOption::header(ss);
@@ -293,11 +299,16 @@ GetDevice(const std::string& preferred)
     //------------------------------------------------------------------------//
     // print the option selection first time it is encountered
     auto print_selection = [&](DeviceOption& selected_opt) {
-        static bool first = true;
-        if(!first)
+        static std::atomic_uint _once;
+        auto                    _count = _once++;
+        if(_count % pythreads > 0)
+        {
+            if(_count + 1 == pythreads)
+            {
+                _once.store(0);
+            }
             return;
-        else
-            first = false;
+        }
 
         std::stringstream ss;
         DeviceOption::spacer(ss, '-');
