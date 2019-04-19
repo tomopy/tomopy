@@ -396,6 +396,7 @@ class ThreadPool
 public:
     ThreadPool(intmax_t = 1, bool = false) {}
     intmax_t size() const { return 1; }
+    void destroy_threadpool() { }
 };
 
 template <typename _Ret, typename _Arg = _Ret>
