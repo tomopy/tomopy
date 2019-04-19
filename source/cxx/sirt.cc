@@ -104,12 +104,17 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
         AutoLock l(TypeMutex<decltype(std::cout)>());
         std::cerr << "[TID: " << tid << "] " << e.what()
                   << "\nFalling back to CPU algorithm..." << std::endl;
+        // safely destroy threadpool
+        opts.thread_pool->destroy_threadpool();
         // return failure code
         return EXIT_FAILURE;
     }
 
     registration.cleanup(&opts);
     REPORT_TIMER(cxx_timer, __FUNCTION__, count, tcount);
+
+    // safely destroy threadpool
+    opts.thread_pool->destroy_threadpool();
 
     // return successful code
     return EXIT_SUCCESS;

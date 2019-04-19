@@ -62,8 +62,8 @@ struct RuntimeOptions
     num_threads_t        pool_size     = HW_CONCURRENCY;
     int                  interpolation = -1;
     DeviceOption         device;
-    std::array<int, 3>   block_size = { 32, 32, 1 };
-    std::array<int, 3>   grid_size  = { 0, 0, 0 };
+    std::array<int, 3>   block_size = { { 32, 32, 1 } };
+    std::array<int, 3>   grid_size  = { { 0, 0, 0 } };
     unique_thread_pool_t thread_pool;
 
     RuntimeOptions(int _pool_size, const char* _interp, const char* _device,
