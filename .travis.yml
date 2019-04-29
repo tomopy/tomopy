@@ -9,11 +9,18 @@ env:
     - PYTHON_VERSION="3.6"
     - PYTHON_VERSION="3.7"
   global:
+    - CUDA_INSTALLER=cuda_10.1.168_418.67_linux.run
+    - CUDA_TOOLKIT_ROOT_DIR=${HOME}/cuda
+    - CUDA_COMPILER=${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc
+    - LD_LIBRARY_PATH=${HOME}/miniconda/lib:${CUDA_TOOLKIT_ROOT_DIR}/lib64
     - PATH=${HOME}/miniconda/bin:${PATH}
-    - LD_LIBRARY_PATH=${HOME}/miniconda/lib
-    - PYCTEST_ARGS='-SF --pyctest-jobs=1 --pyctest-site=Travis --exclude-phantoms shepp3d -- -VV'
+    - PYCTEST_ARGS="-SF --pyctest-jobs=1 --pyctest-site=Travis
+      --exclude-phantoms shepp3d -- -VV --
+      -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_TOOLKIT_ROOT_DIR}
+      -DCMAKE_CUDA_COMPILER=${CUDA_COMPILER}"
     - TOMOPY_USE_C_ALGORITHMS=1
 before_install:
+  # Install miniconda
   - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
@@ -29,17 +36,30 @@ before_install:
     --set auto_update_conda no
   - conda update -n base conda
 install:
+  # Install python dependencies using conda
   - PYTHON_TAG=$(echo ${PYTHON_VERSION} | sed 's/\.//g')
   - conda env create -n tomopy -f envs/linux-${PYTHON_TAG}.yml
   - conda activate tomopy
   - conda info -a
   - conda list --explicit
+  # Install the CUDA toolkit seconds so CUDA can find host compilers
+  - ln -s ${CC} ${CONDA_PREFIX}/bin/gcc
+  - ln -s ${CXX} ${CONDA_PREFIX}/bin/g++
+  - wget -N https://developer.nvidia.com/compute/cuda/10.1/Prod/local_installers/${CUDA_INSTALLER}
+  - chmod u+x ${CUDA_INSTALLER}
+  - >
+    ./${CUDA_INSTALLER} --silent --toolkit
+    --toolkitpath=${CUDA_TOOLKIT_ROOT_DIR}
+    --defaultroot=${CUDA_TOOLKIT_ROOT_DIR}
+    --no-opengl-libs --no-man-page --no-drm
   # Check the compilers
+  - which gcc
+  - which g++
   - echo "C compiler = ${CC}"
   - echo "CXX compiler = ${CXX}"
 script:
-  - ./pyctest_tomopy.py --enable-tasking --disable-cuda --phantom-size 128 ${PYCTEST_ARGS}
-  - ./pyctest_tomopy.py --disable-tasking --disable-cuda --coverage ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --enable-tasking --enable-cuda --phantom-size 128 ${PYCTEST_ARGS}
+  - ./pyctest_tomopy.py --disable-tasking --enable-cuda --coverage ${PYCTEST_ARGS}
   - $(which nosetests)
 after_success:
   - coveralls
