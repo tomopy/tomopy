@@ -1,6 +1,6 @@
-======================
-Tomographic data files
-======================
+============================
+How to read tomographic data
+============================
 
 For reading tomography files formatted in different ways, please 
 go check the `DXchange <http://dxchange.readthedocs.io>`_ package. There

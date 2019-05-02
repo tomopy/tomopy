@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2015-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2015-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -69,6 +69,27 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['recon', 'init_tomo']
+
+
+allowed_recon_kwargs = {
+    'art': ['num_gridx', 'num_gridy', 'num_iter'],
+    'bart': ['num_gridx', 'num_gridy', 'num_iter',
+             'num_block', 'ind_block'],
+    'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+    'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
+    'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
+    'osem': ['num_gridx', 'num_gridy', 'num_iter',
+             'num_block', 'ind_block'],
+    'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
+                     'reg_par', 'num_block', 'ind_block'],
+    'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
+                   'reg_par', 'num_block', 'ind_block'],
+    'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
+    'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+}
 
 
 def recon(
@@ -222,26 +243,6 @@ def recon(
     # Initialize tomography data.
     tomo = init_tomo(tomo, sinogram_order, sharedmem=False)
 
-    allowed_kwargs = {
-        'art': ['num_gridx', 'num_gridy', 'num_iter'],
-        'bart': ['num_gridx', 'num_gridy', 'num_iter',
-                 'num_block', 'ind_block'],
-        'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
-        'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
-        'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
-        'osem': ['num_gridx', 'num_gridy', 'num_iter',
-                 'num_block', 'ind_block'],
-        'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
-                         'reg_par', 'num_block', 'ind_block'],
-        'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
-                       'reg_par', 'num_block', 'ind_block'],
-        'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
-        'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-        'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
-    }
-
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
 
     # Generate kwargs for the algorithm.
@@ -250,17 +251,17 @@ def recon(
     if isinstance(algorithm, six.string_types):
 
         # Check whether we have an allowed method
-        if algorithm not in allowed_kwargs:
+        if algorithm not in allowed_recon_kwargs:
             raise ValueError(
                 'Keyword "algorithm" must be one of %s, or a Python method.' %
-                (list(allowed_kwargs.keys()),))
+                (list(allowed_recon_kwargs.keys()),))
 
         # Make sure have allowed kwargs appropriate for algorithm.
         for key, value in list(kwargs.items()):
-            if key not in allowed_kwargs[algorithm]:
+            if key not in allowed_recon_kwargs[algorithm]:
                 raise ValueError(
                     '%s keyword not in allowed keywords %s' %
-                    (key, allowed_kwargs[algorithm]))
+                    (key, allowed_recon_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
                 if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
@@ -272,7 +273,7 @@ def recon(
                         kwargs[key] = np.array(value, dtype='float32')
 
         # Set kwarg defaults.
-        for kw in allowed_kwargs[algorithm]:
+        for kw in allowed_recon_kwargs[algorithm]:
             kwargs.setdefault(kw, kwargs_defaults[kw])
 
     elif hasattr(algorithm, '__call__'):
@@ -282,7 +283,7 @@ def recon(
     else:
         raise ValueError(
             'Keyword "algorithm" must be one of %s, or a Python method.' %
-            (list(allowed_kwargs.keys()),))
+            (list(allowed_recon_kwargs.keys()),))
 
     # Generate args for the algorithm.
     center_arr = get_center(tomo.shape, center)
@@ -324,38 +325,18 @@ def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
     return recon
 
 
-# TODO: replace with dict, then users could easily add their own functions
 def _get_func(algorithm):
-    if algorithm == 'art':
-        func = extern.c_art
-    elif algorithm == 'bart':
-        func = extern.c_bart
-    elif algorithm == 'fbp':
-        func = extern.c_fbp
-    elif algorithm == 'gridrec':
-        func = extern.c_gridrec
-    elif algorithm == 'mlem':
-        func = extern.c_mlem
-    elif algorithm == 'osem':
-        func = extern.c_osem
-    elif algorithm == 'ospml_hybrid':
-        func = extern.c_ospml_hybrid
-    elif algorithm == 'ospml_quad':
-        func = extern.c_ospml_quad
-    elif algorithm == 'pml_hybrid':
-        func = extern.c_pml_hybrid
-    elif algorithm == 'pml_quad':
-        func = extern.c_pml_quad
-    elif algorithm == 'sirt':
-        func = extern.c_sirt
-    elif algorithm == 'tv':
-        func = extern.c_tv
-    elif algorithm == 'grad':
-        func = extern.c_grad
+    """Return the c function for the given algorithm.
 
-    else:
-        func = algorithm
-    return func
+    Raises
+    ------
+    AttributeError
+        If 'c_' + algorithm is not a function defined in tomopy.util.extern.
+    """
+    try:
+        return getattr(extern, 'c_' + algorithm)
+    except TypeError:  # algorithm is not a string
+        return algorithm
 
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2015-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2015-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -82,7 +82,8 @@ DATA_PATH = os.path.abspath(
 
 try:
     resize_kwargs = {'anti_aliasing': False}
-    ignore = skimage.transform.resize(np.zeros(5), 2, **resize_kwargs)
+    ignore = skimage.transform.resize(np.zeros(5), [2], mode='constant',
+                                      **resize_kwargs)
 except TypeError:
     logger.debug("Determined that the anti_aliasing keyword is not needed.")
     resize_kwargs = dict()

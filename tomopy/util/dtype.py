@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2015-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2015-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -142,7 +142,8 @@ def as_sharedmem(arr, copy=False):
     if not copy and is_sharedmem(arr):
         return arr
     # get ctype from numpy array
-    ctype = np.ctypeslib._typecodes[arr.__array_interface__['typestr']]
+    temp_arr = np.empty((1), dtype=arr.dtype)
+    ctype = type(np.ctypeslib.as_ctypes(temp_arr)._type_())
     # create shared ctypes object with no lock
     shared_obj = mp.RawArray(ctype, arr.size)
     # create numpy array from shared object
@@ -189,7 +190,7 @@ def empty_shared_array(shape, dtype=np.float32):
     # create a shared ndarray with the provided shape and type
     # get ctype from np dtype
     temp_arr = np.empty((1), dtype)
-    ctype = np.ctypeslib._typecodes[temp_arr.__array_interface__['typestr']]
+    ctype = type(np.ctypeslib.as_ctypes(temp_arr)._type_())
     # create shared ctypes object with no lock
     size = 1
     for dim in shape:
