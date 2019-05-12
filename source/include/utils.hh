@@ -102,10 +102,11 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode(const std::string& preferred)
 {
-    EnvChoiceList<int> choices =
-        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    EnvChoiceList<int> choices = {
+        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
     return GetChoice<int>(choices, preferred);
 }
 
@@ -199,10 +200,11 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 inline int
 GetNppInterpolationMode(const std::string& preferred)
 {
-    EnvChoiceList<int> choices =
-        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
+    EnvChoiceList<int> choices = {
+        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
+    };
     return GetChoice<int>(choices, preferred);
 }
 

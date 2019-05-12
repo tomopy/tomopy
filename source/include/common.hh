@@ -93,9 +93,9 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     auto tid = GetThisThreadID();
 
     // initialize the thread-local data information
-    ThreadData*& thread_data = ThreadData::GetInstance();
+    auto& thread_data = ThreadData::GetInstance();
     if(!thread_data)
-        thread_data = new ThreadData(tp.get());
+        thread_data.reset(new ThreadData(tp.get()));
 
     // tell thread that initialized thread-pool to process tasks
     // (typically master thread will only wait for other threads)

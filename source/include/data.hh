@@ -73,7 +73,6 @@ struct RuntimeOptions
     {
         memcpy(grid_size.data(), _grid_size, 3 * sizeof(int));
         memcpy(block_size.data(), _block_size, 3 * sizeof(int));
-        CreateThreadPool(thread_pool, pool_size);
 
         if(device.key == "gpu")
         {
@@ -94,6 +93,10 @@ struct RuntimeOptions
     // disable copying and copy assignment
     RuntimeOptions(const RuntimeOptions&) = delete;
     RuntimeOptions& operator=(const RuntimeOptions&) = delete;
+
+    // create the thread pool -- don't have this in the constructor
+    // because you don't want to arbitrarily create thread-pools
+    void init() { CreateThreadPool(thread_pool, pool_size); }
 
     // invoke the generic printer defined in common.hh
     template <typename... _Descriptions, typename... _Objects>

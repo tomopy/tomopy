@@ -1,8 +1,0 @@
-/.git
-/.vscode
-*__pycache__*
-*_skbuild*
-/tomopy.egg-info
-/benchmarking
-/binder
-/dist
