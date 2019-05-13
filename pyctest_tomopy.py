@@ -145,10 +145,6 @@ def configure():
                         help="Customize the build name",
                         type=str,
                         default=None)
-    parser.add_argument("--cmake-args",
-                        help="CMake arguments passed to build",
-                        type=str,
-                        default=[])
     parser.add_argument("--cuda-arch", help="CUDA architecture flag",
                         type=int, default=53)
 
@@ -187,6 +183,9 @@ def configure():
                         type=str, choices=["leak", "thread", "address", "memory"])
 
     args = parser.parse_args()
+
+    # Grab CMake args from command line
+    args.cmake_args = pycmake.ARGUMENTS
 
     add_bool_opt(args, "TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
     add_bool_opt(args, "TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
