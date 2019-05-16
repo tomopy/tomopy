@@ -372,6 +372,8 @@ def lprec(tomo, center, recon, theta, **kwargs):
             - 'cg'
             - 'tv'
             - 'em'
+            - 'tve'
+            - 'tvl1'
     filter_type:
         Filter for backprojection
             - 'ramp'
@@ -425,7 +427,9 @@ def lprec(tomo, center, recon, theta, **kwargs):
         'grad': lpmethods.grad,
         'cg': lpmethods.cg,
         'tv': lpmethods.tv,
-        'em': lpmethods.em
+        'em': lpmethods.em,
+        'tve': lpmethods.tve,
+        'tvl1': lpmethods.tvl1,
     }
 
     [Ns, Nproj, N] = tomo.shape
@@ -468,7 +472,7 @@ def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, ids):
     """
     # take gpu number with respect to the current thread
     gpu = gpu_list[int(threading.current_thread().name.split("_", 1)[1])]
-    print([gpu, ids])
+    logger.info(str([gpu, ids]))
     # reconstruct
     recon[ids] = lpmethod(lp, recon[ids], tomo[ids], num_iter, reg_par, gpu)
 
