@@ -167,7 +167,7 @@ def configure():
                             help="Explicitly enable {} build".format(disp_name))
         # disable option
         parser.add_argument("--disable-{}".format(lc_name), action='store_true',
-                            help="Explicitly disnable {} build".format(disp_name))
+                            help="Explicitly disable {} build".format(disp_name))
 
     add_option(parser, "cuda", "CUDA")
     add_option(parser, "nvtx", "NVTX (NVIDIA Nsight)")
