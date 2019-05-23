@@ -3,40 +3,44 @@ skip_commits:
  files:
    - docs/*
    - '**/*.html'
+   - .travis.yml
 skip_branch_with_pr: true
 max_jobs: 6
 image: Visual Studio 2015
+platform: x64
+configuration: Debug
 init:
   - git config --global core.autocrlf input
-shallow_clone: true
+clone_depth: 1
 environment:
+  # these variables are common to all jobs
+  TOMOPY_USE_C_ALGORITHMS: "1"
   matrix:
-    - PYTHON_VERSION: "3.6"
+    - PYTHON_VERSION: "36"
       MINICONDA: "C:\\Miniconda36-x64"
-    - PYTHON_VERSION: "3.7"
+    - PYTHON_VERSION: "37"
       MINICONDA: "C:\\Miniconda37-x64"
 matrix:
   fast_finish: true
 install:
-  - "%MINICONDA%\\Scripts\\activate.bat"
-  - conda config --set always_yes True
-  - conda config --add channels jrmadsen
-  - conda config --add channels conda-forge
-  - conda update conda  # required in order to find mkl-devel
+  # conda 4.5.11 seems to expect that this directory exists already
+  - mkdir C:\Users\appveyor\.conda
+  - call %MINICONDA%\Scripts\activate.bat
+  # The safety checks are simply intended to ensure that there is enough disk space
+  # and the user has the necessary permissions to make environment changes. In a CI
+  # environment these are not necessary and slow things down noticeably on Windows.
   - >
-      conda install python=%PYTHON_VERSION%
-      --file envs/requirements-all.txt
-      --file envs/requirements-win-build.txt
-  # Check that we have the expected version and architecture for Python
+    conda config
+    --set always_yes yes
+    --set changeps1 no
+    --set auto_update_conda no
+    --set safety_checks disabled
+  - conda env create -n tomopy -f envs/win-%PYTHON_VERSION%.yml
+  - conda activate tomopy
   - conda info -a
-  - "python --version"
-  - where gcc
-platform: x64
-configuration: Debug
-build_script:
-  - set CC=gcc
+  - conda list --explicit
   - python setup.py install
-before_test:
-  - cd test/
+# Not a .NET project, we build in the install step instead
+build: false
 test_script:
-  - nosetests -v
+  - nosetests

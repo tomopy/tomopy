@@ -1,0 +1,20 @@
+##
+##  Ignore everything...
+##
+
+*
+
+##
+##  Except these files...
+##
+
+!.gitignore
+!__init__.py
+!__main__.py
+!phantom.py
+!rec.py
+!util.py
+!*.sh
+!README.md
+!profile.sh
+!setup.py
