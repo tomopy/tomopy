@@ -32,7 +32,7 @@ def add_option(lc_name, disp_name):
                         help="Explicitly enable {} build".format(disp_name))
     # disable option
     parser.add_argument("--disable-{}".format(lc_name), action='store_true',
-                        help="Explicitly disnable {} build".format(disp_name))
+                        help="Explicitly disable {} build".format(disp_name))
 
 add_option("cuda", "CUDA")
 add_option("nvtx", "NVTX (NVIDIA Nsight)")
