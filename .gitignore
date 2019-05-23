@@ -28,7 +28,10 @@ config/Mk.config
 dist
 share
 build
-eggs
+_skbuild
+_cmake_test_compile
+/build-*
+.eggs
 parts
 bin
 var
@@ -42,6 +45,7 @@ __pycache__
 *.log
 *.sql
 *.sqlite
+/.docker/pgilinux-*
 
 # OS generated files #
 ######################
@@ -66,6 +70,7 @@ doc/_build
 .settings
 pip-log.txt
 .ipynb_checkpoints
+/tomopy/allocator/__init__.py
 
 # Other byproducts #
 ####################
@@ -88,6 +93,7 @@ test.py
 main.py
 *.ipynb
 trunk
+/test/*.jpeg
 
 # Installer logs
 ##############
@@ -96,6 +102,7 @@ pip-log.txt
 # Unit test / coverage reports #
 ################################
 .coverage
+.coverage.xml
 .tox
 nosetests.xml
 
@@ -114,6 +121,7 @@ nosetests.xml
 .pydevproject
 .idea
 .vscode
+/CMakeLists.txt.user*
 
 # Private functions #
 #####################
@@ -139,10 +147,10 @@ script
 /Testing
 /Utilities.cmake
 /cmake_install.cmake
-/benchmarking/tomo_*
-/benchmarking/*_comparison*
 *.gcov
 *.gcda
 *.gcno
 /coverage.xml
+/.coverage.xml
 /CMakeFiles
+/test_rotate.py

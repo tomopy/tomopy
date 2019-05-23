@@ -1,0 +1,99 @@
+//  Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.
+//  Copyright 2015. UChicago Argonne, LLC. This software was produced
+//  under U.S. Government contract DE-AC02-06CH11357 for Argonne National
+//  Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
+//  U.S. Department of Energy. The U.S. Government has rights to use,
+//  reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
+//  UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+//  ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
+//  modified to produce derivative works, such modified software should
+//  be clearly marked, so as not to confuse it with the version available
+//  from ANL.
+//  Additionally, redistribution and use in source and binary forms, with
+//  or without modification, are permitted provided that the following
+//  conditions are met:
+//      * Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//      * Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in
+//        the documentation andwith the
+//        distribution.
+//      * Neither the name of UChicago Argonne, LLC, Argonne National
+//        Laboratory, ANL, the U.S. Government, nor the names of its
+//        contributors may be used to endorse or promote products derived
+//        from this software without specific prior written permission.
+//  THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
+//  Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//  POSSIBILITY OF SUCH DAMAGE.
+//  ---------------------------------------------------------------
+//   TOMOPY header
+
+/** \file macros.h
+ * \headerfile macros.h "include/macros.h"
+ * Include files + some standard macros available to C and C++
+ */
+
+#pragma once
+
+//======================================================================================//
+
+#ifdef __cplusplus
+#    ifndef BEGIN_EXTERN_C
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
+            {
+#    endif
+#    ifndef END_EXTERN_C
+#        define END_EXTERN_C }
+#    endif
+#else
+#    ifndef BEGIN_EXTERN_C
+#        define BEGIN_EXTERN_C
+#    endif
+#    ifndef END_EXTERN_C
+#        define END_EXTERN_C
+#    endif
+#endif
+
+//--------------------------------------------------------------------------------------//
+
+#ifndef DLL
+#    ifdef WIN32
+#        define DLL __declspec(dllexport)
+#    else
+#        define DLL
+#    endif
+#endif
+
+//--------------------------------------------------------------------------------------//
+
+#ifdef __cplusplus
+#    include <cstdio>
+#    include <cstring>
+#else
+#    include <stdio.h>
+#    include <string.h>
+#endif
+
+//======================================================================================//
+
+#if !defined(PRAGMA_SIMD)
+#    define PRAGMA_SIMD _Pragma("omp simd")
+#endif
+
+//======================================================================================//
+
+#if !defined(PRAGMA_SIMD_REDUCTION)
+#    define PRAGMA(statement) _Pragma(statement)
+#endif
+
+//======================================================================================//

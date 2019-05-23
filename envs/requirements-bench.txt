@@ -1,6 +1,0 @@
-dxchange
-h5py
-numpy
-pyctest
-scipy
-timemory

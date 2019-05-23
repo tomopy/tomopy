@@ -2,4 +2,4 @@ languages:
   Python: true
 
 exclude_paths:
-  - tomopy/util/extern.py
+  - src/tomopy/util/extern.py
