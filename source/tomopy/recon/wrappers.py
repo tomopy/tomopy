@@ -456,24 +456,36 @@ def lprec(tomo, center, recon, theta, **kwargs):
         # if not fbp, allocate memory for the forward transform arrays
         lp.initcmem(lpmethod != 'fbp', gpu)
 
+    lock = threading.Lock()
+    global BUSYGPUS
+    BUSYGPUS = np.zeros(ngpus)
     # run reconstruciton on many gpus
     with cf.ThreadPoolExecutor(ngpus) as e:
         shift = 0
-        for reconi in e.map(partial(lpmultigpu, lp, lpmethods_list[lpmethod], recon, tomo, num_iter, reg_par, gpu_list), ids_list):
+        for reconi in e.map(partial(lpmultigpu, lp, lpmethods_list[lpmethod], recon, tomo, num_iter, reg_par, gpu_list, lock), ids_list):
             recon[np.arange(0, reconi.shape[0])+shift] = reconi
             shift += reconi.shape[0]
 
     return recon
 
 
-def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, ids):
+def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, lock, ids):
     """
     Reconstruction Nssimgpu slices simultaneously on 1 GPU
     """
-    # take gpu number with respect to the current thread
-    gpu = gpu_list[int(threading.current_thread().name.split("_", 1)[1])]
-    logger.info(str([gpu, ids]))
+
+    global BUSYGPUS
+    lock.acquire()  # will block if lock is already held
+    for k in range(len(gpu_list)):
+        if BUSYGPUS[k] == 0:
+            BUSYGPUS[k] = 1
+            gpu_id = k
+            break
+    lock.release()
+    gpu = gpu_list[gpu_id]
+
     # reconstruct
     recon[ids] = lpmethod(lp, recon[ids], tomo[ids], num_iter, reg_par, gpu)
+    BUSYGPUS[gpu_id] = 0
 
     return recon[ids]
