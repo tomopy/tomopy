@@ -455,7 +455,7 @@ def lprec(tomo, center, recon, theta, **kwargs):
         gpu = gpu_list[igpu]
         # if not fbp, allocate memory for the forward transform arrays
         lp.initcmem(lpmethod != 'fbp', gpu)
-    
+
     lock = threading.Lock()
     global bgpus
     bgpus = np.zeros(ngpus)
@@ -473,17 +473,14 @@ def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, lock, ids
     """
     Reconstruction Nssimgpu slices simultaneously on 1 GPU
     """
-    
+
     global bgpus
-    lock.acquire() # will block if lock is already held
-    print(lock)
+    lock.acquire()  # will block if lock is already held
     for k in range(len(gpu_list)):
-        if bgpus[k]==0:
+        if bgpus[k] == 0:
             bgpus[k] = 1
             gpu_id = k
             break
-    print(bgpus)            
-    print("release")    
     lock.release()
     gpu = gpu_list[gpu_id]
 
