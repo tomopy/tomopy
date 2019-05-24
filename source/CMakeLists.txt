@@ -18,8 +18,17 @@ set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
 #   PTL submodule
 #
 #------------------------------------------------------------------------------#
-checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
-    RELATIVE_PATH source/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+if(DEFINED PTL_RELEASE AND DEFINED PTL_SHA512)
+    DOWNLOAD_RELEASE_TARBALL(
+        NAME PTL
+        RELEASE ${PTL_RELEASE}
+        SHA512 ${PTL_SHA512}
+        URL_PREFIX https://github.com/jrmadsen
+        COPY_TO ${CMAKE_CURRENT_LIST_DIR}/PTL)
+else()
+    checkout_git_submodule(RECURSIVE TEST_FILE CMakeLists.txt
+        RELATIVE_PATH source/PTL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+endif()
 
 if(TOMOPY_USE_PTL)
     add_subdirectory(PTL)

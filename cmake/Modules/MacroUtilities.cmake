@@ -96,6 +96,58 @@ ENDFUNCTION(ADD_OPTION _NAME _MESSAGE _DEFAULT)
 
 
 #------------------------------------------------------------------------------#
+# macro DOWNLOAD_RELEASE_TARBALL()
+#
+#   download a GitHub release, compare checksum, extract, copy somewhere
+#
+#   ARGS:
+#       NAME (one value) -- name of the project
+#       URL_PREFIX (one value) -- domain + project/user, e.g. https://github.com/tomopy
+#       SHA512 (one value) -- the checksum sha512sum
+#       COPY_TO (one value) -- where to copy the extracted folder
+#       RELEASE (one value) -- the name of the release, e.g. v1.0.0
+#
+#   EXAMPLE:
+#       DOWNLOAD_RELEASE_TARBALL(
+#           NAME PTL
+#           RELEASE tomopy-v1.0
+#           COPY_TO ${CMAKE_CURRENT_LIST_DIR}/PTL
+#           URL_PREFIX https://github.com/jrmadsen
+#           SHA512 38412b950a0608a15ca2a7325134cbb1d929df7d1eb209765121db0df6ab9fc5f7908f9b78a4739aa6e01954ec35fa89f31019e371198d1f526c3b7a20c50e61
+#       )
+#
+FUNCTION(DOWNLOAD_RELEASE_TARBALL)
+    # parse args
+    cmake_parse_arguments(
+        PROJECT
+        ""
+        "NAME;URL_PREFIX;SHA512;COPY_TO;RELEASE"
+        "ADDITIONAL_CMDS"
+        ${ARGN})
+
+    set(_CWD ${PROJECT_BINARY_DIR}/downloads)
+    set(_URL ${PROJECT_URL_PREFIX}/${PROJECT_NAME}/archive/${PROJECT_RELEASE}.tar.gz)
+    set(_TAR ${_CWD}/${PROJECT_RELEASE}.tar.gz)
+    file(DOWNLOAD ${_URL} ${_TAR})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${_TAR} WORKING_DIRECTORY ${_CWD})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E sha512sum ${_TAR} OUTPUT_VARIABLE _SHA512)
+    string(REPLACE " " ";" _SHA512 "${_SHA512}")
+    list(GET _SHA512 0 _SHA512)
+    if(NOT "${_SHA512}" STREQUAL "${PROJECT_SHA512}")
+        message(STATUS "DOWNLOAD sha512sum: ${_SHA512}")
+        message(STATUS "EXPECTED sha512sum: ${PROJECT_SHA512}")
+        message(FATAL_ERROR "sha512sum mismatch!")
+    endif()
+    if(EXISTS ${PROJECT_COPY_TO} AND IS_DIRECTORY ${PROJECT_COPY_TO})
+        execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_COPY_TO})
+    endif()
+    message(STATUS "Copying '${_CWD}/${PROJECT_NAME}-${PROJECT_RELEASE}' to '${PROJECT_COPY_TO}'...")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${_CWD}/${PROJECT_NAME}-${PROJECT_RELEASE} ${PROJECT_COPY_TO})
+
+ENDFUNCTION()
+
+
+#------------------------------------------------------------------------------#
 # macro CHECKOUT_GIT_SUBMODULE()
 #
 #   Run "git submodule update" if a file in a submodule does not exist
