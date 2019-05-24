@@ -457,8 +457,8 @@ def lprec(tomo, center, recon, theta, **kwargs):
         lp.initcmem(lpmethod != 'fbp', gpu)
 
     lock = threading.Lock()
-    global bgpus
-    bgpus = np.zeros(ngpus)
+    global BUSYGPUS
+    BUSYGPUS = np.zeros(ngpus)
     # run reconstruciton on many gpus
     with cf.ThreadPoolExecutor(ngpus) as e:
         shift = 0
@@ -474,11 +474,11 @@ def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, lock, ids
     Reconstruction Nssimgpu slices simultaneously on 1 GPU
     """
 
-    global bgpus
+    global BUSYGPUS
     lock.acquire()  # will block if lock is already held
     for k in range(len(gpu_list)):
-        if bgpus[k] == 0:
-            bgpus[k] = 1
+        if BUSYGPUS[k] == 0:
+            BUSYGPUS[k] = 1
             gpu_id = k
             break
     lock.release()
@@ -486,6 +486,6 @@ def lpmultigpu(lp, lpmethod, recon, tomo, num_iter, reg_par, gpu_list, lock, ids
 
     # reconstruct
     recon[ids] = lpmethod(lp, recon[ids], tomo[ids], num_iter, reg_par, gpu)
-    bgpus[gpu_id] = 0
+    BUSYGPUS[gpu_id] = 0
 
     return recon[ids]
