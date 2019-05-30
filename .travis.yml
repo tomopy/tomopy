@@ -27,7 +27,7 @@ env:
     - LD_LIBRARY_PATH=${HOME}/miniconda/lib:${CUDA_TOOLKIT_ROOT_DIR}/lib64
     - PATH=${HOME}/miniconda/bin:${PATH}
     - PYCTEST_ARGS="-SF --pyctest-jobs=1 --pyctest-site=Travis
-      --exclude-phantoms shepp3d -- -VV --
+      --phantoms baboon checkerboard peppers -- -VV --
       -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_TOOLKIT_ROOT_DIR}
       -DCMAKE_CUDA_COMPILER=${CUDA_COMPILER}"
     - TOMOPY_USE_C_ALGORITHMS=1
