@@ -115,8 +115,6 @@ cuda_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta
     assert(tmp != nullptr);
     assert(sum_dist != nullptr);
 
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-
     for(int p = 0; p < dt; ++p)
     {
         float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
