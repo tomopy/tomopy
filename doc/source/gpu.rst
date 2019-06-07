@@ -39,7 +39,7 @@ a factor of 90 degrees:
 
 .. code-block:: python
 
-        obj = tomopy.misc.phantom("shepp2d")
+        obj = tomopy.shepp2d()
         obj = tomopy.misc.morph.pad(obj, axis=1, mode='constant')
         obj = tomopy.misc.morph.pad(obj, axis=2, mode='constant')
 
