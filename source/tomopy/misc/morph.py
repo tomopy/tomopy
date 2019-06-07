@@ -85,10 +85,10 @@ def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     ----------
     arr : ndarray
         Input array.
+    axis : int
+        Axis along which padding will be performed.
     npad : int, optional
         New dimension after padding.
-    axis : int, optional
-        Axis along which padding will be performed.
     mode : str or function
         One of the following string values or a user supplied function.
 
