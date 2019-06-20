@@ -1,31 +1,21 @@
-.. title:: TomoPy
-
 .. image:: img/tomopy-logo.png
    :width: 320px
    :alt: TomoPy
 
-`TomoPy <https://github.com/tomopy/tomopy.git>`_ is an open-source
-Python package for tomographic data processing and image reconstruction.
 
-Features
-========
+.. include:: ../../README.rst
 
-* Image reconstruction algorithms for tomography.
-* Various filters, ring removal algorithms, phase retrieval algorithms.
-* Forward projection operator for absorption and wave propagation.
 
-Contribute
-==========
+Indices and tables
+==================
 
-* Issue Tracker: https://github.com/tomopy/tomopy/issues
-* Documentation: https://github.com/tomopy/tomopy/tree/master/doc
-* Source Code: https://github.com/tomopy/tomopy/tree/master/tomopy
-* Tests: https://github.com/tomopy/tomopy/tree/master/test
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
-Table of Contents
-=================
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
 
    about
@@ -38,18 +28,3 @@ Table of Contents
    demo
    faq
    credits
-
-License
-=======
-
-The project is licensed under the
-`BSD-3 <https://github.com/tomopy/tomopy/blob/master/LICENSE.txt>`_ license.
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
