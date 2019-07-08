@@ -81,7 +81,7 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 if sys.version_info < (3,):
     warnings.warn(
-        'TomoPy will drop support for Python 2 no later than 1 January 2020.'
+        'TomoPy will drop support for Python 2 before 1 January 2020.'
         ' For more information, visit https://python3statement.org/.',
         UserWarning,
     )

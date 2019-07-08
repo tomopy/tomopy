@@ -49,7 +49,7 @@ then open a terminal or a command prompt window and run:
   conda install -c conda-forge tomopy
 
 
-.. warning:: TomoPy will drop support for Python 2 no later than 1 January 2020. For more information, visit https://python3statement.org/.
+.. warning:: TomoPy will drop support for Python 2 before 1 January 2020. For more information, visit https://python3statement.org/.
 
 Try Now
 =======
