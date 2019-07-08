@@ -1,5 +1,5 @@
-TomoPy
-######
+**TomoPy** is an open-source
+Python package for tomographic data processing and image reconstruction.
 
 .. image:: https://readthedocs.org/projects/tomopy/badge/?version=latest
    :target: https://readthedocs.org/projects/tomopy/?badge=latest
@@ -8,7 +8,7 @@ TomoPy
 .. image:: https://travis-ci.org/tomopy/tomopy.svg?branch=master
    :target: https://travis-ci.org/tomopy/tomopy
    :alt: Travis CI
-  
+
 .. image:: https://ci.appveyor.com/api/projects/status/t2ty4k5snkv9od0r/branch/master?svg=true
    :target: https://ci.appveyor.com/project/tomopy/tomopy
    :alt: Appyveyor
@@ -25,12 +25,11 @@ TomoPy
    :target: https://anaconda.org/conda-forge/tomopy
    :alt: Anaconda downloads
 
-.. image:: https://mybinder.org/badge.svg 
+.. image:: https://mybinder.org/badge.svg
    :target: https://mybinder.org/v2/gh/tomopy/tomopy/master
    :alt: Use on Binder
 
-**TomoPy** is an open-source Python package for tomographic data 
-processing and image reconstruction.
+|
 
 Features
 ========
@@ -42,11 +41,16 @@ Features
 Installation
 ============
 
-Have `Conda <http://continuum.io/downloads>`_ installed first,  
+Have `Conda <http://continuum.io/downloads>`_ installed first,
 then open a terminal or a command prompt window and run:
 
-    conda install -c conda-forge tomopy
-    
+.. code-block::
+
+  conda install -c conda-forge tomopy
+
+
+.. warning:: TomoPy will drop support for Python 2 before 1 January 2020. For more information, visit https://python3statement.org/.
+
 Try Now
 =======
 
@@ -66,5 +70,5 @@ Contribute
 License
 =======
 
-The project is licensed under the 
+The project is licensed under the
 `BSD-3 <https://github.com/tomopy/tomopy/blob/master/LICENSE.txt>`_ license.
