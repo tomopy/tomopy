@@ -49,6 +49,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
+import warnings
+
 from pkg_resources import get_distribution, DistributionNotFound
 try:
     __version__ = get_distribution(__name__).version
@@ -75,3 +78,10 @@ from tomopy.util.mproc import set_debug
 
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+if sys.version_info < (3,):
+    warnings.warn(
+        'TomoPy will drop support for Python 2 before 1 January 2020.'
+        ' For more information, visit https://python3statement.org/.',
+        UserWarning,
+    )
