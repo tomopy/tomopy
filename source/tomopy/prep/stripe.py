@@ -838,6 +838,6 @@ def _remove_all_stripe(tomo, snr, la_size, sm_size):
     matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
     for m in range(tomo.shape[1]):
         sino = tomo[:, m, :]
-        sino = _rs_algorithm_6(sino, snr, la_size, matindex)
-        sino = _rs_algorithm_3(sino, sm_size, matindex)
+        sino = _rs_dead(sino, snr, la_size, matindex)
+        sino = _rs_sort(sino, sm_size, matindex)
         tomo[:, m, :] = sino
