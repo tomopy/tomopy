@@ -84,9 +84,6 @@ if platform.system() == "Darwin":
     version = ".".join([version[0], version[1]])
     cmake_args += ["-DCMAKE_OSX_DEPLOYMENT_TARGET={}".format(version)]
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
 # suppress:
 #  "setuptools_scm/git.py:68: UserWarning: "/.../tomopy" is shallow and may cause errors"
 # since 'error' in output causes CDash to interpret warning as error
@@ -103,7 +100,6 @@ with warnings.catch_warnings():
         author='Doga Gursoy',
         author_email='dgursoy@aps.anl.gov',
         description='Tomographic Reconstruction in Python.',
-        long_description=read('README.rst'),
         long_description_content_type='text/x-rst',
         keywords=['tomography', 'reconstruction', 'imaging'],
         url='http://tomopy.readthedocs.org',
