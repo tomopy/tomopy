@@ -100,6 +100,7 @@ with warnings.catch_warnings():
         author='Doga Gursoy',
         author_email='dgursoy@aps.anl.gov',
         description='Tomographic Reconstruction in Python.',
+        long_description_content_type='text/x-rst',
         keywords=['tomography', 'reconstruction', 'imaging'],
         url='http://tomopy.readthedocs.org',
         download_url='http://github.com/tomopy/tomopy.git',

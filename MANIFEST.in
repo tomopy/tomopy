@@ -1,4 +1,2 @@
-include README.rst
-include LICENSE.txt
 graft source/tomopy
 global-exclude *.py[co]
