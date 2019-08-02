@@ -163,3 +163,8 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='grad', num_iter=4),
             read_file('grad.npy'), rtol=1e-2)
+
+    def test_tikh(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='tikh', num_iter=4),
+            read_file('tikh.npy'), rtol=1e-2)

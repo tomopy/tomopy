@@ -62,14 +62,14 @@ def configure():
     # default algorithm choices
     available_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
                             'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                            'pml_quad', 'tv', 'grad']
+                            'pml_quad', 'tv', 'grad', 'tikh']
     # default phantom choices
     available_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                           "lena", "peppers", "shepp2d", "shepp3d"]
     # choices for algorithms
     algorithm_choices = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
                          'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                         'pml_quad', 'tv', 'grad', 'none', 'all']
+                         'pml_quad', 'tv', 'grad', 'tikh',  'none', 'all']
     # phantom choices
     phantom_choices = ["baboon", "cameraman", "barbara", "checkerboard",
                        "lena", "peppers", "shepp2d", "shepp3d", "none", "all"]
@@ -78,7 +78,7 @@ def configure():
     # default algorithm choices
     default_algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem',
                           'sirt', 'ospml_hybrid', 'ospml_quad', 'pml_hybrid',
-                          'pml_quad', 'tv', 'grad']
+                          'pml_quad', 'tv', 'grad', 'tikh']
     # default phantom choices
     default_phantoms = ["baboon", "cameraman", "barbara", "checkerboard",
                         "lena", "peppers", "shepp2d", "shepp3d"]

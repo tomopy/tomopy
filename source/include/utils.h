@@ -136,6 +136,10 @@ void DLL
         float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
 
 void DLL
+     tikh(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+          float* recon, int ngridx, int ngridy, int num_iter, const float* reg_data, const float* reg_pars);
+
+void DLL
      vector(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
             float* recon1, float* recon2, int ngridx, int ngridy, int num_iter);
 
