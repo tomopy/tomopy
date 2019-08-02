@@ -183,13 +183,13 @@ tikh(const float* data, int dy, int dt, int dx, const float* center, const float
             }                      
         }
 
-        // add to the gradient 2*(recon-reg_data)
+        // add to the gradient 2*reg_par[1]*(recon-reg_data)
         for(s = 0; s < dy; s++)
         {
             ind_recon = s * ngridx * ngridy;
             for(iy = 0; iy < ngridy; iy++)
                 for(ix = 0; ix < ngridx; ix++)
-                    grad[ind_recon + iy * ngridx + ix] += reg_pars[1]*(recon[ind_recon + iy * ngridx + ix]-reg_data[ind_recon + iy * ngridx + ix]);
+                    grad[ind_recon + iy * ngridx + ix] += 2*reg_pars[1]*(recon[ind_recon + iy * ngridx + ix]-reg_data[ind_recon + iy * ngridx + ix]);
         }
         // compute the gradient step
         for(s = 0; s < dy; s++)
