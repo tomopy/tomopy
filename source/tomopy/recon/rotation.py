@@ -486,6 +486,9 @@ def write_center(
             :cite:`Chambolle:11`.
         'grad'
             Gradient descent method with a constant step size
+        'tikh'
+            Tikhonov regularization with identity Tikhonov matrix.            
+            
 
     filter_name : str, optional
         Name of the filter for analytic reconstruction.

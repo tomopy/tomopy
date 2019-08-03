@@ -95,6 +95,7 @@ allowed_recon_kwargs = {
     'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
     'tv': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     'grad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
+    'tikh': ['num_gridx', 'num_gridy', 'num_iter', 'reg_data', 'reg_par'],
 }
 
 
@@ -150,7 +151,9 @@ def recon(
             Total Variation reconstruction technique
             :cite:`Chambolle:11`.
         'grad'
-            Gradient descent method with a constant step size
+            Gradient descent method. 
+        'tikh'
+            Tikhonov regularization with identity Tikhonov matrix.
 
     num_gridx, num_gridy : int, optional
         Number of pixels along x- and y-axes in the reconstruction grid.
@@ -278,7 +281,7 @@ def recon(
                     kwargs[key] = np.array(value)
 
                 # Make sure reg_par and filter_par is float32.
-                if key == 'reg_par' or key == 'filter_par':
+                if key == 'reg_par' or key == 'filter_par' or key == 'reg_data':
                     if not isinstance(kwargs[key], np.float32):
                         kwargs[key] = np.array(value, dtype='float32')
 
@@ -416,6 +419,7 @@ def _get_algorithm_kwargs(shape):
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
+        'reg_data': np.zeros([dy,dx,dx], dtype='float32'),
         'num_block': dtype.as_int32(1),
         'ind_block': np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
         'options': {},
