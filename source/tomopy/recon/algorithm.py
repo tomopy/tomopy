@@ -419,7 +419,7 @@ def _get_algorithm_kwargs(shape):
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
-        'reg_data': np.zeros(shape,dtype='float32'),
+        'reg_data': np.zeros([dy,dx,dx], dtype='float32'),
         'num_block': dtype.as_int32(1),
         'ind_block': np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
         'options': {},
