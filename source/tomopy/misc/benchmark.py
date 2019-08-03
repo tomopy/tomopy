@@ -65,7 +65,7 @@ import timemory
 
 algorithms = ['gridrec', 'art', 'fbp', 'bart', 'mlem', 'osem', 'sirt',
               'ospml_hybrid', 'ospml_quad', 'pml_hybrid', 'pml_quad',
-              'tv', 'grad']
+              'tv', 'grad', 'tikh']
 image_quality = {}
 
 
