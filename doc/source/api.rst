@@ -17,6 +17,7 @@ This section contains the API reference and usage information for TomoPy.
    api/tomopy.prep.stripe
    api/tomopy.recon.algorithm
    api/tomopy.recon.rotation
+   api/tomopy.sim.distortion
    api/tomopy.sim.project
    api/tomopy.sim.propagate
 
@@ -24,4 +25,4 @@ This section contains the API reference and usage information for TomoPy.
 .. automodule:: tomopy
    :members:
    :undoc-members:
-   :show-inheritance: 
+   :show-inheritance:

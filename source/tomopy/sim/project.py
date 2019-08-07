@@ -70,83 +70,7 @@ __all__ = ['angles',
            'project2',
            'project3',
            'fan_to_para',
-           'para_to_fan',
-           'add_gaussian',
-           'add_poisson',
-           'add_salt_pepper',
-           'add_focal_spot_blur']
-
-
-def add_gaussian(tomo, mean=0, std=None):
-    """
-    Add Gaussian noise.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    mean : float, optional
-        Mean of the Gaussian distribution.
-    std : float, optional
-        Standard deviation of the Gaussian distribution.
-
-    Returns
-    -------
-    ndarray
-        3D tomographic data after Gaussian noise added.
-    """
-    tomo = dtype.as_ndarray(tomo)
-    if std is None:
-        std = tomo.max() * 0.05
-    dx, dy, dz = tomo.shape
-    tomo += std * np.random.randn(dx, dy, dz) + mean
-    return tomo
-
-
-def add_poisson(tomo):
-    """
-    Add Poisson noise.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-
-    Returns
-    -------
-    ndarray
-        3D tomographic data after Poisson noise added.
-    """
-    return np.random.poisson(tomo)
-
-
-def add_salt_pepper(tomo, prob=0.01, val=None):
-    """
-    Add salt and pepper noise.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    prob : float, optional
-        Independent probability that each element of a pixel might be
-        corrupted by the salt and pepper type noise.
-    val : float, optional
-        Value to be assigned to the corrupted pixels.
-
-    Returns
-    -------
-    ndarray
-        3D tomographic data after salt and pepper noise added.
-    """
-    tomo = dtype.as_ndarray(tomo)
-    dx, dy, dz = tomo.shape
-    ind = np.random.rand(dx, dy, dz) < prob
-    if val is None:
-        val = tomo.max()
-    tomo[ind] = val
-    return tomo
-
+           'para_to_fan']
 
 def angles(nang, ang1=0., ang2=180.):
     """
@@ -295,7 +219,7 @@ def project2(
     center = get_center(shape, center)
 
     extern.c_project2(objx, objy, center, tomo, theta)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -310,7 +234,7 @@ def project2(
 
 
 def project3(
-        objx, objy, objz, theta, center=None, 
+        objx, objy, objz, theta, center=None,
         emission=True, pad=True,
         sinogram_order=False, axis=0, ncore=None, nchunk=None):
     """
@@ -363,7 +287,7 @@ def project3(
     center = get_center(shape, center)
 
     extern.c_project3(objx, objy, objz, center, tomo, theta, axis)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -373,7 +297,7 @@ def project3(
         tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
         # copy data to sharedmem
         tomo = dtype.as_sharedmem(tomo, copy=True)
-        
+
     return tomo
 
 
@@ -435,24 +359,6 @@ def para_to_fan(tomo, dist, geom):
     -------
     ndarray
         Transformed 3D tomographic data.
-    """
-    logger.warning('Not implemented.')
-
-
-def add_focal_spot_blur(tomo, spotsize):
-    """
-    Add focal spot blur.
-
-    Warning
-    -------
-    Not implemented yet.
-
-    Parameters
-    ----------
-    tomo : ndarray
-        3D tomographic data.
-    spotsize : float
-        Focal spot size of circular x-ray source.
     """
     logger.warning('Not implemented.')
 

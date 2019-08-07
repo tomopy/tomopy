@@ -74,6 +74,7 @@ from tomopy.recon.vector import *
 from tomopy.recon.acceleration import *
 from tomopy.sim.project import *
 from tomopy.sim.propagate import *
+from tomopy.sim.distortion import *
 from tomopy.util.mproc import set_debug
 
 import logging
