@@ -63,21 +63,20 @@ __docformat__ = 'restructuredtext en'
  
  
 class DistortionCorrectionTestCase(unittest.TestCase):
- 
-    def __init__(self):
+    def test_distortion_correction_proj(self):
         test_dir = os.path.dirname(os.path.realpath(__file__))        
         file_path = os.path.join(test_dir, 'test_data','discoef.txt')
-        (self.xc, self.yc, self.list_fact) = load_distortion_coefs(file_path)
-        self.data3d = read_file('distortion_3d.npy')
-        self.data_slice = read_file('distortion_sino.npy')
-        self.data_proj = read_file('distortion_proj.npy')
-        
-    def test_distortion_correction_proj(self):
+        (xc, yc, list_fact) = load_distortion_coefs(file_path)        
         assert_allclose(
-            distortion_correction_proj(self.data3d, self.xc, self.yc, self.list_fact)[0],
-            self.data_proj, rtol=1e-2)
+            distortion_correction_proj(
+                read_file('distortion_3d.npy'), xc, yc, list_fact)[0],
+            read_file('distortion_proj.npy'), rtol=1e-2)
  
     def test_distortion_correction_sino(self):
+        test_dir = os.path.dirname(os.path.realpath(__file__))        
+        file_path = os.path.join(test_dir, 'test_data','discoef.txt')
+        (xc, yc, list_fact) = load_distortion_coefs(file_path)
         assert_allclose(
-            distortion_correction_sino(self.data3d, 5, self.xc, self.yc, self.list_fact),
-            self.data_slice, rtol=1e-2)
+            distortion_correction_sino(
+                read_file('distortion_3d.npy'), 5, xc, yc, list_fact),
+            read_file('distortion_sino.npy'), rtol=1e-2)
