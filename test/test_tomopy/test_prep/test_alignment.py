@@ -64,7 +64,7 @@ __docformat__ = 'restructuredtext en'
  
 class DistortionCorrectionTestCase(unittest.TestCase):
  
-    def __init__ (self):
+    def __init__(self):
         test_dir = os.path.dirname(os.path.realpath(__file__))        
         file_path = os.path.join(test_dir, 'test_data','discoef.txt')
         (self.xc, self.yc, self.list_fact) = load_distortion_coefs(file_path)
