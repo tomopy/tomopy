@@ -64,8 +64,9 @@ __docformat__ = 'restructuredtext en'
  
 class DistortionCorrectionTestCase(unittest.TestCase):
     def test_distortion_correction_proj(self):
-        test_dir = os.path.dirname(os.path.realpath(__file__))        
-        file_path = os.path.join(test_dir, 'test_data','discoef.txt')
+        test_dir = os.path.dirname(os.path.realpath(__file__))       
+        file_path = os.path.join(
+            os.path.dirname(test_dir),'test_data','discoef.txt')
         (xc, yc, list_fact) = load_distortion_coefs(file_path)        
         assert_allclose(
             distortion_correction_proj(
@@ -74,7 +75,8 @@ class DistortionCorrectionTestCase(unittest.TestCase):
  
     def test_distortion_correction_sino(self):
         test_dir = os.path.dirname(os.path.realpath(__file__))        
-        file_path = os.path.join(test_dir, 'test_data','discoef.txt')
+        file_path = os.path.join(
+            os.path.dirname(test_dir),'test_data','discoef.txt')
         (xc, yc, list_fact) = load_distortion_coefs(file_path)
         assert_allclose(
             distortion_correction_sino(
