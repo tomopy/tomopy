@@ -23,7 +23,6 @@ Indices and tables
    data
    devguide
    gpu
-   releases
    api
    demo
    faq
