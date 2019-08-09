@@ -16,14 +16,14 @@ Indices and tables
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 4
 
    about
-   install
-   data
-   devguide
-   gpu
-   api
-   demo
    faq
-   credits
+   api
+   install
+   examples
+   data
+   gpu
+   devguide
+   zcredits
