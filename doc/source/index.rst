@@ -23,7 +23,6 @@ Indices and tables
    api
    install
    examples
-   data
    gpu
    devguide
    zcredits
