@@ -2,10 +2,12 @@
 Credits
 =======
 
-We kindly request that you cite the following article(s) :cite:`Gursoy:14a` if
-you use TomoPy (and also cite :cite:`Pelt:16a` if you use ASTRA or
-:cite:`Vogelgesang:12` if you use UFO). For vector reconstructions please
-additionally cite :cite:`Hierro-Rodriguez:18`.
+We kindly request that you cite the following article(s):
+
+- cite :cite:`Gursoy:14a` if you use TomoPy
+- cite :cite:`Pelt:16a` if you use ASTRA
+- cite :cite:`Hierro-Rodriguez:18` if you use vector reconstructions
+- cite :cite:`Vogelgesang:12` if you use UFO
 
 .. bibliography:: bibtex/zcite.bib
    :style: unsrt
