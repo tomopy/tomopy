@@ -60,13 +60,14 @@ from tomopy.util.misc import write_tiff
 from scipy.signal import medfilt, medfilt2d
 from scipy.optimize import curve_fit
 from scipy.ndimage import affine_transform
+from scipy.ndimage import map_coordinates
 from collections import namedtuple
 
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy, Chen Zhang"
-__copyright__ = "Copyright (c) 2016-17, UChicago Argonne, LLC."
+__author__ = "Doga Gursoy, Chen Zhang, Nghia Vo"
+__copyright__ = "Copyright (c) 2016-19, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['align_seq',
            'align_joint',
@@ -79,6 +80,9 @@ __all__ = ['align_seq',
            'find_slits_corners_aps_1id',
            'calc_slit_box_aps_1id',
            'remove_slits_aps_1id',
+           'distortion_correction_proj',
+           'distortion_correction_sino',
+           'load_distortion_coefs',           
            ]
 
 
@@ -899,3 +903,154 @@ def _calc_proj_cnrs(imgs,
                                 )
                        )
     return np.stack([me.result() for me in tmp], axis=0)
+
+
+def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
+                                ncore=None, nchunk=None):
+    """
+    Apply distortion correction to projections using the polynomial model.
+    Coefficients are calculated using Vounwarp package.:cite:`Vo:15`
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    xcenter : float
+        Center of distortion in x-direction. From the left of the image.
+    ycenter : float
+        Center of distortion in y-direction. From the top of the image. 
+    list_fact : list of floats
+        Polynomial coefficients of the backward model.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+    nchunk : int, optional
+        Chunk size for each core.
+
+    Returns
+    -------
+    ndarray
+        Corrected 3D tomographic data.
+    """
+    arr = mproc.distribute_jobs(
+        tomo,
+        func=_distortion_correction_proj,
+        args=(xcenter, ycenter, list_fact),
+        axis=0,
+        ncore=ncore,
+        nchunk=nchunk)
+    return arr
+
+
+def _unwarp_image_backward(mat, xcenter, ycenter, list_fact):
+    """
+    Unwarp an image using the polynomial model.
+    
+    Parameters
+    ----------
+    mat : 2D array.
+    xcenter : float 
+            Center of distortion in x-direction. From the left of the image.
+    ycenter : float
+            Center of distortion in y-direction. From the top of the image.
+    list_fact : list of floats 
+            Polynomial coefficients of the backward model.
+    
+    Returns
+    -------
+    2D array
+        Corrected image.
+    """
+    (height, width) = mat.shape
+    xu_list = np.arange(width) - xcenter
+    yu_list = np.arange(height) - ycenter
+    xu_mat, yu_mat = np.meshgrid(xu_list, yu_list)
+    ru_mat = np.sqrt(xu_mat**2 + yu_mat**2)
+    fact_mat = np.sum(
+        np.asarray([factor * ru_mat**i for i,
+                    factor in enumerate(list_fact)]), axis=0)
+    xd_mat = np.float32(np.clip(xcenter + fact_mat * xu_mat, 0, width - 1))
+    yd_mat = np.float32(np.clip(ycenter + fact_mat * yu_mat, 0, height - 1))
+    indices = np.reshape(yd_mat, (-1, 1)), np.reshape(xd_mat, (-1, 1))
+    mat = map_coordinates(mat, indices, order=1, mode='reflect')
+    return mat.reshape((height, width))
+
+
+def _distortion_correction_proj(tomo, xcenter, ycenter, list_fact):
+    for m in np.arange(tomo.shape[0]):
+        proj = tomo[m, :, :]
+        proj = _unwarp_image_backward(proj, xcenter, ycenter, list_fact)        
+        tomo[m, :, :] = proj
+
+
+def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
+    """
+    Generate an unwarped sinogram of a 3D tomographic data using
+    the polynomial model. Coefficients are calculated using Vounwarp
+    package :cite:`Vo:15`
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    ind : int
+        Index of the unwarped sinogram.
+    xcenter : float
+        Center of distortion in x-direction. From the left of the image.
+    ycenter : float
+        Center of distortion in y-direction. From the top of the image.         
+    list_fact : list of floats
+        Polynomial coefficients of the backward model.
+
+    Returns
+    -------
+    2D array
+        Corrected sinogram.
+    """
+    (depth, height, width) = tomo.shape
+    xu_list = np.arange(0, width) - xcenter
+    yu = ind - ycenter
+    ru_list = np.sqrt(xu_list**2 + yu**2)
+    flist = np.sum(
+        np.asarray([factor * ru_list**i for i,
+                    factor in enumerate(list_fact)]), axis=0)
+    xd_list = np.clip(xcenter + flist * xu_list, 0, width - 1)
+    yd_list = np.clip(ycenter + flist * yu, 0, height - 1)
+    yd_min = np.int16(np.floor(np.amin(yd_list)))
+    yd_max = np.int16(np.ceil(np.amax(yd_list))) + 1
+    yd_list = yd_list - yd_min 
+    sino = np.zeros((depth, width), dtype=np.float32)
+    indices = yd_list, xd_list
+    for i in np.arange(depth):
+        sino[i] = map_coordinates(
+            tomo[i, yd_min:yd_max, :], indices, order=1, mode='reflect')
+    return sino
+
+
+def load_distortion_coefs(file_path):
+        """
+        Load distortion coefficients from a text file.
+        Order of the infor in the text file:
+        xcenter
+        ycenter
+        factor_0
+        factor_1
+        factor_2
+        ..
+
+        Parameters
+        ----------
+        file_path: Path to the file.
+
+        Returns
+        -------
+        Tuple of (xcenter, ycenter, list_fact).
+        """
+        with open(file_path, 'r') as f:
+            x = f.read().splitlines()
+            list_data = []
+            for i in x:
+                list_data.append(float(i.split()[-1]))
+        xcenter = list_data[0]
+        ycenter = list_data[1]
+        list_fact = list_data[2:]
+        return xcenter, ycenter, list_fact
