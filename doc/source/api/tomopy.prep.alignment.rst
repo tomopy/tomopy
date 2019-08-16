@@ -18,3 +18,5 @@
       shift_images
       scale
       tilt
+      distortion_correction_proj
+      distortion_correction_sino

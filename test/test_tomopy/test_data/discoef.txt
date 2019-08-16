@@ -1,0 +1,7 @@
+xcenter : 8
+ycenter : 8
+factor0 : 0.4
+factor1 : -1.5e-01
+factor2 : 0.0e-02
+factor3 : 0.0e-10
+factor4 : 0.0e-14
