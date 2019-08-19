@@ -16,3 +16,4 @@
       add_focal_spot_blur
       add_rings
       add_zingers
+      add_jitter

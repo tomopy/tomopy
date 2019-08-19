@@ -9,11 +9,9 @@
    .. rubric:: **Functions:**
 
    .. autosummary::
-      
+
       align_seq
       align_joint
-      add_jitter
-      add_noise
       blur_edges
       shift_images
       scale

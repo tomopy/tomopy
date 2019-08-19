@@ -72,8 +72,6 @@ __all__ = ['align_seq',
            'align_joint',
            'scale',
            'tilt',
-           'add_jitter',
-           'add_noise',
            'blur_edges',
            'shift_images',
            'find_slits_corners_aps_1id',
@@ -371,75 +369,7 @@ def tilt(obj, rad=0, phi=0):
     ndarray
         Tilted 3D object.
     """
-    pass
-
-
-def add_jitter(prj, low=0, high=1):
-    """
-    Simulates jitter in projection images. The jitter
-    is simulated by drawing random samples from a uniform
-    distribution over the half-open interval [low, high).
-
-    Parameters
-    ----------
-    prj : ndarray
-        3D stack of projection images. The first dimension
-        is projection axis, second and third dimensions are
-        the x- and y-axes of the projection image, respectively.
-    low : float, optional
-        Lower boundary of the output interval. All values
-        generated will be greater than or equal to low. The
-        default value is 0.
-    high : float
-        Upper boundary of the output interval. All values
-        generated will be less than high. The default value
-        is 1.0.
-
-    Returns
-    -------
-    ndarray
-        3D stack of projection images with jitter.
-    """
-    from skimage import transform as tf
-
-    # Needs scaling for skimage float operations.
-    prj, scl = scale(prj)
-
-    # Random jitter parameters are drawn from uniform distribution.
-    jitter = np.random.uniform(low, high, size=(prj.shape[0], 2))
-
-    for m in range(prj.shape[0]):
-        tform = tf.SimilarityTransform(translation=jitter[m])
-        prj[m] = tf.warp(prj[m], tform, order=0)
-
-    # Re-scale back to original values.
-    prj *= scl
-    return prj, jitter[:, 0], jitter[:, 1]
-
-
-def add_noise(prj, ratio=0.05):
-    """
-    Adds Gaussian noise with zero mean and a given standard
-    deviation as a ratio of the maximum value in data.
-
-    Parameters
-    ----------
-    prj : ndarray
-        3D stack of projection images. The first dimension
-        is projection axis, second and third dimensions are
-        the x- and y-axes of the projection image, respectively.
-    ratio : float, optional
-        Ratio of the standard deviation of the Gaussian noise
-        distribution to the maximum value in data.
-
-    Returns
-    -------
-    ndarray
-        3D stack of projection images with added Gaussian noise.
-    """
-    std = prj.max() * ratio
-    noise = np.random.normal(0, std, size=prj.shape)
-    return prj + noise.astype('float32')
+    raise NotImplementedError("Tilt is not implemented.")
 
 
 def scale(prj):
