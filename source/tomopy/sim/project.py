@@ -295,7 +295,7 @@ def project2(
     center = get_center(shape, center)
 
     extern.c_project2(objx, objy, center, tomo, theta)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -310,7 +310,7 @@ def project2(
 
 
 def project3(
-        objx, objy, objz, theta, center=None, 
+        objx, objy, objz, theta, center=None,
         emission=True, pad=True,
         sinogram_order=False, axis=0, ncore=None, nchunk=None):
     """
@@ -363,7 +363,7 @@ def project3(
     center = get_center(shape, center)
 
     extern.c_project3(objx, objy, objz, center, tomo, theta, axis)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -373,7 +373,7 @@ def project3(
         tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
         # copy data to sharedmem
         tomo = dtype.as_sharedmem(tomo, copy=True)
-        
+
     return tomo
 
 
@@ -409,7 +409,7 @@ def fan_to_para(tomo, dist, geom):
     ndarray
         Transformed 3D tomographic data.
     """
-    logger.warning('Not implemented.')
+    raise NotImplementedError('Not implemented.')
 
 
 def para_to_fan(tomo, dist, geom):
@@ -436,7 +436,7 @@ def para_to_fan(tomo, dist, geom):
     ndarray
         Transformed 3D tomographic data.
     """
-    logger.warning('Not implemented.')
+    raise NotImplementedError('Not implemented.')
 
 
 def add_focal_spot_blur(tomo, spotsize):
@@ -454,7 +454,7 @@ def add_focal_spot_blur(tomo, spotsize):
     spotsize : float
         Focal spot size of circular x-ray source.
     """
-    logger.warning('Not implemented.')
+    raise NotImplementedError('Not implemented.')
 
 
 def _get_magnification(r1, r2):
@@ -499,4 +499,4 @@ def _get_otf(dx, dy, px, py, spotsize):
     array
         2D OTF function.
     """
-    logger.warning('Not implemented.')
+    raise NotImplementedError('Not implemented.')
