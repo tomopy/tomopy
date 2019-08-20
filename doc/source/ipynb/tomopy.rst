@@ -29,6 +29,13 @@ more sophisticated 3D rendering.
 
     import matplotlib.pyplot as plt
 
+Import and activate Python's built in logging module if desired.
+
+.. code:: python
+
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
 Set the path to the micro-CT data to reconstruct.
 
 .. code:: python
