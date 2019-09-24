@@ -2,7 +2,8 @@ name: tomopy
 channels:
   - conda-forge
   - defaults
-  - astra-toolbox
 dependencies:
+  - dxchange
+  - python
+  - matplotlib
   - tomopy
-  - astra-toolbox
