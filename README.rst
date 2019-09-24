@@ -62,6 +62,7 @@ You can try notebooks now using mybinder.org
 Contribute
 ==========
 
+* Bugs Tracker: https://github.com/tomopy/tomopy/projects/1
 * Issue Tracker: https://github.com/tomopy/tomopy/issues
 * Documentation: https://github.com/tomopy/tomopy/tree/master/doc
 * Source Code: https://github.com/tomopy/tomopy/tree/master/tomopy
