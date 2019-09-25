@@ -16,9 +16,9 @@ scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_
    :hidden:
 
    ipynb/data.rst
-   ipynb/tomopy.rst
-   ipynb/astra.rst
-   ipynb/lprec.rst
+   ipynb/tomopy
+   ipynb/astra
+   ipynb/lprec
    ipynb/ufo.rst
    ipynb/vector.rst
 
