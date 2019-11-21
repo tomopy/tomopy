@@ -5,10 +5,11 @@ Examples
 This section contains examples for using various TomoPy functions and plugins
 from other packages.
 
-To `run <http://jupyter.readthedocs.org/en/latest/running.html>`_ these examples in a
-`notebook <http://ipython.org/notebook.html>`_ install
-`Jupyter <http://jupyter.readthedocs.org/en/latest/install.html>`_ or run the python
-scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_
+The examples that do not require a GPU can be run in your browser using the
+Binder link at the top of the page. Otherwise, you may run these
+`Jupyter notebook <https://jupyter-notebook.readthedocs.io/en/stable/>`_
+examples on your local machine or run the equivalent Python
+scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_.
 
 
 .. toctree::

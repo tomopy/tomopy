@@ -54,10 +54,8 @@ then open a terminal or a command prompt window and run:
 Try Now
 =======
 
-You can try notebooks now using mybinder.org
-
-* GridRec: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fgridrec.ipynb
-* Vector Heterostructure: https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fdemo%2Fvector_heterostructure.ipynb
+Some `Example Jupyter notebooks <https://tomopy.readthedocs.io/en/latest/examples.html>`_ will run in your
+browser using `binder <https://mybinder.org/v2/gh/tomopy/tomopy/master?filepath=doc%2Fsource%2Fipynb%2Ftomopy.ipynb>`_.
 
 Contribute
 ==========
