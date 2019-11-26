@@ -4,5 +4,7 @@ channels:
   - defaults
   - astra-toolbox
 dependencies:
+  # astra-toolbox has not released stable builds with Python >3.6
+  - python=3.6
   - tomopy
   - astra-toolbox
