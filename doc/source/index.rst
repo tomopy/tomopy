@@ -1,10 +1,11 @@
 .. image:: img/tomopy-logo-wide.svg
    :width: 320px
-   :alt: TomoPy
+   :alt: TomoPy Logo
+   :align: center
 
+|
 
 .. include:: ../../README.rst
-
 
 Indices and tables
 ==================
