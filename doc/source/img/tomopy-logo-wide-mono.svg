@@ -11,9 +11,9 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    version="1.1"
    id="svg885"
-   width="40cm"
-   height="16cm"
-   viewBox="0 0 1511.811 604.7244"
+   width="23.080114cm"
+   height="5.0894828cm"
+   viewBox="0 0 872.31929 192.3584"
    sodipodi:docname="tomopy-logo-wide-mono.svg"
    inkscape:version="0.92.4 (unknown)">
   <metadata
@@ -42,46 +42,52 @@
      inkscape:window-width="1366"
      inkscape:window-height="704"
      id="namedview887"
-     showgrid="false"
+     showgrid="true"
      inkscape:zoom="0.44227154"
-     inkscape:cx="628.82697"
-     inkscape:cy="322.49051"
+     inkscape:cx="682.66434"
+     inkscape:cy="248.0947"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer6"
+     inkscape:current-layer="layer8"
      units="cm"
      inkscape:pagecheckerboard="false"
-     showguides="true">
+     showguides="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0">
     <inkscape:grid
        type="xygrid"
-       id="grid1466" />
+       id="grid1466"
+       originx="-428.27345"
+       originy="-203.5931" />
   </sodipodi:namedview>
   <g
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="small circle"
      style="display:inline"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-428.27345,-318.71514)" />
   <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="right"
      style="display:inline"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-428.27345,-318.71514)" />
   <g
      inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="left"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-428.27345,-318.71514)" />
   <g
      inkscape:groupmode="layer"
      id="layer6"
      inkscape:label="upper"
-     transform="translate(0,-109.94229)">
+     transform="translate(-428.27345,-318.71514)">
     <g
        id="g5931"
-       transform="translate(28.961173,94.189262)"
+       transform="matrix(0.39604886,0,0,0.39604886,399.02783,288.7477)"
        style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:16;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -110,55 +116,52 @@
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="Text"
-     transform="translate(0,-109.94229)">
+     transform="translate(-428.27345,-318.71514)">
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:189.33332825px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:0;stroke:none;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none;"
-       x="630.32715"
-       y="390.66516"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:189.33332825px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:0;stroke:none;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
+       x="618.32715"
+       y="456.54388"
        id="text6644"><tspan
          sodipodi:role="line"
          id="tspan6642"
-         x="630.32715"
-         y="390.66516"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:189.33332825px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none;">TomoPy</tspan></text>
+         x="618.32715"
+         y="456.54388"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:189.33332825px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none">TomoPy</tspan></text>
     <flowRoot
        xml:space="preserve"
        id="flowRoot6648"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;"><flowRegion
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none"><flowRegion
          id="flowRegion6650"
-         style="fill:#ffffff;"><rect
+         style="fill:#ffffff"><rect
            id="rect6652"
            width="21.480017"
            height="82.528488"
            x="1320.4558"
            y="240.97578"
-           style="fill:#ffffff;" /></flowRegion><flowPara
+           style="fill:#ffffff" /></flowRegion><flowPara
          id="flowPara6654" /></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot6656"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;"><flowRegion
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none"><flowRegion
          id="flowRegion6658"
-         style="fill:#ffffff;"><rect
+         style="fill:#ffffff"><rect
            id="rect6660"
            width="676.0553"
            height="754.06165"
            x="-67.831635"
            y="-31.481268"
-           style="fill:#ffffff;" /></flowRegion><flowPara
+           style="fill:#ffffff" /></flowRegion><flowPara
          id="flowPara6662" /></flowRoot>    <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.66666412px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;opacity:0.93999999;fill:#ffffff;fill-opacity:1;stroke:none;"
-       x="664.74994"
-       y="482.39288"
-       id="text96"><tspan
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none"
+       x="640.08252"
+       y="494.00739"
+       id="text3735"><tspan
          sodipodi:role="line"
-         id="tspan94"
-         x="664.74994"
-         y="482.39288">Tomographic </tspan><tspan
-         sodipodi:role="line"
-         x="664.74994"
-         y="565.7262"
-         id="tspan98">reconstruction in Python</tspan></text>
+         id="tspan3733"
+         x="640.08252"
+         y="494.00739"
+         style="font-size:29.33333397px">tomographic reconstruction in Python</tspan></text>
   </g>
 </svg>

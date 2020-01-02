@@ -11,9 +11,9 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    version="1.1"
    id="svg885"
-   width="40cm"
-   height="16cm"
-   viewBox="0 0 1511.811 604.7244"
+   width="33.447372cm"
+   height="12.406271cm"
+   viewBox="0 0 1264.1526 468.89842"
    sodipodi:docname="tomopy-logo-wide.svg"
    inkscape:version="0.92.4 (unknown)">
   <metadata
@@ -44,41 +44,47 @@
      id="namedview887"
      showgrid="false"
      inkscape:zoom="0.44227154"
-     inkscape:cx="805.18921"
-     inkscape:cy="141.60616"
+     inkscape:cx="585.05876"
+     inkscape:cy="73.693173"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer8"
      units="cm"
      inkscape:pagecheckerboard="false"
-     showguides="true">
+     showguides="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0">
     <inkscape:grid
        type="xygrid"
-       id="grid1466" />
+       id="grid1466"
+       originx="-111.59984"
+       originy="-67.912985" />
   </sodipodi:namedview>
   <g
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="small circle"
      style="display:inline"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-111.59985,-177.85528)" />
   <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="right"
      style="display:inline"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-111.59985,-177.85528)" />
   <g
      inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="left"
-     transform="translate(0,-109.94229)" />
+     transform="translate(-111.59985,-177.85528)" />
   <g
      inkscape:groupmode="layer"
      id="layer6"
      inkscape:label="upper"
-     transform="translate(0,-109.94229)">
+     transform="translate(-111.59985,-177.85528)">
     <g
        id="g5931"
        transform="translate(28.961173,94.189262)"
@@ -110,7 +116,7 @@
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="Text"
-     transform="translate(0,-109.94229)">
+     transform="translate(-111.59985,-177.85528)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:189.33332825px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4f8fb8;fill-opacity:1;stroke:none;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
