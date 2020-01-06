@@ -120,3 +120,11 @@ is a MapReduce type MPI implementation layer, which was successfully used on
 many clusters,  i.e. Stampede, Cori, Mira. There are plans to allow user access
 to TomoPy on a HPC cluster (e.g. through a client or web­portal), but these
 projects will take some time before they are being matured for user’s use.
+
+
+Why can't I install TomoPy from PyPI using pip?
+===============================================
+
+pip wasn't designed to manage non-Python packages, and TomoPy has non-Python
+dependencies. Our preferred package and environment manager, conda, makes it
+easier for us (the developers) to build and distribute TomoPy.
