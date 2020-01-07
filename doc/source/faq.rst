@@ -62,14 +62,10 @@ The TomoPy toolbox is specifically designed to be easy to use and deploy at a
 synchrotron facility beamline. It supports reading many common synchrotron data
 formats from disk through the companion project, DXChange :cite:`DeCarlo:14a`,
 and includes several other processing algorithms commonly used for synchrotron
-data. The algorithms in TomoPy are all CPU-based, however, which can make them
-prohibitively slow in the case of iterative methods, which are often required
-for advanced tomographic experiments.
-
-By integrating the ASTRA toolbox in the TomoPy framework, the optimized
-GPU-based reconstruction methods become easily available for synchrotron
-beamline users, and users of the ASTRA toolbox can more easily read data and use
-TomoPy’s other functionality for data filtering and cleaning.
+data. Integrating the ASTRA toolbox into the TomoPy framework, brought optimized
+GPU-based reconstruction methods to synchrotron beamline users at a time when
+TomoPy had no GPU-based methods. Even today, the ASTRA toolbox offers faster
+iterative methods than TomoPy.
 
 
 What is UFO?
