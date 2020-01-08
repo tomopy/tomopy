@@ -4,7 +4,7 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - coverage
+  - coverage!=5.0.2
   - dxchange
   - futures
   - gcc_linux-64
