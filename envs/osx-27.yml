@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - clangdev
-  - coverage
+  - coverage!=5.0.2
   - dxchange
   - futures
   - git
