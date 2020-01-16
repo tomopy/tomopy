@@ -187,7 +187,7 @@ def astra_rec(tomo, center, recon, theta, vol_geom, niter, proj_type, gpu_index,
         sino = tomo[i]
         if proj_type=='cuda':
             if hasattr(astra_mod, 'geom_postalignment'):
-                proj_geom = astra_mod.geom_postalignment(proj_geom_orig, (center[i] - ndet / 2.))
+                proj_geom = astra_mod.geom_postalignment(proj_geom_orig, -(center[i] - ndet / 2.))
             else:
                 proj_geom['option'] = {
                     'ExtraDetectorOffset':
