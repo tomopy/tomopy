@@ -22,9 +22,3 @@ scripts from `here <https://github.com/tomopy/tomopy/tree/master/doc/demo>`_.
    ipynb/lprec
    ipynb/ufo.rst
    ipynb/vector.rst
-
-
-.. automodule:: tomopy
-   :members:
-   :undoc-members:
-   :show-inheritance:
