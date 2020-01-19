@@ -7,7 +7,8 @@ dependencies:
   - astra-toolbox
   - dxchange
   - python
-  - matplotlib
+  # We don't need the full matplotlib with QT because we are using jupyter
+  - matplotlib-base
   # astra-toolbox has not released stable builds with Python > 3.6
   - python=3.6
   - tomopy
