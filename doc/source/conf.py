@@ -16,6 +16,8 @@ Argonne = u'Argonne National Laboratory'
 project = u'TomoPy'
 copyright = u'2013-2019, ' + Argonne
 
+release = os.popen('git log -1 --format="%H"').read().strip()
+
 # We require sphinx >=2 because of sphinxcontrib.bibtex,
 needs_sphinx = '2.0'
 
