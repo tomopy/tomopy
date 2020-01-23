@@ -43,11 +43,11 @@ endif()
 
 ################################################################################
 #
-#        MKL (required)
+#        MKL (optional)
 #
 ################################################################################
 
-find_package(MKL REQUIRED)
+find_package(MKL)
 
 if(MKL_FOUND)
     list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
