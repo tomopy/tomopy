@@ -62,6 +62,7 @@ add_option(TOMOPY_USE_COVERAGE "Enable code coverage for C/C++" OFF)
 add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
 add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
+add_option(TOMOPY_USE_MKL "Enable MKL support" OFF)
 add_option(TOMOPY_USER_FLAGS "Insert CFLAGS and CXXFLAGS regardless of whether pass check" OFF)
 
 if(TOMOPY_USE_CUDA)
