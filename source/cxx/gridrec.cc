@@ -53,7 +53,13 @@
 #define _XOPEN_SOURCE 700
 
 #include "gridrec.hh"
-#include "mkl.h"
+
+#ifdef USE_MKL
+#   include "mkl.h"
+#else
+#    include <fftw3.h>
+#endif
+
 #include <complex>
 
 #if defined(TOMOPY_CXX_GRIDREC)

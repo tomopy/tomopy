@@ -69,6 +69,8 @@ add_bool_opt("TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
 add_bool_opt("TOMOPY_USE_SANITIZER", args.enable_sanitizer, args.disable_sanitizer)
 add_bool_opt("TOMOPY_USE_PTL", args.enable_tasking, args.disable_tasking)
 
+#cmake_args.append('-DCMAKE_CUDA_COMPILER=$(which nvcc)')
+
 if args.enable_cuda:
     cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
 
