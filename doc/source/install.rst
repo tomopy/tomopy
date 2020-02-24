@@ -12,7 +12,8 @@ If you only want to run TomoPy, not develop it, then you should install through
 Conda, our supported package and environment manager. Conda can install TomoPy
 and its dependencies for you.
 
-First, you must have `Conda <http://continuum.io/downloads>`_ installed.
+First, you must have `Conda <https://docs.conda.io/en/latest/miniconda.html>`_
+installed.
 
 Next, install TomoPy and all its dependencies into a new Conda environment
 called ``tomopy`` by running::
@@ -34,4 +35,4 @@ containing TomoPy and run::
     $ conda update --channel conda-forge tomopy
 
 For some more information about using Conda, please refer to the `docs
-<http://conda.pydata.org/docs>`__.
+<https://conda.io/projects/conda>`__.
