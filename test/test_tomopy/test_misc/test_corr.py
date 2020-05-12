@@ -79,30 +79,20 @@ class ImageFilterTestCase(unittest.TestCase):
                 [np.nan, 1.5, 2, np.nan, 1]), [0, 1.5, 2, 0, 1])
 
     def test_interp_nan(self):
-        use_1d = False
-        if use_1d:
-            in_arr = read_file('proj.npy')[2, 6]
-            nan_idx = 17
-        else:
-            in_arr = read_file('proj.npy')
-            nan_idx = (2, 6, 17) # Which pixel to change
+        in_arr = read_file('proj.npy')
+        nan_idx = (2, 6, 17) # Which pixel to change
+        kernel_size = 3
         # Modify the input array to have a np.nan value
         in_arr[nan_idx] = np.nan
-        # Create an interpolated result to compare against
-        # expected_arr = np.copy(in_arr)
-        # r = int((kernel_size - 1) / 2)
-        # box = expected_arr[nan_idx[0],
-        #                    nan_idx[1]-r:nan_idx[1]+r+1,
-        #                    nan_idx[2]-r:nan_idx[2]+r+1,]
-        # expected_arr[nan_idx] = np.nanmedian(box)
+        # Create an filtered result to compare against
+        expected_arr = np.copy(in_arr)
+        r = int((kernel_size - 1) / 2)
+        box = expected_arr[nan_idx[0],
+                           nan_idx[1]-r:nan_idx[1]+r+1,
+                           nan_idx[2]-r:nan_idx[2]+r+1,]
+        expected_arr[nan_idx] = np.nanmedian(box)
         # Run the *interp_nan* function and check the results
-        out_arr = interp_nan(in_arr)
-        # import matplotlib.pyplot as plt
-        # fig, (ax0, ax1) = plt.subplots(1, 2)
-        # ax0.imshow(in_arr[2])
-        # # ax1.imshow(expected_arr[2])
-        # plt.show()
-        print(out_arr)
+        out_arr = interp_nan(in_arr, size=(1, kernel_size, kernel_size))
         assert_array_equal(out_arr, expected_arr)
 
     def test_remove_outlier(self):

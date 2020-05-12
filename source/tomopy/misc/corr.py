@@ -353,16 +353,22 @@ def remove_neg(arr, val=0., ncore=None):
     return arr
 
 
-def interp_nan(arr, size=3, ncore=None):
-    """
-    Replace NaN values in array by interpolation of neighboring data. 
+def interp_nan(arr, size=(1, 3, 3), ncore=None):
+    """Replace NaN values in array with median of neighboring data.
+
+    The value for *kernel* can be either a scalar, or a tuple with
+    length matching *arr.ndim*. If a scalar is given it will be
+    broadcast to the appropriate shape. Ex: *size=5* with a
+    3-dimensional *arr* is equivalent to *size=(5, 5, 5)*
+
+    If the output still contains NaN's, try a bigger kernel.
 
     Parameters
     ----------
     arr : ndarray
         Input array.
-    size : int, optional
-        Size of kernel to use for interpolation.
+    size : int or tuple, optional
+        Size of kernel to use for median filtering.
     ncore : int, optional
         Number of cores that will be assigned to jobs (coming soon).
 
@@ -370,61 +376,12 @@ def interp_nan(arr, size=3, ncore=None):
     -------
     ndarray
        Corrected array.
+
     """
-    ndim = arr.ndim
-    noutdim = 1 # 1 for scalar data, 3 for 3D vector data, etc
-    # Get coordinate positions of data
-    all_points = np.mgrid[tuple(slice(0, d) for d in arr.shape)]
-    # assert all_points.shape == arr.shape, "{} - {}".format(all_points.shape, arr.shape)
-    # Separate into good and bad data
+    median = filters.median_filter(arr, size=size)
     arr_isnan = np.isnan(arr)
-    values = arr[~arr_isnan]
-    values = values[..., np.newaxis]
-    points = all_points[:,~arr_isnan]
-    xi = all_points[:,arr_isnan]
-    # Interpolate the missing values
-    print(f"Points: {points.shape}, Values: {values.shape}, xi: {xi.shape}")
-    interped = interpn(points, arr.flatten(), xi)
-    print("Result:", interped)
-    # nans, x= nan_helper(y)
-    # y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    
-    # val = np.float32(val)
-
-    # with mproc.set_numexpr_threads(ncore):
-    #     ne.evaluate('where(arr!=arr, val, arr)', out=arr)
-    # import matplotlib.pyplot as plt
-    # fig, (ax0, ax1) = plt.subplots(1, 2)
-    # ax0.imshow(arr[2])
-    # ax1.imshow(points[:,:,-1,2], vmax=48)
-    # plt.show()
-    return arr
-
-
-def remove_neg(arr, val=0., ncore=None):
-    """
-    Replace negative values in array with a given value.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    val : float, optional
-        Values to be replaced with negative values in array.
-    ncore : int, optional
-        Number of cores that will be assigned to jobs.
-
-    Returns
-    -------
-    ndarray
-       Corrected array.
-    """
-    arr = dtype.as_float32(arr)
-    val = np.float32(val)
-
-    with mproc.set_numexpr_threads(ncore):
-        ne.evaluate('where(arr<0, val, arr)', out=arr)
-    return arr
+    median[~arr_isnan] = arr[~arr_isnan]
+    return median
 
 
 def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
