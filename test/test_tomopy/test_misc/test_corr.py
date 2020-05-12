@@ -49,10 +49,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.misc.corr import gaussian_filter, median_filter, remove_neg, remove_nan, remove_outlier, circ_mask
+from tomopy.misc.corr import (gaussian_filter, median_filter,
+                              remove_neg, remove_nan, remove_outlier,
+                              circ_mask, interp_nan)
 from ..util import read_file, loop_dim
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -75,6 +77,33 @@ class ImageFilterTestCase(unittest.TestCase):
         assert_allclose(
             remove_nan(
                 [np.nan, 1.5, 2, np.nan, 1]), [0, 1.5, 2, 0, 1])
+
+    def test_interp_nan(self):
+        use_1d = False
+        if use_1d:
+            in_arr = read_file('proj.npy')[2, 6]
+            nan_idx = 17
+        else:
+            in_arr = read_file('proj.npy')
+            nan_idx = (2, 6, 17) # Which pixel to change
+        # Modify the input array to have a np.nan value
+        in_arr[nan_idx] = np.nan
+        # Create an interpolated result to compare against
+        # expected_arr = np.copy(in_arr)
+        # r = int((kernel_size - 1) / 2)
+        # box = expected_arr[nan_idx[0],
+        #                    nan_idx[1]-r:nan_idx[1]+r+1,
+        #                    nan_idx[2]-r:nan_idx[2]+r+1,]
+        # expected_arr[nan_idx] = np.nanmedian(box)
+        # Run the *interp_nan* function and check the results
+        out_arr = interp_nan(in_arr)
+        # import matplotlib.pyplot as plt
+        # fig, (ax0, ax1) = plt.subplots(1, 2)
+        # ax0.imshow(in_arr[2])
+        # # ax1.imshow(expected_arr[2])
+        # plt.show()
+        print(out_arr)
+        assert_array_equal(out_arr, expected_arr)
 
     def test_remove_outlier(self):
         proj = read_file('proj.npy')
