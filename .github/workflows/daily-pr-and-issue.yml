@@ -28,4 +28,4 @@ jobs:
         stale-issue-label: stale
         exempt-issue-labels: bug
 
-        debug-only: true # optional
+        #debug-only: true # optional
