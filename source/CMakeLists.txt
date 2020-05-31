@@ -47,10 +47,19 @@ file(GLOB tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/*.c
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
+file(GLOB misc_tomo_sources
+    ${CMAKE_CURRENT_LIST_DIR}/c/misc/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/misc/*.cc)    
+
+file(GLOB prep_tomo_sources
+    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
+
 # core sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
-set(PREP_LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
-set(MISC_LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
+set(MISC_LIBRARY_SOURCES ${misc_tomo_headers} ${tomo_sources})
+set(PREP_LIBRARY_SOURCES ${prep_tomo_headers} ${tomo_sources})
+
 
 # target properties based on build
 if(TOMOPY_USE_CUDA)
@@ -71,15 +80,15 @@ endif()
 
 # create library
 add_library(libtomopy SHARED ${LIBRARY_SOURCES})
-add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
+add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 
 # link library
 target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
+    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 
@@ -87,7 +96,7 @@ target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 # target properties
-set_target_properties(libtomopy libtomopy-prep libtomopy-misc 
+set_target_properties(libtomopy libtomopy-misc libtomopy-prep 
     PROPERTIES
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
@@ -103,10 +112,10 @@ set_target_properties(libtomopy libtomopy-prep libtomopy-misc
 target_compile_definitions(libtomopy PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_definitions(libtomopy-prep PUBLIC
+target_compile_definitions(libtomopy-misc PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_definitions(libtomopy-misc PUBLIC
+target_compile_definitions(libtomopy-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(libtomopy PUBLIC

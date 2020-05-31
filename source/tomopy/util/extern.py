@@ -118,15 +118,18 @@ def c_shared_lib(lib_name, do_warn=True):
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     LIB_PTL = c_shared_lib('libptl', do_warn=False)
+    
 
 LIB_TOMOPY = c_shared_lib('libtomopy')
+LIB_TOMOPY_MISC = c_shared_lib("libtomopy-misc")
+LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
 
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
 
-    LIB_TOMOPY.normalize_bg.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.normalize_bg(
+    LIB_TOMOPY_PREP.normalize_bg.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.normalize_bg(
         dtype.as_c_float_p(tomo),
         dtype.as_c_int(dt),
         dtype.as_c_int(dy),
@@ -135,6 +138,7 @@ def c_normalize_bg(tomo, air):
 
 
 def c_remove_stripe_sf(tomo, size):
+    
     # TODO: we should fix this elsewhere...
     # TOMO object must be contiguous for c function to work
     contiguous_tomo = np.require(tomo, requirements="AC")
@@ -142,8 +146,8 @@ def c_remove_stripe_sf(tomo, size):
     istart = 0
     iend = dy
 
-    LIB_TOMOPY.remove_stripe_sf.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.remove_stripe_sf(
+    LIB_TOMOPY_PREP.remove_stripe_sf.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.remove_stripe_sf(
         dtype.as_c_float_p(contiguous_tomo),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),
@@ -261,8 +265,8 @@ def c_project3(objx, objy, objz, center, tomo, theta, axis):
 
 
 def c_sample(mode, arr, dx, dy, dz, level, axis, out):
-    LIB_TOMOPY.sample.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.sample(
+    LIB_TOMOPY_MISC.sample.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_MISC.sample(
         dtype.as_c_int(mode),
         dtype.as_c_float_p(arr),
         dtype.as_c_int(dx),
