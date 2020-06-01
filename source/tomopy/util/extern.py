@@ -122,8 +122,12 @@ with warnings.catch_warnings():
 LIB_TOMOPY_MISC = c_shared_lib("libtomopy-misc")
 LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
 LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
+<<<<<<< HEAD
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
+=======
+
+>>>>>>> f2d4cb8... Separated recon algorithms
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
@@ -380,6 +384,7 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
 
     use_accel = 1 if kwargs['accelerated'] else 0
 
+<<<<<<< HEAD
     if use_accel:
         LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
@@ -411,6 +416,26 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_char_p(kwargs['device']),
             dtype.as_c_int_p(kwargs['grid_size']),
             dtype.as_c_int_p(kwargs['block_size']))
+=======
+    LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.mlem(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
+        dtype.as_c_float_p(recon),
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(use_accel),
+        dtype.as_c_int(kwargs['pool_size']),
+        dtype.as_c_char_p(kwargs['interpolation']),
+        dtype.as_c_char_p(kwargs['device']),
+        dtype.as_c_int_p(kwargs['grid_size']),
+        dtype.as_c_int_p(kwargs['block_size']))
+>>>>>>> f2d4cb8... Separated recon algorithms
 
 
 def c_osem(tomo, center, recon, theta, **kwargs):
@@ -543,6 +568,7 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
 
     use_accel = 1 if kwargs['accelerated'] else 0
 
+<<<<<<< HEAD
     if use_accel:
 
         LIB_TOMOPY_ACCEL.cxx_sirt.restype = dtype.as_c_void_p()
@@ -575,6 +601,26 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_char_p(kwargs['device']),
             dtype.as_c_int_p(kwargs['grid_size']),
             dtype.as_c_int_p(kwargs['block_size']))
+=======
+    LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.sirt(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
+        dtype.as_c_float_p(recon),
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(use_accel),
+        dtype.as_c_int(kwargs['pool_size']),
+        dtype.as_c_char_p(kwargs['interpolation']),
+        dtype.as_c_char_p(kwargs['device']),
+        dtype.as_c_int_p(kwargs['grid_size']),
+        dtype.as_c_int_p(kwargs['block_size']))
+>>>>>>> f2d4cb8... Separated recon algorithms
 
 
 def c_tv(tomo, center, recon, theta, **kwargs):

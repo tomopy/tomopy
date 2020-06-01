@@ -1,5 +1,6 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB recon_tomo_sources
+<<<<<<< HEAD
     ${CMAKE_CURRENT_LIST_DIR}/c/*.c
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
@@ -11,6 +12,16 @@ set(RECON_LIBRARY_SOURCES ${recon_tomo_headers} ${recon_tomo_sources})
 
 # create library
 add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
+=======
+    ${CMAKE_CURRENT_LIST_DIR}/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/*.cc)
+
+# core sources
+set(RECON_LIBRARY_SOURCES ${tomo_headers} ${recon_tomo_sources})
+
+# create library
+add_library(libtomopy-recon SHARED ${PREP_LIBRARY_SOURCES})
+>>>>>>> f2d4cb8... Separated recon algorithms
 
 target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
