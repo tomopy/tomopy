@@ -43,9 +43,10 @@ file(GLOB tomo_headers
     ${CMAKE_CURRENT_LIST_DIR}/include/*.hh
     ${CMAKE_CURRENT_LIST_DIR}/include/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/*.icc)
+
 file(GLOB tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc) 
 
 # core sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
@@ -99,12 +100,13 @@ target_compile_options(libtomopy PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo)
+
 # Install the compiled library
 install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT python)
-
-
+ 
 #------------------------------------------------------------------------------#
 #
 #   TomoPy Python file configuration
