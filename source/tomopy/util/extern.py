@@ -123,6 +123,8 @@ with warnings.catch_warnings():
 LIB_TOMOPY = c_shared_lib('libtomopy')
 LIB_TOMOPY_MISC = c_shared_lib("libtomopy-misc")
 LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
+LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
+LIB_TOMOPY_SIM = c_shared_lib("libtomopy-sim")
 
 
 def c_normalize_bg(tomo, air):
@@ -177,8 +179,8 @@ def c_project(obj, center, tomo, theta):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project(
+    LIB_TOMOPY_SIM.project.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_SIM.project(
         dtype.as_c_float_p(obj),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
@@ -211,8 +213,8 @@ def c_project2(objx, objy, center, tomo, theta):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project2(
+    LIB_TOMOPY_SIM.project2.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_SIM.project2(
         dtype.as_c_float_p(objx),
         dtype.as_c_float_p(objy),
         dtype.as_c_int(oy),
@@ -246,8 +248,8 @@ def c_project3(objx, objy, objz, center, tomo, theta, axis):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project3.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project3(
+    LIB_TOMOPY_SIM.project3.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_SIM.project3(
         dtype.as_c_float_p(objx),
         dtype.as_c_float_p(objy),
         dtype.as_c_float_p(objz),
@@ -286,8 +288,8 @@ def c_art(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.art.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.art(
+    LIB_TOMOPY_RECON.art.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.art(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -308,8 +310,8 @@ def c_bart(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.bart.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.bart(
+    LIB_TOMOPY_RECON.bart.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.bart(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -332,8 +334,8 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.fbp.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.fbp(
+    LIB_TOMOPY_RECON.fbp.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.fbp(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -355,8 +357,8 @@ def c_gridrec(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.gridrec.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.gridrec(
+    LIB_TOMOPY_RECON.gridrec.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.gridrec(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -380,8 +382,8 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
 
     use_accel = 1 if kwargs['accelerated'] else 0
 
-    LIB_TOMOPY.mlem.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.mlem(
+    LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.mlem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -408,8 +410,8 @@ def c_osem(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.osem.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.osem(
+    LIB_TOMOPY_RECON.osem.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.osem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -432,8 +434,8 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.ospml_hybrid.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.ospml_hybrid(
+    LIB_TOMOPY_RECON.ospml_hybrid.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.ospml_hybrid(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -457,8 +459,8 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.ospml_quad.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.ospml_quad(
+    LIB_TOMOPY_RECON.ospml_quad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.ospml_quad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -482,8 +484,8 @@ def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.pml_hybrid.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.pml_hybrid(
+    LIB_TOMOPY_RECON.pml_hybrid.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.pml_hybrid(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -505,8 +507,8 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.pml_quad.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.pml_quad(
+    LIB_TOMOPY_RECON.pml_quad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.pml_quad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -530,8 +532,8 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
 
     use_accel = 1 if kwargs['accelerated'] else 0
 
-    LIB_TOMOPY.sirt.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.sirt(
+    LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.sirt(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -557,8 +559,8 @@ def c_tv(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.tv.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.tv(
+    LIB_TOMOPY_RECON.tv.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.tv(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -579,8 +581,8 @@ def c_grad(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.grad.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.grad(
+    LIB_TOMOPY_RECON.grad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.grad(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -601,8 +603,8 @@ def c_tikh(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.tikh.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.tikh(
+    LIB_TOMOPY_RECON.tikh.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.tikh(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -624,8 +626,8 @@ def c_vector(tomo, center, recon1, recon2, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.vector.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.vector(
+    LIB_TOMOPY_RECON.vector.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.vector(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -647,8 +649,8 @@ def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3, theta1, th
     else:
         dy, dt, dx = tomo1.shape
 
-    LIB_TOMOPY.vector2.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.vector2(
+    LIB_TOMOPY_RECON.vector2.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.vector2(
             dtype.as_c_float_p(tomo1),
             dtype.as_c_float_p(tomo2),
             dtype.as_c_int(dy),
@@ -676,8 +678,8 @@ def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1, recon2, re
     else:
         dy, dt, dx = tomo1.shape
 
-    LIB_TOMOPY.vector3.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.vector3(
+    LIB_TOMOPY_RECON.vector3.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.vector3(
             dtype.as_c_float_p(tomo1),
             dtype.as_c_float_p(tomo2),
             dtype.as_c_float_p(tomo3),
@@ -705,8 +707,8 @@ def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1, recon2, re
 def c_remove_ring(rec, *args):
     istart = 0
     iend = rec.shape[0]
-    LIB_TOMOPY.remove_ring.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY.remove_ring(
+    LIB_TOMOPY_MISC.remove_ring.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_MISC.remove_ring(
             dtype.as_c_float_p(rec),
             dtype.as_c_float(args[0]),  # center_x
             dtype.as_c_float(args[1]),  # center_y
