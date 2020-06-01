@@ -7,11 +7,9 @@ file(GLOB tomo_headers
     ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/../../include/*.icc)
 
-
 file(GLOB misc_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c
     ${CMAKE_CURRENT_LIST_DIR}/*.cc)   
-
 
 # core sources
 set(MISC_LIBRARY_SOURCES ${tomo_headers} ${misc_tomo_sources})
@@ -22,7 +20,6 @@ add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
 # link library
 target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
@@ -44,12 +41,10 @@ set_target_properties(libtomopy-misc
 target_compile_definitions(libtomopy-misc PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-
 target_compile_options(libtomopy-misc PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
-
 
 install(TARGETS libtomopy-misc
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
