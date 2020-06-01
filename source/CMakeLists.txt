@@ -156,7 +156,6 @@ if(NOT SKBUILD)
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 endif()
 
-
 #------------------------------------------------------------------------------#
 #
 #   Code coverage
