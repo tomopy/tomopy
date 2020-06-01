@@ -2,15 +2,15 @@
 # Locate sources and headers for this project headers are included for IDEs
 
 file(GLOB tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hh
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.icc)
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hh
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.icc)
 
 
 file(GLOB misc_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/misc/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/misc/*.cc)   
+    ${CMAKE_CURRENT_LIST_DIR}/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/*.cc)   
 
 
 # core sources
@@ -28,7 +28,7 @@ target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 # target properties
-set_target_properties(libtomopy libtomopy-misc libtomopy-prep
+set_target_properties(libtomopy-misc
     PROPERTIES
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
