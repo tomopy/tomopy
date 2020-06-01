@@ -100,6 +100,9 @@ target_compile_options(libtomopy PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/misc)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/prep)
+
 # Install the compiled library
 install(TARGETS libtomopy
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
@@ -153,8 +156,6 @@ if(NOT SKBUILD)
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 endif()
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/misc)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/prep)
 
 #------------------------------------------------------------------------------#
 #
