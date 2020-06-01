@@ -56,20 +56,11 @@ file(GLOB prep_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.c
     ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
 
-file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/recon/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/recon/*.cc)
-
-    file(GLOB sim_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/sim/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/sim/*.cc)
 
 # core sources
-# set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
+set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 set(MISC_LIBRARY_SOURCES ${tomo_headers} ${misc_tomo_sources})
 set(PREP_LIBRARY_SOURCES ${tomo_headers} ${prep_tomo_sources})
-set(RECON_LIBRARY_SOURCES ${tomo_headers} ${recon_tomo_sources})
-set(SIM_LIBRARY_SOURCES ${tomo_headers} ${sim_tomo_sources})
 
 
 # target properties based on build
@@ -90,22 +81,17 @@ if(TOMOPY_USE_CUDA)
 endif()
 
 # create library
-# add_library(libtomopy SHARED ${LIBRARY_SOURCES})
+add_library(libtomopy SHARED ${LIBRARY_SOURCES})
 add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
 add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
-add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
-add_library(libtomopy-sim SHARED ${SIM_LIBRARY_SOURCES})
+
 
 # link library
-# target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES}
-#     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES}
+    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-target_link_libraries(libtomopy-sim PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 
@@ -113,7 +99,7 @@ target_link_libraries(libtomopy-sim PUBLIC ${EXTERNAL_LIBRARIES}
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 # target properties
-set_target_properties(libtomopy-misc libtomopy-prep libtomopy-recon libtomopy-sim 
+set_target_properties(libtomopy libtomopy-misc libtomopy-prep
     PROPERTIES
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
@@ -126,8 +112,8 @@ set_target_properties(libtomopy-misc libtomopy-prep libtomopy-recon libtomopy-si
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
     ${CUDA_PROPERTIES})
 
-# target_compile_definitions(libtomopy PUBLIC
-#     ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(libtomopy PUBLIC
+    ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_definitions(libtomopy-misc PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
@@ -135,16 +121,10 @@ target_compile_definitions(libtomopy-misc PUBLIC
 target_compile_definitions(libtomopy-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_definitions(libtomopy-recon PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
-
-target_compile_definitions(libtomopy-sim PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
-
-# target_compile_options(libtomopy PUBLIC
-#     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-#     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-#     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
+target_compile_options(libtomopy PUBLIC
+    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 target_compile_options(libtomopy-misc PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
@@ -156,20 +136,11 @@ target_compile_options(libtomopy-prep PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
-target_compile_options(libtomopy-recon PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
-
-target_compile_options(libtomopy-sim PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 # Install the compiled library
-# install(TARGETS libtomopy
-#     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-#     COMPONENT python)
+install(TARGETS libtomopy
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    COMPONENT python)
 
 install(TARGETS libtomopy-misc
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
@@ -178,14 +149,7 @@ install(TARGETS libtomopy-misc
 install(TARGETS libtomopy-prep
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT python)
-
-install(TARGETS libtomopy-recon
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT python)
-
-install(TARGETS libtomopy-sim
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT python)    
+ 
 
 
 #------------------------------------------------------------------------------#
