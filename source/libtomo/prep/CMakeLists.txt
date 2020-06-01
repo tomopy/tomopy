@@ -5,11 +5,9 @@ file(GLOB tomo_headers
     ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/../../include/*.icc)
 
-
 file(GLOB prep_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c
     ${CMAKE_CURRENT_LIST_DIR}/*.cc)
-
 
 # core sources
 set(PREP_LIBRARY_SOURCES ${tomo_headers} ${prep_tomo_sources})
@@ -36,7 +34,6 @@ set_target_properties(libtomopy-prep
 
 target_compile_definitions(libtomopy-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
-
 
 target_compile_options(libtomopy-prep PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
