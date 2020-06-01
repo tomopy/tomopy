@@ -57,12 +57,12 @@ file(GLOB prep_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
 
 file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/c/recon/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/recon/*.cc)
 
     file(GLOB sim_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/c/sim/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/sim/*.cc)
 
 # core sources
 # set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
