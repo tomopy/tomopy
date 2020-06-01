@@ -1,14 +1,14 @@
 # Locate sources and headers for this project headers are included for IDEs
 file(GLOB tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hh
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.icc)
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hh
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.icc)
 
 
 file(GLOB prep_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/c/prep/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/*.cc)
 
 
 # core sources

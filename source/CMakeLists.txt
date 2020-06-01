@@ -53,7 +53,6 @@ file(GLOB tomo_sources
 set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
 
 
-
 # target properties based on build
 if(TOMOPY_USE_CUDA)
     file(GLOB CUDA_LIBRARY_SOURCES
@@ -82,13 +81,11 @@ target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 
-
-
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 # target properties
-set_target_properties(libtomopy libtomopy-misc libtomopy-prep
+set_target_properties(libtomopy
     PROPERTIES
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
@@ -165,6 +162,9 @@ if(NOT SKBUILD)
         ${PYSETUP} ${PROJECT_BINARY_DIR}/
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 endif()
+
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/misc)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo/prep)
 
 #------------------------------------------------------------------------------#
 #
