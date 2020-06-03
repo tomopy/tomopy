@@ -177,8 +177,8 @@ def c_project(obj, center, tomo, theta):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project(
+    LIB_TOMOPY_RECON.project.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_RECON.project(
         dtype.as_c_float_p(obj),
         dtype.as_c_int(oy),
         dtype.as_c_int(ox),
@@ -211,8 +211,8 @@ def c_project2(objx, objy, center, tomo, theta):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project2.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project2(
+    LIB_TOMOPY_RECON.project2.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_RECON.project2(
         dtype.as_c_float_p(objx),
         dtype.as_c_float_p(objy),
         dtype.as_c_int(oy),
@@ -246,8 +246,8 @@ def c_project3(objx, objy, objz, center, tomo, theta, axis):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY.project3.restype = dtype.as_c_void_p()
-    LIB_TOMOPY.project3(
+    LIB_TOMOPY_RECON.project3.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_RECON.project3(
         dtype.as_c_float_p(objx),
         dtype.as_c_float_p(objy),
         dtype.as_c_float_p(objz),
