@@ -6,6 +6,23 @@ file(GLOB recon_tomo_sources
 # core sources
 set(RECON_LIBRARY_SOURCES ${tomo_headers} ${recon_tomo_sources})
 
+# target properties based on build
+if(TOMOPY_USE_CUDA)
+    file(GLOB CUDA_LIBRARY_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu)
+
+    list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
+
+    list(APPEND TARGET_INCLUDE_DIRECTORIES
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+    set(CUDA_PROPERTIES
+        CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
+        CUDA_STANDARD_REQUIRED      ON
+        CUDA_SEPARABLE_COMPILATION  ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
+
 # create library
 add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
 
