@@ -33,8 +33,7 @@ install:
     conda config
     --set always_yes yes
     --set changeps1 no
-    --set auto_update_conda no
-    --set safety_checks disabled
+  - conda update conda
   - conda env create -n tomopy -f envs/win-%PYTHON_VERSION%.yml
   - conda activate tomopy
   - conda info -a
