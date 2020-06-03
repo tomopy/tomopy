@@ -5,9 +5,6 @@ sudo: false
 env:
   matrix:
     # define own python versions because we are using conda
-    - PYTHON_VERSION="2.7"
-      TASKING="--enable-tasking"
-      CUDA="--disable-cuda"
     - PYTHON_VERSION="3.6"
       TASKING="--enable-tasking"
       CUDA="--disable-cuda"
