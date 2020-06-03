@@ -115,11 +115,14 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
 
-    def test_mlem(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_MLEM"] = "1"
+    def test_mlem_CPU(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
+            read_file('mlem.npy'), rtol=1e-2)
+
+    def test_mlem_CUDA(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='mlem', num_iter=4, accelerated=True),
             read_file('mlem.npy'), rtol=1e-2)
 
     def test_osem(self):
@@ -147,12 +150,15 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
             read_file('pml_quad.npy'), rtol=1e-2)
 
-    def test_sirt(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_SIRT"] = "1"
-        r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
-        c_sirt = read_file('sirt.npy')
-        assert_allclose(r_sirt, c_sirt, rtol=1e-2)
+    def test_sirt_CPU(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
+            read_file('sirt.npy'), rtol=1e-2)
+        
+    def test_sirt_CUDA(self):
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='sirt', num_iter=4, accelerated=True),
+            read_file('sirt.npy'), rtol=1e-2)
 
     def test_tv(self):
         assert_allclose(
