@@ -400,7 +400,6 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int_p(kwargs['grid_size']),
             dtype.as_c_int_p(kwargs['block_size']))
 
-
     else:
 
         LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
