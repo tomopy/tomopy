@@ -86,10 +86,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     if(dy == 0 || dt == 0 || dx == 0)
         return;
 
-#if defined(TOMOPY_CXX_GRIDREC)
-    cxx_gridrec(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, fname,
-                filter_par);
-#else
     int    s, p, iu, iv;
     int    j;
     float *sine, *cose, *wtbl, *winv;
@@ -435,7 +431,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-#endif
 }
 
 void
