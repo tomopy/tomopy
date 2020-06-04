@@ -381,7 +381,6 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
-
         LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
             dtype.as_c_float_p(tomo),
@@ -399,9 +398,7 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_char_p(kwargs['device']),
             dtype.as_c_int_p(kwargs['grid_size']),
             dtype.as_c_int_p(kwargs['block_size']))
-
     else:
-
         LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.mlem(
             dtype.as_c_float_p(tomo),
