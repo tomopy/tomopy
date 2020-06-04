@@ -381,6 +381,10 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5a70b08... Changed Spaces to tabs
         LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
             dtype.as_c_float_p(tomo),
@@ -575,7 +579,6 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
-
 
 def c_tv(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
