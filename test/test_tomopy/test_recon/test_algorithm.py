@@ -112,7 +112,8 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
             read_file('gridrec_parzen.npy'), rtol=1e-2)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
+            recon(self.prj, self.ang, algorithm='gridrec',
+                  filter_name='butterworth'),
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
 
     def test_mlem_CPU(self):
@@ -122,7 +123,8 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
 
     def test_mlem_CUDA(self):
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='mlem', num_iter=4, accelerated=True),
+            recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
+                  accelerated=True),
             read_file('mlem.npy'), rtol=1e-2)
 
     def test_osem(self):
@@ -154,10 +156,11 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
             read_file('sirt.npy'), rtol=1e-2)
-        
+
     def test_sirt_CUDA(self):
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='sirt', num_iter=4, accelerated=True),
+            recon(self.prj, self.ang, algorithm='sirt',
+                  num_iter=4, accelerated=True),
             read_file('sirt.npy'), rtol=1e-2)
 
     def test_tv(self):
