@@ -12,7 +12,7 @@ file(GLOB gridrec_tomo_sources
 endif(WIN32)
 
 # core sources
-set(GRIDREC_SOURCES ${tomo_headers} ${GRIDREC_tomo_sources})
+set(GRIDREC_SOURCES ${tomo_headers} ${gridrec_tomo_sources})
 
 # create library
 add_library(libtomopy-gridrec SHARED ${GRIDREC_SOURCES})
