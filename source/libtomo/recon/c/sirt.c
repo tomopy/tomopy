@@ -47,7 +47,12 @@
 
 void
 sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+<<<<<<< HEAD
      float* recon, int ngridx, int ngridy, int num_iter)
+=======
+     float* recon, int ngridx, int ngridy, int num_iter, int pool_size,
+     const char* interp, const char* device, int* grid_size, int* block_size)
+>>>>>>> 4f5c615... Split mlem and sirt algorithms into an accelerated and non-accelerated object files and call them using extern.py
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;

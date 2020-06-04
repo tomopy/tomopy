@@ -1,6 +1,8 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/c/*.c)
+
+file(GLOB accel_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
 file(GLOB recon_tomo_headers
@@ -12,9 +14,11 @@ set(RECON_LIBRARY_SOURCES ${recon_tomo_headers} ${recon_tomo_sources})
 
 target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
+    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 # target properties
-set_target_properties(libtomopy-recon
+set_target_properties(libtomopy-recon libtomopy-accel
     PROPERTIES
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
@@ -29,12 +33,23 @@ set_target_properties(libtomopy-recon
 
 target_compile_definitions(libtomopy-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(libtomopy-accel PUBLIC
+    ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(libtomopy-recon PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
+target_compile_options(libtomopy-accel PUBLIC
+    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
+
 install(TARGETS libtomopy-recon
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    COMPONENT python)
+
+install(TARGETS libtomopy-accel
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT python)
