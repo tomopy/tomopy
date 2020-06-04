@@ -98,7 +98,7 @@ void DLL
 
 void DLL
      mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, int accel, int pool_size,
+          float* recon, int ngridx, int ngridy, int num_iter, int pool_size,
           const char* interp, const char* device, int* grid_size, int* block_size);
 
 void DLL
@@ -128,7 +128,7 @@ void DLL
 
 void DLL
      sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, int accel, int pool_size,
+          float* recon, int ngridx, int ngridy, int num_iter, int pool_size,
           const char* interp, const char* device, int* grid_size, int* block_size);
 
 void DLL

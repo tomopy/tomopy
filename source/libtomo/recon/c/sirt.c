@@ -47,19 +47,11 @@
 
 void
 sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-     float* recon, int ngridx, int ngridy, int num_iter, int accel, int pool_size,
+     float* recon, int ngridx, int ngridy, int num_iter, int pool_size,
      const char* interp, const char* device, int* grid_size, int* block_size)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
-
-    if(accel > 0)
-    {
-        int ret = cxx_sirt(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                           num_iter, pool_size, interp, device, grid_size, block_size);
-        if(ret == 0)
-            return;
-    }
 
     void* timer = TIMEMORY_AUTO_TIMER("");
 
