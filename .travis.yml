@@ -5,9 +5,6 @@ sudo: false
 env:
   matrix:
     # define own python versions because we are using conda
-    - PYTHON_VERSION="2.7"
-      TASKING="--enable-tasking"
-      CUDA="--disable-cuda"
     - PYTHON_VERSION="3.6"
       TASKING="--enable-tasking"
       CUDA="--disable-cuda"
@@ -34,9 +31,9 @@ env:
 before_install:
   # Install miniconda
   - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+      wget -q https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p ${HOME}/miniconda
   - source ${HOME}/miniconda/etc/profile.d/conda.sh
@@ -58,7 +55,7 @@ install:
   - ln -s ${CC} ${CONDA_PREFIX}/bin/gcc
   - ln -s ${CXX} ${CONDA_PREFIX}/bin/g++
   - if [[ "$CUDA" == "--enable-cuda" ]]; then
-      wget -N https://developer.nvidia.com/compute/cuda/10.1/Prod/local_installers/${CUDA_INSTALLER};
+      wget -q -N https://developer.nvidia.com/compute/cuda/10.1/Prod/local_installers/${CUDA_INSTALLER};
       chmod u+x ${CUDA_INSTALLER};
       ./${CUDA_INSTALLER} --silent --toolkit
       --toolkitpath=${CUDA_TOOLKIT_ROOT_DIR}

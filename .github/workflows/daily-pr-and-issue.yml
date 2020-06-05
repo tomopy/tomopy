@@ -1,0 +1,31 @@
+# This workflow manages actions on pull requests and issues
+
+name: "Daily PR and issue management"
+
+# Run every time a new day starts in the Pacific
+on:
+  schedule:
+    - cron: "0 12 * * *"
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Close Stale Issues
+      uses: actions/stale@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        days-before-stale: 60
+        days-before-close: 7
+        remove-stale-when-updated: true
+
+        stale-pr-message: "This PR is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 7 days."
+        stale-pr-label: stale
+        # The labels to apply when an issue is exempt from being marked stale. Separate multiple labels with commas (eg. "label1,label2")
+        exempt-pr-labels: bug
+
+        stale-issue-message: "This issue is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 7 days."
+        stale-issue-label: stale
+        exempt-issue-labels: "bug,help wanted"
+
+        #debug-only: true # optional
