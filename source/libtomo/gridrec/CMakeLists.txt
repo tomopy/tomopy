@@ -1,15 +1,15 @@
 # If on Windows, build gridrec.cc
-if(WIN32)
+if(TOMOPY_CXX_GRIDREC)
 # Locate sources for this project headers are included for IDEs
 file(GLOB gridrec_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)   
 
-else(WIN32)
+else(TOMOPY_CXX_GRIDREC)
 
 file(GLOB gridrec_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/*.c)  
 
-endif(WIN32)
+endif(TOMOPY_CXX_GRIDREC)
 
 # core sources
 set(GRIDREC_SOURCES ${tomo_headers} ${gridrec_tomo_sources})
