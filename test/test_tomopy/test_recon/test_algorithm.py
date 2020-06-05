@@ -116,16 +116,16 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                   filter_name='butterworth'),
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
 
-    def test_mlem_CPU(self):
+    def test_mlem(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
             read_file('mlem.npy'), rtol=1e-2)
 
-    def test_mlem_CUDA(self):
+    def test_mlem_accel(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
                   accelerated=True),
-            read_file('mlem.npy'), rtol=1e-2)
+            read_file('mlem_accel.npy'), rtol=1e-2)
 
     def test_osem(self):
         assert_allclose(
@@ -152,16 +152,16 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
             read_file('pml_quad.npy'), rtol=1e-2)
 
-    def test_sirt_CPU(self):
+    def test_sirt(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='sirt', num_iter=4),
             read_file('sirt.npy'), rtol=1e-2)
 
-    def test_sirt_CUDA(self):
+    def test_sirt_accel(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='sirt',
                   num_iter=4, accelerated=True),
-            read_file('sirt.npy'), rtol=1e-2)
+            read_file('sirt_accel.npy'), rtol=1e-2)
 
     def test_tv(self):
         assert_allclose(
