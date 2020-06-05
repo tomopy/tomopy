@@ -8,9 +8,6 @@ variables:
   package_name: tike
 
 trigger:
-- master
-
-pr:
   branches:
     include:
     - master
@@ -19,6 +16,7 @@ pr:
     - 'docs/'
     - '/.*'
     - '/*.rst'
+    - '/*.md'
     - '.travis.yml'
 
 jobs:
