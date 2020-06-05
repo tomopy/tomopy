@@ -442,11 +442,9 @@ set_filter_tables(int dt, int pd, float center,
     // consists of a real filter factor [obtained from the function,
     // (*pf)()], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments.
-#if defined(TOMOPY_CXX_GRIDREC) && defined(_MSC_VER)
     // MSVC has an issue with line:
     //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
     // below
-#else
 
     const float norm  = M_PI / pd / dt;
     const float rtmp1 = 2 * M_PI * center / pd;
@@ -487,8 +485,6 @@ set_filter_tables(int dt, int pd, float center,
             }
         }
     }
-
-#endif
 }
 
 void
