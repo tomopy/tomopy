@@ -105,8 +105,8 @@ class CenterFindingTestCase(unittest.TestCase):
         cen = find_center_vo(sim)
         assert_allclose(cen, 45.28, rtol=0.015)
 
-    # def test_find_center_pc(self):
-    #     proj_0 = read_file('projection.npy')
-    #     proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
-    #     cen = find_center_pc(proj_0, proj_180)
-    #     assert_allclose(cen, 73.375, rtol=0.25)
+    def test_find_center_pc(self):
+        proj_0 = read_file('projection.npy')
+        proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
+        cen = find_center_pc(proj_0, proj_180)
+        assert_allclose(cen, 73.375, rtol=0.25)

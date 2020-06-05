@@ -53,10 +53,6 @@
 #endif
 #define ANSI
 
-#if defined(TOMOPY_CXX_GRIDREC) && defined(WIN32)
-#    define _Complex
-#endif
-
 DLL void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
