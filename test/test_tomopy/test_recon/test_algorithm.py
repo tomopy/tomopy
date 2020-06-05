@@ -121,7 +121,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(result, read_file('mlem.npy'), rtol=1e-2)
 
     def test_mlem_accel(self):
-        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,accelerated=True)
+        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4, accelerated=True)
         assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
 
     def test_osem(self):
