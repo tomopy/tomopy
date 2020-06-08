@@ -3,8 +3,11 @@ file(GLOB recon_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/c/*.c
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
+file(GLOB recon_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h)
+
 # core sources
-set(RECON_LIBRARY_SOURCES ${tomo_headers} ${recon_tomo_sources})
+set(RECON_LIBRARY_SOURCES ${recon_tomo_headers} ${recon_tomo_sources})
 
 # create library
 add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})

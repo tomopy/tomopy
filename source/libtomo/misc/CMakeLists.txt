@@ -4,6 +4,9 @@ file(GLOB misc_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c
     ${CMAKE_CURRENT_LIST_DIR}/*.cc)   
 
+file(GLOB misc_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)   
+
 # core sources
 set(MISC_LIBRARY_SOURCES ${tomo_headers} ${misc_tomo_sources})
 

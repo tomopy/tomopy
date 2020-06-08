@@ -3,6 +3,9 @@ file(GLOB prep_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c
     ${CMAKE_CURRENT_LIST_DIR}/*.cc)
 
+file(GLOB prep_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
+
 # core sources
 set(PREP_LIBRARY_SOURCES ${tomo_headers} ${prep_tomo_sources})
 
