@@ -12,7 +12,6 @@ if(TOMOPY_USE_CUDA)
     target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
         PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
-
     set(CUDA_PROPERTIES
         CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
         CUDA_STANDARD_REQUIRED      ON
