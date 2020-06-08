@@ -1,6 +1,7 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/*.c)
+    ${CMAKE_CURRENT_LIST_DIR}/c/*.c
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
 file(GLOB accel_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
