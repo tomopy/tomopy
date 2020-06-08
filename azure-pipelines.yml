@@ -21,7 +21,7 @@ trigger:
 
 jobs:
 
-- job: Linux with CUDA
+- job: Linux-with-CUDA
   pool:
     name: Default
     demands:
