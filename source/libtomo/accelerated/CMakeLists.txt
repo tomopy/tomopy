@@ -1,6 +1,6 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB accel_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/*.cc)
 
 # core sources
 set(ACCEL_LIBRARY_SOURCES ${tomo_headers} ${accel_tomo_sources})
@@ -10,6 +10,23 @@ add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
 
 target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+
+# target properties based on build
+if(TOMOPY_USE_CUDA)
+    file(GLOB CUDA_LIBRARY_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/*.cu)
+
+    list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
+
+    list(APPEND TARGET_INCLUDE_DIRECTORIES
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+    set(CUDA_PROPERTIES
+        CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
+        CUDA_STANDARD_REQUIRED      ON
+        CUDA_SEPARABLE_COMPILATION  ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
 
 # target properties
 set_target_properties(libtomopy-accel
@@ -36,3 +53,6 @@ target_compile_options(libtomopy-accel PUBLIC
 install(TARGETS libtomopy-accel
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
     COMPONENT python)
+
+
+
