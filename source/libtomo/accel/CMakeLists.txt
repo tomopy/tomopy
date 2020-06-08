@@ -7,7 +7,11 @@ if(TOMOPY_USE_CUDA)
     list(APPEND TARGET_INCLUDE_DIRECTORIES
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-    add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
+    add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
+
+    target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
+        PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+
 
     set(CUDA_PROPERTIES
         CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
