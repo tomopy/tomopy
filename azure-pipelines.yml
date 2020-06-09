@@ -36,6 +36,9 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
+      conda remove -n tomopy --all
+    displayName: Remove exisiting environment
+  - script: |
       conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: |
