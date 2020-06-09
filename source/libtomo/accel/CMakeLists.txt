@@ -29,7 +29,7 @@ if(TOMOPY_USE_CUDA)
         RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
         LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
         ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-        INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
+        INCLUDE_DIRECTORIES         ${CMAKE_CURRENT_LIST_DIR}/../../include/accel
         C_STANDARD                  ${CMAKE_C_STANDARD}
         C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
         CXX_STANDARD                ${CMAKE_CXX_STANDARD}
