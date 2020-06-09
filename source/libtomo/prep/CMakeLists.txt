@@ -1,7 +1,6 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB prep_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/*.c)
 
 file(GLOB prep_tomo_headers
     ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
@@ -24,7 +23,7 @@ set_target_properties(libtomopy-prep
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
     LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
     ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
+    INCLUDE_DIRECTORIES         ${CMAKE_CURRENT_LIST_DIR}/../../include/prep
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
