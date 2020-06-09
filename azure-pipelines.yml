@@ -34,6 +34,9 @@ jobs:
     maxParallel: 4
   steps:
   - script: |
+      conda update -n base conda
+    displayName: Update conda
+  - script: |
       rm -rf /opt/conda/envs/tomopy
     displayName: Remove exisiting environment
   - script: |
