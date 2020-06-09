@@ -34,7 +34,7 @@ jobs:
     maxParallel: 4
   steps:
   - script: |
-      conda update -n base conda
+      conda update -n base conda --yes
     displayName: Update conda
   - script: |
       rm -rf /opt/conda/envs/tomopy
