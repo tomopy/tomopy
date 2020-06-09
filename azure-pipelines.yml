@@ -34,10 +34,10 @@ jobs:
     maxParallel: 4
   steps:
   - script: |
-      rm -r /opt/conda/envs/tomopy
+      rm -rf /opt/conda/envs/tomopy
     displayName: Remove exisiting environment
   - script: |
-      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+      conda env create -n tomopy -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: |
       source activate tomopy
