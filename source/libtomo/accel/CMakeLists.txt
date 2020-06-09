@@ -22,6 +22,9 @@ if(TOMOPY_USE_CUDA)
         CUDA_SEPARABLE_COMPILATION  ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
+    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
+    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
+
     # target properties
     set_target_properties(libtomopy-accel
         PROPERTIES
@@ -29,7 +32,7 @@ if(TOMOPY_USE_CUDA)
         RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
         LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
         ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-        INCLUDE_DIRECTORIES         ${CMAKE_CURRENT_LIST_DIR}/../../include/accel
+        INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
         C_STANDARD                  ${CMAKE_C_STANDARD}
         C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
         CXX_STANDARD                ${CMAKE_CXX_STANDARD}

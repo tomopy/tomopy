@@ -20,6 +20,8 @@ target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/misc")
+
 # target properties
 set_target_properties(libtomopy-misc
     PROPERTIES
@@ -27,7 +29,7 @@ set_target_properties(libtomopy-misc
     RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
     LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
     ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    INCLUDE_DIRECTORIES         ${CMAKE_CURRENT_LIST_DIR}/../../include/misc
+    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
