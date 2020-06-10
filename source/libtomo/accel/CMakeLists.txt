@@ -4,10 +4,14 @@ if(TOMOPY_USE_CUDA)
     file(GLOB ACCEL_LIBRARY_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/*.cu)
 
+    file(GLOB ACCEL_LIBRARY_HEADERS
+        ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.h
+        ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.hh)
+
     list(APPEND TARGET_INCLUDE_DIRECTORIES
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-    add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
+    add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES} ${ACCEL_LIBRARY_HEADERS})
 
     target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
         PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
@@ -17,6 +21,9 @@ if(TOMOPY_USE_CUDA)
         CUDA_STANDARD_REQUIRED      ON
         CUDA_SEPARABLE_COMPILATION  ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+
+    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
+    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
 
     # target properties
     set_target_properties(libtomopy-accel
