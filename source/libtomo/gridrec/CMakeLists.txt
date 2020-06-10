@@ -1,18 +1,24 @@
 # If on Windows, build gridrec.cc
 if(TOMOPY_CXX_GRIDREC)
 # Locate sources for this project headers are included for IDEs
-file(GLOB gridrec_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)   
+    file(GLOB gridrec_tomo_sources
+        ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+    file(GLOB gridrec_tomo_headers
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hh
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.hh)   
 
 else(TOMOPY_CXX_GRIDREC)
 
-file(GLOB gridrec_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/*.c)  
+    file(GLOB gridrec_tomo_sources
+        ${CMAKE_CURRENT_LIST_DIR}/c/*.c)  
+    file(GLOB gridrec_tomo_headers
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)   
 
 endif(TOMOPY_CXX_GRIDREC)
 
 # core sources
-set(GRIDREC_SOURCES ${tomo_headers} ${gridrec_tomo_sources})
+set(GRIDREC_SOURCES ${gridrec_tomo_headers} ${gridrec_tomo_sources})
 
 # create library
 add_library(libtomopy-gridrec SHARED ${GRIDREC_SOURCES})
@@ -23,6 +29,9 @@ target_link_libraries(libtomopy-gridrec PUBLIC ${EXTERNAL_LIBRARIES}
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
+
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec")
 
 # target properties
 set_target_properties(libtomopy-gridrec

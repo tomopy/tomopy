@@ -85,10 +85,7 @@ target_compile_options(libtomopy PUBLIC
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo)
 
-# Install the compiled library
-install(TARGETS libtomopy
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT python)
+
  
 #------------------------------------------------------------------------------#
 #
