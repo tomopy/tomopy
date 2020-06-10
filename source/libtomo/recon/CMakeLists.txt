@@ -1,7 +1,6 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/*.c)
 
 file(GLOB accel_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
@@ -16,8 +15,7 @@ set(RECON_LIBRARY_SOURCES ${recon_tomo_headers} ${recon_tomo_sources})
 target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/recon")
 
 # target properties
 set_target_properties(libtomopy-recon
