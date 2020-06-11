@@ -4,15 +4,16 @@ if(TOMOPY_CXX_GRIDREC)
     file(GLOB gridrec_tomo_sources
         ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
     file(GLOB gridrec_tomo_headers
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/*.hh
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.hh)   
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.hh
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.h
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.hh)
+    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
 
 else(TOMOPY_CXX_GRIDREC)
 
     file(GLOB gridrec_tomo_sources
         ${CMAKE_CURRENT_LIST_DIR}/c/*.c)  
     file(GLOB gridrec_tomo_headers
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h
         ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)   
 
 endif(TOMOPY_CXX_GRIDREC)
@@ -30,7 +31,6 @@ target_link_libraries(libtomopy-gridrec PUBLIC ${EXTERNAL_LIBRARIES}
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec")
 
 # target properties

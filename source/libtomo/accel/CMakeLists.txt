@@ -1,15 +1,19 @@
 # target properties based on build
-file(GLOB ACCEL_LIBRARY_HEADERS
+file(GLOB accel_headers
     ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.h
     ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.hh)
 
-file(GLOB ACCEL_LIBRARY_SOURCES
+file(GLOB accel_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+
+set(ACCEL_LIBRARY_SOURCES ${accel_header} ${accel_sources})
 
 if(TOMOPY_USE_CUDA)
 
-    list(APPEND ACCEL_LIBRARY_SOURCES
+    file(GLOB CUDA_LIBRARY_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu)
+
+    list(APPEND ACCEL_LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
     
     list(APPEND TARGET_INCLUDE_DIRECTORIES
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
