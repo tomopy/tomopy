@@ -53,12 +53,15 @@
 #define _XOPEN_SOURCE 700
 
 #include "gridrec.hh"
-// #include "gridrec.h"
 #include "mkl.h"
-#include "filters.h"
 #include <complex>
 
+BEGIN_EXTERN_C
+    #include "filters.h"
+END_EXTERN_C
+
 using namespace std::literals::complex_literals;
+
 
 #if defined(_MSC_VER)
 #    if defined(__LIKELY)
