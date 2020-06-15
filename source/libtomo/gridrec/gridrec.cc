@@ -56,9 +56,7 @@
 #include "mkl.h"
 #include <complex>
 
-BEGIN_EXTERN_C
-    #include "filters.h"
-END_EXTERN_C
+#include "filters.h"
 
 using namespace std::literals::complex_literals;
 
