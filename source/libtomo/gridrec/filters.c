@@ -51,11 +51,11 @@
 #define _XOPEN_SOURCE 700
 
 #include "mkl.h"
-#include "utils.h"
+#include "filters.h"
+#include <complex.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include "filters.h"
 
 #define __LIKELY(x) __builtin_expect(!!(x), 1)
 #ifdef __INTEL_COMPILER
