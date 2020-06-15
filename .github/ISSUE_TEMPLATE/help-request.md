@@ -1,5 +1,5 @@
 ---
-name: Help request
+name: Help request / Bug report
 about: Ask for help with a problem
 title: Single line summary of the problem here
 labels: question

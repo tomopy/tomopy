@@ -1,11 +1,16 @@
 
 # Locate sources for this project headers are included for IDEs
 file(GLOB misc_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/*.cc)   
+    ${CMAKE_CURRENT_LIST_DIR}/*.c)   
+
+file(GLOB misc_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)      
+
+file(GLOB misc_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)   
 
 # core sources
-set(MISC_LIBRARY_SOURCES ${tomo_headers} ${misc_tomo_sources})
+set(MISC_LIBRARY_SOURCES ${misc_tomo_headers} ${misc_tomo_sources})
 
 # create library
 add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
@@ -16,6 +21,8 @@ target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
+
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/misc")
 
 # target properties
 set_target_properties(libtomopy-misc

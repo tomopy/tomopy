@@ -1,16 +1,24 @@
 # Locate sources for this project headers are included for IDEs
 file(GLOB prep_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/*.cc)
+    ${CMAKE_CURRENT_LIST_DIR}/*.c)
+
+file(GLOB prep_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
+
+file(GLOB prep_tomo_headers
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
 
 # core sources
-set(PREP_LIBRARY_SOURCES ${tomo_headers} ${prep_tomo_sources})
+set(PREP_LIBRARY_SOURCES ${prep_tomo_headers} ${prep_tomo_sources})
 
 # create library
 add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 
 target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
 
 # target properties
 set_target_properties(libtomopy-prep
@@ -35,5 +43,4 @@ target_compile_options(libtomopy-prep PUBLIC
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS libtomopy-prep
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT python)
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs COMPONENT python)

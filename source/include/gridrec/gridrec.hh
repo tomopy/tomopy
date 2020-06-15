@@ -64,6 +64,10 @@ END_EXTERN_C
 #    define M_PI 3.14159265359
 #endif
 
+#if defined(WIN32)
+#    define _Complex
+#endif
+
 #define __LIKELY(x) __builtin_expect(!!(x), 1)
 #ifdef __INTEL_COMPILER
 #    define __PRAGMA_SIMD _Pragma("simd assert")
