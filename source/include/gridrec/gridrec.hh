@@ -43,8 +43,6 @@
 
 #pragma once
 
-#include "utils.hh"
-
 #include <complex.h>
 #include <complex>
 #include <cstdlib>
@@ -54,9 +52,9 @@
 
 //===========================================================================//
 
-BEGIN_EXTERN_C
-#include "gridrec.h"
-END_EXTERN_C
+// BEGIN_EXTERN_C
+// #include "gridrec.h"
+// END_EXTERN_C
 
 //===========================================================================//
 
