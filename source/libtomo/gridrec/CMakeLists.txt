@@ -2,17 +2,16 @@
 if(TOMOPY_CXX_GRIDREC)
 # Locate sources for this project headers are included for IDEs
     file(GLOB gridrec_tomo_sources
-        ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
+        ${CMAKE_CURRENT_LIST_DIR}/*.cc
+        ${CMAKE_CURRENT_LIST_DIR}/gridrec.c)
     file(GLOB gridrec_tomo_headers
         ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.hh
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.h
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.hh)
-    list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)
 
 else(TOMOPY_CXX_GRIDREC)
 
     file(GLOB gridrec_tomo_sources
-        ${CMAKE_CURRENT_LIST_DIR}/c/*.c)  
+        ${CMAKE_CURRENT_LIST_DIR}/*.c)  
     file(GLOB gridrec_tomo_headers
         ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)   
 

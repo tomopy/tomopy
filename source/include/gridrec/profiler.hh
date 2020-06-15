@@ -43,91 +43,28 @@
 
 #pragma once
 
-#include <complex.h>
-#include <stdlib.h>
-
-#ifdef WIN32
-#    define DLL __declspec(dllexport)
+#ifdef TOMOPY_USE_TIMEMORY
+#    include <timemory/timemory.hpp>
 #else
-#    define DLL
+#    include <cstddef>
+#    include <cstring>
+#    define TIMEMORY_AUTO_TIMER(c_str)                                                   \
+        {                                                                                \
+        }
+#    define TIMEMORY_BASIC_AUTO_TIMER(c_str)                                             \
+        {                                                                                \
+        }
+
+namespace tim
+{
+inline void
+enable_signal_detection()
+{
+}
+inline void
+disable_signal_detection()
+{
+}
+}
+
 #endif
-#define ANSI
-
-#if defined(WIN32)
-#    define _Complex
-#endif
-
-DLL void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
-        const float* filter_par);
-
-float*
-malloc_vector_f(size_t n);
-
-void
-free_vector_f(float* v);
-
-float _Complex*
-malloc_vector_c(size_t n);
-
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
-
-void
-free_matrix_c(float _Complex** m);
-
-float (*get_filter(const char* name))(float, int, int, int, const float*);
-
-float
-filter_none(float, int, int, int, const float*);
-
-float
-filter_shepp(float, int, int, int, const float*);
-
-float
-filter_hann(float, int, int, int, const float*);
-
-float
-filter_hamming(float, int, int, int, const float*);
-
-float
-filter_ramlak(float, int, int, int, const float*);
-
-float
-filter_parzen(float, int, int, int, const float*);
-
-float
-filter_butterworth(float, int, int, int, const float*);
-
-float
-filter_custom(float, int, int, int, const float*);
-
-float
-filter_custom2d(float, int, int, int, const float*);
-
-unsigned char
-filter_is_2d(const char* name);
-
-void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char is2d);
-
-void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
-
-void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
-                float* wtbl, float* winv);
-
-float
-legendre(int n, const float* coefs, float x);
-
-extern DLL void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            const char fname[16], const float* filter_par);
