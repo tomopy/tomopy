@@ -58,6 +58,9 @@
 #endif
 #define ANSI
 
+float*
+malloc_vector_f(size_t n);
+
 float 
 (*get_filter(const char* name))(float, int, int, int, const float*);
 

@@ -58,9 +58,6 @@
 #    define _Complex
 #endif
 
-float*
-malloc_vector_f(size_t n);
-
 void
 free_vector_f(float* v);
 

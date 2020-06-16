@@ -75,7 +75,11 @@
 #    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
 
-
+inline float*
+malloc_vector_f(size_t n)
+{
+    return (float*) malloc(n * sizeof(float));
+}
 
 void
 set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int linv,
