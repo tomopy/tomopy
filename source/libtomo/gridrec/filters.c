@@ -75,59 +75,7 @@
 #    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
 
-    void
-    set_filter_tables(int dt, int pd, float center,
-                      float (*const pf)(float, int, int, int, const float*),
-                      const float* filter_par, float _Complex* A, unsigned char filter2d)
-{
-    // Set up the complex array, filphase[], each element of which
-    // consists of a real filter factor [obtained from the function,
-    // (*pf)()], multiplying a complex phase factor (derived from the
-    // parameter, center}.  See Phase 1 comments.
-    // MSVC has an issue with line:
-    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
-    // below
 
-    const float norm  = M_PI / pd / dt;
-    const float rtmp1 = 2 * M_PI * center / pd;
-    int         j, i;
-    int         pd2 = pd / 2;
-    float       x;
-
-    if(!filter2d)
-    {
-        for(j = 0; j < pd2; j++)
-        {
-            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
-        }
-
-        __PRAGMA_SIMD
-        for(j = 0; j < pd2; j++)
-        {
-            x = j * rtmp1;
-            A[j] *= (cosf(x) - I * sinf(x)) * norm;
-        }
-    }
-    else
-    {
-        for(i = 0; i < dt; i++)
-        {
-            int j0 = i * pd2;
-
-            for(j = 0; j < pd2; j++)
-            {
-                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
-            }
-
-            __PRAGMA_SIMD
-            for(j = 0; j < pd2; j++)
-            {
-                x = j * rtmp1;
-                A[j0 + j] *= (cosf(x) - I * sinf(x)) * norm;
-            }
-        }
-    }
-}
 
 void
 set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int linv,
@@ -163,25 +111,6 @@ set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int
         // in array H at end of Phase 1.
         norm           = -norm;
         winv[linv + i] = winv[linv - i] = norm / wtbl[(int) roundf(i * fac)];
-    }
-}
-
-void
-set_trig_tables(int dt, const float* theta, float** sine, float** cose)
-{
-    // Set up tables of sines and cosines.
-    float *s, *c;
-
-    *sine = s = malloc_vector_f(dt);
-    __ASSSUME_64BYTES_ALIGNED(s);
-    *cose = c = malloc_vector_f(dt);
-    __ASSSUME_64BYTES_ALIGNED(c);
-
-    __PRAGMA_SIMD
-    for(int j = 0; j < dt; j++)
-    {
-        s[j] = sinf(theta[j]);
-        c[j] = cosf(theta[j]);
     }
 }
 
@@ -279,6 +208,25 @@ free_matrix_c(float _Complex** m)
 #else
     free(m);
 #endif
+}
+
+void
+set_trig_tables(int dt, const float* theta, float** sine, float** cose)
+{
+    // Set up tables of sines and cosines.
+    float *s, *c;
+
+    *sine = s = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(s);
+    *cose = c = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(c);
+
+    __PRAGMA_SIMD
+    for(int j = 0; j < dt; j++)
+    {
+        s[j] = sinf(theta[j]);
+        c[j] = cosf(theta[j]);
+    }
 }
 
 // No filter
