@@ -51,7 +51,6 @@
 #define _XOPEN_SOURCE 700
 
 #include "gridrec.h"
-#include "filters.h"
 #include "mkl.h"
 #include <math.h>
 #include <stdlib.h>
@@ -486,4 +485,73 @@ set_filter_tables(int dt, int pd, float center,
             }
         }
     }
+}
+
+static inline void*
+malloc_64bytes_aligned(size_t sz)
+{
+#ifdef __MINGW32__
+    return __mingw_aligned_malloc(sz, 64);
+#elif defined(_MSC_VER)
+    void* r = _aligned_malloc(sz, 64);
+    return r;
+#else
+    void* r   = NULL;
+    int   err = posix_memalign(&r, 64, sz);
+    return (err) ? NULL : r;
+#endif
+}
+
+inline float*
+malloc_vector_f(size_t n)
+{
+    return (float*) malloc(n * sizeof(float));
+}
+
+inline void
+free_vector_f(float* v)
+{
+    free(v);
+}
+
+inline float _Complex*
+malloc_vector_c(size_t n)
+{
+    return (float _Complex*) malloc(n * sizeof(float _Complex));
+}
+
+inline void
+free_vector_c(float _Complex* v)
+{
+    free(v);
+}
+
+float _Complex**
+malloc_matrix_c(size_t nr, size_t nc)
+{
+    float _Complex** m = NULL;
+    size_t           i;
+
+    // Allocate pointers to rows,
+    m = (float _Complex**) malloc_64bytes_aligned(nr * sizeof(float _Complex*));
+
+    /* Allocate rows and set the pointers to them */
+    m[0] = malloc_vector_c(nr * nc);
+
+    for(i = 1; i < nr; i++)
+    {
+        m[i] = m[i - 1] + nc;
+    }
+    return m;
+}
+
+inline void
+free_matrix_c(float _Complex** m)
+{
+    free_vector_c(m[0]);
+#ifdef __MINGW32__
+    __mingw_aligned_free(m);
+#else
+    free(m);
+#endif
 }
