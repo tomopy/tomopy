@@ -43,40 +43,23 @@
 
 #pragma once
 
+#include <complex.h>
+#include <stdlib.h>
+
 #ifndef M_PI
 #    define M_PI 3.14159265359
 #endif
 
-#if defined(WIN32)
-#    define _Complex
-#endif
-
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
+#    define _Complex
 #else
 #    define DLL
 #endif
 #define ANSI
 
-float*
-malloc_vector_f(size_t n);
-
-void
-free_vector_f(float* v);
-
-float _Complex*
-malloc_vector_c(size_t n);
-
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
-
-void
-free_matrix_c(float _Complex** m);
-
-float (*get_filter(const char* name))(float, int, int, int, const float*);
+float 
+(*get_filter(const char* name))(float, int, int, int, const float*);
 
 float
 filter_none(float, int, int, int, const float*);

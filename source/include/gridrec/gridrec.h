@@ -62,7 +62,20 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
         const float* filter_par);
 
-extern DLL void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            const char fname[16], const float* filter_par);
+float*
+malloc_vector_f(size_t n);
+
+void
+free_vector_f(float* v);
+
+float _Complex*
+malloc_vector_c(size_t n);
+
+void
+free_vector_c(float _Complex* v);
+
+float _Complex**
+malloc_matrix_c(size_t nr, size_t nc);
+
+void
+free_matrix_c(float _Complex** m);

@@ -433,3 +433,57 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&forward_2d);
     return;
 }
+
+void
+set_filter_tables(int dt, int pd, float center,
+                  float (*const pf)(float, int, int, int, const float*),
+                  const float* filter_par, float _Complex* A, unsigned char filter2d)
+{
+    // Set up the complex array, filphase[], each element of which
+    // consists of a real filter factor [obtained from the function,
+    // (*pf)()], multiplying a complex phase factor (derived from the
+    // parameter, center}.  See Phase 1 comments.
+    // MSVC has an issue with line:
+    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
+    // below
+
+    const float norm  = M_PI / pd / dt;
+    const float rtmp1 = 2 * M_PI * center / pd;
+    int         j, i;
+    int         pd2 = pd / 2;
+    float       x;
+
+    if(!filter2d)
+    {
+        for(j = 0; j < pd2; j++)
+        {
+            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
+        }
+
+        __PRAGMA_SIMD
+        for(j = 0; j < pd2; j++)
+        {
+            x = j * rtmp1;
+            A[j] *= (cosf(x) - I * sinf(x)) * norm;
+        }
+    }
+    else
+    {
+        for(i = 0; i < dt; i++)
+        {
+            int j0 = i * pd2;
+
+            for(j = 0; j < pd2; j++)
+            {
+                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
+            }
+
+            __PRAGMA_SIMD
+            for(j = 0; j < pd2; j++)
+            {
+                x = j * rtmp1;
+                A[j0 + j] *= (cosf(x) - I * sinf(x)) * norm;
+            }
+        }
+    }
+}
