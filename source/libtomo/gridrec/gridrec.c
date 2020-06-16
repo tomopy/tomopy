@@ -502,12 +502,6 @@ malloc_64bytes_aligned(size_t sz)
 #endif
 }
 
-inline float*
-malloc_vector_f(size_t n)
-{
-    return (float*) malloc(n * sizeof(float));
-}
-
 inline void
 free_vector_f(float* v)
 {
