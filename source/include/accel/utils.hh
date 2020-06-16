@@ -47,7 +47,6 @@
 
 BEGIN_EXTERN_C
 #include "cxx_extern.h"
-#include "utils.h"
 END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//
