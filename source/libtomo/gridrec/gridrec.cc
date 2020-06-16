@@ -56,8 +56,6 @@
 #include "mkl.h"
 #include <complex>
 
-#include "filters.h"
-
 using namespace std::literals::complex_literals;
 
 
