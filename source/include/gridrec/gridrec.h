@@ -45,6 +45,7 @@
 
 #include <complex.h>
 #include <stdlib.h>
+#include "filters.h"
 
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
@@ -56,11 +57,6 @@
 #if defined(WIN32)
 #    define _Complex
 #endif
-
-DLL void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
-        const float* filter_par);
 
 float*
 malloc_vector_f(size_t n);
@@ -79,3 +75,9 @@ malloc_matrix_c(size_t nr, size_t nc);
 
 void
 free_matrix_c(float _Complex** m);
+
+DLL void
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
+        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
+        const float* filter_par);
+
