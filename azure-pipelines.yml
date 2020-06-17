@@ -36,11 +36,10 @@ jobs:
   - script: |
       conda update -n base conda --yes --quiet
     displayName: Update conda
-  - script: |
-      rm -rf /opt/conda/envs/tomopy
-    displayName: Remove exisiting environment
-  - script: |
-      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+  - script: >
+      conda env create --quiet --yes
+      -n tomopy-$(python.version)
+      -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: |
       source activate tomopy
