@@ -37,7 +37,7 @@ jobs:
       conda update -n base conda --yes --quiet
     displayName: Update conda
   - script: >
-      conda env create --quiet --yes
+      conda env create --quiet --force
       -n tomopy-$(python.version)
       -f envs/linux-$(python.version).yml
     displayName: Create build environment
