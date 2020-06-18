@@ -90,10 +90,14 @@ extern "C"
 typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
 //===========================================================================//
+
+extern "C"
+{
 extern DLL void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy,
             const char fname[16], const float* filter_par);
+}
 
 float*
 cxx_malloc_vector_f(size_t n);

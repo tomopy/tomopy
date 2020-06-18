@@ -69,7 +69,7 @@ using namespace std::literals::complex_literals;
 //===========================================================================//
 
 void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
             const float* filter_par)
 {
