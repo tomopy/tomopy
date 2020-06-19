@@ -6,7 +6,7 @@ file(GLOB accel_headers
 file(GLOB accel_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
-set(ACCEL_LIBRARY_SOURCES ${accel_header} ${accel_sources})
+set(ACCEL_LIBRARY_SOURCES ${accel_headers} ${accel_sources})
 
 if(TOMOPY_USE_CUDA)
 
@@ -19,8 +19,6 @@ if(TOMOPY_USE_CUDA)
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 endif(TOMOPY_USE_CUDA)
-
-
 
 add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES} ${ACCEL_LIBRARY_HEADERS})
 
