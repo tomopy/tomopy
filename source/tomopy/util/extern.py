@@ -125,6 +125,7 @@ LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
+
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
 
@@ -392,7 +393,12 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_float_p(recon),
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']))
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['pool_size']),
+            dtype.as_c_char_p(kwargs['interpolation']),
+            dtype.as_c_char_p(kwargs['device']),
+            dtype.as_c_int_p(kwargs['grid_size']),
+            dtype.as_c_int_p(kwargs['block_size']))
     else:
         LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.mlem(
@@ -551,7 +557,12 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_float_p(recon),
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']))
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['pool_size']),
+            dtype.as_c_char_p(kwargs['interpolation']),
+            dtype.as_c_char_p(kwargs['device']),
+            dtype.as_c_int_p(kwargs['grid_size']),
+            dtype.as_c_int_p(kwargs['block_size']))
     else:
         LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.sirt(
