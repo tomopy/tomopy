@@ -15,8 +15,8 @@ and its dependencies for you.
 First, you must have `Conda <https://docs.conda.io/en/latest/miniconda.html>`_
 installed.
 
-Next, install TomoPy and all its dependencies into a new Conda environment
-called ``tomopy`` by running::
+Next, install TomoPy and all its runtime dependencies into a new Conda
+environment called ``tomopy`` by running::
 
     $ conda create --name tomopy --channel conda-forge tomopy
 
@@ -36,3 +36,10 @@ containing TomoPy and run::
 
 For some more information about using Conda, please refer to the `docs
 <https://conda.io/projects/conda>`__.
+
+
+Build from Source
+-----------------
+
+Please read the development guide for directions on how to build TomoPy from
+the source code.

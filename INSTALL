@@ -1,8 +1,0 @@
-For Windows, both MinGW-64 and `make` need to be installed and placed in the
-PATH, so that the appropriate 'gcc.exe' (that is, one that supports C99) and
-'make.exe' can be found. For Anaconda Python on Windows, adding the conda
-packages MinGW and make provides these resources.
-
-Then use
-
-    pip install .
