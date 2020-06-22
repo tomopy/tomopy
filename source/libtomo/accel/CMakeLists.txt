@@ -1,7 +1,7 @@
 # target properties based on build
 file(GLOB accel_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/../../accel/*.hh)
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.hh)
 
 file(GLOB accel_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
@@ -20,7 +20,7 @@ if(TOMOPY_USE_CUDA)
 
 endif(TOMOPY_USE_CUDA)
 
-add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES} ${ACCEL_LIBRARY_HEADERS})
+add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
 
 target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
