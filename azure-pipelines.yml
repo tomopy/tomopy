@@ -34,8 +34,8 @@ jobs:
     maxParallel: 4
   steps:
   - script: |
-      echo "$(CUDA_VERSION) middle"
-      echo "$CUDA_VERSION post"
+      echo "CUDA version is $(CUDA_VERSION)"
+     displayName: Print CUDA version
   - script: |
       conda update -n base conda --yes --quiet
     displayName: Update conda
@@ -50,7 +50,7 @@ jobs:
     displayName: Setup and install
   - script: |
       source activate tomopy
-      export CUDA_VERSION=10
+      export CUDA_VERSION="$(CUDA_VERSION)"
       nosetests
     displayName: nosetests
 
