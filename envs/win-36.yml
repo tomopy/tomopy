@@ -25,4 +25,4 @@ dependencies:
   - setuptools_scm_git_archive
   - six
   - timemory
-  - vs2015_win-64
+  - vs2017_win-64

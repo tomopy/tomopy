@@ -41,61 +41,49 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "cxx_extern.h"
+// #include "cxx_extern.h"
 #include "profiler.h"
 #include "utils.h"
 
 void
-mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-     float* recon, int ngridx, int ngridy, int num_iter, int accel, int pool_size,
-     const char* interp, const char* device, int* grid_size, int* block_size)
+sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
 
-    if(accel > 0)
-    {
-        int ret = cxx_mlem(data, dy, dt, dx, center, theta, recon, ngridx, ngridy,
-                           num_iter, pool_size, interp, device, grid_size, block_size);
-        if(ret == 0)
-            return;
-    }
-
     void* timer = TIMEMORY_AUTO_TIMER("");
 
-    float* gridx    = (float*) malloc((ngridx + 1) * sizeof(float));
-    float* gridy    = (float*) malloc((ngridy + 1) * sizeof(float));
-    float* coordx   = (float*) malloc((ngridy + 1) * sizeof(float));
-    float* coordy   = (float*) malloc((ngridx + 1) * sizeof(float));
-    float* ax       = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* ay       = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* bx       = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* by       = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* coorx    = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* coory    = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    float* dist     = (float*) malloc((ngridx + ngridy) * sizeof(float));
-    int*   indi     = (int*) malloc((ngridx + ngridy) * sizeof(int));
-    float* simdata  = (float*) malloc((dy * dt * dx) * sizeof(float));
-    float* sum_dist = (float*) malloc((ngridx * ngridy) * sizeof(float));
-    float* update   = (float*) malloc((ngridx * ngridy) * sizeof(float));
+    float* gridx  = (float*) malloc((ngridx + 1) * sizeof(float));
+    float* gridy  = (float*) malloc((ngridy + 1) * sizeof(float));
+    float* coordx = (float*) malloc((ngridy + 1) * sizeof(float));
+    float* coordy = (float*) malloc((ngridx + 1) * sizeof(float));
+    float* ax     = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* ay     = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* bx     = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* by     = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* coorx  = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* coory  = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    float* dist   = (float*) malloc((ngridx + ngridy) * sizeof(float));
+    int*   indi   = (int*) malloc((ngridx + ngridy) * sizeof(int));
 
     assert(coordx != NULL && coordy != NULL && ax != NULL && ay != NULL && by != NULL &&
-           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
-           simdata != NULL && sum_dist != NULL && update != NULL);
+           bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL);
 
-    int   s, p, d, i, m, n;
-    int   quadrant;
-    float theta_p, sin_p, cos_p;
-    float mov, xi, yi;
-    int   asize, bsize, csize;
-    float upd;
-    int   ind_data, ind_recon;
-    float sum_dist2;
+    int    s, p, d, i, n;
+    int    quadrant;
+    float  theta_p, sin_p, cos_p;
+    float  mov, xi, yi;
+    int    asize, bsize, csize;
+    float  upd;
+    int    ind_data, ind_recon;
+    float* sum_dist;
+    float  sum_dist2;
+    float* update;
 
     for(i = 0; i < num_iter; i++)
     {
-        // initialize simdata to zero
-        memset(simdata, 0, dy * dt * dx * sizeof(float));
+        float* simdata = (float*) calloc((dt * dy * dx), sizeof(float));
 
         // For each slice
         for(s = 0; s < dy; s++)
@@ -103,9 +91,8 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
             preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx,
                           gridy);  // Outputs: mov, gridx, gridy
 
-            // initialize sum_dist and update to zero
-            memset(sum_dist, 0, (ngridx * ngridy) * sizeof(float));
-            memset(update, 0, (ngridx * ngridy) * sizeof(float));
+            sum_dist = (float*) calloc((ngridx * ngridy), sizeof(float));
+            update   = (float*) calloc((ngridx * ngridy), sizeof(float));
 
             // For each projection angle
             for(p = 0; p < dt; p++)
@@ -160,7 +147,7 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     if(sum_dist2 != 0.0f)
                     {
                         ind_data = d + p * dx + s * dt * dx;
-                        upd      = data[ind_data] / simdata[ind_data];
+                        upd      = (data[ind_data] - simdata[ind_data]) / sum_dist2;
                         for(n = 0; n < csize - 1; n++)
                         {
                             update[indi[n]] += upd * dist[n];
@@ -168,17 +155,21 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
                     }
                 }
             }
-            m = 0;
+
             for(n = 0; n < ngridx * ngridy; n++)
             {
                 if(sum_dist[n] != 0.0f)
                 {
                     ind_recon = s * ngridx * ngridy;
-                    recon[m + ind_recon] *= update[m] / sum_dist[n];
+                    recon[n + ind_recon] += update[n] / sum_dist[n];
                 }
-                m++;
             }
+
+            free(sum_dist);
+            free(update);
         }
+
+        free(simdata);
     }
 
     free(gridx);
@@ -193,9 +184,6 @@ mlem(const float* data, int dy, int dt, int dx, const float* center, const float
     free(coory);
     free(dist);
     free(indi);
-    free(simdata);
-    free(sum_dist);
-    free(update);
 
     FREE_TIMEMORY_AUTO_TIMER(timer);
 }

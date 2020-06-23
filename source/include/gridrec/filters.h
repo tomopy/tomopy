@@ -46,41 +46,23 @@
 #include <complex.h>
 #include <stdlib.h>
 
+#ifndef M_PI
+#    define M_PI 3.14159265359
+#endif
+
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
+#    define _Complex
 #else
 #    define DLL
 #endif
 #define ANSI
 
-#if defined(TOMOPY_CXX_GRIDREC) && defined(WIN32)
-#    define _Complex
-#endif
-
-DLL void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
-        const float* filter_par);
-
 float*
 malloc_vector_f(size_t n);
 
-void
-free_vector_f(float* v);
-
-float _Complex*
-malloc_vector_c(size_t n);
-
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
-
-void
-free_matrix_c(float _Complex** m);
-
-float (*get_filter(const char* name))(float, int, int, int, const float*);
+float 
+(*get_filter(const char* name))(float, int, int, int, const float*);
 
 float
 filter_none(float, int, int, int, const float*);
@@ -126,8 +108,3 @@ set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int 
 
 float
 legendre(int n, const float* coefs, float x);
-
-extern DLL void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy,
-            const char fname[16], const float* filter_par);

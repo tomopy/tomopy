@@ -47,10 +47,12 @@
 
 BEGIN_EXTERN_C
 #include "cxx_extern.h"
-#include "utils.h"
 END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//
+#if defined(WIN32)
+#    define _Complex
+#endif
 
 #define CPU_NN CV_INTER_NN
 #define CPU_LINEAR CV_INTER_LINEAR

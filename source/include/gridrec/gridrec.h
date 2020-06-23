@@ -43,71 +43,38 @@
 
 #pragma once
 
-#include "utils.hh"
-
 #include <complex.h>
-#include <complex>
-#include <cstdlib>
-#include <cstring>
-#include <functional>
-#include <math.h>
+#include <stdlib.h>
+// #include "filters.h"
 
-//===========================================================================//
-
-BEGIN_EXTERN_C
-#include "gridrec.h"
-END_EXTERN_C
-
-//===========================================================================//
-
-#ifndef M_PI
-#    define M_PI 3.14159265359
-#endif
-
-#define __LIKELY(x) __builtin_expect(!!(x), 1)
-#ifdef __INTEL_COMPILER
-#    define __PRAGMA_SIMD _Pragma("simd assert")
-#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
-        _Pragma("simd assert, vecremainder, vectorlength(8)")
-#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
-#    define __PRAGMA_IVDEP _Pragma("ivdep")
-#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#ifdef WIN32
+#    define DLL __declspec(dllexport)
 #else
-#    define __PRAGMA_SIMD
-#    define __PRAGMA_SIMD_VECREMAINDER
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#    define __PRAGMA_OMP_SIMD_COLLAPSE
-#    define __PRAGMA_IVDEP
-#    define __ASSSUME_64BYTES_ALIGNED(x)
+#    define DLL
+#endif
+#define ANSI
+
+#if defined(WIN32)
+#    define _Complex
 #endif
 
-//===========================================================================//
+void
+free_vector_f(float* v);
 
-typedef std::function<float(float, int, int, int, const float*)> filter_func;
-
-//===========================================================================//
-
-float*
-cxx_malloc_vector_f(size_t n);
+float _Complex*
+malloc_vector_c(size_t n);
 
 void
-cxx_free_vector_f(float*& v);
+free_vector_c(float _Complex* v);
 
-std::complex<float>*
-cxx_malloc_vector_c(size_t n);
-
-void
-cxx_free_vector_c(std::complex<float>*& v);
-
-std::complex<float>**
-cxx_malloc_matrix_c(size_t nr, size_t nc);
+float _Complex**
+malloc_matrix_c(size_t nr, size_t nc);
 
 void
-cxx_free_matrix_c(std::complex<float>**& m);
+free_matrix_c(float _Complex** m);
 
-void
-cxx_set_filter_tables(int dt, int pd, float fac, filter_func, const float* filter_par,
-                      std::complex<float>* A, unsigned char is2d);
+DLL void
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
+        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
+        const float* filter_par);
 
-//===========================================================================//

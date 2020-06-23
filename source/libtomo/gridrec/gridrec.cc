@@ -56,9 +56,8 @@
 #include "mkl.h"
 #include <complex>
 
-#if defined(TOMOPY_CXX_GRIDREC)
 using namespace std::literals::complex_literals;
-#endif
+
 
 #if defined(_MSC_VER)
 #    if defined(__LIKELY)
@@ -70,11 +69,10 @@ using namespace std::literals::complex_literals;
 //===========================================================================//
 
 void
-cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
             const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
             const float* filter_par)
 {
-#if defined(TOMOPY_CXX_GRIDREC)
     int    s, p, iu, iv;
     int    j;
     float *sine, *cose, *wtbl, *winv;
@@ -424,9 +422,6 @@ cxx_gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-#else
-    throw std::runtime_error("Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
-#endif
 }
 
 //===========================================================================//
@@ -436,7 +431,6 @@ cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
                       const float* filter_par, std::complex<float>* A,
                       unsigned char filter2d)
 {
-#if defined(TOMOPY_CXX_GRIDREC)
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
     // pf(...)], multiplying a complex phase factor (derived from the
@@ -481,9 +475,6 @@ cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
             }
         }
     }
-#else
-    throw std::runtime_error("Error! TOMOPY_CXX_GRIDREC was disabled at compile time.");
-#endif
 }
 
 //===========================================================================//

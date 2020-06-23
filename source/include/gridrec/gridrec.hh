@@ -41,59 +41,84 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "stripe.h"
+#pragma once
+
+#include <complex.h>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <math.h>
+
+//===========================================================================//
+
+extern "C"
+{
+#include "filters.h"
+}
+
+//===========================================================================//
+
+#ifndef M_PI
+#    define M_PI 3.14159265359
+#endif
+
+#if defined(WIN32)
+#    define _Complex
+#endif
+
+#define __LIKELY(x) __builtin_expect(!!(x), 1)
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#else
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
+#endif
+
+//===========================================================================//
+
+typedef std::function<float(float, int, int, int, const float*)> filter_func;
+
+//===========================================================================//
+
+extern "C"
+{
+extern DLL void
+gridrec(const float* data, int dy, int dt, int dx, const float* center,
+            const float* theta, float* recon, int ngridx, int ngridy,
+            const char fname[16], const float* filter_par);
+}
+
+float*
+cxx_malloc_vector_f(size_t n);
 
 void
-remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart, int iend)
-{
-    int    i, j, k, p, s;
-    float* avrage_row;
-    float* smooth_row;
+cxx_free_vector_f(float*& v);
 
-    // For each slice.
-    for(s = istart; s < iend; s++)
-    {
-        avrage_row = (float*) calloc(dz, sizeof(float));
-        smooth_row = (float*) calloc(dz, sizeof(float));
+std::complex<float>*
+cxx_malloc_vector_c(size_t n);
 
-        // For each pixel.
-        for(j = 0; j < dz; j++)
-        {
-            // For each projection.
-            for(p = 0; p < dx; p++)
-            {
-                avrage_row[j] += data[j + s * dz + p * dy * dz] / dx;
-            }
-        }
+void
+cxx_free_vector_c(std::complex<float>*& v);
 
-        // We have now computed the average row of the sinogram.
-        // Smooth it
-        for(i = 0; i < dz; i++)
-        {
-            smooth_row[i] = 0;
-            for(j = 0; j < size; j++)
-            {
-                k = i + j - size / 2;
-                if(k < 0)
-                    k = 0;
-                if(k > dz - 1)
-                    k = dz - 1;
-                smooth_row[i] += avrage_row[k];
-            }
-            smooth_row[i] /= size;
-        }
+std::complex<float>**
+cxx_malloc_matrix_c(size_t nr, size_t nc);
 
-        // For each projection.
-        for(p = 0; p < dx; p++)
-        {
-            // Subtract this difference from each row in sinogram.
-            for(j = 0; j < dz; j++)
-            {
-                data[j + s * dz + p * dy * dz] -= (avrage_row[j] - smooth_row[j]);
-            }
-        }
+void
+cxx_free_matrix_c(std::complex<float>**& m);
 
-        free(avrage_row);
-        free(smooth_row);
-    }
-}
+void
+cxx_set_filter_tables(int dt, int pd, float fac, filter_func, const float* filter_par,
+                      std::complex<float>* A, unsigned char is2d);
+
+//===========================================================================//
