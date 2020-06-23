@@ -34,7 +34,6 @@ jobs:
     maxParallel: 4
   steps:
   - script: |
-      echo ${{ CUDA_VERSION }} pre
       echo $(CUDA_VERSION) middle
       echo $CUDA_VERSION post
   - script: |
