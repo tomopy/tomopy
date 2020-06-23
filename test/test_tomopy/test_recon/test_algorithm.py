@@ -129,7 +129,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def test_mlem_gpu(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
                        accelerated=True, device='gpu')
-        assert_allclose(result, read_file('mlem_gpu.npy'), rtol=1e-2)
+        assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
         assert_allclose(
@@ -169,7 +169,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def test_sirt_gpu(self):
         result = recon(self.prj, self.ang, algorithm='sirt',
                        num_iter=4, accelerated=True, device='gpu')
-        assert_allclose(result, read_file('sirt_gpu.npy'), rtol=1e-2)
+        assert_allclose(result, read_file('sirt_accel_gpu.npy'), rtol=1e-2)
 
     def test_tv(self):
         assert_allclose(
