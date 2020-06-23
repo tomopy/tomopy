@@ -125,7 +125,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                        accelerated=True, device='cpu')
         assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
 
-    @unittest.skipUnless("CUDA_PATH" in os.environ, "CUDA_PATH not set.")
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
     def test_mlem_gpu(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
                        accelerated=True, device='gpu')
@@ -165,7 +165,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                        num_iter=4, accelerated=True, device='cpu')
         assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
 
-    @unittest.skipUnless("CUDA_PATH" in os.environ, "CUDA_PATH not set.")
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
     def test_sirt_gpu(self):
         result = recon(self.prj, self.ang, algorithm='sirt',
                        num_iter=4, accelerated=True, device='gpu')
