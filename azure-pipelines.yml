@@ -33,9 +33,8 @@ jobs:
         python.version: '37'
     maxParallel: 4
   steps:
-  - script: |
-      echo "CUDA version is $(CUDA_VERSION)"
-     displayName: Print CUDA version
+  - script: echo "CUDA version is $(CUDA_VERSION)"
+    displayName: Print CUDA version
   - script: |
       conda update -n base conda --yes --quiet
     displayName: Update conda
