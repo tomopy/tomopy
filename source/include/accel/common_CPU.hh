@@ -62,18 +62,12 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     if(pool_size <= 0)
     {
 #if defined(TOMOPY_USE_PTL)
-        // compute some properties (expected python threads, max threads)
-        auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-#    if defined(TOMOPY_USE_CUDA)
-        // general oversubscription when CUDA is enabled
-        auto max_threads =
-            (HW_CONCURRENCY + HW_CONCURRENCY) / std::max(pythreads, min_threads);
-#    else
-        // if known that CPU only, just try to use all cores
-        auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
-#    endif
-        auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-        pool_size     = nthreads;
+    // compute some properties (expected python threads, max threads)
+    auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    // if known that CPU only, just try to use all cores
+    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+    auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+    pool_size     = nthreads;
 #else
         pool_size = 1;
 #endif
