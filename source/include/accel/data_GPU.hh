@@ -46,11 +46,11 @@
 
 #pragma once
 
-#include "common.hh"
+#include "common_GPU.hh"
 #include "constants.hh"
 #include "macros.hh"
 #include "typedefs.hh"
-#include "utils.hh"
+#include "utils_GPU.hh"
 
 #include <array>
 #include <atomic>
@@ -73,19 +73,7 @@ struct RuntimeOptions
     {
         memcpy(grid_size.data(), _grid_size, 3 * sizeof(int));
         memcpy(block_size.data(), _block_size, 3 * sizeof(int));
-
-        if(device.key == "gpu")
-        {
-#if defined(TOMOPY_USE_CUDA)
-            interpolation = GetNppInterpolationMode(_interp);
-#else
-            interpolation = GetOpenCVInterpolationMode(_interp);
-#endif
-        }
-        else
-        {
-            interpolation = GetOpenCVInterpolationMode(_interp);
-        }
+        interpolation = GetNppInterpolationMode(_interp);
     }
 
     ~RuntimeOptions() {}

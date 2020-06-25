@@ -37,9 +37,9 @@
 //  ---------------------------------------------------------------
 //   TOMOPY implementation
 
-#include "common.hh"
-#include "data.hh"
-#include "utils.hh"
+#include "common_CPU.hh"
+#include "data_CPU.hh"
+#include "utils_CPU.hh"
 #include <cstdlib>
 
 //======================================================================================//

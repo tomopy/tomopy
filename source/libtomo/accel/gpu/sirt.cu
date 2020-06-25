@@ -37,10 +37,10 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
-#include "common.hh"
+#include "common_GPU.hh"
 #include "constants.hh"
-#include "data.hh"
-#include "utils.hh"
+#include "data_GPU.hh"
+#include "utils_GPU.hh"
 
 #include <algorithm>
 #include <cassert>

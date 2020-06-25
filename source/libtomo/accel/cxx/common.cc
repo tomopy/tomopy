@@ -37,7 +37,7 @@
 //  ---------------------------------------------------------------
 //   TOMOPY CUDA implementation
 
-#include "common.hh"
+#include "common_CPU.hh"
 #include "macros.hh"
 #include "utils.hh"
 

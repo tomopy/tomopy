@@ -61,16 +61,16 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     auto min_threads = num_threads_t(1);
     if(pool_size <= 0)
     {
-#if defined(TOMOPY_USE_PTL)
-    // compute some properties (expected python threads, max threads)
-    auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
-    // if known that CPU only, just try to use all cores
-    auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
-    auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-    pool_size     = nthreads;
-#else
-        pool_size = 1;
-#endif
+        #if defined(TOMOPY_USE_PTL)
+                // compute some properties (expected python threads, max threads)
+                auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+                // if known that CPU only, just try to use all cores
+                auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
+                auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+                pool_size     = nthreads;
+        #else
+                pool_size = 1;
+        #endif
     }
     // always specify at least one thread even if not creating threads
     pool_size = std::max(pool_size, min_threads);
@@ -237,26 +237,6 @@ GetDevice(const std::string& preferred)
     DeviceOptionList options     = { DeviceOption(0, "cpu", "Run on CPU (OpenCV)") };
     std::string      default_key = "cpu";
 
-#if defined(TOMOPY_USE_CUDA)
-    auto num_devices = cuda_device_count();
-    if(num_devices > 0)
-    {
-        options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
-        default_key = "gpu";
-#    if defined(TOMOPY_USE_NVTX)
-        // initialize nvtx data
-        init_nvtx();
-#    endif
-        // print device info
-        cuda_device_query();
-    }
-    else
-    {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
-        std::cerr << "\n##### No CUDA device(s) available #####\n" << std::endl;
-    }
-#endif
-
     // find the default entry
     auto default_itr =
         std::find_if(options.begin(), options.end(),
@@ -338,12 +318,7 @@ GetDevice(const std::string& preferred)
 inline void
 stream_sync(cudaStream_t _stream)
 {
-#if defined(__NVCC__) && defined(TOMOPY_USE_CUDA)
-    cudaStreamSynchronize(_stream);
-    CUDA_CHECK_LAST_STREAM_ERROR(_stream);
-#else
     ConsumeParameters(_stream);
-#endif
 }
 
 //======================================================================================//
