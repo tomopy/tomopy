@@ -54,10 +54,10 @@ if(MKL_FOUND)
     list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
 elseif(TOMOPY_USE_MKL)
     message(FATAL_ERROR "Intel MKL not found. Aborting build.")
-    set(${_USE_MKL} OFF)
+    set(_USE_MKL OFF)
 else()
     message(WARNING "Intel MKL not found. Gridrec algorithm will not be available")
-    set(${_USE_MKL} OFF)
+    set(_USE_MKL OFF)
 endif()
 
 # features
