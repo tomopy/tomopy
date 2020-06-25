@@ -128,7 +128,7 @@ LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
 def MissingLibrary():
     raise ModuleNotFoundError(
-        '''Function does not exist due to missing library. 
+        '''Function does not exist due to missing library.
         Check CMake log for more details.''')
 
 
