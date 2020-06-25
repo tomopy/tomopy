@@ -35,6 +35,7 @@ def add_option(lc_name, disp_name):
                         help="Explicitly disable {} build".format(disp_name))
 
 add_option("cuda", "CUDA")
+add_option("opencv", "OpenCV")
 add_option("nvtx", "NVTX (NVIDIA Nsight)")
 add_option("arch", "Hardware optimized")
 add_option("avx512", "AVX-512 optimized")
@@ -59,6 +60,7 @@ sys.argv = sys.argv[:1]+left
 
 add_bool_opt("TOMOPY_USE_CUDA", args.enable_cuda, args.disable_cuda)
 add_bool_opt("TOMOPY_USE_NVTX", args.enable_nvtx, args.disable_nvtx)
+add_bool_opt("TOMOPY_USE_OPENCV", args.enbale_opencv, args.disable_opencv)
 if args.enable_avx512 and not args.enable_arch:
     args.enable_arch = True
     args.disable_arch = False
