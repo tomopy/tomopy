@@ -25,8 +25,11 @@ if (OpenCV_FOUND)
     list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
 elseif(TOMOPY_USE_OPENCV)
     message(FATAL_ERROR "OpenCV not found. Aborting build.")
+    set(_USE_OPENCV OFF)
 else()
     message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
+    set(_USE_OPENCV OFF)
+endif()
 
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
