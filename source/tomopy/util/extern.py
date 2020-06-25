@@ -125,10 +125,12 @@ LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
+
 def MissingLibrary():
     raise ModuleNotFoundError(
         '''Function does not exist due to missing library.
         Check CMake log for more details.''')
+
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
@@ -386,10 +388,10 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
-      
+
         if LIB_TOMOPY_ACCEL is None:
             MissingLibrary()
-            
+
         LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
             dtype.as_c_float_p(tomo),
