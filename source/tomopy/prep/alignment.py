@@ -303,8 +303,11 @@ def align_joint(
             _rec = rec
 
         # Reconstruct image.
+        extra_kwargs = {}
+        if algorithm != 'gridrec':
+            extra_kwargs['num_iter'] = 1
         rec = recon(prj, ang, center=center, algorithm=algorithm,
-                    num_iter=1, init_recon=_rec)
+                    init_recon=_rec, **extra_kwargs)
 
         # Re-project data and obtain simulated data.
         sim = project(rec, ang, center=center, pad=False)
