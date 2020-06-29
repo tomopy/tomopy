@@ -5,6 +5,7 @@ if (TOMOPY_USE_OPENCV)
         ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
     set(ACCEL_LIBRARY_SOURCES ${accel_sources})
+    
 endif()
 
 if(TOMOPY_USE_CUDA)

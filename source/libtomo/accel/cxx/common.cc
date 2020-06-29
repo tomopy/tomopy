@@ -39,7 +39,7 @@
 
 #include "common_CPU.hh"
 #include "macros.hh"
-#include "utils.hh"
+#include "utils_CPU.hh"
 
 #if !defined(TOMOPY_USE_CUDA)
 
