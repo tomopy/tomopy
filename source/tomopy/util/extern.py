@@ -45,7 +45,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
+#%%
 """
 Module for external library wrappers.
 """
@@ -124,7 +124,7 @@ LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
 LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
-
+#%%
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
@@ -382,6 +382,7 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
+        LIB_TOMOPY_ACCEL.__getattr__("cxx_mlem")
         LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
             dtype.as_c_float_p(tomo),
@@ -545,7 +546,7 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
-
+        LIB_TOMOPY_ACCEL.__getattr__("cxx_sirt")
         LIB_TOMOPY_ACCEL.cxx_sirt.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_sirt(
             dtype.as_c_float_p(tomo),
@@ -576,6 +577,7 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
+
 
 def c_tv(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
