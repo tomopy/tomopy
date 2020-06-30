@@ -121,7 +121,7 @@ jobs:
     displayName: Create build environment
   - script: |
       call activate tomopy
-      python setup.py install -- -GNinja
+      python setup.py install -- -GNinja --enable-mkl
     displayName: Setup and install
   - script: |
       call activate tomopy
