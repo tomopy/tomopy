@@ -46,8 +46,8 @@
 #include "utils.h"
 
 void
-mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta, 
-    float* recon, int ngridx, int ngridy, int num_iter)
+mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
+     float* recon, int ngridx, int ngridy, int num_iter)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;

@@ -1,12 +1,9 @@
 # target properties based on build
-file(GLOB accel_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/accel/*.hh)
 
 file(GLOB accel_sources
     ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
 
-set(ACCEL_LIBRARY_SOURCES ${accel_headers} ${accel_sources})
+set(ACCEL_LIBRARY_SOURCES ${accel_sources})
 
 if(TOMOPY_USE_CUDA)
 

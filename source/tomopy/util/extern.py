@@ -587,7 +587,6 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_int(kwargs['num_gridy']),
             dtype.as_c_int(kwargs['num_iter']))
 
-
 def c_tv(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)

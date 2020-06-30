@@ -5,9 +5,6 @@ file(GLOB prep_tomo_sources
 file(GLOB prep_tomo_headers
     ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
 
-file(GLOB prep_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
-
 # core sources
 set(PREP_LIBRARY_SOURCES ${prep_tomo_headers} ${prep_tomo_sources})
 
@@ -17,7 +14,6 @@ add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
     PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include")
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
 
 # target properties
