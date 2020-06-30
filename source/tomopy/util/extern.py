@@ -45,7 +45,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-#%%
 """
 Module for external library wrappers.
 """
@@ -124,7 +123,6 @@ LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
 LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
-#%%
 
 def c_normalize_bg(tomo, air):
     dt, dy, dx = tomo.shape
