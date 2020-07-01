@@ -45,7 +45,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-#%%
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -185,4 +184,3 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='tikh', num_iter=4),
             read_file('tikh.npy'), rtol=1e-2)
-#%%
