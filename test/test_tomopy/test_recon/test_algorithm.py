@@ -45,7 +45,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
+#%%
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -122,7 +122,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
 
     def test_mlem_accel(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
-                       accelerated=True)
+                       accelerated=True, device='cpu')
         assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
@@ -162,7 +162,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
 
     def test_sirt_accel(self):
         result = recon(self.prj, self.ang, algorithm='sirt',
-                       num_iter=4, accelerated=True)
+                       num_iter=4, accelerated=True, device='cpu')
         assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
@@ -185,3 +185,4 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='tikh', num_iter=4),
             read_file('tikh.npy'), rtol=1e-2)
+#%%
