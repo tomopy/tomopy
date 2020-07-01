@@ -296,6 +296,10 @@ def align_joint(
     # Initialization of reconstruction.
     rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
 
+    extra_kwargs = {}
+    if algorithm != 'gridrec':
+        extra_kwargs['num_iter'] = 1
+
     # Register each image frame-by-frame.
     for n in range(iters):
 
@@ -304,7 +308,7 @@ def align_joint(
 
         # Reconstruct image.
         rec = recon(prj, ang, center=center, algorithm=algorithm,
-                    num_iter=1, init_recon=_rec)
+                    init_recon=_rec, **extra_kwargs)
 
         # Re-project data and obtain simulated data.
         sim = project(rec, ang, center=center, pad=False)
