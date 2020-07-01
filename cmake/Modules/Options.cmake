@@ -38,8 +38,10 @@ if(CUDA_FOUND)
         message(STATUS "No CUDA support")
         set(_USE_CUDA OFF)
     endif()
+elseif(TOMOPY_USE_CUDA)
+    message(FATAL_ERROR "CUDA not found. Aborting build.")
 else()
-    set(_USE_CUDA OFF)
+    message(WARNING "CUDA not found. GPU acceleration will not be available.")
 endif()
 
 ################################################################################
