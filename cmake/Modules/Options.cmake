@@ -39,6 +39,7 @@ if(CUDA_FOUND)
         set(_USE_CUDA OFF)
     endif()
 else()
+    set(_USE_CUDA OFF)
     message(WARNING "CUDA not found. GPU acceleration will not be available.")
 endif()
 
