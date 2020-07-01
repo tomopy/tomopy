@@ -11,6 +11,7 @@ include(Compilers)
 set(_USE_OMP ON)
 set(_USE_CUDA ON)
 set(_USE_CXX_GRIDREC OFF)
+set(_USE_MKL ON)
 
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
@@ -22,7 +23,12 @@ if(CMAKE_C_COMPILER_IS_GNU)
     set(_USE_OMP OFF)
 endif()
 
-# Check if CUDA can be enabled
+################################################################################
+#
+#        CUDA (required for GPU acceleration)
+#
+################################################################################
+
 find_package(CUDA QUIET)
 if(CUDA_FOUND)
     check_language(CUDA)
@@ -34,6 +40,24 @@ if(CUDA_FOUND)
     endif()
 else()
     set(_USE_CUDA OFF)
+endif()
+
+################################################################################
+#
+#        MKL (required for gridrec)
+#
+################################################################################
+
+find_package(MKL QUIET)
+if(MKL_FOUND)
+    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+elseif(TOMOPY_USE_MKL)
+    message(FATAL_ERROR "Intel MKL not found. Aborting build.")
+    set(_USE_MKL OFF)
+else()
+    message(WARNING "Intel MKL not found. Gridrec algorithm will not be available")
+    set(_USE_MKL OFF)
 endif()
 
 # features
@@ -63,6 +87,7 @@ add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
 add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 add_option(TOMOPY_USER_FLAGS "Insert CFLAGS and CXXFLAGS regardless of whether pass check" OFF)
+add_option(TOMOPY_USE_MKL "Enable Intel MKL" ${_USE_MKL})
 
 if(TOMOPY_USE_CUDA)
     add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" OFF)
