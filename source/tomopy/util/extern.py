@@ -127,7 +127,9 @@ LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
 
 def MissingLibrary(function):
-    print(f"The {function} algorithm is unavailable. Check CMake logs to determine if TomoPy was built with dependencies required by this algorithm.")
+    print(f"The {function} algorithm is unavailable".
+          + "Check CMake logs to determine if TomoPy was"
+          + "built with dependencies required by this algorithm.")
 
 
 def c_normalize_bg(tomo, air):
@@ -355,7 +357,7 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
 def c_gridrec(tomo, center, recon, theta, **kwargs):
 
     if LIB_TOMOPY_GRIDREC is None:
-        return
+        return MissingLibrary("gridrec")
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
