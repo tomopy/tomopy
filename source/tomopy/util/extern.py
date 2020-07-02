@@ -127,7 +127,7 @@ LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
 
 def MissingLibrary(function):
-    print(f"The {function} algorithm is unavailable".
+    print(f"The {function} algorithm is unavailable"
           + "Check CMake logs to determine if TomoPy was"
           + "built with dependencies required by this algorithm.")
 
