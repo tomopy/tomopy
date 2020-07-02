@@ -125,10 +125,9 @@ LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
 
-def MissingLibrary():
+def MissingLibrary(function):
     raise ModuleNotFoundError(
-        '''Function does not exist due to missing library.
-        Check CMake log for more details.''')
+        f"The {function} algorithm does not exist. Check CMake logs to determine if the necessary dependencies have been built to enable algorithm.")
 
 
 def c_normalize_bg(tomo, air):
@@ -356,7 +355,7 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
 def c_gridrec(tomo, center, recon, theta, **kwargs):
 
     if LIB_TOMOPY_GRIDREC is None:
-        MissingLibrary()
+        MissingLibrary("gridrec")
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
