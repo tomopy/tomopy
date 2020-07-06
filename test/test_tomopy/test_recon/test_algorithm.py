@@ -60,6 +60,12 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+try:
+    import mkl
+    found_mkl = True
+except ImportError:
+    found_mkl = False
+
 
 class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def setUp(self):
@@ -82,6 +88,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -89,6 +96,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                 self.prj, self.ang, algorithm='gridrec', filter_name='custom',
                 filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),

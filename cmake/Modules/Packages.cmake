@@ -40,21 +40,6 @@ if(PYTHON_EXECUTABLE)
         ${PYTHON_ROOT_DIR}/include)
 endif()
 
-
-################################################################################
-#
-#        MKL (required)
-#
-################################################################################
-
-find_package(MKL REQUIRED)
-
-if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-endif()
-
-
 ################################################################################
 #
 #        OpenCV (required)
