@@ -88,7 +88,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
-    @unittest.skipUnless(found_mkl, "Requires MKL")
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -96,7 +96,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                 self.prj, self.ang, algorithm='gridrec', filter_name='custom',
                 filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
-    @unittest.skipUnless(found_mkl, "Requires MKL")
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
