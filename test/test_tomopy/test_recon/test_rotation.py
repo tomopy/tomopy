@@ -65,8 +65,15 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+try: 
+    import mkl 
+    found_mkl = True
+except ImportError:
+    found_mkl = False
 
 class CenterFindingTestCase(unittest.TestCase):
+
+    @unittest.skipUnless(found_mkl, "Requires MKL")
     def test_write_center(self):
         dpath = os.path.join('test', 'tmp')
         #if get_nproc() > 1 and get_rank() > 0:
