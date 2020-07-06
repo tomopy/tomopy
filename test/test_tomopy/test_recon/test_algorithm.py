@@ -66,6 +66,12 @@ try:
 except ImportError:
     found_opencv = False
 
+try:
+    import mkl
+    found_mkl = True
+except ImportError:
+    found_mkl = False
+
 
 class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def setUp(self):
@@ -88,6 +94,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -95,6 +102,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                 self.prj, self.ang, algorithm='gridrec', filter_name='custom',
                 filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -129,7 +137,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
     def test_mlem_accel(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
-                       accelerated=True)
+                       accelerated=True, device='cpu')
         assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
@@ -170,7 +178,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
     def test_sirt_accel(self):
         result = recon(self.prj, self.ang, algorithm='sirt',
-                       num_iter=4, accelerated=True)
+                       num_iter=4, accelerated=True, device='cpu')
         assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")

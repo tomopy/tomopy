@@ -2,17 +2,10 @@
 file(GLOB recon_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c)
 
-file(GLOB recon_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/*.h)
-
 # core sources
-set(RECON_LIBRARY_SOURCES ${recon_tomo_headers} ${recon_tomo_sources})
+set(RECON_LIBRARY_SOURCES ${recon_tomo_sources})
 
-# create library
 add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
-
-target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/recon")
 
@@ -29,6 +22,9 @@ set_target_properties(libtomopy-recon
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
     ${CUDA_PROPERTIES})
+
+target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
+    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
 
 target_compile_definitions(libtomopy-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
