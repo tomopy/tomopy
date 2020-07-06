@@ -4,7 +4,6 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - nomkl
   - coverage!=5.0.2
   - dxchange
   - gcc_linux-64
@@ -13,6 +12,7 @@ dependencies:
   - h5py
   - libstdcxx-ng
   - libgcc-ng
+  - nomkl
   - nose
   - numexpr
   - numpy ["blas=*=openblas"]
