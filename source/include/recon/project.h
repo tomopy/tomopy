@@ -43,10 +43,6 @@
 
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h>
-
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
 #else
@@ -54,46 +50,14 @@
 #endif
 
 void DLL
-     preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
-                   float* gridy);
-
-int DLL
-    calc_quadrant(float theta_p);
+     project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+             const float* center, const float* theta);
 
 void DLL
-     calc_coords(int ngridx, int ngridy, float xi, float yi, float sin_p, float cos_p,
-                 const float* gridx, const float* gridy, float* coordx, float* coordy);
+     project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
+              int dy, int dt, int dx, const float* center, const float* theta);
 
 void DLL
-     trim_coords(int ngridx, int ngridy, const float* coordx, const float* coordy,
-                 const float* gridx, const float* gridy, int* asize, float* ax, float* ay,
-                 int* bsize, float* bx, float* by);
-
-void DLL
-     sort_intersections(int ind_condition, int asize, const float* ax, const float* ay,
-                        int bsize, const float* bx, const float* by, int* csize, float* coorx,
-                        float* coory);
-
-void DLL
-     calc_dist(int ngridx, int ngridy, int csize, const float* coorx, const float* coory,
-               int* indi, float* dist);
-
-void DLL
-     calc_dist2(int ngridx, int ngridy, int csize, const float* coorx, const float* coory,
-                int* indx, int* indy, float* dist);
-
-void DLL
-     calc_simdata(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
-                  const int* indi, const float* dist, const float* model, float* simdata);
-
-void DLL
-     calc_simdata2(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
-                   const int* indx, const int* indy, const float* dist, float vx, float vy,
-                   const float* modelx, const float* modely, float* simdata);
-
-void DLL
-     calc_simdata3(int s, int p, int d, int ngridx, int ngridy, int dt, int dx, int csize,
-                   const int* indx, const int* indy, const float* dist, float vx, float vy,
-                   const float* modelx, const float* modely, const float* modelz, int axis,
-                   float* simdata);
-
+     project3(const float* objx, const float* objy, const float* objz, int oy, int ox, int oz,
+              float* data, int dy, int dt, int dx, const float* center, const float* theta,
+              int axis);
