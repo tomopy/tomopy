@@ -183,24 +183,6 @@ swap_integer(int* arr, int index1, int index2)
 }
 
 int
-partition(float* median_array, int left, int right, int pivot_index)
-{
-    float pivot_value = median_array[pivot_index];
-    swap_float(median_array, pivot_index, right);
-    int store_index = left;
-    for(int i = left; i < right; i++)
-    {
-        if(median_array[i] <= pivot_value)
-        {
-            swap_float(median_array, i, store_index);
-            store_index += 1;
-        }
-    }
-    swap_float(median_array, store_index, right);
-    return store_index;
-}
-
-int
 partition_2_arrays(float* median_array, int* position_array, int left, int right,
                    int pivot_index)
 {
@@ -220,18 +202,6 @@ partition_2_arrays(float* median_array, int* position_array, int left, int right
     swap_float(median_array, store_index, right);
     swap_integer(position_array, store_index, right);
     return store_index;
-}
-
-void
-quick_sort(float* median_array, int left, int right)
-{
-    if(left < right)
-    {
-        int pivot_index     = (int) ((left + right) / 2);
-        int new_pivot_index = partition(median_array, left, right, pivot_index);
-        quick_sort(median_array, left, new_pivot_index - 1);
-        quick_sort(median_array, new_pivot_index + 1, right);
-    }
 }
 
 void
