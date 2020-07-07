@@ -93,13 +93,17 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     {
         if(opts.device.key == "gpu")
         {
+#if defined(TOMOPY_USE_CUDA)
             sirt_cuda(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       &opts);
+#endif
         }
         else
         {
+#if defined(TOMOPY_USE_OPENCV)
             sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                      &opts);
+#endif
         }
     }
     catch(std::exception& e)
@@ -119,6 +123,8 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
 }
 
 //======================================================================================//
+
+#if defined(TOMOPY_USE_OPENCV)
 
 void
 sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx, int nx,
@@ -232,14 +238,4 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
     printf("\n");
 }
 
-//======================================================================================//
-#if !defined(TOMOPY_USE_CUDA)
-void
-sirt_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-          RuntimeOptions* opts)
-{
-    sirt_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter, opts);
-}
-#endif
-//======================================================================================//
+#endif // TOMOPY_USE_OPENCV

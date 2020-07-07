@@ -46,10 +46,11 @@ endif()
 #
 ################################################################################
 
-set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
-list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-
+if(False)
+    set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+    find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
+    list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+endif()
 
 ################################################################################
 #

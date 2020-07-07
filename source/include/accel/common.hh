@@ -81,9 +81,11 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     // always specify at least one thread even if not creating threads
     pool_size = std::max(pool_size, min_threads);
 
-    // explicitly set number of threads to 0 so OpenCV doesn't try to create threads
+    // explicitly set number of threads to 0 so OpenCV doesn't try to create
+    // threads
+#if defined(TOMOPY_USE_OPENCV)
     cv::setNumThreads(0);
-
+#endif
     // use unique pointer per-thread so manager gets deleted when thread gets deleted
     // create the thread-pool instance
     tp = unique_thread_pool_t(new tomopy::ThreadPool(pool_size));
