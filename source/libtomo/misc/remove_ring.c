@@ -43,79 +43,15 @@
 
 // Original author: Justin Blair
 
+#include <stdlib.h>
+#include <math.h>
+
 #include "remove_ring.h"
 
 #define INT_MODE_WRAP 0
 #define INT_MODE_REFLECT 1
 
-void
-remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
-            float thresh_max, float thresh_min, float threshold, int angular_min,
-            int ring_width, int int_mode, int istart, int iend)
-{
-    int     pol_width  = 0;
-    int     pol_height = 0;
-    int     m_rad      = 30;
-    int     r_scale    = 1;
-    int     ang_scale  = 1;
-    int     m_azi;
-    float** polar_image = 0;
-    float** ring_image  = 0;
-    float** image       = (float**) calloc(dy, sizeof(float*));
-
-    // For each reconstructed slice
-    for(int s = istart; s < iend; s++)
-    {
-        // Fill in reconstructed slice data array into reshaped 2D array
-        image[0] = data + s * dy * dx;
-        for(int i = 1; i < dy; i++)
-        {
-            image[i] = image[i - 1] + dx;
-        }
-        // Translate Image to Polar Coordinates
-        polar_image =
-            polar_transform(image, center_x, center_y, dx, dy, &pol_width, &pol_height,
-                            thresh_max, thresh_min, r_scale, ang_scale, ring_width);
-        m_azi = ceil((float) pol_height / 360.0) * angular_min;
-        m_rad = 2 * ring_width + 1;
-
-        // Call Ring Algorithm
-        ring_filter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi,
-                    ring_width, int_mode);
-
-        // Translate Ring-Image to Cartesian Coordinates
-        ring_image = inverse_polar_transform(polar_image, center_x, center_y, pol_width,
-                                             pol_height, dx, dy, r_scale, ring_width);
-
-        // Subtract Ring-Image from Image
-        for(int row = 0; row < dy; row++)
-        {
-            for(int col = 0; col < dx; col++)
-            {
-                image[row][col] -= ring_image[row][col];
-            }
-        }
-
-        // Flatten 2D filtered array
-        for(int j = 0; j < dy; j++)
-        {
-            for(int i = 0; i < dx; i++)
-            {
-                data[i + (j * dx) + s * dy * dx] = image[j][i];
-            }
-        }
-
-        free(polar_image[0]);
-        free(polar_image);
-
-        free(ring_image[0]);
-        free(ring_image);
-    }
-
-    free(image);
-
-    return;
-}
+#define PI 3.14159265359
 
 int
 min_distance_to_edge(float center_x, float center_y, int width, int height)
@@ -692,5 +628,74 @@ ring_filter(float*** polar_image, int pol_height, int pol_width, float threshold
 
     free(filtered_image[0]);
     free(filtered_image);
+    return;
+}
+
+void
+remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
+            float thresh_max, float thresh_min, float threshold, int angular_min,
+            int ring_width, int int_mode, int istart, int iend)
+{
+    int     pol_width  = 0;
+    int     pol_height = 0;
+    int     m_rad      = 30;
+    int     r_scale    = 1;
+    int     ang_scale  = 1;
+    int     m_azi;
+    float** polar_image = 0;
+    float** ring_image  = 0;
+    float** image       = (float**) calloc(dy, sizeof(float*));
+
+    // For each reconstructed slice
+    for(int s = istart; s < iend; s++)
+    {
+        // Fill in reconstructed slice data array into reshaped 2D array
+        image[0] = data + s * dy * dx;
+        for(int i = 1; i < dy; i++)
+        {
+            image[i] = image[i - 1] + dx;
+        }
+        // Translate Image to Polar Coordinates
+        polar_image =
+            polar_transform(image, center_x, center_y, dx, dy, &pol_width, &pol_height,
+                            thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+        m_azi = ceil((float) pol_height / 360.0) * angular_min;
+        m_rad = 2 * ring_width + 1;
+
+        // Call Ring Algorithm
+        ring_filter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi,
+                    ring_width, int_mode);
+
+        // Translate Ring-Image to Cartesian Coordinates
+        ring_image = inverse_polar_transform(polar_image, center_x, center_y, pol_width,
+                                             pol_height, dx, dy, r_scale, ring_width);
+
+        // Subtract Ring-Image from Image
+        for(int row = 0; row < dy; row++)
+        {
+            for(int col = 0; col < dx; col++)
+            {
+                image[row][col] -= ring_image[row][col];
+            }
+        }
+
+        // Flatten 2D filtered array
+        for(int j = 0; j < dy; j++)
+        {
+            for(int i = 0; i < dx; i++)
+            {
+                data[i + (j * dx) + s * dy * dx] = image[j][i];
+            }
+        }
+
+        free(polar_image[0]);
+        free(polar_image);
+
+        free(ring_image[0]);
+        free(ring_image);
+    }
+
+    free(image);
+
     return;
 }
