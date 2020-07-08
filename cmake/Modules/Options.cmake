@@ -37,10 +37,11 @@ endif()
 #
 ################################################################################
 
-set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
 find_package(OpenCV QUIET COMPONENTS ${OpenCV_COMPONENTS})
 if (OpenCV_FOUND)
     list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+    set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
 elseif(TOMOPY_USE_OPENCV)
     message(FATAL_ERROR "OpenCV not found. Aborting build.")
 else()
