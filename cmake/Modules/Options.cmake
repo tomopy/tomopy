@@ -9,7 +9,6 @@ include(MacroUtilities)
 include(Compilers)
 
 set(_USE_OMP ON)
-set(_USE_CUDA ON)
 set(_USE_CXX_GRIDREC OFF)
 
 # if Windows MSVC compiler, use C++ version of gridrec
@@ -25,13 +24,7 @@ endif()
 # Check if CUDA can be enabled
 find_package(CUDA)
 if(CUDA_FOUND)
-    if (NOT CMAKE_CUDA_HOST_COMPILER)
-        set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    endif()
-    if (NOT CMAKE_CUDA_COMPILER)
-        set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
-    endif()
-    enable_language(CUDA)
+    set(_USE_CUDA ON)
 else()
     set(_USE_CUDA OFF)
 endif()
