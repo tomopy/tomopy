@@ -172,6 +172,10 @@ endif()
 
 if(TOMOPY_USE_CUDA)
 
+    if(NOT CMAKE_CUDA_HOST_COMPILER)
+        set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    endif()
+
     if(NOT CMAKE_CUDA_COMPILER)
         set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
     endif()
