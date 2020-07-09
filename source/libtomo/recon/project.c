@@ -42,6 +42,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "profiler.h"
+#include "project.h"
 #include "utils.h"
 
 volatile unsigned long counter;

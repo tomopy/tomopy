@@ -42,6 +42,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "profiler.h"
+#include "recon.h"
 #include "utils.h"
 
 void

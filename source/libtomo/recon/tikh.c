@@ -41,6 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "recon.h"
 #include "utils.h"
 
 void
@@ -180,7 +181,7 @@ tikh(const float* data, int dy, int dt, int dx, const float* center, const float
                             grad[ind_recon + indi[n]] +=
                                 2 * r * prox1[ind_data] * dist[n];
                 }
-            }                      
+            }
         }
 
         // add to the gradient 2*reg_par[1]*(recon-reg_data)
