@@ -35,14 +35,23 @@ jobs:
   steps:
   - script: echo "CUDA version is $(CUDA_VERSION)"
     displayName: Print CUDA version
-  - script: |
-      conda update -n base conda --yes --quiet
+  - script: >
+      conda update --yes --quiet
+      -n base conda
     displayName: Update conda
   - script: >
-      conda env create --quiet --force
+      conda env remove --yes --quiet
+      -n tomopy
+    displayName: Remove existing build environment
+  - script: >
+      conda env create --quiet
       -n tomopy
       -f envs/linux-$(python.version).yml
     displayName: Create build environment
+  - script: >
+      conda list
+      -n tomopy
+    displayName: List build environment
   - script: |
       source activate tomopy
       python setup.py install --enable-cuda --cuda-arch=30
