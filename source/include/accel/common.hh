@@ -42,6 +42,7 @@
 #include "constants.hh"
 #include "macros.hh"
 #include "typedefs.hh"
+#include <stdexcept>
 
 BEGIN_EXTERN_C
 #include "cxx_extern.h"
@@ -268,6 +269,11 @@ GetDevice(const std::string& preferred)
         std::cerr << "\n##### No CUDA device(s) available #####\n" << std::endl;
     }
 #endif
+
+    if (options.empty()){
+        throw std::runtime_error("No devices found! Check that TomoPy was "
+                                 "compiled with OpenCV or CUDA.");
+    }
 
     // find the default entry
     auto default_itr =
