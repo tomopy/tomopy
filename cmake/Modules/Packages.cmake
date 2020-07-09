@@ -46,10 +46,11 @@ endif()
 #
 ################################################################################
 
-if(False)
+if(True)
     set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
     find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
     list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
 endif()
 
 ################################################################################
