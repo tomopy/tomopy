@@ -242,8 +242,12 @@ GetDevice(const std::string& preferred)
 {
     auto pythreads               = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
     using DeviceOptionList       = std::deque<DeviceOption>;
-    DeviceOptionList options     = { DeviceOption(0, "cpu", "Run on CPU (OpenCV)") };
+    DeviceOptionList options     = { };
     std::string      default_key = "cpu";
+
+#if defined(TOMOPY_USE_OPENCV)
+    options.push_back(DeviceOption(0, "cpu", "Run on CPU (OpenCV)"));
+# endif
 
 #if defined(TOMOPY_USE_CUDA)
     auto num_devices = cuda_device_count();
