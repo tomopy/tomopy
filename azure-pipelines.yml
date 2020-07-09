@@ -45,7 +45,7 @@ jobs:
     displayName: Create build environment
   - script: |
       source activate tomopy
-      python setup.py install --enable-cuda
+      python setup.py install --enable-cuda --cuda-arch=30
     displayName: Setup and install
   - script: |
       source activate tomopy
