@@ -136,13 +136,13 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
     @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
     def test_mlem_accel(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
-                       accelerated=True, device='cpu')
+                       accelerated=True, device='cpu', ncore=1, pool_size=3)
         assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
     def test_mlem_gpu(self):
         result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
-                       accelerated=True, device='gpu')
+                       accelerated=True, device='gpu', ncore=1, pool_size=3)
         assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
@@ -176,14 +176,14 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
 
     @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
     def test_sirt_accel(self):
-        result = recon(self.prj, self.ang, algorithm='sirt',
-                       num_iter=4, accelerated=True, device='cpu')
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4,
+                       accelerated=True, device='cpu', ncore=1, pool_size=3)
         assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
 
     @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
     def test_sirt_gpu(self):
-        result = recon(self.prj, self.ang, algorithm='sirt',
-                       num_iter=4, accelerated=True, device='gpu')
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4,
+                       accelerated=True, device='gpu', ncore=1, pool_size=3)
         assert_allclose(result, read_file('sirt_accel_gpu.npy'), rtol=1e-2)
 
     def test_tv(self):
