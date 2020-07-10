@@ -48,9 +48,7 @@ jobs:
       -n tomopy
       -f envs/linux-$(python.version).yml
     displayName: Create build environment
-  - script: >
-      conda list
-      -n tomopy
+  - script: conda list -n tomopy
     displayName: List build environment
   - script: |
       source activate tomopy
@@ -80,6 +78,8 @@ jobs:
   - script: |
       conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
+  - script: conda list -n tomopy
+    displayName: List build environment
   - script: |
       source activate tomopy
       python setup.py install
@@ -105,6 +105,8 @@ jobs:
   - script: |
       conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
     displayName: Create build environment
+  - script: conda list -n tomopy
+    displayName: List build environment
   - script: |
       source activate tomopy
       python setup.py install
@@ -130,6 +132,8 @@ jobs:
   - script: |
       conda env create -n tomopy --quiet -f envs/win-$(python.version).yml
     displayName: Create build environment
+  - script: conda list -n tomopy
+    displayName: List build environment
   - script: |
       call activate tomopy
       python setup.py install -- -GNinja
