@@ -10,8 +10,8 @@ include(Compilers)
 
 set(_USE_OMP ON)
 set(_USE_CXX_GRIDREC OFF)
-set(_USE_MKL ON)
 set(_USE_OPENCV ON)
+set(_USE_MKL ON) 
 
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
@@ -29,6 +29,19 @@ if(CUDA_FOUND)
     set(_USE_CUDA ON)
 else()
     set(_USE_CUDA OFF)
+endif()
+
+# Check if OpenCV can be enabled; only search for desired modules.
+set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
+if(NOT OpenCV_FOUND)
+    set(_USE_OPENCV OFF)
+endif()
+
+# Check if MKL can be enabled
+find_package(MKL)
+if(NOT MKL_FOUND)
+    set(_USE_MKL OFF)
 endif()
 
 # features

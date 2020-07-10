@@ -46,22 +46,15 @@ endif()
 #
 ################################################################################
 
-if(True)
-    set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-    find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
-    list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-    find_package(OpenCV QUIET COMPONENTS ${OpenCV_COMPONENTS})
-
-    if (OpenCV_FOUND)
+if(TOMOPY_USE_OPENCV)
+    if(OpenCV_FOUND)
         list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-        set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
-    elseif(TOMOPY_USE_OPENCV)
-        message(FATAL_ERROR "OpenCV not found. Aborting build.")
     else()
-        message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
-        set(_USE_OPENCV OFF)
+        message(FATAL_ERROR "OpenCV not found. Aborting build.")
     endif()
+else()
+    message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
 endif()
 
 ################################################################################
@@ -70,15 +63,15 @@ endif()
 #
 ################################################################################
 
-find_package(MKL QUIET)
-if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-elseif(TOMOPY_USE_MKL)
-    message(FATAL_ERROR "MKL not found. Aborting build.")
-else() 
-    message(WARNING "MKL not found. Gridrec reconstruction algorithm will not be available.")
-    set(_USE_MKL OFF)
+if(TOMOPY_USE_MKL)
+    if(MKL_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    else()
+        message(FATAL_ERROR "MKL not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "MKL not found. Gridrec will be disabled.")
 endif()
 
 ################################################################################
