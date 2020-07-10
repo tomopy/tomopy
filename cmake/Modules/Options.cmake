@@ -8,19 +8,18 @@
 include(MacroUtilities)
 include(Compilers)
 
-set(_USE_OMP ON)
-set(_USE_CXX_GRIDREC OFF)
-set(_USE_MKL ON)
-set(_USE_OPENCV ON)
-
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
     set(_USE_CXX_GRIDREC ON)
+else()
+    set(_USE_CXX_GRIDREC OFF)
 endif()
 
 # GNU compiler will enable OpenMP SIMD with -fopenmp-simd
 if(CMAKE_C_COMPILER_IS_GNU)
     set(_USE_OMP OFF)
+else()
+    set(_USE_OMP ON)
 endif()
 
 # Check if CUDA can be enabled
@@ -34,13 +33,17 @@ endif()
 # Check if OpenCV can be enabled; only search for desired modules.
 set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
 find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
-if(NOT OpenCV_FOUND)
+if(OpenCV_FOUND)
+    set(_USE_OPENCV ON)
+else()
     set(_USE_OPENCV OFF)
 endif()
 
 # Check if MKL can be enabled
 find_package(MKL)
-if(NOT MKL_FOUND)
+if(MKL_FOUND)
+    set(_USE_MKL ON)
+else()
     set(_USE_MKL OFF)
 endif()
 
