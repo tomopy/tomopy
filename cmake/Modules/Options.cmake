@@ -10,8 +10,8 @@ include(Compilers)
 
 set(_USE_OMP ON)
 set(_USE_CXX_GRIDREC OFF)
+set(_USE_MKL ON)
 set(_USE_OPENCV ON)
-set(_USE_MKL ON) 
 
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
