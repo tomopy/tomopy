@@ -8,18 +8,18 @@
 include(MacroUtilities)
 include(Compilers)
 
-set(_USE_OMP ON)
-set(_USE_CXX_GRIDREC OFF)
-set(_USE_MKL ON)
-
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
     set(_USE_CXX_GRIDREC ON)
+else()
+    set(_USE_CXX_GRIDREC OFF)
 endif()
 
 # GNU compiler will enable OpenMP SIMD with -fopenmp-simd
 if(CMAKE_C_COMPILER_IS_GNU)
     set(_USE_OMP OFF)
+else()
+    set(_USE_OMP ON)
 endif()
 
 # Check if CUDA can be enabled
@@ -30,20 +30,20 @@ else()
     set(_USE_CUDA OFF)
 endif()
 
-################################################################################
-#
-#        MKL (required for gridrec)
-#
-################################################################################
+# Check if OpenCV can be enabled; only search for desired modules.
+set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
+if(OpenCV_FOUND)
+    set(_USE_OPENCV ON)
+else()
+    set(_USE_OPENCV OFF)
+endif()
 
-find_package(MKL QUIET)
+# Check if MKL can be enabled
+find_package(MKL)
 if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-elseif(TOMOPY_USE_MKL)
-    message(FATAL_ERROR "MKL not found. Aborting build.")
-else() 
-    message(WARNING "MKL not found. Gridrec reconstruction algorithm will not be available.")
+    set(_USE_MKL ON)
+else()
     set(_USE_MKL OFF)
 endif()
 
@@ -65,7 +65,7 @@ endif()
 add_option(TOMOPY_USE_GPERF "Enable using Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP (for SIMD -- GNU will enable without this setting)" ${_USE_OMP})
-add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ON)
+add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ${_USE_OPENCV})
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" ${_USE_CXX_GRIDREC})

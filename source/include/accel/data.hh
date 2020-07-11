@@ -74,18 +74,18 @@ struct RuntimeOptions
         memcpy(grid_size.data(), _grid_size, 3 * sizeof(int));
         memcpy(block_size.data(), _block_size, 3 * sizeof(int));
 
+#if defined(TOMOPY_USE_OPENCV)
+        if(device.key == "cpu")
+        {
+            interpolation = GetOpenCVInterpolationMode(_interp);
+        }
+#endif
+#if defined(TOMOPY_USE_CUDA)
         if(device.key == "gpu")
         {
-#if defined(TOMOPY_USE_CUDA)
             interpolation = GetNppInterpolationMode(_interp);
-#else
-            interpolation = GetOpenCVInterpolationMode(_interp);
+        }
 #endif
-        }
-        else
-        {
-            interpolation = GetOpenCVInterpolationMode(_interp);
-        }
     }
 
     ~RuntimeOptions() {}

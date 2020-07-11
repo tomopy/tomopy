@@ -392,7 +392,6 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
-        LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_mlem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
@@ -555,8 +554,6 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
     use_accel = 1 if kwargs['accelerated'] else 0
 
     if use_accel:
-
-        LIB_TOMOPY_ACCEL.cxx_sirt.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_ACCEL.cxx_sirt(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
