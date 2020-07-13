@@ -42,6 +42,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
+#include "string.h"
 
 void
 osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
