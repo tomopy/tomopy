@@ -43,6 +43,7 @@
 
 #include "recon.h"
 #include "utils.h"
+#include "stdio.h"
 
 void
 vector(const float* data, int dy, int dt, int dx, const float* center, const float* theta,

@@ -43,6 +43,7 @@
 
 #include "recon.h"
 #include "utils.h"
+#include "string.h"
 
 void
 tikh(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
