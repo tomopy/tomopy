@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # #########################################################################
-# Copyright (c) 2019, UChicago Argonne, LLC. All rights reserved.         #
+# Copyright (c) 2015-2019, UChicago Argonne, LLC. All rights reserved.    #
 #                                                                         #
-# Copyright 2019. UChicago Argonne, LLC. This software was produced       #
+# Copyright 2015-2019. UChicago Argonne, LLC. This software was produced  #
 # under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
 # Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
 # U.S. Department of Energy. The U.S. Government has rights to use,       #
@@ -46,42 +46,39 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-"""
-TomoPy example script to reconstruct the tomography data as
-with gridrec.
-"""
-from __future__ import print_function
-import tomopy
-import dxchange
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+ 
+import os.path
+import unittest
+from numpy.testing import assert_allclose
 
-if __name__ == '__main__':
-
-    # Set path to the micro-CT data to reconstruct.
-    fname = '../../../source/tomopy/data/tooth.h5'
-
-    # Select the sinogram range to reconstruct.
-    start = 0
-    end = 2
-
-    # Read the APS 2-BM 0r 32-ID raw data.
-    proj, flat, dark, theta = dxchange.read_aps_32id(fname, sino=(start, end))
-
-    # Set data collection angles as equally spaced between 0-180 degrees.
-    theta = tomopy.angles(proj.shape[0])
-
-    # Set data collection angles as equally spaced between 0-180 degrees.
-    proj = tomopy.normalize(proj, flat, dark)
-
-    # Set data collection angles as equally spaced between 0-180 degrees.
-    rot_center = tomopy.find_center(proj, theta, init=290, ind=0, tol=0.5)
-
-    proj = tomopy.minus_log(proj)
-
-    # Reconstruct object using Gridrec algorithm.
-    recon = tomopy.recon(proj, theta, center=rot_center, algorithm='gridrec')
-
-    # Mask each reconstructed slice with a circle.
-    recon = tomopy.circ_mask(recon, axis=0, ratio=0.95)
-
-    # Write data as stack of TIFs.
-    dxchange.write_tiff_stack(recon, fname='recon_dir/recon')
+from ..util import read_file
+from tomopy.prep.alignment import distortion_correction_proj\
+, distortion_correction_sino, load_distortion_coefs
+ 
+__author__ = "Nghia Vo"
+__copyright__ = "Copyright (c) 2019, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+ 
+ 
+class DistortionCorrectionTestCase(unittest.TestCase):
+    def test_distortion_correction_proj(self):
+        test_dir = os.path.dirname(os.path.realpath(__file__))       
+        file_path = os.path.join(
+            os.path.dirname(test_dir),'test_data','discoef.txt')
+        (xc, yc, list_fact) = load_distortion_coefs(file_path)        
+        assert_allclose(
+            distortion_correction_proj(
+                read_file('distortion_3d.npy'), xc, yc, list_fact)[0],
+            read_file('distortion_proj.npy'), rtol=1e-2)
+ 
+    def test_distortion_correction_sino(self):
+        test_dir = os.path.dirname(os.path.realpath(__file__))        
+        file_path = os.path.join(
+            os.path.dirname(test_dir),'test_data','discoef.txt')
+        (xc, yc, list_fact) = load_distortion_coefs(file_path)
+        assert_allclose(
+            distortion_correction_sino(
+                read_file('distortion_3d.npy'), 5, xc, yc, list_fact),
+            read_file('distortion_sino.npy'), rtol=1e-2)

@@ -1,10 +1,11 @@
-.. image:: img/tomopy-logo.png
+.. image:: img/tomopy-logo-wide.svg
    :width: 320px
-   :alt: TomoPy
+   :alt: TomoPy Logo
+   :align: center
 
+|
 
 .. include:: ../../README.rst
-
 
 Indices and tables
 ==================
@@ -16,15 +17,13 @@ Indices and tables
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 4
 
    about
-   install
-   data
-   devguide
-   gpu
-   releases
-   api
-   demo
    faq
-   credits
+   api
+   install
+   examples
+   gpu
+   devguide
+   zcredits

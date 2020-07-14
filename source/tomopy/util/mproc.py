@@ -141,8 +141,7 @@ def get_ncore_nchunk(axis_size, ncore=None, nchunk=None):
 
 def get_ncore_slices(axis_size, ncore=None, nchunk=None):
     # default ncore to max (also defaults ncore == 0)
-    if not ncore:
-        ncore = mp.cpu_count()
+    ncore = min(mp.cpu_count() if not ncore else ncore, axis_size)
     if nchunk is None:
         # calculate number of slices to send to each GPU
         chunk_size = axis_size // ncore

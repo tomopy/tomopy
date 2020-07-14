@@ -1,0 +1,129 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to
+# a PyPI-compatible index, and more:
+# https://docs.microsoft.com/vsts/pipelines/languages/python
+
+variables:
+  package_name: tike
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - 'docs/'
+    - '/.*'
+    - '/*.rst'
+    - '/*.md'
+    - '.travis.yml'
+
+jobs:
+
+- job: CUDA_Linux
+  pool:
+    name: Default
+    demands:
+    - CUDA_VERSION
+    - Agent.OS -equals Linux
+  strategy:
+    matrix:
+      Python37:
+        python.version: '37'
+    maxParallel: 4
+  steps:
+  - script: echo "CUDA version is $(CUDA_VERSION)"
+    displayName: Print CUDA version
+  - script: |
+      conda update -n base conda --yes --quiet
+    displayName: Update conda
+  - script: >
+      conda env create --quiet --force
+      -n tomopy
+      -f envs/linux-$(python.version).yml
+    displayName: Create build environment
+  - script: |
+      source activate tomopy
+      python setup.py install --enable-cuda --cuda-arch=30
+    displayName: Setup and install
+  - script: |
+      source activate tomopy
+      export CUDA_VERSION="$(CUDA_VERSION)"
+      nosetests
+    displayName: nosetests
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '36'
+      Python37:
+        python.version: '37'
+    maxParallel: 4
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: |
+      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+    displayName: Create build environment
+  - script: |
+      source activate tomopy
+      python setup.py install
+    displayName: Setup and install
+  - script: |
+      source activate tomopy
+      nosetests
+    displayName: nosetests
+
+- job: macOS
+  pool:
+    vmImage: 'macOS-latest'
+  strategy:
+    matrix:
+      Python37:
+        python.version: '37'
+    maxParallel: 4
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - bash: sudo chown -R $USER $CONDA
+    displayName: Take ownership of conda installation
+  - script: |
+      conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
+    displayName: Create build environment
+  - script: |
+      source activate tomopy
+      python setup.py install
+    displayName: Setup and install
+  - script: |
+      source activate tomopy
+      nosetests
+    displayName: nosetests
+
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '36'
+      Python37:
+        python.version: '37'
+    maxParallel: 4
+  steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+  - script: |
+      conda env create -n tomopy --quiet -f envs/win-$(python.version).yml
+    displayName: Create build environment
+  - script: |
+      call activate tomopy
+      python setup.py install -- -GNinja
+    displayName: Setup and install
+  - script: |
+      call activate tomopy
+      nosetests
+    displayName: nosetests
