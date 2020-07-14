@@ -121,10 +121,10 @@ jobs:
     vmImage: 'windows-latest'
   strategy:
     matrix:
+      Python36:
+        python.version: '36'
       Python37:
         python.version: '37'
-      Python-nomkl:
-        python.version: 'nomkl'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
