@@ -60,6 +60,7 @@ import numpy as np
 import tomopy.util.dtype as dtype
 import logging
 import warnings
+from .. import c_shared_lib
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +68,8 @@ logger = logging.getLogger(__name__)
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['c_mlem'
-           'c_sirt']
+__all__ = ['c_accel_mlem',
+           'c_accel_sirt']
 
 
 # PTL is typically built statically so don't warn if not found
@@ -79,7 +80,7 @@ with warnings.catch_warnings():
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 
 
-def accel_c_mlem(tomo, center, recon, theta, **kwargs):
+def c_accel_mlem(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
         dy = 1
@@ -106,7 +107,7 @@ def accel_c_mlem(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int_p(kwargs['block_size']))
 
 
-def accel_c_sirt(tomo, center, recon, theta, **kwargs):
+def c_accel_sirt(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
         dy = 1

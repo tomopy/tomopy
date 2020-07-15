@@ -48,3 +48,29 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
+
+def c_shared_lib(lib_name, do_warn=True):
+    """Get the path and import the C-shared library."""
+    load_dll = ctypes.cdll.LoadLibrary
+    ext = '.so'
+    if sys.platform == 'darwin':
+        ext = '.dylib'
+    if os.name == 'nt':
+        ext = '.dll'
+        load_dll = ctypes.windll.LoadLibrary
+    base_path = os.path.abspath(os.path.dirname(
+                                os.path.dirname(__file__)))
+    sharedlib = os.path.join(base_path, 'sharedlibs', '%s%s' % (lib_name, ext))
+    if os.path.exists(sharedlib):
+        return load_dll(sharedlib)
+    # cannot find shared lib:
+    if do_warn is True:
+        logger.warning('OSError: The following shared lib is missing!\n{}'.format(
+                       sharedlib))
+
+
+def MissingLibrary(function):
+    print(f"The {function} algorithm is unavailable."
+          " Check CMake logs to determine if TomoPy was"
+          " built with dependencies required by this algorithm.")

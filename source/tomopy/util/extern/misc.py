@@ -60,7 +60,7 @@ import numpy as np
 import tomopy.util.dtype as dtype
 import logging
 import warnings
-import c_shared_lib
+from .. import c_shared_lib
 
 logger = logging.getLogger(__name__)
 

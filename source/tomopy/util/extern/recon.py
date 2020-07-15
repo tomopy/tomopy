@@ -60,7 +60,9 @@ import numpy as np
 import tomopy.util.dtype as dtype
 import logging
 import warnings
-import c_shared_lib
+from .. import c_shared_lib
+from .accel import c_accel_mlem
+from .accel import c_accel_sirt
 
 logger = logging.getLogger(__name__)
 
@@ -267,34 +269,18 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
 
 
 def c_mlem(tomo, center, recon, theta, **kwargs):
-    if len(tomo.shape) == 2:
-        # no y-axis (only one slice)
-        dy = 1
-        dt, dx = tomo.shape
-    else:
-        dy, dt, dx = tomo.shape
 
-    use_accel = 1 if kwargs['accelerated'] else 0
+    if kwargs['accelerated']:
+        return c_accel_mlem(theta, center, recon, theta, kwargs)
 
-    if use_accel:
-        LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
-        return LIB_TOMOPY_ACCEL.cxx_mlem(
-            dtype.as_c_float_p(tomo),
-            dtype.as_c_int(dy),
-            dtype.as_c_int(dt),
-            dtype.as_c_int(dx),
-            dtype.as_c_float_p(center),
-            dtype.as_c_float_p(theta),
-            dtype.as_c_float_p(recon),
-            dtype.as_c_int(kwargs['num_gridx']),
-            dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']),
-            dtype.as_c_int(kwargs['pool_size']),
-            dtype.as_c_char_p(kwargs['interpolation']),
-            dtype.as_c_char_p(kwargs['device']),
-            dtype.as_c_int_p(kwargs['grid_size']),
-            dtype.as_c_int_p(kwargs['block_size']))
     else:
+        if len(tomo.shape) == 2:
+            # no y-axis (only one slice)
+            dy = 1
+            dt, dx = tomo.shape
+        else:
+            dy, dt, dx = tomo.shape
+
         LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.mlem(
             dtype.as_c_float_p(tomo),
@@ -430,35 +416,19 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
 
 
 def c_sirt(tomo, center, recon, theta, **kwargs):
-    if len(tomo.shape) == 2:
-        # no y-axis (only one slice)
-        dy = 1
-        dt, dx = tomo.shape
-    else:
-        dy, dt, dx = tomo.shape
 
-    use_accel = 1 if kwargs['accelerated'] else 0
+    if kwargs['accelerated']:
+        return c_accel_sirt(tomo, center, recon, theta, kwargs)
 
-    if use_accel:
+    else: 
 
-        LIB_TOMOPY_ACCEL.cxx_sirt.restype = dtype.as_c_void_p()
-        return LIB_TOMOPY_ACCEL.cxx_sirt(
-            dtype.as_c_float_p(tomo),
-            dtype.as_c_int(dy),
-            dtype.as_c_int(dt),
-            dtype.as_c_int(dx),
-            dtype.as_c_float_p(center),
-            dtype.as_c_float_p(theta),
-            dtype.as_c_float_p(recon),
-            dtype.as_c_int(kwargs['num_gridx']),
-            dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']),
-            dtype.as_c_int(kwargs['pool_size']),
-            dtype.as_c_char_p(kwargs['interpolation']),
-            dtype.as_c_char_p(kwargs['device']),
-            dtype.as_c_int_p(kwargs['grid_size']),
-            dtype.as_c_int_p(kwargs['block_size']))
-    else:
+        if len(tomo.shape) == 2:
+            # no y-axis (only one slice)
+            dy = 1
+            dt, dx = tomo.shape
+        else:
+            dy, dt, dx = tomo.shape
+
         LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.sirt(
             dtype.as_c_float_p(tomo),
