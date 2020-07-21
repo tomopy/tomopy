@@ -52,6 +52,10 @@ from __future__ import (absolute_import, division, print_function,
 import ctypes
 import os
 import sys
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def c_shared_lib(lib_name, do_warn=True):
@@ -70,8 +74,9 @@ def c_shared_lib(lib_name, do_warn=True):
         return load_dll(sharedlib)
     # cannot find shared lib:
     if do_warn is True:
-        logger.warning('OSError: The following shared lib is missing!\n{}'.format(
-                       sharedlib))
+        logger.warning('OSError: ' +
+                       'The following shared lib is missing!\n{}'.format(
+                           sharedlib))
 
 
 def MissingLibrary(function):
