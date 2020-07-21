@@ -49,9 +49,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import ctypes 
-import os 
-import sys 
+import ctypes
+import os
+import sys
 
 
 def c_shared_lib(lib_name, do_warn=True):

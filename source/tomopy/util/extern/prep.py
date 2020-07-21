@@ -105,5 +105,3 @@ def c_remove_stripe_sf(tomo, size):
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
     tomo[:] = contiguous_tomo[:]
-
-

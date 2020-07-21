@@ -79,7 +79,6 @@ with warnings.catch_warnings():
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
 
-
 def c_gridrec(tomo, center, recon, theta, **kwargs):
 
     if LIB_TOMOPY_GRIDREC is None:
@@ -105,5 +104,3 @@ def c_gridrec(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_gridy']),
         dtype.as_c_char_p(kwargs['filter_name']),
         dtype.as_c_float_p(kwargs['filter_par']))
-
-

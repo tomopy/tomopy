@@ -54,5 +54,3 @@ from tomopy.util.extern.accel import *
 from tomopy.util.extern.gridrec import *
 from tomopy.util.extern.prep import *
 from tomopy.util.extern.misc import *
-
-
