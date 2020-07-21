@@ -141,10 +141,12 @@ extern "C"
 //--------------------------------------------------------------------------------------//
 // relevant OpenCV headers
 //
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgproc/types_c.h>
+#if defined(TOMOPY_USE_OPENCV)
+    #include <opencv2/core.hpp>
+    #include <opencv2/imgproc.hpp>
+    #include <opencv2/imgproc/imgproc.hpp>
+    #include <opencv2/imgproc/types_c.h>
+#endif
 
 //======================================================================================//
 // this function is used by a macro -- returns a unique identifier to the thread

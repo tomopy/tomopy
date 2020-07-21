@@ -45,9 +45,6 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
 #else

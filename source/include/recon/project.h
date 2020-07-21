@@ -41,8 +41,6 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-// Module for ring removal in reconstructed domain
-
 #pragma once
 
 #ifdef WIN32
@@ -51,7 +49,15 @@
 #    define DLL
 #endif
 
-DLL void
-remove_ring(float* data, float center_x, float center_y, int dx, int dy, int dz,
-            float thresh_max, float thresh_min, float threshold, int angular_min,
-            int ring_width, int int_mode, int istart, int iend);
+void DLL
+     project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
+             const float* center, const float* theta);
+
+void DLL
+     project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
+              int dy, int dt, int dx, const float* center, const float* theta);
+
+void DLL
+     project3(const float* objx, const float* objy, const float* objz, int oy, int ox, int oz,
+              float* data, int dy, int dt, int dx, const float* center, const float* theta,
+              int axis);

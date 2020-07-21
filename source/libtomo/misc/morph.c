@@ -41,24 +41,11 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "morph.h"
-#include "assert.h"
+#include <assert.h>
 #include <limits.h>
+#include <math.h>
 
-DLL void
-sample(int mode, const float* data, int dx, int dy, int dz, int level, int axis,
-       float* out)
-{
-    if(mode == 0)
-    {
-        downsample(data, dx, dy, dz, level, axis, out);
-    }
-
-    else if(mode == 1)
-    {
-        upsample(data, dx, dy, dz, level, axis, out);
-    }
-}
+#include "morph.h"
 
 DLL void
 downsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out)
@@ -202,5 +189,20 @@ upsample(const float* data, int dx, int dy, int dz, int level, int axis, float* 
                 }
             }
         }
+    }
+}
+
+DLL void
+sample(int mode, const float* data, int dx, int dy, int dz, int level, int axis,
+       float* out)
+{
+    if(mode == 0)
+    {
+        downsample(data, dx, dy, dz, level, axis, out);
+    }
+
+    else if(mode == 1)
+    {
+        upsample(data, dx, dy, dz, level, axis, out);
     }
 }

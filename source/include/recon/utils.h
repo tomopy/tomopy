@@ -41,14 +41,10 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _utils_h
-#define _utils_h
+#pragma once
 
-#include "string.h"
 #include <assert.h>
 #include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #define _USE_MATH_DEFINES
@@ -61,100 +57,6 @@
 #else
 #    define DLL
 #endif
-
-// Data simulation
-
-void DLL
-     project(const float* obj, int oy, int ox, int oz, float* data, int dy, int dt, int dx,
-             const float* center, const float* theta);
-
-void DLL
-     project2(const float* objx, const float* objy, int oy, int ox, int oz, float* data,
-              int dy, int dt, int dx, const float* center, const float* theta);
-
-void DLL
-     project3(const float* objx, const float* objy, const float* objz, int oy, int ox, int oz,
-              float* data, int dy, int dt, int dx, const float* center, const float* theta,
-              int axis);
-
-// Reconstruction algorithms
-
-void DLL
-     art(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-         float* recon, int ngridx, int ngridy, int num_iter);
-
-void DLL
-     bart(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, int num_block,
-          const float* ind_block);  // TODO: I think this should be int *
-
-void DLL
-     fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-         float* recon, int ngridx, int ngridy, const char name[16], const float* filter_par);
-
-void DLL
-     grad(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
-
-void DLL
-     mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter);
-
-void DLL
-     osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, int num_block,
-          const float* ind_block);
-
-void DLL
-     ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-                  const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                  const float* reg_pars, int num_block, const float* ind_block);
-
-void DLL
-     ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
-                const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                const float* reg_pars, int num_block, const float* ind_block);
-
-void DLL
-     pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-                const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                const float* reg_pars);
-
-void DLL
-     pml_quad(const float* data, int dy, int dt, int dx, const float* center,
-              const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-              const float* reg_pars);
-
-void DLL
-     sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter);
-
-void DLL
-     tv(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-        float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
-
-void DLL
-     tikh(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter, const float* reg_data, const float* reg_pars);
-
-void DLL
-     vector(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-            float* recon1, float* recon2, int ngridx, int ngridy, int num_iter);
-
-void DLL
-     vector2(const float* data1, const float* data2, int dy, int dt, int dx,
-             const float* center1, const float* center2, const float* theta1,
-             const float* theta2, float* recon1, float* recon2, float* recon3, int ngridx,
-             int ngridy, int num_iter, int axis1, int axis2);
-
-void DLL
-     vector3(const float* data1, const float* data2, const float* data3, int dy, int dt,
-             int dx, const float* center1, const float* center2, const float* center3,
-             const float* theta1, const float* theta2, const float* theta3, float* recon1,
-             float* recon2, float* recon3, int ngridx, int ngridy, int num_iter, int axis1,
-             int axis2, int axis3);
-
-// Utility functions for data simultation
 
 void DLL
      preprocessing(int ngridx, int ngridy, int dz, float center, float* mov, float* gridx,
@@ -200,4 +102,3 @@ void DLL
                    const float* modelx, const float* modely, const float* modelz, int axis,
                    float* simdata);
 
-#endif

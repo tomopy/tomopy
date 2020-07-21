@@ -271,7 +271,7 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
 def c_mlem(tomo, center, recon, theta, **kwargs):
 
     if kwargs['accelerated']:
-        return c_accel_mlem(theta, center, recon, theta, kwargs)
+        return c_accel_mlem(theta, center, recon, theta, **kwargs)
 
     else:
         if len(tomo.shape) == 2:
@@ -418,9 +418,9 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
 def c_sirt(tomo, center, recon, theta, **kwargs):
 
     if kwargs['accelerated']:
-        return c_accel_sirt(tomo, center, recon, theta, kwargs)
+        return c_accel_sirt(tomo, center, recon, theta, **kwargs)
 
-    else: 
+    else:
 
         if len(tomo.shape) == 2:
             # no y-axis (only one slice)

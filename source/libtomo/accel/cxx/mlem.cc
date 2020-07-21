@@ -94,13 +94,17 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     {
         if(opts.device.key == "gpu")
         {
+#if defined(TOMOPY_USE_CUDA)
             mlem_cuda(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                       &opts);
+#endif
         }
         else
         {
+#if defined(TOMOPY_USE_OPENCV)
             mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter,
                      &opts);
+#endif
         }
     }
     catch(std::exception& e)
@@ -118,6 +122,8 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
 }
 
 //======================================================================================//
+
+#if defined(TOMOPY_USE_OPENCV)
 
 void
 mlem_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx, int nx,
@@ -231,14 +237,4 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
     printf("\n");
 }
 
-//======================================================================================//
-#if !defined(TOMOPY_USE_CUDA)
-void
-mlem_cuda(const float* data, int dy, int dt, int dx, const float* center,
-          const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-          RuntimeOptions* opts)
-{
-    mlem_cpu(data, dy, dt, dx, center, theta, recon, ngridx, ngridy, num_iter, opts);
-}
-#endif
-//======================================================================================//
+#endif // TOMOPY_USE_OPENCV
