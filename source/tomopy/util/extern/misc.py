@@ -50,20 +50,8 @@
 Module for external library wrappers.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-import sys
-import os.path
-import ctypes
-import numpy as np
 import tomopy.util.dtype as dtype
-import logging
-import warnings
 from .. import c_shared_lib
-
-logger = logging.getLogger(__name__)
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."

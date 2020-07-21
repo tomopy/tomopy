@@ -49,22 +49,12 @@
 """
 Module for recon library wrappers.
 """
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-import sys
-import os.path
-import ctypes
 import numpy as np
+
 import tomopy.util.dtype as dtype
-import logging
-import warnings
 from .. import c_shared_lib
 from .accel import c_accel_mlem
 from .accel import c_accel_sirt
-
-logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy"

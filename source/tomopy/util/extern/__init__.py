@@ -46,9 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from tomopy.util.extern.recon import *
 from tomopy.util.extern.accel import *
 from tomopy.util.extern.gridrec import *
