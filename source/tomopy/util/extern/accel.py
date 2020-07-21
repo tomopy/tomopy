@@ -74,7 +74,7 @@ LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 
 def c_accel_mlem(tomo, center, recon, theta, **kwargs):
 
-    if LIB_TOMOPY_ACCEL is None: 
+    if LIB_TOMOPY_ACCEL is None:
         MissingLibrary("MLEM ACCEL")
 
     if len(tomo.shape) == 2:
