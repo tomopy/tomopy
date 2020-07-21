@@ -61,9 +61,7 @@ import tomopy.util.dtype as dtype
 import logging
 import warnings
 from .. import c_shared_lib
-
-logger = logging.getLogger(__name__)
-
+from .. import MissingLibrary
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -71,16 +69,14 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_accel_mlem',
            'c_accel_sirt']
 
-
-# PTL is typically built statically so don't warn if not found
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    LIB_PTL = c_shared_lib('libptl', do_warn=False)
-
 LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 
 
 def c_accel_mlem(tomo, center, recon, theta, **kwargs):
+
+    if LIB_TOMOPY_ACCEL is None: 
+        MissingLibrary("MLEM ACCEL")
+
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
         dy = 1
@@ -108,6 +104,10 @@ def c_accel_mlem(tomo, center, recon, theta, **kwargs):
 
 
 def c_accel_sirt(tomo, center, recon, theta, **kwargs):
+
+    if LIB_TOMOPY_ACCEL is None:
+        return MissingLibrary("SIRT ACCEL")
+
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
         dy = 1

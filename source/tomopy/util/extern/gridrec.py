@@ -61,6 +61,7 @@ import tomopy.util.dtype as dtype
 import logging
 import warnings
 from .. import c_shared_lib
+from .. import MissingLibrary
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +71,6 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_gridrec']
 
-
-# PTL is typically built statically so don't warn if not found
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    LIB_PTL = c_shared_lib('libptl', do_warn=False)
 
 LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
 
