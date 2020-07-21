@@ -45,13 +45,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
 """
 Module for external library wrappers.
 """
 
 import tomopy.util.dtype as dtype
-from .. import c_shared_lib
+from . import c_shared_lib
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."

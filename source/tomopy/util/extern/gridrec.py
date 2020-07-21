@@ -50,8 +50,8 @@
 Module for external library wrappers.
 """
 import tomopy.util.dtype as dtype
-from .. import c_shared_lib
-from .. import MissingLibrary
+from . import c_shared_lib
+from . import MissingLibrary
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."

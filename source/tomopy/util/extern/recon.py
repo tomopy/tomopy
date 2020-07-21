@@ -52,7 +52,7 @@ Module for recon library wrappers.
 import numpy as np
 
 import tomopy.util.dtype as dtype
-from .. import c_shared_lib
+from . import c_shared_lib
 from .accel import c_accel_mlem
 from .accel import c_accel_sirt
 

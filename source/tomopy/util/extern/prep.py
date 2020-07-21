@@ -53,7 +53,7 @@ Module for external library wrappers.
 import numpy as np
 
 import tomopy.util.dtype as dtype
-from .. import c_shared_lib
+from . import c_shared_lib
 
 
 __author__ = "Doga Gursoy"
