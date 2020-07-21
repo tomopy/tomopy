@@ -10,7 +10,7 @@ set(BUILD_SHARED_LIBS     OFF CACHE BOOL "Build shared libraries")
 set(PTL_DEVELOPER_INSTALL OFF CACHE BOOL "Install headers, cmake export, and shared libs" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON
     CACHE BOOL "Position independent code" FORCE)
-set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/util/extern
     CACHE PATH "Installation directory of libraries" FORCE)
 
 #------------------------------------------------------------------------------#
@@ -41,7 +41,7 @@ endif()
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo)
- 
+
 #------------------------------------------------------------------------------#
 #
 #   TomoPy Python file configuration
