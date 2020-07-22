@@ -52,9 +52,14 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "gridrec.hh"
 #include "mkl.h"
 #include <complex>
+
+extern "C"
+{
+    #include "gridrec.h"
+    #include "filters.h"
+}
 
 using namespace std::literals::complex_literals;
 
