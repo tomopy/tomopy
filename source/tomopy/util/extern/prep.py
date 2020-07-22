@@ -46,5 +46,53 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+"""
+Module for external library wrappers.
+"""
+
+import numpy as np
+
+import tomopy.util.dtype as dtype
+from . import c_shared_lib
+
+
+__author__ = "Doga Gursoy"
+__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['c_normalize_bg',
+           'c_remove_stripe_sf']
+
+LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
+
+
+def c_normalize_bg(tomo, air):
+    dt, dy, dx = tomo.shape
+
+    LIB_TOMOPY_PREP.normalize_bg.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.normalize_bg(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(air))
+
+
+def c_remove_stripe_sf(tomo, size):
+
+    # TODO: we should fix this elsewhere...
+    # TOMO object must be contiguous for c function to work
+    contiguous_tomo = np.require(tomo, requirements="AC")
+    dx, dy, dz = tomo.shape
+    istart = 0
+    iend = dy
+
+    LIB_TOMOPY_PREP.remove_stripe_sf.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.remove_stripe_sf(
+        dtype.as_c_float_p(contiguous_tomo),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+        dtype.as_c_int(size),
+        dtype.as_c_int(istart),
+        dtype.as_c_int(iend))
+    tomo[:] = contiguous_tomo[:]

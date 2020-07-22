@@ -11,7 +11,7 @@ if(TOMOPY_USE_CUDA)
         ${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu)
 
     list(APPEND ACCEL_LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
-    
+
     list(APPEND TARGET_INCLUDE_DIRECTORIES
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
@@ -34,9 +34,9 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/
 set_target_properties(libtomopy-accel
     PROPERTIES
     PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
+    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
@@ -53,7 +53,7 @@ target_compile_options(libtomopy-accel PUBLIC
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS libtomopy-accel
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
     COMPONENT python)
 
 

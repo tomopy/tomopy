@@ -72,6 +72,7 @@ try:
 except ImportError:
     found_opencv = False
 
+
 class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def setUp(self):
         self.prj = read_file('proj.npy')

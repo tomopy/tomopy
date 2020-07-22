@@ -1,13 +1,13 @@
 
 # Locate sources for this project headers are included for IDEs
 file(GLOB misc_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)   
+    ${CMAKE_CURRENT_LIST_DIR}/*.c)
 
 file(GLOB misc_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)      
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)
 
 file(GLOB misc_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)   
+    ${CMAKE_CURRENT_LIST_DIR}/../../include/misc/*.h)
 
 # core sources
 set(MISC_LIBRARY_SOURCES ${misc_tomo_headers} ${misc_tomo_sources})
@@ -28,9 +28,9 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/
 set_target_properties(libtomopy-misc
     PROPERTIES
     PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
+    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
@@ -47,5 +47,5 @@ target_compile_options(libtomopy-misc PUBLIC
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS libtomopy-misc
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
     COMPONENT python)

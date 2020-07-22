@@ -11,9 +11,9 @@ if(TOMOPY_CXX_GRIDREC)
 else(TOMOPY_CXX_GRIDREC)
 
     file(GLOB gridrec_tomo_sources
-        ${CMAKE_CURRENT_LIST_DIR}/*.c)  
+        ${CMAKE_CURRENT_LIST_DIR}/*.c)
     file(GLOB gridrec_tomo_headers
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)   
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h)
 
 endif(TOMOPY_CXX_GRIDREC)
 
@@ -36,9 +36,9 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/
 set_target_properties(libtomopy-gridrec
     PROPERTIES
     PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
+    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
+    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
@@ -55,5 +55,5 @@ target_compile_options(libtomopy-gridrec PUBLIC
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS libtomopy-gridrec
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
     COMPONENT python)

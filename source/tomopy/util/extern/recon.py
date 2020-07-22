@@ -47,37 +47,25 @@
 # #########################################################################
 
 """
-Module for external library wrappers.
+Module for recon library wrappers.
 """
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-import sys
-import os.path
-import ctypes
 import numpy as np
-import tomopy.util.dtype as dtype
-import logging
-import warnings
 
-logger = logging.getLogger(__name__)
+import tomopy.util.dtype as dtype
+from . import c_shared_lib
+from .accel import c_accel_mlem
+from .accel import c_accel_sirt
 
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['c_shared_lib',
-           'c_project',
+__all__ = ['c_project',
            'c_project2',
            'c_project3',
-           'c_normalize_bg',
-           'c_remove_stripe_sf',
-           'c_sample',
            'c_art',
            'c_bart',
            'c_fbp',
-           'c_gridrec',
            'c_mlem',
            'c_osem',
            'c_ospml_hybrid',
@@ -90,79 +78,9 @@ __all__ = ['c_shared_lib',
            'c_tikh',
            'c_vector',
            'c_vector2',
-           'c_vector3',
-           'c_remove_ring']
+           'c_vector3']
 
-
-def c_shared_lib(lib_name, do_warn=True):
-    """Get the path and import the C-shared library."""
-    load_dll = ctypes.cdll.LoadLibrary
-    ext = '.so'
-    if sys.platform == 'darwin':
-        ext = '.dylib'
-    if os.name == 'nt':
-        ext = '.dll'
-        load_dll = ctypes.windll.LoadLibrary
-    base_path = os.path.abspath(os.path.dirname(
-                                os.path.dirname(__file__)))
-    sharedlib = os.path.join(base_path, 'sharedlibs', '%s%s' % (lib_name, ext))
-    if os.path.exists(sharedlib):
-        return load_dll(sharedlib)
-    # cannot find shared lib:
-    if do_warn is True:
-        logger.warning('OSError: The following shared lib is missing!\n{}'.format(
-                       sharedlib))
-
-
-# PTL is typically built statically so don't warn if not found
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    LIB_PTL = c_shared_lib('libptl', do_warn=False)
-
-LIB_TOMOPY_MISC = c_shared_lib("libtomopy-misc")
-LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
 LIB_TOMOPY_RECON = c_shared_lib("libtomopy-recon")
-LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
-LIB_TOMOPY_GRIDREC = c_shared_lib("libtomopy-gridrec")
-
-
-def MissingLibrary(function):
-    print(f"The {function} algorithm is unavailable."
-          " Check CMake logs to determine if TomoPy was"
-          " built with dependencies required by this algorithm.")
-
-
-def c_normalize_bg(tomo, air):
-    dt, dy, dx = tomo.shape
-
-    LIB_TOMOPY_PREP.normalize_bg.restype = dtype.as_c_void_p()
-    LIB_TOMOPY_PREP.normalize_bg(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dx),
-        dtype.as_c_int(air))
-
-
-def c_remove_stripe_sf(tomo, size):
-
-    # TODO: we should fix this elsewhere...
-    # TOMO object must be contiguous for c function to work
-    contiguous_tomo = np.require(tomo, requirements="AC")
-    dx, dy, dz = tomo.shape
-    istart = 0
-    iend = dy
-
-    LIB_TOMOPY_PREP.remove_stripe_sf.restype = dtype.as_c_void_p()
-    LIB_TOMOPY_PREP.remove_stripe_sf(
-        dtype.as_c_float_p(contiguous_tomo),
-        dtype.as_c_int(dx),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dz),
-        dtype.as_c_int(size),
-        dtype.as_c_int(istart),
-        dtype.as_c_int(iend))
-    tomo[:] = contiguous_tomo[:]
 
 
 def c_project(obj, center, tomo, theta):
@@ -271,20 +189,6 @@ def c_project3(objx, objy, objz, center, tomo, theta, axis):
     tomo[:] = contiguous_tomo[:]
 
 
-def c_sample(mode, arr, dx, dy, dz, level, axis, out):
-    LIB_TOMOPY_MISC.sample.restype = dtype.as_c_void_p()
-    LIB_TOMOPY_MISC.sample(
-        dtype.as_c_int(mode),
-        dtype.as_c_float_p(arr),
-        dtype.as_c_int(dx),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dz),
-        dtype.as_c_int(level),
-        dtype.as_c_int(axis),
-        dtype.as_c_float_p(out))
-    return out
-
-
 def c_art(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
@@ -354,61 +258,19 @@ def c_fbp(tomo, center, recon, theta, **kwargs):
         dtype.as_c_float_p(kwargs['filter_par']))  # filter_par
 
 
-def c_gridrec(tomo, center, recon, theta, **kwargs):
-
-    if LIB_TOMOPY_GRIDREC is None:
-        return MissingLibrary("gridrec")
-
-    if len(tomo.shape) == 2:
-        # no y-axis (only one slice)
-        dy = 1
-        dt, dx = tomo.shape
-    else:
-        dy, dt, dx = tomo.shape
-
-    LIB_TOMOPY_GRIDREC.gridrec.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY_GRIDREC.gridrec(
-        dtype.as_c_float_p(tomo),
-        dtype.as_c_int(dy),
-        dtype.as_c_int(dt),
-        dtype.as_c_int(dx),
-        dtype.as_c_float_p(center),
-        dtype.as_c_float_p(theta),
-        dtype.as_c_float_p(recon),
-        dtype.as_c_int(kwargs['num_gridx']),
-        dtype.as_c_int(kwargs['num_gridy']),
-        dtype.as_c_char_p(kwargs['filter_name']),
-        dtype.as_c_float_p(kwargs['filter_par']))
-
-
 def c_mlem(tomo, center, recon, theta, **kwargs):
-    if len(tomo.shape) == 2:
-        # no y-axis (only one slice)
-        dy = 1
-        dt, dx = tomo.shape
-    else:
-        dy, dt, dx = tomo.shape
 
-    use_accel = 1 if kwargs['accelerated'] else 0
+    if kwargs['accelerated']:
+        return c_accel_mlem(tomo, center, recon, theta, **kwargs)
 
-    if use_accel:
-        return LIB_TOMOPY_ACCEL.cxx_mlem(
-            dtype.as_c_float_p(tomo),
-            dtype.as_c_int(dy),
-            dtype.as_c_int(dt),
-            dtype.as_c_int(dx),
-            dtype.as_c_float_p(center),
-            dtype.as_c_float_p(theta),
-            dtype.as_c_float_p(recon),
-            dtype.as_c_int(kwargs['num_gridx']),
-            dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']),
-            dtype.as_c_int(kwargs['pool_size']),
-            dtype.as_c_char_p(kwargs['interpolation']),
-            dtype.as_c_char_p(kwargs['device']),
-            dtype.as_c_int_p(kwargs['grid_size']),
-            dtype.as_c_int_p(kwargs['block_size']))
     else:
+        if len(tomo.shape) == 2:
+            # no y-axis (only one slice)
+            dy = 1
+            dt, dx = tomo.shape
+        else:
+            dy, dt, dx = tomo.shape
+
         LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.mlem(
             dtype.as_c_float_p(tomo),
@@ -544,33 +406,19 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
 
 
 def c_sirt(tomo, center, recon, theta, **kwargs):
-    if len(tomo.shape) == 2:
-        # no y-axis (only one slice)
-        dy = 1
-        dt, dx = tomo.shape
-    else:
-        dy, dt, dx = tomo.shape
 
-    use_accel = 1 if kwargs['accelerated'] else 0
+    if kwargs['accelerated']:
+        return c_accel_sirt(tomo, center, recon, theta, **kwargs)
 
-    if use_accel:
-        return LIB_TOMOPY_ACCEL.cxx_sirt(
-            dtype.as_c_float_p(tomo),
-            dtype.as_c_int(dy),
-            dtype.as_c_int(dt),
-            dtype.as_c_int(dx),
-            dtype.as_c_float_p(center),
-            dtype.as_c_float_p(theta),
-            dtype.as_c_float_p(recon),
-            dtype.as_c_int(kwargs['num_gridx']),
-            dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']),
-            dtype.as_c_int(kwargs['pool_size']),
-            dtype.as_c_char_p(kwargs['interpolation']),
-            dtype.as_c_char_p(kwargs['device']),
-            dtype.as_c_int_p(kwargs['grid_size']),
-            dtype.as_c_int_p(kwargs['block_size']))
     else:
+
+        if len(tomo.shape) == 2:
+            # no y-axis (only one slice)
+            dy = 1
+            dt, dx = tomo.shape
+        else:
+            dy, dt, dx = tomo.shape
+
         LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
         return LIB_TOMOPY_RECON.sirt(
             dtype.as_c_float_p(tomo),
@@ -738,24 +586,3 @@ def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1, recon2, re
         dtype.as_c_int(axis1),
         dtype.as_c_int(axis2),
         dtype.as_c_int(axis3))
-
-
-def c_remove_ring(rec, *args):
-    istart = 0
-    iend = rec.shape[0]
-    LIB_TOMOPY_MISC.remove_ring.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY_MISC.remove_ring(
-        dtype.as_c_float_p(rec),
-        dtype.as_c_float(args[0]),  # center_x
-        dtype.as_c_float(args[1]),  # center_y
-        dtype.as_c_int(args[2]),  # dx
-        dtype.as_c_int(args[3]),  # dy
-        dtype.as_c_int(args[4]),  # dz
-        dtype.as_c_float(args[5]),  # thresh_max
-        dtype.as_c_float(args[6]),  # thresh_min
-        dtype.as_c_float(args[7]),  # thresh
-        dtype.as_c_int(args[8]),  # theta_min
-        dtype.as_c_int(args[9]),  # rwidth
-        dtype.as_c_int(args[10]),  # int_mode
-        dtype.as_c_int(istart),  # istart
-        dtype.as_c_int(iend))  # iend
