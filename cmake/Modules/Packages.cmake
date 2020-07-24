@@ -42,23 +42,6 @@ endif()
 
 ################################################################################
 #
-#        OpenCV (required for CPU acceleration)
-#
-################################################################################
-
-if(TOMOPY_USE_OPENCV)
-    if(OpenCV_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
-    else()
-        message(FATAL_ERROR "OpenCV not found. Aborting build.")
-    endif()
-else()
-    message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
-endif()
-
-################################################################################
-#
 #        MKL (required for gridrec)
 #
 ################################################################################
@@ -72,6 +55,23 @@ if(TOMOPY_USE_MKL)
     endif()
 else()
     message(WARNING "MKL not found. Gridrec will be disabled.")
+endif()
+
+################################################################################
+#
+#        OpenCV (required for CPU acceleration)
+#
+################################################################################
+
+if(TOMOPY_USE_OPENCV)
+    if(OpenCV_FOUND)
+        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
+    else()
+        message(FATAL_ERROR "OpenCV not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
 endif()
 
 ################################################################################
