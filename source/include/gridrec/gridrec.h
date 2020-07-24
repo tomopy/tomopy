@@ -59,23 +59,7 @@
 
 typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
-void
-free_vector_f(float* v);
-
-float _Complex*
-malloc_vector_c(size_t n);
-
-void
-free_vector_c(float _Complex* v);
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc);
-
-void
-free_matrix_c(float _Complex** m);
-
 DLL void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
         const float* filter_par);
-
