@@ -57,3 +57,6 @@ void
 set_filter_tables(int dt, int pd, float fac,
                   float (*const pf)(float, int, int, int, const float*),
                   const float* filter_par, float _Complex* A, unsigned char is2d);
+
+unsigned char
+filter_is_2d(const char* name);

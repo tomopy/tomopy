@@ -55,6 +55,7 @@
 #include "mkl.h"
 #include <complex>
 #include "string.h"
+#include <functional>
 
 extern "C"
 {
