@@ -526,7 +526,8 @@ def c_vector(tomo, center, recon1, recon2, theta, **kwargs):
         dtype.as_c_int(kwargs['num_iter']))
 
 
-def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3, theta1, theta2, axis1, axis2, **kwargs):
+def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3,
+              theta1, theta2, axis1, axis2, **kwargs):
     if len(tomo1.shape) == 2:
         # no y-axis (only one slice)
         dy = 1
@@ -555,7 +556,9 @@ def c_vector2(tomo1, tomo2, center1, center2, recon1, recon2, recon3, theta1, th
         dtype.as_c_int(axis2))
 
 
-def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1, recon2, recon3, theta1, theta2, theta3, axis1, axis2, axis3, **kwargs):
+def c_vector3(tomo1, tomo2, tomo3, center1, center2, center3, recon1,
+              recon2, recon3, theta1, theta2, theta3, axis1, axis2,
+              axis3, **kwargs):
     if len(tomo1.shape) == 2:
         # no y-axis (only one slice)
         dy = 1
