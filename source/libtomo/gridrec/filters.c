@@ -51,6 +51,7 @@
 #define _XOPEN_SOURCE 700
 
 #include "filters.h"
+#include "memory.h"
 #include "mkl.h"
 #include <complex.h>
 #include <math.h>
@@ -79,6 +80,33 @@ inline float*
 malloc_vector_f(size_t n)
 {
     return (float*) malloc(n * sizeof(float));
+}
+
+float
+legendre(int n, const float* coefs, float x)
+{
+    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
+    // where P(j,x) is the jth Legendre polynomial.
+    // x must be between -1 and 1.
+    float penult, last, cur, y, mxlast;
+
+    y      = coefs[0];
+    penult = 1.0;
+    last   = x;
+    for(int j = 2; j <= n; j++)
+    {
+        mxlast = -(x * last);
+        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
+        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
+        if(!(j & 1))  // if j is even
+        {
+            y += cur * coefs[j >> 1];
+        }
+
+        penult = last;
+        last   = cur;
+    }
+    return y;
 }
 
 void
@@ -116,33 +144,6 @@ set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int
         norm           = -norm;
         winv[linv + i] = winv[linv - i] = norm / wtbl[(int) roundf(i * fac)];
     }
-}
-
-float
-legendre(int n, const float* coefs, float x)
-{
-    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
-    // where P(j,x) is the jth Legendre polynomial.
-    // x must be between -1 and 1.
-    float penult, last, cur, y, mxlast;
-
-    y      = coefs[0];
-    penult = 1.0;
-    last   = x;
-    for(int j = 2; j <= n; j++)
-    {
-        mxlast = -(x * last);
-        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
-        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
-        if(!(j & 1))  // if j is even
-        {
-            y += cur * coefs[j >> 1];
-        }
-
-        penult = last;
-        last   = cur;
-    }
-    return y;
 }
 
 void

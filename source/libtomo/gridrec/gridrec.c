@@ -51,6 +51,7 @@
 #define _XOPEN_SOURCE 700
 
 #include "gridrec.h"
+#include "memory.h"
 #include "mkl.h"
 #include <math.h>
 #include <stdlib.h>

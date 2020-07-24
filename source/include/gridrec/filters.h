@@ -58,12 +58,6 @@
 #endif
 #define ANSI
 
-float*
-malloc_vector_f(size_t n);
-
-float 
-(*get_filter(const char* name))(float, int, int, int, const float*);
-
 float
 filter_none(float, int, int, int, const float*);
 
@@ -91,20 +85,5 @@ filter_custom(float, int, int, int, const float*);
 float
 filter_custom2d(float, int, int, int, const float*);
 
-unsigned char
-filter_is_2d(const char* name);
 
-void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char is2d);
 
-void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
-
-void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
-                float* wtbl, float* winv);
-
-float
-legendre(int n, const float* coefs, float x);
