@@ -25,10 +25,7 @@ set_target_properties(libtomopy-prep
     ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
-    CXX_STANDARD                ${CMAKE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
-    ${CUDA_PROPERTIES})
+    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
 
 target_compile_definitions(libtomopy-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})

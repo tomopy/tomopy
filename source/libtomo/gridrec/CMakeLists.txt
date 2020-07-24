@@ -43,8 +43,7 @@ set_target_properties(libtomopy-gridrec
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
-    ${CUDA_PROPERTIES})
+    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED})
 
 target_compile_definitions(libtomopy-gridrec PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
