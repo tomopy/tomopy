@@ -57,8 +57,6 @@
 #    define _Complex
 #endif
 
-typedef std::function<float(float, int, int, int, const float*)> filter_func;
-
 DLL void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
         const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
