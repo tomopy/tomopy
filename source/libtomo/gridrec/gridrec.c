@@ -50,13 +50,16 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "gridrec.h"
-#include "memory.h"
-#include "mkl.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "mkl.h"
+
 #include "filters.h"
+#include "gridrec.h"
+#include "memory.h"
+#include "tables.h"
 
 #ifndef M_PI
 #    define M_PI 3.14159265359

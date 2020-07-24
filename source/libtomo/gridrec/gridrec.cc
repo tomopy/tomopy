@@ -53,8 +53,8 @@
 #define _XOPEN_SOURCE 700
 
 #include "mkl.h"
-#include <complex>
 #include "string.h"
+#include <complex>
 #include <functional>
 
 extern "C"
@@ -62,7 +62,10 @@ extern "C"
 #include "filters.h"
 #include "gridrec.h"
 #include "memory.h"
+#include "tables.h"
 }
+
+typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
 using namespace std::literals::complex_literals;
 
