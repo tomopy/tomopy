@@ -11,9 +11,6 @@ set(PREP_LIBRARY_SOURCES ${prep_tomo_headers} ${prep_tomo_sources})
 # create library
 add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 
-target_link_libraries(libtomopy-prep PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
 
 # target properties

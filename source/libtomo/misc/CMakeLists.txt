@@ -15,9 +15,8 @@ set(MISC_LIBRARY_SOURCES ${misc_tomo_headers} ${misc_tomo_sources})
 # create library
 add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
 
-# link library
-target_link_libraries(libtomopy-misc PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+# link library to math.h
+target_link_libraries(libtomopy-misc PUBLIC m)
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})

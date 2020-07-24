@@ -20,8 +20,8 @@ set_target_properties(libtomopy-recon
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
 
-target_link_libraries(libtomopy-recon PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+# link libraries to math.h
+target_link_libraries(libtomopy-recon PUBLIC m)
 
 target_compile_definitions(libtomopy-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
