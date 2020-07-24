@@ -52,41 +52,6 @@ BEGIN_EXTERN_C
 
 //======================================================================================//
 //
-//  CUDA
-//      - definitions in gpu/common.cu when CUDA enabled
-//      - definitions in cxx/common.cc when CUDA not enabled
-//
-//======================================================================================//
-// print info about devices available (only does this once per process)
-DLL void
-cuda_device_query();
-
-// get the number of devices available
-DLL int
-cuda_device_count();
-
-// sets the thread to a specific device
-DLL int
-cuda_set_device(int device);
-
-// get the number of CUDA multiprocessors
-DLL int
-cuda_multi_processor_count();
-
-// get the maximum number of threads per block
-DLL int
-cuda_max_threads_per_block();
-
-// get the size of the warps
-DLL int
-cuda_warp_size();
-
-// get the maximum amount of shared memory per block
-DLL int
-cuda_shared_memory_per_block();
-
-//======================================================================================//
-//
 //  MLEM
 //
 //======================================================================================//
