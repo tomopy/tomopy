@@ -57,6 +57,8 @@
 #    define _Complex
 #endif
 
+typedef std::function<float(float, int, int, int, const float*)> filter_func;
+
 void
 free_vector_f(float* v);
 

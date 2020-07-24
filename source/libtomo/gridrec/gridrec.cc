@@ -54,16 +54,16 @@
 
 #include "mkl.h"
 #include <complex>
+#include "string.h"
 
 extern "C"
 {
-    #include "gridrec.h"
-    #include "filters.h"
-    #include "memory.h"
+#include "filters.h"
+#include "gridrec.h"
+#include "memory.h"
 }
 
 using namespace std::literals::complex_literals;
-
 
 #if defined(_MSC_VER)
 #    if defined(__LIKELY)
@@ -72,8 +72,29 @@ using namespace std::literals::complex_literals;
 #    define __LIKELY(EXPR) EXPR
 #endif
 
-//===========================================================================//
+#ifndef M_PI
+#    define M_PI 3.14159265359
+#endif
 
+#define __LIKELY(x) __builtin_expect(!!(x), 1)
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#else
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
+#endif
+
+//===========================================================================//
 
 void
 cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
@@ -216,11 +237,10 @@ cxx_free_matrix_c(std::complex<float>**& m)
 
 //===========================================================================//
 
-
 void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
-            const float* filter_par)
+        const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
+        const float* filter_par)
 {
     int    s, p, iu, iv;
     int    j;
