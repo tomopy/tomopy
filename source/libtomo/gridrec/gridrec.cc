@@ -80,7 +80,6 @@ using namespace std::literals::complex_literals;
 #    define M_PI 3.14159265359
 #endif
 
-#define __LIKELY(x) __builtin_expect(!!(x), 1)
 #ifdef __INTEL_COMPILER
 #    define __PRAGMA_SIMD _Pragma("simd assert")
 #    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
