@@ -85,5 +85,3 @@ filter_custom(float, int, int, int, const float*);
 float
 filter_custom2d(float, int, int, int, const float*);
 
-
-
