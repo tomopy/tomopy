@@ -21,7 +21,9 @@ set_target_properties(libtomopy-recon
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
 
 # link libraries to math.h
-target_link_libraries(libtomopy-recon PUBLIC m)
+if (NOT WIN32)
+    target_link_libraries(libtomopy-recon PUBLIC m)
+endif()
 
 target_compile_definitions(libtomopy-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})

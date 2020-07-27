@@ -16,7 +16,9 @@ set(MISC_LIBRARY_SOURCES ${misc_tomo_headers} ${misc_tomo_sources})
 add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
 
 # link library to math.h
-target_link_libraries(libtomopy-misc PUBLIC m)
+if (NOT WIN32)
+    target_link_libraries(libtomopy-misc PUBLIC m)
+endif() 
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
