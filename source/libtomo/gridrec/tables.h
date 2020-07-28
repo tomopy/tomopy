@@ -41,19 +41,124 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <stdlib.h>
+// Possible speedups:
+//   * Profile code and check adding SIMD to various functions (from OpenMP)
 
-float*
-malloc_vector_f(size_t n);
+//#define WRITE_FILES
+#define _USE_MATH_DEFINES
+
+// Use X/Open-7, where posix_memalign is introduced
+#define _XOPEN_SOURCE 700
+
+#include "mkl.h"
+#include <complex.h>
+#include <math.h>
+#include <string.h>
+
+#define __LIKELY(x) __builtin_expect(!!(x), 1)
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#else
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
+#endif
+
+
+inline float*
+malloc_vector_f(size_t n)
+{
+    return (float*) malloc(n * sizeof(float));
+}
+
+float
+legendre(int n, const float* coefs, float x)
+{
+    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
+    // where P(j,x) is the jth Legendre polynomial.
+    // x must be between -1 and 1.
+    float penult, last, cur, y, mxlast;
+
+    y      = coefs[0];
+    penult = 1.0;
+    last   = x;
+    for(int j = 2; j <= n; j++)
+    {
+        mxlast = -(x * last);
+        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
+        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
+        if(!(j & 1))  // if j is even
+        {
+            y += cur * coefs[j >> 1];
+        }
+
+        penult = last;
+        last   = cur;
+    }
+    return y;
+}
 
 void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
-                float* wtbl, float* winv);
+set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int linv,
+                float* wtbl, float* winv)
+{
+    // Set up lookup tables for convolvent (used in Phase 1 of
+    // do_recon()), and for the final correction factor (used in
+    // Phase 3).
+
+    int         i;
+    float       norm;
+    const float fac   = (float) ltbl / (linv + 0.5);
+    const float polyz = legendre(nt, coefs, 0.);
+
+    wtbl[0] = 1.0;
+    for(i = 1; i <= ltbl; i++)
+    {
+        wtbl[i] = legendre(nt, coefs, (float) i / ltbl) / polyz;
+    }
+
+    // Note the final result at end of Phase 3 contains the factor,
+    // norm^2.  This incorporates the normalization of the 2D
+    // inverse FFT in Phase 2 as well as scale factors involved
+    // in the inverse Fourier transform of the convolvent.
+    norm = sqrt(M_PI / 2 / C / lambda) / 1.2;
+
+    winv[linv] = norm / wtbl[0];
+    __PRAGMA_IVDEP
+    for(i = 1; i <= linv; i++)
+    {
+        // Minus sign for alternate entries
+        // corrects for "natural" data layout
+        // in array H at end of Phase 1.
+        norm           = -norm;
+        winv[linv + i] = winv[linv - i] = norm / wtbl[(int) roundf(i * fac)];
+    }
+}
 
 void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
+set_trig_tables(int dt, const float* theta, float** sine, float** cose)
+{
+    // Set up tables of sines and cosines.
+    float *s, *c;
 
-void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char is2d);
+    *sine = s = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(s);
+    *cose = c = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(c);
+
+    __PRAGMA_SIMD
+    for(int j = 0; j < dt; j++)
+    {
+        s[j] = sinf(theta[j]);
+        c[j] = cosf(theta[j]);
+    }
+}

@@ -55,13 +55,14 @@
 #include "filters.h"
 #include "mkl.h"
 #include "string.h"
-#include "tables.h"
+
 #include <complex>
 #include <functional>
 
 extern "C"
 {
 #include "gridrec.h"
+#include "tables.h"
 }
 
 typedef std::function<float(float, int, int, int, const float*)> filter_func;
