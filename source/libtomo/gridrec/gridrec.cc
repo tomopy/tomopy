@@ -52,16 +52,16 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
+#include "filters.h"
 #include "mkl.h"
 #include "string.h"
+#include "tables.h"
 #include <complex>
 #include <functional>
 
 extern "C"
 {
-#include "filters.h"
 #include "gridrec.h"
-#include "tables.h"
 }
 
 typedef std::function<float(float, int, int, int, const float*)> filter_func;
