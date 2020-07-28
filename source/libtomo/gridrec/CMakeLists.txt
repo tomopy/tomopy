@@ -31,6 +31,7 @@ target_link_libraries(libtomopy-gridrec PUBLIC ${EXTERNAL_LIBRARIES}
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec")
+list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}")
 
 # target properties
 set_target_properties(libtomopy-gridrec
