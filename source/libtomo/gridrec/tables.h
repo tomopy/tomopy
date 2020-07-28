@@ -41,7 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-float (*get_filter(const char* name))(float, int, int, int, const float*);
+float*
+malloc_vector_f(size_t n);
 
 void
 set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
@@ -54,6 +55,3 @@ void
 set_filter_tables(int dt, int pd, float fac,
                   float (*const pf)(float, int, int, int, const float*),
                   const float* filter_par, float _Complex* A, unsigned char is2d);
-
-unsigned char
-filter_is_2d(const char* name);

@@ -61,7 +61,6 @@ extern "C"
 {
 #include "filters.h"
 #include "gridrec.h"
-#include "memory.h"
 #include "tables.h"
 }
 
