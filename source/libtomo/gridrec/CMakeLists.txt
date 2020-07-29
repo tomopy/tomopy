@@ -50,8 +50,7 @@ target_compile_definitions(libtomopy-gridrec PUBLIC
 
 target_compile_options(libtomopy-gridrec PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
+    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
 install(TARGETS libtomopy-gridrec
     DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
