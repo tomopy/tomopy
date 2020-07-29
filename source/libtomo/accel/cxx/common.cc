@@ -40,6 +40,7 @@
 #include "common.hh"
 #include "macros.hh"
 #include "utils.hh"
+#include "cuda.h"
 
 #if !defined(TOMOPY_USE_CUDA)
 

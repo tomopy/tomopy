@@ -44,10 +44,6 @@
 #include "typedefs.hh"
 #include <stdexcept>
 
-BEGIN_EXTERN_C
-#include "cxx_extern.h"
-END_EXTERN_C
-
 //======================================================================================//
 //
 //  The following section provides functions for the initialization of the tasking library

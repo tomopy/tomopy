@@ -46,7 +46,6 @@
 
 #pragma once
 
-#include "common.hh"
 #include "constants.hh"
 #include "macros.hh"
 #include "typedefs.hh"

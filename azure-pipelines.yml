@@ -40,11 +40,11 @@ jobs:
       -n base conda
     displayName: Update conda
   - script: >
-      conda env remove --yes --quiet
+      conda env remove --yes
       -n tomopy
     displayName: Remove existing build environment
   - script: >
-      conda env create --quiet
+      conda env create --quiet --force
       -n tomopy
       -f envs/linux-$(python.version).yml
     displayName: Create build environment

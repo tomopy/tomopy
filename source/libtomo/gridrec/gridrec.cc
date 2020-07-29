@@ -52,12 +52,22 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "gridrec.hh"
+#include "filters.h"
 #include "mkl.h"
+#include "string.h"
+
 #include <complex>
+#include <functional>
+
+extern "C"
+{
+#include "gridrec.h"
+#include "tables.h"
+}
+
+typedef std::function<float(float, int, int, int, const float*)> filter_func;
 
 using namespace std::literals::complex_literals;
-
 
 #if defined(_MSC_VER)
 #    if defined(__LIKELY)
@@ -66,12 +76,174 @@ using namespace std::literals::complex_literals;
 #    define __LIKELY(EXPR) EXPR
 #endif
 
+#ifndef M_PI
+#    define M_PI 3.14159265359
+#endif
+
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
+#else
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
+#endif
+
+//===========================================================================//
+
+void
+cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
+                      const float* filter_par, std::complex<float>* A,
+                      unsigned char filter2d)
+{
+    // Set up the complex array, filphase[], each element of which
+    // consists of a real filter factor [obtained from the function,
+    // pf(...)], multiplying a complex phase factor (derived from the
+    // parameter, center}.  See Phase 1 comments.
+
+    const float norm  = M_PI / pd / dt;
+    const float rtmp1 = 2 * M_PI * center / pd;
+    int         j, i;
+    int         pd2 = pd / 2;
+    float       x;
+
+    if(!filter2d)
+    {
+        for(j = 0; j < pd2; j++)
+        {
+            A[j] = pf((float) j / pd, j, 0, pd2, filter_par);
+        }
+
+        __PRAGMA_SIMD
+        for(j = 0; j < pd2; j++)
+        {
+            x = j * rtmp1;
+            A[j] *= (cosf(x) - 1if * sinf(x)) * norm;
+        }
+    }
+    else
+    {
+        for(i = 0; i < dt; i++)
+        {
+            int j0 = i * pd2;
+
+            for(j = 0; j < pd2; j++)
+            {
+                A[j0 + j] = pf((float) j / pd, j, i, pd2, filter_par);
+            }
+
+            __PRAGMA_SIMD
+            for(j = 0; j < pd2; j++)
+            {
+                x = j * rtmp1;
+                A[j0 + j] *= (cosf(x) - 1if * sinf(x)) * norm;
+            }
+        }
+    }
+}
+
+//===========================================================================//
+
+float*
+cxx_malloc_vector_f(size_t n)
+{
+    return new float[n];
+}
+
+//===========================================================================//
+
+void
+cxx_free_vector_f(float*& v)
+{
+    delete[] v;
+    v = nullptr;
+}
+
+//===========================================================================//
+
+std::complex<float>*
+cxx_malloc_vector_c(size_t n)
+{
+    return new std::complex<float>[n];
+}
+
+//===========================================================================//
+
+void
+cxx_free_vector_c(std::complex<float>*& v)
+{
+    delete[] v;
+    v = nullptr;
+}
+
+//===========================================================================//
+void*
+cxx_malloc_64bytes_aligned(size_t sz)
+{
+#if defined(__MINGW32__)
+    return __mingw_aligned_malloc(sz, 64);
+#elif defined(_MSC_VER)
+    void* r = _aligned_malloc(sz, 64);
+    return r;
+#else
+    void* r   = NULL;
+    int   err = posix_memalign(&r, 64, sz);
+    return (err) ? NULL : r;
+#endif
+}
+
+//===========================================================================//
+
+std::complex<float>**
+cxx_malloc_matrix_c(size_t nr, size_t nc)
+{
+    std::complex<float>** m = nullptr;
+    size_t                i;
+
+    // Allocate pointers to rows,
+    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr *
+                                                           sizeof(std::complex<float>*));
+
+    /* Allocate rows and set the pointers to them */
+    m[0] = cxx_malloc_vector_c(nr * nc);
+
+    for(i = 1; i < nr; i++)
+    {
+        m[i] = m[i - 1] + nc;
+    }
+    return m;
+}
+
+//===========================================================================//
+
+void
+cxx_free_matrix_c(std::complex<float>**& m)
+{
+    cxx_free_vector_c(m[0]);
+#if defined(__MINGW32__)
+    __mingw_aligned_free(m);
+#elif defined(_MSC_VER)
+    _aligned_free(m);
+#else
+    free(m);
+#endif
+    m = nullptr;
+}
+
 //===========================================================================//
 
 void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
-            const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
-            const float* filter_par)
+        const float* theta, float* recon, int ngridx, int ngridy, const char* fname,
+        const float* filter_par)
 {
     int    s, p, iu, iv;
     int    j;
@@ -422,147 +594,6 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-}
-
-//===========================================================================//
-
-void
-cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
-                      const float* filter_par, std::complex<float>* A,
-                      unsigned char filter2d)
-{
-    // Set up the complex array, filphase[], each element of which
-    // consists of a real filter factor [obtained from the function,
-    // pf(...)], multiplying a complex phase factor (derived from the
-    // parameter, center}.  See Phase 1 comments.
-
-    const float norm  = M_PI / pd / dt;
-    const float rtmp1 = 2 * M_PI * center / pd;
-    int         j, i;
-    int         pd2 = pd / 2;
-    float       x;
-
-    if(!filter2d)
-    {
-        for(j = 0; j < pd2; j++)
-        {
-            A[j] = pf((float) j / pd, j, 0, pd2, filter_par);
-        }
-
-        __PRAGMA_SIMD
-        for(j = 0; j < pd2; j++)
-        {
-            x = j * rtmp1;
-            A[j] *= (cosf(x) - 1if * sinf(x)) * norm;
-        }
-    }
-    else
-    {
-        for(i = 0; i < dt; i++)
-        {
-            int j0 = i * pd2;
-
-            for(j = 0; j < pd2; j++)
-            {
-                A[j0 + j] = pf((float) j / pd, j, i, pd2, filter_par);
-            }
-
-            __PRAGMA_SIMD
-            for(j = 0; j < pd2; j++)
-            {
-                x = j * rtmp1;
-                A[j0 + j] *= (cosf(x) - 1if * sinf(x)) * norm;
-            }
-        }
-    }
-}
-
-//===========================================================================//
-
-float*
-cxx_malloc_vector_f(size_t n)
-{
-    return new float[n];
-}
-
-//===========================================================================//
-
-void
-cxx_free_vector_f(float*& v)
-{
-    delete[] v;
-    v = nullptr;
-}
-
-//===========================================================================//
-
-std::complex<float>*
-cxx_malloc_vector_c(size_t n)
-{
-    return new std::complex<float>[n];
-}
-
-//===========================================================================//
-
-void
-cxx_free_vector_c(std::complex<float>*& v)
-{
-    delete[] v;
-    v = nullptr;
-}
-
-//===========================================================================//
-void*
-cxx_malloc_64bytes_aligned(size_t sz)
-{
-#if defined(__MINGW32__)
-    return __mingw_aligned_malloc(sz, 64);
-#elif defined(_MSC_VER)
-    void* r = _aligned_malloc(sz, 64);
-    return r;
-#else
-    void* r   = NULL;
-    int   err = posix_memalign(&r, 64, sz);
-    return (err) ? NULL : r;
-#endif
-}
-
-//===========================================================================//
-
-std::complex<float>**
-cxx_malloc_matrix_c(size_t nr, size_t nc)
-{
-    std::complex<float>** m = nullptr;
-    size_t                i;
-
-    // Allocate pointers to rows,
-    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr *
-                                                           sizeof(std::complex<float>*));
-
-    /* Allocate rows and set the pointers to them */
-    m[0] = cxx_malloc_vector_c(nr * nc);
-
-    for(i = 1; i < nr; i++)
-    {
-        m[i] = m[i - 1] + nc;
-    }
-    return m;
-}
-
-//===========================================================================//
-
-void
-cxx_free_matrix_c(std::complex<float>**& m)
-{
-    cxx_free_vector_c(m[0]);
-#if defined(__MINGW32__)
-    __mingw_aligned_free(m);
-#elif defined(_MSC_VER)
-    _aligned_free(m);
-#else
-    free(m);
-#endif
-    m = nullptr;
 }
 
 //===========================================================================//

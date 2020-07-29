@@ -41,70 +41,138 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
-
-#include <complex.h>
-#include <stdlib.h>
+// Possible speedups:
+//   * Profile code and check adding SIMD to various functions (from OpenMP)
 
 #ifndef M_PI
 #    define M_PI 3.14159265359
 #endif
 
-#ifdef WIN32
-#    define DLL __declspec(dllexport)
-#    define _Complex
+// Use X/Open-7, where posix_memalign is introduced
+#define _XOPEN_SOURCE 700
+
+#include <complex.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define __LIKELY(x) __builtin_expect(!!(x), 1)
+#ifdef __INTEL_COMPILER
+#    define __PRAGMA_SIMD _Pragma("simd assert")
+#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
+        _Pragma("simd assert, vecremainder, vectorlength(8)")
+#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
+#    define __PRAGMA_IVDEP _Pragma("ivdep")
+#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
 #else
-#    define DLL
+#    define __PRAGMA_SIMD
+#    define __PRAGMA_SIMD_VECREMAINDER
+#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
+#    define __PRAGMA_OMP_SIMD_COLLAPSE
+#    define __PRAGMA_IVDEP
+#    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
-#define ANSI
 
-float*
-malloc_vector_f(size_t n);
 
-float 
-(*get_filter(const char* name))(float, int, int, int, const float*);
-
+// No filter
 float
-filter_none(float, int, int, int, const float*);
+filter_none(float x, int i, int j, int fwidth, const float* pars)
+{
+    return 1.0;
+}
 
+// Shepp-Logan filter
 float
-filter_shepp(float, int, int, int, const float*);
+filter_shepp(float x, int i, int j, int fwidth, const float* pars)
+{
+    if(i == 0)
+        return 0.0;
+    return fabsf(2 * x) * (sinf(M_PI * x) / (M_PI * x));
+}
 
+// Cosine filter
 float
-filter_hann(float, int, int, int, const float*);
+filter_cosine(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x) * (cosf(M_PI * x));
+}
 
+// Hann filter
 float
-filter_hamming(float, int, int, int, const float*);
+filter_hann(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x) * 0.5 * (1. + cosf(2 * M_PI * x / pars[0]));
+}
 
+// Hamming filter
 float
-filter_ramlak(float, int, int, int, const float*);
+filter_hamming(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x) * (0.54 + 0.46 * cosf(2 * M_PI * x / pars[0]));
+}
 
+// Ramlak filter
 float
-filter_parzen(float, int, int, int, const float*);
+filter_ramlak(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x);
+}
 
+// Parzen filter
 float
-filter_butterworth(float, int, int, int, const float*);
+filter_parzen(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x) * pow(1 - fabs(x) / pars[0], 3);
+}
 
+// Butterworth filter
 float
-filter_custom(float, int, int, int, const float*);
+filter_butterworth(float x, int i, int j, int fwidth, const float* pars)
+{
+    return fabsf(2 * x) / (1 + pow(x / pars[0], 2 * pars[1]));
+}
 
+// Custom filter
 float
-filter_custom2d(float, int, int, int, const float*);
+filter_custom(float x, int i, int j, int fwidth, const float* pars)
+{
+    return pars[i];
+}
+
+// Custom 2D filter
+float
+filter_custom2d(float x, int i, int j, int fwidth, const float* pars)
+{
+    return pars[j * fwidth + i];
+}
+
+float (*get_filter(const char* name))(float, int, int, int, const float*)
+{
+    struct
+    {
+        const char* name;
+        float (*const fp)(float, int, int, int, const float*);
+    } fltbl[] = { { "none", filter_none },       { "shepp", filter_shepp },  // Default
+                  { "cosine", filter_cosine },   { "hann", filter_hann },
+                  { "hamming", filter_hamming }, { "ramlak", filter_ramlak },
+                  { "parzen", filter_parzen },   { "butterworth", filter_butterworth },
+                  { "custom", filter_custom },   { "custom2d", filter_custom2d } };
+
+    for(int i = 0; i < 10; i++)
+    {
+        if(!strncmp(name, fltbl[i].name, 16))
+        {
+            return fltbl[i].fp;
+        }
+    }
+    return fltbl[1].fp;
+}
 
 unsigned char
-filter_is_2d(const char* name);
-
-void
-set_filter_tables(int dt, int pd, float fac,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char is2d);
-
-void
-set_trig_tables(int dt, const float* theta, float** SP, float** CP);
-
-void
-set_pswf_tables(float C, int nt, float lmbda, const float* coefs, int ltbl, int linv,
-                float* wtbl, float* winv);
-
-float
-legendre(int n, const float* coefs, float x);
+filter_is_2d(const char* name)
+{
+    if(!strncmp(name, "custom2d", 16))
+        return 1;
+    return 0;
+}

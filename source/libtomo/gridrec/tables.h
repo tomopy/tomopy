@@ -50,11 +50,9 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "filters.h"
 #include "mkl.h"
 #include <complex.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define __LIKELY(x) __builtin_expect(!!(x), 1)
@@ -75,10 +73,38 @@
 #    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
 
+
 inline float*
 malloc_vector_f(size_t n)
 {
     return (float*) malloc(n * sizeof(float));
+}
+
+float
+legendre(int n, const float* coefs, float x)
+{
+    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
+    // where P(j,x) is the jth Legendre polynomial.
+    // x must be between -1 and 1.
+    float penult, last, cur, y, mxlast;
+
+    y      = coefs[0];
+    penult = 1.0;
+    last   = x;
+    for(int j = 2; j <= n; j++)
+    {
+        mxlast = -(x * last);
+        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
+        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
+        if(!(j & 1))  // if j is even
+        {
+            y += cur * coefs[j >> 1];
+        }
+
+        penult = last;
+        last   = cur;
+    }
+    return y;
 }
 
 void
@@ -118,33 +144,6 @@ set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int
     }
 }
 
-float
-legendre(int n, const float* coefs, float x)
-{
-    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
-    // where P(j,x) is the jth Legendre polynomial.
-    // x must be between -1 and 1.
-    float penult, last, cur, y, mxlast;
-
-    y      = coefs[0];
-    penult = 1.0;
-    last   = x;
-    for(int j = 2; j <= n; j++)
-    {
-        mxlast = -(x * last);
-        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
-        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
-        if(!(j & 1))  // if j is even
-        {
-            y += cur * coefs[j >> 1];
-        }
-
-        penult = last;
-        last   = cur;
-    }
-    return y;
-}
-
 void
 set_trig_tables(int dt, const float* theta, float** sine, float** cose)
 {
@@ -162,106 +161,4 @@ set_trig_tables(int dt, const float* theta, float** sine, float** cose)
         s[j] = sinf(theta[j]);
         c[j] = cosf(theta[j]);
     }
-}
-
-// No filter
-float
-filter_none(float x, int i, int j, int fwidth, const float* pars)
-{
-    return 1.0;
-}
-
-// Shepp-Logan filter
-float
-filter_shepp(float x, int i, int j, int fwidth, const float* pars)
-{
-    if(i == 0)
-        return 0.0;
-    return fabsf(2 * x) * (sinf(M_PI * x) / (M_PI * x));
-}
-
-// Cosine filter
-float
-filter_cosine(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * (cosf(M_PI * x));
-}
-
-// Hann filter
-float
-filter_hann(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * 0.5 * (1. + cosf(2 * M_PI * x / pars[0]));
-}
-
-// Hamming filter
-float
-filter_hamming(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * (0.54 + 0.46 * cosf(2 * M_PI * x / pars[0]));
-}
-
-// Ramlak filter
-float
-filter_ramlak(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x);
-}
-
-// Parzen filter
-float
-filter_parzen(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) * pow(1 - fabs(x) / pars[0], 3);
-}
-
-// Butterworth filter
-float
-filter_butterworth(float x, int i, int j, int fwidth, const float* pars)
-{
-    return fabsf(2 * x) / (1 + pow(x / pars[0], 2 * pars[1]));
-}
-
-// Custom filter
-float
-filter_custom(float x, int i, int j, int fwidth, const float* pars)
-{
-    return pars[i];
-}
-
-// Custom 2D filter
-float
-filter_custom2d(float x, int i, int j, int fwidth, const float* pars)
-{
-    return pars[j * fwidth + i];
-}
-
-float (*get_filter(const char* name))(float, int, int, int, const float*)
-{
-    struct
-    {
-        const char* name;
-        float (*const fp)(float, int, int, int, const float*);
-    } fltbl[] = { { "none", filter_none },       { "shepp", filter_shepp },  // Default
-                  { "cosine", filter_cosine },   { "hann", filter_hann },
-                  { "hamming", filter_hamming }, { "ramlak", filter_ramlak },
-                  { "parzen", filter_parzen },   { "butterworth", filter_butterworth },
-                  { "custom", filter_custom },   { "custom2d", filter_custom2d } };
-
-    for(int i = 0; i < 10; i++)
-    {
-        if(!strncmp(name, fltbl[i].name, 16))
-        {
-            return fltbl[i].fp;
-        }
-    }
-    return fltbl[1].fp;
-}
-
-unsigned char
-filter_is_2d(const char* name)
-{
-    if(!strncmp(name, "custom2d", 16))
-        return 1;
-    return 0;
 }

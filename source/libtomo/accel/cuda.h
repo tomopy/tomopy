@@ -37,46 +37,46 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
-/** \file cxx_extern.h
- * \headerfile cxx_extern.h "include/cxx_extern.h"
- * C++ functions that are available to C code (available for Python binding)
- */
-
 #pragma once
 
 #include "macros.h"
-
-//======================================================================================//
 
 BEGIN_EXTERN_C
 
 //======================================================================================//
 //
-//  MLEM
+//  CUDA
+//      - definitions in gpu/common.cu when CUDA enabled
+//      - definitions in cxx/common.cc when CUDA not enabled
 //
 //======================================================================================//
+// print info about devices available (only does this once per process)
+DLL void
+cuda_device_query();
 
-// generic decision of whether to use CPU or GPU version
-//     NOTE: if compiled with GPU support but no devices, will call CPU version
+// get the number of devices available
 DLL int
-cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-         int pool_size, const char* interp, const char* device, int* grid_size,
-         int* block_size);
+cuda_device_count();
 
-//======================================================================================//
-//
-//  SIRT
-//
-//======================================================================================//
-
-// generic decision of whether to use CPU or GPU version
-//     NOTE: if compiled with GPU support but no devices, will call CPU version
+// sets the thread to a specific device
 DLL int
-cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
-         const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-         int pool_size, const char* interp, const char* device, int* grid_size,
-         int* block_size);
+cuda_set_device(int device);
+
+// get the number of CUDA multiprocessors
+DLL int
+cuda_multi_processor_count();
+
+// get the maximum number of threads per block
+DLL int
+cuda_max_threads_per_block();
+
+// get the size of the warps
+DLL int
+cuda_warp_size();
+
+// get the maximum amount of shared memory per block
+DLL int
+cuda_shared_memory_per_block();
 
 //======================================================================================//
 

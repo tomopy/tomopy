@@ -50,12 +50,15 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "gridrec.h"
-#include "mkl.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "mkl.h"
+
 #include "filters.h"
+#include "gridrec.h"
+#include "tables.h"
 
 #ifndef M_PI
 #    define M_PI 3.14159265359
@@ -78,6 +81,125 @@
 #    define __PRAGMA_IVDEP
 #    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
+
+
+void
+set_filter_tables(int dt, int pd, float center,
+                  float (*const pf)(float, int, int, int, const float*),
+                  const float* filter_par, float _Complex* A, unsigned char filter2d)
+{
+    // Set up the complex array, filphase[], each element of which
+    // consists of a real filter factor [obtained from the function,
+    // (*pf)()], multiplying a complex phase factor (derived from the
+    // parameter, center}.  See Phase 1 comments.
+    // MSVC has an issue with line:
+    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
+    // below
+
+    const float norm  = M_PI / pd / dt;
+    const float rtmp1 = 2 * M_PI * center / pd;
+    int         j, i;
+    int         pd2 = pd / 2;
+    float       x;
+
+    if(!filter2d)
+    {
+        for(j = 0; j < pd2; j++)
+        {
+            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
+        }
+
+        __PRAGMA_SIMD
+        for(j = 0; j < pd2; j++)
+        {
+            x = j * rtmp1;
+            A[j] *= (cosf(x) - I * sinf(x)) * norm;
+        }
+    }
+    else
+    {
+        for(i = 0; i < dt; i++)
+        {
+            int j0 = i * pd2;
+
+            for(j = 0; j < pd2; j++)
+            {
+                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
+            }
+
+            __PRAGMA_SIMD
+            for(j = 0; j < pd2; j++)
+            {
+                x = j * rtmp1;
+                A[j0 + j] *= (cosf(x) - I * sinf(x)) * norm;
+            }
+        }
+    }
+}
+
+static inline void*
+malloc_64bytes_aligned(size_t sz)
+{
+#ifdef __MINGW32__
+    return __mingw_aligned_malloc(sz, 64);
+#elif defined(_MSC_VER)
+    void* r = _aligned_malloc(sz, 64);
+    return r;
+#else
+    void* r   = NULL;
+    int   err = posix_memalign(&r, 64, sz);
+    return (err) ? NULL : r;
+#endif
+}
+
+inline void
+free_vector_f(float* v)
+{
+    free(v);
+}
+
+inline float _Complex*
+malloc_vector_c(size_t n)
+{
+    return (float _Complex*) malloc(n * sizeof(float _Complex));
+}
+
+inline void
+free_vector_c(float _Complex* v)
+{
+    free(v);
+}
+
+float _Complex**
+malloc_matrix_c(size_t nr, size_t nc)
+{
+    float _Complex** m = NULL;
+    size_t           i;
+
+    // Allocate pointers to rows,
+    m = (float _Complex**) malloc_64bytes_aligned(nr * sizeof(float _Complex*));
+
+    /* Allocate rows and set the pointers to them */
+    m[0] = malloc_vector_c(nr * nc);
+
+    for(i = 1; i < nr; i++)
+    {
+        m[i] = m[i - 1] + nc;
+    }
+    return m;
+}
+
+inline void
+free_matrix_c(float _Complex** m)
+{
+    free_vector_c(m[0]);
+#ifdef __MINGW32__
+    __mingw_aligned_free(m);
+#else
+    free(m);
+#endif
+}
+
 
 void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
@@ -432,121 +554,4 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;
-}
-
-void
-set_filter_tables(int dt, int pd, float center,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char filter2d)
-{
-    // Set up the complex array, filphase[], each element of which
-    // consists of a real filter factor [obtained from the function,
-    // (*pf)()], multiplying a complex phase factor (derived from the
-    // parameter, center}.  See Phase 1 comments.
-    // MSVC has an issue with line:
-    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
-    // below
-
-    const float norm  = M_PI / pd / dt;
-    const float rtmp1 = 2 * M_PI * center / pd;
-    int         j, i;
-    int         pd2 = pd / 2;
-    float       x;
-
-    if(!filter2d)
-    {
-        for(j = 0; j < pd2; j++)
-        {
-            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
-        }
-
-        __PRAGMA_SIMD
-        for(j = 0; j < pd2; j++)
-        {
-            x = j * rtmp1;
-            A[j] *= (cosf(x) - I * sinf(x)) * norm;
-        }
-    }
-    else
-    {
-        for(i = 0; i < dt; i++)
-        {
-            int j0 = i * pd2;
-
-            for(j = 0; j < pd2; j++)
-            {
-                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
-            }
-
-            __PRAGMA_SIMD
-            for(j = 0; j < pd2; j++)
-            {
-                x = j * rtmp1;
-                A[j0 + j] *= (cosf(x) - I * sinf(x)) * norm;
-            }
-        }
-    }
-}
-
-static inline void*
-malloc_64bytes_aligned(size_t sz)
-{
-#ifdef __MINGW32__
-    return __mingw_aligned_malloc(sz, 64);
-#elif defined(_MSC_VER)
-    void* r = _aligned_malloc(sz, 64);
-    return r;
-#else
-    void* r   = NULL;
-    int   err = posix_memalign(&r, 64, sz);
-    return (err) ? NULL : r;
-#endif
-}
-
-inline void
-free_vector_f(float* v)
-{
-    free(v);
-}
-
-inline float _Complex*
-malloc_vector_c(size_t n)
-{
-    return (float _Complex*) malloc(n * sizeof(float _Complex));
-}
-
-inline void
-free_vector_c(float _Complex* v)
-{
-    free(v);
-}
-
-float _Complex**
-malloc_matrix_c(size_t nr, size_t nc)
-{
-    float _Complex** m = NULL;
-    size_t           i;
-
-    // Allocate pointers to rows,
-    m = (float _Complex**) malloc_64bytes_aligned(nr * sizeof(float _Complex*));
-
-    /* Allocate rows and set the pointers to them */
-    m[0] = malloc_vector_c(nr * nc);
-
-    for(i = 1; i < nr; i++)
-    {
-        m[i] = m[i - 1] + nc;
-    }
-    return m;
-}
-
-inline void
-free_matrix_c(float _Complex** m)
-{
-    free_vector_c(m[0]);
-#ifdef __MINGW32__
-    __mingw_aligned_free(m);
-#else
-    free(m);
-#endif
 }
