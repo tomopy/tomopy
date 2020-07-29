@@ -43,19 +43,12 @@
 
 #pragma once
 
-#include <complex.h>
-#include <stdlib.h>
-
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
 #else
 #    define DLL
 #endif
 #define ANSI
-
-#if defined(WIN32)
-#    define _Complex
-#endif
 
 DLL void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,

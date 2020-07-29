@@ -50,7 +50,6 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
-#include "mkl.h"
 #include <complex.h>
 #include <math.h>
 #include <stdlib.h>
