@@ -2,11 +2,8 @@
 file(GLOB prep_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c)
 
-file(GLOB prep_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/prep/*.h)
-
 # core sources
-set(PREP_LIBRARY_SOURCES ${prep_tomo_headers} ${prep_tomo_sources})
+set(PREP_LIBRARY_SOURCES ${prep_tomo_sources})
 
 # create library
 add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
