@@ -44,8 +44,9 @@
 // Possible speedups:
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
-//#define WRITE_FILES
-#define _USE_MATH_DEFINES
+#ifndef M_PI
+#    define M_PI 3.14159265359
+#endif
 
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
@@ -175,4 +176,3 @@ filter_is_2d(const char* name)
         return 1;
     return 0;
 }
-
