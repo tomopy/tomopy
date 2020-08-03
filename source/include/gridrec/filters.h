@@ -44,13 +44,12 @@
 // Possible speedups:
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
+#include <math.h>
+#include <string.h>
+
 #ifndef M_PI
 #    define M_PI 3.14159265359
 #endif
-
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
 
 typedef float (*const filter_func)(float, int, int, int, const float*);
 

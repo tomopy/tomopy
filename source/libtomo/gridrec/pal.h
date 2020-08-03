@@ -5,6 +5,23 @@
 
 #pragma once
 
+// Complex types and functions ----------------------------------------------//
+#ifdef __cplusplus
+// For CXX use the standard library complex types
+#    define conjf std::conj<float>
+#    define crealf std::real<float>
+#    define cimagf std::imag<float>
+using namespace std::literals::complex_literals;
+#    define I 1if
+typedef std::complex<float> PAL_COMPLEX;
+#else
+// For C use the complex header which is only present with some compilers
+#    include <complex.h>
+typedef float _Complex PAL_COMPLEX;
+#endif
+
+// Memory allocation and alignment ------------------------------------------//
+
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
@@ -33,20 +50,9 @@
 #    define __ASSSUME_64BYTES_ALIGNED(x)
 #endif
 
-// Swap out Complex types and functions
-#ifdef __cplusplus
-            typedef std::complex<float> complex;
-#    define conjf std::conj<float>
-#    define crealf std::real<float>
-#    define cimagf std::imag<float>
-using namespace std::literals::complex_literals;
-#    define I 1if
-#else
-            typedef float _Complex* complex;
-#endif
-
 //===========================================================================//
-float*
+
+inline float*
 malloc_vector_f(size_t n)
 {
 #ifdef __cplusplus
@@ -55,9 +61,8 @@ malloc_vector_f(size_t n)
     return (float*) malloc(n * sizeof(float));
 #endif
 }
-//===========================================================================//
 
-void
+inline void
 free_vector_f(float* v)
 {
 #ifdef __cplusplus
@@ -70,61 +75,37 @@ free_vector_f(float* v)
 
 //===========================================================================//
 
-#ifdef __cplusplus
-
-complex*
+inline PAL_COMPLEX*
 malloc_vector_c(size_t n)
 {
-    return new complex[n];
-}
+#ifdef __cplusplus
+    return new PAL_COMPLEX[n];
 #else
-inline complex*
-malloc_vector_c(size_t n)
-{
-    return (complex*) malloc(n * sizeof(complex));
-}
+    return (PAL_COMPLEX*) malloc(n * sizeof(PAL_COMPLEX));
 #endif
-//===========================================================================//
+}
 
 #ifdef __cplusplus
-
-void
-free_vector_c(complex*& v)
+inline void
+free_vector_c(PAL_COMPLEX*& v)
 {
     delete[] v;
     v = nullptr;
 }
 #else
 inline void
-free_vector_c(complex* v)
+free_vector_c(PAL_COMPLEX* v)
 {
     free(v);
 }
 #endif
 
 //===========================================================================//
-#ifdef __cplusplus
-void*
-malloc_64bytes_aligned(size_t sz)
-{
-#if defined(__MINGW32__)
-    return __mingw_aligned_malloc(sz, 64);
-#elif defined(_MSC_VER)
-    void* r = _aligned_malloc(sz, 64);
-    return r;
-#else
-    void* r   = NULL;
-    int   err = posix_memalign(&r, 64, sz);
-    return (err) ? NULL : r;
-#endif
-}
-
-#else
 
 static inline void*
 malloc_64bytes_aligned(size_t sz)
 {
-#ifdef __MINGW32__
+#if defined(__MINGW32__)
     return __mingw_aligned_malloc(sz, 64);
 #elif defined(_MSC_VER)
     void* r = _aligned_malloc(sz, 64);
@@ -136,38 +117,20 @@ malloc_64bytes_aligned(size_t sz)
 #endif
 }
 
-#endif
-
 //===========================================================================//
-#ifdef __cplusplus
-complex**
+
+PAL_COMPLEX**
 malloc_matrix_c(size_t nr, size_t nc)
 {
-    complex** m = nullptr;
-    size_t                i;
-
-    // Allocate pointers to rows,
-    m = (complex**) malloc_64bytes_aligned(nr *
-                                                           sizeof(complex*));
-
-    /* Allocate rows and set the pointers to them */
-    m[0] = malloc_vector_c(nr * nc);
-
-    for(i = 1; i < nr; i++)
-    {
-        m[i] = m[i - 1] + nc;
-    }
-    return m;
-}
+#ifdef __cplusplus
+    PAL_COMPLEX** m = nullptr;
 #else
-complex**
-malloc_matrix_c(size_t nr, size_t nc)
-{
-    complex** m = NULL;
-    size_t           i;
+    PAL_COMPLEX** m = NULL;
+#endif
+    size_t i;
 
     // Allocate pointers to rows,
-    m = (complex**) malloc_64bytes_aligned(nr * sizeof(complex*));
+    m = (PAL_COMPLEX**) malloc_64bytes_aligned(nr * sizeof(PAL_COMPLEX*));
 
     /* Allocate rows and set the pointers to them */
     m[0] = malloc_vector_c(nr * nc);
@@ -178,43 +141,32 @@ malloc_matrix_c(size_t nr, size_t nc)
     }
     return m;
 }
-#endif
-//===========================================================================//
-#ifdef __cplusplus
 
+//===========================================================================//
+
+#ifdef __cplusplus
 void
-free_matrix_c(complex**& m)
+free_matrix_c(PAL_COMPLEX**& m)
 {
     free_vector_c(m[0]);
-#if defined(__MINGW32__)
+#    if defined(__MINGW32__)
     __mingw_aligned_free(m);
-#elif defined(_MSC_VER)
+#    elif defined(_MSC_VER)
     _aligned_free(m);
-#else
+#    else
     free(m);
-#endif
+#    endif
     m = nullptr;
 }
 #else
 inline void
-free_matrix_c(complex** m)
+free_matrix_c(PAL_COMPLEX** m)
 {
     free_vector_c(m[0]);
-#ifdef __MINGW32__
+#    ifdef __MINGW32__
     __mingw_aligned_free(m);
-#else
+#    else
     free(m);
-#endif
+#    endif
 }
 #endif
-
-
-
-
-
-
-
-
-
-
-

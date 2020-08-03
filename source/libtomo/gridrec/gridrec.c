@@ -44,38 +44,105 @@
 // Possible speedups:
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
-//#define WRITE_FILES
-#define _USE_MATH_DEFINES
-
-// Use X/Open-7, where posix_memalign is introduced
-#define _XOPEN_SOURCE 700
-
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "mkl.h"
 
 #include "filters.h"
 #include "gridrec.h"
-#include "tables.h"
+#include "pal.h"
 
-#ifndef M_PI
-#    define M_PI 3.14159265359
-#endif
+float
+legendre(int n, const float* coefs, float x)
+{
+    // Compute SUM(coefs(k)*P(2*k,x), for k=0,n/2)
+    // where P(j,x) is the jth Legendre polynomial.
+    // x must be between -1 and 1.
+    float penult, last, cur, y, mxlast;
+
+    y      = coefs[0];
+    penult = 1.0;
+    last   = x;
+    for(int j = 2; j <= n; j++)
+    {
+        mxlast = -(x * last);
+        cur    = -(2 * mxlast + penult) + (penult + mxlast) / j;
+        // cur = (x*(2*j-1)*last-(j-1)*penult)/j;
+        if(!(j & 1))  // if j is even
+        {
+            y += cur * coefs[j >> 1];
+        }
+
+        penult = last;
+        last   = cur;
+    }
+    return y;
+}
 
 void
-set_filter_tables(int dt, int pd, float center,
-                  float (*const pf)(float, int, int, int, const float*),
-                  const float* filter_par, float _Complex* A, unsigned char filter2d)
+set_pswf_tables(float C, int nt, float lambda, const float* coefs, int ltbl, int linv,
+                float* wtbl, float* winv)
+{
+    // Set up lookup tables for convolvent (used in Phase 1 of
+    // do_recon()), and for the final correction factor (used in
+    // Phase 3).
+
+    int         i;
+    float       norm;
+    const float fac   = (float) ltbl / (linv + 0.5);
+    const float polyz = legendre(nt, coefs, 0.);
+
+    wtbl[0] = 1.0;
+    for(i = 1; i <= ltbl; i++)
+    {
+        wtbl[i] = legendre(nt, coefs, (float) i / ltbl) / polyz;
+    }
+
+    // Note the final result at end of Phase 3 contains the factor,
+    // norm^2.  This incorporates the normalization of the 2D
+    // inverse FFT in Phase 2 as well as scale factors involved
+    // in the inverse Fourier transform of the convolvent.
+    norm = sqrt(M_PI / 2 / C / lambda) / 1.2;
+
+    winv[linv] = norm / wtbl[0];
+    __PRAGMA_IVDEP
+    for(i = 1; i <= linv; i++)
+    {
+        // Minus sign for alternate entries
+        // corrects for "natural" data layout
+        // in array H at end of Phase 1.
+        norm           = -norm;
+        winv[linv + i] = winv[linv - i] = norm / wtbl[(int) roundf(i * fac)];
+    }
+}
+
+void
+set_trig_tables(int dt, const float* theta, float** sine, float** cose)
+{
+    // Set up tables of sines and cosines.
+    float *s, *c;
+
+    *sine = s = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(s);
+    *cose = c = malloc_vector_f(dt);
+    __ASSSUME_64BYTES_ALIGNED(c);
+
+    __PRAGMA_SIMD
+    for(int j = 0; j < dt; j++)
+    {
+        s[j] = sinf(theta[j]);
+        c[j] = cosf(theta[j]);
+    }
+}
+
+void
+set_filter_tables(int dt, int pd, float center, filter_func pf, const float* filter_par,
+                  PAL_COMPLEX* A, unsigned char filter2d)
 {
     // Set up the complex array, filphase[], each element of which
     // consists of a real filter factor [obtained from the function,
-    // (*pf)()], multiplying a complex phase factor (derived from the
+    // pf(...)], multiplying a complex phase factor (derived from the
     // parameter, center}.  See Phase 1 comments.
-    // MSVC has an issue with line:
-    //      A[j] *= (cosf(x) - I * sinf(x)) * norm;
-    // below
 
     const float norm  = M_PI / pd / dt;
     const float rtmp1 = 2 * M_PI * center / pd;
@@ -87,7 +154,7 @@ set_filter_tables(int dt, int pd, float center,
     {
         for(j = 0; j < pd2; j++)
         {
-            A[j] = (*pf)((float) j / pd, j, 0, pd2, filter_par);
+            A[j] = pf((float) j / pd, j, 0, pd2, filter_par);
         }
 
         __PRAGMA_SIMD
@@ -105,7 +172,7 @@ set_filter_tables(int dt, int pd, float center,
 
             for(j = 0; j < pd2; j++)
             {
-                A[j0 + j] = (*pf)((float) j / pd, j, i, pd2, filter_par);
+                A[j0 + j] = pf((float) j / pd, j, i, pd2, filter_par);
             }
 
             __PRAGMA_SIMD
@@ -132,15 +199,16 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
 
     float *work, *work2;
 
-    float (*const filter)(float, int, int, int, const float*) = get_filter(fname);
-    const float        C                                      = 7.0;
-    const float        nt                                     = 20.0;
-    const float        lambda                                 = 0.99998546;
-    const unsigned int L                                      = (int) (2 * C / M_PI);
-    const int          ltbl                                   = 512;
+    filter_func filter = get_filter(fname);
+
+    const float        C      = 7.0;
+    const float        nt     = 20.0;
+    const float        lambda = 0.99998546;
+    const unsigned int L      = (int) (2 * C / M_PI);
+    const int          ltbl   = 512;
     int                pdim;
-    float _Complex *   sino, *filphase, *filphase_iter = NULL, **H;
-    float _Complex **  U_d, **V_d;
+    PAL_COMPLEX *      sino, *filphase, *filphase_iter = NULL, **H;
+    PAL_COMPLEX **     U_d, **V_d;
     float *            J_z, *P_z;
 
     const float coefs[11] = { 0.5767616E+02,  -0.8931343E+02, 0.4167596E+02,
@@ -277,7 +345,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         // for carrying out the convolution (step 4 above), but necessitates
         // an additional correction -- See Phase 3 below.
 
-        float _Complex Cdata1, Cdata2;
+        PAL_COMPLEX Cdata1, Cdata2;
 
         // For each projection
         for(p = 0; p < dt; p++)
