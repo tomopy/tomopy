@@ -48,32 +48,11 @@
 #    define M_PI 3.14159265359
 #endif
 
-// Use X/Open-7, where posix_memalign is introduced
-#define _XOPEN_SOURCE 700
-
-#include <complex.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define __LIKELY(x) __builtin_expect(!!(x), 1)
-#ifdef __INTEL_COMPILER
-#    define __PRAGMA_SIMD _Pragma("simd assert")
-#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
-        _Pragma("simd assert, vecremainder, vectorlength(8)")
-#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
-#    define __PRAGMA_IVDEP _Pragma("ivdep")
-#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
-#else
-#    define __PRAGMA_SIMD
-#    define __PRAGMA_SIMD_VECREMAINDER
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#    define __PRAGMA_OMP_SIMD_COLLAPSE
-#    define __PRAGMA_IVDEP
-#    define __ASSSUME_64BYTES_ALIGNED(x)
-#endif
-
+typedef float (*const filter_func)(float, int, int, int, const float*);
 
 // No filter
 float

@@ -52,12 +52,14 @@
 // Use X/Open-7, where posix_memalign is introduced
 #define _XOPEN_SOURCE 700
 
+#include <complex>
+#include <functional>
+
+#include "pal.h"
+
 #include "filters.h"
 #include "mkl.h"
 #include "string.h"
-
-#include <complex>
-#include <functional>
 
 extern "C"
 {
@@ -65,180 +67,9 @@ extern "C"
 #include "tables.h"
 }
 
-typedef std::function<float(float, int, int, int, const float*)> filter_func;
-
-using namespace std::literals::complex_literals;
-
-#if defined(_MSC_VER)
-#    if defined(__LIKELY)
-#        undef __LIKELY
-#    endif
-#    define __LIKELY(EXPR) EXPR
-#endif
-
 #ifndef M_PI
 #    define M_PI 3.14159265359
 #endif
-
-#ifdef __INTEL_COMPILER
-#    define __PRAGMA_SIMD _Pragma("simd assert")
-#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
-        _Pragma("simd assert, vecremainder, vectorlength(8)")
-#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
-#    define __PRAGMA_IVDEP _Pragma("ivdep")
-#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
-#else
-#    define __PRAGMA_SIMD
-#    define __PRAGMA_SIMD_VECREMAINDER
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#    define __PRAGMA_OMP_SIMD_COLLAPSE
-#    define __PRAGMA_IVDEP
-#    define __ASSSUME_64BYTES_ALIGNED(x)
-#endif
-
-//===========================================================================//
-
-void
-cxx_set_filter_tables(int dt, int pd, float center, filter_func pf,
-                      const float* filter_par, std::complex<float>* A,
-                      unsigned char filter2d)
-{
-    // Set up the complex array, filphase[], each element of which
-    // consists of a real filter factor [obtained from the function,
-    // pf(...)], multiplying a complex phase factor (derived from the
-    // parameter, center}.  See Phase 1 comments.
-
-    const float norm  = M_PI / pd / dt;
-    const float rtmp1 = 2 * M_PI * center / pd;
-    int         j, i;
-    int         pd2 = pd / 2;
-    float       x;
-
-    if(!filter2d)
-    {
-        for(j = 0; j < pd2; j++)
-        {
-            A[j] = pf((float) j / pd, j, 0, pd2, filter_par);
-        }
-
-        __PRAGMA_SIMD
-        for(j = 0; j < pd2; j++)
-        {
-            x = j * rtmp1;
-            A[j] *= (cosf(x) - 1if * sinf(x)) * norm;
-        }
-    }
-    else
-    {
-        for(i = 0; i < dt; i++)
-        {
-            int j0 = i * pd2;
-
-            for(j = 0; j < pd2; j++)
-            {
-                A[j0 + j] = pf((float) j / pd, j, i, pd2, filter_par);
-            }
-
-            __PRAGMA_SIMD
-            for(j = 0; j < pd2; j++)
-            {
-                x = j * rtmp1;
-                A[j0 + j] *= (cosf(x) - 1if * sinf(x)) * norm;
-            }
-        }
-    }
-}
-
-//===========================================================================//
-
-float*
-cxx_malloc_vector_f(size_t n)
-{
-    return new float[n];
-}
-
-//===========================================================================//
-
-void
-cxx_free_vector_f(float*& v)
-{
-    delete[] v;
-    v = nullptr;
-}
-
-//===========================================================================//
-
-std::complex<float>*
-cxx_malloc_vector_c(size_t n)
-{
-    return new std::complex<float>[n];
-}
-
-//===========================================================================//
-
-void
-cxx_free_vector_c(std::complex<float>*& v)
-{
-    delete[] v;
-    v = nullptr;
-}
-
-//===========================================================================//
-void*
-cxx_malloc_64bytes_aligned(size_t sz)
-{
-#if defined(__MINGW32__)
-    return __mingw_aligned_malloc(sz, 64);
-#elif defined(_MSC_VER)
-    void* r = _aligned_malloc(sz, 64);
-    return r;
-#else
-    void* r   = NULL;
-    int   err = posix_memalign(&r, 64, sz);
-    return (err) ? NULL : r;
-#endif
-}
-
-//===========================================================================//
-
-std::complex<float>**
-cxx_malloc_matrix_c(size_t nr, size_t nc)
-{
-    std::complex<float>** m = nullptr;
-    size_t                i;
-
-    // Allocate pointers to rows,
-    m = (std::complex<float>**) cxx_malloc_64bytes_aligned(nr *
-                                                           sizeof(std::complex<float>*));
-
-    /* Allocate rows and set the pointers to them */
-    m[0] = cxx_malloc_vector_c(nr * nc);
-
-    for(i = 1; i < nr; i++)
-    {
-        m[i] = m[i - 1] + nc;
-    }
-    return m;
-}
-
-//===========================================================================//
-
-void
-cxx_free_matrix_c(std::complex<float>**& m)
-{
-    cxx_free_vector_c(m[0]);
-#if defined(__MINGW32__)
-    __mingw_aligned_free(m);
-#elif defined(_MSC_VER)
-    _aligned_free(m);
-#else
-    free(m);
-#endif
-    m = nullptr;
-}
-
-//===========================================================================//
 
 void
 gridrec(const float* data, int dy, int dt, int dx, const float* center,
@@ -259,8 +90,8 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     const unsigned int   L      = (int) (2 * C / M_PI);
     const int            ltbl   = 512;
     int                  pdim;
-    std::complex<float>* sino, *filphase, *filphase_iter = NULL, **H;
-    std::complex<float>**U_d, **V_d;
+    complex* sino, *filphase, *filphase_iter = NULL, **H;
+    complex** U_d, **V_d;
     float *              J_z, *P_z;
 
     const float coefs[11] = { 0.5767616E+02,  -0.8931343E+02, 0.4167596E+02,
@@ -279,34 +110,34 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     unsigned char filter2d = filter_is_2d(fname);
 
     // Allocate storage for various arrays.
-    sino = cxx_malloc_vector_c(pdim);
+    sino = malloc_vector_c(pdim);
     if(!filter2d)
     {
-        filphase      = cxx_malloc_vector_c(pdim2);
+        filphase      = malloc_vector_c(pdim2);
         filphase_iter = filphase;
     }
     else
     {
-        filphase = cxx_malloc_vector_c(dt * (pdim2));
+        filphase = malloc_vector_c(dt * (pdim2));
     }
     __ASSSUME_64BYTES_ALIGNED(filphase);
-    H = cxx_malloc_matrix_c(pdim, pdim);
+    H = malloc_matrix_c(pdim, pdim);
     __ASSSUME_64BYTES_ALIGNED(H);
-    wtbl = cxx_malloc_vector_f(ltbl + 1);
+    wtbl = malloc_vector_f(ltbl + 1);
     __ASSSUME_64BYTES_ALIGNED(wtbl);
-    winv = cxx_malloc_vector_f(pdim - 1);
+    winv = malloc_vector_f(pdim - 1);
     __ASSSUME_64BYTES_ALIGNED(winv);
-    J_z = cxx_malloc_vector_f(pdim2 * dt);
+    J_z = malloc_vector_f(pdim2 * dt);
     __ASSSUME_64BYTES_ALIGNED(J_z);
-    P_z = cxx_malloc_vector_f(pdim2 * dt);
+    P_z = malloc_vector_f(pdim2 * dt);
     __ASSSUME_64BYTES_ALIGNED(P_z);
-    U_d = cxx_malloc_matrix_c(dt, pdim);
+    U_d = malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(U_d);
-    V_d = cxx_malloc_matrix_c(dt, pdim);
+    V_d = malloc_matrix_c(dt, pdim);
     __ASSSUME_64BYTES_ALIGNED(V_d);
-    work = cxx_malloc_vector_f(L + 1);
+    work = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work);
-    work2 = cxx_malloc_vector_f(L + 1);
+    work2 = malloc_vector_f(L + 1);
     __ASSSUME_64BYTES_ALIGNED(work2);
 
     // Set up table of sines and cosines.
@@ -349,13 +180,11 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     for(s = 0; s < dy; s += 2)
     {
         // Set up table of combined filter-phase factors.
-        cxx_set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
+        set_filter_tables(dt, pdim, center[s], filter, filter_par, filphase,
                               filter2d);
 
         // First clear the array H
         memset(H[0], 0, pdim * pdim * sizeof(H[0][0]));
-        // for(int i = 0; i < pdim * pdim; ++i)
-        //    *(H[i]) = std::complex<float>();
 
         // Loop over the dt projection angles. For each angle, do the following:
 
@@ -400,7 +229,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         // for carrying out the convolution (step 4 above), but necessitates
         // an additional correction -- See Phase 3 below.
 
-        std::complex<float> Cdata1, Cdata2;
+        complex Cdata1, Cdata2;
 
         // For each projection
         for(p = 0; p < dt; p++)
@@ -418,7 +247,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
                 {
                     second_sino = data[index + delta_index];
                 }
-                sino[j] = data[index] + 1if * second_sino;
+                sino[j] = data[index] + I * second_sino;
             }
 
             __PRAGMA_SIMD_VECREMAINDER
@@ -437,7 +266,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
             for(j = 1; j < pdim2; j++)
             {
                 Cdata1 = filphase_iter[j] * sino[j];
-                Cdata2 = std::conj<float>(filphase_iter[j]) * sino[pdim - j];
+                Cdata2 = conjf(filphase_iter[j]) * sino[pdim - j];
 
                 U = j * cose_p + M2;
                 V = j * sine_p + M2;
@@ -557,11 +386,11 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
                     {
                         const float corrn = corrn_u * winv[k + padx];
                         recon[islc1 + ngridy * (ngridx - 1 - k) + j] =
-                            corrn * std::real<float>(H[iu][iv]);
+                            corrn * crealf(H[iu][iv]);
                         if(__LIKELY((s + 1) < dy))
                         {
                             recon[islc2 + ngridy * (ngridx - 1 - k) + j] =
-                                corrn * std::imag<float>(H[iu][iv]);
+                                corrn * cimagf(H[iu][iv]);
                         }
                     }
                     if(k < ngridx)
@@ -579,18 +408,18 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         }
     }
 
-    cxx_free_vector_f(sine);
-    cxx_free_vector_f(cose);
-    cxx_free_vector_c(sino);
-    cxx_free_vector_f(wtbl);
-    cxx_free_vector_c(filphase);
-    cxx_free_vector_f(winv);
-    cxx_free_vector_f(work);
-    cxx_free_matrix_c(H);
-    cxx_free_vector_f(J_z);
-    cxx_free_vector_f(P_z);
-    cxx_free_matrix_c(U_d);
-    cxx_free_matrix_c(V_d);
+    free_vector_f(sine);
+    free_vector_f(cose);
+    free_vector_c(sino);
+    free_vector_f(wtbl);
+    free_vector_c(filphase);
+    free_vector_f(winv);
+    free_vector_f(work);
+    free_matrix_c(H);
+    free_vector_f(J_z);
+    free_vector_f(P_z);
+    free_matrix_c(U_d);
+    free_matrix_c(V_d);
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
     return;

@@ -6,7 +6,8 @@ if(TOMOPY_CXX_GRIDREC)
         ${CMAKE_CURRENT_LIST_DIR}/filters.c)
     file(GLOB gridrec_tomo_headers
         ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.hh
-        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/filters.h)
+        ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/filters.h
+        ${CMAKE_CURRENT_LIST_DIR}/pal.h)
 
 else(TOMOPY_CXX_GRIDREC)
 
