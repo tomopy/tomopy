@@ -1,3 +1,7 @@
+if(TOMOPY_CXX_GRIDREC)
+    SET_SOURCE_FILES_PROPERTIES("gridrec.c" PROPERTIES LANGUAGE CXX)
+endif()
+
 file(GLOB gridrec_tomo_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.c)
 file(GLOB gridrec_tomo_headers
