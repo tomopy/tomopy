@@ -8,12 +8,13 @@
 // Complex types and functions ----------------------------------------------//
 #ifdef __cplusplus
 // For CXX use the standard library complex types
+#    include <complex>
+typedef std::complex<float> PAL_COMPLEX;
 #    define conjf std::conj<float>
 #    define crealf std::real<float>
 #    define cimagf std::imag<float>
 using namespace std::literals::complex_literals;
 #    define I 1if
-typedef std::complex<float> PAL_COMPLEX;
 #else
 // For C use the complex header which is only present with some compilers
 #    include <complex.h>
