@@ -50,7 +50,15 @@
 #endif
 #define ANSI
 
-DLL void
-gridrec(const float* data, int dy, int dt, int dx, const float* center,
-        const float* theta, float* recon, int ngridx, int ngridy, const char fname[16],
-        const float* filter_par);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    DLL void gridrec(const float* data, int dy, int dt, int dx, const float* center,
+                     const float* theta, float* recon, int ngridx, int ngridy,
+                     const char fname[16], const float* filter_par);
+
+#ifdef __cplusplus
+}
+#endif

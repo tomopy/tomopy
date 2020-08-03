@@ -6,9 +6,9 @@ channels:
 dependencies:
   - coverage!=5.0.2
   - dxchange
-  - gcc_linux-64
+  - gcc_linux-64<=8
   - git
-  - gxx_linux-64
+  - gxx_linux-64<=8
   - h5py
   - libstdcxx-ng
   - libgcc-ng

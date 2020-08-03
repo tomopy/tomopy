@@ -44,42 +44,20 @@
 // Possible speedups:
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
-#ifndef M_PI
-#    define M_PI 3.14159265359
-#endif
-
-// Use X/Open-7, where posix_memalign is introduced
-#define _XOPEN_SOURCE 700
-
-#include <complex.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 
-#define __LIKELY(x) __builtin_expect(!!(x), 1)
-#ifdef __INTEL_COMPILER
-#    define __PRAGMA_SIMD _Pragma("simd assert")
-#    define __PRAGMA_SIMD_VECREMAINDER _Pragma("simd assert, vecremainder")
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8                                           \
-        _Pragma("simd assert, vecremainder, vectorlength(8)")
-#    define __PRAGMA_OMP_SIMD_COLLAPSE _Pragma("omp simd collapse(2)")
-#    define __PRAGMA_IVDEP _Pragma("ivdep")
-#    define __ASSSUME_64BYTES_ALIGNED(x) __assume_aligned((x), 64)
-#else
-#    define __PRAGMA_SIMD
-#    define __PRAGMA_SIMD_VECREMAINDER
-#    define __PRAGMA_SIMD_VECREMAINDER_VECLEN8
-#    define __PRAGMA_OMP_SIMD_COLLAPSE
-#    define __PRAGMA_IVDEP
-#    define __ASSSUME_64BYTES_ALIGNED(x)
+#ifndef M_PI
+#    define M_PI 3.14159265359f
 #endif
 
+typedef float (*const filter_func)(float, int, int, int, const float*);
 
 // No filter
 float
 filter_none(float x, int i, int j, int fwidth, const float* pars)
 {
-    return 1.0;
+    return 1.0f;
 }
 
 // Shepp-Logan filter
@@ -87,7 +65,7 @@ float
 filter_shepp(float x, int i, int j, int fwidth, const float* pars)
 {
     if(i == 0)
-        return 0.0;
+        return 0.0f;
     return fabsf(2 * x) * (sinf(M_PI * x) / (M_PI * x));
 }
 
@@ -102,14 +80,14 @@ filter_cosine(float x, int i, int j, int fwidth, const float* pars)
 float
 filter_hann(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabsf(2 * x) * 0.5 * (1. + cosf(2 * M_PI * x / pars[0]));
+    return fabsf(2 * x) * 0.5f * (1.0f + cosf(2 * M_PI * x / pars[0]));
 }
 
 // Hamming filter
 float
 filter_hamming(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabsf(2 * x) * (0.54 + 0.46 * cosf(2 * M_PI * x / pars[0]));
+    return fabsf(2 * x) * (0.54f + 0.46f * cosf(2 * M_PI * x / pars[0]));
 }
 
 // Ramlak filter
@@ -123,14 +101,14 @@ filter_ramlak(float x, int i, int j, int fwidth, const float* pars)
 float
 filter_parzen(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabsf(2 * x) * pow(1 - fabs(x) / pars[0], 3);
+    return fabsf(2 * x) * powf(1.0f - fabsf(x) / pars[0], 3);
 }
 
 // Butterworth filter
 float
 filter_butterworth(float x, int i, int j, int fwidth, const float* pars)
 {
-    return fabsf(2 * x) / (1 + pow(x / pars[0], 2 * pars[1]));
+    return fabsf(2 * x) / (1.0f + powf(x / pars[0], 2 * pars[1]));
 }
 
 // Custom filter
