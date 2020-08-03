@@ -50,7 +50,7 @@
 #endif
 #define ANSI
 
-#ifdef __cplus_plus
+#ifdef __cplusplus
 extern "C"
 {
 #endif
