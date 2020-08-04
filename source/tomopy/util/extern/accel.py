@@ -46,75 +46,80 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+"""
+Module for external library wrappers.
+"""
 
-import unittest
-from ..util import read_file
-from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
-    find_center_pc
-#from tomopy.util.mproc import get_rank, get_nproc, barrier
-import numpy as np
-from scipy.ndimage.interpolation import shift as image_shift
-import os.path
-import shutil
-from numpy.testing import assert_array_equal as assert_equals
-from numpy.testing import assert_allclose
+import tomopy.util.dtype as dtype
+from . import c_shared_lib
+from . import MissingLibrary
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+__all__ = ['c_accel_mlem',
+           'c_accel_sirt']
 
-try:
-    import mkl
-    found_mkl = True
-except ImportError:
-    found_mkl = False
+LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
 
 
-class CenterFindingTestCase(unittest.TestCase):
+def c_accel_mlem(tomo, center, recon, theta, **kwargs):
 
-    @unittest.skipUnless(found_mkl, "Requires MKL")
-    def test_write_center(self):
-        dpath = os.path.join('test', 'tmp')
-        # if get_nproc() > 1 and get_rank() > 0:
-        #    dpath += "_{}".format(get_rank())
-        cen_range = (5, 7, 0.5)
-        cen = np.arange(*cen_range)
-        write_center(
-            read_file('proj.npy'),
-            read_file('angle.npy'),
-            dpath, cen_range=cen_range,
-            algorithm='gridrec', filter_name='shepp')
-        for m in range(cen.size):
-            assert_equals(
-                os.path.isfile(
-                    os.path.join(
-                        os.path.join('test', 'tmp'),
-                        str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
-        shutil.rmtree(dpath)
+    if LIB_TOMOPY_ACCEL is None:
+        MissingLibrary("MLEM ACCEL")
 
-    def test_find_center(self):
-        sim = read_file('sinogram.npy')
-        ang = np.linspace(0, np.pi, sim.shape[0])
-        cen = find_center(sim, ang)
-        assert_allclose(cen, 45.28, rtol=1e-2)
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
 
-    def test_find_center_vo(self):
-        sim = read_file('sinogram.npy')
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
+    LIB_TOMOPY_ACCEL.cxx_mlem.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_ACCEL.cxx_mlem(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
+        dtype.as_c_float_p(recon),
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(kwargs['pool_size']),
+        dtype.as_c_char_p(kwargs['interpolation']),
+        dtype.as_c_char_p(kwargs['device']),
+        dtype.as_c_int_p(kwargs['grid_size']),
+        dtype.as_c_int_p(kwargs['block_size']))
 
-    def test_find_center_vo_with_downsampling(self):
-        sim = read_file('sinogram.npy')
-        np.pad(
-            sim, ((1000, 1000), (0, 0), (1000, 1000)),
-            mode="constant", constant_values=0)
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
 
-    def test_find_center_pc(self):
-        proj_0 = read_file('projection.npy')
-        proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
-        cen = find_center_pc(proj_0, proj_180)
-        assert_allclose(cen, 73.375, rtol=0.25)
+def c_accel_sirt(tomo, center, recon, theta, **kwargs):
+
+    if LIB_TOMOPY_ACCEL is None:
+        return MissingLibrary("SIRT ACCEL")
+
+    if len(tomo.shape) == 2:
+        # no y-axis (only one slice)
+        dy = 1
+        dt, dx = tomo.shape
+    else:
+        dy, dt, dx = tomo.shape
+
+    LIB_TOMOPY_ACCEL.cxx_sirt.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_ACCEL.cxx_sirt(
+        dtype.as_c_float_p(tomo),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dt),
+        dtype.as_c_int(dx),
+        dtype.as_c_float_p(center),
+        dtype.as_c_float_p(theta),
+        dtype.as_c_float_p(recon),
+        dtype.as_c_int(kwargs['num_gridx']),
+        dtype.as_c_int(kwargs['num_gridy']),
+        dtype.as_c_int(kwargs['num_iter']),
+        dtype.as_c_int(kwargs['pool_size']),
+        dtype.as_c_char_p(kwargs['interpolation']),
+        dtype.as_c_char_p(kwargs['device']),
+        dtype.as_c_int_p(kwargs['grid_size']),
+        dtype.as_c_int_p(kwargs['block_size']))

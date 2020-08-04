@@ -10,7 +10,7 @@ set(BUILD_SHARED_LIBS     OFF CACHE BOOL "Build shared libraries")
 set(PTL_DEVELOPER_INSTALL OFF CACHE BOOL "Install headers, cmake export, and shared libs" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON
     CACHE BOOL "Position independent code" FORCE)
-set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/sharedlibs
+set(CMAKE_INSTALL_LIBDIR ${PYTHON_SITE_DIR}/tomopy/util/extern
     CACHE PATH "Installation directory of libraries" FORCE)
 
 #------------------------------------------------------------------------------#
@@ -37,73 +37,10 @@ endif()
 #
 #------------------------------------------------------------------------------#
 
-# Locate sources and headers for this project headers are included for IDEs
-file(GLOB tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hh
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/*.icc)
-file(GLOB tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/c/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/*.cc)
-
-# core sources
-set(LIBRARY_SOURCES ${tomo_headers} ${tomo_sources})
-
-# target properties based on build
-if(TOMOPY_USE_CUDA)
-    file(GLOB CUDA_LIBRARY_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/gpu/*.cu)
-
-    list(APPEND LIBRARY_SOURCES ${CUDA_LIBRARY_SOURCES})
-
-    list(APPEND TARGET_INCLUDE_DIRECTORIES
-        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-
-    set(CUDA_PROPERTIES
-        CUDA_STANDARD               ${CMAKE_CXX_STANDARD}
-        CUDA_STANDARD_REQUIRED      ON
-        CUDA_SEPARABLE_COMPILATION  ON
-        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-endif()
-
-# create library
-add_library(libtomopy SHARED ${LIBRARY_SOURCES})
-
-# link library
-target_link_libraries(libtomopy PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
-
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-# target properties
-set_target_properties(libtomopy
-    PROPERTIES
-    PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/sharedlibs
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
-    CXX_STANDARD                ${CMAKE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
-    ${CUDA_PROPERTIES})
-
-target_compile_definitions(libtomopy PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
-
-target_compile_options(libtomopy PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
-
-# Install the compiled library
-install(TARGETS libtomopy
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/sharedlibs
-    COMPONENT python)
-
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libtomo)
 
 #------------------------------------------------------------------------------#
 #

@@ -45,76 +45,53 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+"""
+Module for external library wrappers.
+"""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-import unittest
-from ..util import read_file
-from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
-    find_center_pc
-#from tomopy.util.mproc import get_rank, get_nproc, barrier
-import numpy as np
-from scipy.ndimage.interpolation import shift as image_shift
-import os.path
-import shutil
-from numpy.testing import assert_array_equal as assert_equals
-from numpy.testing import assert_allclose
+import tomopy.util.dtype as dtype
+from . import c_shared_lib
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-
-try:
-    import mkl
-    found_mkl = True
-except ImportError:
-    found_mkl = False
+__all__ = ['c_sample',
+           'c_remove_ring']
 
 
-class CenterFindingTestCase(unittest.TestCase):
+LIB_TOMOPY_MISC = c_shared_lib("libtomopy-misc")
 
-    @unittest.skipUnless(found_mkl, "Requires MKL")
-    def test_write_center(self):
-        dpath = os.path.join('test', 'tmp')
-        # if get_nproc() > 1 and get_rank() > 0:
-        #    dpath += "_{}".format(get_rank())
-        cen_range = (5, 7, 0.5)
-        cen = np.arange(*cen_range)
-        write_center(
-            read_file('proj.npy'),
-            read_file('angle.npy'),
-            dpath, cen_range=cen_range,
-            algorithm='gridrec', filter_name='shepp')
-        for m in range(cen.size):
-            assert_equals(
-                os.path.isfile(
-                    os.path.join(
-                        os.path.join('test', 'tmp'),
-                        str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
-        shutil.rmtree(dpath)
 
-    def test_find_center(self):
-        sim = read_file('sinogram.npy')
-        ang = np.linspace(0, np.pi, sim.shape[0])
-        cen = find_center(sim, ang)
-        assert_allclose(cen, 45.28, rtol=1e-2)
+def c_sample(mode, arr, dx, dy, dz, level, axis, out):
+    LIB_TOMOPY_MISC.sample.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_MISC.sample(
+        dtype.as_c_int(mode),
+        dtype.as_c_float_p(arr),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+        dtype.as_c_int(level),
+        dtype.as_c_int(axis),
+        dtype.as_c_float_p(out))
+    return out
 
-    def test_find_center_vo(self):
-        sim = read_file('sinogram.npy')
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
 
-    def test_find_center_vo_with_downsampling(self):
-        sim = read_file('sinogram.npy')
-        np.pad(
-            sim, ((1000, 1000), (0, 0), (1000, 1000)),
-            mode="constant", constant_values=0)
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
-
-    def test_find_center_pc(self):
-        proj_0 = read_file('projection.npy')
-        proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
-        cen = find_center_pc(proj_0, proj_180)
-        assert_allclose(cen, 73.375, rtol=0.25)
+def c_remove_ring(rec, *args):
+    istart = 0
+    iend = rec.shape[0]
+    LIB_TOMOPY_MISC.remove_ring.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_MISC.remove_ring(
+        dtype.as_c_float_p(rec),
+        dtype.as_c_float(args[0]),  # center_x
+        dtype.as_c_float(args[1]),  # center_y
+        dtype.as_c_int(args[2]),  # dx
+        dtype.as_c_int(args[3]),  # dy
+        dtype.as_c_int(args[4]),  # dz
+        dtype.as_c_float(args[5]),  # thresh_max
+        dtype.as_c_float(args[6]),  # thresh_min
+        dtype.as_c_float(args[7]),  # thresh
+        dtype.as_c_int(args[8]),  # theta_min
+        dtype.as_c_int(args[9]),  # rwidth
+        dtype.as_c_int(args[10]),  # int_mode
+        dtype.as_c_int(istart),  # istart
+        dtype.as_c_int(iend))  # iend

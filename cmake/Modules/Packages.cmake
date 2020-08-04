@@ -40,31 +40,39 @@ if(PYTHON_EXECUTABLE)
         ${PYTHON_ROOT_DIR}/include)
 endif()
 
-
 ################################################################################
 #
-#        MKL (required)
+#        MKL (required for gridrec)
 #
 ################################################################################
 
-find_package(MKL REQUIRED)
-
-if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+if(TOMOPY_USE_MKL)
+    if(MKL_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    else()
+        message(FATAL_ERROR "MKL not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "MKL not found. Gridrec will be disabled.")
 endif()
 
-
 ################################################################################
 #
-#        OpenCV (required)
+#        OpenCV (required for CPU acceleration)
 #
 ################################################################################
 
-set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
-list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-
+if(TOMOPY_USE_OPENCV)
+    if(OpenCV_FOUND)
+        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
+    else()
+        message(FATAL_ERROR "OpenCV not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
+endif()
 
 ################################################################################
 #

@@ -6,21 +6,18 @@ channels:
 dependencies:
   - coverage!=5.0.2
   - dxchange
-  - gcc_linux-64<=8
+  - gcc_linux-64
   - git
-  - gxx_linux-64<=8
+  - gxx_linux-64
   - h5py
   - libstdcxx-ng
   - libgcc-ng
-  - mkl ["blas=*=openblas"]
-  - mkl-devel ["blas=*=openblas"]
-  - mkl_fft
+  - nomkl
   - nose
   - numexpr
   - numpy ["blas=*=openblas"]
   - opencv>=3.4 ["blas=*=openblas"]
   - pyctest>0.0.10
-  - python=3.7
   - pywavelets
   - scikit-build
   - scikit-image

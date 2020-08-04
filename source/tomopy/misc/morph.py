@@ -73,10 +73,6 @@ __all__ = ['downsample',
            'sino_360_t0_180',  # For backward compatibility
            'trim_sinogram']
 
-
-LIB_TOMOPY = extern.c_shared_lib('libtomopy')
-
-
 def pad(arr, axis, npad=None, mode='constant', ncore=None, **kwargs):
     """
     Pad an array along specified axis.

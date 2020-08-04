@@ -46,75 +46,42 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+import ctypes
+import os
+import sys
+import logging
 
-import unittest
-from ..util import read_file
-from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
-    find_center_pc
-#from tomopy.util.mproc import get_rank, get_nproc, barrier
-import numpy as np
-from scipy.ndimage.interpolation import shift as image_shift
-import os.path
-import shutil
-from numpy.testing import assert_array_equal as assert_equals
-from numpy.testing import assert_allclose
-
-__author__ = "Doga Gursoy"
-__copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-
-try:
-    import mkl
-    found_mkl = True
-except ImportError:
-    found_mkl = False
+logger = logging.getLogger(__name__)
 
 
-class CenterFindingTestCase(unittest.TestCase):
+def c_shared_lib(lib_name, do_warn=True):
+    """Get the path and import the C-shared library."""
+    load_dll = ctypes.cdll.LoadLibrary
+    ext = '.so'
+    if sys.platform == 'darwin':
+        ext = '.dylib'
+    if os.name == 'nt':
+        ext = '.dll'
+        load_dll = ctypes.windll.LoadLibrary
+    base_path = os.path.abspath(os.path.dirname(__file__))
+    sharedlib = os.path.join(base_path, '%s%s' % (lib_name, ext))
+    if os.path.exists(sharedlib):
+        return load_dll(sharedlib)
+    # cannot find shared lib:
+    if do_warn is True:
+        logger.warning(
+            'OSError: ' +
+            'The following shared lib is missing!\n{}'.format(sharedlib))
 
-    @unittest.skipUnless(found_mkl, "Requires MKL")
-    def test_write_center(self):
-        dpath = os.path.join('test', 'tmp')
-        # if get_nproc() > 1 and get_rank() > 0:
-        #    dpath += "_{}".format(get_rank())
-        cen_range = (5, 7, 0.5)
-        cen = np.arange(*cen_range)
-        write_center(
-            read_file('proj.npy'),
-            read_file('angle.npy'),
-            dpath, cen_range=cen_range,
-            algorithm='gridrec', filter_name='shepp')
-        for m in range(cen.size):
-            assert_equals(
-                os.path.isfile(
-                    os.path.join(
-                        os.path.join('test', 'tmp'),
-                        str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
-        shutil.rmtree(dpath)
 
-    def test_find_center(self):
-        sim = read_file('sinogram.npy')
-        ang = np.linspace(0, np.pi, sim.shape[0])
-        cen = find_center(sim, ang)
-        assert_allclose(cen, 45.28, rtol=1e-2)
+def MissingLibrary(function):
+    print(f"The {function} algorithm is unavailable."
+          " Check CMake logs to determine if TomoPy was"
+          " built with dependencies required by this algorithm.")
 
-    def test_find_center_vo(self):
-        sim = read_file('sinogram.npy')
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
 
-    def test_find_center_vo_with_downsampling(self):
-        sim = read_file('sinogram.npy')
-        np.pad(
-            sim, ((1000, 1000), (0, 0), (1000, 1000)),
-            mode="constant", constant_values=0)
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
-
-    def test_find_center_pc(self):
-        proj_0 = read_file('projection.npy')
-        proj_180 = image_shift(np.fliplr(proj_0), (0, 18.75), mode='reflect')
-        cen = find_center_pc(proj_0, proj_180)
-        assert_allclose(cen, 73.375, rtol=0.25)
+from tomopy.util.extern.recon import *
+from tomopy.util.extern.accel import *
+from tomopy.util.extern.gridrec import *
+from tomopy.util.extern.prep import *
+from tomopy.util.extern.misc import *
