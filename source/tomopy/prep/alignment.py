@@ -52,7 +52,7 @@ import tomopy.util.mproc as mproc
 import logging
 
 from skimage import transform as tf
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
@@ -189,8 +189,8 @@ def align_seq(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(
-                _prj[m], _sim[m], upsample_factor)
+            shift, error, diffphase = phase_cross_correlation(
+                    _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -328,8 +328,8 @@ def align_joint(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(
-                _prj[m], _sim[m], upsample_factor)
+            shift, error, diffphase = phase_cross_correlation(
+                    _prj[m], _sim[m], upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
