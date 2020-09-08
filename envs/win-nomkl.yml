@@ -15,7 +15,7 @@ dependencies:
   - libopencv
   - pywavelets
   - scikit-build
-  - scikit-image
+  - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
