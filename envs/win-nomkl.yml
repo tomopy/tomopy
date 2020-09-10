@@ -19,5 +19,4 @@ dependencies:
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - six
   - vs2017_win-64
