@@ -278,7 +278,8 @@ def recon(
                     (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
-                if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], str):
+                if (not isinstance(kwargs[key], (np.ndarray, np.generic))
+                        and not isinstance(kwargs[key], str)):
                     kwargs[key] = np.array(value)
 
                 # Make sure reg_par and filter_par is float32.
