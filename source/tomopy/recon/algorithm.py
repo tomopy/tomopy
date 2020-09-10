@@ -53,16 +53,17 @@ Module for reconstruction algorithms.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-import six
+import concurrent.futures as cf
 import copy
+import logging
+import os
+
 import numpy as np
+
+from tomopy.sim.project import get_center
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
 import tomopy.util.dtype as dtype
-from tomopy.sim.project import get_center
-import logging
-import concurrent.futures as cf
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,7 @@ def recon(
             Total Variation reconstruction technique
             :cite:`Chambolle:11`.
         'grad'
-            Gradient descent method. 
+            Gradient descent method.
         'tikh'
             Tikhonov regularization with identity Tikhonov matrix.
 
@@ -257,7 +258,7 @@ def recon(
     # Generate kwargs for the algorithm.
     kwargs_defaults = _get_algorithm_kwargs(tomo.shape)
 
-    if isinstance(algorithm, six.string_types):
+    if isinstance(algorithm, str):
 
         allowed_kwargs = copy.copy(allowed_recon_kwargs)
         if algorithm in allowed_accelerated_kwargs:
@@ -277,7 +278,7 @@ def recon(
                     (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
-                if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], six.string_types):
+                if not isinstance(kwargs[key], (np.ndarray, np.generic)) and not isinstance(kwargs[key], str):
                     kwargs[key] = np.array(value)
 
                 # Make sure reg_par and filter_par is float32.

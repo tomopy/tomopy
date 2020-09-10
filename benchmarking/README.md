@@ -40,7 +40,7 @@ $ export PYTHON_VERSION=3.6
 
 $ export CONDA_ENV="tomopy-pyctest"
 
-$ conda install -n ${CONDA_ENV} -c conda-forge -c jrmadsen python=${PYTHON_VERSION} nose six numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr coverage timemory pyctest
+$ conda install -n ${CONDA_ENV} -c conda-forge -c jrmadsen python=${PYTHON_VERSION} nose numpy h5py scipy scikit-image pywavelets mkl-devel mkl_fft python-coveralls dxchange numexpr coverage timemory pyctest
 
 $ source activate ${CONDA_ENV}
 

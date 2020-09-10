@@ -54,10 +54,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import ctypes
-import numpy as np
-import multiprocessing as mp
 import logging
-import six
+import multiprocessing as mp
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ def as_c_float(arr):
 
 
 def as_c_char_p(arr):
-    return ctypes.c_char_p(six.b(arr))
+    return ctypes.c_char_p(arr.encode())
 
 
 def as_c_void_p():
