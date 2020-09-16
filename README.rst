@@ -5,13 +5,9 @@ Python package for tomographic data processing and image reconstruction.
    :target: https://readthedocs.org/projects/tomopy/?badge=latest
    :alt: Read the Docs
 
-.. image:: https://travis-ci.org/tomopy/tomopy.svg?branch=master
-   :target: https://travis-ci.org/tomopy/tomopy
-   :alt: Travis CI
-
-.. image:: https://ci.appveyor.com/api/projects/status/t2ty4k5snkv9od0r/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/tomopy/tomopy
-   :alt: Appyveyor
+.. image:: https://dev.azure.com/tomopy/tomopy/_apis/build/status/tomopy.tomopy?branchName=master
+   :target: https://dev.azure.com/tomopy/tomopy
+   :alt: Azure Pipelines
 
 .. image:: https://coveralls.io/repos/tomopy/tomopy/badge.svg?branch=master
    :target: https://coveralls.io/r/tomopy/tomopy?branch=master

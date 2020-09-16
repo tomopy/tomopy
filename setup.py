@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, sys, glob, shutil, subprocess as sp
+import os
+import sys
+import glob
+import shutil
+import subprocess as sp
 from skbuild import setup
 from skbuild.setuptools_wrap import create_skbuild_argparser
 import argparse
@@ -11,6 +15,7 @@ import platform
 cmake_args = []
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("-h", "--help", help="Print help", action='store_true')
+
 
 def add_bool_opt(opt, enable_opt, disable_opt):
     global cmake_args
@@ -25,6 +30,7 @@ AND disabled.\nGiving priority to disable...\n""".format(opt)
     if disable_opt:
         cmake_args.append("-D{}:BOOL={}".format(opt, "OFF"))
 
+
 def add_option(lc_name, disp_name):
     global parser
     # enable option
@@ -34,6 +40,7 @@ def add_option(lc_name, disp_name):
     parser.add_argument("--disable-{}".format(lc_name), action='store_true',
                         help="Explicitly disable {} build".format(disp_name))
 
+
 add_option("cuda", "CUDA")
 add_option("nvtx", "NVTX (NVIDIA Nsight)")
 add_option("arch", "Hardware optimized")
@@ -42,6 +49,8 @@ add_option("gperf", "gperftools")
 add_option("timemory", "TiMemory")
 add_option("sanitizer", "Enable sanitizer (default=leak)")
 add_option("tasking", "Tasking library (PTL)")
+add_option("mkl", "Intel MKL")
+add_option("opencv", "OpenCV")
 
 parser.add_argument("--sanitizer-type", default="leak",
                     help="Set the sanitizer type",
@@ -65,9 +74,13 @@ if args.enable_avx512 and not args.enable_arch:
 add_bool_opt("TOMOPY_USE_ARCH", args.enable_arch, args.disable_arch)
 add_bool_opt("TOMOPY_USE_AVX512", args.enable_avx512, args.disable_avx512)
 add_bool_opt("TOMOPY_USE_GPERF", args.enable_gperf, args.disable_gperf)
-add_bool_opt("TOMOPY_USE_TIMEMORY", args.enable_timemory, args.disable_timemory)
-add_bool_opt("TOMOPY_USE_SANITIZER", args.enable_sanitizer, args.disable_sanitizer)
+add_bool_opt("TOMOPY_USE_TIMEMORY",
+             args.enable_timemory, args.disable_timemory)
+add_bool_opt("TOMOPY_USE_SANITIZER",
+             args.enable_sanitizer, args.disable_sanitizer)
 add_bool_opt("TOMOPY_USE_PTL", args.enable_tasking, args.disable_tasking)
+add_bool_opt("TOMOPY_USE_MKL", args.enable_mkl, args.disable_mkl)
+add_bool_opt("TOMOPY_USE_OPENCV", args.enable_opencv, args.disable_opencv)
 
 if args.enable_cuda:
     cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))

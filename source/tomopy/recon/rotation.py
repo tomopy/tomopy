@@ -57,7 +57,7 @@ import numpy as np
 from scipy import ndimage
 from tomopy.util.misc import fft2, write_tiff
 from scipy.optimize import minimize
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
@@ -376,7 +376,7 @@ def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     Find rotation axis location by finding the offset between the first
     projection and a mirrored projection 180 degrees apart using
     phase correlation in Fourier space.
-    The ``register_translation`` function uses cross-correlation in Fourier
+    The ``phase_cross_correlation`` function uses cross-correlation in Fourier
     space, optionally employing an upsampled matrix-multiplication DFT to
     achieve arbitrary subpixel precision. :cite:`Guizar:08`.
 
@@ -409,7 +409,7 @@ def find_center_pc(proj1, proj2, tol=0.5, rotc_guess=None):
     proj2 = np.fliplr(proj2)
 
     # Determine shift between images using scikit-image pcm
-    shift = register_translation(proj1, proj2, upsample_factor=1.0 / tol)
+    shift = phase_cross_correlation(proj1, proj2, upsample_factor=1.0 / tol)
 
     # Compute center of rotation as the center of first image and the
     # registered translation with the second image

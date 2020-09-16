@@ -40,31 +40,39 @@ if(PYTHON_EXECUTABLE)
         ${PYTHON_ROOT_DIR}/include)
 endif()
 
-
 ################################################################################
 #
-#        MKL (required)
+#        MKL (required for gridrec)
 #
 ################################################################################
 
-find_package(MKL REQUIRED)
-
-if(MKL_FOUND)
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+if(TOMOPY_USE_MKL)
+    if(MKL_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    else()
+        message(FATAL_ERROR "MKL not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "MKL not found. Gridrec will be disabled.")
 endif()
 
-
 ################################################################################
 #
-#        OpenCV (required)
+#        OpenCV (required for CPU acceleration)
 #
 ################################################################################
 
-set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
-find_package(OpenCV REQUIRED COMPONENTS ${OpenCV_COMPONENTS})
-list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
-
+if(TOMOPY_USE_OPENCV)
+    if(OpenCV_FOUND)
+        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+        list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
+    else()
+        message(FATAL_ERROR "OpenCV not found. Aborting build.")
+    endif()
+else()
+    message(WARNING "OpenCV not found. CPU acceleration will be disabled.")
+endif()
 
 ################################################################################
 #
@@ -172,6 +180,20 @@ endif()
 
 if(TOMOPY_USE_CUDA)
 
+    if(NOT CMAKE_CUDA_HOST_COMPILER)
+        set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    endif()
+
+    if(NOT CMAKE_CUDA_COMPILER)
+        set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
+    endif()
+
+    enable_language(CUDA)
+
+    list(APPEND EXTERNAL_LIBRARIES ${CUDA_npp_LIBRARY})
+    list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
     get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 
     if("CUDA" IN_LIST LANGUAGES)
@@ -228,14 +250,6 @@ if(TOMOPY_USE_CUDA)
 
     endif()
 
-    find_package(CUDA REQUIRED)
-    if(CUDA_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES ${CUDA_npp_LIBRARY})
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
-            ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    else()
-        set(TOMOPY_USE_CUDA OFF)
-    endif()
 endif()
 
 

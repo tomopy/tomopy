@@ -1,0 +1,22 @@
+name: tomopy
+channels:
+  - conda-forge
+  - jrmadsen
+  - defaults
+dependencies:
+  - coverage!=5.0.2
+  - dxchange
+  - git
+  - h5py
+  - nomkl
+  - nose
+  - numexpr
+  - numpy
+  - libopencv
+  - pywavelets
+  - scikit-build
+  - scikit-image>=0.17
+  - scipy
+  - setuptools_scm
+  - setuptools_scm_git_archive
+  - vs2017_win-64

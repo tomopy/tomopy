@@ -60,6 +60,18 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
+try:
+    import mkl
+    found_mkl = True
+except ImportError:
+    found_mkl = False
+
+try:
+    import cv2
+    found_opencv = True
+except ImportError:
+    found_opencv = False
+
 
 class ReconstructionAlgorithmTestCase(unittest.TestCase):
     def setUp(self):
@@ -82,6 +94,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='fbp'),
             read_file('fbp.npy'), rtol=1e-2)
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -89,6 +102,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                 self.prj, self.ang, algorithm='gridrec', filter_name='custom',
                 filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
@@ -112,15 +126,25 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
             read_file('gridrec_parzen.npy'), rtol=1e-2)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
+            recon(self.prj, self.ang, algorithm='gridrec',
+                  filter_name='butterworth'),
             read_file('gridrec_butterworth.npy'), rtol=1e-2)
 
     def test_mlem(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_MLEM"] = "1"
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
-            read_file('mlem.npy'), rtol=1e-2)
+        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4)
+        assert_allclose(result, read_file('mlem.npy'), rtol=1e-2)
+
+    @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
+    def test_mlem_accel(self):
+        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
+                       accelerated=True, device='cpu', ncore=1, pool_size=3)
+        assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
+
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
+    def test_mlem_gpu(self):
+        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4,
+                       accelerated=True, device='gpu', ncore=1, pool_size=3)
+        assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
         assert_allclose(
@@ -148,11 +172,20 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             read_file('pml_quad.npy'), rtol=1e-2)
 
     def test_sirt(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_SIRT"] = "1"
-        r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
-        c_sirt = read_file('sirt.npy')
-        assert_allclose(r_sirt, c_sirt, rtol=1e-2)
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
+        assert_allclose(result, read_file('sirt.npy'), rtol=1e-2)
+
+    @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
+    def test_sirt_accel(self):
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4,
+                       accelerated=True, device='cpu', ncore=1, pool_size=3)
+        assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
+
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
+    def test_sirt_gpu(self):
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4,
+                       accelerated=True, device='gpu', ncore=1, pool_size=3)
+        assert_allclose(result, read_file('sirt_accel_gpu.npy'), rtol=1e-2)
 
     def test_tv(self):
         assert_allclose(

@@ -8,32 +8,43 @@
 include(MacroUtilities)
 include(Compilers)
 
-set(_USE_OMP ON)
-set(_USE_CUDA ON)
-set(_USE_CXX_GRIDREC OFF)
-
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
     set(_USE_CXX_GRIDREC ON)
+else()
+    set(_USE_CXX_GRIDREC OFF)
 endif()
 
 # GNU compiler will enable OpenMP SIMD with -fopenmp-simd
 if(CMAKE_C_COMPILER_IS_GNU)
     set(_USE_OMP OFF)
+else()
+    set(_USE_OMP ON)
 endif()
 
 # Check if CUDA can be enabled
-find_package(CUDA QUIET)
+find_package(CUDA)
 if(CUDA_FOUND)
-    check_language(CUDA)
-    if(CMAKE_CUDA_COMPILER)
-        enable_language(CUDA)
-    else()
-        message(STATUS "No CUDA support")
-        set(_USE_CUDA OFF)
-    endif()
+    set(_USE_CUDA ON)
 else()
     set(_USE_CUDA OFF)
+endif()
+
+# Check if OpenCV can be enabled; only search for desired modules.
+set(OpenCV_COMPONENTS opencv_core opencv_imgproc)
+find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
+if(OpenCV_FOUND)
+    set(_USE_OPENCV ON)
+else()
+    set(_USE_OPENCV OFF)
+endif()
+
+# Check if MKL can be enabled
+find_package(MKL)
+if(MKL_FOUND)
+    set(_USE_MKL ON)
+else()
+    set(_USE_MKL OFF)
 endif()
 
 # features
@@ -41,7 +52,7 @@ add_feature(CMAKE_BUILD_TYPE "Build type (Debug, Release, RelWithDebInfo, MinSiz
 add_feature(CMAKE_INSTALL_PREFIX "Installation prefix")
 add_feature(${PROJECT_NAME}_C_FLAGS "C compiler flags")
 add_feature(${PROJECT_NAME}_CXX_FLAGS "C++ compiler flags")
-add_feature(CMAKE_C_STANDARD "C languae standard")
+add_feature(CMAKE_C_STANDARD "C language standard")
 add_feature(CMAKE_CXX_STANDARD "C++11 STL standard")
 add_feature(PYTHON_EXECUTABLE "Python executable (base path is used to locate MKL, OpenCV, etc.)")
 add_feature(TOMOPY_USER_LIBRARIES "Explicit list of libraries to link")
@@ -54,7 +65,7 @@ endif()
 add_option(TOMOPY_USE_GPERF "Enable using Google perftools profiler" OFF)
 add_option(TOMOPY_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(TOMOPY_USE_OPENMP "Enable OpenMP (for SIMD -- GNU will enable without this setting)" ${_USE_OMP})
-add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ON)
+add_option(TOMOPY_USE_OPENCV "Enable OpenCV for image processing" ${_USE_OPENCV})
 add_option(TOMOPY_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex" ${_USE_CXX_GRIDREC})
@@ -63,6 +74,7 @@ add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
 add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 add_option(TOMOPY_USER_FLAGS "Insert CFLAGS and CXXFLAGS regardless of whether pass check" OFF)
+add_option(TOMOPY_USE_MKL "Enables Intel Math Kernel Library" ${_USE_MKL})
 
 if(TOMOPY_USE_CUDA)
     add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" OFF)
