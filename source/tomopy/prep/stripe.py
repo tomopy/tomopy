@@ -730,7 +730,8 @@ def _remove_large_stripe(tomo, snr, size, drop_ratio, norm):
         tomo[:, m, :] = _rs_large(sino, snr, size, matindex, drop_ratio, norm)
 
 
-def remove_dead_stripe(tomo, snr=3, size=51, norm=True, ncore=None, nchunk=None):
+def remove_dead_stripe(tomo, snr=3, size=51, norm=True,
+                       ncore=None, nchunk=None):
     """
     Remove unresponsive and fluctuating stripe artifacts from sinogram using
     Nghia Vo's approach :cite:`Vo:18` (algorithm 6).
@@ -803,7 +804,8 @@ def _remove_dead_stripe(tomo, snr, size, norm):
         tomo[:, m, :] = _rs_dead(sino, snr, size, matindex, norm)
 
 
-def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, dim=1, ncore=None, nchunk=None):
+def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, dim=1,
+                      ncore=None, nchunk=None):
     """
     Remove all types of stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (combination of algorithm 3,4,5, and 6).
@@ -850,11 +852,11 @@ def _remove_all_stripe(tomo, snr, la_size, sm_size, dim):
         tomo[:, m, :] = sino
 
 
-def remove_stripe_based_interpolation(tomo, snr=3, size=31, drop_ratio=0.1, norm=True,
-                                      ncore=None, nchunk=None):
+def remove_stripe_based_interpolation(tomo, snr=3, size=31, drop_ratio=0.1,
+                                      norm=True, ncore=None, nchunk=None):
     """
-    Remove most types of stripe artifacts from sinograms based on interpolation.
-    Derived from algorithm 4, 5, and 6 in :cite:`Vo:18`.
+    Remove most types of stripe artifacts from sinograms based on
+    interpolation. Derived from algorithm 4, 5, and 6 in :cite:`Vo:18`.
 
     Parameters
     ----------
