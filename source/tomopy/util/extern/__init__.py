@@ -49,12 +49,10 @@
 import ctypes
 import os
 import sys
-import logging
-
-logger = logging.getLogger(__name__)
+import warnings
 
 
-def c_shared_lib(lib_name, do_warn=True):
+def c_shared_lib(lib_name, error=True):
     """Get the path and import the C-shared library."""
     load_dll = ctypes.cdll.LoadLibrary
     ext = '.so'
@@ -67,17 +65,19 @@ def c_shared_lib(lib_name, do_warn=True):
     sharedlib = os.path.join(base_path, '%s%s' % (lib_name, ext))
     if os.path.exists(sharedlib):
         return load_dll(sharedlib)
-    # cannot find shared lib:
-    if do_warn is True:
-        logger.warning(
-            'OSError: ' +
-            'The following shared lib is missing!\n{}'.format(sharedlib))
+    if error:
+        raise ModuleNotFoundError(
+            f'The following shared library is missing:\n{sharedlib}')
+    warnings.warn(
+        'Some compiled functions are unavailable because an optional shared'
+        f' library is missing:\n{sharedlib}', ImportWarning)
 
 
-def MissingLibrary(function):
-    print(f"The {function} algorithm is unavailable."
-          " Check CMake logs to determine if TomoPy was"
-          " built with dependencies required by this algorithm.")
+def _missing_library(function):
+    raise ModuleNotFoundError(
+        f"The {function} algorithm is unavailable because its shared library"
+        " is missing. Check CMake logs to determine if TomoPy was"
+        " built with all dependencies required by this algorithm.")
 
 
 from tomopy.util.extern.recon import *
