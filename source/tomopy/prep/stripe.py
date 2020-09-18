@@ -352,7 +352,7 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
     return arr
 
 
-def remove_stripe_based_sorting(tomo, size, dim=1, ncore=None, nchunk=None):
+def remove_stripe_based_sorting(tomo, size=21, dim=1, ncore=None, nchunk=None):
     """
     Remove full and partial stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 3).
@@ -421,7 +421,7 @@ def _remove_stripe_based_sorting(tomo, size, dim):
 
 
 def remove_stripe_based_filtering(
-        tomo, sigma, size, dim=1, ncore=None, nchunk=None):
+        tomo, sigma=3, size=21, dim=1, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 2).
@@ -497,7 +497,7 @@ def _remove_stripe_based_filtering(tomo, sigma, size, dim):
 
 
 def remove_stripe_based_fitting(
-        tomo, order, sigma, ncore=None, nchunk=None):
+        tomo, order=3, sigma=(5, 20), ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 1).
