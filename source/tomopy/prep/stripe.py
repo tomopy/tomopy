@@ -777,10 +777,9 @@ def _rs_dead(sinogram, snr, size, matindex, norm=True):
     (nrow, _) = sinogram.shape
     sinosmooth = np.apply_along_axis(uniform_filter1d, 0, sinogram, 10)
     listdiff = np.sum(np.abs(sinogram - sinosmooth), axis=0)
-    nmean = np.mean(listdiff)
     listdiffbck = median_filter(listdiff, size)
-    listdiffbck[listdiffbck == 0.0] = nmean
-    listfact = listdiff / listdiffbck
+    listfact = np.divide(listdiff, listdiffbck,
+                         out=np.ones_like(listdiff), where=listdiffbck != 0)
     listmask = _detect_stripe(listfact, snr)
     listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
     listmask[0:2] = 0.0
@@ -791,8 +790,7 @@ def _rs_dead(sinogram, snr, size, matindex, norm=True):
     finter = interpolate.interp2d(listx, listy, matz, kind='linear')
     listxmiss = np.where(listmask > 0.0)[0]
     if len(listxmiss) > 0:
-        matzmiss = finter(listxmiss, listy)
-        sinogram[:, listxmiss] = matzmiss
+        sinogram[:, listxmiss] = finter(listxmiss, listy)
     # Remove residual stripes
     if norm is True:
         sinogram = _rs_large(sinogram, snr, size, matindex)
@@ -920,8 +918,7 @@ def _rs_interpolation(sinogram, snr, size, drop_ratio=0.1, norm=True):
     finter = interpolate.interp2d(listx, listy, matz, kind='linear')
     listxmiss = np.where(listmask > 0.0)[0]
     if len(listxmiss) > 0:
-        matzmiss = finter(listxmiss, listy)
-        sinogram[:, listxmiss] = matzmiss
+        sinogram[:, listxmiss] = finter(listxmiss, listy)
     return sinogram
 
 
