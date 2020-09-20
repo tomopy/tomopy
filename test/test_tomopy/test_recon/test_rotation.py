@@ -94,6 +94,7 @@ class CenterFindingTestCase(unittest.TestCase):
                         str('{0:.2f}'.format(cen[m]) + '.tiff'))), True)
         shutil.rmtree(dpath)
 
+    @unittest.skipUnless(found_mkl, "Requires MKL")
     def test_find_center(self):
         sim = read_file('sinogram.npy')
         ang = np.linspace(0, np.pi, sim.shape[0])
