@@ -679,6 +679,7 @@ def _detect_stripe(listdata, snr):
         xlist[ndrop:-ndrop - 1], listsorted[ndrop:-ndrop - 1], 1)
     numt1 = _intercept + _slope * xlist[-1]
     noiselevel = np.abs(numt1 - _intercept)
+    noiselevel = np.clip(noiselevel, 1e-6, None)
     val1 = np.abs(listsorted[0] - _intercept) / noiselevel
     val2 = np.abs(listsorted[-1] - numt1) / noiselevel
     listmask = np.zeros_like(listdata)
@@ -702,7 +703,8 @@ def _rs_large(sinogram, snr, size, matindex, drop_ratio=0.1, norm=True):
     sinosmooth = median_filter(sinosort, (1, size))
     list1 = np.mean(sinosort[ndrop:nrow - ndrop], axis=0)
     list2 = np.mean(sinosmooth[ndrop:nrow - ndrop], axis=0)
-    listfact = list1 / list2
+    listfact = np.divide(list1, list2,
+                         out=np.ones_like(list1), where=list2 != 0)
     # Locate stripes
     listmask = _detect_stripe(listfact, snr)
     listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
@@ -903,7 +905,8 @@ def _rs_interpolation(sinogram, snr, size, drop_ratio=0.1, norm=True):
     sinosmooth = median_filter(sinosort, (1, size))
     list1 = np.mean(sinosort[ndrop:nrow - ndrop], axis=0)
     list2 = np.mean(sinosmooth[ndrop:nrow - ndrop], axis=0)
-    listfact = list1 / list2
+    listfact = np.divide(list1, list2,
+                         out=np.ones_like(list1), where=list2 != 0)
     listmask = _detect_stripe(listfact, snr)
     listmask = np.float32(binary_dilation(listmask, iterations=1))
     matfact = np.tile(listfact, (nrow, 1))
