@@ -52,7 +52,7 @@ Module for external library wrappers.
 
 import tomopy.util.dtype as dtype
 from . import c_shared_lib
-from . import MissingLibrary
+from . import _missing_library
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -60,13 +60,13 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_accel_mlem',
            'c_accel_sirt']
 
-LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel")
+LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel", error=False)
 
 
 def c_accel_mlem(tomo, center, recon, theta, **kwargs):
 
     if LIB_TOMOPY_ACCEL is None:
-        MissingLibrary("MLEM ACCEL")
+        _missing_library("MLEM ACCEL")
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
@@ -97,7 +97,7 @@ def c_accel_mlem(tomo, center, recon, theta, **kwargs):
 def c_accel_sirt(tomo, center, recon, theta, **kwargs):
 
     if LIB_TOMOPY_ACCEL is None:
-        return MissingLibrary("SIRT ACCEL")
+        _missing_library("SIRT ACCEL")
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
