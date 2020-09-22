@@ -352,7 +352,7 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
     return arr
 
 
-def remove_stripe_based_sorting(tomo, size=21, dim=1, ncore=None, nchunk=None):
+def remove_stripe_based_sorting(tomo, size=None, dim=1, ncore=None, nchunk=None):
     """
     Remove full and partial stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 3).
@@ -415,13 +415,18 @@ def _rs_sort(sinogram, size, matindex, dim):
 
 def _remove_stripe_based_sorting(tomo, size, dim):
     matindex = _create_matindex(tomo.shape[2], tomo.shape[0])
+    if size is None:
+        if tomo.shape[2] > 2000:
+            size = 21
+        else:
+            size = max(5, int(0.01 * tomo.shape[2]))
     for m in range(tomo.shape[1]):
         sino = tomo[:, m, :]
         tomo[:, m, :] = _rs_sort(sino, size, matindex, dim)
 
 
 def remove_stripe_based_filtering(
-        tomo, sigma=3, size=21, dim=1, ncore=None, nchunk=None):
+        tomo, sigma=3, size=None, dim=1, ncore=None, nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 2).
@@ -490,6 +495,11 @@ def _remove_stripe_based_filtering(tomo, sigma, size, dim):
     pad = min(150, int(0.1 * tomo.shape[0]))
     window = _create_1d_window(tomo.shape[0], sigma, pad)
     listsign = _create_listsign(tomo.shape[0], pad)
+    if size is None:
+        if tomo.shape[2] > 2000:
+            size = 21
+        else:
+            size = max(5, int(0.01 * tomo.shape[2]))
     for m in range(tomo.shape[1]):
         sino = tomo[:, m, :]
         tomo[:, m, :] = _rs_filter(
