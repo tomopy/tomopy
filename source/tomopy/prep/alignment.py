@@ -913,7 +913,7 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
                                 ncore=None, nchunk=None):
     """
     Apply distortion correction to projections using the polynomial model.
-    Coefficients are calculated using Vounwarp package.:cite:`Vo:15`
+    Coefficients are calculated using Vounwarp package :cite:`Vo:15`.
 
     Parameters
     ----------
@@ -990,7 +990,7 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     """
     Generate an unwarped sinogram of a 3D tomographic data using
     the polynomial model. Coefficients are calculated using Vounwarp
-    package :cite:`Vo:15`
+    package :cite:`Vo:15`.
 
     Parameters
     ----------
