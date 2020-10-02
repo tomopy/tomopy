@@ -145,6 +145,7 @@ autodoc_mock_imports = [
     'concurrent',
     'DM3lib',
     'libtomopy',
+    'tomopy.util.extern',
     'matplotlib',
     'numexpr',
     'numpy',
