@@ -236,6 +236,9 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
         Rotation axis location.
     """
     tomo = dtype.as_float32(tomo)
+    if tomo.ndim == 2:
+        tomo = np.expand_dims(tomo, 1)
+        ind = 0
     (depth, height, width) = tomo.shape
     if ind is None:
         ind = height // 2
