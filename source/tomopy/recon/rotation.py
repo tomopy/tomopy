@@ -62,6 +62,8 @@ from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
+from tomopy.util.mproc import distribute_jobs
+import multiprocessing as mp
 import os.path
 import logging
 
@@ -203,18 +205,19 @@ def _find_center_cost(
 
 
 def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
-                   ratio=0.5, drop=20):
+                   ratio=0.5, drop=20, ncore=None):
     """
     Find rotation axis location using Nghia Vo's method. :cite:`Vo:14`.
 
     Parameters
     ----------
     tomo : ndarray
-        3D tomographic data.
+        3D tomographic data or a 2D sinogram.
     ind : int, optional
         Index of the slice to be used for reconstruction.
     smin, smax : int, optional
-        Coarse search radius. Reference to the horizontal center of the sinogram.
+        Coarse search radius. Reference to the horizontal center of
+        the sinogram.
     srad : float, optional
         Fine search radius.
     step : float, optional
@@ -224,6 +227,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
         It's used to generate the mask.
     drop : int, optional
         Drop lines around vertical center of the mask.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
 
     Returns
     -------
@@ -253,18 +258,47 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
         _tomo_coarse = downsample(
             np.expand_dims(_tomo_cs, 1), level=2)[:, 0, :]
         init_cen = _search_coarse(
-            _tomo_coarse, smin / 4.0, smax / 4.0, ratio, drop)
+            _tomo_coarse, smin / 4.0, smax / 4.0, ratio, drop, ncore=ncore)
         fine_cen = _search_fine(_tomo_fs, srad, step,
-                                init_cen * 4, ratio, drop)
+                                init_cen * 4.0, ratio, drop, ncore=ncore)
     else:
-        init_cen = _search_coarse(_tomo_cs, smin, smax, ratio, drop)
-        fine_cen = _search_fine(_tomo_fs, srad, step, init_cen, ratio, drop)
-
+        init_cen = _search_coarse(_tomo_cs, smin, smax, ratio, drop,
+                                  ncore=ncore)
+        fine_cen = _search_fine(_tomo_fs, srad, step,
+                                init_cen, ratio, drop, ncore=ncore)
     logger.debug('Rotation center search finished: %i', fine_cen)
     return fine_cen
 
 
-def _search_coarse(sino, smin, smax, ratio, drop):
+def _calculate_metric(shift_col, sino1, sino2, sino3, mask):
+    """
+    Metric calculation.
+    """
+    shift_col = 1.0 * np.squeeze(shift_col)
+    if np.abs(shift_col - np.floor(shift_col)) == 0.0:
+        shift_col = int(shift_col)
+        sino_shift = np.roll(sino2, shift_col, axis=1)
+        if shift_col >= 0:
+            sino_shift[:, :shift_col] = sino3[:, :shift_col]
+        else:
+            sino_shift[:, shift_col:] = sino3[:, shift_col:]
+        mat = np.vstack((sino1, sino_shift))
+    else:
+        sino_shift = ndimage.interpolation.shift(
+            sino2, (0, shift_col), order=3, prefilter=True)
+        if shift_col >= 0:
+            shift_int = int(np.ceil(shift_col))
+            sino_shift[:, :shift_int] = sino3[:, :shift_int]
+        else:
+            shift_int = int(np.floor(shift_col))
+            sino_shift[:, shift_int:] = sino3[:, shift_int:]
+        mat = np.vstack((sino1, sino_shift))
+    metric = np.mean(
+        np.abs(np.fft.fftshift(fft2(mat))) * mask)
+    return np.asarray([metric], dtype=np.float32)
+
+
+def _search_coarse(sino, smin, smax, ratio, drop, ncore=None):
     """
     Coarse search for finding the rotation center.
     """
@@ -272,27 +306,30 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     cen_fliplr = (ncol - 1.0) / 2.0
     smin = np.int16(np.clip(smin + cen_fliplr, 0, ncol - 1) - cen_fliplr)
     smax = np.int16(np.clip(smax + cen_fliplr, 0, ncol - 1) - cen_fliplr)
-    # Flip left-right the [0:Pi ] sinogram to make a full [0;2Pi] sinogram
     flip_sino = np.fliplr(sino)
-    # Below image is used for compensating the shift of the [Pi;2Pi] sinogram
-    # It helps to avoid local minima.
     comp_sino = np.flipud(sino)
     list_shift = np.arange(smin, smax + 1)
-    list_metric = np.zeros(len(list_shift), dtype='float32')
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
-    sino_sino = np.vstack((sino, flip_sino))
-    abs_fft2_sino = np.empty_like(sino_sino)
-    for i in list_shift:
-        _sino = sino_sino[nrow:]
-        _sino[...] = np.roll(flip_sino, i, axis=1)
-        if i >= 0:
-            _sino[:, 0:i] = comp_sino[:, 0:i]
-        else:
-            _sino[:, i:] = comp_sino[:, i:]
-        fft2sino = np.fft.fftshift(fft2(sino_sino))
-        np.abs(fft2sino, out=abs_fft2_sino)
-        abs_fft2_sino *= mask
-        list_metric[i - smin] = abs_fft2_sino.mean()
+    if ncore != 1:
+        list_metric = distribute_jobs(np.float32(list_shift),
+                                      _calculate_metric, axis=0,
+                                      args=(sino, flip_sino, comp_sino, mask),
+                                      ncore=ncore, nchunk=1)
+    else:
+        list_metric = np.zeros(len(list_shift), dtype=np.float32)
+        sino_sino = np.vstack((sino, flip_sino))
+        abs_fft2_sino = np.empty_like(sino_sino)
+        for i in list_shift:
+            _sino = sino_sino[nrow:]
+            _sino[...] = np.roll(flip_sino, i, axis=1)
+            if i >= 0:
+                _sino[:, 0:i] = comp_sino[:, 0:i]
+            else:
+                _sino[:, i:] = comp_sino[:, i:]
+            fft2sino = np.fft.fftshift(fft2(sino_sino))
+            np.abs(fft2sino, out=abs_fft2_sino)
+            abs_fft2_sino *= mask
+            list_metric[i - smin] = abs_fft2_sino.mean()
     minpos = np.argmin(list_metric)
     if minpos == 0:
         logger.debug('WARNING!!!Global minimum is out of searching range')
@@ -304,7 +341,7 @@ def _search_coarse(sino, smin, smax, ratio, drop):
     return init_cen
 
 
-def _search_fine(sino, srad, step, init_cen, ratio, drop):
+def _search_fine(sino, srad, step, init_cen, ratio, drop, ncore=None):
     """
     Fine search for finding the rotation center.
     """
@@ -315,22 +352,29 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop):
     init_cen = np.clip(init_cen, srad, ncol - srad - 1)
     list_cor = init_cen + np.arange(-srad, srad + step, step)
     flip_sino = np.fliplr(sino)
-    comp_sino = np.flipud(sino)  # Used to avoid local minima
-    list_metric = np.zeros(len(list_cor), dtype=np.float32)
+    comp_sino = np.flipud(sino)
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
-    for i, cor in enumerate(list_cor):
-        shift = 2.0 * (cor - cen_fliplr)
-        sino_shift = ndimage.interpolation.shift(
-            flip_sino, (0, shift), order=3, prefilter=True)
-        if shift >= 0:
-            shift_int = np.int16(np.ceil(shift))
-            sino_shift[:, :shift_int] = comp_sino[:, :shift_int]
-        else:
-            shift_int = np.int16(np.floor(shift))
-            sino_shift[:, shift_int:] = comp_sino[:, shift_int:]
-        sinojoin = np.vstack((sino, sino_shift))
-        list_metric[i] = np.mean(np.abs(
-            np.fft.fftshift(fft2(sinojoin))) * mask)
+    if ncore != 1:
+        list_shift = 2.0 * (list_cor - cen_fliplr)
+        list_metric = distribute_jobs(np.float32(list_shift),
+                                      _calculate_metric, axis=0,
+                                      args=(sino, flip_sino, comp_sino, mask),
+                                      ncore=ncore, nchunk=1)
+    else:
+        list_metric = np.zeros(len(list_cor), dtype=np.float32)
+        for i, cor in enumerate(list_cor):
+            shift = 2.0 * (cor - cen_fliplr)
+            sino_shift = ndimage.interpolation.shift(
+                flip_sino, (0, shift), order=3, prefilter=True)
+            if shift >= 0:
+                shift_int = np.int16(np.ceil(shift))
+                sino_shift[:, :shift_int] = comp_sino[:, :shift_int]
+            else:
+                shift_int = np.int16(np.floor(shift))
+                sino_shift[:, shift_int:] = comp_sino[:, shift_int:]
+            sinojoin = np.vstack((sino, sino_shift))
+            list_metric[i] = np.mean(np.abs(
+                np.fft.fftshift(fft2(sinojoin))) * mask)
     cor = list_cor[np.argmin(list_metric)]
     return cor
 
@@ -359,7 +403,7 @@ def _create_mask(nrow, ncol, radius, drop):
     dv = (nrow - 1.0) / (nrow * 2.0 * np.pi)
     cen_row = np.int16(np.ceil(nrow / 2.0) - 1)
     cen_col = np.int16(np.ceil(ncol / 2.0) - 1)
-    drop = min(drop, np.int16(np.ceil(0.1 * nrow)))
+    drop = min(drop, np.int16(np.ceil(0.05 * nrow)))
     mask = np.zeros((nrow, ncol), dtype='float32')
     for i in range(nrow):
         pos = np.int16(np.round(((i - cen_row) * dv / radius) / du))
