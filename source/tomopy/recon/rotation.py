@@ -63,7 +63,6 @@ from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
 from tomopy.util.mproc import distribute_jobs
-import multiprocessing as mp
 import os.path
 import logging
 
@@ -316,23 +315,11 @@ def _search_coarse(sino, smin, smax, ratio, drop, ncore=None):
     list_cor = np.arange(start_cor, stop_cor + 0.5, 0.5)
     list_metric = np.zeros(len(list_cor), dtype=np.float32)
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
-    if ncore != 1:
-        list_shift = 2.0 * (list_cor - cen_fliplr)
-        list_metric = distribute_jobs(np.float32(list_shift),
-                                      _calculate_metric, axis=0,
-                                      args=(sino, flip_sino, comp_sino, mask),
-                                      ncore=ncore, nchunk=1)
-    else:
-        for i, cor in enumerate(list_cor):
-            shift = np.int16(2.0 * (cor - cen_fliplr))
-            sino_shift = np.roll(flip_sino, shift, axis=1)
-            if shift >= 0:
-                sino_shift[:, :shift] = comp_sino[:, :shift]
-            else:
-                sino_shift[:, shift:] = comp_sino[:, shift:]
-            sinojoin = np.vstack((sino, sino_shift))
-            list_metric[i] = np.mean(
-                np.abs(np.fft.fftshift(fft2(sinojoin))) * mask)
+    list_shift = 2.0 * (list_cor - cen_fliplr)
+    list_metric = distribute_jobs(np.float32(list_shift),
+                                  _calculate_metric, axis=0,
+                                  args=(sino, flip_sino, comp_sino, mask),
+                                  ncore=ncore, nchunk=1)
     minpos = np.argmin(list_metric)
     if minpos == 0:
         logger.debug('WARNING!!!Global minimum is out of searching range')
@@ -357,27 +344,11 @@ def _search_fine(sino, srad, step, init_cen, ratio, drop, ncore=None):
     flip_sino = np.fliplr(sino)
     comp_sino = np.flipud(sino)
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
-    if ncore != 1:
-        list_shift = 2.0 * (list_cor - cen_fliplr)
-        list_metric = distribute_jobs(np.float32(list_shift),
-                                      _calculate_metric, axis=0,
-                                      args=(sino, flip_sino, comp_sino, mask),
-                                      ncore=ncore, nchunk=1)
-    else:
-        list_metric = np.zeros(len(list_cor), dtype=np.float32)
-        for i, cor in enumerate(list_cor):
-            shift = 2.0 * (cor - cen_fliplr)
-            sino_shift = ndimage.interpolation.shift(
-                flip_sino, (0, shift), order=3, prefilter=True)
-            if shift >= 0:
-                shift_int = np.int16(np.ceil(shift))
-                sino_shift[:, :shift_int] = comp_sino[:, :shift_int]
-            else:
-                shift_int = np.int16(np.floor(shift))
-                sino_shift[:, shift_int:] = comp_sino[:, shift_int:]
-            sinojoin = np.vstack((sino, sino_shift))
-            list_metric[i] = np.mean(np.abs(
-                np.fft.fftshift(fft2(sinojoin))) * mask)
+    list_shift = 2.0 * (list_cor - cen_fliplr)
+    list_metric = distribute_jobs(np.float32(list_shift),
+                                  _calculate_metric, axis=0,
+                                  args=(sino, flip_sino, comp_sino, mask),
+                                  ncore=ncore, nchunk=1)
     cor = list_cor[np.argmin(list_metric)]
     return cor
 
@@ -534,8 +505,8 @@ def write_center(
         'grad'
             Gradient descent method with a constant step size
         'tikh'
-            Tikhonov regularization with identity Tikhonov matrix.            
-            
+            Tikhonov regularization with identity Tikhonov matrix.
+
 
     filter_name : str, optional
         Name of the filter for analytic reconstruction.
