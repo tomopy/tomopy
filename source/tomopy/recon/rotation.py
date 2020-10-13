@@ -253,8 +253,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
     # Denoising
     # There's a critical reason to use different window sizes
     # between coarse and fine search.
-    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1))
-    _tomo_fs = ndimage.filters.gaussian_filter(_tomo, (2, 2))
+    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1), mode='reflect')
+    _tomo_fs = ndimage.filters.gaussian_filter(_tomo, (2, 2), mode='reflect')
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
@@ -306,33 +306,31 @@ def _search_coarse(sino, smin, smax, ratio, drop, ncore=None):
     Coarse search for finding the rotation center.
     """
     (nrow, ncol) = sino.shape
+    start_cor = ncol//2 + smin
+    stop_cor = ncol//2 + smax
     cen_fliplr = (ncol - 1.0) / 2.0
-    smin = np.int16(np.clip(smin + cen_fliplr, 0, ncol - 1) - cen_fliplr)
-    smax = np.int16(np.clip(smax + cen_fliplr, 0, ncol - 1) - cen_fliplr)
     flip_sino = np.fliplr(sino)
-    comp_sino = np.flipud(sino)
-    list_shift = np.arange(smin, smax + 1)
+    comp_sino = np.flipud(sino)  # Used to avoid local minima
+    list_cor = np.arange(start_cor, stop_cor + 0.5, 0.5)
+    list_metric = np.zeros(len(list_cor), dtype=np.float32)
     mask = _create_mask(2 * nrow, ncol, 0.5 * ratio * ncol, drop)
     if ncore != 1:
+        list_shift = 2.0 * (list_cor - cen_fliplr)
         list_metric = distribute_jobs(np.float32(list_shift),
                                       _calculate_metric, axis=0,
                                       args=(sino, flip_sino, comp_sino, mask),
                                       ncore=ncore, nchunk=1)
     else:
-        list_metric = np.zeros(len(list_shift), dtype=np.float32)
-        sino_sino = np.vstack((sino, flip_sino))
-        abs_fft2_sino = np.empty_like(sino_sino)
-        for i in list_shift:
-            _sino = sino_sino[nrow:]
-            _sino[...] = np.roll(flip_sino, i, axis=1)
-            if i >= 0:
-                _sino[:, 0:i] = comp_sino[:, 0:i]
+        for i, cor in enumerate(list_cor):
+            shift = np.int16(2.0 * (cor - cen_fliplr))
+            sino_shift = np.roll(flip_sino, shift, axis=1)
+            if shift >= 0:
+                sino_shift[:, :shift] = comp_sino[:, :shift]
             else:
-                _sino[:, i:] = comp_sino[:, i:]
-            fft2sino = np.fft.fftshift(fft2(sino_sino))
-            np.abs(fft2sino, out=abs_fft2_sino)
-            abs_fft2_sino *= mask
-            list_metric[i - smin] = abs_fft2_sino.mean()
+                sino_shift[:, shift:] = comp_sino[:, shift:]
+            sinojoin = np.vstack((sino, sino_shift))
+            list_metric[i] = np.mean(
+                np.abs(np.fft.fftshift(fft2(sinojoin))) * mask)
     minpos = np.argmin(list_metric)
     if minpos == 0:
         logger.debug('WARNING!!!Global minimum is out of searching range')
@@ -340,8 +338,8 @@ def _search_coarse(sino, smin, smax, ratio, drop, ncore=None):
     if minpos == len(list_metric) - 1:
         logger.debug('WARNING!!!Global minimum is out of searching range')
         logger.debug('Please extend smax: %i', smax)
-    init_cen = cen_fliplr + list_shift[minpos] / 2.0
-    return init_cen
+    cor = list_cor[minpos]
+    return cor
 
 
 def _search_fine(sino, srad, step, init_cen, ratio, drop, ncore=None):
@@ -409,7 +407,7 @@ def _create_mask(nrow, ncol, radius, drop):
     drop = min(drop, np.int16(np.ceil(0.05 * nrow)))
     mask = np.zeros((nrow, ncol), dtype='float32')
     for i in range(nrow):
-        pos = np.int16(np.round(((i - cen_row) * dv / radius) / du))
+        pos = np.int16(np.ceil(((i - cen_row) * dv / radius) / du))
         (pos1, pos2) = np.clip(np.sort(
             (-pos + cen_col, pos + cen_col)), 0, ncol - 1)
         mask[i, pos1:pos2 + 1] = 1.0
