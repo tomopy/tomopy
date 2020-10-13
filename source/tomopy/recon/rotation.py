@@ -53,18 +53,20 @@ Module for functions related to finding axis of rotation.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import logging
+import os.path
+
 import numpy as np
 from scipy import ndimage
-from tomopy.util.misc import fft2, write_tiff
 from scipy.optimize import minimize
 from skimage.registration import phase_cross_correlation
+
 from tomopy.misc.corr import circ_mask
 from tomopy.misc.morph import downsample
 from tomopy.recon.algorithm import recon
 import tomopy.util.dtype as dtype
+from tomopy.util.misc import fft2, write_tiff
 from tomopy.util.mproc import distribute_jobs
-import os.path
-import logging
 
 logger = logging.getLogger(__name__)
 
