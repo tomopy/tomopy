@@ -306,9 +306,11 @@ def _search_coarse(sino, smin, smax, ratio, drop, ncore=None):
     Coarse search for finding the rotation center.
     """
     (nrow, ncol) = sino.shape
-    start_cor = ncol//2 + smin
-    stop_cor = ncol//2 + smax
     cen_fliplr = (ncol - 1.0) / 2.0
+    smin = np.int16(np.clip(smin + cen_fliplr, 0, ncol - 1) - cen_fliplr)
+    smax = np.int16(np.clip(smax + cen_fliplr, 0, ncol - 1) - cen_fliplr)
+    start_cor = ncol // 2 + smin
+    stop_cor = ncol // 2 + smax
     flip_sino = np.fliplr(sino)
     comp_sino = np.flipud(sino)  # Used to avoid local minima
     list_cor = np.arange(start_cor, stop_cor + 0.5, 0.5)
