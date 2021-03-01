@@ -142,10 +142,10 @@ extern "C"
 // relevant OpenCV headers
 //
 #if defined(TOMOPY_USE_OPENCV)
-    #include <opencv2/core.hpp>
-    #include <opencv2/imgproc.hpp>
-    #include <opencv2/imgproc/imgproc.hpp>
-    #include <opencv2/imgproc/types_c.h>
+#    include <opencv2/core.hpp>
+#    include <opencv2/imgproc.hpp>
+#    include <opencv2/imgproc/imgproc.hpp>
+#    include <opencv2/imgproc/types_c.h>
 #endif
 
 //======================================================================================//
@@ -298,10 +298,28 @@ init_nvtx();
             }
 #    endif
 
+// always
+#    if !defined(CUDA_FAST_CHECK_LAST_ERROR)
+#        define CUDA_FAST_CHECK_LAST_ERROR()                                             \
+            {                                                                            \
+                cudaError err = cudaGetLastError();                                      \
+                if(cudaSuccess != err)                                                   \
+                {                                                                        \
+                    fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",      \
+                            __FUNCTION__, __FILE__, __LINE__, cudaGetErrorString(err));  \
+                    std::stringstream ss;                                                \
+                    ss << "cudaCheckError() failed at " << __FUNCTION__ << "@'"          \
+                       << __FILE__ << "':" << __LINE__ << " : "                          \
+                       << cudaGetErrorString(err);                                       \
+                    throw std::runtime_error(ss.str());                                  \
+                }                                                                        \
+            }
+#    endif
+
 // this is only defined in debug mode
 
 #    if !defined(CUDA_CHECK_LAST_ERROR)
-#        if defined(DEBUG)
+#        if defined(DEBUG) && !defined(NDEBUG)
 #            define CUDA_CHECK_LAST_ERROR()                                              \
                 {                                                                        \
                     cudaStreamSynchronize(0);                                            \
@@ -329,7 +347,7 @@ init_nvtx();
 // this is only defined in debug mode
 
 #    if !defined(CUDA_CHECK_LAST_STREAM_ERROR)
-#        if defined(DEBUG)
+#        if defined(DEBUG) && !defined(NDEBUG)
 #            define CUDA_CHECK_LAST_STREAM_ERROR(stream)                                 \
                 {                                                                        \
                     cudaStreamSynchronize(stream);                                       \

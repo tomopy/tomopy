@@ -124,6 +124,7 @@ mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
 
     // synchronize the stream (do this frequently to avoid backlog)
     stream_sync(stream);
+    CUDA_FAST_CHECK_LAST_ERROR();
 
     // reset destination arrays (NECESSARY! or will cause NaNs)
     // only do once bc for same theta, same pixels get overwritten
@@ -156,7 +157,7 @@ mlem_gpu_compute_projection(data_array_t& gpu_data, int p, int dy, int dt, int d
         CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
         // synchronize the stream (do this frequently to avoid backlog)
-        stream_sync(stream);
+        // stream_sync(stream);
     }
 }
 
@@ -175,7 +176,7 @@ mlem_cuda(const float* cpu_data, int dy, int dt, int dx, const float*, const flo
     // compute some properties (expected python threads, max threads, device assignment)
     int pythread_num = ntid++;
     int device       = pythread_num % cuda_device_count();  // assign to device
-    device           = GetEnv("TOMOPY_DEVICE_NUM", device);
+    device           = GetEnv("TOMOPY_DEVICE_NUM", device) % cuda_device_count();
 
     TIMEMORY_AUTO_TIMER("");
 
