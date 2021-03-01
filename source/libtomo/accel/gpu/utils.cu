@@ -207,8 +207,6 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
 
     if(nppGetStream() != stream)
         throw std::runtime_error("Error! Wrong stream!");
-    // stream_sync(stream);
-    // nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
