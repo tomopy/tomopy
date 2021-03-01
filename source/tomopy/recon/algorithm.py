@@ -418,8 +418,7 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         # execute recon on ncore processes. Accelerated methods have internal thread-pool
         # and NVIDIA NPP library does not support simulatenously leveraging multiple devices
         # within the same process
-        if "accelerated" in kwargs and (kwargs["accelerated"] is True
-                                        or kwargs["accelerated"]):
+        if "accelerated" in kwargs and kwargs["accelerated"]:
             futures = []
             with cf.ProcessPoolExecutor(ncore) as e:
                 for idx, slc in enumerate(use_slcs):
