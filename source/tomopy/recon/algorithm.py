@@ -435,7 +435,7 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             # execute recon on ncore threads
             with cf.ThreadPoolExecutor(ncore) as e:
                 for slc in use_slcs:
-                    e.submit(algorithm, tomo[slc], tomo[slc], center[slc],
+                    e.submit(algorithm, tomo[slc], center[slc],
                              recon[slc], *args, **kwargs)
 
     if pythreads is not None:
