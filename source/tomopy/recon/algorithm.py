@@ -398,10 +398,9 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
     if pythreads is not None and ncore > int(pythreads):
-        print(
-            "Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}', which is less than"
-            " specified ncore={1}. Limiting ncore to {0}...".format(
-                pythreads, ncore))
+        print("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}', "
+              "which is less than specified ncore={1}. "
+              "Limiting ncore to {0}...".format(pythreads, ncore))
         ncore = int(pythreads)
 
     print("Reconstructing {} slice groups with {} master threads...".format(
@@ -415,9 +414,9 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             # run in this thread (useful for debugging)
             algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
     else:
-        # execute recon on ncore processes. Accelerated methods have internal thread-pool
-        # and NVIDIA NPP library does not support simulatenously leveraging multiple devices
-        # within the same process
+        # execute recon on ncore processes. Accelerated methods have internal
+        # thread-pool and NVIDIA NPP library does not support simulatenously
+        # leveraging multiple devices within the same process
         if "accelerated" in kwargs and kwargs["accelerated"]:
             futures = []
             with cf.ProcessPoolExecutor(ncore) as e:
@@ -435,8 +434,8 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             # execute recon on ncore threads
             with cf.ThreadPoolExecutor(ncore) as e:
                 for slc in use_slcs:
-                    e.submit(algorithm, tomo[slc], center[slc],
-                             recon[slc], *args, **kwargs)
+                    e.submit(algorithm, tomo[slc], center[slc], recon[slc],
+                             *args, **kwargs)
 
     if pythreads is not None:
         # reset to default
@@ -464,18 +463,17 @@ def _get_algorithm_kwargs(shape):
         'reg_par': np.ones(10, dtype='float32'),
         'reg_data': np.zeros([dy, dx, dx], dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block':
-        np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
+        # TODO: I think ind_block should be int
+        'ind_block': np.arange(0, dt, dtype=np.float32),
         'options': {},
         'accelerated': False,
-        'pool_size':
-        0,  # if zero, calculate based on threads started at Python level
-        'interpolation':
-        'NN',  # interpolation method (NN = nearest-neighbor, LINEAR, CUBIC)
+        # if zero, calculate based on threads started at Python level
+        'pool_size': 0,
+        # interpolation method (NN = nearest-neighbor, LINEAR, CUBIC)
+        'interpolation': 'NN',
         'device': 'gpu',
-        'grid_size': np.array(
-            [0, 0, 0],
-            dtype='int32'),  # CUDA grid size. If zero, dynamically computed
-        'block_size': np.array([32, 32, 1],
-                               dtype='int32'),  # CUDA threads per block
+        # CUDA grid size. If zero, dynamically computed
+        'grid_size': np.array([0, 0, 0], dtype='int32'),
+        # CUDA threads per block
+        'block_size': np.array([32, 32, 1], dtype='int32'),
     }
