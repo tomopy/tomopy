@@ -172,6 +172,7 @@ sirt_cuda(const float* cpu_data, int dy, int dt, int dx, const float* center,
     // compute some properties (expected python threads, max threads, device assignment)
     int pythread_num = ntid++;
     int device       = pythread_num % cuda_device_count();  // assign to device
+    device           = GetEnv("TOMOPY_DEVICE_NUM", device);
 
     TIMEMORY_AUTO_TIMER("");
 

@@ -216,7 +216,7 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
 
     if(ret != NPP_SUCCESS)
         fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
-                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
+                GetMessageID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
@@ -279,7 +279,7 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
 
     if(ret != NPP_SUCCESS)
         fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
-                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
+                GetMessageID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);

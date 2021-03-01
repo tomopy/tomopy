@@ -163,6 +163,20 @@ GetThisThreadID()
 }
 
 //======================================================================================//
+// this function returns the thread-id on the CPU and the device ID on the GPU
+inline uintmax_t
+GetMessageID()
+{
+#if defined(__CUDACC__)
+    int device = 0;
+    cudaGetDevice(&device);
+    return device;
+#else
+    return GetThisThreadID();
+#endif
+}
+
+//======================================================================================//
 // short hand for static_cast
 #if !defined(scast)
 #    define scast static_cast
@@ -178,7 +192,7 @@ GetThisThreadID()
 // debugging
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
+        printf("[%lu]> %s@'%s':%i %s\n", GetMessageID(), __FUNCTION__, __FILE__,         \
                __LINE__, extra)
 #endif
 
@@ -186,7 +200,7 @@ GetThisThreadID()
 // debugging
 #if !defined(PRINT_ERROR_HERE)
 #    define PRINT_ERROR_HERE(extra)                                                      \
-        fprintf(stderr, "[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__,       \
+        fprintf(stderr, "[%lu]> %s@'%s':%i %s\n", GetMessageID(), __FUNCTION__,          \
                 __FILE__, __LINE__, extra)
 #endif
 
@@ -204,7 +218,7 @@ GetThisThreadID()
             auto                          end_time = std::chrono::system_clock::now();   \
             std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
             printf("[%lu]> %-16s :: %3i of %3i... %5.2f seconds\n",                      \
-                   scast<unsigned long>(GetThisThreadID()), note, counter, total_count,  \
+                   scast<unsigned long>(GetMessageID()), note, counter, total_count,     \
                    elapsed_seconds.count());                                             \
         }
 #endif

@@ -302,25 +302,7 @@ def output_analysis(manager, args, imgs):
     timemory.options.set_report("run_tomopy.out")
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
-    # provide timing plots
-    try:
-        print("\nPlotting TiMemory results...\n")
-        timemory.plotting.plot(files=[timemory.options.serial_filename],
-                               echo_dart=True,
-                               output_dir=timemory.options.output_dir)
-    except Exception as e:
-        print("Exception [timemory.plotting] - {}".format(e))
-    # provide results to dashboard
-    try:
-        print("\nEchoing dart tags...\n")
-        for i in range(0, len(imgs)):
-            img_type = args.format
-            img_name = os.path.basename(imgs[i]).replace(
-                ".{}".format(args.format), "")
-            img_path = imgs[i]
-            timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
-    except Exception as e:
-        print("Exception [echo_dart_tag] - {}".format(e))
+
     # provide ASCII results
     try:
         print("\nWriting notes...\n")

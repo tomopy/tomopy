@@ -354,6 +354,17 @@ def _get_func(algorithm):
         return algorithm
 
 
+def _run_accel_algorithm(idx, _func, tomo, center, recon, *_args, **_kwargs):
+    # set the device to the specified index within the new process
+    os.environ["TOMOPY_DEVICE_NUM"] = "{}".format(idx)
+    # set the "python threads" to one since this was launched via ProcessPool
+    os.environ["TOMOPY_PYTHON_THREADS"] = "1"
+    # execute the accelerated algorithm
+    _func(tomo, center, recon, *_args, **_kwargs)
+    # recon is the only important modified data
+    return recon
+
+
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     axis_size = recon.shape[0]
     ncore, slcs = mproc.get_ncore_slices(axis_size, ncore, nchunk)
@@ -392,10 +403,24 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             # run in this thread (useful for debugging)
             algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
     else:
-        # execute recon on ncore threads
-        with cf.ThreadPoolExecutor(ncore) as e:
-            for slc in use_slcs:
-                e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
+        # execute recon on ncore processes. Accelerated methods have internal thread-pool
+        # and NVIDIA NPP library does not support simulatenously leveraging multiple devices
+        # within the same process
+        if "accelerated" in kwargs and (kwargs["accelerated"] is True or kwargs["accelerated"]):
+            futures = []
+            with cf.ProcessPoolExecutor(ncore) as e:
+                for idx, slc in enumerate(use_slcs):
+                    futures.append(e.submit(_run_accel_algorithm, idx, algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs))
+
+            for f, slc in zip(futures, use_slcs):
+                if f.exception() is not None:
+                    raise f.exception()
+                recon[slc] = f.result()
+        else:
+            # execute recon on ncore threads
+            with cf.ThreadPoolExecutor(ncore) as e:
+                for slc in use_slcs:
+                    e.submit(algorithm, tomo[slc], tomo[slc], center[slc], recon[slc], *args, **kwargs)
 
     if pythreads is not None:
         # reset to default
