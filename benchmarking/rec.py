@@ -80,6 +80,10 @@ def read_rot_centers(fname):
 @timemory.util.auto_timer()
 def reconstruct(h5fname, sino, rot_center, args, blocked_views=None):
 
+    # not setting this will cause issues on supercomputers
+    # allow user to override though
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+
     # Read APS 32-BM raw data.
     proj, flat, dark, theta = dxchange.read_aps_32id(h5fname, sino=sino)
 
