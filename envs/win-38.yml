@@ -15,13 +15,11 @@ dependencies:
   - numexpr
   - numpy
   - libopencv
-  - python=3.6
-  - python-coveralls
+  - python=3.8
   - pywavelets
   - scikit-build
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - timemory
   - vs2017_win-64
