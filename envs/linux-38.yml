@@ -2,7 +2,6 @@ name: tomopy
 channels:
   - conda-forge
   - jrmadsen
-  - defaults
 dependencies:
   - coverage!=5.0.2
   - dxchange
@@ -27,4 +26,3 @@ dependencies:
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - timemory
