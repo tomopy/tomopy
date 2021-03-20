@@ -395,12 +395,12 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
     if pythreads is not None and ncore > int(pythreads):
         logger.warning("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}',
-            which is less than specified ncore={1}. 
-            Limiting ncore to {0}...".format(pythreads, ncore))
+                        which is less than specified ncore={1}.
+                        Limiting ncore to {0}...".format(pythreads, ncore))
         ncore = int(pythreads)
 
     logger.info("Reconstructing {} slice groups with {} master threads..."
-        .format(len(slcs), ncore))
+                .format(len(slcs), ncore))
     # this is used internally to prevent oversubscription
     os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
 
