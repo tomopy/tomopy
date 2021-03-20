@@ -223,28 +223,6 @@ def main(args):
     timemory.options.set_serial("run_tomopy.json")
     manager.report()
 
-    # provide timing plots
-    try:
-        timemory.plotting.plot(files=[timemory.options.serial_filename],
-                               echo_dart=True,
-                               output_dir=timemory.options.output_dir)
-    except Exception as e:
-        print("Exception - {}".format(e))
-
-    # provide results to dashboard
-    try:
-        for i in range(0, len(imgs)):
-            img_base = "{}_{}_stack_{}".format(args.phantom, algorithm, i)
-            img_name = os.path.basename(imgs[i]).replace(
-                ".{}".format(args.format), "").replace(
-                "stack_{}_".format(algorithm), img_base)
-            img_type = args.format
-            img_path = imgs[i]
-            img_path = os.path.abspath(img_path)
-            timemory.plotting.echo_dart_tag(img_name, img_path, img_type)
-    except Exception as e:
-        print("Exception - {}".format(e))
-
     # provide ASCII results
     try:
         notes = manager.write_ctest_notes(
