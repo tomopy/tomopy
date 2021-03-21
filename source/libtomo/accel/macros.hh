@@ -142,10 +142,10 @@ extern "C"
 // relevant OpenCV headers
 //
 #if defined(TOMOPY_USE_OPENCV)
-    #include <opencv2/core.hpp>
-    #include <opencv2/imgproc.hpp>
-    #include <opencv2/imgproc/imgproc.hpp>
-    #include <opencv2/imgproc/types_c.h>
+#    include <opencv2/core.hpp>
+#    include <opencv2/imgproc.hpp>
+#    include <opencv2/imgproc/imgproc.hpp>
+#    include <opencv2/imgproc/types_c.h>
 #endif
 
 //======================================================================================//
@@ -159,6 +159,20 @@ GetThisThreadID()
     static std::atomic<uintmax_t> tcounter;
     static thread_local auto      tid = tcounter++;
     return tid;
+#endif
+}
+
+//======================================================================================//
+// this function returns the thread-id on the CPU and the device ID on the GPU
+inline uintmax_t
+GetMessageID()
+{
+#if defined(__CUDACC__)
+    int device = 0;
+    cudaGetDevice(&device);
+    return device;
+#else
+    return GetThisThreadID();
 #endif
 }
 
@@ -178,7 +192,7 @@ GetThisThreadID()
 // debugging
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__, __FILE__,      \
+        printf("[%lu]> %s@'%s':%i %s\n", GetMessageID(), __FUNCTION__, __FILE__,         \
                __LINE__, extra)
 #endif
 
@@ -186,7 +200,7 @@ GetThisThreadID()
 // debugging
 #if !defined(PRINT_ERROR_HERE)
 #    define PRINT_ERROR_HERE(extra)                                                      \
-        fprintf(stderr, "[%lu]> %s@'%s':%i %s\n", GetThisThreadID(), __FUNCTION__,       \
+        fprintf(stderr, "[%lu]> %s@'%s':%i %s\n", GetMessageID(), __FUNCTION__,          \
                 __FILE__, __LINE__, extra)
 #endif
 
@@ -204,7 +218,7 @@ GetThisThreadID()
             auto                          end_time = std::chrono::system_clock::now();   \
             std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
             printf("[%lu]> %-16s :: %3i of %3i... %5.2f seconds\n",                      \
-                   scast<unsigned long>(GetThisThreadID()), note, counter, total_count,  \
+                   scast<unsigned long>(GetMessageID()), note, counter, total_count,     \
                    elapsed_seconds.count());                                             \
         }
 #endif
@@ -284,10 +298,28 @@ init_nvtx();
             }
 #    endif
 
+// always
+#    if !defined(CUDA_FAST_CHECK_LAST_ERROR)
+#        define CUDA_FAST_CHECK_LAST_ERROR()                                             \
+            {                                                                            \
+                cudaError err = cudaGetLastError();                                      \
+                if(cudaSuccess != err)                                                   \
+                {                                                                        \
+                    fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",      \
+                            __FUNCTION__, __FILE__, __LINE__, cudaGetErrorString(err));  \
+                    std::stringstream ss;                                                \
+                    ss << "cudaCheckError() failed at " << __FUNCTION__ << "@'"          \
+                       << __FILE__ << "':" << __LINE__ << " : "                          \
+                       << cudaGetErrorString(err);                                       \
+                    throw std::runtime_error(ss.str());                                  \
+                }                                                                        \
+            }
+#    endif
+
 // this is only defined in debug mode
 
 #    if !defined(CUDA_CHECK_LAST_ERROR)
-#        if defined(DEBUG)
+#        if defined(DEBUG) && !defined(NDEBUG)
 #            define CUDA_CHECK_LAST_ERROR()                                              \
                 {                                                                        \
                     cudaStreamSynchronize(0);                                            \
@@ -315,7 +347,7 @@ init_nvtx();
 // this is only defined in debug mode
 
 #    if !defined(CUDA_CHECK_LAST_STREAM_ERROR)
-#        if defined(DEBUG)
+#        if defined(DEBUG) && !defined(NDEBUG)
 #            define CUDA_CHECK_LAST_STREAM_ERROR(stream)                                 \
                 {                                                                        \
                     cudaStreamSynchronize(stream);                                       \

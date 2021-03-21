@@ -38,9 +38,9 @@
 //   TOMOPY CUDA implementation
 
 #include "common.hh"
+#include "cuda.h"
 #include "macros.hh"
 #include "utils.hh"
-#include "cuda.h"
 
 //======================================================================================//
 
@@ -284,8 +284,15 @@ cuda_device_query()
     else
         printf("Detected %d CUDA capable devices\n", deviceCount);
 
+    int specific_device = GetEnv("TOMOPY_DEVICE_NUM", -1);
+
     for(int dev = 0; dev < deviceCount; ++dev)
     {
+        // if the process set a specific device, only print out info for that device
+        if(specific_device >= 0 && specific_device < deviceCount &&
+           dev != specific_device)
+            continue;
+
         cudaSetDevice(dev);
         cudaDeviceProp deviceProp;
         cudaGetDeviceProperties(&deviceProp, dev);
