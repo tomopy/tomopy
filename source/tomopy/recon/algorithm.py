@@ -314,8 +314,8 @@ def recon(tomo,
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
     if algorithm == 'gridrec':
-        recon = _init_recon(recon_shape, init_recon, val = 0, sharedmem=False)
-    else:    
+        recon = _init_recon(recon_shape, init_recon, val=0, sharedmem=False)
+    else:
         recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(tomo, center_arr, recon, _get_func(algorithm), args,
                        kwargs, ncore, nchunk)
