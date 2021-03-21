@@ -313,7 +313,10 @@ def recon(tomo,
 
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
-    recon = _init_recon(recon_shape, init_recon, sharedmem=False)
+    if algorithm == 'gridrec':
+        recon = _init_recon(recon_shape, init_recon, val = 0, sharedmem=False)
+    else:    
+        recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(tomo, center_arr, recon, _get_func(algorithm), args,
                        kwargs, ncore, nchunk)
 
@@ -339,7 +342,10 @@ def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
             recon = dtype.empty_shared_array(shape)
             recon[:] = val
         else:
-            recon = np.full(shape, val, dtype=np.float32)
+            if val:
+                recon = np.full(shape, val, dtype=np.float32)
+            else:
+                recon = np.zeros(shape, dtype=np.float32)
     else:
         recon = np.require(init_recon, dtype=np.float32, requirements="AC")
         if sharedmem:

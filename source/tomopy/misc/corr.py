@@ -380,9 +380,6 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     ndarray
        Corrected array.
     """
-    arr = dtype.as_float32(arr)
-    dif = np.float32(dif)
-
     tmp = np.empty_like(arr)
 
     ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
@@ -396,6 +393,10 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
             slc[axis] = chnk_slices[i]
             e.submit(filters.median_filter, arr[tuple(slc)], size=filt_size,
                      output=tmp[tuple(slc)])
+
+    arr = dtype.as_float32(arr)
+    tmp = dtype.as_float32(tmp)
+    dif = np.float32(dif)
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
