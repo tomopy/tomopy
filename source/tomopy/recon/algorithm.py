@@ -51,6 +51,7 @@ Module for reconstruction algorithms.
 import concurrent.futures as cf
 import copy
 import logging
+import warnings
 import os
 
 import numpy as np
@@ -400,7 +401,7 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
     if pythreads is not None and ncore > int(pythreads):
-        logger.warning(
+        warnings.warn(
             "Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}',\
             which is less than specified ncore={1}.\
             Limiting ncore to {0}...".format(pythreads, ncore))
