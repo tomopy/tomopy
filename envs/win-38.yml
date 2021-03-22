@@ -16,6 +16,7 @@ dependencies:
   - numpy
   - libopencv
   - python=3.8
+  - python-coveralls
   - pywavelets
   - scikit-build
   - scikit-image>=0.17
