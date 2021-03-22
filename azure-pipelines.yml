@@ -142,5 +142,9 @@ jobs:
     displayName: Setup and install
   - script: |
       call activate tomopy
-      nosetests
-    displayName: nosetests
+      coverage run -m pytest test -v
+    displayName: Run tests
+  - script: |
+      call activate tomopy
+      coverage report -m
+    displayName: Report coverage

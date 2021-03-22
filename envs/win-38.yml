@@ -11,13 +11,12 @@ dependencies:
   - mkl
   - mkl-devel
   - mkl_fft
-  - nose
   - numexpr
   - numpy
   - libopencv
   - py-opencv  # only for testing
   - python=3.8
-  - python-coveralls
+  - pytest
   - pywavelets
   - scikit-build
   - scikit-image>=0.17
