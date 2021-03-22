@@ -65,10 +65,12 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      Python36:
-        python.version: '36'
       Python37:
         python.version: '37'
+      Python38:
+        python.version: '38'
+      Python39:
+        python.version: '39'
       Python-nomkl:
         python.version: 'nomkl'
     maxParallel: 4
@@ -95,7 +97,7 @@ jobs:
   strategy:
     matrix:
       Python37:
-        python.version: '37'
+        python.version: '38'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -121,10 +123,10 @@ jobs:
     vmImage: 'windows-latest'
   strategy:
     matrix:
-      Python36:
-        python.version: '36'
       Python37:
         python.version: '37'
+      Python39:
+        python.version: '39'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
@@ -140,5 +142,9 @@ jobs:
     displayName: Setup and install
   - script: |
       call activate tomopy
-      nosetests
-    displayName: nosetests
+      coverage run --source tomopy -m pytest test -v
+    displayName: Run tests
+  - script: |
+      call activate tomopy
+      coverage report -m
+    displayName: Report coverage

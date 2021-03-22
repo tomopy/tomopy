@@ -209,7 +209,11 @@ if(TOMOPY_USE_CUDA)
         #   70, 72      + Volta support
         #   75          + Turing support
         if(NOT DEFINED CUDA_ARCH)
-            set(CUDA_ARCH "35")
+            if(CUDA_VERSION_MAJOR VERSION_LESS 11)
+                set(CUDA_ARCH "30;32;35;37;50;52;53;60;61;62;70;72;75")
+            else()
+                set(CUDA_ARCH "35;37;50;52;53;60;61;62;70;72;75;80;86")
+            endif()
         endif()
 
         if(TOMOPY_USE_NVTX)
@@ -231,8 +235,12 @@ if(TOMOPY_USE_CUDA)
             endif()
         endif()
 
+        foreach(ARCH IN ITEMS ${CUDA_ARCH})
+            list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
+                -gencode=arch=compute_${ARCH},code=sm_${ARCH})
+        endforeach(ARCH)
+
         list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
-            -arch=sm_${CUDA_ARCH}
             --default-stream per-thread)
 
         if(NOT WIN32)

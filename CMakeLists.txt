@@ -23,6 +23,7 @@ endif()
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0042 NEW)
 cmake_policy(SET CMP0053 NEW)
+cmake_policy(SET CMP0104 OLD)  # ignore CMAKE_CUDA_ARCHITECTURES
 
 project(tomopy LANGUAGES C CXX)
 

@@ -67,7 +67,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 try:
-    import mkl
+    import mkl_fft
     found_mkl = True
 except ImportError:
     found_mkl = False
