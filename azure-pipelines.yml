@@ -125,7 +125,7 @@ jobs:
     matrix:
       Python37:
         python.version: '37'
-      Python38:
+      Python39:
         python.version: '39'
     maxParallel: 4
   steps:
