@@ -142,7 +142,7 @@ jobs:
     displayName: Setup and install
   - script: |
       call activate tomopy
-      coverage run -m pytest test -v
+      coverage run --source tomopy -m pytest test -v
     displayName: Run tests
   - script: |
       call activate tomopy
