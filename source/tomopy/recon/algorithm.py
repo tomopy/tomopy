@@ -315,7 +315,8 @@ def recon(tomo,
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
     if algorithm == 'gridrec':
-        recon = _init_recon(recon_shape, init_recon, val=0, sharedmem=False)
+        recon = _init_recon(recon_shape, init_recon, val=0, sharedmem=False,
+                            empty=True)
     else:
         recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(tomo, center_arr, recon, _get_func(algorithm), args,
@@ -337,13 +338,15 @@ def init_tomo(tomo, sinogram_order, sharedmem=True):
     return tomo
 
 
-def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
+def _init_recon(shape, init_recon, val=1e-6, sharedmem=True, empty=False):
     if init_recon is None:
         if sharedmem:
             recon = dtype.empty_shared_array(shape)
             recon[:] = val
         else:
-            if val:
+            if empty:
+                recon = np.empty(shape, dtype=np.float32)
+            elif val:
                 recon = np.full(shape, val, dtype=np.float32)
             else:
                 recon = np.zeros(shape, dtype=np.float32)
