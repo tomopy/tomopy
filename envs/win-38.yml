@@ -15,6 +15,7 @@ dependencies:
   - numexpr
   - numpy
   - libopencv
+  - py-opencv  # only for testing
   - python=3.8
   - python-coveralls
   - pywavelets
