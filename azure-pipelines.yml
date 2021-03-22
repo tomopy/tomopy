@@ -126,7 +126,7 @@ jobs:
       Python37:
         python.version: '37'
       Python38:
-        python.version: '38'
+        python.version: '39'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"

@@ -15,7 +15,7 @@ dependencies:
   - numpy
   - libopencv
   - py-opencv  # only for testing
-  - python=3.8
+  - python=3.9
   - pytest
   - pywavelets
   - scikit-build
