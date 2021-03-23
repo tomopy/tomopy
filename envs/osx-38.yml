@@ -4,28 +4,23 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
+  - clangdev
   - coverage!=5.0.2
   - dxchange
-  - gcc_linux-64
   - git
-  - gxx_linux-64
   - h5py
-  - libstdcxx-ng
-  - libgcc-ng
-  - mkl ["blas=*=openblas"]
-  - mkl-devel ["blas=*=openblas"]
+  - mkl
+  - mkl-devel
   - mkl_fft
   - nose
   - numexpr
-  - numpy ["blas=*=openblas"]
-  - opencv>=3.4 ["blas=*=openblas"]
+  - numpy
+  - opencv
   - pyctest>0.0.10
-  - python=3.6
-  - python-coveralls
+  - python=3.8
   - pywavelets
   - scikit-build
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - timemory

@@ -43,6 +43,8 @@
 #include "data.hh"
 #include "utils.hh"
 
+#include <atomic>
+
 //======================================================================================//
 
 #if defined(TOMOPY_USE_NVTX)
@@ -53,6 +55,11 @@ extern nvtxEventAttributes_t nvtx_projection;
 extern nvtxEventAttributes_t nvtx_update;
 extern nvtxEventAttributes_t nvtx_rotate;
 #endif
+
+namespace
+{
+std::atomic<int> _npp_stream_sync{ 0 };
+}
 
 //======================================================================================//
 
@@ -176,8 +183,30 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = GPU_NN, cudaStream_t stream = 0)
 {
-    stream_sync(stream);
-    nppSetStream(stream);
+    // use static + comma operator to set the stream the first time
+    static bool _first = (nppSetStream(stream), false);
+    (void) _first;
+
+    bool _decrement = false;
+    // if stream is current stream continue
+    while(nppGetStream() != stream ||
+          _npp_stream_sync.load(std::memory_order_relaxed) == 0)
+    {
+        // when this hits zero we update stream
+        if(++_npp_stream_sync == 1)
+        {
+            _decrement = true;
+            nppSetStream(stream);
+            break;
+        }
+        else
+        {
+            --_npp_stream_sync;
+        }
+    }
+
+    if(nppGetStream() != stream)
+        throw std::runtime_error("Error! Wrong stream!");
     NVTX_RANGE_PUSH(&nvtx_rotate);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
@@ -216,10 +245,13 @@ cuda_rotate_kernel(int32_t* dst, const int32_t* src, const float theta_rad,
 
     if(ret != NPP_SUCCESS)
         fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
-                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
+                GetMessageID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
+    if(_decrement)
+        --_npp_stream_sync;
 }
 
 //======================================================================================//
@@ -233,8 +265,32 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
                    const float theta_deg, const int nx, const int ny,
                    int eInterp = GPU_CUBIC, cudaStream_t stream = 0)
 {
-    stream_sync(stream);
-    nppSetStream(stream);
+    // use static + comma operator to set the stream the first time
+    static bool _first = (nppSetStream(stream), false);
+    (void) _first;
+
+    bool _decrement = false;
+    // if stream is current stream continue
+    while(nppGetStream() != stream ||
+          _npp_stream_sync.load(std::memory_order_relaxed) == 0)
+    {
+        // when this hits zero we update stream
+        if(++_npp_stream_sync == 1)
+        {
+            _decrement = true;
+            nppSetStream(stream);
+            break;
+        }
+        else
+        {
+            --_npp_stream_sync;
+        }
+    }
+
+    if(nppGetStream() != stream)
+        throw std::runtime_error("Error! Wrong stream!");
+    // stream_sync(stream);
+    // nppSetStream(stream);
     NVTX_RANGE_PUSH(&nvtx_rotate);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
 
@@ -279,10 +335,13 @@ cuda_rotate_kernel(float* dst, const float* src, const float theta_rad,
 
     if(ret != NPP_SUCCESS)
         fprintf(stderr, "[%lu] %s returned non-zero NPP status: %i @ %s:%i. src = %p\n",
-                GetThisThreadID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
+                GetMessageID(), __FUNCTION__, ret, __FILE__, __LINE__, (void*) src);
 
     NVTX_RANGE_POP(stream);
     CUDA_CHECK_LAST_STREAM_ERROR(stream);
+
+    if(_decrement)
+        --_npp_stream_sync;
 }
 
 //======================================================================================//

@@ -56,6 +56,7 @@ from tomopy.recon.rotation import write_center, find_center, find_center_vo, \
 #from tomopy.util.mproc import get_rank, get_nproc, barrier
 import numpy as np
 from scipy.ndimage.interpolation import shift as image_shift
+from scipy.ndimage import zoom
 import os.path
 import shutil
 from numpy.testing import assert_array_equal as assert_equals
@@ -66,7 +67,7 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
 try:
-    import mkl
+    import mkl_fft
     found_mkl = True
 except ImportError:
     found_mkl = False
@@ -103,16 +104,15 @@ class CenterFindingTestCase(unittest.TestCase):
 
     def test_find_center_vo(self):
         sim = read_file('sinogram.npy')
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
+        cen = find_center_vo(sim, smin=-10, smax=10)
+        assert_allclose(cen, 44.75, rtol=0.25)
 
     def test_find_center_vo_with_downsampling(self):
         sim = read_file('sinogram.npy')
-        np.pad(
-            sim, ((1000, 1000), (0, 0), (1000, 1000)),
-            mode="constant", constant_values=0)
-        cen = find_center_vo(sim)
-        assert_allclose(cen, 45.28, rtol=0.015)
+        sim = zoom(sim[:, 0, :], (45, 22), order=3, mode='reflect')
+        sim = np.expand_dims(sim, 1)
+        cen = find_center_vo(sim, smin=-10, smax=10)
+        assert_allclose(cen, 1002.0, rtol=0.25)
 
     def test_find_center_pc(self):
         proj_0 = read_file('projection.npy')

@@ -45,17 +45,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
 """
 Module for reconstruction algorithms.
 """
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import concurrent.futures as cf
 import copy
 import logging
+import warnings
 import os
 
 import numpy as np
@@ -67,30 +63,37 @@ import tomopy.util.dtype as dtype
 
 logger = logging.getLogger(__name__)
 
-
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['recon', 'init_tomo']
 
 allowed_accelerated_kwargs = {
-    'mlem': ['accelerated', 'pool_size', 'interpolation', 'device', 'grid_size', 'block_size'],
-    'sirt': ['accelerated', 'pool_size', 'interpolation', 'device', 'grid_size', 'block_size'],
+    'mlem': [
+        'accelerated', 'pool_size', 'interpolation', 'device', 'grid_size',
+        'block_size'
+    ],
+    'sirt': [
+        'accelerated', 'pool_size', 'interpolation', 'device', 'grid_size',
+        'block_size'
+    ],
 }
 
 allowed_recon_kwargs = {
     'art': ['num_gridx', 'num_gridy', 'num_iter'],
-    'bart': ['num_gridx', 'num_gridy', 'num_iter',
-             'num_block', 'ind_block'],
+    'bart': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
     'fbp': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
     'gridrec': ['num_gridx', 'num_gridy', 'filter_name', 'filter_par'],
     'mlem': ['num_gridx', 'num_gridy', 'num_iter'],
-    'osem': ['num_gridx', 'num_gridy', 'num_iter',
-             'num_block', 'ind_block'],
-    'ospml_hybrid': ['num_gridx', 'num_gridy', 'num_iter',
-                     'reg_par', 'num_block', 'ind_block'],
-    'ospml_quad': ['num_gridx', 'num_gridy', 'num_iter',
-                   'reg_par', 'num_block', 'ind_block'],
+    'osem': ['num_gridx', 'num_gridy', 'num_iter', 'num_block', 'ind_block'],
+    'ospml_hybrid': [
+        'num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block',
+        'ind_block'
+    ],
+    'ospml_quad': [
+        'num_gridx', 'num_gridy', 'num_iter', 'reg_par', 'num_block',
+        'ind_block'
+    ],
     'pml_hybrid': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     'pml_quad': ['num_gridx', 'num_gridy', 'num_iter', 'reg_par'],
     'sirt': ['num_gridx', 'num_gridy', 'num_iter'],
@@ -100,9 +103,15 @@ allowed_recon_kwargs = {
 }
 
 
-def recon(
-        tomo, theta, center=None, sinogram_order=False, algorithm=None,
-        init_recon=None, ncore=None, nchunk=None, **kwargs):
+def recon(tomo,
+          theta,
+          center=None,
+          sinogram_order=False,
+          algorithm=None,
+          init_recon=None,
+          ncore=None,
+          nchunk=None,
+          **kwargs):
     """
     Reconstruct object from projection data.
 
@@ -268,14 +277,13 @@ def recon(
         if algorithm not in allowed_kwargs:
             raise ValueError(
                 'Keyword "algorithm" must be one of %s, or a Python method.' %
-                (list(allowed_kwargs.keys()),))
+                (list(allowed_kwargs.keys()), ))
 
         # Make sure have allowed kwargs appropriate for algorithm.
         for key, value in list(kwargs.items()):
             if key not in allowed_kwargs[algorithm]:
-                raise ValueError(
-                    '%s keyword not in allowed keywords %s' %
-                    (key, allowed_kwargs[algorithm]))
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                 (key, allowed_kwargs[algorithm]))
             else:
                 # Make sure they are numpy arrays.
                 if (not isinstance(kwargs[key], (np.ndarray, np.generic))
@@ -298,7 +306,7 @@ def recon(
     else:
         raise ValueError(
             'Keyword "algorithm" must be one of %s, or a Python method.' %
-            (list(allowed_recon_kwargs.keys()),))
+            (list(allowed_recon_kwargs.keys()), ))
 
     # Generate args for the algorithm.
     center_arr = get_center(tomo.shape, center)
@@ -306,9 +314,13 @@ def recon(
 
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
-    recon = _init_recon(recon_shape, init_recon, sharedmem=False)
-    return _dist_recon(
-        tomo, center_arr, recon, _get_func(algorithm), args, kwargs, ncore, nchunk)
+    if algorithm == 'gridrec':
+        recon = _init_recon(recon_shape, init_recon, val=0, sharedmem=False,
+                            empty=True)
+    else:
+        recon = _init_recon(recon_shape, init_recon, sharedmem=False)
+    return _dist_recon(tomo, center_arr, recon, _get_func(algorithm), args,
+                       kwargs, ncore, nchunk)
 
 
 # Convert data to sinogram order
@@ -326,13 +338,18 @@ def init_tomo(tomo, sinogram_order, sharedmem=True):
     return tomo
 
 
-def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
+def _init_recon(shape, init_recon, val=1e-6, sharedmem=True, empty=False):
     if init_recon is None:
         if sharedmem:
             recon = dtype.empty_shared_array(shape)
             recon[:] = val
         else:
-            recon = np.full(shape, val, dtype=np.float32)
+            if empty:
+                recon = np.empty(shape, dtype=np.float32)
+            elif val:
+                recon = np.full(shape, val, dtype=np.float32)
+            else:
+                recon = np.zeros(shape, dtype=np.float32)
     else:
         recon = np.require(init_recon, dtype=np.float32, requirements="AC")
         if sharedmem:
@@ -352,6 +369,15 @@ def _get_func(algorithm):
         return getattr(extern, 'c_' + algorithm)
     except TypeError:  # algorithm is not a string
         return algorithm
+
+
+def _run_accel_algorithm(idx, _func, tomo, center, recon, *_args, **_kwargs):
+    # set the device to the specified index within the new process
+    os.environ["TOMOPY_DEVICE_NUM"] = "{}".format(idx)
+    # execute the accelerated algorithm
+    _func(tomo, center, recon, *_args, **_kwargs)
+    # recon is the only important modified data
+    return recon
 
 
 def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
@@ -378,12 +404,14 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
     if pythreads is not None and ncore > int(pythreads):
-        print("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}', which is less than"
-              " specified ncore={1}. Limiting ncore to {0}...".format(pythreads, ncore))
+        warnings.warn(
+            "The environment variable 'TOMOPY_PYTHON_THREADS' is limiting "
+            "the requested ncore={1} to {0} cores. "
+            "Set ncore <= 'TOMOPY_PYTHON_THREADS'.".format(pythreads, ncore))
         ncore = int(pythreads)
 
-    print("Reconstructing {} slice groups with {} master threads...".format(len(slcs), ncore))
-
+    logger.info("Reconstructing {} slice groups with {} master threads..."
+                .format(len(slcs), ncore))
     # this is used internally to prevent oversubscription
     os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
 
@@ -392,10 +420,28 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
             # run in this thread (useful for debugging)
             algorithm(tomo[slc], center[slc], recon[slc], *args, **kwargs)
     else:
-        # execute recon on ncore threads
-        with cf.ThreadPoolExecutor(ncore) as e:
-            for slc in use_slcs:
-                e.submit(algorithm, tomo[slc], center[slc], recon[slc], *args, **kwargs)
+        # execute recon on ncore processes. Accelerated methods have internal
+        # thread-pool and NVIDIA NPP library does not support simulatenously
+        # leveraging multiple devices within the same process
+        if "accelerated" in kwargs and kwargs["accelerated"]:
+            futures = []
+            with cf.ProcessPoolExecutor(ncore) as e:
+                for idx, slc in enumerate(use_slcs):
+                    futures.append(
+                        e.submit(_run_accel_algorithm, idx, algorithm,
+                                 tomo[slc], center[slc], recon[slc], *args,
+                                 **kwargs))
+
+            for f, slc in zip(futures, use_slcs):
+                if f.exception() is not None:
+                    raise f.exception()
+                recon[slc] = f.result()
+        else:
+            # execute recon on ncore threads
+            with cf.ThreadPoolExecutor(ncore) as e:
+                for slc in use_slcs:
+                    e.submit(algorithm, tomo[slc], center[slc], recon[slc],
+                             *args, **kwargs)
 
     if pythreads is not None:
         # reset to default
@@ -421,14 +467,19 @@ def _get_algorithm_kwargs(shape):
         'filter_par': np.array([0.5, 8], dtype='float32'),
         'num_iter': dtype.as_int32(1),
         'reg_par': np.ones(10, dtype='float32'),
-        'reg_data': np.zeros([dy,dx,dx], dtype='float32'),
+        'reg_data': np.zeros([dy, dx, dx], dtype='float32'),
         'num_block': dtype.as_int32(1),
-        'ind_block': np.arange(0, dt, dtype=np.float32),  # TODO: I think this should be int
+        # TODO: I think ind_block should be int
+        'ind_block': np.arange(0, dt, dtype=np.float32),
         'options': {},
         'accelerated': False,
-        'pool_size': 0, # if zero, calculate based on threads started at Python level
-        'interpolation': 'NN', # interpolation method (NN = nearest-neighbor, LINEAR, CUBIC)
+        # if zero, calculate based on threads started at Python level
+        'pool_size': 0,
+        # interpolation method (NN = nearest-neighbor, LINEAR, CUBIC)
+        'interpolation': 'NN',
         'device': 'gpu',
-        'grid_size': np.array([0, 0, 0], dtype='int32'), # CUDA grid size. If zero, dynamically computed
-        'block_size': np.array([32, 32, 1], dtype='int32'), # CUDA threads per block
+        # CUDA grid size. If zero, dynamically computed
+        'grid_size': np.array([0, 0, 0], dtype='int32'),
+        # CUDA threads per block
+        'block_size': np.array([32, 32, 1], dtype='int32'),
     }

@@ -4,7 +4,6 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - clangdev
   - coverage!=5.0.2
   - dxchange
   - git
@@ -12,17 +11,16 @@ dependencies:
   - mkl
   - mkl-devel
   - mkl_fft
-  - nose
   - numexpr
   - numpy
-  - opencv
-  - pyctest>0.0.10
-  - python=3.6
-  - python-coveralls
+  - libopencv
+  - py-opencv  # only for testing
+  - python=3.9
+  - pytest
   - pywavelets
   - scikit-build
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - timemory
+  - vs2017_win-64

@@ -9,7 +9,6 @@ dependencies:
   - git
   - h5py
   - nomkl
-  - nose
   - numexpr
   - numpy
   - libopencv
