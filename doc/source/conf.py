@@ -39,6 +39,13 @@ exclude_patterns = ['_build', '**.ipynb_checkpoints']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# -- Options for bibtex
+
+bibtex_bibfiles = [
+    'bibtex/zcite.bib',
+    'bibtex/zref.bib',
+]
+
 # -- Options for Napoleon -----------------------------------------------------
 
 napoleon_google_docstring = True
