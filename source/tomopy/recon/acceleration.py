@@ -54,7 +54,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
-import imp
+import importlib.util
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +180,7 @@ def recon_accelerated(
 def _search_implementation():
     for key in known_implementations:
         try:
-            imp.find_module(known_implementations[key])
+            importlib.util.find_spec(known_implementations[key])
             found = True
         except ImportError:
             found = False

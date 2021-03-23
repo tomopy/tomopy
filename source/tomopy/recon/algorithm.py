@@ -48,13 +48,10 @@
 """
 Module for reconstruction algorithms.
 """
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import concurrent.futures as cf
 import copy
 import logging
+import warnings
 import os
 
 import numpy as np
@@ -317,7 +314,11 @@ def recon(tomo,
 
     # Initialize reconstruction.
     recon_shape = (tomo.shape[0], kwargs['num_gridx'], kwargs['num_gridy'])
-    recon = _init_recon(recon_shape, init_recon, sharedmem=False)
+    if algorithm == 'gridrec':
+        recon = _init_recon(recon_shape, init_recon, val=0, sharedmem=False,
+                            empty=True)
+    else:
+        recon = _init_recon(recon_shape, init_recon, sharedmem=False)
     return _dist_recon(tomo, center_arr, recon, _get_func(algorithm), args,
                        kwargs, ncore, nchunk)
 
@@ -337,13 +338,18 @@ def init_tomo(tomo, sinogram_order, sharedmem=True):
     return tomo
 
 
-def _init_recon(shape, init_recon, val=1e-6, sharedmem=True):
+def _init_recon(shape, init_recon, val=1e-6, sharedmem=True, empty=False):
     if init_recon is None:
         if sharedmem:
             recon = dtype.empty_shared_array(shape)
             recon[:] = val
         else:
-            recon = np.full(shape, val, dtype=np.float32)
+            if empty:
+                recon = np.empty(shape, dtype=np.float32)
+            elif val:
+                recon = np.full(shape, val, dtype=np.float32)
+            else:
+                recon = np.zeros(shape, dtype=np.float32)
     else:
         recon = np.require(init_recon, dtype=np.float32, requirements="AC")
         if sharedmem:
@@ -398,14 +404,14 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
     # check if ncore is limited by env variable
     pythreads = os.environ.get("TOMOPY_PYTHON_THREADS")
     if pythreads is not None and ncore > int(pythreads):
-        print("Warning! 'TOMOPY_PYTHON_THREADS' has been set to '{0}', "
-              "which is less than specified ncore={1}. "
-              "Limiting ncore to {0}...".format(pythreads, ncore))
+        warnings.warn(
+            "The environment variable 'TOMOPY_PYTHON_THREADS' is limiting "
+            "the requested ncore={1} to {0} cores. "
+            "Set ncore <= 'TOMOPY_PYTHON_THREADS'.".format(pythreads, ncore))
         ncore = int(pythreads)
 
-    print("Reconstructing {} slice groups with {} master threads...".format(
-        len(slcs), ncore))
-
+    logger.info("Reconstructing {} slice groups with {} master threads..."
+                .format(len(slcs), ncore))
     # this is used internally to prevent oversubscription
     os.environ["TOMOPY_PYTHON_THREADS"] = "{}".format(ncore)
 
