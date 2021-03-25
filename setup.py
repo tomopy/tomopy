@@ -82,9 +82,6 @@ add_bool_opt("TOMOPY_USE_PTL", args.enable_tasking, args.disable_tasking)
 add_bool_opt("TOMOPY_USE_MKL", args.enable_mkl, args.disable_mkl)
 add_bool_opt("TOMOPY_USE_OPENCV", args.enable_opencv, args.disable_opencv)
 
-if args.enable_cuda:
-    cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
-
 if args.enable_sanitizer:
     cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))
 
