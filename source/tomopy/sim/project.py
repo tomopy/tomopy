@@ -107,7 +107,6 @@ def add_drift(tomo, amp=0.2, period=50, mean=1):
     drift = amp * np.sin(2 * np.pi / period * x) + mean
     drift = drift + np.linspace(0, 1, len(x))
     drift = drift[:, np.newaxis, np.newaxis]
-#     return drift + tomo * 0
     return drift * tomo
 
 
@@ -236,7 +235,7 @@ def add_zingers(tomo, f=0.01, sat=2**16):
         Tomographic data with zingers added.
     """
     zingers = np.random.uniform(0, 1, tomo.shape)
-    zingers = zingers <= f  # five percent of measurements are zingers
+    zingers = zingers <= f  # f percent of measurements are zingers
     new_tomo = np.copy(tomo)
     new_tomo[zingers] = sat
     return new_tomo
