@@ -71,10 +71,43 @@ __all__ = ['angles',
            'project3',
            'fan_to_para',
            'para_to_fan',
+           'add_drift',
            'add_gaussian',
+           'add_rings',
            'add_poisson',
            'add_salt_pepper',
-           'add_focal_spot_blur']
+           'add_focal_spot_blur',
+           'add_zingers']
+
+
+def add_drift(tomo, amp=0.2, period=50, mean=1):
+    """Add illumination drift.
+
+    Illumination drift is caused by the beam instability as the object rotates.
+
+    This drift is modeled using a sinusoid. Which alters the illumination
+    along the rotation dimension. The vertical dimension is constant.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    amp : float
+        The amplitude of the drift.
+    period : float
+        The period of the drift.
+
+    Returns
+    -------
+    ndarray
+        Tomographic data with zingers added.
+    """
+    new_tomo = np.copy(tomo)
+    x = np.arange(tomo.shape[0])
+    drift = amp * np.sin(2 * np.pi / period * x) + mean
+    drift = drift + np.linspace(0, 1, len(x))
+    drift = drift[:, np.newaxis, np.newaxis]
+    return drift * tomo
 
 
 def add_gaussian(tomo, mean=0, std=None):
@@ -120,6 +153,36 @@ def add_poisson(tomo):
     return np.random.poisson(tomo)
 
 
+def add_rings(tomo, std=0.05):
+    """Add rings.
+
+    Rings are caused by inconsistent pixel sensitivity across the detector.
+
+    The sensitivity of the pixels is modeled as normally distributed with an
+    average sensitivity of 1 and a standard deviation given.
+
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    std : float
+        The standard deviation of the pixel sensitivity
+
+    Returns
+    -------
+    ndarray
+        Tomographic data with zingers added.
+    """
+    new_tomo = np.copy(tomo)
+    sensitivity = np.random.normal(
+        loc=1, scale=std,
+        size=(1, new_tomo.shape[1], new_tomo.shape[2])
+    )
+    new_tomo = new_tomo * sensitivity
+    return new_tomo
+
+
 def add_salt_pepper(tomo, prob=0.01, val=None):
     """
     Add salt and pepper noise.
@@ -146,6 +209,36 @@ def add_salt_pepper(tomo, prob=0.01, val=None):
         val = tomo.max()
     tomo[ind] = val
     return tomo
+
+
+def add_zingers(tomo, f=0.01, sat=2**16):
+    """Add zingers.
+
+    Zingers are caused by stray X-rays hitting the detector and causing pixels
+    to saturate.
+
+    The zingers are uniformly distributed across the data set with the given
+    frequency.
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data.
+    f : float
+        The fraction of measurements that are zingers.
+    sat : float
+        The pixel saturation value.
+
+    Returns
+    -------
+    ndarray
+        Tomographic data with zingers added.
+    """
+    zingers = np.random.uniform(0, 1, tomo.shape)
+    zingers = zingers <= f  # f percent of measurements are zingers
+    new_tomo = np.copy(tomo)
+    new_tomo[zingers] = sat
+    return new_tomo
 
 
 def angles(nang, ang1=0., ang2=180.):
@@ -295,7 +388,7 @@ def project2(
     center = get_center(shape, center)
 
     extern.c_project2(objx, objy, center, tomo, theta)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -310,7 +403,7 @@ def project2(
 
 
 def project3(
-        objx, objy, objz, theta, center=None, 
+        objx, objy, objz, theta, center=None,
         emission=True, pad=True,
         sinogram_order=False, axis=0, ncore=None, nchunk=None):
     """
@@ -363,7 +456,7 @@ def project3(
     center = get_center(shape, center)
 
     extern.c_project3(objx, objy, objz, center, tomo, theta, axis)
-    
+
     # NOTE: returns sinogram order with emmission=True
     if not emission:
         # convert data to be transmission type
@@ -373,7 +466,7 @@ def project3(
         tomo = np.swapaxes(tomo, 0, 1)  # doesn't copy data
         # copy data to sharedmem
         tomo = dtype.as_sharedmem(tomo, copy=True)
-        
+
     return tomo
 
 
