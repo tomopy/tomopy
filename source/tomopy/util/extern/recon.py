@@ -271,7 +271,7 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
         else:
             dy, dt, dx = tomo.shape
 
-        kwargs['ind_block'] = np.arange(dt, dtype='float32')
+        kwargs['ind_block'] = np.arange(1, dtype='float32')
         kwargs['num_block'] = 1
 
         LIB_TOMOPY_RECON.osem.restype = dtype.as_c_void_p()
