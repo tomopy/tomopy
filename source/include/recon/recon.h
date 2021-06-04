@@ -56,7 +56,7 @@ void DLL
 void DLL
      bart(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
           float* recon, int ngridx, int ngridy, int num_iter, int num_block,
-          const float* ind_block);  // TODO: I think this should be int *
+          const int* ind_block);
 
 void DLL
      fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
@@ -69,17 +69,17 @@ void DLL
 void DLL
      osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
           float* recon, int ngridx, int ngridy, int num_iter, int num_block,
-          const float* ind_block);
+          const int* ind_block);
 
 void DLL
      ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                   const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                  const float* reg_pars, int num_block, const float* ind_block);
+                  const float* reg_pars, int num_block, const int* ind_block);
 
 void DLL
      ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
                 const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                const float* reg_pars, int num_block, const float* ind_block);
+                const float* reg_pars, int num_block, const int* ind_block);
 
 void DLL
      tv(const float* data, int dy, int dt, int dx, const float* center, const float* theta,

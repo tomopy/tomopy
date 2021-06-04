@@ -47,7 +47,7 @@
 void
 ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
              const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-             const float* reg_pars, int num_block, const float* ind_block)
+             const float* reg_pars, int num_block, const int* ind_block)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
