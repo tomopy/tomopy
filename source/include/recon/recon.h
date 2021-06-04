@@ -67,10 +67,6 @@ void DLL
           float* recon, int ngridx, int ngridy, int num_iter, const float* reg_pars);
 
 void DLL
-     mlem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter);
-
-void DLL
      osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
           float* recon, int ngridx, int ngridy, int num_iter, int num_block,
           const float* ind_block);
@@ -84,20 +80,6 @@ void DLL
      ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
                 const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
                 const float* reg_pars, int num_block, const float* ind_block);
-
-void DLL
-     pml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
-                const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-                const float* reg_pars);
-
-void DLL
-     pml_quad(const float* data, int dy, int dt, int dx, const float* center,
-              const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-              const float* reg_pars);
-
-void DLL
-     sirt(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-          float* recon, int ngridx, int ngridy, int num_iter);
 
 void DLL
      tv(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
