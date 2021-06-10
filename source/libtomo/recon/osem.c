@@ -41,9 +41,11 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <float.h>
+#include <string.h>
+
 #include "recon.h"
 #include "utils.h"
-#include "string.h"
 
 void
 osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
@@ -161,7 +163,7 @@ osem(const float* data, int dy, int dt, int dx, const float* center, const float
                         if(sum_dist2 != 0.0f)
                         {
                             ind_data = d + p * dx + s * dt * dx;
-                            upd      = data[ind_data] / simdata[ind_data];
+                            upd      = data[ind_data] / (simdata[ind_data] + FLT_MIN);
                             for(n = 0; n < csize - 1; n++)
                             {
                                 update[indi[n]] += upd * dist[n];
