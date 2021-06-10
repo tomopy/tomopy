@@ -75,14 +75,14 @@ osem(const float* data, int dy, int dt, int dx, const float* center, const float
            bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
            simdata != NULL && sum_dist != NULL && update != NULL);
 
-    int   s, q, p, d, i, m, n, os;
-    int   quadrant;
-    float theta_p, sin_p, cos_p;
-    float mov, xi, yi;
-    int   asize, bsize, csize;
-    float upd;
-    int   ind_data, ind_recon;
-    float sum_dist2;
+    int       s, q, p, d, i, m, n, os;
+    int       quadrant;
+    float     theta_p, sin_p, cos_p;
+    float     mov, xi, yi;
+    int       asize, bsize, csize;
+    float     upd;
+    int       ind_data, ind_recon;
+    float     sum_dist2;
     const int blocksize = dt / num_block;
     const int remainder = dt % num_block;
     for(i = 0; i < num_iter; i++)
