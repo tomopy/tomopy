@@ -78,7 +78,7 @@ PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 def _wavelength(energy):
     return 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
-
+    
 
 def retrieve_phase(
         tomo, pixel_size=1e-4, dist=50, energy=20,
@@ -113,6 +113,7 @@ def retrieve_phase(
     """
     # New dimensions and pad value after padding.
     py, pz, val = _calc_pad(tomo, pixel_size, dist, energy, pad)
+    
 
     # Compute the reciprocal grid.
     dx, dy, dz = tomo.shape
@@ -139,10 +140,12 @@ def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
     normalized_phase_filter = phase_filter / phase_filter.max()
     for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        prj[:px] = prj[px]
-        prj[-px:] = prj[-px-1]
-        prj[:, :py] = prj[:, py][:, np.newaxis]
-        prj[:, -py:] = prj[:, -py-1][:, np.newaxis]
+        #  Correction for no padding      
+        if pad:
+            prj[:px] = prj[px]
+            prj[-px:] = prj[-px-1]
+            prj[:, :py] = prj[:, py][:, np.newaxis]
+            prj[:, -py:] = prj[:, -py-1][:, np.newaxis]
         fproj = fft2(prj, extra_info=num_jobs)
         fproj *= normalized_phase_filter
         proj = np.real(ifft2(fproj, extra_info=num_jobs, overwrite_input=True))
@@ -189,7 +192,8 @@ def _calc_pad(tomo, pixel_size, dist, energy, pad):
 
 
 def _paganin_filter_factor(energy, dist, alpha, w2):
-    return 1 / (_wavelength(energy) * dist * w2 / (4 * PI) + alpha)
+# The equation is changed according to Paganin equation. Alpha represents the ratio of delta/beta
+    return 1 / (1 + (dist * alpha * _wavelength(energy) * w2/(4*PI)))
 
 
 def _calc_pad_width(dim, pixel_size, wavelength, dist):
@@ -244,5 +248,6 @@ def _reciprocal_coord(pixel_size, num_grid):
     """
     n = num_grid - 1
     rc = np.arange(-n, num_grid, 2, dtype = np.float32)
-    rc *= 0.5 / (n * pixel_size)
+    # The reciprocal coordinate needs to be normalized with 2 PI in the spatial frequency domain
+    rc *= 2*PI / (n * pixel_size)
     return  rc
