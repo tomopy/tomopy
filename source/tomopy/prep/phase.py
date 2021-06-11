@@ -78,7 +78,7 @@ PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 def _wavelength(energy):
     return 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
-    
+
 
 def retrieve_phase(
         tomo, pixel_size=1e-4, dist=50, energy=20,
@@ -113,7 +113,6 @@ def retrieve_phase(
     """
     # New dimensions and pad value after padding.
     py, pz, val = _calc_pad(tomo, pixel_size, dist, energy, pad)
-    
 
     # Compute the reciprocal grid.
     dx, dy, dz = tomo.shape
@@ -140,7 +139,7 @@ def _retrieve_phase(tomo, phase_filter, px, py, prj, pad, energy):
     normalized_phase_filter = phase_filter / phase_filter.max()
     for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        #  Correction for no padding      
+        #  Correction for no padding
         if pad:
             prj[:px] = prj[px]
             prj[-px:] = prj[-px-1]
@@ -196,7 +195,8 @@ def _calc_pad(tomo, pixel_size, dist, energy, pad):
 
 
 def _paganin_filter_factor(energy, dist, alpha, w2):
-# The equation is changed according to Paganin equation. Alpha represents the ratio of delta/beta
+    # The equation is changed according to Paganin equation. 
+    # Alpha represents the ratio of delta/beta.
     return 1 / (1 + (dist * alpha * _wavelength(energy) * w2/(4*PI)))
 
 
@@ -252,6 +252,7 @@ def _reciprocal_coord(pixel_size, num_grid):
     """
     n = num_grid - 1
     rc = np.arange(-n, num_grid, 2, dtype = np.float32)
-    # The reciprocal coordinate needs to be normalized with 2 PI in the spatial frequency domain
+    # The reciprocal coordinate needs to be normalized with 2 PI
+    # in the spatial frequency domain
     rc *= 2*PI / (n * pixel_size)
     return  rc
