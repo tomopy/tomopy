@@ -55,7 +55,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from tomopy.util.misc import (fft2, ifft2)
-
+from tomopy.prep.normalize import minus_log
 
 import tomopy.util.mproc as mproc
 import logging
@@ -127,14 +127,14 @@ def retrieve_phase(
     arr = mproc.distribute_jobs(
         tomo,
         func=_retrieve_phase,
-        args=(phase_filter, py, pz, prj, pad),
+        args=(phase_filter, py, pz, prj, pad, energy),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
+def _retrieve_phase(tomo, phase_filter, px, py, prj, pad, energy):
     dx, dy, dz = tomo.shape
     num_jobs = tomo.shape[0]
     normalized_phase_filter = phase_filter / phase_filter.max()
@@ -151,6 +151,10 @@ def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
         proj = np.real(ifft2(fproj, extra_info=num_jobs, overwrite_input=True))
         if pad:
             proj = proj[px:dy + px, py:dz + py]
+        # The equation of Paganin filter has logarithm operation
+        proj = minus_log(proj)
+        # The final result will be the value of beta
+        proj = proj/(4*PI/_wavelength(energy))
         tomo[m] = proj
 
 
