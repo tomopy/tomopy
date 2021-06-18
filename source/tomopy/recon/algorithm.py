@@ -469,8 +469,7 @@ def _get_algorithm_kwargs(shape):
         'reg_par': np.ones(10, dtype='float32'),
         'reg_data': np.zeros([dy, dx, dx], dtype='float32'),
         'num_block': dtype.as_int32(1),
-        # TODO: I think ind_block should be int
-        'ind_block': np.arange(0, dt, dtype=np.float32),
+        'ind_block': np.arange(0, dt, dtype=np.int32),
         'options': {},
         'accelerated': False,
         # if zero, calculate based on threads started at Python level

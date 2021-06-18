@@ -47,7 +47,7 @@
 void
 ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
              const float* theta, float* recon, int ngridx, int ngridy, int num_iter,
-             const float* reg_pars, int num_block, const float* ind_block)
+             const float* reg_pars, int num_block, const int* ind_block)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
@@ -81,8 +81,8 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
     float *E, *F, *G;
     int    ind0, ind1, indg[8];
     float  totalwg, wg[8], mg[8], rg[8], gammag[8];
-    int    subset_ind1, subset_ind2;
-
+    const int blocksize = dt / num_block;
+    const int remainder = dt % num_block;
     for(i = 0; i < num_iter; i++)
     {
         simdata = (float*) calloc((dt * dy * dx), sizeof(float));
@@ -93,16 +93,13 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
             preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx,
                           gridy);  // Outputs: mov, gridx, gridy
 
-            subset_ind1 = dt / num_block;
-            subset_ind2 = subset_ind1;
-
             // For each ordered-subset num_subset
-            for(os = 0; os < num_block + 1; os++)
+            int subset_end = 0;
+            for(os = 0; os < num_block; os++)
             {
-                if(os == num_block)
-                {
-                    subset_ind2 = dt % num_block;
-                }
+                const int subset_start = subset_end;
+                subset_end = subset_start + blocksize + ((os < remainder) ? 1 : 0);
+                assert(subset_end < dt);
 
                 sum_dist = (float*) calloc((ngridx * ngridy), sizeof(float));
                 E        = (float*) calloc((ngridx * ngridy), sizeof(float));
@@ -110,9 +107,9 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                 G        = (float*) calloc((ngridx * ngridy), sizeof(float));
 
                 // For each projection angle
-                for(q = 0; q < subset_ind2; q++)
+                for(int q = subset_start; q < subset_end; q++)
                 {
-                    p = ind_block[q + os * subset_ind1];
+                    const int p = (num_block == 1) ? q : ind_block[q];
 
                     // Calculate the sin and cos values
                     // of the projection angle and find

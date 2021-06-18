@@ -41,14 +41,16 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <float.h>
+#include <string.h>
+
 #include "recon.h"
 #include "utils.h"
-#include "string.h"
 
 void
 osem(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
      float* recon, int ngridx, int ngridy, int num_iter, int num_block,
-     const float* ind_block)
+     const int* ind_block)
 {
     if(dy == 0 || dt == 0 || dx == 0)
         return;
@@ -73,16 +75,16 @@ osem(const float* data, int dy, int dt, int dx, const float* center, const float
            bx != NULL && coorx != NULL && coory != NULL && dist != NULL && indi != NULL &&
            simdata != NULL && sum_dist != NULL && update != NULL);
 
-    int   s, q, p, d, i, m, n, os;
-    int   quadrant;
-    float theta_p, sin_p, cos_p;
-    float mov, xi, yi;
-    int   asize, bsize, csize;
-    float upd;
-    int   ind_data, ind_recon;
-    float sum_dist2;
-    int   subset_ind1, subset_ind2;
-
+    int       s, q, p, d, i, m, n, os;
+    int       quadrant;
+    float     theta_p, sin_p, cos_p;
+    float     mov, xi, yi;
+    int       asize, bsize, csize;
+    float     upd;
+    int       ind_data, ind_recon;
+    float     sum_dist2;
+    const int blocksize = dt / num_block;
+    const int remainder = dt % num_block;
     for(i = 0; i < num_iter; i++)
     {
         // initialize simdata to zero
@@ -94,25 +96,22 @@ osem(const float* data, int dy, int dt, int dx, const float* center, const float
             preprocessing(ngridx, ngridy, dx, center[s], &mov, gridx,
                           gridy);  // Outputs: mov, gridx, gridy
 
-            subset_ind1 = dt / num_block;
-            subset_ind2 = subset_ind1;
-
             // For each ordered-subset num_subset
-            for(os = 0; os < num_block + 1; os++)
+            int subset_end = 0;
+            for(os = 0; os < num_block; os++)
             {
-                if(os == num_block)
-                {
-                    subset_ind2 = dt % num_block;
-                }
+                const int subset_start = subset_end;
+                subset_end = subset_start + blocksize + ((os < remainder) ? 1 : 0);
+                assert(subset_end < dt);
 
                 // initialize sum_dist and update to zero
                 memset(sum_dist, 0, (ngridx * ngridy) * sizeof(float));
                 memset(update, 0, (ngridx * ngridy) * sizeof(float));
 
                 // For each projection angle
-                for(q = 0; q < subset_ind2; q++)
+                for(int q = subset_start; q < subset_end; q++)
                 {
-                    p = ind_block[q + os * subset_ind1];
+                    const int p = (num_block == 1) ? q : ind_block[q];
 
                     // Calculate the sin and cos values
                     // of the projection angle and find
@@ -164,7 +163,7 @@ osem(const float* data, int dy, int dt, int dx, const float* center, const float
                         if(sum_dist2 != 0.0f)
                         {
                             ind_data = d + p * dx + s * dt * dx;
-                            upd      = data[ind_data] / simdata[ind_data];
+                            upd      = data[ind_data] / (simdata[ind_data] + FLT_MIN);
                             for(n = 0; n < csize - 1; n++)
                             {
                                 update[indi[n]] += upd * dist[n];

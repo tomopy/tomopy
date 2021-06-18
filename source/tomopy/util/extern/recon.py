@@ -232,7 +232,7 @@ def c_bart(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_gridy']),
         dtype.as_c_int(kwargs['num_iter']),
         dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block']))  # TODO: I think this should be int_p
+        dtype.as_c_int_p(kwargs['ind_block']))
 
 
 def c_fbp(tomo, center, recon, theta, **kwargs):
@@ -271,8 +271,11 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
         else:
             dy, dt, dx = tomo.shape
 
-        LIB_TOMOPY_RECON.mlem.restype = dtype.as_c_void_p()
-        return LIB_TOMOPY_RECON.mlem(
+        kwargs['ind_block'] = np.arange(1, dtype='int32')
+        kwargs['num_block'] = 1
+
+        LIB_TOMOPY_RECON.osem.restype = dtype.as_c_void_p()
+        return LIB_TOMOPY_RECON.osem(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -282,7 +285,10 @@ def c_mlem(tomo, center, recon, theta, **kwargs):
             dtype.as_c_float_p(recon),
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']))
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_int_p(kwargs['ind_block']),
+            )
 
 
 def c_osem(tomo, center, recon, theta, **kwargs):
@@ -306,7 +312,7 @@ def c_osem(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_gridy']),
         dtype.as_c_int(kwargs['num_iter']),
         dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
+        dtype.as_c_int_p(kwargs['ind_block']))
 
 
 def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
@@ -331,7 +337,8 @@ def c_ospml_hybrid(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_iter']),
         dtype.as_c_float_p(kwargs['reg_par']),
         dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
+        dtype.as_c_int_p(kwargs['ind_block']),
+    )
 
 
 def c_ospml_quad(tomo, center, recon, theta, **kwargs):
@@ -367,8 +374,11 @@ def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY_RECON.pml_hybrid.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY_RECON.pml_hybrid(
+    kwargs['ind_block'] = np.arange(1, dtype='int32')
+    kwargs['num_block'] = 1
+
+    LIB_TOMOPY_RECON.ospml_hybrid.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.ospml_hybrid(
         dtype.as_c_float_p(tomo),
         dtype.as_c_int(dy),
         dtype.as_c_int(dt),
@@ -379,7 +389,10 @@ def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_gridx']),
         dtype.as_c_int(kwargs['num_gridy']),
         dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']))
+        dtype.as_c_float_p(kwargs['reg_par']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_int_p(kwargs['ind_block']),
+    )
 
 
 def c_pml_quad(tomo, center, recon, theta, **kwargs):
@@ -390,8 +403,11 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
     else:
         dy, dt, dx = tomo.shape
 
-    LIB_TOMOPY_RECON.pml_quad.restype = dtype.as_c_void_p()
-    return LIB_TOMOPY_RECON.pml_quad(
+    kwargs['ind_block'] = np.arange(1, dtype='int32')
+    kwargs['num_block'] = 1
+
+    LIB_TOMOPY_RECON.ospml_quad.restype = dtype.as_c_void_p()
+    return LIB_TOMOPY_RECON.ospml_quad(
         dtype.as_c_float_p(tomo),
         dtype.as_c_int(dy),
         dtype.as_c_int(dt),
@@ -402,7 +418,9 @@ def c_pml_quad(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_gridx']),
         dtype.as_c_int(kwargs['num_gridy']),
         dtype.as_c_int(kwargs['num_iter']),
-        dtype.as_c_float_p(kwargs['reg_par']))
+        dtype.as_c_float_p(kwargs['reg_par']),
+        dtype.as_c_int(kwargs['num_block']),
+        dtype.as_c_int_p(kwargs['ind_block']),)
 
 
 def c_sirt(tomo, center, recon, theta, **kwargs):
@@ -411,7 +429,6 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         return c_accel_sirt(tomo, center, recon, theta, **kwargs)
 
     else:
-
         if len(tomo.shape) == 2:
             # no y-axis (only one slice)
             dy = 1
@@ -419,8 +436,11 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
         else:
             dy, dt, dx = tomo.shape
 
-        LIB_TOMOPY_RECON.sirt.restype = dtype.as_c_void_p()
-        return LIB_TOMOPY_RECON.sirt(
+        kwargs['ind_block'] = np.arange(1, dtype='int32')
+        kwargs['num_block'] = 1
+
+        LIB_TOMOPY_RECON.bart.restype = dtype.as_c_void_p()
+        return LIB_TOMOPY_RECON.bart(
             dtype.as_c_float_p(tomo),
             dtype.as_c_int(dy),
             dtype.as_c_int(dt),
@@ -430,8 +450,9 @@ def c_sirt(tomo, center, recon, theta, **kwargs):
             dtype.as_c_float_p(recon),
             dtype.as_c_int(kwargs['num_gridx']),
             dtype.as_c_int(kwargs['num_gridy']),
-            dtype.as_c_int(kwargs['num_iter']))
-
+            dtype.as_c_int(kwargs['num_iter']),
+            dtype.as_c_int(kwargs['num_block']),
+            dtype.as_c_int_p(kwargs['ind_block']))
 
 def c_tv(tomo, center, recon, theta, **kwargs):
     if len(tomo.shape) == 2:
