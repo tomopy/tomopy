@@ -81,12 +81,12 @@ nbsphinx_prolog = r"""
 
     .. nbinfo::
 
-        This page was generated from `{{ docname }}`__.
+        This page was generated from `/doc/source/{{ env.doc2path(env.docname, base=None) }}`__.
         Interactive online version:
-        :raw-html:`<a href="https://mybinder.org/v2/gh/tomopy/tomopy/{{ env.config.release }}?filepath={{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
+        :raw-html:`<a href="https://mybinder.org/v2/gh/tomopy/tomopy/{{ env.config.release }}?filepath=/doc/source/{{ env.doc2path(env.docname, base=None) }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
 
     __ https://github.com/tomopy/tomopy/blob/
-        {{ env.config.release }}/{{ docname }}
+        {{ env.config.release }}/doc/source/{{ env.doc2path(env.docname, base=None) }}
 
 .. raw:: latex
 
