@@ -190,7 +190,7 @@ if(TOMOPY_USE_CUDA)
 
     enable_language(CUDA)
 
-    list(APPEND EXTERNAL_LIBRARIES ${CUDA_npp_LIBRARY})
+    list(APPEND EXTERNAL_LIBRARIES "CUDA::nppc_static;CUDA::npps_static;CUDA::nppig_static;CUDA::nppisu_static")
     list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
