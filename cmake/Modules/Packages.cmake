@@ -184,8 +184,8 @@ if(TOMOPY_USE_CUDA)
         set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     endif()
 
-    if(NOT CMAKE_CUDA_COMPILER)
-        set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
+    if(NOT CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
+        set(CMAKE_CUDA_COMPILER ${CUDAToolkit_BIN_DIR}/nvcc)
     endif()
 
     enable_language(CUDA)
@@ -209,10 +209,10 @@ if(TOMOPY_USE_CUDA)
         #   70, 72      + Volta support
         #   75          + Turing support
         if(NOT DEFINED CUDA_ARCH)
-            if(CUDA_VERSION_MAJOR VERSION_LESS 11)
+            if(CUDAToolkit_VERSION_MAJOR VERSION_LESS 11)
                 set(CUDA_ARCH "30;32;35;37;50;52;53;60;61;62;70;72;75")
             else()
-                if(CUDA_VERSION_MINOR VERSION_LESS 1)
+                if(CUDAToolkit_VERSION_MINOR VERSION_LESS 1)
                     set(CUDA_ARCH "35;37;50;52;53;60;61;62;70;72;75;80")
                 else()
                     set(CUDA_ARCH "35;37;50;52;53;60;61;62;70;72;75;80;86")
