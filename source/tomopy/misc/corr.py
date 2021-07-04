@@ -557,7 +557,7 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     thresh_min : float, optional
         min value for portion of image to filer
     theta_min : int, optional
-        minimum angle in degrees (int) to be considered ring artifact
+        minimum half angle in degrees (int) to be considered ring artifact
     rwidth : int, optional
         Maximum width of the rings to be filtered in pixels
     int_mode : str, optional
@@ -597,6 +597,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         int_mode = 1
     else:
         raise ValueError("int_mode should be WRAP or REFLECT")
+
+    if not 0 <= theta_min < 180:
+        raise ValueError("theta_min should be in the range [0 - 180)")
 
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth, int_mode)
