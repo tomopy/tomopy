@@ -557,7 +557,8 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     thresh_min : float, optional
         min value for portion of image to filer
     theta_min : int, optional
-        features larger than twice this angle (degrees) will be considered a ring artifact
+        Features larger than twice this angle (degrees) will be considered
+        a ring artifact. Must be less than 180 degrees.
     rwidth : int, optional
         Maximum width of the rings to be filtered in pixels
     int_mode : str, optional
