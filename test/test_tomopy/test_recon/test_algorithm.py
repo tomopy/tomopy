@@ -203,7 +203,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                               num_iter=4,
                               num_block=3),
                         read_file('ospml_hybrid.npy'),
-                        rtol=1e-2)
+                        atol=1e-6)
 
     def test_ospml_quad(self):
         assert_allclose(recon(self.prj,
@@ -212,7 +212,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                               num_iter=4,
                               num_block=3),
                         read_file('ospml_quad.npy'),
-                        rtol=1e-2)
+                        atol=1e-6)
 
     def test_pml_hybrid(self):
         assert_allclose(recon(self.prj,
