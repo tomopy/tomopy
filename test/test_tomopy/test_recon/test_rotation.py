@@ -104,14 +104,14 @@ class CenterFindingTestCase(unittest.TestCase):
 
     def test_find_center_vo(self):
         sim = read_file('sinogram.npy')
-        cen = find_center_vo(sim, smin=-10, smax=10)
+        cen = find_center_vo(sim, smin=-10, smax=10, ncore=2)
         assert_allclose(cen, 44.75, rtol=0.25)
 
     def test_find_center_vo_with_downsampling(self):
         sim = read_file('sinogram.npy')
         sim = zoom(sim[:, 0, :], (45, 22), order=3, mode='reflect')
         sim = np.expand_dims(sim, 1)
-        cen = find_center_vo(sim, smin=-10, smax=10)
+        cen = find_center_vo(sim, smin=-10, smax=10, ncore=2)
         assert_allclose(cen, 1002.0, rtol=0.25)
 
     def test_find_center_pc(self):
