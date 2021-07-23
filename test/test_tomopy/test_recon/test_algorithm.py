@@ -86,11 +86,17 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                         rtol=1e-2)
 
     def test_bart(self):
-        assert_allclose(recon(self.prj,
-                              self.ang,
-                              algorithm='bart',
-                              num_iter=4,
-                              num_block=3),
+        rng = default_rng()
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
+        assert_allclose(recon(
+            self.prj,
+            self.ang,
+            algorithm='bart',
+            num_iter=4,
+            num_block=1,
+            ind_block=ind_block,
+        ),
                         read_file('bart.npy'),
                         rtol=1e-2)
 
