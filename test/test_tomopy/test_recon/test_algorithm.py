@@ -205,7 +205,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             self.prj,
             self.ang,
             algorithm='ospml_hybrid',
-            num_iter=4,
+            num_iter=100,
             num_block=7,
             ind_block=ind_block,
         )
@@ -220,7 +220,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             self.prj,
             self.ang,
             algorithm='ospml_quad',
-            num_iter=4,
+            num_iter=100,
             num_block=7,
             ind_block=ind_block,
         )

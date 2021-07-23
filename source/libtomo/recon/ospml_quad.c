@@ -41,6 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <float.h>
+
 #include "recon.h"
 #include "utils.h"
 
@@ -162,7 +164,7 @@ ospml_quad(const float* data, int dy, int dt, int dx, const float* center,
                         {
                             ind_data  = d + p * dx + s * dt * dx;
                             ind_recon = s * ngridx * ngridy;
-                            upd       = data[ind_data] / simdata[ind_data];
+                            upd       = (data[ind_data] + FLT_MIN) / (simdata[ind_data] + FLT_MIN);
                             for(n = 0; n < csize - 1; n++)
                             {
                                 E[indi[n]] -= recon[indi[n] + ind_recon] * upd * dist[n];
