@@ -198,34 +198,34 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                         rtol=1e-2)
 
     def test_ospml_hybrid(self):
-        rng = default_rng(0)
+        rng = default_rng()
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
-        result = recon(
+        assert_allclose(recon(
             self.prj,
             self.ang,
             algorithm='ospml_hybrid',
-            num_iter=100,
-            num_block=7,
+            num_iter=4,
+            num_block=1,
             ind_block=ind_block,
-        )
-        np.save('ospml_hybrid.npy', result)
-        assert_allclose(result, read_file('ospml_hybrid.npy'), rtol=1e-2)
+        ),
+                        read_file('pml_hybrid.npy'),
+                        rtol=1e-2)
 
     def test_ospml_quad(self):
-        rng = default_rng(1)
+        rng = default_rng()
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
-        result = recon(
+        assert_allclose(recon(
             self.prj,
             self.ang,
             algorithm='ospml_quad',
-            num_iter=100,
-            num_block=7,
+            num_iter=4,
+            num_block=1,
             ind_block=ind_block,
-        )
-        np.save('ospml_quad.npy', result)
-        assert_allclose(result, read_file('ospml_quad.npy'), rtol=1e-2)
+        ),
+                        read_file('pml_quad.npy'),
+                        rtol=1e-2)
 
     def test_pml_hybrid(self):
         assert_allclose(recon(self.prj,
