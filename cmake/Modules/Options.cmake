@@ -23,8 +23,8 @@ else()
 endif()
 
 # Check if CUDA can be enabled
-find_package(CUDA)
-if(CUDA_FOUND)
+find_package(CUDAToolkit)
+if(CUDAToolkit_FOUND)
     set(_USE_CUDA ON)
 else()
     set(_USE_CUDA OFF)

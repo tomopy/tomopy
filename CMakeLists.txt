@@ -1,5 +1,5 @@
-# need CUDA as a first-class language
-cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
+# need CUDA as a first-class language; use newer FindCUDAToolkit
+cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     set(MSG "")
