@@ -193,7 +193,11 @@ if(TOMOPY_USE_CUDA)
 
     enable_language(CUDA)
 
-    list(APPEND TOMOPY_EXTERNAL_LIBRARIES "CUDA::nppc_static;CUDA::npps_static;CUDA::nppig_static;CUDA::nppisu_static")
+    if (WIN32)
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES "CUDA::nppc;CUDA::npps;CUDA::nppig;CUDA::nppisu")
+    else()
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES "CUDA::nppc_static;CUDA::npps_static;CUDA::nppig_static;CUDA::nppisu_static")
+    endif(WIN32)
     list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
