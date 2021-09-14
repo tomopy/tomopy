@@ -186,6 +186,9 @@ if(TOMOPY_USE_CUDA)
 
     if(NOT CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
         set(CMAKE_CUDA_COMPILER ${CUDAToolkit_BIN_DIR}/nvcc)
+        if (WIN32)
+            set(CMAKE_CUDA_COMPILER "${CMAKE_CUDA_COMPILER}.exe")
+        endif (WIN32)
     endif()
 
     enable_language(CUDA)
