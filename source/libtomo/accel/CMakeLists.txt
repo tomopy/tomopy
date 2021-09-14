@@ -19,8 +19,8 @@ endif(TOMOPY_USE_CUDA)
 
 add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
 
-target_link_libraries(libtomopy-accel PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(libtomopy-accel PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
+    PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 set(CUDA_PROPERTIES
     CUDA_STANDARD               ${CMAKE_CXX_STANDARD}

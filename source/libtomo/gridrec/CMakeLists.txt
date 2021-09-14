@@ -15,8 +15,8 @@ set(GRIDREC_SOURCES ${gridrec_tomo_headers} ${gridrec_tomo_sources})
 add_library(libtomopy-gridrec SHARED ${GRIDREC_SOURCES})
 
 # link library
-target_link_libraries(libtomopy-gridrec PUBLIC ${EXTERNAL_LIBRARIES}
-    PRIVATE ${EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(libtomopy-gridrec PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
+    PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 # where to place the library
 set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
