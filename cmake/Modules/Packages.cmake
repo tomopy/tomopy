@@ -178,6 +178,12 @@ endif()
 #
 ################################################################################
 
+add_library(tomopy-cuda-npp INTERFACE)
+# create an alias in the tompy namespace which helps make it clear that you want
+# to link to a cmake target named tomopy::cuda-npp, not a potential library
+# tomopy-cuda-npp (i.e. libtomopy-cuda-npp.so)
+add_library(tomopy::cuda-npp ALIAS tomopy-cuda-npp)
+
 if(TOMOPY_USE_CUDA)
 
     if(NOT CMAKE_CUDA_HOST_COMPILER)
@@ -193,13 +199,16 @@ if(TOMOPY_USE_CUDA)
 
     enable_language(CUDA)
 
-    if (WIN32)
-        list(APPEND TOMOPY_EXTERNAL_LIBRARIES "CUDA::nppc;CUDA::npps;CUDA::nppig;CUDA::nppisu")
-    else()
-        list(APPEND TOMOPY_EXTERNAL_LIBRARIES "CUDA::nppc_static;CUDA::npps_static;CUDA::nppig_static;CUDA::nppisu_static")
-    endif(WIN32)
-    list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
-        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    foreach(_NPP_LIB nppc npps nppig nppisu)
+        if(TARGET CUDA::${_NPP_LIB}_static)
+            target_link_libraries(tomopy-cuda-npp INTERFACE CUDA::${_NPP_LIB}_static)
+        elseif(TARGET CUDA::${_NPP_LIB})
+            target_link_libraries(tomopy-cuda-npp INTERFACE CUDA::${_NPP_LIB})
+        else()
+            message(FATAL_ERROR "Missing CUDA NPP target: CUDA::${_NPP_LIB} or CUDA::${_NPP_LIB}_static")
+        endif()
+    endforeach()
+    target_include_directories(tomopy-cuda-npp INTERFACE ${CUDA_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 
