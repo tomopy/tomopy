@@ -164,7 +164,7 @@ ospml_hybrid(const float* data, int dy, int dt, int dx, const float* center,
                         {
                             ind_data  = d + p * dx + s * dt * dx;
                             ind_recon = s * ngridx * ngridy;
-                            upd       = (data[ind_data] + FLT_MIN) / (simdata[ind_data] + FLT_MIN);
+                            upd       = (data[ind_data] + FLT_EPSILON) / (simdata[ind_data] + FLT_EPSILON);
                             for(n = 0; n < csize - 1; n++)
                             {
                                 E[indi[n]] -= recon[indi[n] + ind_recon] * upd * dist[n];
