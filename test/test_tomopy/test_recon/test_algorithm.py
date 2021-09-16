@@ -86,7 +86,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
                         rtol=1e-2)
 
     def test_bart(self):
-        rng = default_rng()
+        rng = default_rng(0)
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
         assert_allclose(
@@ -197,7 +197,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
-        rng = default_rng()
+        rng = default_rng(0)
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
         assert_allclose(
@@ -214,7 +214,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         )
 
     def test_ospml_hybrid(self):
-        rng = default_rng()
+        rng = default_rng(0)
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
         assert_allclose(
@@ -231,7 +231,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         )
 
     def test_ospml_quad(self):
-        rng = default_rng()
+        rng = default_rng(0)
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
         assert_allclose(
