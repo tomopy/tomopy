@@ -18,7 +18,7 @@ if(CMAKE_C_COMPILER_IS_INTEL OR CMAKE_CXX_COMPILER_IS_INTEL)
 
     find_package(Threads)
     if(Threads_FOUND)
-        list(APPEND EXTERNAL_PRIVATE_LIBRARIES Threads::Threads)
+        list(APPEND TOMOPY_EXTERNAL_PRIVATE_LIBRARIES Threads::Threads)
     endif()
 endif()
 
@@ -48,8 +48,8 @@ endif()
 
 if(TOMOPY_USE_MKL)
     if(MKL_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+        list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
     else()
         message(FATAL_ERROR "MKL not found. Aborting build.")
     endif()
@@ -65,7 +65,7 @@ endif()
 
 if(TOMOPY_USE_OPENCV)
     if(OpenCV_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${OpenCV_LIBRARIES})
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_OPENCV)
     else()
         message(FATAL_ERROR "OpenCV not found. Aborting build.")
@@ -83,9 +83,9 @@ endif()
 if(TOMOPY_USE_COVERAGE)
     find_library(GCOV_LIBRARY gcov)
     if(GCOV_LIBRARY)
-        list(APPEND EXTERNAL_LIBRARIES ${GCOV_LIBRARY})
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${GCOV_LIBRARY})
     else()
-        list(APPEND EXTERNAL_LIBRARIES gcov)
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES gcov)
     endif()
     add(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
 endif()
@@ -101,8 +101,8 @@ if(TOMOPY_USE_TIMEMORY)
     find_package(TiMemory)
 
     if(TiMemory_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${TiMemory_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES
+        list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${TiMemory_INCLUDE_DIRS})
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES
             ${TiMemory_LIBRARIES} ${TiMemory_C_LIBRARIES})
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_TIMEMORY)
     endif()
@@ -120,8 +120,8 @@ if(TOMOPY_USE_GPERF)
     find_package(GPerfTools COMPONENTS profiler)
 
     if(GPerfTools_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${GPerfTools_LIBRARIES})
+        list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
+        list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${GPerfTools_LIBRARIES})
         list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_GPERF)
     endif()
 
@@ -178,6 +178,12 @@ endif()
 #
 ################################################################################
 
+add_library(tomopy-cuda-npp INTERFACE)
+# create an alias in the tompy namespace which helps make it clear that you want
+# to link to a cmake target named tomopy::cuda-npp, not a potential library
+# tomopy-cuda-npp (i.e. libtomopy-cuda-npp.so)
+add_library(tomopy::cuda-npp ALIAS tomopy-cuda-npp)
+
 if(TOMOPY_USE_CUDA)
 
     if(NOT CMAKE_CUDA_HOST_COMPILER)
@@ -186,13 +192,23 @@ if(TOMOPY_USE_CUDA)
 
     if(NOT CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
         set(CMAKE_CUDA_COMPILER ${CUDAToolkit_BIN_DIR}/nvcc)
+        if (WIN32)
+            set(CMAKE_CUDA_COMPILER "${CMAKE_CUDA_COMPILER}.exe")
+        endif (WIN32)
     endif()
 
     enable_language(CUDA)
 
-    list(APPEND EXTERNAL_LIBRARIES "CUDA::nppc_static;CUDA::npps_static;CUDA::nppig_static;CUDA::nppisu_static")
-    list(APPEND EXTERNAL_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS}
-        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    foreach(_NPP_LIB nppc npps nppig nppisu)
+        if(TARGET CUDA::${_NPP_LIB}_static)
+            target_link_libraries(tomopy-cuda-npp INTERFACE CUDA::${_NPP_LIB}_static)
+        elseif(TARGET CUDA::${_NPP_LIB})
+            target_link_libraries(tomopy-cuda-npp INTERFACE CUDA::${_NPP_LIB})
+        else()
+            message(FATAL_ERROR "Missing CUDA NPP target: CUDA::${_NPP_LIB} or CUDA::${_NPP_LIB}_static")
+        endif()
+    endforeach()
+    target_include_directories(tomopy-cuda-npp INTERFACE ${CUDA_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 
@@ -231,7 +247,7 @@ if(TOMOPY_USE_CUDA)
         endif()
 
         if(NVTX_LIBRARY)
-            list(APPEND EXTERNAL_LIBRARIES ${NVTX_LIBRARY})
+            list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${NVTX_LIBRARY})
             list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_NVTX)
         else()
             if(TOMOPY_USE_NVTX)
@@ -274,13 +290,13 @@ endif()
 # user customization to force link libs
 to_list(_LINKLIBS "${TOMOPY_USER_LIBRARIES};$ENV{TOMOPY_USER_LIBRARIES}")
 foreach(_LIB ${_LINKLIBS})
-    list(APPEND EXTERNAL_LIBRARIES ${_LIB})
+    list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${_LIB})
 endforeach()
 
 # including the directories
-safe_remove_duplicates(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS})
-safe_remove_duplicates(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES})
-foreach(_DIR ${EXTERNAL_INCLUDE_DIRS})
+safe_remove_duplicates(TOMOPY_EXTERNAL_INCLUDE_DIRS ${TOMOPY_EXTERNAL_INCLUDE_DIRS})
+safe_remove_duplicates(TOMOPY_EXTERNAL_LIBRARIES ${TOMOPY_EXTERNAL_LIBRARIES})
+foreach(_DIR ${TOMOPY_EXTERNAL_INCLUDE_DIRS})
     include_directories(SYSTEM ${_DIR})
 endforeach()
 
@@ -288,4 +304,4 @@ endforeach()
 set(TARGET_INCLUDE_DIRECTORIES
     ${PROJECT_SOURCE_DIR}/source/include
     ${PROJECT_SOURCE_DIR}/source/PTL/source
-    ${EXTERNAL_INCLUDE_DIRS})
+    ${TOMOPY_EXTERNAL_INCLUDE_DIRS})
