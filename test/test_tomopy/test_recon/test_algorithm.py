@@ -53,9 +53,9 @@ import os
 import unittest
 from ..util import read_file
 from tomopy.recon.algorithm import recon
+from numpy.random import default_rng
 from numpy.testing import assert_allclose
 import numpy as np
-from numpy.random import default_rng
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -89,16 +89,18 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         rng = default_rng()
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
-        assert_allclose(recon(
-            self.prj,
-            self.ang,
-            algorithm='bart',
-            num_iter=4,
-            num_block=1,
-            ind_block=ind_block,
-        ),
-                        read_file('bart.npy'),
-                        rtol=1e-2)
+        assert_allclose(
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='bart',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('bart.npy'),
+            rtol=1e-2,
+        )
 
     def test_fbp(self):
         assert_allclose(recon(self.prj, self.ang, algorithm='fbp'),
@@ -195,59 +197,69 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
         assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
-        assert_allclose(recon(self.prj,
-                              self.ang,
-                              algorithm='osem',
-                              num_iter=4,
-                              num_block=3),
-                        read_file('osem.npy'),
-                        rtol=1e-2)
+        rng = default_rng()
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
+        assert_allclose(
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='osem',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('osem.npy'),
+            rtol=1e-2,
+        )
 
     def test_ospml_hybrid(self):
         rng = default_rng()
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
-        assert_allclose(recon(
-            self.prj,
-            self.ang,
-            algorithm='ospml_hybrid',
-            num_iter=4,
-            num_block=1,
-            ind_block=ind_block,
-        ),
-                        read_file('pml_hybrid.npy'),
-                        rtol=1e-2)
+        assert_allclose(
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='ospml_hybrid',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('ospml_hybrid.npy'),
+            rtol=1e-2,
+        )
 
     def test_ospml_quad(self):
         rng = default_rng()
         ind_block = np.arange(len(self.ang))
         rng.shuffle(ind_block)
-        assert_allclose(recon(
-            self.prj,
-            self.ang,
-            algorithm='ospml_quad',
-            num_iter=4,
-            num_block=1,
-            ind_block=ind_block,
-        ),
-                        read_file('pml_quad.npy'),
-                        rtol=1e-2)
+        assert_allclose(
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='ospml_quad',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('ospml_quad.npy'),
+            rtol=1e-2,
+        )
 
     def test_pml_hybrid(self):
-        assert_allclose(recon(self.prj,
-                              self.ang,
-                              algorithm='pml_hybrid',
-                              num_iter=4),
-                        read_file('pml_hybrid.npy'),
-                        rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='pml_hybrid', num_iter=4),
+            read_file('pml_hybrid.npy'),
+            rtol=1e-2,
+        )
 
     def test_pml_quad(self):
-        assert_allclose(recon(self.prj,
-                              self.ang,
-                              algorithm='pml_quad',
-                              num_iter=4),
-                        read_file('pml_quad.npy'),
-                        rtol=1e-2)
+        assert_allclose(
+            recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
+            read_file('pml_quad.npy'),
+            rtol=1e-2,
+        )
 
     def test_sirt(self):
         result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
