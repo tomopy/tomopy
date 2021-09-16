@@ -112,7 +112,6 @@ def as_uint8(arr):
 
 
 def as_c_float_p(arr):
-    arr = arr.astype(np.float32, copy=False)
     c_float_p = ctypes.POINTER(ctypes.c_float)
     return arr.ctypes.data_as(c_float_p)
 
