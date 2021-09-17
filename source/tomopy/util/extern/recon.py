@@ -363,7 +363,7 @@ def c_ospml_quad(tomo, center, recon, theta, **kwargs):
         dtype.as_c_int(kwargs['num_iter']),
         dtype.as_c_float_p(kwargs['reg_par']),
         dtype.as_c_int(kwargs['num_block']),
-        dtype.as_c_float_p(kwargs['ind_block']))  # TODO: should be int?
+        dtype.as_c_int_p(kwargs['ind_block']))
 
 
 def c_pml_hybrid(tomo, center, recon, theta, **kwargs):
