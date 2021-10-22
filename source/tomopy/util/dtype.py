@@ -45,7 +45,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
 """
 Module for internal utility functions.
 """
@@ -54,29 +53,30 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import ctypes
-import numpy as np
-import multiprocessing as mp
 import logging
-import six
+import multiprocessing as mp
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
-
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['as_ndarray',
-           'as_dtype',
-           'as_float32',
-           'as_int32',
-           'as_uint8',
-           'as_uint16',
-           'as_c_float_p',
-           'as_c_int',
-           'as_c_int_p',
-           'as_c_float',
-           'as_c_char_p',
-           'as_c_void_p']
+__all__ = [
+    'as_ndarray',
+    'as_dtype',
+    'as_float32',
+    'as_int32',
+    'as_uint8',
+    'as_uint16',
+    'as_c_float_p',
+    'as_c_int',
+    'as_c_int_p',
+    'as_c_float',
+    'as_c_char_p',
+    'as_c_void_p',
+]
 
 
 def as_ndarray(arr, dtype=None, copy=False):
@@ -121,6 +121,7 @@ def as_c_int(arr):
 
 
 def as_c_int_p(arr):
+    arr = arr.astype(np.intc, copy=False)
     c_int_p = ctypes.POINTER(ctypes.c_int)
     return arr.ctypes.data_as(c_int_p)
 
@@ -130,7 +131,7 @@ def as_c_float(arr):
 
 
 def as_c_char_p(arr):
-    return ctypes.c_char_p(six.b(arr))
+    return ctypes.c_char_p(arr.encode())
 
 
 def as_c_void_p():

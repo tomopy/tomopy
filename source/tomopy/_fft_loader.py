@@ -67,11 +67,13 @@ fft_impl = 'unset'
 
 
 def import_mkl_fft():
+    global fft_impl
     import mkl_fft
     fft_impl = 'mkl_fft'
 
 
 def import_numpy_fft():
+    global fft_impl
     import numpy.fft
     fft_impl = 'numpy.fft'
 

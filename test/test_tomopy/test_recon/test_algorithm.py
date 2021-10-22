@@ -53,12 +53,25 @@ import os
 import unittest
 from ..util import read_file
 from tomopy.recon.algorithm import recon
+from numpy.random import default_rng
 from numpy.testing import assert_allclose
 import numpy as np
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
+
+try:
+    import mkl_fft
+    found_mkl = True
+except ImportError:
+    found_mkl = False
+
+try:
+    import cv2
+    found_opencv = True
+except ImportError:
+    found_opencv = False
 
 
 class ReconstructionAlgorithmTestCase(unittest.TestCase):
@@ -68,103 +81,227 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
 
     def test_art(self):
         os.environ["TOMOPY_USE_C_ART"] = "1"
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='art', num_iter=4),
-            read_file('art.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj, self.ang, algorithm='art', num_iter=4),
+                        read_file('art.npy'),
+                        rtol=1e-2)
 
     def test_bart(self):
+        rng = default_rng(0)
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='bart', num_iter=4),
-            read_file('bart.npy'), rtol=1e-2)
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='bart',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('bart.npy'),
+            rtol=1e-2,
+        )
 
     def test_fbp(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='fbp'),
-            read_file('fbp.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj, self.ang, algorithm='fbp'),
+                        read_file('fbp.npy'),
+                        rtol=1e-2)
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec_custom(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
-            recon(
-                self.prj, self.ang, algorithm='gridrec', filter_name='custom',
-                filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
+            recon(self.prj,
+                  self.ang,
+                  algorithm='gridrec',
+                  filter_name='custom',
+                  filter_par=np.ones(self.prj.shape[-1], dtype=np.float32)))
 
+    @unittest.skipUnless(found_mkl, "Gridrec requires MKL.")
     def test_gridrec(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='none'),
-            read_file('gridrec_none.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='shepp'),
-            read_file('gridrec_shepp.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='cosine'),
-            read_file('gridrec_cosine.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='hann'),
-            read_file('gridrec_hann.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='hamming'),
-            read_file('gridrec_hamming.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='ramlak'),
-            read_file('gridrec_ramlak.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='parzen'),
-            read_file('gridrec_parzen.npy'), rtol=1e-2)
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='gridrec', filter_name='butterworth'),
-            read_file('gridrec_butterworth.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='none'),
+                        read_file('gridrec_none.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='shepp'),
+                        read_file('gridrec_shepp.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='cosine'),
+                        read_file('gridrec_cosine.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='hann'),
+                        read_file('gridrec_hann.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='hamming'),
+                        read_file('gridrec_hamming.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='ramlak'),
+                        read_file('gridrec_ramlak.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='parzen'),
+                        read_file('gridrec_parzen.npy'),
+                        rtol=1e-2)
+        assert_allclose(recon(self.prj,
+                              self.ang,
+                              algorithm='gridrec',
+                              filter_name='butterworth'),
+                        read_file('gridrec_butterworth.npy'),
+                        rtol=1e-2)
 
     def test_mlem(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_MLEM"] = "1"
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='mlem', num_iter=4),
-            read_file('mlem.npy'), rtol=1e-2)
+        result = recon(self.prj, self.ang, algorithm='mlem', num_iter=4)
+        assert_allclose(result, read_file('mlem.npy'), rtol=1e-2)
+
+    @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
+    def test_mlem_accel(self):
+        result = recon(self.prj,
+                       self.ang,
+                       algorithm='mlem',
+                       num_iter=4,
+                       accelerated=True,
+                       device='cpu',
+                       ncore=1,
+                       pool_size=3)
+        assert_allclose(result, read_file('mlem_accel.npy'), rtol=1e-2)
+
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
+    def test_mlem_gpu(self):
+        result = recon(self.prj,
+                       self.ang,
+                       algorithm='mlem',
+                       num_iter=4,
+                       accelerated=True,
+                       device='gpu',
+                       ncore=1,
+                       pool_size=3)
+        assert_allclose(result, read_file('mlem_accel_gpu.npy'), rtol=1e-2)
 
     def test_osem(self):
+        rng = default_rng(0)
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='osem', num_iter=4),
-            read_file('osem.npy'), rtol=1e-2)
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='osem',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('osem.npy'),
+            rtol=1e-2,
+        )
 
     def test_ospml_hybrid(self):
+        rng = default_rng(0)
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='ospml_hybrid', num_iter=4),
-            read_file('ospml_hybrid.npy'), rtol=1e-2)
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='ospml_hybrid',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('ospml_hybrid.npy'),
+            rtol=1e-2,
+        )
 
     def test_ospml_quad(self):
+        rng = default_rng(0)
+        ind_block = np.arange(len(self.ang))
+        rng.shuffle(ind_block)
         assert_allclose(
-            recon(self.prj, self.ang, algorithm='ospml_quad', num_iter=4),
-            read_file('ospml_quad.npy'), rtol=1e-2)
+            recon(
+                self.prj,
+                self.ang,
+                algorithm='ospml_quad',
+                num_iter=4,
+                num_block=3,
+                ind_block=ind_block,
+            ),
+            read_file('ospml_quad.npy'),
+            rtol=1e-2,
+        )
 
     def test_pml_hybrid(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='pml_hybrid', num_iter=4),
-            read_file('pml_hybrid.npy'), rtol=1e-2)
+            read_file('pml_hybrid.npy'),
+            rtol=1e-2,
+        )
 
     def test_pml_quad(self):
         assert_allclose(
             recon(self.prj, self.ang, algorithm='pml_quad', num_iter=4),
-            read_file('pml_quad.npy'), rtol=1e-2)
+            read_file('pml_quad.npy'),
+            rtol=1e-2,
+        )
 
     def test_sirt(self):
-        # FIXME: Make separate tests for each back-end
-        os.environ["TOMOPY_USE_C_SIRT"] = "1"
-        r_sirt = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
-        c_sirt = read_file('sirt.npy')
-        assert_allclose(r_sirt, c_sirt, rtol=1e-2)
+        result = recon(self.prj, self.ang, algorithm='sirt', num_iter=4)
+        assert_allclose(result, read_file('sirt.npy'), rtol=1e-2)
+
+    @unittest.skipUnless(found_opencv, "CPU acceleration requires OpenCV.")
+    def test_sirt_accel(self):
+        result = recon(self.prj,
+                       self.ang,
+                       algorithm='sirt',
+                       num_iter=4,
+                       accelerated=True,
+                       device='cpu',
+                       ncore=1,
+                       pool_size=3)
+        assert_allclose(result, read_file('sirt_accel.npy'), rtol=1e-2)
+
+    @unittest.skipUnless("CUDA_VERSION" in os.environ, "CUDA_VERSION not set.")
+    def test_sirt_gpu(self):
+        result = recon(self.prj,
+                       self.ang,
+                       algorithm='sirt',
+                       num_iter=4,
+                       accelerated=True,
+                       device='gpu',
+                       ncore=1,
+                       pool_size=3)
+        assert_allclose(result, read_file('sirt_accel_gpu.npy'), rtol=1e-2)
 
     def test_tv(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='tv', num_iter=4),
-            read_file('tv.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj, self.ang, algorithm='tv', num_iter=4),
+                        read_file('tv.npy'),
+                        rtol=1e-2)
 
     def test_grad(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='grad', num_iter=4),
-            read_file('grad.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj, self.ang, algorithm='grad',
+                              num_iter=4),
+                        read_file('grad.npy'),
+                        rtol=1e-2)
 
     def test_tikh(self):
-        assert_allclose(
-            recon(self.prj, self.ang, algorithm='tikh', num_iter=4),
-            read_file('tikh.npy'), rtol=1e-2)
+        assert_allclose(recon(self.prj, self.ang, algorithm='tikh',
+                              num_iter=4),
+                        read_file('tikh.npy'),
+                        rtol=1e-2)

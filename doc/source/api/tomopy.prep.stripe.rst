@@ -19,3 +19,4 @@
       remove_large_stripe
       remove_dead_stripe
       remove_all_stripe
+      remove_stripe_based_interpolation

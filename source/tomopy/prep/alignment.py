@@ -52,7 +52,7 @@ import tomopy.util.mproc as mproc
 import logging
 
 from skimage import transform as tf
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tomopy.recon.algorithm import recon
 from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
@@ -189,8 +189,8 @@ def align_seq(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(
-                _prj[m], _sim[m], upsample_factor)
+            shift, error, diffphase = phase_cross_correlation(
+                    _prj[m], _sim[m], upsample_factor=upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -296,6 +296,10 @@ def align_joint(
     # Initialization of reconstruction.
     rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
 
+    extra_kwargs = {}
+    if algorithm != 'gridrec':
+        extra_kwargs['num_iter'] = 1
+
     # Register each image frame-by-frame.
     for n in range(iters):
 
@@ -304,7 +308,7 @@ def align_joint(
 
         # Reconstruct image.
         rec = recon(prj, ang, center=center, algorithm=algorithm,
-                    num_iter=1, init_recon=_rec)
+                    init_recon=_rec, **extra_kwargs)
 
         # Re-project data and obtain simulated data.
         sim = project(rec, ang, center=center, pad=False)
@@ -324,8 +328,8 @@ def align_joint(
         for m in range(prj.shape[0]):
 
             # Register current projection in sub-pixel precision
-            shift, error, diffphase = register_translation(
-                _prj[m], _sim[m], upsample_factor)
+            shift, error, diffphase = phase_cross_correlation(
+                    _prj[m], _sim[m], upsample_factor=upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -909,7 +913,7 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
                                 ncore=None, nchunk=None):
     """
     Apply distortion correction to projections using the polynomial model.
-    Coefficients are calculated using Vounwarp package.:cite:`Vo:15`
+    Coefficients are calculated using Vounwarp package :cite:`Vo:15`.
 
     Parameters
     ----------
@@ -986,7 +990,7 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     """
     Generate an unwarped sinogram of a 3D tomographic data using
     the polynomial model. Coefficients are calculated using Vounwarp
-    package :cite:`Vo:15`
+    package :cite:`Vo:15`.
 
     Parameters
     ----------

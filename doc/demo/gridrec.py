@@ -57,7 +57,7 @@ import dxchange
 if __name__ == '__main__':
 
     # Set path to the micro-CT data to reconstruct.
-    fname = '../../../tomopy/data/tooth.h5'
+    fname = '../../../source/tomopy/data/tooth.h5'
 
     # Select the sinogram range to reconstruct.
     start = 0

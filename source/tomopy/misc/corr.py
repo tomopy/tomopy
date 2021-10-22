@@ -380,9 +380,6 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
     ndarray
        Corrected array.
     """
-    arr = dtype.as_float32(arr)
-    dif = np.float32(dif)
-
     tmp = np.empty_like(arr)
 
     ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
@@ -396,6 +393,10 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
             slc[axis] = chnk_slices[i]
             e.submit(filters.median_filter, arr[tuple(slc)], size=filt_size,
                      output=tmp[tuple(slc)])
+
+    arr = dtype.as_float32(arr)
+    tmp = dtype.as_float32(tmp)
+    dif = np.float32(dif)
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
@@ -556,7 +557,8 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     thresh_min : float, optional
         min value for portion of image to filer
     theta_min : int, optional
-        minimum angle in degrees (int) to be considered ring artifact
+        Features larger than twice this angle (degrees) will be considered
+        a ring artifact. Must be less than 180 degrees.
     rwidth : int, optional
         Maximum width of the rings to be filtered in pixels
     int_mode : str, optional
@@ -596,6 +598,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
         int_mode = 1
     else:
         raise ValueError("int_mode should be WRAP or REFLECT")
+
+    if not 0 <= theta_min < 180:
+        raise ValueError("theta_min should be in the range [0 - 180)")
 
     args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
             thresh, theta_min, rwidth, int_mode)
