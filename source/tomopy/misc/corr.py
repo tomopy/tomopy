@@ -271,55 +271,56 @@ def median_filter_cuda(arr, size=3, axis=0):
 def find_nonfinite_values_prj(projection, slc_idx):
     """Allows the user to easily obtain the Z, x, y coordinates of nonfinite 
        values for a given 2D projection in a 3D array.
-    
+
     Parameters
     ----------
     projection : 2D nd.array
         The 2D projection for a given 3D data array.
-    
+
     slc_idx : int
         The projection index inside the main 3D array.
-    
+
     Returns
     -------
     The indices for the current projection used, the x coordinates, and y
     coordinates of all non-finite values.
     """
-    
+
     # Determining where the nonfinite values are
     boolean_of_nonfinite = ~np.isfinite(projection)
-    
+
     # Obtaining there x, y locations
     idx_of_nonfinite_prj = np.nonzero(boolean_of_nonfinite)
-    
+
     # Creating an identical shaped array for the z position in the 3D array the prj comes from
-    idx_of_nonfinite_data = np.asarray([slc_idx] * len(idx_of_nonfinite_prj[0]))
-    
+    idx_of_nonfinite_data = np.asarray(
+        [slc_idx] * len(idx_of_nonfinite_prj[0]))
+
     return idx_of_nonfinite_data, idx_of_nonfinite_prj[0], idx_of_nonfinite_prj[1]
 
 
 def determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     """Determine the proper kernel bounds for a given x, y index, and kernel size.
-    
+
     Parameters
     ----------
     x_idx : int
         The x index for a given nonfinite value.
-        
+
     y_idx :  int
         The y index for a given nonfinite value.
-        
+
     shape_x : int
         The max shape of the 2D projection in the x dimension.
-    
+
     shape_y : int
         The max shape of the 2D projection in the y dimension.
-        
+
     Returns
     -------
     The integer kernel bounds to surround the nonfinite value with.
     """
-    
+
     # Determining x kernel
     x_idx_lower = x_idx - kernel
     x_idx_higher = x_idx + kernel + 1
@@ -337,25 +338,26 @@ def determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
         y_idx_lower = 0
     if y_idx_higher > shape_y-1:
         y_idx_higher = shape_y-1
-        
+
     # Forcing values to be integers
     integer_values_pre = [x_idx_lower, x_idx_higher, y_idx_lower, y_idx_higher]
     integer_values = [int(i) for i in integer_values_pre]
-        
+
     return integer_values
 
 
 def median_filter_nonfinite(data, kernel=1):
-    """Apply a selective median filter with size kernel to all nonfinite values in the 3D data array.
-    
+    """Apply a selective median filter with size kernel to all nonfinite
+       values in the 3D data array.
+
     Parameters
     ----------
     data : 3D nd.array
         The 3D array of data with nonfinite values in it.
-        
+
     kernel : int
         The size of the kernel to be used for a local median filter. 
-        
+
     Returns
     -------
     The corrected 3D array with all nonfinite values removed based upon the local
@@ -363,7 +365,7 @@ def median_filter_nonfinite(data, kernel=1):
     """
 
     # Creating store arrays for the prj, x, y indicies for bad values
-    nonfinite_idx_store = [[],[],[]]
+    nonfinite_idx_store = [[], [], []]
 
     # Iterating throug each projection to save on RAM
     for idx, projection in tqdm(enumerate(data), desc='Finding Bad Values', total=len(data)):
@@ -374,21 +376,22 @@ def median_filter_nonfinite(data, kernel=1):
 
     # Iterating through each bad value and replace it with finite median
     for indices in tqdm(zip(nonfinite_idx_store.transpose()), desc='Removing Bad Values'):
-        
+
         # Turning index values to integers
         prj_idx, x_idx, y_idx = [int(ii) for ii in indices[0]]
-        
+
         # Determining the lower and upper bounds for kernel
         x_lower, x_higher, y_lower, y_higher = determine_nonfinite_kernel_idxs(x_idx,
-                                                                                y_idx,
-                                                                                kernel,
-                                                                                shape[1],
-                                                                                shape[2])
-    
+                                                                               y_idx,
+                                                                               kernel,
+                                                                               shape[1],
+                                                                               shape[2])
+
         # Extracting kernel data and fining finite median
         kernel_cropped_data = data[prj_idx, x_lower:x_higher, y_lower:y_higher]
         kernel_cropped_data = np.asarray(kernel_cropped_data)
-        median_corrected_data = np.median(kernel_cropped_data[np.isfinite(kernel_cropped_data)])
+        median_corrected_data = np.median(
+            kernel_cropped_data[np.isfinite(kernel_cropped_data)])
 
         # Replacing bad data with finite median
         data[prj_idx, x_idx, y_idx] = median_corrected_data
