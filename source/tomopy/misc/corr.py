@@ -299,7 +299,7 @@ def _find_nonfinite_values_prj(projection, slc_idx):
     return idx_of_nonfinite_data, idx_of_nonfinite_prj[0], idx_of_nonfinite_prj[1]
 
 
-def determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
+def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     """Determine the proper kernel bounds for a given x, y index, and kernel size.
 
     Parameters
