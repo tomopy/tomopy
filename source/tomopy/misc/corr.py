@@ -267,10 +267,6 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-import numpy as np
-from tqdm import tqdm
-
-
 def _find_nonfinite_values_prj(projection, slc_idx):
     """
     Allows the user to easily obtain the Z, x, y coordinates of nonfinite 
