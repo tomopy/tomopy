@@ -268,7 +268,7 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-def find_nonfinite_values_prj(projection, slc_idx):
+def _find_nonfinite_values_prj(projection, slc_idx):
     """Allows the user to easily obtain the Z, x, y coordinates of nonfinite 
        values for a given 2D projection in a 3D array.
 
