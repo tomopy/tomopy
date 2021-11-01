@@ -344,6 +344,7 @@ def determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
         
     return integer_values
 
+
 def median_filter_nonfinite(data, kernel=1):
     """Apply a selective median filter with size kernel to all nonfinite values in the 3D data array.
     
@@ -393,7 +394,6 @@ def median_filter_nonfinite(data, kernel=1):
         data[prj_idx, x_idx, y_idx] = median_corrected_data
 
     return data
-
 
 
 def sobel_filter(arr, axis=0, ncore=None):
