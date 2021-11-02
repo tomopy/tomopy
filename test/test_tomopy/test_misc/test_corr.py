@@ -74,6 +74,14 @@ class ImageFilterTestCase(unittest.TestCase):
             y = np.random.randint(0, 100)
             z = np.random.randint(0, 100)
             data_org[z, x, y] = np.inf
+            x = np.random.randint(0, 100)
+            y = np.random.randint(0, 100)
+            z = np.random.randint(0, 100)
+            data_org[z, x, y] = -np.inf
+            x = np.random.randint(0, 100)
+            y = np.random.randint(0, 100)
+            z = np.random.randint(0, 100)
+            data_org[z, x, y] = np.nan
 
         data_post_corr = median_filter_nonfinite(
             data_org.copy(), kernel=1, callback=None)
