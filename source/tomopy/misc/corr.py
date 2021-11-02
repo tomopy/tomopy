@@ -353,7 +353,7 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
 
     Parameters
     ----------
-    data : 3D nd.array
+    data : ndarray
         The 3D array of data with nonfinite values in it.
     kernel : int
         The size of the kernel to be used for a local median filter. 
