@@ -74,8 +74,8 @@ add_c_flag_if_avail("-Wno-reserved-id-macro")
 add_c_flag_if_avail("-Wunused-but-set-parameter")
 
 # SIMD OpenMP
-add_c_flag_if_avail("-fopenmp")
-add_cxx_flag_if_avail("-fopenmp")
+add_c_flag_if_avail("-fopenmp-simd")
+add_cxx_flag_if_avail("-fopenmp-simd")
 
 # Intel floating-point model
 add_c_flag_if_avail("-fp-model=precise")
