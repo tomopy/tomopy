@@ -348,8 +348,10 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
 
 def median_filter_nonfinite(data, kernel=1, callback=None):
     """
-    Apply a selective 2D median filter, slice by slice, for a 3D data array
-    with filter_size=kernel to all nonfinite values in the 3D data array.
+    Remove nonfinite values from a 3D array using an in-place 2D median filter.
+    
+    The 2D selective median filter is applied along the last two axes of
+    the array.
 
     Parameters
     ----------
@@ -357,12 +359,11 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
         The 3D array of data with nonfinite values in it.
     kernel : int
         The size of the kernel to be used for a local median filter. 
-    callback : func
-        A callback function to be run for each loop iteration.
-        Define total, description, and unit variables inside the function.
-        Where total is the total length of the progress bar,
-        description is the description of the progress bar,
-        and unit is the iteration unit of the progress bar.
+    callback : func(total, description, unit)
+        A function called after every internal loop iteration.
+        total is number of loop iterations.
+        description is 'Nonfinite median filter'.
+        unit is ' prjs'.
 
     Returns
     -------
