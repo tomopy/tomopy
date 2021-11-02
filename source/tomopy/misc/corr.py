@@ -359,8 +359,10 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
         The size of the kernel to be used for a local median filter. 
     callback : func
         A callback function to be run for each loop iteration.
-        Use self.iterator_len and self.iterator_desc to obtain the
-        length and description for each loop
+        Define total, description, and unit variables inside the function.
+        Where total is the total length of the progress bar,
+        description is the description of the progress bar,
+        and unit is the iteration unit of the progress bar.
 
     Returns
     -------
