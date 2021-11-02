@@ -66,7 +66,7 @@ class ImageFilterTestCase(unittest.TestCase):
     def test_median_filter(self):
         loop_dim(median_filter, read_file('cube.npy'))
 
-    def test_median_filter_nonfinite():
+    def test_median_filter_nonfinite(self):
         data_org = np.ones(shape=(100, 100, 100))
 
         for i in range(50):
