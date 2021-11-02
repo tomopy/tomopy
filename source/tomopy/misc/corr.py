@@ -295,8 +295,8 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
 
     if x_idx_lower < 0:
         x_idx_lower = 0
-    if x_idx_higher > shape_x-1:
-        x_idx_higher = shape_x-1
+    if x_idx_higher > shape_x:
+        x_idx_higher = shape_x
 
     # Determining y kernel
     y_idx_lower = y_idx - kernel
@@ -304,8 +304,8 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
 
     if y_idx_lower < 0:
         y_idx_lower = 0
-    if y_idx_higher > shape_y-1:
-        y_idx_higher = shape_y-1
+    if y_idx_higher > shape_y:
+        y_idx_higher = shape_y
 
     return x_idx_lower, x_idx_higher, y_idx_lower, y_idx_higher
 
