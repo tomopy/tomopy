@@ -9,10 +9,10 @@ include(Compilers)
 
 # ---------------------------------------------------------------------------- #
 # compiler features
-set(CMAKE_CXX_COMPILE_FEATURES
-    cxx_std_11 cxx_lambdas cxx_thread_local cxx_constexpr
-    cxx_decltype cxx_nullptr cxx_variable_templates
-    cxx_deleted_functions cxx_auto_type cxx_alias_templates)
+# set(CMAKE_CXX_COMPILE_FEATURES
+#     cxx_std_11 cxx_lambdas cxx_thread_local cxx_constexpr
+#     cxx_decltype cxx_nullptr cxx_variable_templates
+#     cxx_deleted_functions cxx_auto_type cxx_alias_templates)
 
 # ---------------------------------------------------------------------------- #
 #
@@ -74,8 +74,8 @@ add_c_flag_if_avail("-Wno-reserved-id-macro")
 add_c_flag_if_avail("-Wunused-but-set-parameter")
 
 # SIMD OpenMP
-add_c_flag_if_avail("-fopenmp-simd")
-add_cxx_flag_if_avail("-fopenmp-simd")
+add_c_flag_if_avail("-fopenmp")
+add_cxx_flag_if_avail("-fopenmp")
 
 # Intel floating-point model
 add_c_flag_if_avail("-fp-model=precise")
