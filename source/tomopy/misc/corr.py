@@ -346,10 +346,10 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     return integer_values
 
 
-def median_filter_nonfinite(data, kernel=1, callback=None):
+def median_filter_nonfinite(data, size=3, callback=None):
     """
     Remove nonfinite values from a 3D array using an in-place 2D median filter.
-    
+
     The 2D selective median filter is applied along the last two axes of
     the array.
 
@@ -357,8 +357,8 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
     ----------
     data : ndarray
         The 3D array of data with nonfinite values in it.
-    kernel : int
-        The size of the kernel to be used for a local median filter. 
+    size : int, optional
+        The size of the filter.
     callback : func(total, description, unit)
         A function called after every internal loop iteration.
         total is number of loop iterations.
@@ -400,7 +400,7 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
             # Determining the lower and upper bounds for kernel
             x_lower, x_higher, y_lower, y_higher = _determine_nonfinite_kernel_idxs(x_idx,
                                                                                     y_idx,
-                                                                                    kernel,
+                                                                                    size//2,
                                                                                     shape[1],
                                                                                     shape[2])
 
