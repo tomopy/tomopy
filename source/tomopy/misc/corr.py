@@ -275,7 +275,7 @@ def _find_nonfinite_values_prj(projection, slc_idx):
 
     Parameters
     ----------
-    projection : nd.array
+    projection : ndarray
         The 2D projection for a given 3D data array.
     slc_idx : int
         The projection index inside the main 3D array.
@@ -353,7 +353,7 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
 
     Parameters
     ----------
-    data : nd.array
+    data : ndarray
         The 3D array of data with nonfinite values in it.
     kernel : int
         The size of the kernel to be used for a local median filter. 
