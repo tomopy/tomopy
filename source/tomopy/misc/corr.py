@@ -67,7 +67,7 @@ from scipy.signal import medfilt2d
 logger = logging.getLogger(__name__)
 
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, William Judge"
 __credits__ = "Mark Rivers, Xianghui Xiao"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
@@ -346,7 +346,7 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     return integer_values
 
 
-def median_filter_nonfinite(data, kernel=1, pbar=None):
+def median_filter_nonfinite(data, kernel=1, callback=None):
     """
     Apply a selective 2D median filter, slice by slice, for a 3D data array
     with filter_size=kernel to all nonfinite values in the 3D data array.
@@ -357,8 +357,10 @@ def median_filter_nonfinite(data, kernel=1, pbar=None):
         The 3D array of data with nonfinite values in it.
     kernel : int
         The size of the kernel to be used for a local median filter. 
-    pbar : tqdm instance
-        A tqdm instance allowing the User to display a useful progressbar. 
+    callback : func
+        A callback function to be run for each loop iteration.
+        Use self.iterator_len and self.iterator_desc to obtain the
+        length and description for each loop
 
     Returns
     -------
@@ -367,29 +369,39 @@ def median_filter_nonfinite(data, kernel=1, pbar=None):
         median value defined by the kernel size.
     """
 
+    # Defining a callback class for a User defined progressbar
+    class CallbackClass():
+
+        def __init__(self, iterator_len, iterator_desc):
+            self.iterator_len = iterator_len
+            self.iterator_desc = iterator_desc
+
     # Creating store arrays for the prj, x, y indicies for bad values
     nonfinite_idx_store = [[], [], []]
 
-    # Allowing the User to use a tqdm progressbar if desired
-    if pbar is not None:
-        pbar.total = total = len(data)
-        pbar.set_description('Finding Bad Values')
+    # Allowing the User to use a progressbar if desired
+    if callback is not None:
+        data_len_loop1 = len(data)
+        callback_loop1 = CallbackClass(
+            iterator_len=data_len_loop1, iterator_desc='Finding Bad Values')
+        callback_loop1.callback = callback
 
     # Iterating throug each projection to save on RAM
     for idx, projection in enumerate(data):
         nonfinite_idx_store = np.concatenate((nonfinite_idx_store,
                                               _find_nonfinite_values_prj(projection,
-                                              int(idx))), axis=1)
-        if pbar is not None:
-            pbar.update(1)
+                                                                         int(idx))), axis=1)
+        if callback is not None:
+            callback_loop1.callback(callback_loop1)
 
     shape = np.shape(data)
 
-    # Allowing the User to use a tqdm progressbar if desired
-    if pbar is not None:
-        pbar.reset()
-        pbar.set_description('Removing Bad Values')
-        pbar.total = len(nonfinite_idx_store.transpose())
+    # Allowing the User to use a progressbar if desired
+    if callback is not None:
+        data_len_loop2 = len(nonfinite_idx_store.transpose()) + len(data)
+        callback_loop2 = CallbackClass(iterator_len=data_len_loop2,
+                                       iterator_desc='Removing Bad Values')
+        callback_loop2.callback = callback
 
     # Iterating through each bad value and replace it with finite median
     for indices in zip(nonfinite_idx_store.transpose()):
@@ -412,8 +424,8 @@ def median_filter_nonfinite(data, kernel=1, pbar=None):
         # Replacing bad data with finite median
         data[prj_idx, x_idx, y_idx] = median_corrected_data
 
-        if pbar is not None:
-            pbar.update(1)
+        if callback is not None:
+            callback_loop2.callback(callback_loop2)
 
     return data
 

@@ -49,12 +49,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import unittest
-from tomopy.misc.corr import gaussian_filter, median_filter, remove_neg, remove_nan, remove_outlier, circ_mask
+from tomopy.misc.corr import gaussian_filter, median_filter, median_filter_nonfinite, remove_neg, remove_nan, remove_outlier, circ_mask
 from ..util import read_file, loop_dim
 import numpy as np
 from numpy.testing import assert_allclose
 
-__author__ = "Doga Gursoy"
+__author__ = "Doga Gursoy, William Judge"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
@@ -65,6 +65,21 @@ class ImageFilterTestCase(unittest.TestCase):
 
     def test_median_filter(self):
         loop_dim(median_filter, read_file('cube.npy'))
+
+    def test_median_filter_nonfinite():
+        data_org = np.ones(shape=(100, 100, 100))
+
+        for i in range(50):
+            x = np.random.randint(0, 100)
+            y = np.random.randint(0, 100)
+            z = np.random.randint(0, 100)
+            data_org[z, x, y] = np.inf
+
+        data_post_corr = median_filter_nonfinite(
+            data_org.copy(), kernel=1, callback=None)
+
+        assert np.max(data_org) == np.inf
+        assert np.max(data_post_corr) == 1.0
 
     def test_remove_neg(self):
         assert_allclose(
