@@ -275,7 +275,7 @@ def _find_nonfinite_values_prj(projection, slc_idx):
 
     Parameters
     ----------
-    projection : 2D nd.array
+    projection : nd.array
         The 2D projection for a given 3D data array.
     slc_idx : int
         The projection index inside the main 3D array.
@@ -353,7 +353,7 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
 
     Parameters
     ----------
-    data : 3D nd.array
+    data : nd.array
         The 3D array of data with nonfinite values in it.
     kernel : int
         The size of the kernel to be used for a local median filter. 
@@ -369,63 +369,48 @@ def median_filter_nonfinite(data, kernel=1, callback=None):
         median value defined by the kernel size.
     """
 
-    # Defining a callback class for a User defined progressbar
-    class CallbackClass():
-
-        def __init__(self, iterator_len, iterator_desc):
-            self.iterator_len = iterator_len
-            self.iterator_desc = iterator_desc
+    # Defining a callback function if None is provided
+    if callback is None:
+        def callback(total, description, unit):
+            pass
 
     # Creating store arrays for the prj, x, y indicies for bad values
     nonfinite_idx_store = [[], [], []]
 
-    # Allowing the User to use a progressbar if desired
-    if callback is not None:
-        data_len_loop1 = len(data)
-        callback_loop1 = CallbackClass(
-            iterator_len=data_len_loop1, iterator_desc='Finding Bad Values')
-        callback_loop1.callback = callback
+    # Obtaining information for user defined progressbar
+    shape = np.shape(data)
+    pbar_total = len(data)
+    pbar_desc = 'Nonfinite Median Filter'
+    pbar_unit = ' Prjs'
 
     # Iterating throug each projection to save on RAM
     for idx, projection in enumerate(data):
-        nonfinite_idx_store = np.concatenate((nonfinite_idx_store,
-                                              _find_nonfinite_values_prj(projection,
-                                                                         int(idx))), axis=1)
-        if callback is not None:
-            callback_loop1.callback(callback_loop1)
+        nonfinite_idx = _find_nonfinite_values_prj(projection, int(idx))
+        nonfinite_idx = np.asarray(nonfinite_idx)
 
-    shape = np.shape(data)
+        # Iterating through each bad value and replace it with finite median
+        for indices in zip(nonfinite_idx.transpose()):
 
-    # Allowing the User to use a progressbar if desired
-    if callback is not None:
-        data_len_loop2 = len(nonfinite_idx_store.transpose()) + len(data)
-        callback_loop2 = CallbackClass(iterator_len=data_len_loop2,
-                                       iterator_desc='Removing Bad Values')
-        callback_loop2.callback = callback
+            # Turning index values to integers
+            prj_idx, x_idx, y_idx = [int(ii) for ii in indices[0]]
 
-    # Iterating through each bad value and replace it with finite median
-    for indices in zip(nonfinite_idx_store.transpose()):
+            # Determining the lower and upper bounds for kernel
+            x_lower, x_higher, y_lower, y_higher = _determine_nonfinite_kernel_idxs(x_idx,
+                                                                                    y_idx,
+                                                                                    kernel,
+                                                                                    shape[1],
+                                                                                    shape[2])
 
-        # Turning index values to integers
-        prj_idx, x_idx, y_idx = [int(ii) for ii in indices[0]]
+            # Extracting kernel data and fining finite median
+            kernel_cropped_data = data[prj_idx,
+                                       x_lower:x_higher, y_lower:y_higher]
+            median_corrected_data = np.median(
+                kernel_cropped_data[np.isfinite(kernel_cropped_data)])
 
-        # Determining the lower and upper bounds for kernel
-        x_lower, x_higher, y_lower, y_higher = _determine_nonfinite_kernel_idxs(x_idx,
-                                                                                y_idx,
-                                                                                kernel,
-                                                                                shape[1],
-                                                                                shape[2])
+            # Replacing bad data with finite median
+            data[prj_idx, x_idx, y_idx] = median_corrected_data
 
-        # Extracting kernel data and fining finite median
-        kernel_cropped_data = data[prj_idx, x_lower:x_higher, y_lower:y_higher]
-        median_corrected_data = np.median(
-            kernel_cropped_data[np.isfinite(kernel_cropped_data)])
-
-        # Replacing bad data with finite median
-        data[prj_idx, x_idx, y_idx] = median_corrected_data
-
-        if callback is not None:
-            callback_loop2.callback(callback_loop2)
+        callback(pbar_total, pbar_desc, pbar_unit)
 
     return data
 
