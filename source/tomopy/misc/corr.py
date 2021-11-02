@@ -268,38 +268,6 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-def _find_nonfinite_values_prj(projection, slc_idx):
-    """
-    Allows the user to easily obtain the Z, x, y coordinates of nonfinite 
-    values for a given 2D projection in a 3D array.
-
-    Parameters
-    ----------
-    projection : ndarray
-        The 2D projection for a given 3D data array.
-    slc_idx : int
-        The projection index inside the main 3D array.
-
-    Returns
-    -------
-    ndarray
-        The indices for the current projection used, the x coordinates, and y
-        coordinates of all non-finite values.
-    """
-
-    # Determining where the nonfinite values are
-    boolean_of_nonfinite = ~np.isfinite(projection)
-
-    # Obtaining there x, y locations
-    idx_of_nonfinite_prj = np.nonzero(boolean_of_nonfinite)
-
-    # Creating an identical shaped array for the z position in the 3D array the prj comes from
-    idx_of_nonfinite_data = np.asarray(
-        [slc_idx] * len(idx_of_nonfinite_prj[0]))
-
-    return idx_of_nonfinite_data, idx_of_nonfinite_prj[0], idx_of_nonfinite_prj[1]
-
-
 def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     """
     Determine the proper kernel bounds for a given x, y index, and kernel size.
@@ -317,7 +285,7 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
 
     Returns
     -------
-    ndarray
+    x_lower, x_higher, y_lower, y_higher : int
         The integer kernel bounds to surround the nonfinite value with.
     """
 
@@ -339,11 +307,7 @@ def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
     if y_idx_higher > shape_y-1:
         y_idx_higher = shape_y-1
 
-    # Forcing values to be integers
-    integer_values_pre = [x_idx_lower, x_idx_higher, y_idx_lower, y_idx_higher]
-    integer_values = [int(i) for i in integer_values_pre]
-
-    return integer_values
+    return x_idx_lower, x_idx_higher, y_idx_lower, y_idx_higher
 
 
 def median_filter_nonfinite(data, size=3, callback=None):
@@ -371,49 +335,34 @@ def median_filter_nonfinite(data, size=3, callback=None):
         The corrected 3D array with all nonfinite values removed based upon the local
         median value defined by the kernel size.
     """
-
     # Defining a callback function if None is provided
     if callback is None:
         def callback(total, description, unit):
             pass
 
-    # Creating store arrays for the prj, x, y indicies for bad values
-    nonfinite_idx_store = [[], [], []]
-
-    # Obtaining information for user defined progressbar
-    shape = np.shape(data)
-    pbar_total = len(data)
-    pbar_desc = 'Nonfinite Median Filter'
-    pbar_unit = ' Prjs'
-
     # Iterating throug each projection to save on RAM
-    for idx, projection in enumerate(data):
-        nonfinite_idx = _find_nonfinite_values_prj(projection, int(idx))
-        nonfinite_idx = np.asarray(nonfinite_idx)
+    for projection in data:
+        nonfinite_idx = np.nonzero(~np.isfinite(projection))
 
         # Iterating through each bad value and replace it with finite median
-        for indices in zip(nonfinite_idx.transpose()):
-
-            # Turning index values to integers
-            prj_idx, x_idx, y_idx = [int(ii) for ii in indices[0]]
+        for x_idx, y_idx in zip(*nonfinite_idx):
 
             # Determining the lower and upper bounds for kernel
             x_lower, x_higher, y_lower, y_higher = _determine_nonfinite_kernel_idxs(x_idx,
                                                                                     y_idx,
                                                                                     size//2,
-                                                                                    shape[1],
-                                                                                    shape[2])
+                                                                                    data.shape[1],
+                                                                                    data.shape[2])
 
             # Extracting kernel data and fining finite median
-            kernel_cropped_data = data[prj_idx,
-                                       x_lower:x_higher, y_lower:y_higher]
+            kernel_cropped_data = projection[x_lower:x_higher, y_lower:y_higher]
             median_corrected_data = np.median(
                 kernel_cropped_data[np.isfinite(kernel_cropped_data)])
 
             # Replacing bad data with finite median
-            data[prj_idx, x_idx, y_idx] = median_corrected_data
+            projection[x_idx, y_idx] = median_corrected_data
 
-        callback(pbar_total, pbar_desc, pbar_unit)
+        callback(data.shape[0], 'Nonfinite median filter', ' prjs')
 
     return data
 
@@ -830,8 +779,8 @@ def enhance_projs_aps_1id(imgstack, median_ks=5, ncore=None):
     """
     Enhance the projection images with weak contrast collected at APS 1ID
 
-    This filter uses a median fileter (will be switched to enhanced recursive 
-    median fileter, ERMF, in the future) for denoising, and a histogram 
+    This filter uses a median fileter (will be switched to enhanced recursive
+    median fileter, ERMF, in the future) for denoising, and a histogram
     equalization for dynamic range adjustment to bring out the details.
 
     Parameters
@@ -865,7 +814,7 @@ def enhance_projs_aps_1id(imgstack, median_ks=5, ncore=None):
 
 def _enhance_img(img, median_ks, normalized=True):
     """
-    Enhance the projection image from aps 1ID to counter its weak contrast 
+    Enhance the projection image from aps 1ID to counter its weak contrast
     nature
 
     Parameters
@@ -878,7 +827,7 @@ def _enhance_img(img, median_ks, normalized=True):
         specify whether the enhanced image is normalized between 0 and 1,
         default is True
 
-    Returns 
+    Returns
     -------
     ndarray
         enhanced projection image
@@ -901,7 +850,7 @@ def _calc_histequal_wgt(img):
     Returns
     -------
     ndarray
-        histogram euqalization weights (0-1) in the same shape as original 
+        histogram euqalization weights (0-1) in the same shape as original
         image
     """
     return (np.sort(img.flatten()).searchsorted(img) + 1)/np.prod(img.shape)
