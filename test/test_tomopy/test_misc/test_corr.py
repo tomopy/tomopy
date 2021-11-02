@@ -66,7 +66,7 @@ class ImageFilterTestCase(unittest.TestCase):
     def test_median_filter(self):
         loop_dim(median_filter, read_file('cube.npy'))
 
-    def test_median_filter_nonfinite(self):
+    def test_median_filter_nonfinite():
         data_org = np.ones(shape=(100, 100, 100))
 
         for i in range(50):
@@ -85,8 +85,10 @@ class ImageFilterTestCase(unittest.TestCase):
 
         data_post_corr = median_filter_nonfinite(
             data_org.copy(), kernel=1, callback=None)
-
-        assert np.max(data_org) == np.inf
+        
+        assert np.nanmax(data_org) == np.inf
+        assert np.nanmin(data_org) == -np.inf
+        assert np.isnan(np.max(data_org))
         assert np.max(data_post_corr) == 1.0
 
     def test_remove_neg(self):
