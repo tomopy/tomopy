@@ -74,7 +74,8 @@ def c_normalize_bg(tomo, air):
         dtype.as_c_int(dt),
         dtype.as_c_int(dy),
         dtype.as_c_int(dx),
-        dtype.as_c_int(air))
+        dtype.as_c_int(air),
+        dtype.as_c_int(1))
 
 
 def c_remove_stripe_sf(tomo, size):

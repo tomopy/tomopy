@@ -52,4 +52,4 @@
 #endif
 
 DLL void
-normalize_bg(float* data, int dx, int dy, int dz, int nair);
+normalize_bg(float* data, int dx, int dy, int dz, int nair, int);

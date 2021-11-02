@@ -40,24 +40,26 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+#include <omp.h>
 
 #include "prep.h"
 
 DLL void
-normalize_bg(float* data, int dx, int dy, int dz, int nair)
+normalize_bg(float* const data, const int dx, const int dy, const int dz, const int nair,
+             const int ncore)
 {
-    int   n, m, i, j, iproj;
-    float air_left, air_right, air_slope, air;
-
-    for(m = 0; m < dx; m++)
+#pragma omp parallel num_threads(ncore) shared(data)
+    for(int m = 0; m < dx; m++)
     {
-        iproj = m * (dz * dy);
+        int iproj = m * (dz * dy);
 
-        for(n = 0; n < dy; n++)
+#pragma omp for
+        for(int n = 0; n < dy; n++)
         {
-            i = iproj + n * dz;
+            float air_left, air_right = 0;
+            int   i = iproj + n * dz;
 
-            for(j = 0, air_left = 0, air_right = 0; j < nair; j++)
+            for(int j = 0, air_left = 0, air_right = 0; j < nair; j++)
             {
                 air_left += data[i + j];
                 air_right += data[i + dz - 1 - j];
@@ -75,11 +77,11 @@ normalize_bg(float* data, int dx, int dy, int dz, int nair)
                 air_right = 1.;
             }
 
-            air_slope = (air_right - air_left) / (dz - 1);
+            float air_slope = (air_right - air_left) / (dz - 1);
 
-            for(j = 0; j < dz; j++)
+            for(int j = 0; j < dz; j++)
             {
-                air         = air_left + air_slope * j;
+                float air   = air_left + air_slope * j;
                 data[i + j] = data[i + j] / air;
             }
         }

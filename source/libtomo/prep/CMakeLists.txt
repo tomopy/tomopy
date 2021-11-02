@@ -10,6 +10,9 @@ add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
 
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
 
+find_package(OpenMP REQUIRED)
+target_link_libraries(libtomopy-prep PRIVATE OpenMP::OpenMP_C)
+
 # target properties
 set_target_properties(libtomopy-prep
     PROPERTIES
