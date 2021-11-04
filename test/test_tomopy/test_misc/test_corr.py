@@ -105,7 +105,7 @@ class ImageFilterTestCase(unittest.TestCase):
             data_org[:] = non_finite
             self.assertRaises(ValueError,
                               median_filter_nonfinite,
-                              test_array.copy(),
+                              data_org[:].copy(),
                               size=3,
                               callback=None,
                               )
