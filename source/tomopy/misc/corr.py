@@ -349,18 +349,10 @@ def median_filter_nonfinite(data, size=3, callback=None):
         for x_idx, y_idx in zip(*nonfinite_idx):
 
             # Determining the lower and upper bounds for kernel
-            (
-                x_lower,
-                x_higher,
-                y_lower,
-                y_higher,
-            ) = _determine_nonfinite_kernel_idxs(
-                x_idx,
-                y_idx,
-                size // 2,
-                data.shape[1],
-                data.shape[2],
-            )
+            x_lower = max(0, x_idx - (size // 2))
+            x_higher = min(data.shape[1], x_idx + (size // 2) + 1)
+            y_lower = max(0, y_idx - (size // 2))
+            y_higher = min(data.shape[2], y_idx + (size // 2) + 1)
 
             # Extracting kernel data and fining finite median
             kernel_cropped_data = projection[x_lower:x_higher,
