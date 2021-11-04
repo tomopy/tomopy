@@ -268,49 +268,7 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-def _determine_nonfinite_kernel_idxs(x_idx, y_idx, kernel, shape_x, shape_y):
-    """
-    Determine the proper kernel bounds for a given x, y index, and kernel size.
-
-    Parameters
-    ----------
-    x_idx : int
-        The x index for a given nonfinite value.
-    y_idx :  int
-        The y index for a given nonfinite value.
-    shape_x : int
-        The max shape of the 2D projection in the x dimension.
-    shape_y : int
-        The max shape of the 2D projection in the y dimension.
-
-    Returns
-    -------
-    x_lower, x_higher, y_lower, y_higher : int
-        The integer kernel bounds to surround the nonfinite value with.
-    """
-
-    # Determining x kernel
-    x_idx_lower = x_idx - kernel
-    x_idx_higher = x_idx + kernel + 1
-
-    if x_idx_lower < 0:
-        x_idx_lower = 0
-    if x_idx_higher > shape_x:
-        x_idx_higher = shape_x
-
-    # Determining y kernel
-    y_idx_lower = y_idx - kernel
-    y_idx_higher = y_idx + kernel + 1
-
-    if y_idx_lower < 0:
-        y_idx_lower = 0
-    if y_idx_higher > shape_y:
-        y_idx_higher = shape_y
-
-    return x_idx_lower, x_idx_higher, y_idx_lower, y_idx_higher
-
-
-def median_filter_nonfinite(data, size=3, callback=None):
+def median_filter_nonfinite(data, size=3, callback=None, tshoot=False):
     """
     Remove nonfinite values from a 3D array using an in-place 2D median filter.
 
@@ -334,6 +292,13 @@ def median_filter_nonfinite(data, size=3, callback=None):
     ndarray
         The corrected 3D array with all nonfinite values removed based upon the local
         median value defined by the kernel size.
+
+    Raises
+    ------
+    ValueError
+        If the filter comes across a kernel only containing non-finite values a ValueError
+        is raised for the user to increase their kernel size to avoid replacing the current
+        pixel with 0.
     """
     # Defining a callback function if None is provided
     if callback is None:
@@ -357,6 +322,11 @@ def median_filter_nonfinite(data, size=3, callback=None):
             # Extracting kernel data and fining finite median
             kernel_cropped_data = projection[x_lower:x_higher,
                                              y_lower:y_higher]
+
+            if len(kernel_cropped_data[np.isfinite(kernel_cropped_data)]) == 0:
+                raise ValueError("Found kernel containing only non-finite values.\
+                                 Please increase kernel size")
+
             median_corrected_data = np.median(
                 kernel_cropped_data[np.isfinite(kernel_cropped_data)])
 
