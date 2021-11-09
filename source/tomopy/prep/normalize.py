@@ -109,9 +109,9 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     arr : ndarray
         3D stack of projections.
     flat : ndarray
-        3D flat field data.
+        2D or 3D flat field data.
     dark : ndarray
-        3D dark field data.
+        2D or 3D dark field data.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
@@ -127,7 +127,11 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     """
     arr = dtype.as_float32(arr)
     l = np.float32(1e-6)
+    if len(flat.shape) == 2:
+      flat = flat[np.newaxis;:,:]
     flat = np.mean(flat, axis=0, dtype=np.float32)
+    if len(dark.shape) == 2:
+      dark = dark[np.newaxis;:,:]
     dark = np.mean(dark, axis=0, dtype=np.float32)
 
     with mproc.set_numexpr_threads(ncore):
