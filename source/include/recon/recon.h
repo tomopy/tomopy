@@ -60,7 +60,7 @@ void DLL
 
 void DLL
      fbp(const float* data, int dy, int dt, int dx, const float* center, const float* theta,
-         float* recon, int ngridx, int ngridy, const char name[16], const float* filter_par);
+         float* recon, int ngridx, int ngridy, const char* name, const float* filter_par);
 
 void DLL
      grad(const float* data, int dy, int dt, int dx, const float* center, const float* theta,

@@ -190,7 +190,7 @@ def align_seq(
 
             # Register current projection in sub-pixel precision
             shift, error, diffphase = phase_cross_correlation(
-                    _prj[m], _sim[m], upsample_factor)
+                    _prj[m], _sim[m], upsample_factor=upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
@@ -329,7 +329,7 @@ def align_joint(
 
             # Register current projection in sub-pixel precision
             shift, error, diffphase = phase_cross_correlation(
-                    _prj[m], _sim[m], upsample_factor)
+                    _prj[m], _sim[m], upsample_factor=upsample_factor)
             err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
