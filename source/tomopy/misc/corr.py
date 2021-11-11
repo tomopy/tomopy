@@ -294,15 +294,14 @@ def median_filter_nonfinite(data, size=3, callback=None, tshoot=False):
     Returns
     -------
     ndarray
-        The corrected 3D array with all nonfinite values removed based upon the local
-        median value defined by the kernel size.
+        The corrected 3D array with all nonfinite values removed based upon the
+        local median value defined by the kernel size.
 
     Raises
     ------
     ValueError
-        If the filter comes across a kernel only containing non-finite values a ValueError
-        is raised for the user to increase their kernel size to avoid replacing the current
-        pixel with 0.
+        If the filter comes across a kernel only containing non-finite values a
+        ValueError is raised for the user to increase their kernel size.
     """
     # Defining a callback function if None is provided
     if callback is None:
