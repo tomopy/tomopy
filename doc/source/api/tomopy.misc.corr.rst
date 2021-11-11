@@ -9,12 +9,13 @@
    .. rubric:: **Functions:**
 
    .. autosummary::
-   
+
       adjust_range
       circ_mask
       gaussian_filter
       median_filter
       median_filter_cuda
+      median_filter_nonfinite
       sobel_filter
       remove_nan
       remove_neg
