@@ -101,14 +101,14 @@ class ImageFilterTestCase(unittest.TestCase):
         # Making sure filter raises ValueError when function finds a filter
         # filled with non-finite values.
         for non_finite in [np.nan, np.inf, -np.inf]:
-            data_org = np.empty((10, 10))
-            data_org[:] = non_finite
-            self.assertRaises(ValueError,
-                              median_filter_nonfinite,
-                              data_org[:].copy(),
-                              size=3,
-                              callback=None,
-                              )
+            data_org = np.empty((1, 3, 3))
+            data_org[:, -2:, -2:] = non_finite
+            with self.assertRaises(ValueError):
+                result = median_filter_nonfinite(
+                    data_org.copy(),
+                    size=3,
+                    callback=None,
+                )
 
     def test_remove_neg(self):
         assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])

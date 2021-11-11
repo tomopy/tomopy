@@ -45,7 +45,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
 """
 Module for data correction and masking functions.
 """
@@ -66,26 +65,26 @@ from scipy.signal import medfilt2d
 
 logger = logging.getLogger(__name__)
 
-
 __author__ = "Doga Gursoy, William Judge"
 __credits__ = "Mark Rivers, Xianghui Xiao"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['adjust_range',
-           'circ_mask',
-           'gaussian_filter',
-           'median_filter',
-           'median_filter_cuda',
-           'median_filter_nonfinite',
-           'sobel_filter',
-           'remove_nan',
-           'remove_neg',
-           'remove_outlier',
-           'remove_outlier1d',
-           'remove_outlier_cuda',
-           'remove_ring',
-           'enhance_projs_aps_1id',
-           ]
+__all__ = [
+    'adjust_range',
+    'circ_mask',
+    'gaussian_filter',
+    'median_filter',
+    'median_filter_cuda',
+    'median_filter_nonfinite',
+    'sobel_filter',
+    'remove_nan',
+    'remove_neg',
+    'remove_outlier',
+    'remove_outlier1d',
+    'remove_outlier_cuda',
+    'remove_ring',
+    'enhance_projs_aps_1id',
+]
 
 
 def adjust_range(arr, dmin=None, dmax=None):
@@ -152,11 +151,14 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
         ncore = mproc.mp.cpu_count()
 
     with cf.ThreadPoolExecutor(ncore) as e:
-        slc = [slice(None)]*arr.ndim
+        slc = [slice(None)] * arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.gaussian_filter, arr[tuple(slc)], sigma,
-                     order=order, output=out[tuple(slc)])
+            e.submit(filters.gaussian_filter,
+                     arr[tuple(slc)],
+                     sigma,
+                     order=order,
+                     output=out[tuple(slc)])
     return out
 
 
@@ -187,10 +189,12 @@ def median_filter(arr, size=3, axis=0, ncore=None):
         ncore = mproc.mp.cpu_count()
 
     with cf.ThreadPoolExecutor(ncore) as e:
-        slc = [slice(None)]*arr.ndim
+        slc = [slice(None)] * arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.median_filter, arr[tuple(slc)], size=(size, size),
+            e.submit(filters.median_filter,
+                     arr[tuple(slc)],
+                     size=(size, size),
                      output=out[tuple(slc)])
     return out
 
@@ -228,25 +232,25 @@ def median_filter_cuda(arr, size=3, axis=0):
 
         winAllow = range(2, 16)
 
-        if(axis != 0):
+        if (axis != 0):
             arr = np.swapaxes(arr, 0, axis)
 
         if size in winAllow:
-            loffset = int(size/2)
-            roffset = int((size-1)/2)
+            loffset = int(size / 2)
+            roffset = int((size - 1) / 2)
             prjsize = arr.shape[0]
             imsizex = arr.shape[2]
             imsizey = arr.shape[1]
 
             filter = tomocuda.mFilter(imsizex, imsizey, prjsize, size)
-            out = np.zeros(
-                shape=(prjsize, imsizey, imsizex), dtype=np.float32)
+            out = np.zeros(shape=(prjsize, imsizey, imsizex), dtype=np.float32)
 
             for step in range(prjsize):
                 # im_noisecu = arr[:][step][:].astype(np.float32)
                 im_noisecu = arr[step].astype(np.float32)
                 im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
-                                                     (loffset, roffset)), 'symmetric')
+                                                     (loffset, roffset)),
+                                        'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
@@ -255,7 +259,7 @@ def median_filter_cuda(arr, size=3, axis=0):
                 results = results.reshape(imsizey, imsizex)
                 out[step] = results
 
-            if(axis != 0):
+            if (axis != 0):
                 out = np.swapaxes(out, 0, axis)
         else:
             warnings.warn("Window size not support, using cpu median filter")
@@ -309,6 +313,7 @@ def median_filter_nonfinite(data, size=3, callback=None, tshoot=False):
     # Iterating throug each projection to save on RAM
     for projection in data:
         nonfinite_idx = np.nonzero(~np.isfinite(projection))
+        projection_copy = projection.copy()
 
         # Iterating through each bad value and replace it with finite median
         for x_idx, y_idx in zip(*nonfinite_idx):
@@ -320,11 +325,12 @@ def median_filter_nonfinite(data, size=3, callback=None, tshoot=False):
             y_higher = min(data.shape[2], y_idx + (size // 2) + 1)
 
             # Extracting kernel data and fining finite median
-            kernel_cropped_data = projection[x_lower:x_higher,
-                                             y_lower:y_higher]
+            kernel_cropped_data = projection_copy[x_lower:x_higher,
+                                                  y_lower:y_higher]
 
             if len(kernel_cropped_data[np.isfinite(kernel_cropped_data)]) == 0:
-                raise ValueError("Found kernel containing only non-finite values.\
+                raise ValueError(
+                    "Found kernel containing only non-finite values.\
                                  Please increase kernel size")
 
             median_corrected_data = np.median(
@@ -363,7 +369,7 @@ def sobel_filter(arr, axis=0, ncore=None):
         ncore = mproc.mp.cpu_count()
 
     with cf.ThreadPoolExecutor(ncore) as e:
-        slc = [slice(None)]*arr.ndim
+        slc = [slice(None)] * arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
             e.submit(filters.sobel, arr[slc], output=out[slc])
@@ -455,14 +461,16 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
 
     ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[axis], ncore=ncore)
 
-    filt_size = [size]*arr.ndim
+    filt_size = [size] * arr.ndim
     filt_size[axis] = 1
 
     with cf.ThreadPoolExecutor(ncore) as e:
-        slc = [slice(None)]*arr.ndim
+        slc = [slice(None)] * arr.ndim
         for i in range(ncore):
             slc[axis] = chnk_slices[i]
-            e.submit(filters.median_filter, arr[tuple(slc)], size=filt_size,
+            e.submit(filters.median_filter,
+                     arr[tuple(slc)],
+                     size=filt_size,
                      output=tmp[tuple(slc)])
 
     arr = dtype.as_float32(arr)
@@ -510,17 +518,20 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
     other_axes = [i for i in range(arr.ndim) if i != axis]
     largest = np.argmax([arr.shape[i] for i in other_axes])
     lar_axis = other_axes[largest]
-    ncore, chnk_slices = mproc.get_ncore_slices(
-        arr.shape[lar_axis], ncore=ncore)
-    filt_size = [1]*arr.ndim
+    ncore, chnk_slices = mproc.get_ncore_slices(arr.shape[lar_axis],
+                                                ncore=ncore)
+    filt_size = [1] * arr.ndim
     filt_size[axis] = size
 
     with cf.ThreadPoolExecutor(ncore) as e:
-        slc = [slice(None)]*arr.ndim
+        slc = [slice(None)] * arr.ndim
         for i in range(ncore):
             slc[lar_axis] = chnk_slices[i]
-            e.submit(filters.median_filter, arr[slc], size=filt_size,
-                     output=tmp[slc], mode='mirror')
+            e.submit(filters.median_filter,
+                     arr[slc],
+                     size=filt_size,
+                     output=tmp[slc],
+                     mode='mirror')
 
     with mproc.set_numexpr_threads(ncore):
         out = ne.evaluate('where(arr-tmp>=dif,tmp,arr)', out=out)
@@ -568,13 +579,13 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
 
         winAllow = range(2, 16)
 
-        if(axis != 0):
+        if (axis != 0):
             arr = np.swapaxes(arr, 0, axis)
 
         if size in winAllow:
             prjsize = arr.shape[0]
-            loffset = int(size/2)
-            roffset = int((size-1)/2)
+            loffset = int(size / 2)
+            roffset = int((size - 1) / 2)
             imsizex = arr.shape[2]
             imsizey = arr.shape[1]
 
@@ -584,7 +595,8 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
             for step in range(prjsize):
                 im_noisecu = arr[step].astype(np.float32)
                 im_noisecu = np.lib.pad(im_noisecu, ((loffset, roffset),
-                                                     (loffset, roffset)), 'symmetric')
+                                                     (loffset, roffset)),
+                                        'symmetric')
                 im_noisecu = im_noisecu.flatten()
 
                 filter.setCuImage(im_noisecu)
@@ -593,7 +605,7 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
                 results = results.reshape(imsizey, imsizex)
                 out[step] = results
 
-            if(axis != 0):
+            if (axis != 0):
                 out = np.swapaxes(out, 0, axis)
         else:
             warnings.warn("Window size not support, using cpu outlier removal")
@@ -606,9 +618,18 @@ def remove_outlier_cuda(arr, dif, size=3, axis=0):
     return out
 
 
-def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
-                thresh_max=300.0, thresh_min=-100.0, theta_min=30,
-                rwidth=30, int_mode='WRAP', ncore=None, nchunk=None, out=None):
+def remove_ring(rec,
+                center_x=None,
+                center_y=None,
+                thresh=300.0,
+                thresh_max=300.0,
+                thresh_min=-100.0,
+                theta_min=30,
+                rwidth=30,
+                int_mode='WRAP',
+                ncore=None,
+                nchunk=None,
+                out=None):
     """
     Remove ring artifacts from images in the reconstructed domain.
     Descriptions of parameters need to be more clear for sure.
@@ -659,9 +680,9 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     dz, dy, dx = rec.shape
 
     if center_x is None:
-        center_x = (dx - 1.0)/2.0
+        center_x = (dx - 1.0) / 2.0
     if center_y is None:
-        center_y = (dy - 1.0)/2.0
+        center_y = (dy - 1.0) / 2.0
 
     if int_mode.lower() == 'wrap':
         int_mode = 0
@@ -673,14 +694,14 @@ def remove_ring(rec, center_x=None, center_y=None, thresh=300.0,
     if not 0 <= theta_min < 180:
         raise ValueError("theta_min should be in the range [0 - 180)")
 
-    args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min,
-            thresh, theta_min, rwidth, int_mode)
+    args = (center_x, center_y, dx, dy, dz, thresh_max, thresh_min, thresh,
+            theta_min, rwidth, int_mode)
 
     axis_size = rec.shape[0]
     ncore, nchunk = mproc.get_ncore_nchunk(axis_size, ncore, nchunk)
     with cf.ThreadPoolExecutor(ncore) as e:
         for offset in range(0, axis_size, nchunk):
-            slc = np.s_[offset:offset+nchunk]
+            slc = np.s_[offset:offset + nchunk]
             e.submit(extern.c_remove_ring, out[slc], *args)
     return out
 
@@ -768,17 +789,18 @@ def enhance_projs_aps_1id(imgstack, median_ks=5, ncore=None):
     ndarray
         3D enhanced image stacks.
     """
-    ncore = mproc.mp.cpu_count()-1 if ncore is None else ncore
+    ncore = mproc.mp.cpu_count() - 1 if ncore is None else ncore
 
     # need to use multiprocessing to speed up the process
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
         for n_img in range(imgstack.shape[0]):
-            tmp.append(e.submit(_enhance_img,
-                                imgstack[n_img, :, :],
-                                median_ks,
-                                )
-                       )
+            tmp.append(
+                e.submit(
+                    _enhance_img,
+                    imgstack[n_img, :, :],
+                    median_ks,
+                ))
 
     return np.stack([me.result() for me in tmp], axis=0)
 
@@ -806,7 +828,7 @@ def _enhance_img(img, median_ks, normalized=True):
     wgt = _calc_histequal_wgt(img)
     img = medfilt2d(img, kernel_size=median_ks).astype(np.float64)
     img = ne.evaluate('(img**2)*wgt', out=img)
-    return img/img.max() if normalized else img
+    return img / img.max() if normalized else img
 
 
 def _calc_histequal_wgt(img):
@@ -824,4 +846,4 @@ def _calc_histequal_wgt(img):
         histogram euqalization weights (0-1) in the same shape as original
         image
     """
-    return (np.sort(img.flatten()).searchsorted(img) + 1)/np.prod(img.shape)
+    return (np.sort(img.flatten()).searchsorted(img) + 1) / np.prod(img.shape)
