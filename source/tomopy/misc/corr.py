@@ -272,7 +272,7 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-def median_filter_nonfinite(data, size=3, callback=None):
+def median_filter_nonfinite(arr, size=3, callback=None):
     """
     Remove nonfinite values from a 3D array using an in-place 2D median filter.
 
@@ -281,8 +281,8 @@ def median_filter_nonfinite(data, size=3, callback=None):
 
     Parameters
     ----------
-    data : ndarray
-        The 3D array of data with nonfinite values in it.
+    arr : ndarray
+        The 3D array with nonfinite values in it.
     size : int, optional
         The size of the filter.
     callback : func(total, description, unit)
@@ -310,7 +310,7 @@ def median_filter_nonfinite(data, size=3, callback=None):
             pass
 
     # Iterating throug each projection to save on RAM
-    for projection in data:
+    for projection in arr:
         nonfinite_idx = np.nonzero(~np.isfinite(projection))
         projection_copy = projection.copy()
 
@@ -319,28 +319,28 @@ def median_filter_nonfinite(data, size=3, callback=None):
 
             # Determining the lower and upper bounds for kernel
             x_lower = max(0, x_idx - (size // 2))
-            x_higher = min(data.shape[1], x_idx + (size // 2) + 1)
+            x_higher = min(arr.shape[1], x_idx + (size // 2) + 1)
             y_lower = max(0, y_idx - (size // 2))
-            y_higher = min(data.shape[2], y_idx + (size // 2) + 1)
+            y_higher = min(arr.shape[2], y_idx + (size // 2) + 1)
 
             # Extracting kernel data and fining finite median
-            kernel_cropped_data = projection_copy[x_lower:x_higher,
+            kernel_cropped_arr = projection_copy[x_lower:x_higher,
                                                   y_lower:y_higher]
 
-            if len(kernel_cropped_data[np.isfinite(kernel_cropped_data)]) == 0:
+            if len(kernel_cropped_arr[np.isfinite(kernel_cropped_arr)]) == 0:
                 raise ValueError(
                     "Found kernel containing only non-finite values.\
                                  Please increase kernel size")
 
-            median_corrected_data = np.median(
-                kernel_cropped_data[np.isfinite(kernel_cropped_data)])
+            median_corrected_arr = np.median(
+                kernel_cropped_arr[np.isfinite(kernel_cropped_arr)])
 
             # Replacing bad data with finite median
-            projection[x_idx, y_idx] = median_corrected_data
+            projection[x_idx, y_idx] = median_corrected_arr
 
-        callback(data.shape[0], 'Nonfinite median filter', ' prjs')
+        callback(arr.shape[0], 'Nonfinite median filter', ' prjs')
 
-    return data
+    return arr
 
 
 def sobel_filter(arr, axis=0, ncore=None):
