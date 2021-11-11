@@ -272,7 +272,7 @@ def median_filter_cuda(arr, size=3, axis=0):
     return out
 
 
-def median_filter_nonfinite(data, size=3, callback=None, tshoot=False):
+def median_filter_nonfinite(data, size=3, callback=None):
     """
     Remove nonfinite values from a 3D array using an in-place 2D median filter.
 
