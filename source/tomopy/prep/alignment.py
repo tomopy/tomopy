@@ -82,7 +82,7 @@ __all__ = ['align_seq',
            'remove_slits_aps_1id',
            'distortion_correction_proj',
            'distortion_correction_sino',
-           'load_distortion_coefs',           
+           'load_distortion_coefs',
            ]
 
 
@@ -915,6 +915,8 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
     Apply distortion correction to projections using the polynomial model.
     Coefficients are calculated using Vounwarp package :cite:`Vo:15`.
 
+    .. versionadded:: 1.7
+
     Parameters
     ----------
     tomo : ndarray
@@ -922,7 +924,7 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
     xcenter : float
         Center of distortion in x-direction. From the left of the image.
     ycenter : float
-        Center of distortion in y-direction. From the top of the image. 
+        Center of distortion in y-direction. From the top of the image.
     list_fact : list of floats
         Polynomial coefficients of the backward model.
     ncore : int, optional
@@ -948,17 +950,17 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
 def _unwarp_image_backward(mat, xcenter, ycenter, list_fact):
     """
     Unwarp an image using the polynomial model.
-    
+
     Parameters
     ----------
     mat : 2D array.
-    xcenter : float 
+    xcenter : float
             Center of distortion in x-direction. From the left of the image.
     ycenter : float
             Center of distortion in y-direction. From the top of the image.
-    list_fact : list of floats 
+    list_fact : list of floats
             Polynomial coefficients of the backward model.
-    
+
     Returns
     -------
     2D array
@@ -982,7 +984,7 @@ def _unwarp_image_backward(mat, xcenter, ycenter, list_fact):
 def _distortion_correction_proj(tomo, xcenter, ycenter, list_fact):
     for m in np.arange(tomo.shape[0]):
         proj = tomo[m, :, :]
-        proj = _unwarp_image_backward(proj, xcenter, ycenter, list_fact)        
+        proj = _unwarp_image_backward(proj, xcenter, ycenter, list_fact)
         tomo[m, :, :] = proj
 
 
@@ -991,6 +993,8 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     Generate an unwarped sinogram of a 3D tomographic data using
     the polynomial model. Coefficients are calculated using Vounwarp
     package :cite:`Vo:15`.
+
+    .. versionadded:: 1.7
 
     Parameters
     ----------
@@ -1001,7 +1005,7 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     xcenter : float
         Center of distortion in x-direction. From the left of the image.
     ycenter : float
-        Center of distortion in y-direction. From the top of the image.         
+        Center of distortion in y-direction. From the top of the image.
     list_fact : list of floats
         Polynomial coefficients of the backward model.
 
@@ -1021,7 +1025,7 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     yd_list = np.clip(ycenter + flist * yu, 0, height - 1)
     yd_min = np.int16(np.floor(np.amin(yd_list)))
     yd_max = np.int16(np.ceil(np.amax(yd_list))) + 1
-    yd_list = yd_list - yd_min 
+    yd_list = yd_list - yd_min
     sino = np.zeros((depth, width), dtype=np.float32)
     indices = yd_list, xd_list
     for i in np.arange(depth):

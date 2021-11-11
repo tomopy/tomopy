@@ -279,6 +279,8 @@ def median_filter_nonfinite(arr, size=3, callback=None):
     The 2D selective median filter is applied along the last two axes of
     the array.
 
+    .. versionadded:: 1.11
+
     Parameters
     ----------
     arr : ndarray
@@ -302,6 +304,7 @@ def median_filter_nonfinite(arr, size=3, callback=None):
     ValueError
         If the filter comes across a kernel only containing non-finite values a
         ValueError is raised for the user to increase their kernel size.
+
     """
     # Defining a callback function if None is provided
     if callback is None:
