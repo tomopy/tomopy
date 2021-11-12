@@ -45,16 +45,23 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import unittest
-from tomopy.misc.corr import gaussian_filter, median_filter, remove_neg, remove_nan, remove_outlier, circ_mask
-from ..util import read_file, loop_dim
+
 import numpy as np
 from numpy.testing import assert_allclose
+from tomopy.misc.corr import (
+    gaussian_filter,
+    median_filter,
+    median_filter_nonfinite,
+    remove_neg,
+    remove_nan,
+    remove_outlier,
+    circ_mask,
+)
 
-__author__ = "Doga Gursoy"
+from ..util import read_file, loop_dim
+
+__author__ = "Doga Gursoy, William Judge"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 
@@ -66,22 +73,54 @@ class ImageFilterTestCase(unittest.TestCase):
     def test_median_filter(self):
         loop_dim(median_filter, read_file('cube.npy'))
 
+    def test_median_filter_nonfinite(self):
+
+        # Set a standard random value to make reproducible
+        np.random.seed(1)
+
+        data_org = np.ones(shape=(100, 100, 100))
+
+        # Add some random non-finite values to an array of all ones
+        for non_finite in [np.nan, np.inf, -np.inf]:
+            for i in range(50):
+                x = np.random.randint(0, 100)
+                y = np.random.randint(0, 100)
+                z = np.random.randint(0, 100)
+                data_org[z, x, y] = non_finite
+
+        data_post_corr = median_filter_nonfinite(
+            data_org.copy(),
+            size=5,
+            callback=None,
+        )
+
+        # All the post filtering values should be 1 because all of the finite
+        # values are 1.
+        assert np.all(data_post_corr == 1.0)
+
+        # Making sure filter raises ValueError when function finds a filter
+        # filled with non-finite values.
+        for non_finite in [np.nan, np.inf, -np.inf]:
+            data_org = np.empty((1, 3, 3))
+            data_org[:, -2:, -2:] = non_finite
+            with self.assertRaises(ValueError):
+                result = median_filter_nonfinite(
+                    data_org.copy(),
+                    size=3,
+                    callback=None,
+                )
+
     def test_remove_neg(self):
-        assert_allclose(
-            remove_neg(
-                [-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
+        assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
 
     def test_remove_nan(self):
-        assert_allclose(
-            remove_nan(
-                [np.nan, 1.5, 2, np.nan, 1]), [0, 1.5, 2, 0, 1])
+        assert_allclose(remove_nan([np.nan, 1.5, 2, np.nan, 1]),
+                        [0, 1.5, 2, 0, 1])
 
     def test_remove_outlier(self):
         proj = read_file('proj.npy')
         proj[8][4][6] = 20
-        assert_allclose(
-            remove_outlier(proj, dif=10),
-            read_file('proj.npy'))
+        assert_allclose(remove_outlier(proj, dif=10), read_file('proj.npy'))
 
     def test_circ_mask(self):
         loop_dim(circ_mask, read_file('obj.npy'))
