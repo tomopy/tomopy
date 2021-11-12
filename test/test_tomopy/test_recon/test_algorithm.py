@@ -100,6 +100,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             ),
             read_file('bart.npy'),
             rtol=1e-2,
+            atol=1e-5,
         )
 
     def test_fbp(self):
@@ -211,6 +212,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             ),
             read_file('osem.npy'),
             rtol=1e-2,
+            atol=1e-5,
         )
 
     def test_ospml_hybrid(self):
@@ -228,6 +230,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             ),
             read_file('ospml_hybrid.npy'),
             rtol=1e-2,
+            atol=1e-5,
         )
 
     def test_ospml_quad(self):
@@ -245,6 +248,7 @@ class ReconstructionAlgorithmTestCase(unittest.TestCase):
             ),
             read_file('ospml_quad.npy'),
             rtol=1e-2,
+            atol=1e-5,
         )
 
     def test_pml_hybrid(self):
