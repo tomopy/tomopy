@@ -19,6 +19,7 @@ This section contains the API reference and usage information for TomoPy.
    api/tomopy.recon.rotation
    api/tomopy.sim.project
    api/tomopy.sim.propagate
+   api/tomopy.data.tomodata
 
 
 .. automodule:: tomopy
