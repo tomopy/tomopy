@@ -100,7 +100,8 @@ def minus_log(arr, ncore=None, out=None):
     return out
 
 
-def normalize(arr, flat, dark, averaging='mean', cutoff=None, ncore=None, out=None):
+def normalize(arr, flat, dark, averaging='mean', 
+              cutoff=None, ncore=None, out=None):
     """
     Normalize raw projection data using the flat and dark field projections.
 
@@ -113,7 +114,8 @@ def normalize(arr, flat, dark, averaging='mean', cutoff=None, ncore=None, out=No
     dark : ndarray
         2D or 3D dark field data.
     averaging : str, optional
-        'mean' or 'median', based on how the flat and dark arrays should be averaged.
+        'mean' or 'median', based on how the flat and dark arrays 
+        should be averaged.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
@@ -245,7 +247,8 @@ def normalize_nf(tomo, flats, dark, flat_loc, averaging='mean',
     flat_loc : list of int
         Indices of flat field data within tomography
     averaging : str, optional
-        'mean' or 'median', based on how the flat and dark arrays should be averaged.
+        'mean' or 'median', based on how the flat and dark arrays 
+        should be averaged.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
