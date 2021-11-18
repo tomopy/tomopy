@@ -100,7 +100,7 @@ def minus_log(arr, ncore=None, out=None):
     return out
 
 
-def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
+def normalize(arr, flat, dark, averaging='mean', cutoff=None, ncore=None, out=None):
     """
     Normalize raw projection data using the flat and dark field projections.
 
@@ -112,6 +112,8 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
         2D or 3D flat field data.
     dark : ndarray
         2D or 3D dark field data.
+    averaging : str, optional
+        'mean' or 'median', based on how the flat and dark arrays should be averaged.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
@@ -127,12 +129,16 @@ def normalize(arr, flat, dark, cutoff=None, ncore=None, out=None):
     """
     arr = dtype.as_float32(arr)
     l = np.float32(1e-6)
-    if len(flat.shape) == 2:
+    if flat.ndim == 2:
         flat = flat[np.newaxis, :, :]
-    flat = np.mean(flat, axis=0, dtype=np.float32)
-    if len(dark.shape) == 2:
+    if dark.ndim == 2:
         dark = dark[np.newaxis, :, :]
-    dark = np.mean(dark, axis=0, dtype=np.float32)
+    if averaging == 'mean':
+        flat = np.mean(flat, axis=0, dtype=np.float32)
+        dark = np.mean(dark, axis=0, dtype=np.float32)
+    elif averaging == 'median':
+        flat = np.median(flat, axis=0, dtype=np.float32)
+        dark = np.median(dark, axis=0, dtype=np.float32)
 
     with mproc.set_numexpr_threads(ncore):
         denom = ne.evaluate('flat-dark')
@@ -221,7 +227,7 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     return arr
 
 
-def normalize_nf(tomo, flats, dark, flat_loc,
+def normalize_nf(tomo, flats, dark, flat_loc, averaging='mean',
                  cutoff=None, ncore=None, out=None):
     """
     Normalize raw 3D projection data with flats taken more than once during
@@ -235,9 +241,11 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     flats : ndarray
         3D flat field data.
     dark : ndarray
-        3D dark field data.
+        2D or 3D dark field data.
     flat_loc : list of int
         Indices of flat field data within tomography
+    averaging : str, optional
+        'mean' or 'median', based on how the flat and dark arrays should be averaged.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
@@ -252,14 +260,18 @@ def normalize_nf(tomo, flats, dark, flat_loc,
 
     tomo = dtype.as_float32(tomo)
     flats = dtype.as_float32(flats)
+    if dark.ndim == 2:
+        dark = dark[np.newaxis, :, :]
     dark = dtype.as_float32(dark)
     l = np.float32(1e-6)
     if cutoff is not None:
         cutoff = np.float32(cutoff)
     if out is None:
         out = np.empty_like(tomo)
-
-    dark = np.median(dark, axis=0)
+    if averaging == 'mean':
+        dark = np.mean(dark, axis=0, dtype=np.float32)
+    elif averaging == 'median':
+        dark = np.median(dark, axis=0, dtype=np.float32)
     denom = np.empty_like(dark)
 
     num_flats = len(flat_loc)
