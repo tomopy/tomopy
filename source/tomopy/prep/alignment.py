@@ -50,7 +50,10 @@ import numpy as np
 import concurrent.futures as cf
 import tomopy.util.mproc as mproc
 import logging
+import matplotlib.pyplot as plt
+import os
 
+from time import process_time, perf_counter, sleep
 from skimage import transform as tf
 from skimage.registration import phase_cross_correlation
 from tomopy.recon.algorithm import recon
@@ -63,38 +66,49 @@ from scipy.ndimage import affine_transform
 from scipy.ndimage import map_coordinates
 from collections import namedtuple
 
+
 logger = logging.getLogger(__name__)
 
 
 __author__ = "Doga Gursoy, Chen Zhang, Nghia Vo"
 __copyright__ = "Copyright (c) 2016-19, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-__all__ = ['align_seq',
-           'align_joint',
-           'scale',
-           'tilt',
-           'add_jitter',
-           'add_noise',
-           'blur_edges',
-           'shift_images',
-           'find_slits_corners_aps_1id',
-           'calc_slit_box_aps_1id',
-           'remove_slits_aps_1id',
-           'distortion_correction_proj',
-           'distortion_correction_sino',
-           'load_distortion_coefs',
-           ]
+__docformat__ = "restructuredtext en"
+__all__ = [
+    "align_seq",
+    "align_joint",
+    "scale",
+    "tilt",
+    "add_jitter",
+    "add_noise",
+    "blur_edges",
+    "shift_images",
+    "find_slits_corners_aps_1id",
+    "calc_slit_box_aps_1id",
+    "remove_slits_aps_1id",
+    "distortion_correction_proj",
+    "distortion_correction_sino",
+    "load_distortion_coefs",
+]
 
 
 def align_seq(
-        prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, center=None, algorithm='sirt',
-        upsample_factor=10, rin=0.5, rout=0.8,
-        save=False, debug=True):
+    prj,
+    ang,
+    fdir=".",
+    iters=10,
+    pad=(0, 0),
+    blur=True,
+    center=None,
+    algorithm="sirt",
+    upsample_factor=10,
+    rin=0.5,
+    rout=0.8,
+    save=False,
+    debug=True,
+):
     """
     Aligns the projection image stack using the sequential
     re-projection algorithm :cite:`Gursoy:17`.
-
     Parameters
     ----------
     prj : ndarray
@@ -113,7 +127,6 @@ def align_seq(
         Location of rotation axis.
     algorithm : {str, function}
         One of the following string values.
-
         'art'
             Algebraic reconstruction technique :cite:`Kak:98`.
         'gridrec'
@@ -129,7 +142,6 @@ def align_seq(
             :cite:`Chambolle:11`.
         'grad'
             Gradient descent method with a constant step size
-
     upsample_factor : integer, optional
         The upsampling factor. Registration accuracy is
         inversely propotional to upsample_factor.
@@ -144,7 +156,6 @@ def align_seq(
         for each algorithm iteration.
     debug : book, optional
         Provides debugging info such as iterations and error.
-
     Returns
     -------
     ndarray
@@ -164,7 +175,7 @@ def align_seq(
 
     # Pad images.
     npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
-    prj = np.pad(prj, npad, mode='constant', constant_values=0)
+    prj = np.pad(prj, npad, mode="constant", constant_values=0)
 
     # Register each image frame-by-frame.
     for n in range(iters):
@@ -190,8 +201,9 @@ def align_seq(
 
             # Register current projection in sub-pixel precision
             shift, error, diffphase = phase_cross_correlation(
-                    _prj[m], _sim[m], upsample_factor=upsample_factor)
-            err[m] = np.sqrt(shift[0]*shift[0] + shift[1]*shift[1])
+                _prj[m], _sim[m], upsample_factor=upsample_factor
+            )
+            err[m] = np.sqrt(shift[0] * shift[0] + shift[1] * shift[1])
             sx[m] += shift[0]
             sy[m] += shift[1]
 
@@ -200,13 +212,13 @@ def align_seq(
             prj[m] = tf.warp(prj[m], tform, order=5)
 
         if debug:
-            print('iter=' + str(n) + ', err=' + str(np.linalg.norm(err)))
+            print("iter=" + str(n) + ", err=" + str(np.linalg.norm(err)))
             conv[n] = np.linalg.norm(err)
 
         if save:
-            write_tiff(prj, fdir + '/tmp/iters/prj', n)
-            write_tiff(sim, fdir + '/tmp/iters/sim', n)
-            write_tiff(rec, fdir + '/tmp/iters/rec', n)
+            write_tiff(prj, fdir + "/tmp/iters/prj", n)
+            write_tiff(sim, fdir + "/tmp/iters/sim", n)
+            write_tiff(rec, fdir + "/tmp/iters/rec", n)
 
     # Re-normalize data
     prj *= scl
@@ -214,13 +226,178 @@ def align_seq(
 
 
 def align_joint(
-        prj, ang, fdir='.', iters=10, pad=(0, 0),
-        blur=True, center=None, algorithm='sirt',
-        upsample_factor=10, rin=0.5, rout=0.8,
-        save=False, debug=True):
+    prj,
+    ang,
+    fdir=".",
+    iters=10,
+    pad=(0, 0),
+    blur=True,
+    center=None,
+    algorithm="sirt",
+    upsample_factor=10,
+    rin=0.5,
+    rout=0.8,
+    save=False,
+    debug=True,
+):
     """
     Aligns the projection image stack using the joint
     re-projection algorithm :cite:`Gursoy:17`.
+    Parameters
+    ----------
+    prj : ndarray
+        3D stack of projection images. The first dimension
+        is projection axis, second and third dimensions are
+        the x- and y-axes of the projection image, respectively.
+    ang : ndarray
+        Projection angles in radians as an array.
+    iters : scalar, optional
+        Number of iterations of the algorithm.
+    pad : list-like, optional
+        Padding for projection images in x and y-axes.
+    blur : bool, optional
+        Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor.
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
+    save : bool, optional
+        Saves projections and corresponding reconstruction
+        for each algorithm iteration.
+    debug : book, optional
+        Provides debugging info such as iterations and error.
+    Returns
+    -------
+    ndarray
+        3D stack of projection images with jitter.
+    ndarray
+        Error array for each iteration.
+    """
+
+    # Needs scaling for skimage float operations.
+    prj, scl = scale(prj)
+
+    # Shift arrays
+    sx = np.zeros((prj.shape[0]))
+    sy = np.zeros((prj.shape[0]))
+
+    conv = np.zeros((iters))
+
+    # Pad images.
+    npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
+    prj = np.pad(prj, npad, mode="constant", constant_values=0)
+
+    # Initialization of reconstruction.
+    rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
+
+    extra_kwargs = {}
+    if algorithm != "gridrec":
+        extra_kwargs["num_iter"] = 1
+
+    # Register each image frame-by-frame.
+    for n in range(iters):
+
+        if np.mod(n, 1) == 0:
+            _rec = rec
+
+        # Reconstruct image.
+        rec = recon(
+            prj,
+            ang,
+            center=center,
+            algorithm=algorithm,
+            init_recon=_rec,
+            **extra_kwargs,
+        )
+
+        # Re-project data and obtain simulated data.
+        sim = project(rec, ang, center=center, pad=False)
+
+        # Blur edges.
+        if blur:
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
+        else:
+            _prj = prj
+            _sim = sim
+
+        # Initialize error matrix per iteration.
+        err = np.zeros((prj.shape[0]))
+
+        # For each projection
+        for m in range(prj.shape[0]):
+
+            # Register current projection in sub-pixel precision
+            shift, error, diffphase = phase_cross_correlation(
+                _prj[m], _sim[m], upsample_factor=upsample_factor
+            )
+            err[m] = np.sqrt(shift[0] * shift[0] + shift[1] * shift[1])
+            sx[m] += shift[0]
+            sy[m] += shift[1]
+
+            # Register current image with the simulated one
+            tform = tf.SimilarityTransform(translation=(shift[1], shift[0]))
+            prj[m] = tf.warp(prj[m], tform, order=5)
+
+        if debug:
+            print("iter=" + str(n) + ", err=" + str(np.linalg.norm(err)))
+            conv[n] = np.linalg.norm(err)
+
+        if save:
+            write_tiff(prj, "tmp/iters/prj", n)
+            write_tiff(sim, "tmp/iters/sim", n)
+            write_tiff(rec, "tmp/iters/rec", n)
+
+    # Re-normalize data
+    prj *= scl
+    return prj, sx, sy, conv
+
+
+def align_joint_astra_cupy(
+    prj,
+    ang,
+    fdir=".",
+    iters=10,
+    pad=(0, 0),
+    blur=True,
+    center=None,
+    algorithm="SIRT_CUDA",
+    upsample_factor=10,
+    rin=0.5,
+    rout=0.8,
+    save=False,
+    debug=True,
+    batches=10,
+):
+    """
+    EXPERIMENTAL
+    TODO: CLEAN
+    Aligns the projection image stack using the joint
+    re-projection algorithm using the Astra Toolbox and cupy :cite:`Gursoy:17`.
 
     Parameters
     ----------
@@ -279,10 +456,212 @@ def align_joint(
     ndarray
         Error array for each iteration.
     """
-
     # Needs scaling for skimage float operations.
+    import astra
+    import cupy as cp
+    from joblib import Parallel, delayed
+    import tomopy.recon.wrappers as wrappers
     prj, scl = scale(prj)
 
+    # Shift arrays
+    sx = np.zeros((prj.shape[0]))
+    sy = np.zeros((prj.shape[0]))
+    conv = np.zeros((iters))
+
+    # Pad images.
+    npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
+    prj = np.pad(prj, npad, mode="constant", constant_values=0)
+
+    # Initialization of reconstruction.
+    rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
+    os.environ["TOMOPY_PYTHON_THREADS"] = "1"
+    extra_kwargs = {}
+
+    # Register each image frame-by-frame.
+    for n in range(iters):
+        print(
+            "------------------------------------\
+            ---------------------------"
+        )
+        print(f"Iteration {n+1:0.0f}.")
+        tic = perf_counter()
+        if np.mod(n, 1) == 0:
+            _rec = rec
+
+        # Reconstruct image.
+        options = {"proj_type": "cuda", "method": "SIRT_CUDA", "num_iter": 1}
+        extra_kwargs["options"] = options
+        # tic = perf_counter()
+        rec = recon(
+            prj,
+            ang,
+            center=center,
+            algorithm=wrappers.astra,
+            init_recon=_rec,
+            ncore=None,
+            **extra_kwargs,
+        )
+        # toc = perf_counter()
+        # print(f"Finished reconstruction after { toc - tic:0.3f} seconds.")
+
+        # Re-project data and obtain simulated data.
+        # print('Starting re-projection.', str(n))
+        # tic = perf_counter()
+
+        sim = np.zeros(prj.shape)
+        for i in range(rec.shape[0]):
+            _rec = rec[i, :, :]
+            _rec = _rec[np.newaxis, :, :]
+            vol_geom = astra.create_vol_geom(
+                _rec.shape[1], _rec.shape[1], _rec.shape[0]
+            )
+            phantom_id = astra.data3d.create("-vol", vol_geom, data=_rec)
+            proj_geom = astra.create_proj_geom(
+                "parallel3d", 1, 1, _rec.shape[0], _rec.shape[1], ang
+            )
+            projections_id, _sim = astra.creators.create_sino3d_gpu(
+                phantom_id, proj_geom, vol_geom
+            )
+            _sim = _sim.swapaxes(0, 1)
+            astra.data3d.delete(projections_id)
+            astra.data3d.delete(phantom_id)
+            sim[:, i, :] = _sim[:, 0, :]
+            del _sim
+        sim = np.flip(sim, axis=2)
+
+        # toc = perf_counter()
+        # print(f"Finished re-projection after {toc - tic:0.3f} seconds.")
+
+        # Blur edges.
+        if blur:
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
+        else:
+            _prj = prj
+            _sim = sim
+
+        # Cut the data up into batches (along projection axis) so that the GPU can handle it.
+        # This number will change depending on your GPU memory.
+        splitPrj = np.array_split(_prj, batches, axis=0)
+        splitSim = np.array_split(_sim, batches, axis=0)
+        shift_cpu = []
+        # print('Starting image registration.')
+        # tic = perf_counter()
+        for i in range(len(splitPrj)):
+            shift_gpu = phase_cross_correlation(
+                splitPrj[i], splitSim[i], upsample_factor=1, return_error=False
+            )
+            shift_cpu.append(cp.asnumpy(shift_gpu))
+        shift_cpu = np.concatenate(shift_cpu, axis=1)
+        prj, err, sx, sy = transform_parallel(prj, shift_cpu, sx, sy)
+        # print(f"Iteration {n:0.0f}, finished registration after {toc - tic:0.3f} seconds.")
+        # print(f"Iteration {n:0.0f}, finished registration after {(toc - tic)/_prj.shape[0]:0.3f} s/projection.")
+        plotIm(prj[50], _sim[50])
+        toc = perf_counter()
+        if debug:
+            print(f"Error = {np.linalg.norm(err):3.3f}.")
+            print(f"Runtime: {toc - tic:0.3f} seconds.")
+            print(
+                "--------------------------------------\
+                -------------------------"
+            )
+            conv[n] = np.linalg.norm(err)
+
+        if save:
+            write_tiff(prj, "tmp/iters/prj", n)
+            write_tiff(sim, "tmp/iters/sim", n)
+            write_tiff(rec, "tmp/iters/rec", n)
+
+    # Re-normalize data
+    prj *= scl
+    return prj, sx, sy, conv, center, sim, rec
+
+def align_joint_astra(
+    prj,
+    ang,
+    fdir=".",
+    iters=10,
+    pad=(0, 0),
+    blur=True,
+    center=None,
+    algorithm="SIRT_CUDA",
+    upsample_factor=10,
+    rin=0.5,
+    rout=0.8,
+    save=False,
+    debug=True,
+):
+    """
+    Aligns the projection image stack using the joint
+    re-projection algorithm using the Astra Toolbox :cite:`Gursoy:17`.
+    
+    TODO: Make astra reprojection faster (already pretty fast, but could use
+    batching.)
+    Parameters
+    ----------
+    prj : ndarray
+        3D stack of projection images. The first dimension
+        is projection axis, second and third dimensions are
+        the x- and y-axes of the projection image, respectively.
+    ang : ndarray
+        Projection angles in radians as an array.
+    iters : scalar, optional
+        Number of iterations of the algorithm.
+    pad : list-like, optional
+        Padding for projection images in x and y-axes.
+    blur : bool, optional
+        Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor.
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
+    save : bool, optional
+        Saves projections and corresponding reconstruction
+        for each algorithm iteration.
+    debug : book, optional
+        Provides debugging info such as iterations and error.
+
+    Returns
+    -------
+    ndarray
+        3D stack of projection images with jitter.
+    ndarray
+        Error array for each iteration.
+    """
+    import astra
+    import tomopy.recon.wrappers as wrappers
+    print(
+        "Performing joint iterative sample alignment using upsample factor: ",
+        str(upsample_factor),
+    )
+    # Needs scaling for skimage float operations.
+    prj, scl = scale(prj)
     # Shift arrays
     sx = np.zeros((prj.shape[0]))
     sy = np.zeros((prj.shape[0]))
@@ -291,15 +670,12 @@ def align_joint(
 
     # Pad images.
     npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
-    prj = np.pad(prj, npad, mode='constant', constant_values=0)
-
+    print("Adding padding to dataset,", str(pad[1]), " on X and", str(pad[0]), "on Y")
+    prj = np.pad(prj, npad, mode="constant", constant_values=0)
     # Initialization of reconstruction.
     rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
-
+    os.environ["TOMOPY_PYTHON_THREADS"] = "1"
     extra_kwargs = {}
-    if algorithm != 'gridrec':
-        extra_kwargs['num_iter'] = 1
-
     # Register each image frame-by-frame.
     for n in range(iters):
 
@@ -307,11 +683,55 @@ def align_joint(
             _rec = rec
 
         # Reconstruct image.
-        rec = recon(prj, ang, center=center, algorithm=algorithm,
-                    init_recon=_rec, **extra_kwargs)
+        options = {"proj_type": "cuda", "method": "SIRT_CUDA", "num_iter": 1}
+        extra_kwargs["options"] = options
+        tic = perf_counter()
+        print("Starting reconstruction, iteration number " + str(n) + ".")
+        rec = recon(
+            prj,
+            ang,
+            center=center,
+            algorithm=wrappers.astra,
+            init_recon=_rec,
+            ncore=1,
+            **extra_kwargs,
+        )
+        toc = perf_counter()
+        print(
+            f"Iteration {n:0.0f}, finished reconstruction after { toc - tic:0.3f} seconds."
+        )
 
         # Re-project data and obtain simulated data.
-        sim = project(rec, ang, center=center, pad=False)
+        print("Starting re-projection, iteration number", str(n))
+        tic = perf_counter()
+        # sim = project(rec, ang, center=center, pad=False)
+
+        sim = np.zeros(prj.shape)
+        for i in range(rec.shape[0]):
+            _rec = rec[i, :, :]
+            _rec = _rec[np.newaxis, :, :]
+            vol_geom = astra.create_vol_geom(
+                _rec.shape[1], _rec.shape[1], _rec.shape[0]
+            )
+            phantom_id = astra.data3d.create("-vol", vol_geom, data=_rec)
+            proj_geom = astra.create_proj_geom(
+                "parallel3d", 1, 1, _rec.shape[0], _rec.shape[1], ang
+            )
+            projections_id, _sim = astra.creators.create_sino3d_gpu(
+                phantom_id, proj_geom, vol_geom
+            )
+            _sim = _sim.swapaxes(0, 1)
+            astra.data3d.delete(projections_id)
+            astra.data3d.delete(phantom_id)
+            sim[:, i, :] = _sim[:, 0, :]
+            del _sim
+        sim = np.flip(sim, axis=2)
+
+        toc = perf_counter()
+        print(
+            f"Iteration {n:0.0f}, \
+            finished re-projection after {toc - tic:0.3f} seconds."
+        )
 
         # Blur edges.
         if blur:
@@ -351,6 +771,39 @@ def align_joint(
     prj *= scl
     return prj, sx, sy, conv
 
+
+def transform_parallel(reference_images, shift_data, sx, sy):
+    reference_imagesTformed = np.zeros_like(reference_images)
+    err = np.zeros((reference_images.shape[0] + 1, 1))
+
+    def tform(reference_images, shift, m):
+        shiftm = shift[:, m]
+        sx[m] += shiftm[0]
+        sy[m] += shiftm[1]
+        err[m] = np.sqrt(shiftm[0] * shiftm[0] + shiftm[1] * shiftm[1])
+        tform = tf.SimilarityTransform(translation=(shiftm[1], shiftm[0]))
+        reference_imagesTformed[m, :, :] = tf.warp(
+            reference_images[m, :, :], tform, order=5
+        )
+
+    Parallel(n_jobs=-1, require="sharedmem")(
+        delayed(tform)(reference_images, shift_data, m)
+        for m in range(reference_images.shape[0])
+    )
+    return reference_imagesTformed, err, sx, sy
+
+
+def plotIm(prj, sim):
+    fig = plt.figure(figsize=(8, 3))
+    ax1 = plt.subplot(1, 2, 1)
+    ax2 = plt.subplot(1, 2, 2)
+    ax1.imshow(prj, cmap="gray")
+    ax1.set_axis_off()
+    ax1.set_title("Projection Image")
+    ax2.imshow(sim, cmap="gray")
+    ax2.set_axis_off()
+    ax2.set_title("Re-projected Image")
+    plt.show()
 
 def tilt(obj, rad=0, phi=0):
     """
@@ -447,7 +900,7 @@ def add_noise(prj, ratio=0.05):
     """
     std = prj.max() * ratio
     noise = np.random.normal(0, std, size=prj.shape)
-    return prj + noise.astype('float32')
+    return prj + noise.astype("float32")
 
 
 def scale(prj):
@@ -495,7 +948,7 @@ def blur_edges(prj, low=0, high=0.8):
     _prj = prj.copy()
     dx, dy, dz = _prj.shape
     rows, cols = np.mgrid[:dy, :dz]
-    rad = np.sqrt((rows - dy / 2)**2 + (cols - dz / 2)**2)
+    rad = np.sqrt((rows - dy / 2) ** 2 + (cols - dz / 2) ** 2)
     mask = np.zeros((dy, dz))
     rmin, rmax = low * rad.max(), high * rad.max()
     mask[rad < rmin] = 1
@@ -529,11 +982,12 @@ def shift_images(prj, sx, sy):
     return prj
 
 
-def find_slits_corners_aps_1id(img,
-                               method='quadrant+',
-                               medfilt2_kernel_size=3,
-                               medfilt_kernel_size=23,
-                               ):
+def find_slits_corners_aps_1id(
+    img,
+    method="quadrant+",
+    medfilt2_kernel_size=3,
+    medfilt_kernel_size=23,
+):
     """
     Automatically locate the slit box location by its four corners.
 
@@ -572,13 +1026,14 @@ def find_slits_corners_aps_1id(img,
         autodetected slit corners (counter-clockwise order)
         (upperLeft, lowerLeft, lowerRight, upperRight)
     """
-    img = medfilt2d(np.log(img.astype(np.float64)),
-                    kernel_size=medfilt2_kernel_size,
-                    )
+    img = medfilt2d(
+        np.log(img.astype(np.float64)),
+        kernel_size=medfilt2_kernel_size,
+    )
     rows, cols = img.shape
 
     # simple method is simple, therefore it stands out
-    if method.lower() == 'simple':
+    if method.lower() == "simple":
         # assuming a rectangle type slit box
         col_std = medfilt(np.std(img, axis=0), kernel_size=medfilt_kernel_size)
         row_std = medfilt(np.std(img, axis=1), kernel_size=medfilt_kernel_size)
@@ -591,11 +1046,14 @@ def find_slits_corners_aps_1id(img,
         _top = np.argmax(np.gradient(row_std))
         _bottom = np.argmin(np.gradient(row_std))
 
-        cnrs = np.array([[_left, _top],
-                         [_left, _bottom],
-                         [_right, _bottom],
-                         [_right, _top],
-                         ])
+        cnrs = np.array(
+            [
+                [_left, _top],
+                [_left, _bottom],
+                [_right, _bottom],
+                [_right, _top],
+            ]
+        )
     else:
         # predefine all quadrants
         # Here let's assume that the four corners of the slit box are in the
@@ -608,43 +1066,63 @@ def find_slits_corners_aps_1id(img,
         # origin =  (0,      cnt[1])
         # center of image that defines FOUR quadrants
         cnt = [int(cols / 2), int(rows / 2)]
-        Quadrant = namedtuple('Quadrant', 'img col_func, row_func')
-        quadrants = [Quadrant(img=img[0:cnt[1], 0:cnt[0]], col_func=np.argmax, row_func=np.argmax),  # upper left,  1st quadrant
-                     # lower left,  2nd quadrant
-                     Quadrant(img=img[cnt[1]:, 0:cnt[0]],
-                              col_func=np.argmax, row_func=np.argmin),
-                     # lower right, 3rd quadrant
-                     Quadrant(img=img[cnt[1]:, cnt[0]:],
-                              col_func=np.argmin, row_func=np.argmin),
-                     # upper right, 4th quadrant
-                     Quadrant(img=img[0:cnt[0], cnt[1]:],
-                              col_func=np.argmin, row_func=np.argmax),
-                     ]
+        Quadrant = namedtuple("Quadrant", "img col_func, row_func")
+        quadrants = [
+            Quadrant(
+                img=img[0 : cnt[1], 0 : cnt[0]], col_func=np.argmax, row_func=np.argmax
+            ),  # upper left,  1st quadrant
+            # lower left,  2nd quadrant
+            Quadrant(
+                img=img[cnt[1] :, 0 : cnt[0]], col_func=np.argmax, row_func=np.argmin
+            ),
+            # lower right, 3rd quadrant
+            Quadrant(
+                img=img[cnt[1] :, cnt[0] :], col_func=np.argmin, row_func=np.argmin
+            ),
+            # upper right, 4th quadrant
+            Quadrant(
+                img=img[0 : cnt[0], cnt[1] :], col_func=np.argmin, row_func=np.argmax
+            ),
+        ]
         # the origin in each quadrants ==> easier to set it here
-        quadrantorigins = np.array([[0, 0],  # upper left,  1st quadrant
-                                    [0, cnt[1]],  # lower left,  2nd quadrant
-                                    # lower right, 3rd quadrant
-                                    [cnt[0], cnt[1]],
-                                    [cnt[1], 0],  # upper right, 4th quadrant
-                                    ])
+        quadrantorigins = np.array(
+            [
+                [0, 0],  # upper left,  1st quadrant
+                [0, cnt[1]],  # lower left,  2nd quadrant
+                # lower right, 3rd quadrant
+                [cnt[0], cnt[1]],
+                [cnt[1], 0],  # upper right, 4th quadrant
+            ]
+        )
         # init four corners
         cnrs = np.zeros((4, 2))
-        if method.lower() == 'quadrant':
+        if method.lower() == "quadrant":
             # the standard quadrant method
             for i, q in enumerate(quadrants):
-                cnrs[i, :] = np.array([q.col_func(np.gradient(medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size))),  # x is col_idx
-                                       q.row_func(
-                    np.gradient(
-                        medfilt(
-                            np.std(
-                                q.img,
-                                axis=1),
-                            kernel_size=medfilt_kernel_size))),
-                    # y is row_idx
-                ])
+                cnrs[i, :] = np.array(
+                    [
+                        q.col_func(
+                            np.gradient(
+                                medfilt(
+                                    np.std(q.img, axis=0),
+                                    kernel_size=medfilt_kernel_size,
+                                )
+                            )
+                        ),  # x is col_idx
+                        q.row_func(
+                            np.gradient(
+                                medfilt(
+                                    np.std(q.img, axis=1),
+                                    kernel_size=medfilt_kernel_size,
+                                )
+                            )
+                        ),
+                        # y is row_idx
+                    ]
+                )
             # add the origin offset back
             cnrs = cnrs + quadrantorigins
-        elif method.lower() == 'quadrant+':
+        elif method.lower() == "quadrant+":
             # use Gaussian curve fitting to achive subpixel precision
             # TODO:
             # improve the curve fitting with Lorentz and Voigt fitting function
@@ -652,44 +1130,47 @@ def find_slits_corners_aps_1id(img,
                 # -- find x subpixel position
                 cnr_x_guess = q.col_func(
                     np.gradient(
-                        medfilt(
-                            np.std(
-                                q.img,
-                                axis=0),
-                            kernel_size=medfilt_kernel_size)))
+                        medfilt(np.std(q.img, axis=0), kernel_size=medfilt_kernel_size)
+                    )
+                )
                 # isolate the strongest peak to fit
                 tmpx = np.arange(cnr_x_guess - 10, cnr_x_guess + 11)
                 tmpy = np.gradient(np.std(q.img, axis=0))[tmpx]
                 # tmpy[0] is the value from the highest/lowest pixle
                 # tmpx[0] is basically cnr_x_guess
                 # 5.0 is the guessted std,
-                coeff, _ = curve_fit(gauss1d, tmpx, tmpy,
-                                     p0=[tmpy[0], tmpx[0], 5.0],
-                                     maxfev=int(1e6),
-                                     )
+                coeff, _ = curve_fit(
+                    gauss1d,
+                    tmpx,
+                    tmpy,
+                    p0=[tmpy[0], tmpx[0], 5.0],
+                    maxfev=int(1e6),
+                )
                 cnrs[i, 0] = coeff[1]  # x position
                 # -- find y subpixel positoin
                 cnr_y_guess = q.row_func(
                     np.gradient(
-                        medfilt(
-                            np.std(
-                                q.img,
-                                axis=1),
-                            kernel_size=medfilt_kernel_size)))
+                        medfilt(np.std(q.img, axis=1), kernel_size=medfilt_kernel_size)
+                    )
+                )
                 # isolate the peak (x, y here is only associated with the peak)
                 tmpx = np.arange(cnr_y_guess - 10, cnr_y_guess + 11)
                 tmpy = np.gradient(np.std(q.img, axis=1))[tmpx]
-                coeff, _ = curve_fit(gauss1d, tmpx, tmpy,
-                                     p0=[tmpy[0], tmpx[0], 5.0],
-                                     maxfev=int(1e6),
-                                     )
+                coeff, _ = curve_fit(
+                    gauss1d,
+                    tmpx,
+                    tmpy,
+                    p0=[tmpy[0], tmpx[0], 5.0],
+                    maxfev=int(1e6),
+                )
                 cnrs[i, 1] = coeff[1]  # y posiiton
             # add the quadrant shift back
             cnrs = cnrs + quadrantorigins
 
         else:
             raise NotImplementedError(
-                "Available methods are: simple, quadrant, quadrant+")
+                "Available methods are: simple, quadrant, quadrant+"
+            )
 
     # return the slit corner detected
     return cnrs
@@ -714,14 +1195,14 @@ def calc_slit_box_aps_1id(slit_box_corners, inclip=(1, 10, 1, 10)):
 
     """
     return (
-        np.floor(slit_box_corners[:, 0].min()).astype(
-            int) + inclip[0],  # clip top    row
-        np.ceil(slit_box_corners[:, 0].max()).astype(
-            int) - inclip[1],  # clip bottom row
-        np.floor(slit_box_corners[:, 1].min()).astype(
-            int) + inclip[2],  # clip left   col
-        np.ceil(slit_box_corners[:, 1].max()).astype(
-            int) - inclip[3],  # clip right  col
+        np.floor(slit_box_corners[:, 0].min()).astype(int)
+        + inclip[0],  # clip top    row
+        np.ceil(slit_box_corners[:, 0].max()).astype(int)
+        - inclip[1],  # clip bottom row
+        np.floor(slit_box_corners[:, 1].min()).astype(int)
+        + inclip[2],  # clip left   col
+        np.ceil(slit_box_corners[:, 1].max()).astype(int)
+        - inclip[3],  # clip right  col
     )
 
 
@@ -747,12 +1228,13 @@ def remove_slits_aps_1id(imgstacks, slit_box_corners, inclip=(1, 10, 1, 10)):
     return imgstacks[:, yl:yu, xl:xu]
 
 
-def detector_drift_adjust_aps_1id(imgstacks,
-                                  slit_cnr_ref,
-                                  medfilt2_kernel_size=3,
-                                  medfilt_kernel_size=3,
-                                  ncore=None,
-                                  ):
+def detector_drift_adjust_aps_1id(
+    imgstacks,
+    slit_cnr_ref,
+    medfilt2_kernel_size=3,
+    medfilt_kernel_size=3,
+    ncore=None,
+):
     """
     Adjust each still image based on the slit corners and generate report fig
 
@@ -780,7 +1262,8 @@ def detector_drift_adjust_aps_1id(imgstacks,
     """
     ncore = mproc.mp.cpu_count() - 1 if ncore is None else ncore
 
-    def quick_diff(x): return np.amax(np.absolute(x))
+    def quick_diff(x):
+        return np.amax(np.absolute(x))
 
     # -- find all projection corners (slow)
     # NOTE:
@@ -795,21 +1278,26 @@ def detector_drift_adjust_aps_1id(imgstacks,
     #     number of iterations.
     #  4. move on to next step.
     nlist = range(imgstacks.shape[0])
-    proj_cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist,
-                                'quadrant+',
-                                medfilt2_kernel_size,
-                                medfilt_kernel_size,
-                                )
-    cnrs_found = np.array([quick_diff(proj_cnrs[n, :, :] - slit_cnr_ref) < 15
-                           for n in nlist])
-    kernels = [(medfilt2_kernel_size+2*i, medfilt_kernel_size+2*j)
-               for i in range(15)
-               for j in range(15)]
+    proj_cnrs = _calc_proj_cnrs(
+        imgstacks,
+        ncore,
+        nlist,
+        "quadrant+",
+        medfilt2_kernel_size,
+        medfilt_kernel_size,
+    )
+    cnrs_found = np.array(
+        [quick_diff(proj_cnrs[n, :, :] - slit_cnr_ref) < 15 for n in nlist]
+    )
+    kernels = [
+        (medfilt2_kernel_size + 2 * i, medfilt_kernel_size + 2 * j)
+        for i in range(15)
+        for j in range(15)
+    ]
     counter = 0
 
     while not cnrs_found.all():
-        nlist = [idx for idx, cnr_found in enumerate(cnrs_found)
-                 if not cnr_found]
+        nlist = [idx for idx, cnr_found in enumerate(cnrs_found) if not cnr_found]
         # NOTE:
         #   Check to see if we run out of candidate kernels:
         if counter > len(kernels):
@@ -821,8 +1309,7 @@ def detector_drift_adjust_aps_1id(imgstacks,
             # test with differnt 2D and 1D kernels
             ks2d, ks1d = kernels[counter]
 
-        _cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist,
-                                'quadrant+', ks2d, ks1d)
+        _cnrs = _calc_proj_cnrs(imgstacks, ncore, nlist, "quadrant+", ks2d, ks1d)
         for idx, _cnr in enumerate(_cnrs):
             n_img = nlist[idx]
             cnr = proj_cnrs[n_img, :, :]  # previous results
@@ -846,33 +1333,37 @@ def detector_drift_adjust_aps_1id(imgstacks,
     img_correct_F = np.ones((imgstacks.shape[0], 3, 3))
     for n_img in range(imgstacks.shape[0]):
         img_correct_F[n_img, :, :] = calc_affine_transform(
-            proj_cnrs[n_img, :, :], slit_cnr_ref)
+            proj_cnrs[n_img, :, :], slit_cnr_ref
+        )
 
     # -- apply affine transformation (slow)
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
         for n_img in range(imgstacks.shape[0]):
-            tmp.append(e.submit(affine_transform,
-                                # input image
-                                imgstacks[n_img, :, :],
-                                # rotation matrix
-                                img_correct_F[n_img, 0:2, 0:2],
-                                # offset vector
-                                offset=img_correct_F[n_img, 0:2,  2],
-                                )
-                       )
+            tmp.append(
+                e.submit(
+                    affine_transform,
+                    # input image
+                    imgstacks[n_img, :, :],
+                    # rotation matrix
+                    img_correct_F[n_img, 0:2, 0:2],
+                    # offset vector
+                    offset=img_correct_F[n_img, 0:2, 2],
+                )
+            )
     imgstacks = np.stack([me.result() for me in tmp], axis=0)
 
     return imgstacks, proj_cnrs, img_correct_F
 
 
-def _calc_proj_cnrs(imgs,
-                    ncore,
-                    nlist,
-                    method,
-                    medfilt2_kernel_size,
-                    medfilt_kernel_size,
-                    ):
+def _calc_proj_cnrs(
+    imgs,
+    ncore,
+    nlist,
+    method,
+    medfilt2_kernel_size,
+    medfilt_kernel_size,
+):
     """
     Private function calculate slit corners concurrently
 
@@ -899,23 +1390,24 @@ def _calc_proj_cnrs(imgs,
     tmp = []
     with cf.ProcessPoolExecutor(ncore) as e:
         for n_img in nlist:
-            tmp.append(e.submit(find_slits_corners_aps_1id,
-                                imgs[n_img, :, :],
-                                method=method,
-                                medfilt2_kernel_size=medfilt2_kernel_size,
-                                medfilt_kernel_size=medfilt_kernel_size,
-                                )
-                       )
+            tmp.append(
+                e.submit(
+                    find_slits_corners_aps_1id,
+                    imgs[n_img, :, :],
+                    method=method,
+                    medfilt2_kernel_size=medfilt2_kernel_size,
+                    medfilt_kernel_size=medfilt_kernel_size,
+                )
+            )
     return np.stack([me.result() for me in tmp], axis=0)
 
 
-def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
-                                ncore=None, nchunk=None):
+def distortion_correction_proj(
+    tomo, xcenter, ycenter, list_fact, ncore=None, nchunk=None
+):
     """
     Apply distortion correction to projections using the polynomial model.
     Coefficients are calculated using Vounwarp package :cite:`Vo:15`.
-
-    .. versionadded:: 1.7
 
     Parameters
     ----------
@@ -943,7 +1435,8 @@ def distortion_correction_proj(tomo, xcenter, ycenter, list_fact,
         args=(xcenter, ycenter, list_fact),
         axis=0,
         ncore=ncore,
-        nchunk=nchunk)
+        nchunk=nchunk,
+    )
     return arr
 
 
@@ -970,14 +1463,14 @@ def _unwarp_image_backward(mat, xcenter, ycenter, list_fact):
     xu_list = np.arange(width) - xcenter
     yu_list = np.arange(height) - ycenter
     xu_mat, yu_mat = np.meshgrid(xu_list, yu_list)
-    ru_mat = np.sqrt(xu_mat**2 + yu_mat**2)
+    ru_mat = np.sqrt(xu_mat ** 2 + yu_mat ** 2)
     fact_mat = np.sum(
-        np.asarray([factor * ru_mat**i for i,
-                    factor in enumerate(list_fact)]), axis=0)
+        np.asarray([factor * ru_mat ** i for i, factor in enumerate(list_fact)]), axis=0
+    )
     xd_mat = np.float32(np.clip(xcenter + fact_mat * xu_mat, 0, width - 1))
     yd_mat = np.float32(np.clip(ycenter + fact_mat * yu_mat, 0, height - 1))
     indices = np.reshape(yd_mat, (-1, 1)), np.reshape(xd_mat, (-1, 1))
-    mat = map_coordinates(mat, indices, order=1, mode='reflect')
+    mat = map_coordinates(mat, indices, order=1, mode="reflect")
     return mat.reshape((height, width))
 
 
@@ -993,8 +1486,6 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     Generate an unwarped sinogram of a 3D tomographic data using
     the polynomial model. Coefficients are calculated using Vounwarp
     package :cite:`Vo:15`.
-
-    .. versionadded:: 1.7
 
     Parameters
     ----------
@@ -1017,10 +1508,11 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     (depth, height, width) = tomo.shape
     xu_list = np.arange(0, width) - xcenter
     yu = ind - ycenter
-    ru_list = np.sqrt(xu_list**2 + yu**2)
+    ru_list = np.sqrt(xu_list ** 2 + yu ** 2)
     flist = np.sum(
-        np.asarray([factor * ru_list**i for i,
-                    factor in enumerate(list_fact)]), axis=0)
+        np.asarray([factor * ru_list ** i for i, factor in enumerate(list_fact)]),
+        axis=0,
+    )
     xd_list = np.clip(xcenter + flist * xu_list, 0, width - 1)
     yd_list = np.clip(ycenter + flist * yu, 0, height - 1)
     yd_min = np.int16(np.floor(np.amin(yd_list)))
@@ -1030,35 +1522,36 @@ def distortion_correction_sino(tomo, ind, xcenter, ycenter, list_fact):
     indices = yd_list, xd_list
     for i in np.arange(depth):
         sino[i] = map_coordinates(
-            tomo[i, yd_min:yd_max, :], indices, order=1, mode='reflect')
+            tomo[i, yd_min:yd_max, :], indices, order=1, mode="reflect"
+        )
     return sino
 
 
 def load_distortion_coefs(file_path):
-        """
-        Load distortion coefficients from a text file.
-        Order of the infor in the text file:
-        xcenter
-        ycenter
-        factor_0
-        factor_1
-        factor_2
-        ..
+    """
+    Load distortion coefficients from a text file.
+    Order of the infor in the text file:
+    xcenter
+    ycenter
+    factor_0
+    factor_1
+    factor_2
+    ..
 
-        Parameters
-        ----------
-        file_path: Path to the file.
+    Parameters
+    ----------
+    file_path: Path to the file.
 
-        Returns
-        -------
-        Tuple of (xcenter, ycenter, list_fact).
-        """
-        with open(file_path, 'r') as f:
-            x = f.read().splitlines()
-            list_data = []
-            for i in x:
-                list_data.append(float(i.split()[-1]))
-        xcenter = list_data[0]
-        ycenter = list_data[1]
-        list_fact = list_data[2:]
-        return xcenter, ycenter, list_fact
+    Returns
+    -------
+    Tuple of (xcenter, ycenter, list_fact).
+    """
+    with open(file_path, "r") as f:
+        x = f.read().splitlines()
+        list_data = []
+        for i in x:
+            list_data.append(float(i.split()[-1]))
+    xcenter = list_data[0]
+    ycenter = list_data[1]
+    list_fact = list_data[2:]
+    return xcenter, ycenter, list_fact
