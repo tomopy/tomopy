@@ -377,7 +377,7 @@ def align_joint(
     return prj, sx, sy, conv
 
 
-def align_joint_astra_cupy(
+def align_joint_astra_cupy2(
     prj,
     ang,
     fdir=".",
@@ -391,7 +391,7 @@ def align_joint_astra_cupy(
     rout=0.8,
     save=False,
     debug=True,
-    batches=10,
+    batchsize=10,
 ):
     """
     EXPERIMENTAL
@@ -507,7 +507,210 @@ def align_joint_astra_cupy(
         # Re-project data and obtain simulated data.
         # print('Starting re-projection.', str(n))
         # tic = perf_counter()
+        # Cut the data up into batchsize (along projection axis) so that the GPU can handle it.
+        # This number will change depending on your GPU memory.
+        split_rec_cpu = np.array_split(rec, batchsize, axis=0)
+        shift_cpu = []
+        sim = []
+        for i in range(len(split_rec_cpu)):
+            _rec = split_rec_cpu[i]
+            vol_geom = astra.create_vol_geom(
+                _rec.shape[1], _rec.shape[1], _rec.shape[0]
+            )
+            phantom_id = astra.data3d.create("-vol", vol_geom, data=_rec)
+            proj_geom = astra.create_proj_geom(
+                "parallel3d", 1, 1, _rec.shape[0], _rec.shape[1], ang
+            )
+            projections_id, _sim = astra.creators.create_sino3d_gpu(
+                phantom_id, proj_geom, vol_geom
+            )
+            _sim = _sim.swapaxes(0, 1)
+            astra.data3d.delete(projections_id)
+            astra.data3d.delete(phantom_id)
+            sim.append(_sim)
+        del _sim
+        del _rec
+        sim = np.concatenate(sim, axis=0)
+        sim = np.flip(sim, axis=2)
 
+        # toc = perf_counter()
+        # print(f"Finished re-projection after {toc - tic:0.3f} seconds.")
+
+        # Blur edges.
+        if blur:
+            _prj = blur_edges(prj, rin, rout)
+            _sim = blur_edges(sim, rin, rout)
+        else:
+            _prj = prj
+            _sim = sim
+
+        # Cut the data up into batchsize (along projection axis) so that the GPU can handle it.
+        # This number will change depending on your GPU memory.
+        splitPrj = np.array_split(_prj, batchsize, axis=0)
+        splitSim = np.array_split(_sim, batchsize, axis=0)
+        shift_cpu = []
+        # print('Starting image registration.')
+        # tic = perf_counter()
+        for i in range(len(splitPrj)):
+            shift_gpu = phase_cross_correlation(
+                splitPrj[i], splitSim[i], upsample_factor=1, return_error=False
+            )
+            shift_cpu.append(cp.asnumpy(shift_gpu))
+        shift_cpu = np.concatenate(shift_cpu, axis=1)
+        prj, err, sx, sy = transform_parallel(prj, shift_cpu, sx, sy)
+        # print(f"Iteration {n:0.0f}, finished registration after {toc - tic:0.3f} seconds.")
+        # print(f"Iteration {n:0.0f}, finished registration after {(toc - tic)/_prj.shape[0]:0.3f} s/projection.")
+        plotIm(prj[50], _sim[50])
+        toc = perf_counter()
+        if debug:
+            print(f"Error = {np.linalg.norm(err):3.3f}.")
+            print(f"Runtime: {toc - tic:0.3f} seconds.")
+            print(
+                "--------------------------------------\
+                -------------------------"
+            )
+            conv[n] = np.linalg.norm(err)
+
+        if save:
+            write_tiff(prj, "tmp/iters/prj", n)
+            write_tiff(sim, "tmp/iters/sim", n)
+            write_tiff(rec, "tmp/iters/rec", n)
+
+    # Re-normalize data
+    prj *= scl
+    return prj, sx, sy, conv, center, sim, rec
+
+def align_joint_astra_cupy(
+    prj,
+    ang,
+    fdir=".",
+    iters=10,
+    pad=(0, 0),
+    blur=True,
+    center=None,
+    algorithm="SIRT_CUDA",
+    upsample_factor=10,
+    rin=0.5,
+    rout=0.8,
+    save=False,
+    debug=True,
+    batchsize=10,
+):
+    """
+    EXPERIMENTAL
+    TODO: CLEAN
+    Aligns the projection image stack using the joint
+    re-projection algorithm using the Astra Toolbox and cupy :cite:`Gursoy:17`.
+
+    Parameters
+    ----------
+    prj : ndarray
+        3D stack of projection images. The first dimension
+        is projection axis, second and third dimensions are
+        the x- and y-axes of the projection image, respectively.
+    ang : ndarray
+        Projection angles in radians as an array.
+    iters : scalar, optional
+        Number of iterations of the algorithm.
+    pad : list-like, optional
+        Padding for projection images in x and y-axes.
+    blur : bool, optional
+        Blurs the edge of the image before registration.
+    center: array, optional
+        Location of rotation axis.
+    algorithm : {str, function}
+        One of the following string values.
+
+        'art'
+            Algebraic reconstruction technique :cite:`Kak:98`.
+        'gridrec'
+            Fourier grid reconstruction algorithm :cite:`Dowd:99`,
+            :cite:`Rivers:06`.
+        'mlem'
+            Maximum-likelihood expectation maximization algorithm
+            :cite:`Dempster:77`.
+        'sirt'
+            Simultaneous algebraic reconstruction technique.
+        'tv'
+            Total Variation reconstruction technique
+            :cite:`Chambolle:11`.
+        'grad'
+            Gradient descent method with a constant step size
+
+    upsample_factor : integer, optional
+        The upsampling factor. Registration accuracy is
+        inversely propotional to upsample_factor.
+    rin : scalar, optional
+        The inner radius of blur function. Pixels inside
+        rin is set to one.
+    rout : scalar, optional
+        The outer radius of blur function. Pixels outside
+        rout is set to zero.
+    save : bool, optional
+        Saves projections and corresponding reconstruction
+        for each algorithm iteration.
+    debug : book, optional
+        Provides debugging info such as iterations and error.
+
+    Returns
+    -------
+    ndarray
+        3D stack of projection images with jitter.
+    ndarray
+        Error array for each iteration.
+    """
+    # Needs scaling for skimage float operations.
+    import astra
+    import cupy as cp
+    from joblib import Parallel, delayed
+    import tomopy.recon.wrappers as wrappers
+    prj, scl = scale(prj)
+
+    # Shift arrays
+    sx = np.zeros((prj.shape[0]))
+    sy = np.zeros((prj.shape[0]))
+    conv = np.zeros((iters))
+
+    # Pad images.
+    npad = ((0, 0), (pad[1], pad[1]), (pad[0], pad[0]))
+    prj = np.pad(prj, npad, mode="constant", constant_values=0)
+
+    # Initialization of reconstruction.
+    rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
+    os.environ["TOMOPY_PYTHON_THREADS"] = "1"
+    extra_kwargs = {}
+
+    # Register each image frame-by-frame.
+    for n in range(iters):
+        print(
+            "------------------------------------\
+            ---------------------------"
+        )
+        print(f"Iteration {n+1:0.0f}.")
+        tic = perf_counter()
+        if np.mod(n, 1) == 0:
+            _rec = rec
+
+        # Reconstruct image.
+        options = {"proj_type": "cuda", "method": "SIRT_CUDA", "num_iter": 1}
+        extra_kwargs["options"] = options
+        # tic = perf_counter()
+        rec = recon(
+            prj,
+            ang,
+            center=center,
+            algorithm=wrappers.astra,
+            init_recon=_rec,
+            ncore=None,
+            **extra_kwargs,
+        )
+        # toc = perf_counter()
+        # print(f"Finished reconstruction after { toc - tic:0.3f} seconds.")
+
+        # Re-project data and obtain simulated data.
+        # print('Starting re-projection.', str(n))
+        # tic = perf_counter()
+        shift_cpu = []
         sim = np.zeros(prj.shape)
         for i in range(rec.shape[0]):
             _rec = rec[i, :, :]
@@ -540,10 +743,10 @@ def align_joint_astra_cupy(
             _prj = prj
             _sim = sim
 
-        # Cut the data up into batches (along projection axis) so that the GPU can handle it.
+        # Cut the data up into batchsize (along projection axis) so that the GPU can handle it.
         # This number will change depending on your GPU memory.
-        splitPrj = np.array_split(_prj, batches, axis=0)
-        splitSim = np.array_split(_sim, batches, axis=0)
+        splitPrj = np.array_split(_prj, batchsize, axis=0)
+        splitSim = np.array_split(_sim, batchsize, axis=0)
         shift_cpu = []
         # print('Starting image registration.')
         # tic = perf_counter()
