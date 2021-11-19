@@ -478,9 +478,12 @@ class Recon:
         numX=None,
         numY=None,
         options=dict(),
-        reconTime=dict(),
+        alignment_time=dict(),
+        recon_time=dict(),
         prjRange=None,
         cbarRange=[0, 1],
+        sx = None,
+        sy = None   
     ):
         self.tomo = tomo  # tomodata object
         self.recon = recon
@@ -489,7 +492,10 @@ class Recon:
         self.numX = numX
         self.numY = numY
         self.numSlices = numSlices
-        self.reconTime = reconTime
+        self.recon_time = recon_time
+        self.alignment_time = alignment_time
+        self.sx = sx
+        self.sy = sy
         if prjRange == None:
             self.prjRange = [i for i in range(self.tomo.numTheta)]
         else:
@@ -561,6 +567,74 @@ class Recon:
         self.recon = tomopy.circ_mask(self.recon, 0)
         self.numSlices, self.numY, self.numX = self.recon.shape
         self.options = options
+
+    # --------------------------Astra with Cupy----------------------#
+
+    def align_and_reconstruct(
+        self,
+        options={
+            "proj_type": "cuda",
+            "method": "SIRT_CUDA",
+            "ncore": 1,
+            "extra_options": {"MinConstraint": 0},
+            "iters_alignment": 50,
+            "iters_reconstruction": 50,
+            "upsample_factor": 1,
+            "batchsize": 5,
+            "pad": (10,10)
+        },
+    ):
+        """
+        Reconstructs projection images after creating a Recon object.
+        Uses the Astra toolbox to do the reconstruction.
+        Puts the reconstructed dataset into self.recon.
+
+        Parameters
+        ----------
+        options : dict
+            Dictionary format typically used to specify options in tomopy, see
+            LINK TO DESCRIPTION OF OPTIONS.
+
+        """
+
+        import astra
+
+        os.environ["TOMOPY_PYTHON_THREADS"] = "1"
+        if "center" in options:
+            self.center = options["center"]
+        else:
+            options["center"] = self.center
+
+        print(
+            "Running joint alignment using",
+            str(options["method"]),
+            "for",
+            str(options["iters_alignment"]),
+            "iterations.",
+        )
+
+        if "extra_options" in options:
+            print("Extra options: " + str(options["extra_options"]))
+        tic = time.perf_counter()
+        prj, self.sx, self.sy, conv, center, sim, self.recon = tomopy.prep.alignment.align_joint_astra_cupy2(
+            self.tomo.prjImgs, 
+            self.tomo.theta,         
+            pad=options["pad"], 
+            iters=options["iters_alignment"],
+            upsample_factor=options["upsample_factor"], 
+            batchsize=options["batchsize"])
+        toc = time.perf_counter()
+
+        self.recon_time = {
+            "seconds": tic - toc,
+            "minutes": (tic - toc) / 60,
+            "hours": (tic - toc) / 3600,
+        }
+
+        self.recon = tomopy.circ_mask(self.recon, 0)
+        self.numSlices, self.numY, self.numX = self.recon.shape
+        self.options = options
+        return prj, conv, sim
 
     # --------------------------Tomopy Reconstruction----------------------#
 
