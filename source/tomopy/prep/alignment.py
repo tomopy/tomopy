@@ -52,11 +52,15 @@ import tomopy.util.mproc as mproc
 import logging
 import matplotlib.pyplot as plt
 import os
+import astra
+import cupy as cp
 
+from joblib import Parallel, delayed
 from time import process_time, perf_counter, sleep
 from skimage import transform as tf
 from skimage.registration import phase_cross_correlation
 from tomopy.recon.algorithm import recon
+from tomopy.recon import wrappers 
 from tomopy.sim.project import project
 from tomopy.misc.npmath import gauss1d, calc_affine_transform
 from tomopy.util.misc import write_tiff
@@ -457,10 +461,7 @@ def align_joint_astra_cupy2(
         Error array for each iteration.
     """
     # Needs scaling for skimage float operations.
-    import astra
-    import cupy as cp
-    from joblib import Parallel, delayed
-    import tomopy.recon.wrappers as wrappers
+
     prj, scl = scale(prj)
 
     # Shift arrays
@@ -480,8 +481,7 @@ def align_joint_astra_cupy2(
     # Register each image frame-by-frame.
     for n in range(iters):
         print(
-            "------------------------------------\
-            ---------------------------"
+            "---------------------------------------------------------------"
         )
         print(f"Iteration {n+1:0.0f}.")
         tic = perf_counter()
@@ -530,8 +530,8 @@ def align_joint_astra_cupy2(
             sim.append(_sim)
         del _sim
         del _rec
-        sim = np.concatenate(sim, axis=0)
-        sim = np.flip(sim, axis=2)
+        sim = np.concatenate(sim, axis=1)
+        sim = np.flip(sim, axis=0)
 
         # toc = perf_counter()
         # print(f"Finished re-projection after {toc - tic:0.3f} seconds.")
@@ -566,8 +566,7 @@ def align_joint_astra_cupy2(
             print(f"Error = {np.linalg.norm(err):3.3f}.")
             print(f"Runtime: {toc - tic:0.3f} seconds.")
             print(
-                "--------------------------------------\
-                -------------------------"
+                "---------------------------------------------------------------"
             )
             conv[n] = np.linalg.norm(err)
 
@@ -660,10 +659,7 @@ def align_joint_astra_cupy(
         Error array for each iteration.
     """
     # Needs scaling for skimage float operations.
-    import astra
-    import cupy as cp
-    from joblib import Parallel, delayed
-    import tomopy.recon.wrappers as wrappers
+
     prj, scl = scale(prj)
 
     # Shift arrays
@@ -857,8 +853,6 @@ def align_joint_astra(
     ndarray
         Error array for each iteration.
     """
-    import astra
-    import tomopy.recon.wrappers as wrappers
     print(
         "Performing joint iterative sample alignment using upsample factor: ",
         str(upsample_factor),
