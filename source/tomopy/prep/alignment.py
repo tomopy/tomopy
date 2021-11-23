@@ -208,8 +208,8 @@ def align_seq(
                 _prj[m], _sim[m], upsample_factor=upsample_factor
             )
             err[m] = np.sqrt(shift[0] * shift[0] + shift[1] * shift[1])
-            sx[m] += shift[0]
-            sy[m] += shift[1]
+            sx[m] += shift[1]
+            sy[m] += shift[0]
 
             # Register current image with the simulated one
             tform = tf.SimilarityTransform(translation=(shift[1], shift[0]))
@@ -474,7 +474,7 @@ def align_joint_astra_cupy2(
     prj = np.pad(prj, npad, mode="constant", constant_values=0)
 
     # Initialization of reconstruction.
-    rec = 1e-12 * np.ones((prj.shape[1], prj.shape[2], prj.shape[2]))
+    rec = np.empty((prj.shape[1], prj.shape[2], prj.shape[2]), dtype=np.float32)
     os.environ["TOMOPY_PYTHON_THREADS"] = "1"
     extra_kwargs = {}
 
@@ -505,15 +505,15 @@ def align_joint_astra_cupy2(
         # print(f"Finished reconstruction after { toc - tic:0.3f} seconds.")
 
         # Re-project data and obtain simulated data.
-        # print('Starting re-projection.', str(n))
+        print('Starting re-projection.', str(n))
         # tic = perf_counter()
         # Cut the data up into batchsize (along projection axis) so that the GPU can handle it.
         # This number will change depending on your GPU memory.
-        split_rec_cpu = np.array_split(rec, batchsize, axis=0)
+        rec = np.array_split(rec, batchsize, axis=0)
         shift_cpu = []
         sim = []
-        for i in range(len(split_rec_cpu)):
-            _rec = split_rec_cpu[i]
+        for i in range(len(rec)):
+            _rec = rec[i]   
             vol_geom = astra.create_vol_geom(
                 _rec.shape[1], _rec.shape[1], _rec.shape[0]
             )
@@ -532,6 +532,7 @@ def align_joint_astra_cupy2(
         del _rec
         sim = np.concatenate(sim, axis=1)
         sim = np.flip(sim, axis=0)
+        rec = np.concatenate(rec, axis=0)
 
         # toc = perf_counter()
         # print(f"Finished re-projection after {toc - tic:0.3f} seconds.")
@@ -546,21 +547,25 @@ def align_joint_astra_cupy2(
 
         # Cut the data up into batchsize (along projection axis) so that the GPU can handle it.
         # This number will change depending on your GPU memory.
-        splitPrj = np.array_split(_prj, batchsize, axis=0)
-        splitSim = np.array_split(_sim, batchsize, axis=0)
+        print(type(prj))
+        _prj = np.array_split(_prj, batchsize, axis=0)
+        print(type(prj))
+        _sim = np.array_split(_sim, batchsize, axis=0)
         shift_cpu = []
-        # print('Starting image registration.')
+        print('Starting image registration.')
         # tic = perf_counter()
-        for i in range(len(splitPrj)):
+        for i in range(len(_prj)):
             shift_gpu = phase_cross_correlation(
-                splitPrj[i], splitSim[i], upsample_factor=1, return_error=False
+                _prj[i], _sim[i], upsample_factor=1, return_error=False
             )
             shift_cpu.append(cp.asnumpy(shift_gpu))
         shift_cpu = np.concatenate(shift_cpu, axis=1)
+
         prj, err, sx, sy = transform_parallel(prj, shift_cpu, sx, sy)
         # print(f"Iteration {n:0.0f}, finished registration after {toc - tic:0.3f} seconds.")
         # print(f"Iteration {n:0.0f}, finished registration after {(toc - tic)/_prj.shape[0]:0.3f} s/projection.")
-        plotIm(prj[50], _sim[50])
+        
+        plotIm(prj[50], sim[50])
         toc = perf_counter()
         if debug:
             print(f"Error = {np.linalg.norm(err):3.3f}.")
@@ -975,8 +980,8 @@ def transform_parallel(reference_images, shift_data, sx, sy):
 
     def tform(reference_images, shift, m):
         shiftm = shift[:, m]
-        sx[m] += shiftm[0]
-        sy[m] += shiftm[1]
+        sx[m] += shiftm[1]
+        sy[m] += shiftm[0]
         err[m] = np.sqrt(shiftm[0] * shiftm[0] + shiftm[1] * shiftm[1])
         tform = tf.SimilarityTransform(translation=(shiftm[1], shiftm[0]))
         reference_imagesTformed[m, :, :] = tf.warp(
