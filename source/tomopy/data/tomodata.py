@@ -111,16 +111,14 @@ class TomoData:
         """
         if self.verboseImport == "Y" or self.verboseImport == "Yes":
             logging.getLogger("dxchange").setLevel(logging.INFO)
-        prjImgs = dxchange.reader.read_tiff(filename)
-        prjImgs = np.swapaxes(prjImgs, 1, 2)
-        prjImgs = np.flip(prjImgs, 2)
+        self.prjImgs = dxchange.reader.read_tiff(filename)
+        self.prjImgs = np.swapaxes(prjImgs, 1, 2)
+        self.prjImgs = np.flip(prjImgs, 2)
         self.prjImgs = prjImgs.astype(np.float32)
         if len(self.prjImgs.shape) == 2:
             self.prjImgs = self.prjImgs[np.newaxis, :, :]
         if len(prjImgs.shape) == 3:
             self.numTheta, self.numY, self.numX = prjImgs.shape
-        else:
-            self.numY, self.numX = prjImgs.shape
         return self
 
     def importTiffStack(self, filename, numTheta=None):
@@ -480,10 +478,11 @@ class Recon:
         options=dict(),
         alignment_time=dict(),
         recon_time=dict(),
-        prjRange=None,
         cbarRange=[0, 1],
         sx = None,
-        sy = None   
+        sy = None,
+        prjRangeX = None,
+        prjRangeY = None   
     ):
         self.tomo = tomo  # tomodata object
         self.recon = recon
@@ -496,10 +495,8 @@ class Recon:
         self.alignment_time = alignment_time
         self.sx = sx
         self.sy = sy
-        if prjRange == None:
-            self.prjRange = [i for i in range(self.tomo.numTheta)]
-        else:
-            self.prjRange = [i for i in range(prjRange[0], prjRange[1])]
+        self.prjRangeX = prjRangeX
+        self.prjRangeY = prjRangeY
         self.cbarRange = cbarRange
 
     # --------------------------Astra Reconstruction----------------------#
@@ -534,6 +531,7 @@ class Recon:
         else:
             options["center"] = self.center
         # Perform the reconstruction
+        """
         print(
             "Astra reconstruction beginning on projection images",
             self.prjRange[0],
@@ -541,6 +539,7 @@ class Recon:
             self.prjRange[-1],
             ".",
         )
+        """
         print(
             "Running",
             str(options["method"]),
@@ -551,12 +550,28 @@ class Recon:
         if "extra_options" in options:
             print("Extra options: " + str(options["extra_options"]))
         tic = time.perf_counter()
-        self.recon = tomopy.recon(
-            self.tomo.prjImgs[:, self.prjRange[0] : self.prjRange[-1] : 1, :],
-            self.tomo.theta,
-            algorithm=tomopy.astra,
-            options=options,
-        )
+        if self.prjRangeX == None and self.prjRangeY == None:
+            self.recon = tomopy.recon(
+                self.tomo.prjImgs,
+                self.tomo.theta,
+                algorithm=tomopy.astra,
+                options=options,
+            )
+        elif self.prjRangeX == None and self.prjRangeY is not None:
+            self.recon = tomopy.recon(
+                self.tomo.prjImgs[:, self.prjRangeY[0] : self.prjRangeY[1] : 1, :],
+                self.tomo.theta,
+                algorithm=tomopy.astra,
+                options=options,
+            )
+        elif self.prjRangeX is not None and self.prjRangeY is not None:
+            self.recon = tomopy.recon(
+                self.tomo.prjImgs[:, self.prjRangeY[0] : self.prjRangeY[1] : 1, self.prjRangeX[0] : self.prjRangeX[1] : 1],
+                self.tomo.theta,
+                algorithm=tomopy.astra,
+                options=options,
+            )
+
         toc = time.perf_counter()
         self.reconTime = {
             "seconds": tic - toc,
@@ -568,7 +583,7 @@ class Recon:
         self.numSlices, self.numY, self.numX = self.recon.shape
         self.options = options
 
-    # --------------------------Astra with Cupy----------------------#
+    # ----------------------------Astra with Cupy-----------------------------#
 
     def align_and_reconstruct(
         self,
