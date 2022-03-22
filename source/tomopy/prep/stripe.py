@@ -436,7 +436,7 @@ def remove_stripe_based_filtering(
     tomo : ndarray
         3D tomographic data.
     sigma : float
-        Sigma of the Gaussian window which is used to separate 
+        Sigma of the Gaussian window which is used to separate
         the low-pass and high-pass components of the intensity
         profiles of each column. Recommended values: 3->10.
     size : int
@@ -550,7 +550,7 @@ def _create_2d_window(nrow, ncol, sigma, pad):
     ----------
     nrow : int
         Height of the window.
-    ncol: int 
+    ncol: int
         Width of the window.
     sigma: tuple of 2 floats
         Sigmas of the window.
@@ -590,7 +590,7 @@ def _2d_filter(mat, win2d, matsign, pad):
     mat : 2D array of floats
     nrow : int
         Height of the window.
-    ncol: int 
+    ncol: int
         Width of the window.
     sigma: tuple of 2 floats
         Sigmas of the window.
@@ -598,7 +598,7 @@ def _2d_filter(mat, win2d, matsign, pad):
         Padding.
 
     Returns
-    -------    
+    -------
         Filtered image.
     """
     matpad = np.pad(mat, ((0, 0), (pad, pad)), mode='edge')
@@ -649,7 +649,7 @@ def remove_large_stripe(tomo, snr=3, size=51, drop_ratio=0.1, norm=True,
         3D tomographic data.
     snr  : float
         Ratio used to locate of large stripes.
-        Greater is less sensitive. 
+        Greater is less sensitive.
     size : int
         Window size of the median filter.
     drop_ratio : float, optional
@@ -754,7 +754,7 @@ def remove_dead_stripe(tomo, snr=3, size=51, norm=True,
         3D tomographic data.
     snr  : float
         Ratio used to detect locations of large stripes.
-        Greater is less sensitive. 
+        Greater is less sensitive.
     size : int
         Window size of the median filter.
     norm : bool, optional
@@ -826,7 +826,7 @@ def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, dim=1,
         3D tomographic data.
     snr  : float
         Ratio used to locate large stripes.
-        Greater is less sensitive. 
+        Greater is less sensitive.
     la_size : int
         Window size of the median filter to remove large stripes.
     sm_size : int
@@ -867,6 +867,8 @@ def remove_stripe_based_interpolation(tomo, snr=3, size=31, drop_ratio=0.1,
     """
     Remove most types of stripe artifacts from sinograms based on
     interpolation. Derived from algorithm 4, 5, and 6 in :cite:`Vo:18`.
+
+    .. versionadded:: 1.9
 
     Parameters
     ----------
