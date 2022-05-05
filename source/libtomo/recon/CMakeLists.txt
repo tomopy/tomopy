@@ -5,12 +5,12 @@ file(GLOB recon_tomo_sources
 # core sources
 set(RECON_LIBRARY_SOURCES ${recon_tomo_sources})
 
-add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
+add_library(libtomo-recon SHARED ${RECON_LIBRARY_SOURCES})
 
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/recon")
 
 # target properties
-set_target_properties(libtomopy-recon
+set_target_properties(libtomo-recon
     PROPERTIES
     PREFIX ""
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
@@ -19,13 +19,13 @@ set_target_properties(libtomopy-recon
 
 # link libraries to math.h
 if (NOT WIN32)
-    target_link_libraries(libtomopy-recon PUBLIC m)
+    target_link_libraries(libtomo-recon PUBLIC m)
 endif()
 
-target_compile_definitions(libtomopy-recon PUBLIC
+target_compile_definitions(libtomo-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-recon PUBLIC
+target_compile_options(libtomo-recon PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomopy-recon)
+install(TARGETS libtomo-recon)

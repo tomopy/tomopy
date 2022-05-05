@@ -80,7 +80,7 @@ __all__ = ['c_project',
            'c_vector2',
            'c_vector3']
 
-LIB_TOMOPY_RECON = c_shared_lib("tomopy-recon")
+LIB_TOMOPY_RECON = c_shared_lib("tomo-recon")
 
 
 def c_project(obj, center, tomo, theta):

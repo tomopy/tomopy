@@ -59,7 +59,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_gridrec']
 
 
-LIB_TOMOPY_GRIDREC = c_shared_lib("tomopy-gridrec", error=False)
+LIB_TOMOPY_GRIDREC = c_shared_lib("tomo-gridrec", error=False)
 
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):

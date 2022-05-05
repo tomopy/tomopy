@@ -7,11 +7,11 @@ file(GLOB misc_tomo_sources
 set(MISC_LIBRARY_SOURCES ${misc_tomo_sources})
 
 # create library
-add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
+add_library(libtomo-misc SHARED ${MISC_LIBRARY_SOURCES})
 
 # link library to math.h
 if (NOT WIN32)
-    target_link_libraries(libtomopy-misc PUBLIC m)
+    target_link_libraries(libtomo-misc PUBLIC m)
 endif()
 
 # where to place the library
@@ -20,17 +20,17 @@ set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/misc")
 
 # target properties
-set_target_properties(libtomopy-misc
+set_target_properties(libtomo-misc
     PROPERTIES
     PREFIX ""
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
 
-target_compile_definitions(libtomopy-misc PUBLIC
+target_compile_definitions(libtomo-misc PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-misc PUBLIC
+target_compile_options(libtomo-misc PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomopy-misc)
+install(TARGETS libtomo-misc)

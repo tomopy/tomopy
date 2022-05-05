@@ -17,9 +17,9 @@ if(TOMOPY_USE_CUDA)
 
 endif(TOMOPY_USE_CUDA)
 
-add_library(libtomopy-accel SHARED ${ACCEL_LIBRARY_SOURCES})
+add_library(libtomo-accel SHARED ${ACCEL_LIBRARY_SOURCES})
 
-target_link_libraries(libtomopy-accel
+target_link_libraries(libtomo-accel
     PUBLIC tomopy::cuda-npp ${TOMOPY_EXTERNAL_LIBRARIES}
     PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
@@ -33,7 +33,7 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}")
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/accel")
 
 # target properties
-set_target_properties(libtomopy-accel
+set_target_properties(libtomo-accel
     PROPERTIES
     PREFIX ""
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
@@ -43,15 +43,15 @@ set_target_properties(libtomopy-accel
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED}
     ${CUDA_PROPERTIES})
 
-target_compile_definitions(libtomopy-accel PUBLIC
+target_compile_definitions(libtomo-accel PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-accel PUBLIC
+target_compile_options(libtomo-accel PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
-install(TARGETS libtomopy-accel)
+install(TARGETS libtomo-accel)
 
 
 

@@ -12,10 +12,10 @@ file(GLOB gridrec_tomo_headers
 set(GRIDREC_SOURCES ${gridrec_tomo_headers} ${gridrec_tomo_sources})
 
 # create library
-add_library(libtomopy-gridrec SHARED ${GRIDREC_SOURCES})
+add_library(libtomo-gridrec SHARED ${GRIDREC_SOURCES})
 
 # link library
-target_link_libraries(libtomopy-gridrec PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
+target_link_libraries(libtomo-gridrec PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
     PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 # where to place the library
@@ -25,7 +25,7 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}")
 
 # target properties
-set_target_properties(libtomopy-gridrec
+set_target_properties(libtomo-gridrec
     PROPERTIES
     PREFIX ""
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
@@ -34,11 +34,11 @@ set_target_properties(libtomopy-gridrec
     CXX_STANDARD                ${CMAKE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED})
 
-target_compile_definitions(libtomopy-gridrec PUBLIC
+target_compile_definitions(libtomo-gridrec PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-gridrec PUBLIC
+target_compile_options(libtomo-gridrec PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
-install(TARGETS libtomopy-gridrec)
+install(TARGETS libtomo-gridrec)

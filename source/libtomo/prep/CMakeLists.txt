@@ -6,22 +6,22 @@ file(GLOB prep_tomo_sources
 set(PREP_LIBRARY_SOURCES ${prep_tomo_sources})
 
 # create library
-add_library(libtomopy-prep SHARED ${PREP_LIBRARY_SOURCES})
+add_library(libtomo-prep SHARED ${PREP_LIBRARY_SOURCES})
 
 list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
 
 # target properties
-set_target_properties(libtomopy-prep
+set_target_properties(libtomo-prep
     PROPERTIES
     PREFIX ""
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
 
-target_compile_definitions(libtomopy-prep PUBLIC
+target_compile_definitions(libtomo-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-prep PUBLIC
+target_compile_options(libtomo-prep PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomopy-prep)
+install(TARGETS libtomo-prep)

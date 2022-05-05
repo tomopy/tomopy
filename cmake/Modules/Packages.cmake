@@ -181,7 +181,7 @@ endif()
 add_library(tomopy-cuda-npp INTERFACE)
 # create an alias in the tompy namespace which helps make it clear that you want
 # to link to a cmake target named tomopy::cuda-npp, not a potential library
-# tomopy-cuda-npp (i.e. libtomopy-cuda-npp.so)
+# tomopy-cuda-npp (i.e. libtomo-cuda-npp.so)
 add_library(tomopy::cuda-npp ALIAS tomopy-cuda-npp)
 
 if(TOMOPY_USE_CUDA)

@@ -59,7 +59,7 @@ __all__ = ['c_sample',
            'c_remove_ring']
 
 
-LIB_TOMOPY_MISC = c_shared_lib("tomopy-misc")
+LIB_TOMOPY_MISC = c_shared_lib("tomo-misc")
 
 
 def c_sample(mode, arr, dx, dy, dz, level, axis, out):
