@@ -28,7 +28,6 @@ cmake_policy(SET CMP0104 OLD)  # ignore CMAKE_CUDA_ARCHITECTURES
 project(tomopy LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules ${CMAKE_MODULE_PATH})
-set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME python)
 
 ################################################################################
 
