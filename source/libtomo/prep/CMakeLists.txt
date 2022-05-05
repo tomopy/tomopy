@@ -14,9 +14,6 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/
 set_target_properties(libtomopy-prep
     PROPERTIES
     PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
     INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
     C_STANDARD                  ${CMAKE_C_STANDARD}
     C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
@@ -27,5 +24,4 @@ target_compile_definitions(libtomopy-prep PUBLIC
 target_compile_options(libtomopy-prep PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomopy-prep
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern COMPONENT python)
+install(TARGETS libtomopy-prep)

@@ -47,13 +47,17 @@
 # #########################################################################
 
 import ctypes
+import ctypes.util
 import os
 import sys
 import warnings
 
 
 def c_shared_lib(lib_name, error=True):
-    """Get the path and import the C-shared library."""
+    """Get the path and import the C-shared library.
+
+    The ctypes.util.find_library function preprends "lib" to the name.
+    """
     load_dll = ctypes.cdll.LoadLibrary
     ext = '.so'
     if sys.platform == 'darwin':
@@ -61,13 +65,12 @@ def c_shared_lib(lib_name, error=True):
     if os.name == 'nt':
         ext = '.dll'
         load_dll = ctypes.windll.LoadLibrary
-    base_path = os.path.abspath(os.path.dirname(__file__))
-    sharedlib = os.path.join(base_path, '%s%s' % (lib_name, ext))
-    if os.path.exists(sharedlib):
+    sharedlib = ctypes.util.find_library(lib_name)
+    if sharedlib and os.path.exists(sharedlib):
         return load_dll(sharedlib)
     if error:
         raise ModuleNotFoundError(
-            f'The following shared library is missing:\n{sharedlib}')
+            f'The following shared library is missing:\n{lib_name}')
     warnings.warn(
         'Some compiled functions are unavailable because an optional shared'
         f' library is missing:\n{sharedlib}', ImportWarning)
