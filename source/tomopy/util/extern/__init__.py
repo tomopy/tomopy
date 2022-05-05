@@ -68,12 +68,18 @@ def c_shared_lib(lib_name, error=True):
     sharedlib = ctypes.util.find_library(lib_name)
     if sharedlib and os.path.exists(sharedlib):
         return load_dll(sharedlib)
+    explanation = (
+        'TomoPy links to compiled components which are installed separately'
+        ' and loaded using ctypes.util.find_library().'
+    )
     if error:
         raise ModuleNotFoundError(
-            f'The following shared library is missing:\n{lib_name}')
+            explanation +
+            f' A required library, {lib_name}, was not found.')
     warnings.warn(
-        'Some compiled functions are unavailable because an optional shared'
-        f' library is missing:\n{sharedlib}', ImportWarning)
+        explanation +
+        'Some functionality is unavailable because an optional shared'
+        f' library, {sharedlib}, is missing.', ImportWarning)
 
 
 def _missing_library(function):
