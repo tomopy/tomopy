@@ -1,31 +1,32 @@
-# Locate sources for this project headers are included for IDEs
-file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
+add_library(tomo-recon
+    art.c
+    bart.c
+    fbp.c
+    grad.c
+    osem.c
+    ospml_hybrid.c
+    ospml_quad.c
+    project.c
+    tikh.c
+    tv.c
+    utils.c
+    vector.c
+)
 
-# core sources
-set(RECON_LIBRARY_SOURCES ${recon_tomo_sources})
-
-add_library(libtomo-recon SHARED ${RECON_LIBRARY_SOURCES})
-
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/recon")
-
-# target properties
-set_target_properties(libtomo-recon
-    PROPERTIES
-    PREFIX ""
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
+target_include_directories(tomo-recon PUBLIC
+    $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/source/include/recon>
+    $<INSTALL_INTERFACE:include>
+)
 
 # link libraries to math.h
 if (NOT WIN32)
-    target_link_libraries(libtomo-recon PUBLIC m)
+    target_link_libraries(tomo-recon PUBLIC m)
 endif()
 
-target_compile_definitions(libtomo-recon PUBLIC
+target_compile_definitions(tomo-recon PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomo-recon PUBLIC
+target_compile_options(tomo-recon PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomo-recon)
+install(TARGETS tomo-recon)

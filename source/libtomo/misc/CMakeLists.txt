@@ -1,36 +1,19 @@
+add_library(tomo-misc morph.c remove_ring.c)
 
-# Locate sources for this project headers are included for IDEs
-file(GLOB misc_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
-
-# core sources
-set(MISC_LIBRARY_SOURCES ${misc_tomo_sources})
-
-# create library
-add_library(libtomo-misc SHARED ${MISC_LIBRARY_SOURCES})
+target_include_directories(tomo-misc PUBLIC
+    $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/source/include/misc>
+    $<INSTALL_INTERFACE:include>
+)
 
 # link library to math.h
 if (NOT WIN32)
-    target_link_libraries(libtomo-misc PUBLIC m)
+    target_link_libraries(tomo-misc PUBLIC m)
 endif()
 
-# where to place the library
-set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
-
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/misc")
-
-# target properties
-set_target_properties(libtomo-misc
-    PROPERTIES
-    PREFIX ""
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
-
-target_compile_definitions(libtomo-misc PUBLIC
+target_compile_definitions(tomo-misc PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomo-misc PUBLIC
+target_compile_options(tomo-misc PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomo-misc)
+install(TARGETS tomo-misc)

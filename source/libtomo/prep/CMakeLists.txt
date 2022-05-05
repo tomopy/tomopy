@@ -1,27 +1,17 @@
-# Locate sources for this project headers are included for IDEs
-file(GLOB prep_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
+add_library(tomo-prep
+    prep.c
+    stripe.c
+    )
 
-# core sources
-set(PREP_LIBRARY_SOURCES ${prep_tomo_sources})
+target_include_directories(tomo-prep PUBLIC
+    $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/source/include/prep>
+    $<INSTALL_INTERFACE:include>
+)
 
-# create library
-add_library(libtomo-prep SHARED ${PREP_LIBRARY_SOURCES})
-
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/prep")
-
-# target properties
-set_target_properties(libtomo-prep
-    PROPERTIES
-    PREFIX ""
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
-
-target_compile_definitions(libtomo-prep PUBLIC
+target_compile_definitions(tomo-prep PUBLIC
     ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomo-prep PUBLIC
+target_compile_options(tomo-prep PUBLIC
     $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomo-prep)
+install(TARGETS tomo-prep)
