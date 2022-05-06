@@ -1,7 +1,7 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/prep.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h")
 
-add_library(tomo-prep prep.c stripe.c ${HEADERS})
+add_library(tomo-prep SHARED prep.c stripe.c ${HEADERS})
 
 target_include_directories(
   tomo-prep

@@ -5,7 +5,7 @@ if(TOMOPY_CXX_GRIDREC)
   set_source_files_properties("gridrec.c" PROPERTIES LANGUAGE CXX)
 endif()
 
-add_library(tomo-gridrec gridrec.c pal.h ${HEADERS})
+add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 
 target_link_libraries(
   tomo-gridrec

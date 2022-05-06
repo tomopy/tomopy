@@ -2,7 +2,7 @@ set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/accel.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/macros.h")
 
 add_library(
-  tomo-accel
+  tomo-accel SHARED
   cxx/common.cc
   cxx/mlem.cc
   cxx/sirt.cc
