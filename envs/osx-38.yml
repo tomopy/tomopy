@@ -19,7 +19,8 @@ dependencies:
   - pyctest>0.0.10
   - python=3.8
   - pywavelets
-  - scikit-build
+  - cmake
+  - ninja
   - scikit-image>=0.17
   - scipy
   - setuptools_scm

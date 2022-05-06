@@ -19,7 +19,8 @@ dependencies:
   - opencv>=3.4 ["blas=*=openblas"]
   - pyctest>0.0.10
   - pywavelets
-  - scikit-build
+  - cmake
+  - ninja
   - scikit-image>=0.17
   - scipy
   - setuptools_scm

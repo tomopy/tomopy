@@ -40,11 +40,11 @@ jobs:
       -n base conda
     displayName: Update conda
   - script: >
-      conda env remove --yes
+      mamba env remove --yes
       -n tomopy
     displayName: Remove existing build environment
   - script: >
-      conda env create --quiet --force
+      mamba env create --quiet --force
       -n tomopy
       -f envs/linux-$(python.version).yml
     displayName: Create build environment
@@ -81,7 +81,7 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
-      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+      mamba env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -111,7 +111,7 @@ jobs:
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
-      conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
+      mamba env create -n tomopy --quiet -f envs/osx-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -141,7 +141,7 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
-      conda env create -n tomopy --quiet -f envs/win-$(python.version).yml
+      mamba env create -n tomopy --quiet -f envs/win-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment

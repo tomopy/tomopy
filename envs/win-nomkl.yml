@@ -13,7 +13,8 @@ dependencies:
   - numpy
   - libopencv
   - pywavelets
-  - scikit-build
+  - cmake
+  - ninja
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
