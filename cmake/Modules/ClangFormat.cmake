@@ -13,10 +13,10 @@ find_program(CLANG_FORMATTER
 
 if(CLANG_FORMATTER)
     file(GLOB headers
-        ${PROJECT_SOURCE_DIR}/source/include/*.h
-        ${PROJECT_SOURCE_DIR}/source/include/*.h
-        ${PROJECT_SOURCE_DIR}/source/include/*.hh
-        ${PROJECT_SOURCE_DIR}/source/include/*.hpp)
+        ${PROJECT_SOURCE_DIR}/include/libtomo/*.h
+        ${PROJECT_SOURCE_DIR}/include/libtomo/*.h
+        ${PROJECT_SOURCE_DIR}/include/libtomo/*.hh
+        ${PROJECT_SOURCE_DIR}/include/libtomo/*.hpp)
     file(GLOB sources
         ${PROJECT_SOURCE_DIR}/source/c/*.c
         ${PROJECT_SOURCE_DIR}/source/cxx/*.cc

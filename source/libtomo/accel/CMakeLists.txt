@@ -1,3 +1,6 @@
+set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/accel.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/macros.h")
+
 add_library(
   tomo-accel
   cxx/common.cc
@@ -7,17 +10,16 @@ add_library(
   constants.hh
   cuda.h
   data.hh
-  macros.h
   macros.hh
   profiler.hh
   typedefs.hh
   utils.hh
-  ${tomopy_SOURCE_DIR}/source/include/accel/cxx_extern.h)
+  ${HEADERS})
 
 target_include_directories(
   tomo-accel
-  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/source/include/accel>
-         $<INSTALL_INTERFACE:include>
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
+         $<INSTALL_INTERFACE:include/libtomo>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 if(TRUE)
@@ -64,3 +66,8 @@ target_compile_options(
          $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS tomo-accel)
+
+install(
+  FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
+  COMPONENT Headers)

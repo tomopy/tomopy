@@ -44,6 +44,8 @@
 // Possible speedups:
 //   * Profile code and check adding SIMD to various functions (from OpenMP)
 
+#pragma once
+
 #include <math.h>
 #include <string.h>
 

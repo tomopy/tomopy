@@ -1,3 +1,6 @@
+set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/project.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/recon.h")
+
 add_library(
   tomo-recon
   art.c
@@ -11,11 +14,15 @@ add_library(
   tikh.c
   tv.c
   utils.c
-  vector.c)
+  utils.h
+  vector.c
+  ${HEADERS})
 
 target_include_directories(
-  tomo-recon PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/source/include/recon>
-                    $<INSTALL_INTERFACE:include>)
+  tomo-recon
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
+         $<INSTALL_INTERFACE:include/libtomo>
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # link libraries to math.h
 if(NOT WIN32)
@@ -28,3 +35,8 @@ target_compile_options(
   tomo-recon PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
 install(TARGETS tomo-recon)
+
+install(
+  FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
+  COMPONENT Headers)

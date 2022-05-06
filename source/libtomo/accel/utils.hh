@@ -44,7 +44,7 @@
 #include "macros.hh"
 
 BEGIN_EXTERN_C
-#include "cxx_extern.h"
+#include "accel.h"
 END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//
