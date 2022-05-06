@@ -29,7 +29,7 @@ cmake_policy(SET CMP0104 OLD) # ignore CMAKE_CUDA_ARCHITECTURES
 
 project(
   tomopy
-  VERSION 1.10.4
+  VERSION 1.11.0
   LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules
