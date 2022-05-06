@@ -52,7 +52,10 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      python setup.py install --enable-cuda --cuda-arch=30
+      pip install .
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX
+      cmake --build build
+      cmake --install build
     displayName: Setup and install
   - script: |
       source activate tomopy
@@ -84,7 +87,10 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      python setup.py install
+      pip install .
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX
+      cmake --build build
+      cmake --install build
     displayName: Setup and install
   - script: |
       source activate tomopy
@@ -111,7 +117,10 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      python setup.py install
+      pip install .
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX
+      cmake --build build
+      cmake --install build
     displayName: Setup and install
   - script: |
       source activate tomopy
@@ -138,7 +147,10 @@ jobs:
     displayName: List build environment
   - script: |
       call activate tomopy
-      python setup.py install -- -GNinja
+      pip install .
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%\Library
+      cmake --build build
+      cmake --install build
     displayName: Setup and install
   - script: |
       call activate tomopy
