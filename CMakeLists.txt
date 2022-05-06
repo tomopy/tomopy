@@ -27,7 +27,10 @@ cmake_policy(SET CMP0042 NEW)
 cmake_policy(SET CMP0053 NEW)
 cmake_policy(SET CMP0104 OLD) # ignore CMAKE_CUDA_ARCHITECTURES
 
-project(tomopy LANGUAGES C CXX)
+project(
+  tomopy
+  VERSION 1.10.4
+  LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules
                       ${CMAKE_MODULE_PATH})
@@ -54,3 +57,9 @@ add_subdirectory(source)
 # ##############################################################################
 
 print_features()
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  libtomoConfigVersion.cmake
+  VERSION ${PACKAGE_VERSION}
+  COMPATIBILITY SameMajorVersion)
