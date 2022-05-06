@@ -11,7 +11,6 @@ dependencies:
   - nomkl
   - numexpr
   - numpy
-  - libopencv
   - pywavelets
   - cmake
   - ninja
