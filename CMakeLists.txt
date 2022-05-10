@@ -76,7 +76,7 @@ install(EXPORT libtomoTargets
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/libtomoConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/libtomoConfigVersion.cmake
   VERSION ${PACKAGE_VERSION}
   COMPATIBILITY SameMajorVersion)
 
