@@ -27,9 +27,18 @@ cmake_policy(SET CMP0042 NEW)
 cmake_policy(SET CMP0053 NEW)
 cmake_policy(SET CMP0104 OLD) # ignore CMAKE_CUDA_ARCHITECTURES
 
+# get version from git if available; fall back to .gitarchival.txt
+execute_process(
+  COMMAND git describe --tags
+  OUTPUT_VARIABLE GIT_TAG ERROR_QUIET)
+if ("${GIT_TAG}" STREQUAL "")
+  file(READ ".git_archival.txt" GIT_TAG)
+endif()
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" GIT_TAG ${GIT_TAG})
+
 project(
   tomopy
-  VERSION 1.11.0
+  VERSION ${GIT_TAG}
   LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules
