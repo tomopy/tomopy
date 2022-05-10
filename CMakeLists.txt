@@ -58,8 +58,32 @@ add_subdirectory(source)
 
 print_features()
 
+install(EXPORT libtomoTargets
+        FILE libtomoTargets.cmake
+        NAMESPACE libtomo::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
+)
+
 include(CMakePackageConfigHelpers)
+
 write_basic_package_version_file(
-  libtomoConfigVersion.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/libtomoConfigVersion.cmake
   VERSION ${PACKAGE_VERSION}
   COMPATIBILITY SameMajorVersion)
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
+)
+
+install(FILES
+          "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfig.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
+)
+
+export(EXPORT libtomoTargets
+       FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/libtomoTargets.cmake"
+       NAMESPACE libtomo::
+)

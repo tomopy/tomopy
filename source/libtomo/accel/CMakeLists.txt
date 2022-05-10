@@ -19,7 +19,7 @@ add_library(
 target_include_directories(
   tomo-accel
   PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:include/libtomo>
+         $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/libtomo>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 if(TRUE)
@@ -36,7 +36,7 @@ if(TOMOPY_USE_CUDA)
   target_include_directories(tomo-accel
                              PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-  target_link_libraries(tomo-accel PUBLIC tomopy::cuda-npp)
+  target_link_libraries(tomo-accel PRIVATE tomopy::cuda-npp)
 
   set(CUDA_PROPERTIES
       CUDA_STANDARD
@@ -54,8 +54,7 @@ endif(TOMOPY_USE_CUDA)
 
 target_link_libraries(
   tomo-accel
-  PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
-  PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+  PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES} ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 target_compile_definitions(tomo-accel PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
 
@@ -65,7 +64,9 @@ target_compile_options(
          $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
          $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
-install(TARGETS tomo-accel)
+install(TARGETS tomo-accel
+EXPORT libtomoTargets
+)
 
 install(
   FILES ${HEADERS}

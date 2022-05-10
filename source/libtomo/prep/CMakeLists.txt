@@ -6,7 +6,7 @@ add_library(tomo-prep SHARED prep.c stripe.c ${HEADERS})
 target_include_directories(
   tomo-prep
   PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:include/libtomo>
+         $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/libtomo>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_definitions(tomo-prep PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
@@ -14,7 +14,9 @@ target_compile_definitions(tomo-prep PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
 target_compile_options(
   tomo-prep PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS tomo-prep)
+install(TARGETS tomo-prep
+EXPORT libtomoTargets
+)
 
 install(
   FILES ${HEADERS}
