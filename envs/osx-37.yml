@@ -10,7 +10,6 @@ dependencies:
   - git
   - h5py
   - ninja
-  - nose
   - numexpr
   - numpy ["blas=*=openblas"]
   - python=3.7
@@ -25,4 +24,5 @@ dependencies:
   - mkl ["blas=*=openblas"]
   - mkl-devel ["blas=*=openblas"]
   - mkl_fft
+  - nose
   - opencv>=3.4 ["blas=*=openblas"]

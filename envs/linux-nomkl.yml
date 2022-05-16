@@ -10,7 +10,6 @@ dependencies:
   - git
   - h5py
   - ninja
-  - nose
   - numexpr
   - numpy ["blas=*=openblas"]
   - python=3.7
@@ -24,4 +23,5 @@ dependencies:
   - pyctest>0.0.10
   - timemory  # not released for python > 3.7
   - nomkl
+  - nose
   - opencv>=3.4 ["blas=*=openblas"]
