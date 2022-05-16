@@ -135,7 +135,7 @@ jobs:
   - script: |
       call activate tomopy
       pip install .
-      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%\Library -DTOMOPY_USE_OPENCV=OFF -DCMAKE_BUILD_TYPE=Release
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%\Library -DTOMOPY_USE_OPENCV=ON -DCMAKE_BUILD_TYPE=Release
       cmake --build build
       cmake --install build
     displayName: Setup and install
