@@ -4,28 +4,27 @@ channels:
   - jrmadsen
   - defaults
 dependencies:
-  - coverage!=5.0.2
+  - cmake
+  - cxx-compiler
   - dxchange
-  - gcc_linux-64<=8 # CUDA=10 requires gcc<8
   - git
-  - gxx_linux-64<=8 # CUDA=10 requires gcc<8
   - h5py
-  - libstdcxx-ng
-  - libgcc-ng
-  - mkl ["blas=*=openblas"]
-  - mkl-devel ["blas=*=openblas"]
-  - mkl_fft
+  - ninja
   - nose
   - numexpr
   - numpy ["blas=*=openblas"]
-  - opencv>=3.4 ["blas=*=openblas"]
-  - pyctest>0.0.10
   - python=3.7
   - pywavelets
-  - cmake
-  - ninja
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
+# Optional packages
+  - coverage!=5.0.2
+  - pyctest>0.0.10
   - timemory  # not released for python > 3.7
+  - gxx_linux-64<=8 # CUDA=10 requires gcc<8
+  - mkl ["blas=*=openblas"]
+  - mkl-devel ["blas=*=openblas"]
+  - mkl_fft
+  - opencv>=3.4 ["blas=*=openblas"]

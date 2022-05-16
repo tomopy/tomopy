@@ -1,11 +1,6 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to
-# a PyPI-compatible index, and more:
-# https://docs.microsoft.com/vsts/pipelines/languages/python
-
-variables:
-  package_name: tike
+# Only test the minimum supported Python version for each major version. i.e
+# test python=3.7 until summer 2023 and test python=4.0 if released. python=2
+# is not supported.
 
 trigger:
   branches:
@@ -68,12 +63,6 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '37'
-      Python38:
-        python.version: '38'
-      Python39:
-        python.version: '39'
       Python-nomkl:
         python.version: 'nomkl'
     maxParallel: 4
@@ -103,7 +92,7 @@ jobs:
   strategy:
     matrix:
       Python37:
-        python.version: '38'
+        python.version: '37'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -134,8 +123,6 @@ jobs:
     matrix:
       Python37:
         python.version: '37'
-      Python39:
-        python.version: '39'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
