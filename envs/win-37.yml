@@ -21,7 +21,6 @@ dependencies:
   - setuptools_scm_git_archive
 # Optional packages
   - coverage!=5.0.2
-  - pyctest>0.0.10
   - mkl ["blas=*=openblas"]
   - mkl-devel ["blas=*=openblas"]
   - mkl_fft

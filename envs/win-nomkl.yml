@@ -21,6 +21,5 @@ dependencies:
   - setuptools_scm_git_archive
 # Optional packages
   - coverage!=5.0.2
-  - pyctest>0.0.10
   - nomkl
   - opencv>=3.4 ["blas=*=openblas"]
