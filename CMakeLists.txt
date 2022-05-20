@@ -30,8 +30,9 @@ cmake_policy(SET CMP0104 OLD) # ignore CMAKE_CUDA_ARCHITECTURES
 # get version from git if available; fall back to .gitarchival.txt
 execute_process(
   COMMAND git describe --tags
-  OUTPUT_VARIABLE GIT_TAG ERROR_QUIET)
-if ("${GIT_TAG}" STREQUAL "")
+  OUTPUT_VARIABLE GIT_TAG
+  ERROR_QUIET)
+if("${GIT_TAG}" STREQUAL "")
   file(READ ".git_archival.txt" GIT_TAG)
 endif()
 string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" GIT_TAG ${GIT_TAG})
@@ -67,11 +68,11 @@ add_subdirectory(source)
 
 print_features()
 
-install(EXPORT libtomoTargets
-        FILE libtomoTargets.cmake
-        NAMESPACE libtomo::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
-)
+install(
+  EXPORT libtomoTargets
+  FILE libtomoTargets.cmake
+  NAMESPACE libtomo::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo)
 
 include(CMakePackageConfigHelpers)
 
@@ -83,16 +84,13 @@ write_basic_package_version_file(
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
   "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfig.cmake"
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
-)
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo)
 
-install(FILES
-          "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfig.cmake"
-          "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfigVersion.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/libtomoConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libtomo)
 
-export(EXPORT libtomoTargets
-       FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/libtomoTargets.cmake"
-       NAMESPACE libtomo::
-)
+export(
+  EXPORT libtomoTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/libtomoTargets.cmake"
+  NAMESPACE libtomo::)

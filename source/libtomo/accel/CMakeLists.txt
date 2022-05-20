@@ -52,9 +52,8 @@ if(TOMOPY_USE_CUDA)
 
 endif(TOMOPY_USE_CUDA)
 
-target_link_libraries(
-  tomo-accel
-  PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES} ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(tomo-accel PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
+                                         ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 target_compile_definitions(tomo-accel PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
 
@@ -64,9 +63,7 @@ target_compile_options(
          $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
          $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
-install(TARGETS tomo-accel
-EXPORT libtomoTargets
-)
+install(TARGETS tomo-accel EXPORT libtomoTargets)
 
 install(
   FILES ${HEADERS}

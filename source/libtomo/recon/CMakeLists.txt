@@ -34,9 +34,7 @@ target_compile_definitions(tomo-recon PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
 target_compile_options(
   tomo-recon PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS tomo-recon
-        EXPORT libtomoTargets
-)
+install(TARGETS tomo-recon EXPORT libtomoTargets)
 
 install(
   FILES ${HEADERS}

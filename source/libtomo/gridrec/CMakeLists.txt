@@ -7,9 +7,8 @@ endif()
 
 add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 
-target_link_libraries(
-  tomo-gridrec
-  PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES} ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
+                                           ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
 target_include_directories(
   tomo-gridrec
@@ -23,9 +22,7 @@ target_compile_options(
   tomo-gridrec PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
                       $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
-install(TARGETS tomo-gridrec
-EXPORT libtomoTargets
-)
+install(TARGETS tomo-gridrec EXPORT libtomoTargets)
 
 install(
   FILES ${HEADERS}
