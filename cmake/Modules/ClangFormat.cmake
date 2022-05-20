@@ -18,19 +18,17 @@ if(CLANG_FORMATTER)
         ${PROJECT_SOURCE_DIR}/include/libtomo/*.hh
         ${PROJECT_SOURCE_DIR}/include/libtomo/*.hpp)
     file(GLOB sources
-        ${PROJECT_SOURCE_DIR}/source/c/*.c
-        ${PROJECT_SOURCE_DIR}/source/cxx/*.cc
-        ${PROJECT_SOURCE_DIR}/source/cxx/*.cpp
-        ${PROJECT_SOURCE_DIR}/source/gpu/*.cc
-        ${PROJECT_SOURCE_DIR}/source/gpu/*.cu
-        ${PROJECT_SOURCE_DIR}/test/*.cc
-        ${PROJECT_SOURCE_DIR}/test/*.cu
-        ${PROJECT_SOURCE_DIR}/test/*.cpp)
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/*.c
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/*.h
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/*.hh
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/*.cc
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/cxx/*.cc
+        ${PROJECT_SOURCE_DIR}/source/libtomo/*/gpu/*.cu)
 
     # avoid conflicting format targets
     set(FORMAT_NAME format)
     if(TARGET format)
-        set(FORMAT_NAME format-tomopy)
+        set(FORMAT_NAME format-libtomo)
     endif()
 
     add_custom_target(${FORMAT_NAME}
