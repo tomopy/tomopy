@@ -29,7 +29,7 @@ if(NOT WIN32)
   target_link_libraries(tomo-recon PUBLIC m)
 endif()
 
-target_compile_definitions(tomo-recon PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(tomo-recon PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
   tomo-recon PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)

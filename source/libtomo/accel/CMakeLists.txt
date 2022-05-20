@@ -55,7 +55,7 @@ endif(TOMOPY_USE_CUDA)
 target_link_libraries(tomo-accel PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
                                          ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
-target_compile_definitions(tomo-accel PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(tomo-accel PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
   tomo-accel

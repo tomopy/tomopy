@@ -16,7 +16,7 @@ target_include_directories(
          $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/libtomo>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-target_compile_definitions(tomo-gridrec PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(tomo-gridrec PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
   tomo-gridrec PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>

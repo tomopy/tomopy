@@ -14,7 +14,7 @@ if(NOT WIN32)
   target_link_libraries(tomo-misc PUBLIC m)
 endif()
 
-target_compile_definitions(tomo-misc PUBLIC ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(tomo-misc PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
   tomo-misc PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
