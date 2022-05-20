@@ -1,7 +1,6 @@
 name: tomopy
 channels:
   - conda-forge
-  - jrmadsen
   - defaults
 dependencies:
   - cmake
@@ -21,7 +20,7 @@ dependencies:
 # Optional packages
   - coverage!=5.0.2
   - pyctest>0.0.10
-  - timemory  # not released for python > 3.7
+  - timemory
   - gxx_linux-64<=8 # CUDA=10 requires gcc<8
   - mkl ["blas=*=openblas"]
   - mkl-devel ["blas=*=openblas"]

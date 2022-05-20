@@ -1,7 +1,6 @@
 name: tomopy
 channels:
   - conda-forge
-  - jrmadsen
   - defaults
 dependencies:
   - cmake
