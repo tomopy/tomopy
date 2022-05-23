@@ -19,7 +19,7 @@ dependencies:
 # Optional packages
   - coverage!=5.0.2
   - pyctest>0.0.10
-  - timemory=*=py37h # the nompi build
+  - timemory=*=py37h* # the nompi build
   - gxx_linux-64<=8 # CUDA=10 requires gcc<8
   - mkl ["blas=*=openblas"]
   - mkl-devel ["blas=*=openblas"]
