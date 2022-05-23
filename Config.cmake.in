@@ -1,5 +1,13 @@
 @PACKAGE_INIT@
 
 include("${CMAKE_CURRENT_LIST_DIR}/libtomoTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/libtomoTargetsVersion.cmake")
 
 check_required_components(libtomo)
+
+if(libtomo_FOUND)
+    set(libtomo_LIBRARIES @libtomo_TARGETS@)
+
+    add_library(libtomo::libtomo INTERFACE IMPORTED)
+    target_link_libraries(libtomo::libtomo INTERFACE ${libtomo_LIBRARIES})
+endif()

@@ -11,12 +11,6 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(WARNING "In-source build")
 endif()
 
-if(SKBUILD)
-  message("Using scikit-build. cmake: ${CMAKE_COMMAND}...")
-else()
-  message("Using cmake: ${CMAKE_COMMAND}...")
-endif()
-
 # ##############################################################################
 #
 # CMake settings
@@ -59,6 +53,8 @@ include(ClangFormat)
 # ##############################################################################
 # tomopy source
 # ##############################################################################
+
+set(libtomo_TARGETS "")
 
 add_subdirectory(source)
 

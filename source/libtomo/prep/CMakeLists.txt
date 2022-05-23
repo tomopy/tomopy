@@ -20,3 +20,5 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
+
+list(APPEND libtomo_TARGETS tomo-prep)
