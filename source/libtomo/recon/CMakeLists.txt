@@ -21,7 +21,7 @@ tomopy_add_library(
 target_include_directories(
   tomo-recon
   PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/libtomo>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libtomo>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # link libraries to math.h
