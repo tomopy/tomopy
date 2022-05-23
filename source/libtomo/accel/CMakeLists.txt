@@ -1,7 +1,7 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/accel.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/macros.h")
 
-add_library(
+tomopy_add_library(
   tomo-accel SHARED
   cxx/common.cc
   cxx/mlem.cc
@@ -69,5 +69,3 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
-
-list(APPEND libtomo_TARGETS tomo-accel)

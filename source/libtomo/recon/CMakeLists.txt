@@ -1,7 +1,7 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/project.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/recon.h")
 
-add_library(
+tomopy_add_library(
   tomo-recon SHARED
   art.c
   bart.c
@@ -40,5 +40,3 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
-
-list(APPEND libtomo_TARGETS tomo-recon)

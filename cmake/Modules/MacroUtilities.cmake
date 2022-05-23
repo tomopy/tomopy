@@ -315,4 +315,26 @@ FUNCTION(print_features)
     print_disabled_features()
 ENDFUNCTION()
 
+#------------------------------------------------------------------------------#
+function(TOMOPY_ADD_LIBRARY _TARGET)
+    # basically this makes tomopy_add_library(...) act exactly like add_library(...)
+    add_library(${_TARGET} ${ARGN})
+
+    # check the name has the "tomo-" prefix (expected by libtomoConfig.cmake)
+    if(NOT "${_TARGET}" MATCHES "^(tomo-)")
+        message(FATAL_ERROR
+            "The name of the target passed to tomopy_add_library MUST start with 'tomo-'")
+    endif()
+
+    # create an alias library in the build tree. This allows parent projects adding
+    # tomopy as a submodule to be able to always reference the libtomo targets
+    # with the libtomo:: namespace
+    add_library(libtomo::${_TARGET} ALIAS ${_TARGET})
+
+    # append to global property. Use the namespaced name because when
+    # libtomoConfig.cmake imports the targets tomo-accel will not be the name
+    # of the target, libtomo::tomo-accel will be the name
+    set_property(GLOBAL APPEND PROPERTY libtomo_TARGETS "libtomo::${_TARGET} ")
+endfunction()
+
 cmake_policy(POP)

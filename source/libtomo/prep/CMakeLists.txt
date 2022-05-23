@@ -1,7 +1,7 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/prep.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h")
 
-add_library(tomo-prep SHARED prep.c stripe.c ${HEADERS})
+tomopy_add_library(tomo-prep SHARED prep.c stripe.c ${HEADERS})
 
 target_include_directories(
   tomo-prep
@@ -20,5 +20,3 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
-
-list(APPEND libtomo_TARGETS tomo-prep)

@@ -1,7 +1,7 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/morph.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/remove_ring.h")
 
-add_library(tomo-misc SHARED morph.c remove_ring.c ${HEADERS})
+tomopy_add_library(tomo-misc SHARED morph.c remove_ring.c ${HEADERS})
 
 target_include_directories(
   tomo-misc
@@ -25,5 +25,3 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
-
-list(APPEND libtomo_TARGETS tomo-misc)

@@ -5,7 +5,7 @@ if(TOMOPY_CXX_GRIDREC)
   set_source_files_properties("gridrec.c" PROPERTIES LANGUAGE CXX)
 endif()
 
-add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
+tomopy_add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 
 # FIXME: gridrec should not be linking to OpenCV
 target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
@@ -29,5 +29,3 @@ install(
   FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
   COMPONENT Headers)
-
-list(APPEND libtomo_TARGETS tomo-gridrec)
