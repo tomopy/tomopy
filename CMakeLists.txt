@@ -54,9 +54,9 @@ include(ClangFormat)
 # tomopy source
 # ##############################################################################
 
-set(libtomo_TARGETS "")
-
 add_subdirectory(source)
+
+get_property(libtomo_TARGETS GLOBAL PROPERTY libtomo_TARGETS)
 
 # ##############################################################################
 # Information
