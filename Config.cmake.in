@@ -1,15 +1,14 @@
 @PACKAGE_INIT@
 
 include("${CMAKE_CURRENT_LIST_DIR}/libtomoTargets.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/libtomoTargetsVersion.cmake")
 set(libtomo_LIBRARIES) # clear variable
 
 foreach(_TARG @libtomo_TARGETS@)
     # there is a check in the build-tree that ensures this is a valid string manip
     string(REPLACE "libtomo::tomo-" "" _TARG_BASIC "${_TARG}")
-    
+
     if(NOT TARGET ${_TARG})
-        # if the target doesn't exist add it to the libtomo_FIND_COMPONENTS 
+        # if the target doesn't exist add it to the libtomo_FIND_COMPONENTS
         # and set that it is not found so check_required_components will fail
         list(APPEND libtomo_FIND_COMPONENTS ${_TARG_BASIC})
         set(libtomo_${_TARG_BASIC}_FOUND 0)
