@@ -59,9 +59,9 @@ target_compile_definitions(tomo-accel PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
   tomo-accel
-  PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-         $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
-         $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
+  PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+          $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>
+          $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS}>)
 
 install(TARGETS tomo-accel EXPORT libtomoTargets)
 

@@ -20,8 +20,8 @@ target_include_directories(
 target_compile_definitions(tomo-gridrec PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
-  tomo-gridrec PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-                      $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
+  tomo-gridrec PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+                       $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
 install(TARGETS tomo-gridrec EXPORT libtomoTargets)
 

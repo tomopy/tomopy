@@ -17,7 +17,7 @@ endif()
 target_compile_definitions(tomo-misc PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
-  tomo-misc PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
+  tomo-misc PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
 install(TARGETS tomo-misc EXPORT libtomoTargets)
 

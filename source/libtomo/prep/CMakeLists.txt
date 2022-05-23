@@ -12,7 +12,7 @@ target_include_directories(
 target_compile_definitions(tomo-prep PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
 target_compile_options(
-  tomo-prep PUBLIC $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
+  tomo-prep PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
 install(TARGETS tomo-prep EXPORT libtomoTargets)
 
