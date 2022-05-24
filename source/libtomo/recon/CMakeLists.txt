@@ -2,7 +2,8 @@ set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/project.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/recon.h")
 
 tomopy_add_library(
-  tomo-recon SHARED
+  tomo-recon
+  SHARED
   art.c
   bart.c
   fbp.c
