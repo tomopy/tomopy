@@ -18,8 +18,8 @@ tomopy_add_library(
 
 target_include_directories(
   tomo-accel
-  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libtomo>
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 if(TRUE)

@@ -41,7 +41,7 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "prep.h"
+#include "libtomo/prep.h"
 
 DLL void
 normalize_bg(float* data, int dx, int dy, int dz, int nair)

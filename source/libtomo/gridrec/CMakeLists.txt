@@ -13,8 +13,8 @@ target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
 
 target_include_directories(
   tomo-gridrec
-  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libtomo>
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_definitions(tomo-gridrec PRIVATE ${${PROJECT_NAME}_DEFINITIONS})

@@ -44,7 +44,7 @@
 #include "macros.hh"
 
 BEGIN_EXTERN_C
-#include "accel.h"
+#include "libtomo/accel.h"
 END_EXTERN_C
 
 //--------------------------------------------------------------------------------------//

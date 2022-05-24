@@ -5,8 +5,8 @@ tomopy_add_library(tomo-misc SHARED morph.c remove_ring.c ${HEADERS})
 
 target_include_directories(
   tomo-misc
-  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include/libtomo>
-         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libtomo>
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # link library to math.h
