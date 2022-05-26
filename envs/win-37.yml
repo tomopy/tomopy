@@ -12,7 +12,7 @@ dependencies:
   - mkl-devel
   - mkl_fft
   - numexpr
-  - numpy
+  - numpy!=1.22.4
   - libopencv
   - py-opencv  # only for testing
   - python=3.7
