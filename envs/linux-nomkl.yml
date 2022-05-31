@@ -22,5 +22,5 @@ dependencies:
   - pyctest>0.0.10
   - timemory=*=py37h* # the nompi build
   - nomkl
-  - nose
   - opencv>=3.4
+  - pytest

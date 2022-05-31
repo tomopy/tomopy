@@ -40,7 +40,7 @@ TomoPy (the python-only modules)
 After navigating to inside the `tomopy` directory, you can install TomoPy by
 running the install script in the typical Python way::
 
-    $ pip install .
+    $ pip install . --no-deps
 
 libtomo (the compiled shared libraries)
 ---------------------------------------

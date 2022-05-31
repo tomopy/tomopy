@@ -23,5 +23,5 @@ dependencies:
   - mkl
   - mkl-devel
   - mkl_fft
-  - nose
   - opencv>=3.4
+  - pytest

@@ -47,7 +47,7 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      pip install .
+      pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCUDA_ARCH='30'
       cmake --build build
       cmake --install build
@@ -55,8 +55,8 @@ jobs:
   - script: |
       source activate tomopy
       export CUDA_VERSION="$(CUDA_VERSION)"
-      nosetests
-    displayName: nosetests
+      pytest test -v
+    displayName: Run tests
 
 - job: Linux
   pool:
@@ -76,15 +76,15 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      pip install .
+      pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
       cmake --build build
       cmake --install build
     displayName: Setup and install
   - script: |
       source activate tomopy
-      nosetests
-    displayName: nosetests
+      pytest test -v
+    displayName: Run tests
 
 - job: macOS
   pool:
@@ -106,15 +106,15 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
-      pip install .
+      pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
       cmake --build build
       cmake --install build
     displayName: Setup and install
   - script: |
       source activate tomopy
-      nosetests
-    displayName: nosetests
+      pytest test -v
+    displayName: Run tests
 
 - job: Windows
   pool:
@@ -134,7 +134,7 @@ jobs:
     displayName: List build environment
   - script: |
       call activate tomopy
-      pip install .
+      pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%\Library -DTOMOPY_USE_OPENCV=ON -DCMAKE_BUILD_TYPE=Release
       cmake --build build
       cmake --install build
