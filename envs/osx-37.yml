@@ -7,10 +7,10 @@ dependencies:
   - dxchange
   - git
   - h5py
-  - importlib_metadata
+  - importlib_metadata  # backport for python<3.8
   - ninja
   - numexpr
-  - numpy ["blas=*=openblas"]
+  - numpy<1.22.4|>=1.23.0
   - python=3.7
   - pywavelets
   - scikit-image>=0.17
@@ -20,8 +20,8 @@ dependencies:
 # Optional packages
   - coverage!=5.0.2
   - pyctest>0.0.10
-  - mkl ["blas=*=openblas"]
-  - mkl-devel ["blas=*=openblas"]
+  - mkl
+  - mkl-devel
   - mkl_fft
   - nose
-  - opencv>=3.4 ["blas=*=openblas"]
+  - opencv>=3.4
