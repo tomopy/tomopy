@@ -96,7 +96,7 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
-      Python37:
+      Python38:
         python.version: '38'
     maxParallel: 4
   steps:
