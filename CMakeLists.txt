@@ -30,6 +30,9 @@ if("${GIT_TAG}" STREQUAL "")
   file(READ ".git_archival.txt" GIT_TAG)
 endif()
 string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" GIT_TAG ${GIT_TAG})
+if("${GIT_TAG}" STREQUAL "")
+  set(GIT_TAG "0.0.0")
+endif()
 
 project(
   tomopy
