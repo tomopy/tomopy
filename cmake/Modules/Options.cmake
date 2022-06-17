@@ -6,6 +6,7 @@
 
 include(MacroUtilities)
 include(Compilers)
+include(CheckLanguage)
 
 # if Windows MSVC compiler, use C++ version of gridrec
 if(WIN32)
@@ -22,8 +23,8 @@ else()
 endif()
 
 # Check if CUDA can be enabled
-find_package(CUDAToolkit)
-if(CUDAToolkit_FOUND)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
   set(_USE_CUDA ON)
 else()
   set(_USE_CUDA OFF)
