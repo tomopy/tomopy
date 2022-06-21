@@ -180,27 +180,16 @@ endif()
 
 if(TOMOPY_USE_CUDA)
 
+  enable_language(CUDA)
+
   # Locates cudatoolkit libraries like npp (this is different from finding nvcc)
-  find_package(CUDAToolkit)
+  find_package(CUDAToolkit REQUIRED COMPONENTS nppc npps nppig nppisu)
 
   add_library(tomopy-cuda-npp INTERFACE)
   # create an alias in the tompy namespace which helps make it clear that you want
   # to link to a cmake target named tomopy::cuda-npp, not a potential library
   # tomopy-cuda-npp (i.e. libtomo-cuda-npp.so)
   add_library(tomopy::cuda-npp ALIAS tomopy-cuda-npp)
-
-  if(NOT CMAKE_CUDA_HOST_COMPILER)
-    set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-  endif()
-
-  if(NOT CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
-    set(CMAKE_CUDA_COMPILER ${CUDAToolkit_BIN_DIR}/nvcc)
-    if(WIN32)
-      set(CMAKE_CUDA_COMPILER "${CMAKE_CUDA_COMPILER}.exe")
-    endif(WIN32)
-  endif()
-
-  enable_language(CUDA)
 
   foreach(_NPP_LIB nppc npps nppig nppisu)
     if(TARGET CUDA::${_NPP_LIB}_static)
