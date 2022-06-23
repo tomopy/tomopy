@@ -53,7 +53,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import numpy as np
-from scipy.ndimage import filters
+import scipy.ndimage
 import tomopy.util.mproc as mproc
 import tomopy.util.dtype as dtype
 import tomopy.util.extern as extern
@@ -154,7 +154,7 @@ def gaussian_filter(arr, sigma=3, order=0, axis=0, ncore=None):
         slc = [slice(None)] * arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.gaussian_filter,
+            e.submit(scipy.ndimage.gaussian_filter,
                      arr[tuple(slc)],
                      sigma,
                      order=order,
@@ -192,7 +192,7 @@ def median_filter(arr, size=3, axis=0, ncore=None):
         slc = [slice(None)] * arr.ndim
         for i in range(arr.shape[axis]):
             slc[axis] = i
-            e.submit(filters.median_filter,
+            e.submit(scipy.ndimage.median_filter,
                      arr[tuple(slc)],
                      size=(size, size),
                      output=out[tuple(slc)])
@@ -470,7 +470,7 @@ def remove_outlier(arr, dif, size=3, axis=0, ncore=None, out=None):
         slc = [slice(None)] * arr.ndim
         for i in range(ncore):
             slc[axis] = chnk_slices[i]
-            e.submit(filters.median_filter,
+            e.submit(scipy.ndimage.median_filter,
                      arr[tuple(slc)],
                      size=filt_size,
                      output=tmp[tuple(slc)])
@@ -529,7 +529,7 @@ def remove_outlier1d(arr, dif, size=3, axis=0, ncore=None, out=None):
         slc = [slice(None)] * arr.ndim
         for i in range(ncore):
             slc[lar_axis] = chnk_slices[i]
-            e.submit(filters.median_filter,
+            e.submit(scipy.ndimage.median_filter,
                      arr[slc],
                      size=filt_size,
                      output=tmp[slc],
