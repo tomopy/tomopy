@@ -39,7 +39,7 @@
 
 #pragma once
 
-#include "macros.h"
+#include "libtomo/macros.h"
 
 BEGIN_EXTERN_C
 

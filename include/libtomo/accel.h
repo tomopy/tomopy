@@ -37,14 +37,14 @@
 //  ---------------------------------------------------------------
 //   TOMOPY header
 
-/** \file cxx_extern.h
- * \headerfile cxx_extern.h "include/cxx_extern.h"
+/** \file accel.h
+ * \headerfile accel.h "include/accel.h"
  * C++ functions that are available to C code (available for Python binding)
  */
 
 #pragma once
 
-#include "macros.h"
+#include "libtomo/macros.h"
 
 //======================================================================================//
 

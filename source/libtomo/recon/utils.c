@@ -50,12 +50,12 @@
 #ifdef WIN32
 #    ifdef PY3K
 void
-PyInit_libtomopy(void)
+PyInit_libtomo(void)
 {
 }
 #    else
 void
-initlibtomopy(void)
+initlibtomo(void)
 {
 }
 #    endif

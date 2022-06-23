@@ -41,8 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "profiler.h"
-#include "project.h"
+#include "libtomo/profiler.h"
+#include "libtomo/project.h"
 #include "utils.h"
 
 volatile unsigned long counter;

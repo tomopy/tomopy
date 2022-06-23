@@ -62,7 +62,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_normalize_bg',
            'c_remove_stripe_sf']
 
-LIB_TOMOPY_PREP = c_shared_lib("libtomopy-prep")
+LIB_TOMOPY_PREP = c_shared_lib("tomo-prep")
 
 
 def c_normalize_bg(tomo, air):

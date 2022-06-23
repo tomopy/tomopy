@@ -48,8 +48,8 @@
 
 #include "mkl.h"
 
-#include "filters.h"
-#include "gridrec.h"
+#include "libtomo/filters.h"
+#include "libtomo/gridrec.h"
 #include "pal.h"
 
 float

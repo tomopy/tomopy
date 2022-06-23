@@ -46,7 +46,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "remove_ring.h"
+#include "libtomo/remove_ring.h"
 
 #define INT_MODE_WRAP 0
 #define INT_MODE_REFLECT 1

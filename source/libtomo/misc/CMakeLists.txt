@@ -1,41 +1,27 @@
+set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/morph.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/remove_ring.h")
 
-# Locate sources for this project headers are included for IDEs
-file(GLOB misc_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
+tomopy_add_library(tomo-misc SHARED morph.c remove_ring.c ${HEADERS})
 
-# core sources
-set(MISC_LIBRARY_SOURCES ${misc_tomo_sources})
-
-# create library
-add_library(libtomopy-misc SHARED ${MISC_LIBRARY_SOURCES})
+target_include_directories(
+  tomo-misc
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # link library to math.h
-if (NOT WIN32)
-    target_link_libraries(libtomopy-misc PUBLIC m)
-endif() 
+if(NOT WIN32)
+  target_link_libraries(tomo-misc PUBLIC m)
+endif()
 
-# where to place the library
-set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
+target_compile_definitions(tomo-misc PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/misc")
+target_compile_options(
+  tomo-misc PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-# target properties
-set_target_properties(libtomopy-misc
-    PROPERTIES
-    PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
+install(TARGETS tomo-misc EXPORT libtomoTargets)
 
-target_compile_definitions(libtomopy-misc PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
-
-target_compile_options(libtomopy-misc PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
-
-install(TARGETS libtomopy-misc
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
-    COMPONENT python)
+install(
+  FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
+  COMPONENT Headers)
