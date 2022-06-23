@@ -59,7 +59,7 @@ except ModuleNotFoundError:
     from importlib_metadata import version, PackageNotFoundError
 
 try:
-    __version__ = version("package-name")
+    __version__ = version("tomopy")
 except PackageNotFoundError:
     # package is not installed
     pass
