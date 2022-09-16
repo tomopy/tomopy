@@ -87,7 +87,7 @@ def get_rank():
         from mpi4py import MPI
         comm_w = MPI.COMM_WORLD
         return comm_w.Get_rank()
-    except:
+    except ModuleNotFoundError:
         return 0
 
 
@@ -97,7 +97,7 @@ def get_nproc():
         from mpi4py import MPI
         comm_w = MPI.COMM_WORLD
         return comm_w.Get_size()
-    except:
+    except ModuleNotFoundError:
         return 1
 
 def barrier():
@@ -106,7 +106,7 @@ def barrier():
         from mpi4py import MPI
         comm_w = MPI.COMM_WORLD
         comm_w.Barrier()
-    except:
+    except ModuleNotFoundError:
         pass
 
 
