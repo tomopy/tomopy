@@ -58,16 +58,21 @@ def c_shared_lib(lib_name, error=True):
 
     The ctypes.util.find_library function preprends "lib" to the name.
     """
-    load_dll = ctypes.cdll.LoadLibrary
-    ext = '.so'
-    if sys.platform == 'darwin':
-        ext = '.dylib'
     if os.name == 'nt':
-        ext = '.dll'
         load_dll = ctypes.windll.LoadLibrary
+    else:
+        load_dll = ctypes.cdll.LoadLibrary
+
+    # Returns None or a library name
     sharedlib = ctypes.util.find_library(lib_name)
-    if sharedlib and os.path.exists(sharedlib):
-        return load_dll(sharedlib)
+
+    if sharedlib is not None:
+        try:
+            # No error if sharedlib is None; error if library name wrong
+            return load_dll(sharedlib)
+        except OSError:
+            pass
+
     explanation = (
         'TomoPy links to compiled components which are installed separately'
         ' and loaded using ctypes.util.find_library().'
@@ -79,7 +84,8 @@ def c_shared_lib(lib_name, error=True):
     warnings.warn(
         explanation +
         'Some functionality is unavailable because an optional shared'
-        f' library, {sharedlib}, is missing.', ImportWarning)
+        f' library, {lib_name}, is missing.', ImportWarning)
+    return None
 
 
 def _missing_library(function):
