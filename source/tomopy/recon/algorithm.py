@@ -439,9 +439,15 @@ def _dist_recon(tomo, center, recon, algorithm, args, kwargs, ncore, nchunk):
         else:
             # execute recon on ncore threads
             with cf.ThreadPoolExecutor(ncore) as e:
-                for slc in use_slcs:
+                futures = [
                     e.submit(algorithm, tomo[slc], center[slc], recon[slc],
-                             *args, **kwargs)
+                             *args, **kwargs) for slc in use_slcs
+                ]
+            done, _ = cf.wait(futures, return_when=cf.ALL_COMPLETED)
+            for f in done:
+                if f.exception() is not None:
+                    raise f.exception()
+
 
     if pythreads is not None:
         # reset to default
