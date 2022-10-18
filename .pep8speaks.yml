@@ -1,0 +1,3 @@
+# File : .pep8speaks.yml
+
+no_blank_comment: False  # If True, no comment is made on PR without any errors.
