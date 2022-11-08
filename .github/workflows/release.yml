@@ -14,3 +14,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: carterbox/release-archive-with-hash@v1
+        with:
+          token: ${{ secrets.AUTO_ARCHIVE_TOKEN }}
