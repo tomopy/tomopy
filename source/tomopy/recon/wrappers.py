@@ -291,7 +291,7 @@ def ufo_dfi(tomo, center, recon, theta, **kwargs):
     Reconstruct object using UFO's Direct Fourier pipeline
     """
     import gi
-    gi.require_version('Ufo', '0.0')
+    # gi.require_version('Ufo', '0.0')
     from gi.repository import Ufo
 
     theta = theta[1] - theta[0]
