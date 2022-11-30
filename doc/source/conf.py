@@ -161,4 +161,5 @@ autodoc_mock_imports = [
     'scipy',
     'skimage',
     'tifffile',
+    'larix',
 ]

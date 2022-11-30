@@ -16,6 +16,7 @@
       median_filter
       median_filter_cuda
       median_filter_nonfinite
+      median_filter_3d
       sobel_filter
       remove_nan
       remove_neg
