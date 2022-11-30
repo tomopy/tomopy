@@ -53,6 +53,7 @@ from tomopy.misc.corr import (
     gaussian_filter,
     median_filter,
     median_filter_nonfinite,
+    median_filter_3d,
     remove_neg,
     remove_nan,
     remove_outlier,
@@ -109,6 +110,10 @@ class ImageFilterTestCase(unittest.TestCase):
                     size=3,
                     callback=None,
                 )
+
+    def test_median_filter_3d(self):
+        data = np.ones(shape=(100, 100, 100), dtype=np.float32) + 100.0
+        assert np.all(median_filter_3d(data) == 101.)
 
     def test_remove_neg(self):
         assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
