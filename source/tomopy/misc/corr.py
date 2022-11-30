@@ -62,6 +62,7 @@ import warnings
 import numexpr as ne
 import concurrent.futures as cf
 from scipy.signal import medfilt2d
+from larix.methods.misc import MEDIAN_FILT as median_filter_3d_larix
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,7 @@ __all__ = [
     'median_filter',
     'median_filter_cuda',
     'median_filter_nonfinite',
+    'median_filter_3d',
     'sobel_filter',
     'remove_nan',
     'remove_neg',
@@ -344,6 +346,30 @@ def median_filter_nonfinite(arr, size=3, callback=None):
         callback(arr.shape[0], 'Nonfinite median filter', ' prjs')
 
     return arr
+
+
+def median_filter_3d(arr: np.ndarray, radius_kernel: int = 1,
+                     ncore: int = 1) -> np.ndarray:
+    """
+    Apply 3D median filter from the Larix toolbox.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Input array.
+    radius_kernel : int, optional
+        The radius of the median kernel (e.g., the full size 3D kernel is
+        (2*radius_kernel+1)^3).
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+
+    Returns
+    -------
+    np.ndarray
+        Median filtered 3D array.
+    """
+
+    return median_filter_3d_larix(arr, radius_kernel, ncore)
 
 
 def sobel_filter(arr, axis=0, ncore=None):

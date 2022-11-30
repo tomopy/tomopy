@@ -1,6 +1,7 @@
 name: tomopy
 channels:
   - conda-forge
+  - savu-dep
 dependencies:
   - cmake
   - cxx-compiler
@@ -27,3 +28,4 @@ dependencies:
   - mkl_fft
   - opencv>=3.4
   - pytest
+  - larix
