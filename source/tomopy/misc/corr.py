@@ -348,7 +348,7 @@ def median_filter_nonfinite(arr, size=3, callback=None):
     return arr
 
 
-def median_filter_3d(arr: np.ndarray, radius_kernel: int = 1,
+def median_filter_3d(arr: np.ndarray, radius_kernel: int = 3,
                      ncore: int = 1) -> np.ndarray:
     """
     Apply 3D median filter from the Larix toolbox.
@@ -359,7 +359,7 @@ def median_filter_3d(arr: np.ndarray, radius_kernel: int = 1,
         Input array.
     radius_kernel : int, optional
         The radius of the median kernel (e.g., the full size 3D kernel is
-        (2*radius_kernel+1)^3).
+        (2*radius_kernel+1)^3). Accepted kernel sizes are 3, 5, 7, 9 and 11.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
 
