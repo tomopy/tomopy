@@ -249,7 +249,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     flat_loc : list of int
         Indices of flat field data within tomography
     averaging : str, optional
-        'mean' or 'median', based on how the flat and dark arrays
+        'mean' or 'median', how the flat and dark arrays
         should be averaged.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
