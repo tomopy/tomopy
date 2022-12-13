@@ -231,8 +231,8 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
     return arr
 
 
-def normalize_nf(tomo, flats, dark, flat_loc, averaging='mean',
-                 cutoff=None, ncore=None, out=None):
+def normalize_nf(tomo, flats, dark, flat_loc,
+                 cutoff=None, ncore=None, out=None, averaging='mean'):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
