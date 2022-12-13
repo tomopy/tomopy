@@ -277,6 +277,8 @@ def normalize_nf(tomo, flats, dark, flat_loc,
         dark = np.mean(dark, axis=0, dtype=np.float32)
     elif averaging == 'median':
         dark = np.median(dark, axis=0, dtype=np.float32)
+    else:
+        raise ValueError(f"'averaging' must be 'mean' or 'median' not {averaging}")
     denom = np.empty_like(dark)
 
     num_flats = len(flat_loc)
