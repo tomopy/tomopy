@@ -100,8 +100,8 @@ def minus_log(arr, ncore=None, out=None):
     return out
 
 
-def normalize(arr, flat, dark, averaging='mean',
-              cutoff=None, ncore=None, out=None):
+def normalize(arr, flat, dark, cutoff=None,
+              ncore=None, out=None, averaging='mean'):
     """
     Normalize raw projection data using the flat and dark field projections.
 
