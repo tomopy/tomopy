@@ -114,7 +114,7 @@ def normalize(arr, flat, dark, cutoff=None,
     dark : ndarray
         2D or 3D dark field data.
     averaging : str, optional
-        'mean' or 'median', based on how the flat and dark arrays
+        'mean' or 'median', how the flat and dark arrays
         should be averaged.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
