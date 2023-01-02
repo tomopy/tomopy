@@ -41,10 +41,17 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-// C-module for median filtration and dezingering (3D and 2D case)
-// Original author: Daniil Kazantsev, Diamond Light Source Ltd.
-
 #pragma once
+
+#include <assert.h>
+#include <math.h>
+#include <stdlib.h>
+#include <memory.h>
+
+#define _USE_MATH_DEFINES
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846264338327
+#endif
 
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
@@ -52,5 +59,12 @@
 #    define DLL
 #endif
 
-DLL void
-medianfilter_main_float(float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ);
+void DLL copyIm(float *A, float *U, long dimX, long dimY, long dimZ);
+void DLL copyIm_unchar(unsigned char *A, unsigned char *U, int dimX, int dimY, int dimZ);
+void DLL copyIm_unshort(unsigned short *A, unsigned short *U, int dimX, int dimY, int dimZ);
+void DLL sort_bubble_float(float *x, int n_size);
+void DLL sort_bubble_uint16(unsigned short *x, int n_size);
+void DLL quicksort_float(float *x, int first, int last);
+void DLL quicksort_uint16(unsigned short *x, int first, int last);
+
+

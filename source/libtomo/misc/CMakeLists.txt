@@ -2,7 +2,13 @@ set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/morph.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/remove_ring.h"
             "${tomopy_SOURCE_DIR}/include/libtomo/median_filt3d.h")
 
-tomopy_add_library(tomo-misc SHARED morph.c remove_ring.c median_filt3d.c ${HEADERS})
+tomopy_add_library(tomo-misc SHARED 
+		   morph.c
+		   remove_ring.c
+		   median_filt3d.c
+		   utils.c
+		   utils.h		   
+		   ${HEADERS})
 
 find_package(OpenMP REQUIRED)
 if (OPENMP_FOUND)

@@ -48,20 +48,28 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
-//#include "omp.h"
+#include "omp.h"
 
 #include "libtomo/median_filt3d.h"
+#include "utils.h"
 
 DLL void
-medianfilter_main_float(const float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
+medianfilter_main_float(float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
 {
     int sizefilter_total, diameter;
     long i, j, k, index;
-    diameter = (int)(2*radius+1);
+    
+    diameter = (int)(2*radius+1); /* diameter of the filter's kernel */
     /* copy input into output */
-    // copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ));
+    copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ));
 
-    printf("DimZ size: %i \n", dimZ);
+    /* dealing here with a custom given number of cpu threads */
+    if (ncores > 0) {
+    omp_set_dynamic(0);     // Explicitly disable dynamic teams
+    omp_set_num_threads(ncores); // Use a number of threads for all consecutive parallel regions 
+    }    
+
+    //printf("DimZ size: %i \n", dimZ);
 
     if (dimZ <= 1) {
     /*2D case */
@@ -82,7 +90,7 @@ medianfilter_main_float(const float *Input, float *Output, int radius, float mu_
        for(j=0; j<dimY; j++) {
          for(i=0; i<dimX; i++) {
            index = (long)((dimX*dimY)*k + j*dimX+i);          
-          Output[index] = 10.0f;
+          //Output[index] = 10.0f;
         }}}
     } /* 3D case done */
     //return 0;
