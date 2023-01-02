@@ -76,6 +76,7 @@ __all__ = [
     'median_filter',
     'median_filter_cuda',
     'median_filter_nonfinite',
+    'median_filter3d',
     'sobel_filter',
     'remove_nan',
     'remove_neg',
@@ -345,6 +346,36 @@ def median_filter_nonfinite(arr, size=3, callback=None):
 
     return arr
 
+
+def median_filter3d(arr, kernel_half_size=1, ncore=None):
+    """
+    Apply 3D median filter to 3D array (C- implementation).
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    kernel_half_size : int, optional
+        The half size of the filter's kernel, i.e. 1 results in the full kernel size of 3 x 3 x 3.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+
+    Returns
+    -------
+    ndarray
+        Median filtered 3D array.
+    """
+    arr = dtype.as_float32(arr)
+    out = np.empty_like(arr)
+    dz, dy, dx = arr.shape
+
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()    
+    
+    #with cf.ThreadPoolExecutor(ncore) as e:
+    #    e.submit(extern.c_median_filt3d, arr, out, kernel_half_size, ncore, dx, dy, dz)
+    extern.c_median_filt3d(arr, out, kernel_half_size, ncore, dx, dy, dz)
+    return out
 
 def sobel_filter(arr, axis=0, ncore=None):
     """

@@ -41,29 +41,27 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-// C-module for median filtration and dezingering (3D and 2D case)
+// C-module for median filtration and dezingering (3D and 2D cases)
 // Original author: Daniil Kazantsev, Diamond Light Source Ltd.
 
 #include <math.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
-#include "omp.h"
+//#include "omp.h"
 
 #include "libtomo/median_filt3d.h"
 
-void medianfilter_main_float(float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
+DLL void
+medianfilter_main_float(const float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
 {
     int sizefilter_total, diameter;
     long i, j, k, index;
     diameter = (int)(2*radius+1);
     /* copy input into output */
-    copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ));
+    // copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ));
 
-    if (ncores > 0) {
-    omp_set_dynamic(0);     // Explicitly disable dynamic teams
-    omp_set_num_threads(ncores); // Use a number of threads for all consecutive parallel regions 
-    }    
+    printf("DimZ size: %i \n", dimZ);
 
     if (dimZ <= 1) {
     /*2D case */
@@ -78,8 +76,14 @@ void medianfilter_main_float(float *Input, float *Output, int radius, float mu_t
      } /* 2D case done */
      else {
      /* 3D case */
-
+    sizefilter_total = (int)(powf(diameter,3));
+    printf("Kernel size: %i \n", sizefilter_total);    
+     for(k=0; k<dimZ; k++) {
+       for(j=0; j<dimY; j++) {
+         for(i=0; i<dimX; i++) {
+           index = (long)((dimX*dimY)*k + j*dimX+i);          
+          Output[index] = 10.0f;
+        }}}
     } /* 3D case done */
-
-    return 0;
+    //return 0;
 }

@@ -56,11 +56,10 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_sample',
-           'c_remove_ring']
-
+           'c_remove_ring',
+	       'c_median_filt3d']
 
 LIB_TOMOPY_MISC = c_shared_lib("tomo-misc")
-
 
 def c_sample(mode, arr, dx, dy, dz, level, axis, out):
     LIB_TOMOPY_MISC.sample.restype = dtype.as_c_void_p()
@@ -74,7 +73,6 @@ def c_sample(mode, arr, dx, dy, dz, level, axis, out):
         dtype.as_c_int(axis),
         dtype.as_c_float_p(out))
     return out
-
 
 def c_remove_ring(rec, *args):
     istart = 0
@@ -95,3 +93,17 @@ def c_remove_ring(rec, *args):
         dtype.as_c_int(args[10]),  # int_mode
         dtype.as_c_int(istart),  # istart
         dtype.as_c_int(iend))  # iend
+
+def c_median_filt3d(input, output, kernel_half_size, ncore, dx, dy, dz):
+    threshold = 0.0 # for dezinger it should be > 0
+    LIB_TOMOPY_MISC.medianfilter_main_float.restype = dtype.as_c_void_p()    
+    LIB_TOMOPY_MISC.medianfilter_main_float(
+        dtype.as_c_float_p(input),
+        dtype.as_c_float_p(output),
+        dtype.as_c_int(kernel_half_size),
+        dtype.as_c_float(threshold),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz))
+    return output

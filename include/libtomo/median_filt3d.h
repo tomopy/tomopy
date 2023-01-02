@@ -52,5 +52,5 @@
 #    define DLL
 #endif
 
-DLL void 
-medianfilter_main_float(float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ);
+DLL void
+medianfilter_main_float(const float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ);
