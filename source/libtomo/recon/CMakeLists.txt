@@ -1,36 +1,43 @@
-# Locate sources for this project headers are included for IDEs
-file(GLOB recon_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
+set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/project.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/recon.h")
 
-# core sources
-set(RECON_LIBRARY_SOURCES ${recon_tomo_sources})
+tomopy_add_library(
+  tomo-recon
+  SHARED
+  art.c
+  bart.c
+  fbp.c
+  grad.c
+  osem.c
+  ospml_hybrid.c
+  ospml_quad.c
+  project.c
+  tikh.c
+  tv.c
+  utils.c
+  utils.h
+  vector.c
+  ${HEADERS})
 
-add_library(libtomopy-recon SHARED ${RECON_LIBRARY_SOURCES})
-
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/recon")
-
-# target properties
-set_target_properties(libtomopy-recon
-    PROPERTIES
-    PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED})
+target_include_directories(
+  tomo-recon
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # link libraries to math.h
-if (NOT WIN32)
-    target_link_libraries(libtomopy-recon PUBLIC m)
+if(NOT WIN32)
+  target_link_libraries(tomo-recon PUBLIC m)
 endif()
 
-target_compile_definitions(libtomopy-recon PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
+target_compile_definitions(tomo-recon PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
-target_compile_options(libtomopy-recon PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
+target_compile_options(
+  tomo-recon PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
-install(TARGETS libtomopy-recon
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
-    COMPONENT python)
+install(TARGETS tomo-recon EXPORT libtomoTargets)
+
+install(
+  FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
+  COMPONENT Headers)

@@ -45,7 +45,7 @@
 #include <limits.h>
 #include <math.h>
 
-#include "morph.h"
+#include "libtomo/morph.h"
 
 DLL void
 downsample(const float* data, int dx, int dy, int dz, int level, int axis, float* out)

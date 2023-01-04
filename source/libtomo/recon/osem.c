@@ -43,7 +43,7 @@
 
 #include <string.h>
 
-#include "recon.h"
+#include "libtomo/recon.h"
 #include "utils.h"
 
 void

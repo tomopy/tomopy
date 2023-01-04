@@ -1,0 +1,18 @@
+name: Upload a source archive and hash at every tagged release
+
+on:
+  push:
+    tags:
+    # Use pattern matching to only run on version release tags
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: carterbox/release-archive-with-hash@v1
+        with:
+          token: ${{ secrets.AUTO_ARCHIVE_TOKEN }}

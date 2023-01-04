@@ -1,49 +1,31 @@
+set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/filters.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/gridrec.h")
+
 if(TOMOPY_CXX_GRIDREC)
-    SET_SOURCE_FILES_PROPERTIES("gridrec.c" PROPERTIES LANGUAGE CXX)
+  set_source_files_properties("gridrec.c" PROPERTIES LANGUAGE CXX)
 endif()
 
-file(GLOB gridrec_tomo_sources
-    ${CMAKE_CURRENT_LIST_DIR}/*.c)
-file(GLOB gridrec_tomo_headers
-    ${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/*.h)
+tomopy_add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 
-# core sources
-set(GRIDREC_SOURCES ${gridrec_tomo_headers} ${gridrec_tomo_sources})
+# FIXME: gridrec should not be linking to OpenCV
+target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
+                                           ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
-# create library
-add_library(libtomopy-gridrec SHARED ${GRIDREC_SOURCES})
+target_include_directories(
+  tomo-gridrec
+  PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-# link library
-target_link_libraries(libtomopy-gridrec PUBLIC ${TOMOPY_EXTERNAL_LIBRARIES}
-    PRIVATE ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+target_compile_definitions(tomo-gridrec PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 
-# where to place the library
-set(OUTPUT_PATH ${CMAKE_BINARY_DIR})
+target_compile_options(
+  tomo-gridrec PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
+                       $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include/gridrec")
-list(APPEND TARGET_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}")
+install(TARGETS tomo-gridrec EXPORT libtomoTargets)
 
-# target properties
-set_target_properties(libtomopy-gridrec
-    PROPERTIES
-    PREFIX ""
-    RUNTIME_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    LIBRARY_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    ARCHIVE_OUTPUT_DIRECTORY    ${OUTPUT_PATH}/tomopy/util/extern
-    INCLUDE_DIRECTORIES         "${TARGET_INCLUDE_DIRECTORIES}"
-    C_STANDARD                  ${CMAKE_C_STANDARD}
-    C_STANDARD_REQUIRED         ${CMAKE_C_STANDARD_REQUIRED}
-    CXX_STANDARD                ${CMAKE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED       ${CMAKE_CXX_STANDARD_REQUIRED})
-
-target_compile_definitions(libtomopy-gridrec PUBLIC
-    ${${PROJECT_NAME}_DEFINITIONS})
-
-target_compile_options(libtomopy-gridrec PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
-
-install(TARGETS libtomopy-gridrec
-    DESTINATION ${PYTHON_SITE_DIR}/tomopy/util/extern
-    COMPONENT python)
+install(
+  FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libtomo
+  COMPONENT Headers)

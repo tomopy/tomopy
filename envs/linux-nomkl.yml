@@ -1,27 +1,26 @@
 name: tomopy
 channels:
   - conda-forge
-  - jrmadsen
-  - defaults
 dependencies:
-  - coverage!=5.0.2
+  - cmake
+  - cxx-compiler
   - dxchange
-  - gcc_linux-64
   - git
-  - gxx_linux-64
   - h5py
-  - libstdcxx-ng
-  - libgcc-ng
-  - nomkl
-  - nose
+  - importlib_metadata  # backport for python<3.8
+  - ninja
   - numexpr
-  - numpy ["blas=*=openblas"]
-  - opencv>=3.4 ["blas=*=openblas"]
-  - pyctest>0.0.10
+  - numpy<1.22.4|>=1.23.0
+  - python=3.7
   - pywavelets
-  - scikit-build
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - timemory
+# Optional packages
+  - coverage!=5.0.2
+  - pyctest>0.0.10
+  - timemory=*=py37h* # the nompi build
+  - nomkl
+  - opencv>=3.4
+  - pytest

@@ -1,0 +1,8 @@
+parse:
+  additional_commands:
+    tomopy_add_library:
+      flags:
+      - STATIC
+      - SHARED
+      - MODULE
+      - EXCLUDE_FROM_ALL

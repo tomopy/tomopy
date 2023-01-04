@@ -60,7 +60,7 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_accel_mlem',
            'c_accel_sirt']
 
-LIB_TOMOPY_ACCEL = c_shared_lib("libtomopy-accel", error=False)
+LIB_TOMOPY_ACCEL = c_shared_lib("tomo-accel", error=False)
 
 
 def c_accel_mlem(tomo, center, recon, theta, **kwargs):

@@ -41,8 +41,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "profiler.h"
-#include "recon.h"
+#include "libtomo/profiler.h"
+#include "libtomo/recon.h"
 #include "utils.h"
 
 void

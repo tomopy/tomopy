@@ -52,10 +52,15 @@ from __future__ import (absolute_import, division, print_function,
 import sys
 import warnings
 
-from pkg_resources import get_distribution, DistributionNotFound
 try:
-    __version__ = get_distribution(__name__).version
-except DistributionNotFound:
+    from importlib.metadata import version, PackageNotFoundError
+except ModuleNotFoundError:
+    # Use backport for python<3.8
+    from importlib_metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("tomopy")
+except PackageNotFoundError:
     # package is not installed
     pass
 

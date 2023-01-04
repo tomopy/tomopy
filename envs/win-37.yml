@@ -1,26 +1,26 @@
 name: tomopy
 channels:
   - conda-forge
-  - jrmadsen
-  - defaults
 dependencies:
-  - coverage!=5.0.2
+  - cmake
+  - cxx-compiler
   - dxchange
   - git
   - h5py
-  - mkl
-  - mkl-devel
-  - mkl_fft
+  - importlib_metadata  # backport for python<3.8
+  - ninja
   - numexpr
-  - numpy
-  - libopencv
-  - py-opencv  # only for testing
+  - numpy!=1.22.4
   - python=3.7
-  - pytest
   - pywavelets
-  - scikit-build
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-  - vs2017_win-64
+# Optional packages
+  - coverage!=5.0.2
+  - mkl
+  - mkl-devel
+  - mkl_fft
+  - opencv>=3.4,<4.2
+  - pytest

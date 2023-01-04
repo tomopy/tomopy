@@ -43,7 +43,7 @@
 
 #include <stdlib.h>
 
-#include "stripe.h"
+#include "libtomo/stripe.h"
 
 void
 remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart, int iend)

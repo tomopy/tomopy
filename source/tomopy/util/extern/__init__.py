@@ -47,30 +47,45 @@
 # #########################################################################
 
 import ctypes
+import ctypes.util
 import os
 import sys
 import warnings
 
 
 def c_shared_lib(lib_name, error=True):
-    """Get the path and import the C-shared library."""
-    load_dll = ctypes.cdll.LoadLibrary
-    ext = '.so'
-    if sys.platform == 'darwin':
-        ext = '.dylib'
+    """Get the path and import the C-shared library.
+
+    The ctypes.util.find_library function preprends "lib" to the name.
+    """
     if os.name == 'nt':
-        ext = '.dll'
         load_dll = ctypes.windll.LoadLibrary
-    base_path = os.path.abspath(os.path.dirname(__file__))
-    sharedlib = os.path.join(base_path, '%s%s' % (lib_name, ext))
-    if os.path.exists(sharedlib):
-        return load_dll(sharedlib)
+    else:
+        load_dll = ctypes.cdll.LoadLibrary
+
+    # Returns None or a library name
+    sharedlib = ctypes.util.find_library(lib_name)
+
+    if sharedlib is not None:
+        try:
+            # No error if sharedlib is None; error if library name wrong
+            return load_dll(sharedlib)
+        except OSError:
+            pass
+
+    explanation = (
+        'TomoPy links to compiled components which are installed separately'
+        ' and loaded using ctypes.util.find_library().'
+    )
     if error:
         raise ModuleNotFoundError(
-            f'The following shared library is missing:\n{sharedlib}')
+            explanation +
+            f' A required library, {lib_name}, was not found.')
     warnings.warn(
-        'Some compiled functions are unavailable because an optional shared'
-        f' library is missing:\n{sharedlib}', ImportWarning)
+        explanation +
+        'Some functionality is unavailable because an optional shared'
+        f' library, {lib_name}, is missing.', ImportWarning)
+    return None
 
 
 def _missing_library(function):

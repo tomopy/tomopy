@@ -151,7 +151,7 @@ texinfo_documents = [
 autodoc_mock_imports = [
     'concurrent',
     'DM3lib',
-    'libtomopy',
+    'libtomo',
     'tomopy.util.extern',
     'matplotlib',
     'numexpr',

@@ -254,8 +254,8 @@ def find_center_vo(tomo, ind=None, smin=-50, smax=50, srad=6, step=0.25,
     # Denoising
     # There's a critical reason to use different window sizes
     # between coarse and fine search.
-    _tomo_cs = ndimage.filters.gaussian_filter(_tomo, (3, 1), mode='reflect')
-    _tomo_fs = ndimage.filters.gaussian_filter(_tomo, (2, 2), mode='reflect')
+    _tomo_cs = ndimage.gaussian_filter(_tomo, (3, 1), mode='reflect')
+    _tomo_fs = ndimage.gaussian_filter(_tomo, (2, 2), mode='reflect')
 
     # Coarse and fine searches for finding the rotation center.
     if _tomo.shape[0] * _tomo.shape[1] > 4e6:  # If data is large (>2kx2k)
