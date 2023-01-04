@@ -45,10 +45,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
-"""
-Module for data normalization.
-"""
+"""Module for data normalization."""
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -62,16 +59,17 @@ import numexpr as ne
 
 logger = logging.getLogger(__name__)
 
-
 __author__ = "Doga Gursoy, Luis Barroso-Luque"
 __credits__ = "Mark Rivers"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['minus_log',
-           'normalize',
-           'normalize_bg',
-           'normalize_roi',
-           'normalize_nf']
+__all__ = [
+    'minus_log',
+    'normalize',
+    'normalize_bg',
+    'normalize_roi',
+    'normalize_nf',
+]
 
 
 def minus_log(arr, ncore=None, out=None):
@@ -100,8 +98,15 @@ def minus_log(arr, ncore=None, out=None):
     return out
 
 
-def normalize(arr, flat, dark, cutoff=None,
-              ncore=None, out=None, averaging='mean'):
+def normalize(
+    arr,
+    flat,
+    dark,
+    cutoff=None,
+    ncore=None,
+    out=None,
+    averaging='mean',
+):
     """
     Normalize raw projection data using the flat and dark field projections.
 
@@ -114,8 +119,7 @@ def normalize(arr, flat, dark, cutoff=None,
     dark : ndarray
         2D or 3D dark field data.
     averaging : str, optional
-        'mean' or 'median', how the flat and dark arrays
-        should be averaged.
+        'mean' or 'median', how the `flat` and `dark` arrays should be averaged.
     cutoff : float, optional
         Permitted maximum vaue for the normalized data.
     ncore : int, optional
@@ -128,6 +132,11 @@ def normalize(arr, flat, dark, cutoff=None,
     -------
     ndarray
         Normalized 3D tomographic data.
+
+    .. versionadded:: 1.13.0
+        The averaging parameter.
+    .. versionchanged:: 1.13.0
+        `flat` and `dark` can now be a 3D array.
     """
     arr = dtype.as_float32(arr)
     l = np.float32(1e-6)
@@ -142,7 +151,8 @@ def normalize(arr, flat, dark, cutoff=None,
         flat = np.median(flat, axis=0, dtype=np.float32)
         dark = np.median(dark, axis=0, dtype=np.float32)
     else:
-        raise ValueError(f"'averaging' must be 'mean' or 'median' not {averaging}")
+        raise ValueError(
+            f"'averaging' must be 'mean' or 'median' not {averaging}")
 
     with mproc.set_numexpr_threads(ncore):
         denom = ne.evaluate('flat-dark')
@@ -180,10 +190,11 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     arr = mproc.distribute_jobs(
         arr,
         func=_normalize_roi,
-        args=(roi, ),
+        args=(roi,),
         axis=0,
         ncore=ncore,
-        nchunk=0)
+        nchunk=0,
+    )
     return arr
 
 
@@ -227,12 +238,21 @@ def normalize_bg(tomo, air=1, ncore=None, nchunk=None):
         args=(air,),
         axis=0,
         ncore=ncore,
-        nchunk=nchunk)
+        nchunk=nchunk,
+    )
     return arr
 
 
-def normalize_nf(tomo, flats, dark, flat_loc,
-                 cutoff=None, ncore=None, out=None, averaging='mean'):
+def normalize_nf(
+    tomo,
+    flats,
+    dark,
+    flat_loc,
+    cutoff=None,
+    ncore=None,
+    out=None,
+    averaging='mean',
+):
     """
     Normalize raw 3D projection data with flats taken more than once during
     tomography. Normalization for each projection is done with the mean of the
@@ -249,8 +269,7 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     flat_loc : list of int
         Indices of flat field data within tomography
     averaging : str, optional
-        'mean' or 'median', how the flat and dark arrays
-        should be averaged.
+        'mean' or 'median', how the `dark` arrays should be averaged.
     ncore : int, optional
         Number of cores that will be assigned to jobs.
     out : ndarray, optional
@@ -261,8 +280,12 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     -------
     ndarray
         Normalized 3D tomographic data.
-    """
 
+    .. versionadded:: 1.13.0
+        The averaging parameter.
+    .. versionchanged:: 1.13.0
+        `dark` can now be a 3D array.
+    """
     tomo = dtype.as_float32(tomo)
     flats = dtype.as_float32(flats)
     if dark.ndim == 2:
@@ -278,19 +301,20 @@ def normalize_nf(tomo, flats, dark, flat_loc,
     elif averaging == 'median':
         dark = np.median(dark, axis=0, dtype=np.float32)
     else:
-        raise ValueError(f"'averaging' must be 'mean' or 'median' not {averaging}")
+        raise ValueError(
+            f"'averaging' must be 'mean' or 'median' not {averaging}")
     denom = np.empty_like(dark)
 
     num_flats = len(flat_loc)
     total_flats = flats.shape[0]
     total_tomo = tomo.shape[0]
 
-    num_per_flat = total_flats//num_flats
+    num_per_flat = total_flats // num_flats
     tend = 0
 
     for m, loc in enumerate(flat_loc):
-        fstart = m*num_per_flat
-        fend = (m + 1)*num_per_flat
+        fstart = m * num_per_flat
+        fend = (m + 1) * num_per_flat
         flat = np.median(flats[fstart:fend], axis=0)
 
         # Normalization can be parallelized much more efficiently outside this
