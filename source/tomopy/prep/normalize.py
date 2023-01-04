@@ -257,9 +257,10 @@ def normalize_nf(
 ):
     """
     Normalize raw 3D projection data with flats taken more than once during
-    tomography. Normalization for each projection is done with the mean of the
-    nearest set of flat fields (nearest flat fields).
+    tomography.
 
+    Normalization for each projection is done with the mean of the
+    nearest set of flat fields (nearest flat fields).
 
     Parameters
     ----------
