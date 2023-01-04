@@ -7,7 +7,7 @@ tomopy_add_library(tomo-misc SHARED
 		   remove_ring.c
 		   median_filt3d.c
 		   utils.c
-		   utils.h		   
+		   utils.h	   
 		   ${HEADERS})
 
 find_package(OpenMP REQUIRED)

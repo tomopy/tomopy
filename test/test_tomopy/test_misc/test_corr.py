@@ -52,6 +52,8 @@ from numpy.testing import assert_allclose
 from tomopy.misc.corr import (
     gaussian_filter,
     median_filter,
+    median_filter3d,
+    remove_outlier3d,
     median_filter_nonfinite,
     remove_neg,
     remove_nan,
@@ -109,6 +111,33 @@ class ImageFilterTestCase(unittest.TestCase):
                     size=3,
                     callback=None,
                 )
+    
+    def test_median_filter3d(self):
+        # generate a small noncubic volume and apply random noise
+        A = np.float32(np.zeros((30,40,20)))
+        A[:] = 0.1
+        A[10:20,20:30,:] = 0.5
+        np.random.seed(1)
+        A_noise = A + np.random.normal(loc=0,
+                          scale=0.03 * A,
+                          size=np.shape(A))
+        A_filtered = median_filter3d(np.float32(A_noise))
+        max_filtered = 0.513833
+        assert_allclose(np.max(A_filtered), max_filtered, rtol=1e-06)
+        
+    def test_remove_outlier3d(self):
+        # generate a small noncubic volume and apply random noise with an outlier
+        A = np.float32(np.zeros((30,40,20)))
+        A[:] = 0.1
+        A[10:20,20:30,:] = 0.5        
+        np.random.seed(1)
+        A_noise = A + np.random.normal(loc=0,
+                          scale=0.03 * A,
+                          size=np.shape(A))
+        A[15,25,0] = 1.5 # placing an outlier
+        A_filtered = remove_outlier3d(np.float32(A_noise), kernel_half_size=1, dif = 0.5)
+        max_filtered = 0.56252176
+        assert_allclose(np.max(A_filtered), max_filtered, rtol=1e-06)        
 
     def test_remove_neg(self):
         assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])

@@ -77,6 +77,7 @@ __all__ = [
     'median_filter_cuda',
     'median_filter_nonfinite',
     'median_filter3d',
+    'remove_outlier3d',
     'sobel_filter',
     'remove_nan',
     'remove_neg',
@@ -349,12 +350,12 @@ def median_filter_nonfinite(arr, size=3, callback=None):
 
 def median_filter3d(arr, kernel_half_size=1, ncore=None):
     """
-    Apply 3D median filter to 3D array (C- implementation).
+    Apply 3D median filter to 3D array (C-implementation).
 
     Parameters
     ----------
     arr : ndarray
-        Input array.
+        Input 3D array.
     kernel_half_size : int, optional
         The half size of the filter's kernel, i.e. 1 results in the full kernel size of 3 x 3 x 3.
     ncore : int, optional
@@ -365,16 +366,68 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     ndarray
         Median filtered 3D array.
     """
-    arr = dtype.as_float32(arr)
+    input_type = arr.dtype
+    if (input_type != 'float32') and (input_type != 'uint16'):
+        arr = dtype.as_float32(arr) # silently convert to float32 data type
     out = np.empty_like(arr)
-    dz, dy, dx = arr.shape
+    dif = 0.0 # set to 0 to avoid selective filtering
 
-    if ncore is None:
-        ncore = mproc.mp.cpu_count()    
+    if np.ndim(arr) == 3:
+        dz, dy, dx = arr.shape
+    else:
+        raise ValueError("The input array must be a 3D array")
     
-    #with cf.ThreadPoolExecutor(ncore) as e:
-    #    e.submit(extern.c_median_filt3d, arr, out, kernel_half_size, ncore, dx, dy, dz)
-    extern.c_median_filt3d(arr, out, kernel_half_size, ncore, dx, dy, dz)
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+        
+    #deal with different data types 
+    if (input_type == 'float32'):
+        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore, dx, dy, dz)
+    else:
+        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore, dx, dy, dz)
+    return out
+
+
+def remove_outlier3d(arr, kernel_half_size=1, dif = 0.1, ncore=None):
+    """
+    Also a so-called dezinger. Selectively applies 3D median filter to 
+    3D array (C-implementation) to remove outliers specifically. 
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input 3D array.
+    kernel_half_size : int, optional
+        The half size of the filter's kernel, i.e. 1 results in the full kernel size of 3 x 3 x 3.
+    dif : float
+        Expected difference value between outlier value and
+        the median value of the array.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs.
+
+    Returns
+    -------
+    ndarray
+        Dezingered 3D array.
+    """
+    input_type = arr.dtype
+    if (input_type != 'float32') and (input_type != 'uint16'):
+        arr = dtype.as_float32(arr) # silently convert to float32 data type
+    out = np.empty_like(arr)
+
+    if np.ndim(arr) == 3:
+        dz, dy, dx = arr.shape
+    else:
+        raise ValueError("The input array must be a 3D array")
+    
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+        
+    #deal with different data types 
+    if (input_type == 'float32'):
+        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore, dx, dy, dz)
+    else:
+        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore, dx, dy, dz)
     return out
 
 def sobel_filter(arr, axis=0, ncore=None):

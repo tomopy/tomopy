@@ -53,45 +53,126 @@
 #include "libtomo/median_filt3d.h"
 #include "utils.h"
 
-DLL void
+DLL int
 medianfilter_main_float(float *Input, float *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
 {
     int sizefilter_total, diameter;
     long i, j, k, index;
     
     diameter = (int)(2*radius+1); /* diameter of the filter's kernel */
-    /* copy input into output */
-    copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ));
-
+    if (mu_threshold != 0.0) {
+    copyIm(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ)); } /* copy input into output */
+    
     /* dealing here with a custom given number of cpu threads */
     if (ncores > 0) {
     omp_set_dynamic(0);     // Explicitly disable dynamic teams
     omp_set_num_threads(ncores); // Use a number of threads for all consecutive parallel regions 
     }    
-
-    //printf("DimZ size: %i \n", dimZ);
-
-    if (dimZ <= 1) {
-    /*2D case */
-    sizefilter_total = (int)(powf(diameter,2));
-    #pragma omp parallel for shared (Input, Output) private(i, j, index)
-    for(j=0; j<dimY; j++) {
-      for(i=0; i<dimX; i++) {
-          index = (long)(j*dimX+i);
-          //medfilt2D_float(Input, Output, radius, sizefilter_total, mu_threshold, i, j, index, (long)(dimX), (long)(dimY));
-          Output[index] = 10.0f*Input[index];
-        }}
-     } /* 2D case done */
-     else {
-     /* 3D case */
-    sizefilter_total = (int)(powf(diameter,3));
-    printf("Kernel size: %i \n", sizefilter_total);    
+    /* 3D filtering */
+    sizefilter_total = (int)(powf(diameter,3));    
+    #pragma omp parallel for shared (Input, Output) private(i, j, k, index)
      for(k=0; k<dimZ; k++) {
        for(j=0; j<dimY; j++) {
          for(i=0; i<dimX; i++) {
-           index = (long)((dimX*dimY)*k + j*dimX+i);          
-          //Output[index] = 10.0f;
+          index = (long)((dimX*dimY)*k + j*dimX+i);
+          medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold, i, j, k, index, (long)(dimX), (long)(dimY), (long)(dimZ));
         }}}
-    } /* 3D case done */
-    //return 0;
+    return 0;
+}
+
+DLL int
+medianfilter_main_uint16(unsigned short *Input, unsigned short *Output, int radius, float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
+{
+    int sizefilter_total, diameter;
+    long i, j, k, index;
+    
+    diameter = (int)(2*radius+1); /* diameter of the filter's kernel */
+    if (mu_threshold != 0.0) {
+    copyIm_unshort(Input, Output, (long)(dimX), (long)(dimY), (long)(dimZ)); } /* copy input into output */
+    
+    /* dealing here with a custom given number of cpu threads */
+    if (ncores > 0) {
+    omp_set_dynamic(0);     // Explicitly disable dynamic teams
+    omp_set_num_threads(ncores); // Use a number of threads for all consecutive parallel regions 
+    }    
+    /* 3D filtering */
+    sizefilter_total = (int)(powf(diameter,3));    
+    #pragma omp parallel for shared (Input, Output) private(i, j, k, index)
+     for(k=0; k<dimZ; k++) {
+       for(j=0; j<dimY; j++) {
+         for(i=0; i<dimX; i++) {
+          index = (long)((dimX*dimY)*k + j*dimX+i);
+          medfilt3D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i, j, k, index, (long)(dimX), (long)(dimY), (long)(dimZ));
+        }}}
+    return 0;
+}
+
+
+void medfilt3D_float(float *Input, float *Output, int radius, int sizefilter_total, float mu_threshold, long i, long j, long k, long index, long dimX, long dimY, long dimZ)
+{
+    float *ValVec;
+    long i_m, j_m, k_m, i1, j1, k1, counter;
+    int midval;
+    midval = (int)(sizefilter_total/2);
+    ValVec = (float*) calloc(sizefilter_total, sizeof(float));
+
+    /* filling the allocated vector with the neighbouring values */
+    counter = 0l;
+    for(i_m=-radius; i_m<=radius; i_m++) {
+        i1 = i + i_m;
+        if ((i1 < 0) || (i1 >= dimX)) i1 = i;
+        for(j_m=-radius; j_m<=radius; j_m++) {
+          j1 = j + j_m;
+          if ((j1 < 0) || (j1 >= dimY)) j1 = j;
+          for(k_m=-radius; k_m<=radius; k_m++) {
+            k1 = k + k_m;
+            if ((k1 < 0) || (k1 >= dimZ)) k1 = k;
+          ValVec[counter] = Input[(dimX*dimY)*k1 + j1*dimX+i1];
+          counter++;
+    }}}
+    quicksort_float(ValVec, 0, sizefilter_total-1); /* perform sorting */
+
+    if (mu_threshold == 0.0f) {
+    /* perform median filtration */
+    Output[index] = ValVec[midval]; }
+    else {
+    /* perform dezingering */
+    if (fabs(Input[index] - ValVec[midval]) >= mu_threshold) Output[index] = ValVec[midval]; }
+    free(ValVec);
+    return;
+}
+
+
+void medfilt3D_uint16(unsigned short *Input, unsigned short *Output, int radius, int sizefilter_total, float mu_threshold, long i, long j, long k, long index, long dimX, long dimY, long dimZ)
+{
+    unsigned short *ValVec;
+    long i_m, j_m, k_m, i1, j1, k1, counter;
+    int midval;
+    midval = (int)(sizefilter_total/2);
+    ValVec = (unsigned short*) calloc(sizefilter_total, sizeof(unsigned short));
+
+    /* filling the allocated vector with the neighbouring values */
+    counter = 0l;
+    for(i_m=-radius; i_m<=radius; i_m++) {
+        i1 = i + i_m;
+        if ((i1 < 0) || (i1 >= dimX)) i1 = i;
+        for(j_m=-radius; j_m<=radius; j_m++) {
+          j1 = j + j_m;
+          if ((j1 < 0) || (j1 >= dimY)) j1 = j;
+          for(k_m=-radius; k_m<=radius; k_m++) {
+            k1 = k + k_m;
+            if ((k1 < 0) || (k1 >= dimZ)) k1 = k;
+          ValVec[counter] = Input[(dimX*dimY)*k1 + j1*dimX+i1];
+          counter++;
+    }}}
+    quicksort_uint16(ValVec, 0, sizefilter_total-1); /* perform sorting */
+
+    if (mu_threshold == 0.0f) {
+    /* perform median filtration */
+    Output[index] = ValVec[midval]; }
+    else {
+    /* perform dezingering */
+    if (fabs(Input[index] - ValVec[midval]) >= mu_threshold) Output[index] = ValVec[midval]; }
+    free(ValVec);
+    return;
 }
