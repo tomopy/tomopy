@@ -133,9 +133,11 @@ def normalize(
     ndarray
         Normalized 3D tomographic data.
 
-    .. versionadded:: 1.13.0
+
+    .. versionadded:: 1.13
         The averaging parameter.
-    .. versionchanged:: 1.13.0
+
+    .. versionchanged:: 1.13
         `flat` and `dark` can now be a 3D array.
     """
     arr = dtype.as_float32(arr)
@@ -258,6 +260,7 @@ def normalize_nf(
     tomography. Normalization for each projection is done with the mean of the
     nearest set of flat fields (nearest flat fields).
 
+
     Parameters
     ----------
     tomo : ndarray
@@ -281,9 +284,11 @@ def normalize_nf(
     ndarray
         Normalized 3D tomographic data.
 
-    .. versionadded:: 1.13.0
+
+    .. versionadded:: 1.13
         The averaging parameter.
-    .. versionchanged:: 1.13.0
+
+    .. versionchanged:: 1.13
         `dark` can now be a 3D array.
     """
     tomo = dtype.as_float32(tomo)
