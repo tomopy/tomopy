@@ -350,7 +350,7 @@ def median_filter_nonfinite(arr, size=3, callback=None):
 
 def median_filter3d(arr, kernel_half_size=1, ncore=None):
     """
-    Apply 3D median filter to 3D array (C-implementation).
+    Apply 3D median filter to 3D array.
 
     Parameters
     ----------
@@ -359,12 +359,17 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     kernel_half_size : int, optional
         The half size of the filter's kernel, i.e. 1 results in the full kernel size of 3 x 3 x 3.
     ncore : int, optional
-        Number of cores that will be assigned to jobs.
+        Number of cores that will be assigned to jobs. All cores will be used if unspecified.
 
     Returns
     -------
     ndarray
         Median filtered 3D array.
+    Raises
+    ------
+    ValueError
+        If the input array is not three dimensional.
+    
     """
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
@@ -391,7 +396,7 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
 def remove_outlier3d(arr, kernel_half_size=1, dif = 0.1, ncore=None):
     """
     Also a so-called dezinger. Selectively applies 3D median filter to 
-    3D array (C-implementation) to remove outliers specifically. 
+    3D array to remove outliers specifically. 
 
     Parameters
     ----------
@@ -403,12 +408,17 @@ def remove_outlier3d(arr, kernel_half_size=1, dif = 0.1, ncore=None):
         Expected difference value between outlier value and
         the median value of the array.
     ncore : int, optional
-        Number of cores that will be assigned to jobs.
+        Number of cores that will be assigned to jobs. All cores will be used if unspecified.
 
     Returns
     -------
     ndarray
         Dezingered 3D array.
+    Raises
+    ------
+    ValueError
+        If the input array is not three dimensional.
+    
     """
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
