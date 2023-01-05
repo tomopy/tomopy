@@ -60,11 +60,11 @@
 #endif
 
 void DLL
-copyIm(float* A, float* U, long dimX, long dimY, long dimZ);
+copyIm(const float* A, float* U, long dimX, long dimY, long dimZ);
 void DLL
-copyIm_unchar(unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ);
+copyIm_unchar(const unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ);
 void DLL
-copyIm_unshort(unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ);
+copyIm_unshort(const unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ);
 void DLL
 sort_bubble_float(float* x, int n_size);
 void DLL

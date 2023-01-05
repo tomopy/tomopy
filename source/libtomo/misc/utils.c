@@ -64,39 +64,37 @@ initlibtomo(void)
 
 /* Copy Image (float) */
 void
-copyIm(float* A, float* U, long dimX, long dimY, long dimZ)
+copyIm(const float* A, float* U, long dimX, long dimY, long dimZ)
 {
     long j;
     for(j = 0; j < dimX * dimY * dimZ; j++)
         U[j] = A[j];
-    return;
 }
 
 /* Copy Image -unsigned char (8bit)*/
 void
-copyIm_unchar(unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ)
+copyIm_unchar(const unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ)
 {
     int j;
     for(j = 0; j < dimX * dimY * dimZ; j++)
         U[j] = A[j];
-    return;
 }
 
 /* Copy Image - unsigned short (16bit)*/
 void
-copyIm_unshort(unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ)
+copyIm_unshort(const unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ)
 {
     int j;
     for(j = 0; j < dimX * dimY * dimZ; j++)
         U[j] = A[j];
-    return;
 }
 
 /* sorting using bubble method (float)*/
 void
 sort_bubble_float(float* x, int n_size)
 {
-    int   i, j;
+    int   i;
+    int   j;
     float temp;
 
     for(i = 0; i < n_size - 1; i++)
@@ -111,14 +109,14 @@ sort_bubble_float(float* x, int n_size)
             }
         }
     }
-    return;
 }
 
 /* sorting using bubble method (uint16)*/
 void
 sort_bubble_uint16(unsigned short* x, int n_size)
 {
-    int            i, j;
+    int            i;
+    int            j;
     unsigned short temp;
 
     for(i = 0; i < n_size - 1; i++)
@@ -133,13 +131,14 @@ sort_bubble_uint16(unsigned short* x, int n_size)
             }
         }
     }
-    return;
 }
 
 void
 quicksort_float(float* x, int first, int last)
 {
-    int   i, j, pivot;
+    int   i;
+    int   j;
+    int   pivot;
     float temp;
 
     if(first < last)
@@ -168,13 +167,14 @@ quicksort_float(float* x, int first, int last)
         quicksort_float(x, first, j - 1);
         quicksort_float(x, j + 1, last);
     }
-    return;
 }
 
 void
 quicksort_uint16(unsigned short* x, int first, int last)
 {
-    int            i, j, pivot;
+    int            i;
+    int            j;
+    int            pivot;
     unsigned short temp;
 
     if(first < last)
@@ -203,5 +203,4 @@ quicksort_uint16(unsigned short* x, int first, int last)
         quicksort_uint16(x, first, j - 1);
         quicksort_uint16(x, j + 1, last);
     }
-    return;
 }
