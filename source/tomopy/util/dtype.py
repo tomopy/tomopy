@@ -116,9 +116,11 @@ def as_c_float_p(arr):
     c_float_p = ctypes.POINTER(ctypes.c_float)
     return arr.ctypes.data_as(c_float_p)
 
+
 def as_c_uint16_p(arr):
     c_uint16_p = ctypes.POINTER(ctypes.c_uint16)
     return arr.ctypes.data_as(c_uint16_p)
+
 
 def as_c_int(arr):
     return ctypes.c_int(arr)

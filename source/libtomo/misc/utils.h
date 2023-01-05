@@ -45,8 +45,8 @@
 
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 #include <memory.h>
+#include <stdlib.h>
 
 #define _USE_MATH_DEFINES
 #ifndef M_PI
@@ -59,12 +59,17 @@
 #    define DLL
 #endif
 
-void DLL copyIm(float *A, float *U, long dimX, long dimY, long dimZ);
-void DLL copyIm_unchar(unsigned char *A, unsigned char *U, int dimX, int dimY, int dimZ);
-void DLL copyIm_unshort(unsigned short *A, unsigned short *U, int dimX, int dimY, int dimZ);
-void DLL sort_bubble_float(float *x, int n_size);
-void DLL sort_bubble_uint16(unsigned short *x, int n_size);
-void DLL quicksort_float(float *x, int first, int last);
-void DLL quicksort_uint16(unsigned short *x, int first, int last);
-
-
+void DLL
+copyIm(float* A, float* U, long dimX, long dimY, long dimZ);
+void DLL
+copyIm_unchar(unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ);
+void DLL
+copyIm_unshort(unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ);
+void DLL
+sort_bubble_float(float* x, int n_size);
+void DLL
+sort_bubble_uint16(unsigned short* x, int n_size);
+void DLL
+quicksort_float(float* x, int first, int last);
+void DLL
+quicksort_uint16(unsigned short* x, int first, int last);

@@ -55,14 +55,26 @@ from . import c_shared_lib
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['c_sample',
-           'c_remove_ring',
-	       'c_median_filt3d_float32',
-           'c_median_filt3d_uint16']
+__all__ = [
+    'c_sample',
+    'c_remove_ring',
+    'c_median_filt3d_float32',
+    'c_median_filt3d_uint16',
+]
 
 LIB_TOMOPY_MISC = c_shared_lib("tomo-misc")
 
-def c_sample(mode, arr, dx, dy, dz, level, axis, out):
+
+def c_sample(
+    mode,
+    arr,
+    dx,
+    dy,
+    dz,
+    level,
+    axis,
+    out,
+):
     LIB_TOMOPY_MISC.sample.restype = dtype.as_c_void_p()
     LIB_TOMOPY_MISC.sample(
         dtype.as_c_int(mode),
@@ -72,8 +84,10 @@ def c_sample(mode, arr, dx, dy, dz, level, axis, out):
         dtype.as_c_int(dz),
         dtype.as_c_int(level),
         dtype.as_c_int(axis),
-        dtype.as_c_float_p(out))
+        dtype.as_c_float_p(out),
+    )
     return out
+
 
 def c_remove_ring(rec, *args):
     istart = 0
@@ -93,10 +107,21 @@ def c_remove_ring(rec, *args):
         dtype.as_c_int(args[9]),  # rwidth
         dtype.as_c_int(args[10]),  # int_mode
         dtype.as_c_int(istart),  # istart
-        dtype.as_c_int(iend))  # iend
+        dtype.as_c_int(iend),  # iend
+    )
 
-def c_median_filt3d_float32(input, output, kernel_half_size, absdif, ncore, dx, dy, dz):
-    LIB_TOMOPY_MISC.medianfilter_main_float.restype = dtype.as_c_void_p()    
+
+def c_median_filt3d_float32(
+    input,
+    output,
+    kernel_half_size,
+    absdif,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_MISC.medianfilter_main_float.restype = dtype.as_c_void_p()
     LIB_TOMOPY_MISC.medianfilter_main_float(
         dtype.as_c_float_p(input),
         dtype.as_c_float_p(output),
@@ -105,10 +130,21 @@ def c_median_filt3d_float32(input, output, kernel_half_size, absdif, ncore, dx, 
         dtype.as_c_int(ncore),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),
-        dtype.as_c_int(dz))
+        dtype.as_c_int(dz),
+    )
     return output
 
-def c_median_filt3d_uint16(input, output, kernel_half_size, absdif, ncore, dx, dy, dz):
+
+def c_median_filt3d_uint16(
+    input,
+    output,
+    kernel_half_size,
+    absdif,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
     LIB_TOMOPY_MISC.medianfilter_main_uint16.restype = dtype.as_c_void_p()
     LIB_TOMOPY_MISC.medianfilter_main_uint16(
         dtype.as_c_uint16_p(input),
@@ -118,5 +154,6 @@ def c_median_filt3d_uint16(input, output, kernel_half_size, absdif, ncore, dx, d
         dtype.as_c_int(ncore),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),
-        dtype.as_c_int(dz))
+        dtype.as_c_int(dz),
+    )
     return output
