@@ -387,13 +387,7 @@ def median_filter3d(arr, size=3, ncore=None):
         ncore = mproc.mp.cpu_count()
 
     # convert the full kernel size (odd int) to a half size as the C function requires
-    if size < 3:
-        size = 3 # check if the kernel size is not too small
-    if (size % 2) == 0:
-        # dealing with even integers
-        kernel_half_size = (int)(0.5*size)
-    else:
-        kernel_half_size = (int)(0.5*(size-1))
+    kernel_half_size = (max(int(size), 3) - 1) // 2
     
     # deal with different data types
     if (input_type == 'float32'):
@@ -446,13 +440,7 @@ def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
         ncore = mproc.mp.cpu_count()
 
     # convert the full kernel size (odd int) to a half size as the C function requires
-    if size < 3:
-        size = 3 # check if the kernel size is not too small
-    if (size % 2) == 0:
-        # dealing with even integers
-        kernel_half_size = (int)(0.5*size)
-    else:
-        kernel_half_size = (int)(0.5*(size-1))
+    kernel_half_size = (max(int(size), 3) - 1) // 2
         
     # deal with different data types
     if (input_type == 'float32'):
