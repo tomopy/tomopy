@@ -172,7 +172,7 @@ void medfilt3D_uint16(unsigned short *Input, unsigned short *Output, int radius,
     Output[index] = ValVec[midval]; }
     else {
     /* perform dezingering */
-    if (fabs(Input[index] - ValVec[midval]) >= mu_threshold) Output[index] = ValVec[midval]; }
+    if (abs(Input[index] - ValVec[midval]) >= mu_threshold) Output[index] = ValVec[midval]; }
     free(ValVec);
     return;
 }
