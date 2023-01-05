@@ -348,17 +348,16 @@ def median_filter_nonfinite(arr, size=3, callback=None):
     return arr
 
 
-def median_filter3d(arr, kernel_half_size=1, ncore=None):
+def median_filter3d(arr, size=3, ncore=None):
     """
     Apply 3D median filter to 3D array.
 
     Parameters
     ----------
     arr : ndarray
-        Input 3D array.
-    kernel_half_size : int, optional
-        The half size of the filter's kernel, i.e. 1 results in the full kernel
-        size of 3 x 3 x 3.
+        Input 3D array either float32 or uint16 data type.
+    size : int, optional
+        The size of the filter's kernel.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -366,7 +365,7 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     Returns
     -------
     ndarray
-        Median filtered 3D array.
+        Median filtered 3D array either float32 or uint16 data type.
     Raises
     ------
     ValueError
@@ -375,7 +374,7 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     """
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
-        arr = dtype.as_float32(arr)  # silently convert to float32 data type
+        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
     out = np.empty_like(arr)
     dif = 0.0  # set to 0 to avoid selective filtering
 
@@ -387,7 +386,16 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    #deal with different data types
+    # convert the full kernel size (odd int) to a half size as the C function requires
+    if size < 3:
+        size = 3 # check if the kernel size is not too small
+    if (size % 2) == 0:
+        # dealing with even integers
+        kernel_half_size = (int)(0.5*size)
+    else:
+        kernel_half_size = (int)(0.5*(size-1))
+    
+    # deal with different data types
     if (input_type == 'float32'):
         extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
                                        dx, dy, dz)
@@ -397,21 +405,19 @@ def median_filter3d(arr, kernel_half_size=1, ncore=None):
     return out
 
 
-def remove_outlier3d(arr, kernel_half_size=1, dif=0.1, ncore=None):
+def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
     """
-    Also a so-called dezinger. Selectively applies 3D median filter to 3D array
-    to remove outliers specifically.
+    Selectively applies 3D median filter to a 3D array to remove outliers specifically. Also called a dezinger.
 
     Parameters
     ----------
     arr : ndarray
-        Input 3D array.
-    kernel_half_size : int, optional
-        The half size of the filter's kernel, i.e. 1 results in the full kernel
-        size of 3 x 3 x 3.
+        Input 3D array either float32 or uint16 data type.
     dif : float
         Expected difference value between outlier value and the median value of
         the array.
+    size : int, optional
+        The size of the filter's kernel.        
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -419,7 +425,7 @@ def remove_outlier3d(arr, kernel_half_size=1, dif=0.1, ncore=None):
     Returns
     -------
     ndarray
-        Dezingered 3D array.
+        Dezingered 3D array either float32 or uint16 data type.
     Raises
     ------
     ValueError
@@ -428,7 +434,7 @@ def remove_outlier3d(arr, kernel_half_size=1, dif=0.1, ncore=None):
     """
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
-        arr = dtype.as_float32(arr)  # silently convert to float32 data type
+        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
     out = np.empty_like(arr)
 
     if np.ndim(arr) == 3:
@@ -439,7 +445,16 @@ def remove_outlier3d(arr, kernel_half_size=1, dif=0.1, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    #deal with different data types
+    # convert the full kernel size (odd int) to a half size as the C function requires
+    if size < 3:
+        size = 3 # check if the kernel size is not too small
+    if (size % 2) == 0:
+        # dealing with even integers
+        kernel_half_size = (int)(0.5*size)
+    else:
+        kernel_half_size = (int)(0.5*(size-1))
+        
+    # deal with different data types
     if (input_type == 'float32'):
         extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
                                        dx, dy, dz)
