@@ -57,12 +57,12 @@ DLL int
 medianfilter_main_float(float* Input, float* Output, int radius, float mu_threshold,
                         int ncores, int dimX, int dimY, int dimZ)
 {
-    int  sizefilter_total;
-    int  diameter;
-    long i;
-    long j;
-    long k;
-    long index;
+    int       sizefilter_total;
+    int       diameter;
+    long      i;
+    long      j;
+    long      k;
+    long long index;
 
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
     if(mu_threshold != 0.0)
@@ -100,12 +100,12 @@ DLL int
 medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radius,
                          float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
 {
-    int  sizefilter_total;
-    int  diameter;
-    long i;
-    long j;
-    long k;
-    long index;
+    int       sizefilter_total;
+    int       diameter;
+    long      i;
+    long      j;
+    long      k;
+    long long index;
 
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
     if(mu_threshold != 0.0)
@@ -145,20 +145,20 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
                 float mu_threshold, long i, long j, long k, long index, long dimX,
                 long dimY, long dimZ)
 {
-    float* ValVec;
-    long   i_m;
-    long   j_m;
-    long   k_m;
-    long   i1;
-    long   j1;
-    long   k1;
-    long   counter;
-    int    midval;
+    float*    ValVec;
+    long      i_m;
+    long      j_m;
+    long      k_m;
+    long      i1;
+    long      j1;
+    long      k1;
+    long long counter;
+    int       midval;
     midval = (sizefilter_total / 2);
     ValVec = (float*) calloc(sizefilter_total, sizeof(float));
 
     /* filling the allocated vector with the neighbouring values */
-    counter = 0L;
+    counter = 0LL;
     for(i_m = -radius; i_m <= radius; i_m++)
     {
         i1 = i + i_m;
@@ -207,13 +207,13 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
     long            i1;
     long            j1;
     long            k1;
-    long            counter;
+    long long       counter;
     int             midval;
     midval = (sizefilter_total / 2);
     ValVec = (unsigned short*) calloc(sizefilter_total, sizeof(unsigned short));
 
     /* filling the allocated vector with the neighbouring values */
-    counter = 0L;
+    counter = 0LL;
     for(i_m = -radius; i_m <= radius; i_m++)
     {
         i1 = i + i_m;
