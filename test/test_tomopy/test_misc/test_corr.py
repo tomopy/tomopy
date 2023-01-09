@@ -48,6 +48,7 @@
 import unittest
 
 import numpy as np
+import scipy
 from numpy.testing import assert_allclose, assert_equal
 from tomopy.misc.corr import (
     gaussian_filter,
@@ -114,9 +115,10 @@ class ImageFilterTestCase(unittest.TestCase):
     
     def test_median_filter3d(self):
         A = np.arange(4*5*6).reshape(4,5,6)
-        A_median = median_filter3d(np.float32(A))
-        assert_equal(read_file('median_filter3d.npy'), A_median)
-        
+        assert_equal(
+            scipy.ndimage.median_filter(np.float32(A), size=3), 
+            median_filter3d(np.float32(A), size=3, axis=None))
+
     def test_remove_outlier3d(self):
         A = np.arange(4*5*6).reshape(4,5,6)
         A[2,2,2] = 1000.0 # introduce an outlier

@@ -78,18 +78,36 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
         // Use a number of threads for all consecutive parallel regions
         omp_set_num_threads(ncores);
     }
+    if (dimZ == 0) 
+    /* 2D filtering */
+    {
+    sizefilter_total = (int) (powf(diameter, 2));
+#pragma omp parallel for shared(Input, Output) private(i, j, index)
+    for(j = 0; j < dimY; j++)
+        {
+        for(i = 0; i < dimX; i++)
+            {
+                index = (j * dimX + i);
+                medfilt2D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
+                                j, index, (long) (dimX), (long) (dimY));
+            }
+        }  
+    }
+    else 
     /* 3D filtering */
+    {    
     sizefilter_total = (int) (powf(diameter, 3));
 #pragma omp parallel for shared(Input, Output) private(i, j, k, index)
-    for(k = 0; k < dimZ; k++)
-    {
-        for(j = 0; j < dimY; j++)
+        for(k = 0; k < dimZ; k++)
         {
-            for(i = 0; i < dimX; i++)
+            for(j = 0; j < dimY; j++)
             {
-                index = ((dimX * dimY) * k + j * dimX + i);
-                medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                for(i = 0; i < dimX; i++)
+                {
+                    index = ((dimX * dimY) * k + j * dimX + i);
+                    medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
+                                    j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                }
             }
         }
     }
@@ -99,6 +117,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
 DLL int
 medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radius,
                          float mu_threshold, int ncores, int dimX, int dimY, int dimZ)
+
 {
     int       sizefilter_total;
     int       diameter;
@@ -121,19 +140,36 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
         // Use a number of threads for all consecutive parallel regions
         omp_set_num_threads(ncores);
     }
+    if (dimZ == 0) 
+    /* 2D filtering */
+    {
+    sizefilter_total = (int) (powf(diameter, 2));
+#pragma omp parallel for shared(Input, Output) private(i, j, index)
+    for(j = 0; j < dimY; j++)
+        {
+        for(i = 0; i < dimX; i++)
+            {
+                index = (j * dimX + i);
+                medfilt2D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
+                                j, index, (long) (dimX), (long) (dimY));
+            }
+        }  
+    }
+    else 
     /* 3D filtering */
+    {    
     sizefilter_total = (int) (powf(diameter, 3));
 #pragma omp parallel for shared(Input, Output) private(i, j, k, index)
-    for(k = 0; k < dimZ; k++)
-    {
-        for(j = 0; j < dimY; j++)
+        for(k = 0; k < dimZ; k++)
         {
-            for(i = 0; i < dimX; i++)
+            for(j = 0; j < dimY; j++)
             {
-                index = ((dimX * dimY) * k + j * dimX + i);
-                medfilt3D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                 j, k, index, (long) (dimX), (long) (dimY),
-                                 (long) (dimZ));
+                for(i = 0; i < dimX; i++)
+                {
+                    index = ((dimX * dimY) * k + j * dimX + i);
+                    medfilt3D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
+                                    j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                }
             }
         }
     }
@@ -177,6 +213,54 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
                 ValVec[counter] = Input[(dimX * dimY) * k1 + j1 * dimX + i1];
                 counter++;
             }
+        }
+    }        
+    quicksort_float(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+
+    if(mu_threshold == 0.0F)
+    {
+        /* perform median filtration */
+        Output[index] = ValVec[midval];
+    }
+    else
+    {
+        /* perform dezingering */
+        if(fabsf(Input[index] - ValVec[midval]) >= mu_threshold)
+            Output[index] = ValVec[midval];
+    }
+    free(ValVec);
+}
+
+
+void
+medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
+                float mu_threshold, long i, long j, long index, long dimX,
+                long dimY)
+{
+    float*    ValVec;
+    long      i_m;
+    long      j_m;
+    long      i1;
+    long      j1;
+    long long counter;
+    int       midval;
+    midval = (sizefilter_total / 2);
+    ValVec = (float*) calloc(sizefilter_total, sizeof(float));
+
+    /* filling the allocated vector with the neighbouring values */
+    counter = 0LL;
+    for(i_m = -radius; i_m <= radius; i_m++)
+    {
+        i1 = i + i_m;
+        if((i1 < 0) || (i1 >= dimX))
+            i1 = i;
+        for(j_m = -radius; j_m <= radius; j_m++)
+        {
+            j1 = j + j_m;
+            if((j1 < 0) || (j1 >= dimY))
+                j1 = j;
+            ValVec[counter] = Input[j1 * dimX + i1];
+            counter++;
         }
     }
     quicksort_float(ValVec, 0, sizefilter_total - 1); /* perform sorting */
@@ -232,6 +316,55 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
                 ValVec[counter] = Input[(dimX * dimY) * k1 + j1 * dimX + i1];
                 counter++;
             }
+        }
+    }
+    quicksort_uint16(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+
+    if(mu_threshold == 0.0F)
+    {
+        /* perform median filtration */
+        Output[index] = ValVec[midval];
+    }
+    else
+    {
+        /* perform dezingering */
+        if(abs(Input[index] - ValVec[midval]) >= mu_threshold)
+            Output[index] = ValVec[midval];
+    }
+    free(ValVec);
+}
+
+
+void
+medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
+                 int sizefilter_total, float mu_threshold, long i, long j, 
+                 long index, long dimX, long dimY)
+{
+    unsigned short* ValVec;
+    long            i_m;
+    long            j_m;
+    long            i1;
+    long            j1;
+    long long       counter;
+    int             midval;
+    midval = (sizefilter_total / 2);
+    ValVec = (unsigned short*) calloc(sizefilter_total, sizeof(unsigned short));
+
+    /* filling the allocated vector with the neighbouring values */
+    counter = 0LL;
+    for(i_m = -radius; i_m <= radius; i_m++)
+    {
+        i1 = i + i_m;
+        if((i1 < 0) || (i1 >= dimX))
+            i1 = i;
+        for(j_m = -radius; j_m <= radius; j_m++)
+        {
+            j1 = j + j_m;
+            if((j1 < 0) || (j1 >= dimY))
+                j1 = j;
+            ValVec[counter] = Input[j1 * dimX + i1];
+            counter++;
+
         }
     }
     quicksort_uint16(ValVec, 0, sizefilter_total - 1); /* perform sorting */
