@@ -348,9 +348,9 @@ def median_filter_nonfinite(arr, size=3, callback=None):
     return arr
 
 
-def median_filter3d(arr, size=3, axis=None, ncore=None):
+def median_filter3d(arr, size=3, ncore=None):
     """
-    Apply 3D or 2D median filter to a 3D array.
+    Apply 3D median filter to a 3D array.
 
     Parameters
     ----------
@@ -358,8 +358,6 @@ def median_filter3d(arr, size=3, axis=None, ncore=None):
         Input 3D array either float32 or uint16 data type.
     size : int, optional
         The size of the filter's kernel.
-    axis : int, optional
-        Axis along which median filtering is performed, if set to None, 3D filtering is enabled.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -393,37 +391,19 @@ def median_filter3d(arr, size=3, axis=None, ncore=None):
     else:
         raise ValueError("The input array must be a 3D array")
    
-    if axis is not None and axis < 3:
-        # perform 2D filtering in a slice by slice fashon
-        slc = [slice(None)] * arr.ndim
-        for i in range(arr.shape[axis]):
-            slc[axis] = i            
-            input2d = arr[tuple(slc)].copy()
-            dy, dx =  input2d.shape
-            outtemp2d = np.empty_like(input2d)
-            # deal with different data types
-            if (input_type == 'float32'):
-                extern.c_median_filt3d_float32(input2d, outtemp2d, kernel_half_size, dif, ncore,
-                                            dx, dy, 0)
-            else:
-                extern.c_median_filt3d_uint16(input2d, outtemp2d, kernel_half_size, dif, ncore,
-                                            dx, dy, 0)
-            out[tuple(slc)] = outtemp2d
+    # perform full 3D filtering    
+    if (input_type == 'float32'):
+        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
+                                    dx, dy, dz)
     else:
-        # perform full 3D filtering
-        # deal with different data types
-        if (input_type == 'float32'):
-            extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
-                                        dx, dy, dz)
-        else:
-            extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
-                                        dx, dy, dz)
+        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
+                                    dx, dy, dz)
     return out
 
 
-def remove_outlier3d(arr, dif=0.1, size=3, axis=None, ncore=None):
+def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
     """
-    Selectively applies 3D or2D  median filter to a 3D array to remove outliers. Also called a dezinger.
+    Selectively applies 3D median filter to a 3D array to remove outliers. Also called a dezinger.
 
     Parameters
     ----------
@@ -433,9 +413,7 @@ def remove_outlier3d(arr, dif=0.1, size=3, axis=None, ncore=None):
         Expected difference value between outlier value and the median value of
         the array.
     size : int, optional
-        The size of the filter's kernel.    
-    axis : int, optional
-        Axis along which dezingering is performed, if set to None, 3D dezingering is enabled.            
+        The size of the filter's kernel.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -468,31 +446,13 @@ def remove_outlier3d(arr, dif=0.1, size=3, axis=None, ncore=None):
     else:
         raise ValueError("The input array must be a 3D array")
    
-    if axis is not None and axis < 3:
-        # perform 2D filtering in a slice by slice fashon
-        slc = [slice(None)] * arr.ndim
-        for i in range(arr.shape[axis]):
-            slc[axis] = i            
-            input2d = arr[tuple(slc)].copy()
-            dy, dx =  input2d.shape
-            outtemp2d = np.empty_like(input2d)
-            # deal with different data types
-            if (input_type == 'float32'):
-                extern.c_median_filt3d_float32(input2d, outtemp2d, kernel_half_size, dif, ncore,
-                                            dx, dy, 0)
-            else:
-                extern.c_median_filt3d_uint16(input2d, outtemp2d, kernel_half_size, dif, ncore,
-                                            dx, dy, 0)
-            out[tuple(slc)] = outtemp2d
+    # perform full 3D filtering
+    if (input_type == 'float32'):
+        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
+                                    dx, dy, dz)
     else:
-        # perform full 3D filtering
-        # deal with different data types
-        if (input_type == 'float32'):
-            extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
-                                        dx, dy, dz)
-        else:
-            extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
-                                        dx, dy, dz)
+        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
+                                    dx, dy, dz)
     return out
 
 

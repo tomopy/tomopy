@@ -117,7 +117,7 @@ class ImageFilterTestCase(unittest.TestCase):
         A = np.arange(4*5*6).reshape(4,5,6)
         assert_equal(
             scipy.ndimage.median_filter(np.float32(A), size=3), 
-            median_filter3d(np.float32(A), size=3, axis=None))
+            median_filter3d(np.float32(A), size=3))
 
     def test_remove_outlier3d(self):
         A = np.arange(4*5*6).reshape(4,5,6)
