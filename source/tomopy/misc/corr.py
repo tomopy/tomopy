@@ -352,6 +352,8 @@ def median_filter3d(arr, size=3, ncore=None):
     """
     Apply 3D median filter to a 3D array.
 
+    .. versionadded:: 1.13
+
     Parameters
     ----------
     arr : ndarray
@@ -366,6 +368,7 @@ def median_filter3d(arr, size=3, ncore=None):
     -------
     ndarray
         Median filtered 3D array either float32 or uint16 data type.
+
     Raises
     ------
     ValueError
@@ -390,8 +393,8 @@ def median_filter3d(arr, size=3, ncore=None):
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
         raise ValueError("The input array must be a 3D array")
-   
-    # perform full 3D filtering    
+
+    # perform full 3D filtering
     if (input_type == 'float32'):
         extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
                                     dx, dy, dz)
@@ -401,9 +404,12 @@ def median_filter3d(arr, size=3, ncore=None):
     return out
 
 
-def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
+def remove_outlier3d(arr, dif, size=3, ncore=None):
     """
-    Selectively applies 3D median filter to a 3D array to remove outliers. Also called a dezinger.
+    Selectively applies 3D median filter to a 3D array to remove outliers. Also
+    called a dezinger.
+
+    .. versionadded:: 1.13
 
     Parameters
     ----------
@@ -422,6 +428,7 @@ def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
     -------
     ndarray
         Dezingered 3D array either float32 or uint16 data type.
+
     Raises
     ------
     ValueError
@@ -445,7 +452,7 @@ def remove_outlier3d(arr, dif=0.1, size=3, ncore=None):
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
         raise ValueError("The input array must be a 3D array")
-   
+
     # perform full 3D filtering
     if (input_type == 'float32'):
         extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
