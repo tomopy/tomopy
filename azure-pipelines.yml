@@ -31,9 +31,10 @@ jobs:
 #   steps:
 #   - script: echo "CUDA version is $(CUDA_VERSION)"
 #     displayName: Print CUDA version
-#   - script: >
-#       conda update --yes --quiet
-#       -n base conda
+#   - script: |
+#       conda update --yes --quiet -n base conda
+#       conda install -n base conda-libmamba-solver
+#       conda config --set solver libmamba
 #     displayName: Update conda
 #   - script: >
 #       conda env remove --yes
@@ -56,7 +57,7 @@ jobs:
 #   - script: |
 #       source activate tomopy
 #       export CUDA_VERSION="$(CUDA_VERSION)"
-#       pytest test -v
+#       pytest --cov tomopy test -v
 #     displayName: Run tests
 
 - job: Linux
@@ -71,6 +72,8 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
       conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
@@ -84,7 +87,7 @@ jobs:
     displayName: Setup and install
   - script: |
       source activate tomopy
-      pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
 
 - job: macOS
@@ -101,6 +104,8 @@ jobs:
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
       conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
@@ -114,7 +119,7 @@ jobs:
     displayName: Setup and install
   - script: |
       source activate tomopy
-      pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
 
 - job: Windows
@@ -129,6 +134,8 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
       conda env create -n tomopy --quiet -f envs/win-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
@@ -142,9 +149,5 @@ jobs:
     displayName: Setup and install
   - script: |
       call activate tomopy
-      coverage run --source tomopy -m pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
-  - script: |
-      call activate tomopy
-      coverage report -m
-    displayName: Report coverage

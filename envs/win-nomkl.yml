@@ -2,12 +2,13 @@ name: tomopy
 channels:
   - conda-forge
 dependencies:
+  - c-compiler
   - cmake
   - cxx-compiler
   - dxchange
   - git
   - h5py
-  - importlib_metadata  # backport for python<3.8
+  - importlib_metadata # backport for python<3.8
   - ninja
   - numexpr
   - numpy!=1.22.4
@@ -17,8 +18,8 @@ dependencies:
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
-# Optional packages
-  - coverage!=5.0.2
+  # Optional packages
   - nomkl
   - opencv>=3.4
   - pytest
+  - pytest-cov

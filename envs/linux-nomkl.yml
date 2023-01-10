@@ -2,6 +2,7 @@ name: tomopy
 channels:
   - conda-forge
 dependencies:
+  - c-compiler
   - cmake
   - cxx-compiler
   - dxchange
@@ -18,9 +19,9 @@ dependencies:
   - setuptools_scm
   - setuptools_scm_git_archive
 # Optional packages
-  - coverage!=5.0.2
   - pyctest>0.0.10
   - timemory=*=py37h* # the nompi build
   - nomkl
   - opencv>=3.4
   - pytest
+  - pytest-cov
