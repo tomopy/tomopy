@@ -27,11 +27,6 @@ if(NOT WIN32)
   target_link_libraries(tomo-misc PUBLIC m)
 endif()
 
-target_compile_definitions(tomo-misc PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
-
-target_compile_options(
-  tomo-misc PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
-
 install(TARGETS tomo-misc EXPORT libtomoTargets)
 
 install(
