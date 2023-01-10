@@ -24,7 +24,7 @@ target_include_directories(
 
 # link library to math.h
 if(NOT WIN32)
-  target_link_libraries(tomo-misc PUBLIC m)
+  target_link_libraries(tomo-misc PRIVATE m)
 endif()
 
 install(TARGETS tomo-misc EXPORT libtomoTargets)
