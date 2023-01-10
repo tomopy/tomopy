@@ -46,6 +46,7 @@
 
 #include <math.h>
 #include <omp.h>
+#include <stdlib.h>
 
 #include "libtomo/median_filt3d.h"
 #include "utils.h"
