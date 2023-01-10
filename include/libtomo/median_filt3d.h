@@ -64,8 +64,7 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
                 long dimY, long dimZ);
 void
 medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, long index, long dimX,
-                long dimY);
+                float mu_threshold, long i, long j, long index, long dimX, long dimY);
 DLL void
 medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
                  int sizefilter_total, float mu_threshold, long i, long j, long k,
@@ -73,5 +72,5 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
 
 DLL void
 medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
-int sizefilter_total, float mu_threshold, long i, long j, 
-long index, long dimX, long dimY);
+                 int sizefilter_total, float mu_threshold, long i, long j, long index,
+                 long dimX, long dimY);

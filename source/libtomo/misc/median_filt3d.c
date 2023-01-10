@@ -44,11 +44,8 @@
 // C-module for median filtration and dezingering (3D and 2D cases)
 // Original author: Daniil Kazantsev, Diamond Light Source Ltd.
 
-#include "omp.h"
 #include <math.h>
-#include <memory.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <omp.h>
 
 #include "libtomo/median_filt3d.h"
 #include "utils.h"
@@ -78,25 +75,25 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
         // Use a number of threads for all consecutive parallel regions
         omp_set_num_threads(ncores);
     }
-    if (dimZ == 0) 
+    if(dimZ == 0)
     /* 2D filtering */
     {
-    sizefilter_total = (int) (powf(diameter, 2));
+        sizefilter_total = (int) (powf(diameter, 2));
 #pragma omp parallel for shared(Input, Output) private(i, j, index)
-    for(j = 0; j < dimY; j++)
+        for(j = 0; j < dimY; j++)
         {
-        for(i = 0; i < dimX; i++)
+            for(i = 0; i < dimX; i++)
             {
                 index = (j * dimX + i);
                 medfilt2D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
                                 j, index, (long) (dimX), (long) (dimY));
             }
-        }  
+        }
     }
-    else 
+    else
     /* 3D filtering */
-    {    
-    sizefilter_total = (int) (powf(diameter, 3));
+    {
+        sizefilter_total = (int) (powf(diameter, 3));
 #pragma omp parallel for shared(Input, Output) private(i, j, k, index)
         for(k = 0; k < dimZ; k++)
         {
@@ -105,8 +102,9 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
                 for(i = 0; i < dimX; i++)
                 {
                     index = ((dimX * dimY) * k + j * dimX + i);
-                    medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                    j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                    medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold,
+                                    i, j, k, index, (long) (dimX), (long) (dimY),
+                                    (long) (dimZ));
                 }
             }
         }
@@ -140,25 +138,25 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
         // Use a number of threads for all consecutive parallel regions
         omp_set_num_threads(ncores);
     }
-    if (dimZ == 0) 
+    if(dimZ == 0)
     /* 2D filtering */
     {
-    sizefilter_total = (int) (powf(diameter, 2));
+        sizefilter_total = (int) (powf(diameter, 2));
 #pragma omp parallel for shared(Input, Output) private(i, j, index)
-    for(j = 0; j < dimY; j++)
+        for(j = 0; j < dimY; j++)
         {
-        for(i = 0; i < dimX; i++)
+            for(i = 0; i < dimX; i++)
             {
                 index = (j * dimX + i);
                 medfilt2D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                j, index, (long) (dimX), (long) (dimY));
+                                 j, index, (long) (dimX), (long) (dimY));
             }
-        }  
+        }
     }
-    else 
+    else
     /* 3D filtering */
-    {    
-    sizefilter_total = (int) (powf(diameter, 3));
+    {
+        sizefilter_total = (int) (powf(diameter, 3));
 #pragma omp parallel for shared(Input, Output) private(i, j, k, index)
         for(k = 0; k < dimZ; k++)
         {
@@ -167,8 +165,9 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
                 for(i = 0; i < dimX; i++)
                 {
                     index = ((dimX * dimY) * k + j * dimX + i);
-                    medfilt3D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                    j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                    medfilt3D_uint16(Input, Output, radius, sizefilter_total,
+                                     mu_threshold, i, j, k, index, (long) (dimX),
+                                     (long) (dimY), (long) (dimZ));
                 }
             }
         }
@@ -214,7 +213,7 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
                 counter++;
             }
         }
-    }        
+    }
     quicksort_float(ValVec, 0, sizefilter_total - 1); /* perform sorting */
 
     if(mu_threshold == 0.0F)
@@ -231,11 +230,9 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
     free(ValVec);
 }
 
-
 void
 medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, long index, long dimX,
-                long dimY)
+                float mu_threshold, long i, long j, long index, long dimX, long dimY)
 {
     float*    ValVec;
     long      i_m;
@@ -334,11 +331,10 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
     free(ValVec);
 }
 
-
 void
 medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
-                 int sizefilter_total, float mu_threshold, long i, long j, 
-                 long index, long dimX, long dimY)
+                 int sizefilter_total, float mu_threshold, long i, long j, long index,
+                 long dimX, long dimY)
 {
     unsigned short* ValVec;
     long            i_m;
@@ -364,7 +360,6 @@ medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
                 j1 = j;
             ValVec[counter] = Input[j1 * dimX + i1];
             counter++;
-
         }
     }
     quicksort_uint16(ValVec, 0, sizefilter_total - 1); /* perform sorting */

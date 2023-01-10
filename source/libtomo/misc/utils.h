@@ -43,16 +43,6 @@
 
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-#include <memory.h>
-#include <stdlib.h>
-
-#define _USE_MATH_DEFINES
-#ifndef M_PI
-#    define M_PI 3.14159265358979323846264338327
-#endif
-
 #ifdef WIN32
 #    define DLL __declspec(dllexport)
 #else

@@ -43,8 +43,8 @@
 
 // Original author: Justin Blair
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "libtomo/remove_ring.h"
 
