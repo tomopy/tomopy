@@ -13,10 +13,8 @@ tomopy_add_library(
   utils.h
   ${HEADERS})
 
-find_package(OpenMP REQUIRED)
-if(OpenMP_C_FOUND)
-  target_link_libraries(tomo-misc PUBLIC OpenMP::OpenMP_C)
-endif()
+find_package(OpenMP REQUIRED COMPONENTS C)
+target_link_libraries(tomo-misc PRIVATE OpenMP::OpenMP_C)
 
 target_include_directories(
   tomo-misc
