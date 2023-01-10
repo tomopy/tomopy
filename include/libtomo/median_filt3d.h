@@ -58,19 +58,3 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
 DLL int
 medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radius,
                          float mu_threshold, int ncores, int dimX, int dimY, int dimZ);
-DLL void
-medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, long k, long index, long dimX,
-                long dimY, long dimZ);
-void
-medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, long index, long dimX, long dimY);
-DLL void
-medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
-                 int sizefilter_total, float mu_threshold, long i, long j, long k,
-                 long index, long dimX, long dimY, long dimZ);
-
-DLL void
-medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
-                 int sizefilter_total, float mu_threshold, long i, long j, long index,
-                 long dimX, long dimY);
