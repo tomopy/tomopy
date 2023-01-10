@@ -16,47 +16,48 @@ trigger:
 
 jobs:
 
-- job: CUDA_Linux
-  pool:
-    name: Default
-    demands:
-    - CUDA_VERSION
-    - Agent.OS -equals Linux
-  strategy:
-    matrix:
-      Python37:
-        python.version: '37'
-    maxParallel: 4
-  steps:
-  - script: echo "CUDA version is $(CUDA_VERSION)"
-    displayName: Print CUDA version
-  - script: >
-      conda update --yes --quiet
-      -n base conda
-    displayName: Update conda
-  - script: >
-      conda env remove --yes
-      -n tomopy
-    displayName: Remove existing build environment
-  - script: >
-      conda env create --quiet --force
-      -n tomopy
-      -f envs/linux-$(python.version).yml
-    displayName: Create build environment
-  - script: conda list -n tomopy
-    displayName: List build environment
-  - script: |
-      source activate tomopy
-      pip install . --no-deps
-      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
-      cmake --build build
-      cmake --install build
-    displayName: Setup and install
-  - script: |
-      source activate tomopy
-      export CUDA_VERSION="$(CUDA_VERSION)"
-      pytest test -v
-    displayName: Run tests
+# NO CUDA RUNNER AVAILABLE
+# - job: CUDA_Linux
+#   pool:
+#     name: Default
+#     demands:
+#     - CUDA_VERSION
+#     - Agent.OS -equals Linux
+#   strategy:
+#     matrix:
+#       Python37:
+#         python.version: '37'
+#     maxParallel: 4
+#   steps:
+#   - script: echo "CUDA version is $(CUDA_VERSION)"
+#     displayName: Print CUDA version
+#   - script: >
+#       conda update --yes --quiet
+#       -n base conda
+#     displayName: Update conda
+#   - script: >
+#       conda env remove --yes
+#       -n tomopy
+#     displayName: Remove existing build environment
+#   - script: >
+#       conda env create --quiet --force
+#       -n tomopy
+#       -f envs/linux-$(python.version).yml
+#     displayName: Create build environment
+#   - script: conda list -n tomopy
+#     displayName: List build environment
+#   - script: |
+#       source activate tomopy
+#       pip install . --no-deps
+#       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
+#       cmake --build build
+#       cmake --install build
+#     displayName: Setup and install
+#   - script: |
+#       source activate tomopy
+#       export CUDA_VERSION="$(CUDA_VERSION)"
+#       pytest test -v
+#     displayName: Run tests
 
 - job: Linux
   pool:
