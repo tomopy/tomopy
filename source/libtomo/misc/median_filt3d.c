@@ -253,7 +253,7 @@ medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
     free(ValVec);
 }
 
-int
+DLL int
 medianfilter_main_float(float* Input, float* Output, int radius, float mu_threshold,
                         int ncores, int dimX, int dimY, int dimZ)
 {

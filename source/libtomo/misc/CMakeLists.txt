@@ -15,6 +15,10 @@ tomopy_add_library(
 
 find_package(OpenMP REQUIRED COMPONENTS C)
 target_link_libraries(tomo-misc PRIVATE OpenMP::OpenMP_C)
+if (WIN32)
+target_compile_options(
+  tomo-misc PRIVATE $<$<COMPILE_LANGUAGE:C>:/openmp:experimental>)
+endif()
 
 target_include_directories(
   tomo-misc
