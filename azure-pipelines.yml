@@ -25,8 +25,8 @@ jobs:
 #     - Agent.OS -equals Linux
 #   strategy:
 #     matrix:
-#       Python37:
-#         python.version: '37'
+#       Python38:
+#         python.version: '38'
 #     maxParallel: 4
 #   steps:
 #   - script: echo "CUDA version is $(CUDA_VERSION)"
@@ -67,16 +67,14 @@ jobs:
     matrix:
       Python-nomkl:
         python.version: 'nomkl'
-      Python-37:
-        python.version: '37'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
-      conda create -n mamba mamba -c conda-forge
-      source activate mamba
-      mamba env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -97,8 +95,8 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '37'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -106,9 +104,7 @@ jobs:
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
-      conda create -n mamba mamba -c conda-forge
-      source activate mamba
-      mamba env create -n tomopy --quiet -f envs/osx-$(python.version).yml
+      conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -129,16 +125,14 @@ jobs:
     vmImage: 'windows-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '37'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
-      conda create -n mamba mamba -c conda-forge
-      call activate mamba
-      mamba env create -n tomopy --quiet -f envs/win-$(python.version).yml
+      conda env create -n tomopy --quiet -f envs/win-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment

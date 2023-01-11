@@ -8,11 +8,10 @@ dependencies:
   - dxchange
   - git
   - h5py
-  - importlib_metadata  # backport for python<3.8
   - ninja
   - numexpr
   - numpy!=1.22.4
-  - python=3.7
+  - python=3.8
   - pywavelets
   - scikit-image>=0.17
   - scipy
