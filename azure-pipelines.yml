@@ -67,6 +67,8 @@ jobs:
     matrix:
       Python-nomkl:
         python.version: 'nomkl'
+      Python-37:
+        python.version: '37'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
