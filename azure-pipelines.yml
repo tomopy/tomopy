@@ -74,7 +74,8 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
-      conda install mamba -c conda-forge
+      conda create -n mamba mamba -c conda-forge
+      source activate mamba
       mamba env create -n tomopy --quiet -f envs/linux-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
@@ -105,7 +106,8 @@ jobs:
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
-      conda install mamba -c conda-forge
+      conda create -n mamba mamba -c conda-forge
+      source activate mamba
       mamba env create -n tomopy --quiet -f envs/osx-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
@@ -134,7 +136,8 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
-      conda install mamba -c conda-forge
+      conda create -n mamba mamba -c conda-forge
+      call activate mamba
       mamba env create -n tomopy --quiet -f envs/win-$(python.version).yml
     displayName: Create build environment
   - script: conda list -n tomopy
