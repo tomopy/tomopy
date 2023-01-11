@@ -48,10 +48,13 @@
 import unittest
 
 import numpy as np
-from numpy.testing import assert_allclose
+import scipy
+from numpy.testing import assert_allclose, assert_equal
 from tomopy.misc.corr import (
     gaussian_filter,
     median_filter,
+    median_filter3d,
+    remove_outlier3d,
     median_filter_nonfinite,
     remove_neg,
     remove_nan,
@@ -109,7 +112,20 @@ class ImageFilterTestCase(unittest.TestCase):
                     size=3,
                     callback=None,
                 )
+    
+    def test_median_filter3d(self):
+        A = np.arange(4*5*6).reshape(4,5,6)
+        assert_equal(
+            scipy.ndimage.median_filter(np.float32(A), size=3), 
+            median_filter3d(np.float32(A), size=3))
 
+    def test_remove_outlier3d(self):
+        A = np.arange(4*5*6).reshape(4,5,6)
+        A[2,2,2] = 1000.0 # introduce an outlier
+        A_dezinged = remove_outlier3d(np.float32(A), dif = 500, size=3)
+        A[2,2,2] = 75 # substituted value by dezinger
+        assert_equal(np.float32(A), A_dezinged)
+        
     def test_remove_neg(self):
         assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
 

@@ -11,6 +11,11 @@ tomopy_add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
                                            ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
 
+# link library to math.h
+if(NOT WIN32)
+  target_link_libraries(tomo-gridrec PUBLIC m)
+endif()
+
 target_include_directories(
   tomo-gridrec
   PUBLIC $<BUILD_INTERFACE:${tomopy_SOURCE_DIR}/include>
