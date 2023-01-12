@@ -16,47 +16,49 @@ trigger:
 
 jobs:
 
-- job: CUDA_Linux
-  pool:
-    name: Default
-    demands:
-    - CUDA_VERSION
-    - Agent.OS -equals Linux
-  strategy:
-    matrix:
-      Python37:
-        python.version: '37'
-    maxParallel: 4
-  steps:
-  - script: echo "CUDA version is $(CUDA_VERSION)"
-    displayName: Print CUDA version
-  - script: >
-      conda update --yes --quiet
-      -n base conda
-    displayName: Update conda
-  - script: >
-      conda env remove --yes
-      -n tomopy
-    displayName: Remove existing build environment
-  - script: >
-      conda env create --quiet --force
-      -n tomopy
-      -f envs/linux-$(python.version).yml
-    displayName: Create build environment
-  - script: conda list -n tomopy
-    displayName: List build environment
-  - script: |
-      source activate tomopy
-      pip install . --no-deps
-      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
-      cmake --build build
-      cmake --install build
-    displayName: Setup and install
-  - script: |
-      source activate tomopy
-      export CUDA_VERSION="$(CUDA_VERSION)"
-      pytest test -v
-    displayName: Run tests
+# NO CUDA RUNNER AVAILABLE
+# - job: CUDA_Linux
+#   pool:
+#     name: Default
+#     demands:
+#     - CUDA_VERSION
+#     - Agent.OS -equals Linux
+#   strategy:
+#     matrix:
+#       Python38:
+#         python.version: '38'
+#     maxParallel: 4
+#   steps:
+#   - script: echo "CUDA version is $(CUDA_VERSION)"
+#     displayName: Print CUDA version
+#   - script: |
+#       conda update --yes --quiet -n base conda
+#       conda install -n base conda-libmamba-solver
+#       conda config --set solver libmamba
+#     displayName: Update conda
+#   - script: >
+#       conda env remove --yes
+#       -n tomopy
+#     displayName: Remove existing build environment
+#   - script: >
+#       conda env create --quiet --force
+#       -n tomopy
+#       -f envs/linux-$(python.version).yml
+#     displayName: Create build environment
+#   - script: conda list -n tomopy
+#     displayName: List build environment
+#   - script: |
+#       source activate tomopy
+#       pip install . --no-deps
+#       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
+#       cmake --build build
+#       cmake --install build
+#     displayName: Setup and install
+#   - script: |
+#       source activate tomopy
+#       export CUDA_VERSION="$(CUDA_VERSION)"
+#       pytest --cov tomopy test -v
+#     displayName: Run tests
 
 - job: Linux
   pool:
@@ -65,6 +67,8 @@ jobs:
     matrix:
       Python-nomkl:
         python.version: 'nomkl'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -83,7 +87,7 @@ jobs:
     displayName: Setup and install
   - script: |
       source activate tomopy
-      pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
 
 - job: macOS
@@ -91,8 +95,8 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '37'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -113,7 +117,7 @@ jobs:
     displayName: Setup and install
   - script: |
       source activate tomopy
-      pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
 
 - job: Windows
@@ -121,8 +125,8 @@ jobs:
     vmImage: 'windows-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '37'
+      Python-38:
+        python.version: '38'
     maxParallel: 4
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
@@ -141,9 +145,5 @@ jobs:
     displayName: Setup and install
   - script: |
       call activate tomopy
-      coverage run --source tomopy -m pytest test -v
+      pytest --cov=tomopy test -v
     displayName: Run tests
-  - script: |
-      call activate tomopy
-      coverage report -m
-    displayName: Report coverage

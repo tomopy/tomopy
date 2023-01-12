@@ -2,28 +2,27 @@ name: tomopy
 channels:
   - conda-forge
 dependencies:
+  - c-compiler
   - cmake
   - cxx-compiler
   - dxchange
   - git
   - h5py
-  - importlib_metadata  # backport for python<3.8
   - ninja
   - numexpr
   - numpy<1.22.4|>=1.23.0
-  - python=3.7
+  - python=3.8
   - pywavelets
   - scikit-image>=0.17
   - scipy
   - setuptools_scm
   - setuptools_scm_git_archive
 # Optional packages
-  - coverage!=5.0.2
-  - pyctest>0.0.10
-  - timemory=*=py37h* # the nompi build
-  - gxx_linux-64<=8 # CUDA=10 requires gcc<8
+  # - pyctest>0.0.10
+  # - timemory=*=py37h* # the nompi build
   - mkl
   - mkl-devel
   - mkl_fft
   - opencv>=3.4
   - pytest
+  - pytest-cov
