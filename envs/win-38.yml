@@ -11,7 +11,7 @@ dependencies:
   - ninja
   - numexpr
   - numpy!=1.22.4
-  - python=3.8
+  - python
   - pywavelets
   - scikit-image>=0.17
   - scipy
