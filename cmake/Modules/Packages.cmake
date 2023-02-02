@@ -25,6 +25,16 @@ endif()
 
 # ##############################################################################
 #
+# Link atomic library if needed
+#
+# ##############################################################################
+include(CheckAtomic)
+if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+  list(APPEND TOMOPY_EXTERNAL_PRIVATE_LIBRARIES "atomic")
+endif()
+
+# ##############################################################################
+#
 # Prefix path to Anaconda installation
 #
 # ##############################################################################
