@@ -1,7 +1,23 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/prep.h"
-            "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h")
+            "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h"
+            "${tomopy_SOURCE_DIR}/include/libtomo/stripes_detect3d.h")
 
-tomopy_add_library(tomo-prep SHARED prep.c stripe.c ${HEADERS})
+tomopy_add_library(
+  tomo-prep
+  SHARED
+  prep.c
+  stripe.c
+  stripes_detect3d.c
+  ../misc/utils.c
+  ../misc/utils.h
+  ${HEADERS})
+
+find_package(OpenMP REQUIRED COMPONENTS C)
+target_link_libraries(tomo-prep PRIVATE OpenMP::OpenMP_C)
+if (WIN32)
+target_compile_options(
+  tomo-prep PRIVATE $<$<COMPILE_LANGUAGE:C>:/openmp:experimental>)
+endif()
 
 target_include_directories(
   tomo-prep

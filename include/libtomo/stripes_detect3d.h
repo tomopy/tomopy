@@ -41,6 +41,9 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+// C-module for detecting and emphasising stripes present in the data (3D case)
+// Original author: Daniil Kazantsev, Diamond Light Source Ltd.
+
 #pragma once
 
 #ifdef WIN32
@@ -49,19 +52,6 @@
 #    define DLL
 #endif
 
-void DLL
-copyIm(const float* A, float* U, long dimX, long dimY, long dimZ);
-void DLL
-copyIm_unchar(const unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ);
-void DLL
-copyIm_unshort(const unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ);
-void DLL
-sort_bubble_float(float* x, int n_size);
-void DLL
-sort_bubble_uint16(unsigned short* x, int n_size);
-void DLL
-quicksort_float(float* x, int first, int last);
-void DLL
-quicksort_uint16(unsigned short* x, int first, int last);
-void DLL
-gradient3D(float *input, float *output, long dimX, long dimY, long dimZ, int axis, int step_size);
+DLL int
+stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_vertical,
+                           int ncores, int dimX, int dimY, int dimZ);

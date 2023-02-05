@@ -60,7 +60,8 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_normalize_bg',
-           'c_remove_stripe_sf']
+           'c_remove_stripe_sf',
+           'c_stripes_detect3d']
 
 LIB_TOMOPY_PREP = c_shared_lib("tomo-prep")
 
@@ -96,3 +97,24 @@ def c_remove_stripe_sf(tomo, size):
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
     tomo[:] = contiguous_tomo[:]
+
+def c_stripes_detect3d(
+    input,
+    output,
+    window_halflength_vertical,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_PREP.stripesdetect3d_main_float.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.stripesdetect3d_main_float(
+        dtype.as_c_float_p(input),
+        dtype.as_c_float_p(output),
+        dtype.as_c_int(window_halflength_vertical),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+    )
+    return output

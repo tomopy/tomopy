@@ -82,7 +82,8 @@ __all__ = ['remove_stripe_fw',
            'remove_large_stripe',
            'remove_dead_stripe',
            'remove_all_stripe',
-           'remove_stripe_based_interpolation']
+           'remove_stripe_based_interpolation',
+           'stripes_detect3d']
 
 
 def remove_stripe_fw(
@@ -939,3 +940,53 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         sino = tomo[:, m, :]
         sino = _rs_interpolation(sino, snr, size, drop_ratio, norm)
         tomo[:, m, :] = sino
+
+
+def stripes_detect3d(arr, window_halflength_vertical=10, ncore=None):
+    """
+    Apply 3D stripe detection method to empasize stripe's edges in a 3D array.
+
+    .. versionadded:: 1.13
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input 3D array of float32 data type.
+    size : int, optional
+        The size of the filter's kernel.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs. All cores will be used
+        if unspecified.
+
+    Returns
+    -------
+    ndarray
+        Weights for stripe's edges as a 3D array of float32 data type.
+
+    Raises
+    ------
+    ValueError
+        If the input array is not three dimensional.
+
+    """
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    input_type = arr.dtype
+    if (input_type != 'float32'):
+        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
+    out = np.empty_like(arr)    
+
+    if arr.ndim == 3:
+        dz, dy, dx = arr.shape
+        if (dz == 0) or (dy == 0) or (dx == 0):
+            raise ValueError("The length of one of dimensions is equal to zero")
+    else:
+        raise ValueError("The input array must be a 3D array")
+
+    # perform full 3D stripes detection
+    extern.c_stripes_detect3d(arr, out, 
+                              window_halflength_vertical,
+                              ncore,
+                              dx, dy, dz)
+    return out
