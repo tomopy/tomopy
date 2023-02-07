@@ -61,7 +61,8 @@ __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_normalize_bg',
            'c_remove_stripe_sf',
-           'c_stripes_detect3d']
+           'c_stripes_detect3d',
+           'c_stripesmask3d']
 
 LIB_TOMOPY_PREP = c_shared_lib("tomo-prep")
 
@@ -112,6 +113,31 @@ def c_stripes_detect3d(
         dtype.as_c_float_p(input),
         dtype.as_c_float_p(output),
         dtype.as_c_int(window_halflength_vertical),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+    )
+    return output
+
+def c_stripesmask3d(
+    input,
+    output,
+    threshold_val,
+    stripe_length_min,
+    stripe_depth_min,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_PREP.stripesmask3d_main_float.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.stripesmask3d_main_float(
+        dtype.as_c_float_p(input),
+        dtype.as_c_uint16_p(output),
+        dtype.as_c_float(threshold_val),
+        dtype.as_c_int(stripe_length_min),
+        dtype.as_c_int(stripe_depth_min),
         dtype.as_c_int(ncore),
         dtype.as_c_int(dx),
         dtype.as_c_int(dy),

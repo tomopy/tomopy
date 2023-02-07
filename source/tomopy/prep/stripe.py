@@ -83,7 +83,8 @@ __all__ = ['remove_stripe_fw',
            'remove_dead_stripe',
            'remove_all_stripe',
            'remove_stripe_based_interpolation',
-           'stripes_detect3d']
+           'stripes_detect3d',
+           'stripes_mask3d']
 
 
 def remove_stripe_fw(
@@ -942,7 +943,7 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         tomo[:, m, :] = sino
 
 
-def stripes_detect3d(arr, window_halflength_vertical=10, ncore=None):
+def stripes_detect3d(arr, vertical_filter_size=10, ncore=None):
     """
     Apply 3D stripe detection method to empasize stripe's edges in a 3D array.
 
@@ -952,8 +953,8 @@ def stripes_detect3d(arr, window_halflength_vertical=10, ncore=None):
     ----------
     arr : ndarray
         Input 3D array of float32 data type.
-    size : int, optional
-        The size of the filter's kernel.
+    vertical_filter_size : float, optional
+        The size of the vertical 1D median filer which removes outliers.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -986,7 +987,63 @@ def stripes_detect3d(arr, window_halflength_vertical=10, ncore=None):
 
     # perform full 3D stripes detection
     extern.c_stripes_detect3d(arr, out, 
-                              window_halflength_vertical,
+                              vertical_filter_size,
                               ncore,
                               dx, dy, dz)
+    return out
+
+def stripes_mask3d(arr, 
+                   threshold = 0.7,
+                   stripe_length_min = 100,
+                   stripe_depth_min = 10,
+                   ncore=None):
+    """
+    Takes the result of the stripes_detect3d module as an input (weights for stripes)
+    and creates a binary 3D mask emphasizing stripes and removing other features.
+
+    .. versionadded:: 1.13
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input 3D array of float32 data type, output of stripes_detect3d module.
+    vertical_filter_size : float, optional
+        The size of the vertical 1D median filer which removes outliers.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs. All cores will be used
+        if unspecified.
+
+    Returns
+    -------
+    ndarray
+        Weights for stripe's edges as a 3D array of float32 data type.
+
+    Raises
+    ------
+    ValueError
+        If the input array is not three dimensional.
+
+    """
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    input_type = arr.dtype
+    if (input_type != 'float32'):
+        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
+    out = np.uint16(np.empty_like(arr))
+
+    if arr.ndim == 3:
+        dz, dy, dx = arr.shape
+        if (dz == 0) or (dy == 0) or (dx == 0):
+            raise ValueError("The length of one of dimensions is equal to zero")
+    else:
+        raise ValueError("The input array must be a 3D array")
+
+    # perform mask creation based on the input provided by stripes_detect3d module
+    extern.c_stripesmask3d(arr, out, 
+                           threshold,
+                           stripe_length_min,
+                           stripe_depth_min,
+                           ncore,
+                           dx, dy, dz)
     return out
