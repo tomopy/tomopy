@@ -28,6 +28,8 @@ target_compile_options(
   tomo-gridrec PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
                        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
+set_property(TARGET tomo-gridrec PROPERTY CXX_STANDARD 14)
+
 install(TARGETS tomo-gridrec EXPORT libtomoTargets)
 
 install(
