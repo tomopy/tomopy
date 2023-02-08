@@ -60,7 +60,7 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     {
 #if defined(TOMOPY_USE_PTL)
         // compute some properties (expected python threads, max threads)
-        auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+        auto pythreads = PTL::GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
 #    if defined(TOMOPY_USE_CUDA)
         // general oversubscription when CUDA is enabled
         auto max_threads =
@@ -69,8 +69,9 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
         // if known that CPU only, just try to use all cores
         auto max_threads = HW_CONCURRENCY / std::max(pythreads, min_threads);
 #    endif
-        auto nthreads = std::max(GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
-        pool_size     = nthreads;
+        auto nthreads =
+            std::max(PTL::GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
+        pool_size = nthreads;
 #else
         pool_size = 1;
 #endif
@@ -92,19 +93,19 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     auto tid = GetThisThreadID();
 
     // initialize the thread-local data information
-    auto& thread_data = ThreadData::GetInstance();
+    auto& thread_data = PTL::ThreadData::GetInstance();
     if(!thread_data)
-        thread_data.reset(new ThreadData(tp.get()));
+        thread_data = new PTL::ThreadData(tp.get());
 
     // tell thread that initialized thread-pool to process tasks
-    // (typically master thread will only wait for other threads)
-    thread_data->is_master = true;
+    // (typically main thread will only wait for other threads)
+    thread_data->is_main = true;
 
     // tell thread that it is not currently within task
     thread_data->within_task = false;
 
     // notify
-    AutoLock l(TypeMutex<decltype(std::cout)>());
+    PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
     std::cout << "\n"
               << "[" << tid << "] Initialized tasking run manager with " << tp->size()
               << " threads..." << std::endl;
@@ -237,14 +238,14 @@ public:
 inline DeviceOption
 GetDevice(const std::string& preferred)
 {
-    auto pythreads               = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto pythreads               = PTL::GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
     using DeviceOptionList       = std::deque<DeviceOption>;
-    DeviceOptionList options     = { };
+    DeviceOptionList options     = {};
     std::string      default_key = "cpu";
 
 #if defined(TOMOPY_USE_OPENCV)
     options.push_back(DeviceOption(0, "cpu", "Run on CPU (OpenCV)"));
-# endif
+#endif
 
 #if defined(TOMOPY_USE_CUDA)
     auto num_devices = cuda_device_count();
@@ -261,12 +262,13 @@ GetDevice(const std::string& preferred)
     }
     else
     {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
+        PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
         std::cerr << "\n##### No CUDA device(s) available #####\n" << std::endl;
     }
 #endif
 
-    if (options.empty()){
+    if(options.empty())
+    {
         throw std::runtime_error("No devices found! Check that TomoPy was "
                                  "compiled with OpenCV or CUDA.");
     }
@@ -278,7 +280,8 @@ GetDevice(const std::string& preferred)
 
     //------------------------------------------------------------------------//
     // print the options the first time it is encountered
-    auto print_options = [&]() {
+    auto print_options = [&]()
+    {
         static std::atomic_uint _once;
         auto                    _count = _once++;
         if(_count % pythreads > 0)
@@ -301,12 +304,13 @@ GetDevice(const std::string& preferred)
         }
         DeviceOption::footer(ss);
 
-        AutoLock l(TypeMutex<decltype(std::cout)>());
+        PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
         std::cout << "\n" << ss.str() << std::endl;
     };
     //------------------------------------------------------------------------//
     // print the option selection first time it is encountered
-    auto print_selection = [&](DeviceOption& selected_opt) {
+    auto print_selection = [&](DeviceOption& selected_opt)
+    {
         static std::atomic_uint _once;
         auto                    _count = _once++;
         if(_count % pythreads > 0)
@@ -323,7 +327,7 @@ GetDevice(const std::string& preferred)
         ss << "Selected device: " << selected_opt << "\n";
         DeviceOption::spacer(ss, '-');
 
-        AutoLock l(TypeMutex<decltype(std::cout)>());
+        PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
         std::cout << ss.str() << std::endl;
     };
     //------------------------------------------------------------------------//
@@ -356,7 +360,7 @@ stream_sync(cudaStream_t _stream)
     cudaStreamSynchronize(_stream);
     CUDA_CHECK_LAST_STREAM_ERROR(_stream);
 #else
-    ConsumeParameters(_stream);
+    PTL::ConsumeParameters(_stream);
 #endif
 }
 

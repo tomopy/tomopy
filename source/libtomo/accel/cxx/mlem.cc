@@ -76,7 +76,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     // local count for the thread
     int count = registration.initialize();
     // number of threads started at Python level
-    auto tcount = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto tcount = PTL::GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
 
     // configured runtime options
     RuntimeOptions opts(pool_size, interp, device, grid_size, block_size);
@@ -109,7 +109,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     }
     catch(std::exception& e)
     {
-        AutoLock l(TypeMutex<decltype(std::cout)>());
+        PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
         std::cerr << "[TID: " << tid << "] " << e.what()
                   << "\nFalling back to CPU algorithm..." << std::endl;
         return EXIT_FAILURE;
@@ -129,7 +129,7 @@ void
 mlem_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int dx, int nx,
                             int ny, const float* theta)
 {
-    ConsumeParameters(dy);
+    PTL::ConsumeParameters(dy);
     auto cache = cpu_data[GetThisThreadID() % cpu_data.size()];
 
     // calculate some values
@@ -237,4 +237,4 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float*, const float* t
     printf("\n");
 }
 
-#endif // TOMOPY_USE_OPENCV
+#endif  // TOMOPY_USE_OPENCV

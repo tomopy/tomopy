@@ -54,11 +54,11 @@ END_EXTERN_C
 
 #if defined(TOMOPY_USE_OPENCV)
 
-#define CPU_NN CV_INTER_NN
-#define CPU_LINEAR CV_INTER_LINEAR
-#define CPU_AREA CV_INTER_AREA
-#define CPU_CUBIC CV_INTER_CUBIC
-#define CPU_LANCZOS CV_INTER_LANCZOS4
+#    define CPU_NN CV_INTER_NN
+#    define CPU_LINEAR CV_INTER_LINEAR
+#    define CPU_AREA CV_INTER_AREA
+#    define CPU_CUBIC CV_INTER_CUBIC
+#    define CPU_LANCZOS CV_INTER_LANCZOS4
 
 //--------------------------------------------------------------------------------------//
 
@@ -73,16 +73,16 @@ struct OpenCVDataType
     }
 };
 
-#define DEFINE_OPENCV_DATA_TYPE(pod_type, opencv_type)                                   \
-    template <>                                                                          \
-    struct OpenCVDataType<pod_type>                                                      \
-    {                                                                                    \
-        template <typename _Up = pod_type>                                               \
-        static constexpr int value()                                                     \
+#    define DEFINE_OPENCV_DATA_TYPE(pod_type, opencv_type)                               \
+        template <>                                                                      \
+        struct OpenCVDataType<pod_type>                                                  \
         {                                                                                \
-            return opencv_type;                                                          \
-        }                                                                                \
-    };
+            template <typename _Up = pod_type>                                           \
+            static constexpr int value()                                                 \
+            {                                                                            \
+                return opencv_type;                                                      \
+            }                                                                            \
+        };
 
 // floating point types
 DEFINE_OPENCV_DATA_TYPE(float, CV_32F)
@@ -97,19 +97,19 @@ DEFINE_OPENCV_DATA_TYPE(int32_t, CV_32S)
 DEFINE_OPENCV_DATA_TYPE(uint8_t, CV_8U)
 DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 
-#undef DEFINE_OPENCV_DATA_TYPE  // don't pollute
+#    undef DEFINE_OPENCV_DATA_TYPE  // don't pollute
 
 //--------------------------------------------------------------------------------------//
 
 inline int
 GetOpenCVInterpolationMode(const std::string& preferred)
 {
-    EnvChoiceList<int> choices = {
-        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    PTL::EnvChoiceList<int> choices = {
+        PTL::EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        PTL::EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        PTL::EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
-    return GetChoice<int>(choices, preferred);
+    return PTL::GetChoice<int>(choices, preferred);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -158,7 +158,8 @@ cxx_rotate(const _Tp* src, double theta, const intmax_t& nx, const intmax_t& ny,
 inline iarray_t
 cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 {
-    auto compute = [&](const iarray_t& ones, iarray_t& sum_dist, int p) {
+    auto compute = [&](const iarray_t& ones, iarray_t& sum_dist, int p)
+    {
         for(int s = 0; s < dy; ++s)
         {
             for(int d = 0; d < dx; ++d)
@@ -186,7 +187,7 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 
     return sum_dist;
 }
-#endif // TOMOPY_USE_OPENCV
+#endif  // TOMOPY_USE_OPENCV
 
 //======================================================================================//
 //
@@ -203,12 +204,12 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 inline int
 GetNppInterpolationMode(const std::string& preferred)
 {
-    EnvChoiceList<int> choices = {
-        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
+    PTL::EnvChoiceList<int> choices = {
+        PTL::EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+        PTL::EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        PTL::EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
-    return GetChoice<int>(choices, preferred);
+    return PTL::GetChoice<int>(choices, preferred);
 }
 
 //======================================================================================//
@@ -220,7 +221,7 @@ GetNppInterpolationMode(const std::string& preferred)
 inline int
 GetBlockSize(const int& init = 32)
 {
-    static thread_local int _instance = GetEnv<int>("TOMOPY_BLOCK_SIZE", init);
+    static thread_local int _instance = PTL::GetEnv<int>("TOMOPY_BLOCK_SIZE", init);
     return _instance;
 }
 
@@ -230,7 +231,7 @@ inline int
 GetGridSize(const int& init = 0)
 {
     // default value of zero == calculated according to block and loop size
-    static thread_local int _instance = GetEnv<int>("TOMOPY_GRID_SIZE", init);
+    static thread_local int _instance = PTL::GetEnv<int>("TOMOPY_GRID_SIZE", init);
     return _instance;
 }
 
@@ -247,9 +248,9 @@ ComputeGridSize(const int& size, const int& block_size = GetBlockSize())
 inline dim3
 GetBlockDims(const dim3& init = dim3(32, 32, 1))
 {
-    int _x = GetEnv<int>("TOMOPY_BLOCK_SIZE_X", init.x);
-    int _y = GetEnv<int>("TOMOPY_BLOCK_SIZE_Y", init.y);
-    int _z = GetEnv<int>("TOMOPY_BLOCK_SIZE_Z", init.z);
+    int _x = PTL::GetEnv<int>("TOMOPY_BLOCK_SIZE_X", init.x);
+    int _y = PTL::GetEnv<int>("TOMOPY_BLOCK_SIZE_Y", init.y);
+    int _z = PTL::GetEnv<int>("TOMOPY_BLOCK_SIZE_Z", init.z);
     return dim3(_x, _y, _z);
 }
 
@@ -259,9 +260,9 @@ inline dim3
 GetGridDims(const dim3& init = dim3(0, 0, 0))
 {
     // default value of zero == calculated according to block and loop size
-    int _x = GetEnv<int>("TOMOPY_GRID_SIZE_X", init.x);
-    int _y = GetEnv<int>("TOMOPY_GRID_SIZE_Y", init.y);
-    int _z = GetEnv<int>("TOMOPY_GRID_SIZE_Z", init.z);
+    int _x = PTL::GetEnv<int>("TOMOPY_GRID_SIZE_X", init.x);
+    int _y = PTL::GetEnv<int>("TOMOPY_GRID_SIZE_Y", init.y);
+    int _z = PTL::GetEnv<int>("TOMOPY_GRID_SIZE_Z", init.z);
     return dim3(_x, _y, _z);
 }
 
@@ -501,8 +502,8 @@ reduce(float* _in, float* _out, int size);
 //======================================================================================//
 
 DLL int32_t*
-    cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
-                const int nx, const int ny, cudaStream_t stream, const int eInterp);
+cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
+            const int nx, const int ny, cudaStream_t stream, const int eInterp);
 
 //--------------------------------------------------------------------------------------//
 

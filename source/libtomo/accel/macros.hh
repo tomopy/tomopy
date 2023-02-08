@@ -151,7 +151,7 @@ inline uintmax_t
 GetThisThreadID()
 {
 #if defined(TOMOPY_USE_PTL)
-    return ThreadPool::GetThisThreadID();
+    return PTL::ThreadPool::get_this_thread_id();
 #else
     static std::atomic<uintmax_t> tcounter;
     static thread_local auto      tid = tcounter++;
@@ -403,15 +403,15 @@ struct cuda_algorithms
 
 //--------------------------------------------------------------------------------------//
 
-using ThreadPool = ::ThreadPool;
+using ThreadPool = PTL::ThreadPool;
 template <typename _Ret, typename _Arg = _Ret>
-using TaskGroup = ::TaskGroup<_Ret, _Arg>;
+using TaskGroup = PTL::TaskGroup<_Ret, _Arg>;
 
 //--------------------------------------------------------------------------------------//
 
 // when compiled with PTL, mark tomopy::ThreadPool as implemented
 template <>
-struct implementation_available<ThreadPool> : std::true_type
+struct implementation_available<PTL::ThreadPool> : std::true_type
 {
 };
 
