@@ -90,7 +90,7 @@ struct RuntimeOptions
     ~RuntimeOptions() {}
 
     // disable copying and copy assignment
-    RuntimeOptions(const RuntimeOptions&) = delete;
+    RuntimeOptions(const RuntimeOptions&)            = delete;
     RuntimeOptions& operator=(const RuntimeOptions&) = delete;
 
     // create the thread pool -- don't have this in the constructor
@@ -210,7 +210,7 @@ execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... arg
         std::stringstream ss;
         ss << "\n\nError executing :: " << e.what() << "\n\n";
         {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
+            PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
             std::cerr << e.what() << std::endl;
         }
         throw std::runtime_error(ss.str().c_str());
@@ -244,7 +244,7 @@ execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... arg
         std::stringstream ss;
         ss << "\n\nError executing :: " << e.what() << "\n\n";
         {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
+            PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
             std::cerr << e.what() << std::endl;
         }
         throw std::runtime_error(ss.str().c_str());
@@ -295,9 +295,9 @@ public:
 
     int interpolation() const { return m_interp; }
 
-    Mutex* upd_mutex() const
+    PTL::Mutex* upd_mutex() const
     {
-        static Mutex mtx;
+        static PTL::Mutex mtx;
         return &mtx;
     }
 
@@ -401,7 +401,7 @@ public:
     GpuData(this_type&&)      = default;
 
     this_type& operator=(const this_type&) = delete;
-    this_type& operator=(this_type&&) = default;
+    this_type& operator=(this_type&&)      = default;
 
 public:
     // access functions

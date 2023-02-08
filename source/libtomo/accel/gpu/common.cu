@@ -238,7 +238,7 @@ cuda_device_count()
 void
 cuda_device_query()
 {
-    auto pythreads = GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
+    auto pythreads = PTL::GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
     static std::atomic<int16_t> _once;
     auto                        _count = _once++;
     if(_count + 1 == pythreads)
@@ -277,14 +277,14 @@ cuda_device_query()
         return;
     }
 
-    AutoLock l(TypeMutex<decltype(std::cout)>());
+    PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
 
     if(deviceCount == 0)
         printf("No available CUDA device(s) detected\n");
     else
         printf("Detected %d CUDA capable devices\n", deviceCount);
 
-    int specific_device = GetEnv("TOMOPY_DEVICE_NUM", -1);
+    int specific_device = PTL::GetEnv("TOMOPY_DEVICE_NUM", -1);
 
     for(int dev = 0; dev < deviceCount; ++dev)
     {
