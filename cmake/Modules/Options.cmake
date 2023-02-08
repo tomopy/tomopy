@@ -71,7 +71,6 @@ add_option(TOMOPY_USE_SANITIZER "Enable sanitizer" OFF)
 add_option(TOMOPY_CXX_GRIDREC "Enable gridrec with C++ std::complex"
            ${_USE_CXX_GRIDREC})
 add_option(TOMOPY_USE_COVERAGE "Enable code coverage for C/C++" OFF)
-add_option(TOMOPY_USE_PTL "Enable Parallel Tasking Library (PTL)" ON)
 add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 add_option(TOMOPY_USER_FLAGS
