@@ -80,6 +80,11 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
+      export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}"
+      export CC=$(which gcc)
+      export CXX=$(which g++)
+      echo "C compiler is ${CC}"
+      echo "C++ compiler is ${CXX}"
       pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
       cmake --build build
@@ -110,6 +115,11 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
+      export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}"
+      export CC=$(which clang)
+      export CXX=$(which clang++)
+      echo "C compiler is ${CC}"
+      echo "C++ compiler is ${CXX}"
       pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
       cmake --build build
