@@ -994,8 +994,10 @@ def stripes_detect3d(arr, vertical_filter_size=10, ncore=None):
 
 def stripes_mask3d(arr, 
                    threshold = 0.7,
-                   stripe_length_min = 100,
-                   stripe_depth_min = 10,
+                   stripe_length_perc = 20.0,
+                   stripe_depth_perc = 1.0,
+                   stripe_width_perc = 2.0,
+                   sensitivity_perc = 80.0,
                    ncore=None):
     """
     Takes the result of the stripes_detect3d module as an input (weights for stripes)
@@ -1006,9 +1008,11 @@ def stripes_mask3d(arr,
     Parameters
     ----------
     arr : ndarray
-        Input 3D array of float32 data type, output of stripes_detect3d module.
-    vertical_filter_size : float, optional
-        The size of the vertical 1D median filer which removes outliers.
+        3D array (float32 data type) given as [angles, detY(depth), detX]; The input array is the result of stripes_detect3d module.
+    stripe_length_perc : float, optional
+        Parameter that defines the minimal length of a stripe accepted in percents relative to the full angular dimension.
+    sensitivity_perc : float, optional
+        The value in percents to impose less strict conditions on length, depth and width of a stripe.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -1038,12 +1042,34 @@ def stripes_mask3d(arr,
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
         raise ValueError("The input array must be a 3D array")
-
+    
+    # calculate absolute values based on the provided percentages: 
+    if 0.0 < stripe_length_perc <= 100.0:
+        stripe_length_min = (int)((0.01*stripe_length_perc)*dz)
+    else:
+        raise ValueError("stripe_length_perc value must be in (0, 100] percentage range ")
+    if 0.0 <= stripe_depth_perc <= 100.0:
+        stripe_depth_min = (int)((0.01*stripe_depth_perc)*dy)
+    else:
+        raise ValueError("stripe_depth_perc value must be in [0, 100] percentage range ")
+    if 0.0 < stripe_width_perc <= 100.0:
+        stripe_width_min = (int)((0.01*stripe_width_perc)*dx)
+    else:
+        raise ValueError("stripe_width_perc value must be in (0, 100] percentage range ")    
+    if 0.0 < sensitivity_perc <= 100.0:
+        pass
+    else:
+        raise ValueError("sensitivity_perc value must be in (0, 100] percentage range ")
+    
+   
     # perform mask creation based on the input provided by stripes_detect3d module
     extern.c_stripesmask3d(arr, out, 
                            threshold,
                            stripe_length_min,
                            stripe_depth_min,
+                           stripe_width_min,
+                           sensitivity_perc,
                            ncore,
                            dx, dy, dz)
     return out
+

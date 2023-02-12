@@ -47,6 +47,7 @@
 #include <math.h>
 #include <omp.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "libtomo/stripes_detect3d.h"
 #include "../misc/utils.h"
@@ -74,12 +75,12 @@ ratio_mean_stride3d(float* input, float* output,
     {
         j1 = j + j_m;
         if((j1 < 0) || (j1 >= dimY))
-            j1 = j;
+            j1 = j - j_m;
         for(k_m = -radius; k_m <= radius; k_m++)
         {
             k1 = k + k_m;
             if((k1 < 0) || (k1 >= dimZ))
-                k1 = k;
+                k1 = k - k_m;
             mean_plate += fabsf(input[((dimX * dimY) * k1 + j1 * dimX + i)]);
         }
     }
@@ -91,7 +92,7 @@ ratio_mean_stride3d(float* input, float* output,
     {
         i1 = i + i_m;
         if (i1 >= dimX) 
-            i1 = i;
+            i1 = i - i_m;
         mean_horiz += fabsf(input[((dimX * dimY) * k + j * dimX + i1)]);
     }
     mean_horiz /= 7.0f;
@@ -129,7 +130,7 @@ vertical_median_stride3d(float* input, float* output,
     {
         k1 = k + k_m;
         if((k1 < 0) || (k1 >= dimZ))
-            k1 = k;
+            k1 = k-k_m;
         _values[counter] = input[((dimX * dimY) * k1 + j * dimX + i)];
         counter++;
     }
@@ -138,6 +139,121 @@ vertical_median_stride3d(float* input, float* output,
 
     free (_values);
 }
+
+void
+remove_inconsistent_stripes(unsigned short* mask,
+                            unsigned short* out, 
+                            int stripe_length_min, 
+                            int stripe_depth_min, 
+                            float sensitivity,
+                            long i,
+                            long j,
+                            long k,
+                            long long index,
+                            long dimX, long dimY, long dimZ)
+{
+    int       counter_vert_voxels;    
+    int       counter_depth_voxels;
+    int       halfstripe_length = (int)stripe_length_min/2;
+    int       halfstripe_depth = (int)stripe_depth_min/2;
+    long      k_m;
+    long      k1;
+    long      y_m;
+    long      y1;
+    int threshold_verical = (int)((0.01f*sensitivity)*stripe_length_min);
+    int threshold_depth = (int)((0.01f*sensitivity)*stripe_depth_min);
+
+    counter_vert_voxels = 0;
+    for(k_m = -halfstripe_length; k_m <= halfstripe_length; k_m++)
+    {
+        k1 = k + k_m;
+         if((k1 < 0) || (k1 >= dimZ))
+            k1 = k - k_m;
+        if (mask[((dimX * dimY) * k1 + j * dimX + i)] == 1)
+        {
+            counter_vert_voxels++;
+        }
+    }
+    
+    /* Here we decide to keep the currect voxel based on the number of vertical voxels bellow it */
+    if (counter_vert_voxels > threshold_verical)
+    {
+        /* The vertical non zero values seem consistent, so we asssume that this element might belong to a stripe. */
+        /* We do, however, need to check the depth consistency as well. Here we assume that the stripes are not very 
+        extended in the depth dimension compared to the features that are belong to a sample. */
+       
+       if (stripe_depth_min != 0)
+       {
+            counter_depth_voxels = 0;
+            for(y_m = -halfstripe_depth; y_m <= halfstripe_depth; y_m++)
+            {
+                y1 = j + y_m;
+                if((y1 < 0) || (y1 >= dimY))
+                    y1 = j - y_m;
+                if (mask[((dimX * dimY) * k + y1 * dimX + i)] == 1)
+                {
+                    counter_depth_voxels++;
+                }        
+            }
+            if (counter_depth_voxels < threshold_depth)
+            {
+            out[index] = 1;
+            }
+            else
+            {
+            out[index] = 0;
+            }
+        }
+        else 
+        {
+            out[index] = 1;
+        }
+    }
+    else
+    {
+        out[index] = 0;
+    }
+}                            
+
+void
+merge_stripes(unsigned short* mask,
+              unsigned short* out, 
+              int stripe_width_min, 
+              long i,
+              long j,
+              long k,
+              long long index,
+              long dimX, long dimY, long dimZ)
+{
+
+    long        x_m;
+    long        x1;
+    long        x2;
+    long        x2_m;
+
+    if (mask[index] == 1)    
+    {
+        /* merging stripes in the horizontal direction */
+        for(x_m=stripe_width_min; x_m>=0; x_m--) {
+            x1 = i + x_m;
+            if (x1 >= dimX)
+                x1 = i - x_m;
+            if (mask[((dimX * dimY) * k + j * dimX + x1)] == 1)
+            /*the other end of the mask has been found, merge all values inbetween */
+            {
+              for(x2 = 0; x2 <= x_m; x2++) 
+              {
+                x2_m = i + x2;
+                out[((dimX * dimY) * k + j * dimX + x2_m)] = 1;
+              }
+              break;
+            }
+        }            
+
+    }
+}
+
+
 
 DLL int
 stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_vertical,
@@ -215,7 +331,10 @@ stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_ve
 DLL int
 stripesmask3d_main_float(float* Input, unsigned short* Output,
                          float threshold_val,
-                         int stripe_length_min, int stripe_depth_min,
+                         int stripe_length_min,
+                         int stripe_depth_min,
+                         int stripe_width_min,
+                         float sensitivity,
                          int ncores, int dimX, int dimY, int dimZ)
 {
     long      i;
@@ -224,6 +343,9 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
     long long index;
     long long totalvoxels;
     totalvoxels = (long long) (dimX*dimY*dimZ);    
+
+    unsigned short* mask;
+    mask = calloc(totalvoxels, sizeof(unsigned short));
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -235,8 +357,8 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
     }
 
     /* First step is to mask all the values in the given weights input image    
-       that are bellow a given threshold_val */
-#pragma omp parallel for shared(Input, Output) private(i, j, k, index)
+       that are bellow a given "threshold_val" parameter */
+#pragma omp parallel for shared(Input, mask) private(i, j, k, index)
         for(k = 0; k < dimZ; k++)
         {
             for(j = 0; j < dimY; j++)
@@ -246,12 +368,56 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
                     index = ((dimX * dimY) * k + j * dimX + i);
                     if (Input[index] <= threshold_val) 
                     {
-                        Output[index] = 1;
+                        mask[index] = 1;
                     }
                     
                 }
             }
         }
+    /* Then we need to remove stripes that are shorter than "stripe_length_min" parameter
+    or inconsistent otherwise. For every pixel we will run a 1D vertical window to count 
+    nonzero values in the mask. We also check for the depth of the mask's value, 
+    assuming that the stripes are normally shorter in depth compare to the features that 
+    belong to true data */
+#pragma omp parallel for shared(mask, Output) private(i, j, k, index)
+        for(k = 0; k < dimZ; k++)
+        {
+            for(j = 0; j < dimY; j++)
+            {
+                for(i = 0; i < dimX; i++)
+                {
+                    index = ((dimX * dimY) * k + j * dimX + i);
+                    remove_inconsistent_stripes(mask, Output,
+                                                stripe_length_min,
+                                                stripe_depth_min,
+                                                sensitivity,
+                                                i, j, k, index,
+                                                (long) (dimX), (long) (dimY), (long) (dimZ));
+                }
+            }
+        }
+    /* Copy output to mask */
+   // copyIm_unshort(Output, mask, (long) (dimX), (long) (dimY), (long) (dimZ));
 
+    /* We can merge stripes together if they are relatively close to each other
+     based on the stripe_width_min parameter */
+     /*
+#pragma omp parallel for shared(mask, Output) private(i, j, k, index)
+        for(k = 0; k < dimZ; k++)
+        {
+            for(j = 0; j < dimY; j++)
+            {
+                for(i = 0; i < dimX; i++)
+                {
+                    index = ((dimX * dimY) * k + j * dimX + i);
+                    merge_stripes(mask, Output,
+                                  stripe_width_min,
+                                  i, j, k, index,
+                                  (long) (dimX), (long) (dimY), (long) (dimZ));
+                }
+            }
+        }
+        */
+    free(mask);
     return 0;
 }
