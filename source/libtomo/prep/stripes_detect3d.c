@@ -55,13 +55,16 @@
 
 void
 ratio_mean_stride3d(float* input, float* output,
+                    int radius,
                     long i, long j, long k, long long index,
                     long dimX, long dimY, long dimZ)
 {
-    float mean_plate; 
+    float mean_plate;
     float mean_horiz;
-    int radius = 3;
+    float mean_horiz2;
+    float min_val;    
     int diameter = 2*radius + 1;
+    int all_pixels_window = diameter*diameter;
     long      i_m;
     long      j_m;
     long      k_m;
@@ -84,18 +87,29 @@ ratio_mean_stride3d(float* input, float* output,
             mean_plate += fabsf(input[((dimX * dimY) * k1 + j1 * dimX + i)]);
         }
     }
-    mean_plate /= 49.0f;
+    mean_plate /= (float)(all_pixels_window);
     
-    /* calculate mean of gradientX in a direction orthogonal to stripes direction */    
+    /* calculate mean of gradientX in a direction orthogonal to stripes direction */
     mean_horiz = 0.0f;
-    for(i_m = 1; i_m <= diameter; i_m++)
+    for(i_m = 1; i_m <= radius; i_m++)
     {
         i1 = i + i_m;
         if (i1 >= dimX) 
             i1 = i - i_m;
         mean_horiz += fabsf(input[((dimX * dimY) * k + j * dimX + i1)]);
     }
-    mean_horiz /= 7.0f;
+    mean_horiz /= (float)(radius);
+    
+    /* Calculate another mean symmetrically */
+    mean_horiz2 = 0.0f;
+    for(i_m = -radius; i_m <= -1; i_m++)
+    {
+        i1 = i + i_m;
+        if (i1 < 0)
+            i1 = i - i_m;
+        mean_horiz2 += fabsf(input[((dimX * dimY) * k + j * dimX + i1)]);
+    }
+    mean_horiz2 /= (float)(radius);
 
     /* calculate the ratio between two means assuming that the mean 
     orthogonal to stripes direction should be larger than the mean 
@@ -108,6 +122,21 @@ ratio_mean_stride3d(float* input, float* output,
     {        
         output[index] = mean_horiz/mean_plate;
     }    
+    min_val = 0.0f;
+    if ((mean_horiz2 > mean_plate) && (mean_horiz2 != 0.0f))
+    {   
+        min_val = mean_plate/mean_horiz2;
+    }
+    if ((mean_horiz2 < mean_plate) && (mean_plate != 0.0f))
+    {
+        min_val = mean_horiz2/mean_plate;
+    }
+
+    /* accepting the smallest value */
+    if (output[index] > min_val)
+    {
+        output[index] = min_val;
+    }
 }
 
 void
@@ -256,8 +285,11 @@ merge_stripes(unsigned short* mask,
 
 
 DLL int
-stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_vertical,
-                        int ncores, int dimX, int dimY, int dimZ)
+stripesdetect3d_main_float(float* Input, float* Output, 
+                           int window_halflength_vertical,
+                           int ratio_radius,
+                           int ncores,
+                           int dimX, int dimY, int dimZ)
 {
     long      i;
     long      j;
@@ -300,7 +332,7 @@ stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_ve
                 for(i = 0; i < dimX; i++)
                 {
                     index = ((dimX * dimY) * k + j * dimX + i);
-                    ratio_mean_stride3d(gradient3d_x_arr, mean_ratio3d_arr,  i, j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
+                    ratio_mean_stride3d(gradient3d_x_arr, mean_ratio3d_arr, ratio_radius, i, j, k, index, (long) (dimX), (long) (dimY), (long) (dimZ));
                 }
             }
         }
@@ -397,11 +429,10 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
             }
         }
     /* Copy output to mask */
-   // copyIm_unshort(Output, mask, (long) (dimX), (long) (dimY), (long) (dimZ));
+   copyIm_unshort(Output, mask, (long) (dimX), (long) (dimY), (long) (dimZ));
 
     /* We can merge stripes together if they are relatively close to each other
      based on the stripe_width_min parameter */
-     /*
 #pragma omp parallel for shared(mask, Output) private(i, j, k, index)
         for(k = 0; k < dimZ; k++)
         {
@@ -417,7 +448,7 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
                 }
             }
         }
-        */
+
     free(mask);
     return 0;
 }

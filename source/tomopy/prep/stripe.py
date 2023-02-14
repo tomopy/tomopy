@@ -943,18 +943,24 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         tomo[:, m, :] = sino
 
 
-def stripes_detect3d(arr, vertical_filter_size=10, ncore=None):
+def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
     """
-    Apply 3D stripe detection method to empasize stripe's edges in a 3D array.
+    Apply a stripes detection method to empasize their edges in a 3D array.
+    The input must be normalized projection data in range [0,1] and given in
+    the following axis orientation [angles, detY(depth), detX (horizontal)]. With 
+    this orientation, the stripes are the vertical features. The method works with
+    full and partial stripes of constant ot varying intensity. 
 
     .. versionadded:: 1.13
 
     Parameters
     ----------
     arr : ndarray
-        Input 3D array of float32 data type.
-    vertical_filter_size : float, optional
-        The size of the vertical 1D median filer which removes outliers.
+        Input 3D array of float32 data type, normalized and in the following axis orientation [angles, detY(depth), detX (horizontal)].
+    vert_filter_size_perc : float, optional
+        The size (in percents relative to angular dimension) of the vertical 1D median filter to remove outliers.
+    radius_size : int, optional
+        The size of the filter to calculate the ratio. This will effect the width of the resulting mask.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -962,7 +968,8 @@ def stripes_detect3d(arr, vertical_filter_size=10, ncore=None):
     Returns
     -------
     ndarray
-        Weights for stripe's edges as a 3D array of float32 data type.
+        Weights for stripe's edges as a 3D array of float32 data type. 
+        The weights can be thresholded or passed to stripes_mask3d function to obtain a binary mask.
 
     Raises
     ------
@@ -985,9 +992,16 @@ def stripes_detect3d(arr, vertical_filter_size=10, ncore=None):
     else:
         raise ValueError("The input array must be a 3D array")
 
-    # perform full 3D stripes detection
+    # calculate absolute values based on the provided percentages: 
+    if 0.0 < vert_filter_size_perc <= 100.0:
+        vertical_filter_size = (int)((0.01*vert_filter_size_perc)*dz)
+    else:
+        raise ValueError("vert_filter_size_perc value must be in (0, 100] percentage range ")
+
+    # perform stripes detection
     extern.c_stripes_detect3d(arr, out, 
                               vertical_filter_size,
+                              radius_size,
                               ncore,
                               dx, dy, dz)
     return out
@@ -1000,8 +1014,9 @@ def stripes_mask3d(arr,
                    sensitivity_perc = 80.0,
                    ncore=None):
     """
-    Takes the result of the stripes_detect3d module as an input (weights for stripes)
-    and creates a binary 3D mask emphasizing stripes and removing other features.
+    Takes the result of the stripes_detect3d module as an input and generates a 
+    binary 3D mask with ones where stripes present. The method tries to eliminate
+    non-stripe features by checking the consistency in three directions.
 
     .. versionadded:: 1.13
 
@@ -1009,8 +1024,14 @@ def stripes_mask3d(arr,
     ----------
     arr : ndarray
         3D array (float32 data type) given as [angles, detY(depth), detX]; The input array is the result of stripes_detect3d module.
+    threshold : float, optional
+        Threshold for the given weights, the smaller values should correspond to the stripes
     stripe_length_perc : float, optional
-        Parameter that defines the minimal length of a stripe accepted in percents relative to the full angular dimension.
+        Parameter (in percents) that controls the minimum accepted length of a stripe relative to the full angular dimension.
+    stripe_depth_perc : float, optional
+        Parameter (in percents) that controls the minimum accepted depth of a stripe relative to the depth dimension.
+    stripe_width_perc : float, optional
+        Parameter (in percents) that controls the minimum accepted width of a stripe relative to the full horizontal dimension.
     sensitivity_perc : float, optional
         The value in percents to impose less strict conditions on length, depth and width of a stripe.
     ncore : int, optional
@@ -1020,7 +1041,7 @@ def stripes_mask3d(arr,
     Returns
     -------
     ndarray
-        Weights for stripe's edges as a 3D array of float32 data type.
+        A binary mask of uint16 data type with stripes highlighted.
 
     Raises
     ------

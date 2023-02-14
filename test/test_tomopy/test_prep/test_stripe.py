@@ -145,3 +145,20 @@ class StripeRemovalTestCase(unittest.TestCase):
             np.expand_dims(mat, 1), 1.5, 5)[:, 0, :]
         num = np.abs(np.mean(mat_corr[:, self.b:self.e]) - 6.0)
         self.assertTrue(num > self.eps)
+
+    def test_stripe_detection(self):
+        assert_allclose(
+            srm.stripes_detect3d(read_file('test_stripe_data.npy'), 
+                                 vert_filter_size_perc=25, 
+                                 radius_size=1),
+            read_file('stripes_detect3d.npy'), rtol=1e-6)
+
+    def test_stripe_mask(self):
+        assert_allclose(
+            srm.stripes_mask3d(read_file('stripes_detect3d.npy'), 
+                               threshold=0.2,
+                               stripe_length_perc=30.0,
+                               stripe_depth_perc=0.0,
+                               stripe_width_perc=20.0,
+                               sensitivity_perc=80.0),
+            read_file('stripes_mask3d.npy'), rtol=1e-6)        

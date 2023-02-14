@@ -53,7 +53,9 @@
 #endif
 
 DLL int
-stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_vertical,
+stripesdetect3d_main_float(float* Input, float* Output, 
+                           int window_halflength_vertical,
+                           int ratio_radius,
                            int ncores, int dimX, int dimY, int dimZ);
 
 DLL int
