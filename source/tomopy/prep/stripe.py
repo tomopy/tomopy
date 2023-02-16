@@ -983,8 +983,8 @@ def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
     input_type = arr.dtype
     if (input_type != 'float32'):
         arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.empty_like(arr)    
-
+    out = np.empty_like(arr, order='C')
+    
     if arr.ndim == 3:
         dz, dy, dx = arr.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
@@ -999,7 +999,7 @@ def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
         raise ValueError("vert_filter_size_perc value must be in (0, 100] percentage range ")
 
     # perform stripes detection
-    extern.c_stripes_detect3d(arr, out, 
+    extern.c_stripes_detect3d(np.ascontiguousarray(arr), out, 
                               vertical_filter_size,
                               radius_size,
                               ncore,
@@ -1055,7 +1055,7 @@ def stripes_mask3d(arr,
     input_type = arr.dtype
     if (input_type != 'float32'):
         arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.uint16(np.empty_like(arr))
+    out = np.uint16(np.empty_like(arr, order='C'))
 
     if arr.ndim == 3:
         dz, dy, dx = arr.shape
@@ -1084,7 +1084,7 @@ def stripes_mask3d(arr,
     
    
     # perform mask creation based on the input provided by stripes_detect3d module
-    extern.c_stripesmask3d(arr, out, 
+    extern.c_stripesmask3d(np.ascontiguousarray(arr), out, 
                            threshold,
                            stripe_length_min,
                            stripe_depth_min,

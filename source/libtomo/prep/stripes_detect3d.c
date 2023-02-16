@@ -89,27 +89,39 @@ ratio_mean_stride3d(float* input, float* output,
     }
     mean_plate /= (float)(all_pixels_window);
     
-    /* calculate mean of gradientX in a direction orthogonal to stripes direction */
+    /* calculate mean of gradientX in a 2D plate orthogonal to stripes direction */
     mean_horiz = 0.0f;
-    for(i_m = 1; i_m <= radius; i_m++)
+    for(j_m = -1; j_m <= 1; j_m++)
     {
-        i1 = i + i_m;
-        if (i1 >= dimX) 
-            i1 = i - i_m;
-        mean_horiz += fabsf(input[((dimX * dimY) * k + j * dimX + i1)]);
+        j1 = j + j_m;
+        if((j1 < 0) || (j1 >= dimY))
+            j1 = j - j_m;
+        for(i_m = 1; i_m <= radius; i_m++)
+        {
+            i1 = i + i_m;
+            if (i1 >= dimX) 
+                i1 = i - i_m;
+            mean_horiz += fabsf(input[((dimX * dimY) * k + j1 * dimX + i1)]);
+        }
     }
-    mean_horiz /= (float)(radius);
+    mean_horiz /= (float)(radius*3);
     
     /* Calculate another mean symmetrically */
     mean_horiz2 = 0.0f;
-    for(i_m = -radius; i_m <= -1; i_m++)
+    for(j_m = -1; j_m <= 1; j_m++)
     {
-        i1 = i + i_m;
-        if (i1 < 0)
-            i1 = i - i_m;
-        mean_horiz2 += fabsf(input[((dimX * dimY) * k + j * dimX + i1)]);
+        j1 = j + j_m;
+        if((j1 < 0) || (j1 >= dimY))
+            j1 = j - j_m;
+        for(i_m = -radius; i_m <= -1; i_m++)
+        {
+            i1 = i + i_m;
+            if (i1 < 0)
+                i1 = i - i_m;
+        mean_horiz2 += fabsf(input[((dimX * dimY) * k + j1 * dimX + i1)]);
+        }
     }
-    mean_horiz2 /= (float)(radius);
+    mean_horiz2 /= (float)(radius*3);
 
     /* calculate the ratio between two means assuming that the mean 
     orthogonal to stripes direction should be larger than the mean 
