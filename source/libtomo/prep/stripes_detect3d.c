@@ -49,9 +49,61 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "libtomo/stripes_detect3d.h"
+#include "libtomo/stripe.h"
 #include "../misc/utils.h"
 
+
+/* Calculate the forward difference derrivative of the 3D input in the direction of the "axis" parameter 
+using the step_size in pixels to skip pixels (i.e. step_size = 1 is the classical gradient)
+axis = 0: horizontal direction
+axis = 1: depth direction
+axis = 2: vertical direction
+*/
+void 
+gradient3D(float *input, float *output, long dimX, long dimY, long dimZ, int axis, int step_size)
+{  
+    long i;
+    long j;
+    long k;
+    long i1;
+    long j1;
+    long k1;
+    long index;
+   
+#pragma omp parallel for shared(input, output) private(i,j,k,i1,j1,k1,index)
+    for(j=0; j<dimY; j++)     
+    {
+        for(i=0; i<dimX; i++) 
+        {
+            for(k=0; k<dimZ; k++)             
+            {
+            index = ((dimX * dimY) * k + j * dimX + i);
+                /* Forward differences */
+                if (axis == 0) 
+                {
+                    i1 = i + step_size; 
+                    if (i1 >= dimX) 
+                        i1 = i - step_size;
+                    output[index] = input[(dimX*dimY)*k + j*dimX+i1] - input[index];
+                }
+                else if (axis == 1) 
+                {
+                    j1 = j + step_size; 
+                    if (j1 >= dimY) 
+                        j1 = j - step_size;
+                    output[index] = input[(dimX*dimY)*k + j1*dimX+i] - input[index];
+                }
+                else 
+                {
+                    k1 = k + step_size; 
+                    if (k1 >= dimZ) 
+                        k1 = k-step_size;
+                    output[index] = input[(dimX*dimY)*k1 + j*dimX+i] - input[index];
+                }
+            }
+        }
+    }
+}
 
 void
 ratio_mean_stride3d(float* input, float* output,

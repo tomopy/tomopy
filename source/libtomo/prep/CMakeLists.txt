@@ -1,6 +1,5 @@
 set(HEADERS "${tomopy_SOURCE_DIR}/include/libtomo/prep.h"
-            "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h"
-            "${tomopy_SOURCE_DIR}/include/libtomo/stripes_detect3d.h")
+            "${tomopy_SOURCE_DIR}/include/libtomo/stripe.h")
 
 tomopy_add_library(
   tomo-prep

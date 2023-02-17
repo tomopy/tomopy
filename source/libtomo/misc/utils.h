@@ -63,5 +63,3 @@ void DLL
 quicksort_float(float* x, int first, int last);
 void DLL
 quicksort_uint16(unsigned short* x, int first, int last);
-void DLL
-gradient3D(float *input, float *output, long dimX, long dimY, long dimZ, int axis, int step_size);

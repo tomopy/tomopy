@@ -943,7 +943,7 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         tomo[:, m, :] = sino
 
 
-def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
+def stripes_detect3d(tomo, vert_filter_size_perc=5, radius_size=3, ncore=None):
     """
     Apply a stripes detection method to empasize their edges in a 3D array.
     The input must be normalized projection data in range [0,1] and given in
@@ -951,12 +951,13 @@ def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
     this orientation, the stripes are the vertical features. The method works with
     full and partial stripes of constant ot varying intensity. 
 
-    .. versionadded:: 1.13
+    .. versionadded:: 1.14
 
     Parameters
     ----------
-    arr : ndarray
-        Input 3D array of float32 data type, normalized and in the following axis orientation [angles, detY(depth), detX (horizontal)].
+    tomo : ndarray
+        3D tomographic data of float32 data type, normalized [0,1] and given in
+        [angles, detY(depth), detX (horizontal)] axis orientation.
     vert_filter_size_perc : float, optional
         The size (in percents relative to angular dimension) of the vertical 1D median filter to remove outliers.
     radius_size : int, optional
@@ -980,13 +981,13 @@ def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    input_type = arr.dtype
+    input_type = tomo.dtype
     if (input_type != 'float32'):
-        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.empty_like(arr, order='C')
+        tomo = dtype.as_float32(tomo)  # silent convertion to float32 data type
+    out = np.empty_like(tomo, order='C')
     
-    if arr.ndim == 3:
-        dz, dy, dx = arr.shape
+    if tomo.ndim == 3:
+        dz, dy, dx = tomo.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
@@ -999,14 +1000,14 @@ def stripes_detect3d(arr, vert_filter_size_perc=5, radius_size=3, ncore=None):
         raise ValueError("vert_filter_size_perc value must be in (0, 100] percentage range ")
 
     # perform stripes detection
-    extern.c_stripes_detect3d(np.ascontiguousarray(arr), out, 
+    extern.c_stripes_detect3d(np.ascontiguousarray(tomo), out, 
                               vertical_filter_size,
                               radius_size,
                               ncore,
                               dx, dy, dz)
     return out
 
-def stripes_mask3d(arr, 
+def stripes_mask3d(weights, 
                    threshold = 0.7,
                    stripe_length_perc = 20.0,
                    stripe_depth_perc = 1.0,
@@ -1016,14 +1017,15 @@ def stripes_mask3d(arr,
     """
     Takes the result of the stripes_detect3d module as an input and generates a 
     binary 3D mask with ones where stripes present. The method tries to eliminate
-    non-stripe features by checking the consistency in three directions.
+    non-stripe features in data by checking the weight consistency in three directions.
 
-    .. versionadded:: 1.13
+    .. versionadded:: 1.14
 
     Parameters
     ----------
-    arr : ndarray
-        3D array (float32 data type) given as [angles, detY(depth), detX]; The input array is the result of stripes_detect3d module.
+    weights : ndarray
+        3D weights array, a result of stripes_detect3d module given in
+        [angles, detY(depth), detX] axis orientation.
     threshold : float, optional
         Threshold for the given weights, the smaller values should correspond to the stripes
     stripe_length_perc : float, optional
@@ -1052,13 +1054,13 @@ def stripes_mask3d(arr,
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
-    input_type = arr.dtype
+    input_type = weights.dtype
     if (input_type != 'float32'):
-        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.uint16(np.empty_like(arr, order='C'))
+        weights = dtype.as_float32(weights)  # silent convertion to float32 data type
+    out = np.uint16(np.empty_like(weights, order='C'))
 
-    if arr.ndim == 3:
-        dz, dy, dx = arr.shape
+    if weights.ndim == 3:
+        dz, dy, dx = weights.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
@@ -1084,7 +1086,7 @@ def stripes_mask3d(arr,
     
    
     # perform mask creation based on the input provided by stripes_detect3d module
-    extern.c_stripesmask3d(np.ascontiguousarray(arr), out, 
+    extern.c_stripesmask3d(np.ascontiguousarray(weights), out, 
                            threshold,
                            stripe_length_min,
                            stripe_depth_min,
