@@ -234,8 +234,8 @@ vertical_median_stride3d(float* input, float* output,
 }
 
 void
-remove_inconsistent_stripes(unsigned short* mask,
-                            unsigned short* out, 
+remove_inconsistent_stripes(unsigned char* mask,
+                            unsigned char* out, 
                             int stripe_length_min, 
                             int stripe_depth_min, 
                             float sensitivity,
@@ -309,8 +309,8 @@ remove_inconsistent_stripes(unsigned short* mask,
 }                            
 
 void
-merge_stripes(unsigned short* mask,
-              unsigned short* out, 
+merge_stripes(unsigned char* mask,
+              unsigned char* out, 
               int stripe_width_min, 
               long i,
               long j,
@@ -425,7 +425,7 @@ stripesdetect3d_main_float(float* Input, float* Output,
 }
 
 DLL int
-stripesmask3d_main_float(float* Input, unsigned short* Output,
+stripesmask3d_main_float(float* Input, unsigned char* Output,
                          float threshold_val,
                          int stripe_length_min,
                          int stripe_depth_min,
@@ -440,8 +440,8 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
     long long totalvoxels;
     totalvoxels = (long long) (dimX*dimY*dimZ);    
 
-    unsigned short* mask;
-    mask = calloc(totalvoxels, sizeof(unsigned short));
+    unsigned char* mask;
+    mask = calloc(totalvoxels, sizeof(unsigned char));
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -493,7 +493,7 @@ stripesmask3d_main_float(float* Input, unsigned short* Output,
             }
         }
     /* Copy output to mask */
-   copyIm_unshort(Output, mask, (long) (dimX), (long) (dimY), (long) (dimZ));
+   copyIm_unchar(Output, mask, (long) (dimX), (long) (dimY), (long) (dimZ));
 
     /* We can merge stripes together if they are relatively close to each other
      based on the stripe_width_min parameter */

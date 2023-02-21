@@ -1043,7 +1043,7 @@ def stripes_mask3d(weights,
     Returns
     -------
     ndarray
-        A binary mask of uint16 data type with stripes highlighted.
+        A binary mask of uint8 data type with stripes highlighted.
 
     Raises
     ------
@@ -1057,7 +1057,7 @@ def stripes_mask3d(weights,
     input_type = weights.dtype
     if (input_type != 'float32'):
         weights = dtype.as_float32(weights)  # silent convertion to float32 data type
-    out = np.uint16(np.empty_like(weights, order='C'))
+    out = np.uint8(np.empty_like(weights, order='C'))
 
     if weights.ndim == 3:
         dz, dy, dx = weights.shape
