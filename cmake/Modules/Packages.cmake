@@ -212,22 +212,6 @@ if(TOMOPY_USE_CUDA)
   if("CUDA" IN_LIST LANGUAGES)
     list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_CUDA)
     add_feature(${PROJECT_NAME}_CUDA_FLAGS "CUDA NVCC compiler flags")
-    add_feature(CUDA_ARCH "CUDA architecture (e.g. '35' means '-arch=sm_35')")
-
-    # 30, 32      + Kepler support + Unified memory programming 35          +
-    # Dynamic parallelism support 50, 52, 53  + Maxwell support 60, 61, 62  +
-    # Pascal support 70, 72      + Volta support 75          + Turing support
-    if(NOT DEFINED CUDA_ARCH)
-      if(CUDAToolkit_VERSION_MAJOR VERSION_LESS 11)
-        set(CUDA_ARCH "30;32;35;37;50;52;53;60;61;62;70;72;75")
-      else()
-        if(CUDAToolkit_VERSION_MINOR VERSION_LESS 1)
-          set(CUDA_ARCH "35;37;50;52;53;60;61;62;70;72;75;80")
-        else()
-          set(CUDA_ARCH "35;37;50;52;53;60;61;62;70;72;75;80;86")
-        endif()
-      endif()
-    endif()
 
     if(TOMOPY_USE_NVTX)
       find_library(
@@ -248,11 +232,6 @@ if(TOMOPY_USE_CUDA)
         set(TOMOPY_USE_NVTX OFF)
       endif()
     endif()
-
-    foreach(ARCH IN ITEMS ${CUDA_ARCH})
-      list(APPEND ${PROJECT_NAME}_CUDA_FLAGS
-           -gencode=arch=compute_${ARCH},code=sm_${ARCH})
-    endforeach(ARCH)
 
     list(APPEND ${PROJECT_NAME}_CUDA_FLAGS --default-stream per-thread)
 
