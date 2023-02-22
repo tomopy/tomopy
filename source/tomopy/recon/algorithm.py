@@ -314,6 +314,11 @@ def recon(tomo,
 
     # Generate args for the algorithm.
     center_arr = get_center(tomo.shape, center)
+
+    if tomo.shape[0] != len(center_arr):
+        msg = 'There must be one center for every slice.'
+        raise ValueError(msg)
+
     args = _get_algorithm_args(theta)
 
     # Initialize reconstruction.
