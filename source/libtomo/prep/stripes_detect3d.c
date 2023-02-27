@@ -48,6 +48,7 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "libtomo/stripe.h"
 #include "../misc/utils.h"
@@ -608,8 +609,7 @@ int stripesmask3d_main_float(float* Input,
     int       iter_merge;
     int       switch_dim;
     size_t index;
-    long long totalvoxels;
-    totalvoxels = (long long)(dimX*dimY*dimZ);
+    size_t totalvoxels = dimX*dimY*dimZ;
 
     unsigned char* mask;    
     mask = malloc(totalvoxels * sizeof(unsigned char));
@@ -645,7 +645,7 @@ int stripesmask3d_main_float(float* Input,
         }
         
     /* Copy mask to output */
-    copyIm_unchar_long(mask, Output, totalvoxels);
+    memcpy(Output, mask, totalvoxels * sizeof(unsigned char));
     
     /* the depth consistency for features  */
     switch_dim = 1; 
@@ -668,7 +668,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }
     /* Copy output to mask */     
-    copyIm_unchar_long(Output, mask, totalvoxels);
+    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
 
     /* 
     Now we need to remove stripes that are shorter than "stripe_length_min" parameter
@@ -699,7 +699,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }
     /* Copy output to mask */
-    copyIm_unchar_long(Output, mask, totalvoxels);
+    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
 
     /* now we clean the obtained mask if the features do not hold our assumptions about the lengths */
 
@@ -720,7 +720,7 @@ int stripesmask3d_main_float(float* Input,
         }
 
     /* Copy output to mask */
-    copyIm_unchar_long(Output, mask, totalvoxels);
+    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
 
     /* 
     We can merge stripes together if they are relatively close to each other
@@ -744,7 +744,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }    
     /* Copy output to mask */
-    copyIm_unchar_long(Output, mask, totalvoxels);
+    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
     }
 
     free(mask);

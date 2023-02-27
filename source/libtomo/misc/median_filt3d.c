@@ -47,6 +47,7 @@
 #include <math.h>
 #include <omp.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "libtomo/median_filt3d.h"
 #include "utils.h"
@@ -268,7 +269,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
     if(mu_threshold != 0.0)
     {
-        copyIm(Input, Output, (long) (dimX), (long) (dimY), (long) (dimZ));
+        memcpy(Output, Input, dimX * dimY * dimZ * sizeof(float));
     } /* copy input into output */
 
     /* dealing here with a custom given number of cpu threads */
@@ -331,7 +332,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
     if(mu_threshold != 0.0)
     {
-        copyIm_unshort(Input, Output, (long) (dimX), (long) (dimY), (long) (dimZ));
+        memcpy(Output, Input, dimX * dimY * dimZ * sizeof(unsigned short));
     } /* copy input into output */
 
     /* dealing here with a custom given number of cpu threads */

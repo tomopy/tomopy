@@ -50,14 +50,6 @@
 #endif
 
 void DLL
-copyIm(const float* A, float* U, long dimX, long dimY, long dimZ);
-void DLL
-copyIm_unchar(const unsigned char* A, unsigned char* U, int dimX, int dimY, int dimZ);
-void DLL
-copyIm_unchar_long(unsigned char *A, unsigned char *U, long long totalvoxels);
-void DLL
-copyIm_unshort(const unsigned short* A, unsigned short* U, int dimX, int dimY, int dimZ);
-void DLL
 sort_bubble_float(float* x, int n_size);
 void DLL
 sort_bubble_uint16(unsigned short* x, int n_size);
