@@ -130,6 +130,8 @@ def as_c_uint16_p(arr):
 def as_c_int(arr):
     return ctypes.c_int(arr)
 
+def as_c_long(arr):
+    return ctypes.c_long(arr)
 
 def as_c_int_p(arr):
     arr = arr.astype(np.intc, copy=False)

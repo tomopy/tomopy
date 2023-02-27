@@ -942,26 +942,25 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         sino = _rs_interpolation(sino, snr, size, drop_ratio, norm)
         tomo[:, m, :] = sino
 
-
-def stripes_detect3d(tomo, vert_filter_size_perc=5, radius_size=3, ncore=None):
+def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     """
     Apply a stripes detection method to empasize their edges in a 3D array.
     The input must be normalized projection data in range [0,1] and given in
     the following axis orientation [angles, detY(depth), detX (horizontal)]. With 
     this orientation, the stripes are the vertical features. The method works with
     full and partial stripes of constant ot varying intensity. 
-
+    
     .. versionadded:: 1.14
 
     Parameters
     ----------
-    tomo : ndarray
+    inputData : ndarray
         3D tomographic data of float32 data type, normalized [0,1] and given in
         [angles, detY(depth), detX (horizontal)] axis orientation.
-    vert_filter_size_perc : float, optional
-        The size (in percents relative to angular dimension) of the vertical 1D median filter to remove outliers.
-    radius_size : int, optional
-        The size of the filter to calculate the ratio. This will effect the width of the resulting mask.
+    size : int, optional
+        The pixel size of the vertical 1D median filter to minimise false detections. Increase it if you have longer or full stripes in the data. 
+    radius : int, optional
+        The pixel size of the stencil to calculate the mean ratio between vertical and horizontal orientations. The larger values will enlarge the mask width.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -975,9 +974,8 @@ def stripes_detect3d(tomo, vert_filter_size_perc=5, radius_size=3, ncore=None):
     Raises
     ------
     ValueError
-        If the input array is not three dimensional.
-
-    """
+        If the input array is not three dimensional.        
+    """ 
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
@@ -993,27 +991,26 @@ def stripes_detect3d(tomo, vert_filter_size_perc=5, radius_size=3, ncore=None):
     else:
         raise ValueError("The input array must be a 3D array")
 
-    # calculate absolute values based on the provided percentages: 
-    if 0.0 < vert_filter_size_perc <= 100.0:
-        vertical_filter_size = (int)((0.01*vert_filter_size_perc)*dz)
-    else:
-        raise ValueError("vert_filter_size_perc value must be in (0, 100] percentage range ")
+    if size <= 0 or size > dz //  2:
+        raise ValueError("The size of the filter should be larger than zero and smaller than the half of the vertical dimension")
 
     # perform stripes detection
-    extern.c_stripes_detect3d(np.ascontiguousarray(tomo), out, 
-                              vertical_filter_size,
-                              radius_size,
+    extern.c_stripes_detect3d(np.ascontiguousarray(tomo), 
+                              out, 
+                              size,
+                              radius,
                               ncore,
                               dx, dy, dz)
     return out
 
+
 def stripes_mask3d(weights, 
-                   threshold = 0.7,
-                   stripe_length_perc = 20.0,
-                   stripe_depth_perc = 1.0,
-                   stripe_width_perc = 2.0,
-                   sensitivity_perc = 80.0,
-                   ncore=None):
+                  threshold = 0.6,
+                  min_stripe_length = 20,
+                  min_stripe_depth  = 10,
+                  min_stripe_width = 5,
+                  sensitivity_perc = 85.0,
+                  ncore=None):
     """
     Takes the result of the stripes_detect3d module as an input and generates a 
     binary 3D mask with ones where stripes present. The method tries to eliminate
@@ -1027,13 +1024,13 @@ def stripes_mask3d(weights,
         3D weights array, a result of stripes_detect3d module given in
         [angles, detY(depth), detX] axis orientation.
     threshold : float, optional
-        Threshold for the given weights, the smaller values should correspond to the stripes
-    stripe_length_perc : float, optional
-        Parameter (in percents) that controls the minimum accepted length of a stripe relative to the full angular dimension.
-    stripe_depth_perc : float, optional
-        Parameter (in percents) that controls the minimum accepted depth of a stripe relative to the depth dimension.
-    stripe_width_perc : float, optional
-        Parameter (in percents) that controls the minimum accepted width of a stripe relative to the full horizontal dimension.
+        Threshold for the given weights, the smaller values correspond to the stripes
+    min_stripe_length : int, optional
+        Minimum accepted length of a stripe in pixels. Can be large if there are full stripes in the data.
+    min_stripe_depth : int, optional
+        Minimum accepted depth of a stripe in pixels. The stripes do not extend very deep, with this parameter more non-stripe features can be removed. 
+    min_stripe_width : int, optional
+        Minimum accepted width of a stripe in pixels. The stripes can be merged together with this parameter.
     sensitivity_perc : float, optional
         The value in percents to impose less strict conditions on length, depth and width of a stripe.
     ncore : int, optional
@@ -1065,32 +1062,28 @@ def stripes_mask3d(weights,
             raise ValueError("The length of one of dimensions is equal to zero")
     else:
         raise ValueError("The input array must be a 3D array")
-    
-    # calculate absolute values based on the provided percentages: 
-    if 0.0 < stripe_length_perc <= 100.0:
-        stripe_length_min = (int)((0.01*stripe_length_perc)*dz)
-    else:
-        raise ValueError("stripe_length_perc value must be in (0, 100] percentage range ")
-    if 0.0 <= stripe_depth_perc <= 100.0:
-        stripe_depth_min = (int)((0.01*stripe_depth_perc)*dy)
-    else:
-        raise ValueError("stripe_depth_perc value must be in [0, 100] percentage range ")
-    if 0.0 < stripe_width_perc <= 100.0:
-        stripe_width_min = (int)((0.01*stripe_width_perc)*dx)
-    else:
-        raise ValueError("stripe_width_perc value must be in (0, 100] percentage range ")    
+
+    if min_stripe_length <= 0 or min_stripe_length >= dz:
+        raise ValueError("The minimum length of a stripe cannot be zero or exceed the size of the angular dimension")
+
+    if min_stripe_depth < 0 or min_stripe_depth >= dy:
+        raise ValueError("The minimum depth of a stripe cannot exceed the size of the depth dimension")
+
+    if min_stripe_width <= 0 or min_stripe_width >= dx:
+        raise ValueError("The minimum width of a stripe cannot be zero or exceed the size of the horizontal dimension")
+
     if 0.0 < sensitivity_perc <= 100.0:
         pass
     else:
         raise ValueError("sensitivity_perc value must be in (0, 100] percentage range ")
     
-   
     # perform mask creation based on the input provided by stripes_detect3d module
-    extern.c_stripesmask3d(np.ascontiguousarray(weights), out, 
+    extern.c_stripesmask3d(np.ascontiguousarray(weights), 
+                           out, 
                            threshold,
-                           stripe_length_min,
-                           stripe_depth_min,
-                           stripe_width_min,
+                           min_stripe_length,
+                           min_stripe_depth,
+                           min_stripe_width,
                            sensitivity_perc,
                            ncore,
                            dx, dy, dz)

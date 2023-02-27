@@ -42,6 +42,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
+#include "stdio.h"
 
 // for windows build
 #ifdef WIN32
@@ -75,6 +76,16 @@ copyIm_unchar(const unsigned char* A, unsigned char* U, int dimX, int dimY, int 
     for(j = 0; j < dimX * dimY * dimZ; j++)
         U[j] = A[j];
 }
+
+/* Copy Image -unsigned char long long (8bit)*/
+void copyIm_unchar_long(unsigned char *A, unsigned char *U, long long totalvoxels)
+{
+    size_t j;
+#pragma omp parallel for shared(A, U) private(j)
+	for (j = 0; j<totalvoxels; j++)  U[j] = A[j];
+	return;
+}
+
 
 /* Copy Image - unsigned short (16bit)*/
 void
