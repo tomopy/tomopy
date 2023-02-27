@@ -204,7 +204,7 @@ def configure():
         args.cmake_args.append("-DSANITIZER_TYPE:STRING={}".format(args.sanitizer_type))
 
     if args.enable_cuda:
-        args.cmake_args.append("-DCUDA_ARCH={}".format(args.cuda_arch))
+        args.cmake_args.append("-DCMAKE_CUDA_ARCHITECTURES={}".format(args.cuda_arch))
 
     if len(args.cmake_args) > 0:
         print("\n\n\tCMake arguments set via command line: {}\n".format(
