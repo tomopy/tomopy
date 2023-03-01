@@ -51,8 +51,6 @@
 #include <string.h>
 
 #include "libtomo/stripe.h"
-#include "../misc/utils.h"
-
 
 /********************************************************************/
 /**********************Supporting Functions**************************/
@@ -206,6 +204,13 @@ ratio_mean_stride3d(float* input, float* output,
     return;
 }
 
+int floatcomp(const void* elem1, const void* elem2)
+{
+    if(*(const float*)elem1 < *(const float*)elem2)
+        return -1;
+    return *(const float*)elem1 > *(const float*)elem2;
+}
+
 void
 vertical_median_stride3d(float* input, float* output,
                         int window_halflength_vertical,
@@ -232,14 +237,13 @@ vertical_median_stride3d(float* input, float* output,
             k1 = k-k_m;
         _values[counter] = input[(size_t)(dimX * dimY * k1) + (size_t)(j * dimX + i)];
         counter++;
-    }
-    quicksort_float(_values, 0, window_fulllength-1);
+    }   
+    qsort(_values, window_fulllength, sizeof(float), floatcomp);
     output[index] = _values[midval_window_index];
 
     free (_values);
     return;
 }
-
 
 void
 mean_stride3d(float* input, float* output,

@@ -7,8 +7,6 @@ tomopy_add_library(
   prep.c
   stripe.c
   stripes_detect3d.c
-  ../misc/utils.c
-  ../misc/utils.h
   ${HEADERS})
 
 find_package(OpenMP REQUIRED COMPONENTS C)

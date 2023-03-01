@@ -70,3 +70,4 @@ stripesmask3d_main_float(float* Input,
                         int stripe_width_min,
                         float sensitivity,
                         int ncores, long dimX, long dimY, long dimZ);
+                        

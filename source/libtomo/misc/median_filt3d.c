@@ -50,7 +50,19 @@
 #include <string.h>
 
 #include "libtomo/median_filt3d.h"
-#include "utils.h"
+
+int floatcomp(const void* elem1, const void* elem2)
+{
+    if(*(const float*)elem1 < *(const float*)elem2)
+        return -1;
+    return *(const float*)elem1 > *(const float*)elem2;
+}
+int uint16comp(const void* elem1, const void* elem2)
+{
+    if(*(const unsigned short*)elem1 < *(const unsigned short*)elem2)
+        return -1;
+    return *(const unsigned short*)elem1 > *(const unsigned short*)elem2;
+}
 
 void
 medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
@@ -91,7 +103,8 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
             }
         }
     }
-    quicksort_float(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+
+    qsort(ValVec, sizefilter_total, sizeof(float), floatcomp);
 
     if(mu_threshold == 0.0F)
     {
@@ -137,7 +150,7 @@ medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
             counter++;
         }
     }
-    quicksort_float(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+    qsort(ValVec, sizefilter_total, sizeof(float), floatcomp);
 
     if(mu_threshold == 0.0F)
     {
@@ -192,7 +205,8 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
             }
         }
     }
-    quicksort_uint16(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+ 
+    qsort(ValVec, sizefilter_total, sizeof(unsigned short), uint16comp);
 
     if(mu_threshold == 0.0F)
     {
@@ -239,7 +253,8 @@ medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
             counter++;
         }
     }
-    quicksort_uint16(ValVec, 0, sizefilter_total - 1); /* perform sorting */
+
+    qsort(ValVec, sizefilter_total, sizeof(unsigned short), uint16comp);
 
     if(mu_threshold == 0.0F)
     {
