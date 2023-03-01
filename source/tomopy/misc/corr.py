@@ -396,10 +396,10 @@ def median_filter3d(arr, size=3, ncore=None):
 
     # perform full 3D filtering
     if (input_type == 'float32'):
-        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_float32(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     else:
-        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_uint16(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     return out
 
@@ -455,10 +455,10 @@ def remove_outlier3d(arr, dif, size=3, ncore=None):
 
     # perform full 3D filtering
     if (input_type == 'float32'):
-        extern.c_median_filt3d_float32(arr, out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_float32(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     else:
-        extern.c_median_filt3d_uint16(arr, out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_uint16(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     return out
 
