@@ -39,13 +39,7 @@ else()
   set(_USE_OPENCV OFF)
 endif()
 
-# Check if MKL can be enabled
-find_package(MKL)
-if(MKL_FOUND)
-  set(_USE_MKL ON)
-else()
-  set(_USE_MKL OFF)
-endif()
+
 
 # features
 add_feature(CMAKE_BUILD_TYPE
@@ -82,7 +76,7 @@ add_option(TOMOPY_USE_CLANG_TIDY "Enable clang-tidy (C++ linter)" OFF)
 add_option(TOMOPY_USE_CUDA "Enable CUDA option for GPU execution" ${_USE_CUDA})
 add_option(TOMOPY_USER_FLAGS
            "Insert CFLAGS and CXXFLAGS regardless of whether pass check" OFF)
-add_option(TOMOPY_USE_MKL "Enables Intel Math Kernel Library" ${_USE_MKL})
+add_option(TOMOPY_USE_MKL "Enables Intel Math Kernel Library" ON)
 
 if(TOMOPY_USE_CUDA)
   add_option(TOMOPY_USE_NVTX "Enable NVTX for Nsight" OFF)

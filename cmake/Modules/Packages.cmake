@@ -40,23 +40,6 @@ endif()
 
 # ##############################################################################
 #
-# MKL (required for gridrec)
-#
-# ##############################################################################
-
-if(TOMOPY_USE_MKL)
-  if(MKL_FOUND)
-    list(APPEND TOMOPY_EXTERNAL_INCLUDE_DIRS ${MKL_INCLUDE_DIRS})
-    list(APPEND TOMOPY_EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
-  else()
-    message(FATAL_ERROR "MKL not found. Aborting build.")
-  endif()
-else()
-  message(WARNING "MKL not found. Gridrec will be disabled.")
-endif()
-
-# ##############################################################################
-#
 # OpenCV (required for CPU acceleration)
 #
 # ##############################################################################
