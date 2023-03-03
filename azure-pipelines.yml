@@ -67,8 +67,10 @@ jobs:
     matrix:
       Python-nomkl:
         python.version: 'nomkl'
+        use.mkl: 'OFF'
       Python-38:
         python.version: '38'
+        use.mkl: 'ON'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -81,7 +83,7 @@ jobs:
   - script: |
       source activate tomopy
       pip install . --no-deps
-      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DTOMOPY_USE_MKL:BOOL=$(use.mkl)
       cmake --build build
       cmake --install build
     displayName: Setup and install
