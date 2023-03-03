@@ -7,9 +7,20 @@ endif()
 
 tomopy_add_library(tomo-gridrec SHARED gridrec.c pal.h ${HEADERS})
 
-# FIXME: gridrec should not be linking to OpenCV
-target_link_libraries(tomo-gridrec PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
-                                           ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+if(TOMOPY_USE_MKL)
+  find_package(MKL CONFIG REQUIRED COMPONENTS MKL::MKL)
+  target_link_libraries(tomo-gridrec PRIVATE MKL::MKL)
+  target_compile_definitions(tomo-gridrec PRIVATE TOMOPY_USE_MKL)
+else()
+  if(TOMOPY_CXX_GRIDREC)
+    message(WARNING "TOMOPY_CXX_GRIDREC with FFTW3 is not officially supported.")
+  endif()
+  # FFTW doesn't officially support CMAKE, they prefer PkgConfig
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(FFTW REQUIRED fftw3f IMPORTED_TARGET)
+  target_link_libraries(tomo-gridrec PRIVATE fftw3f)
+  target_compile_definitions(tomo-gridrec PRIVATE TOMOPY_USE_FFTW)
+endif()
 
 # link library to math.h
 if(NOT WIN32)

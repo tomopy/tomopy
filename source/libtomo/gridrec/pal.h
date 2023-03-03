@@ -19,6 +19,7 @@ using namespace std::literals::complex_literals;
 // For C use the complex header which is only present with some compilers
 #    include <complex.h>
 typedef float _Complex PAL_COMPLEX;
+#    include <stdlib.h>
 #endif
 
 // Memory allocation and alignment ------------------------------------------//
