@@ -51,11 +51,11 @@
 #include "pal.h"
 
 #ifdef TOMOPY_USE_MKL
-    #include "mkl.h"
+#    include "mkl.h"
 #endif
 #ifdef TOMOPY_USE_FFTW
 // Import pal.h first to import <complex.h> first so fftw uses native complex types
-    #include "fftw3.h"
+#    include "fftw3.h"
 #endif
 
 float
@@ -271,7 +271,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
-# ifdef TOMOPY_USE_MKL
+#ifdef TOMOPY_USE_MKL
     DFTI_DESCRIPTOR_HANDLE reverse_1d;
     MKL_LONG               length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
@@ -284,8 +284,9 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiSetValue(forward_2d, DFTI_THREAD_LIMIT,
                  1);  // FFT should run sequentially to avoid oversubscription
     DftiCommitDescriptor(forward_2d);
-# endif
+#endif
 #ifdef TOMOPY_USE_FFTW
+    fftwf_make_planner_thread_safe();
     fftwf_plan reverse_1d;
     reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_ESTIMATE);
     fftwf_plan forward_2d;

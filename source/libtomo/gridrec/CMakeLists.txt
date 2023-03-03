@@ -19,10 +19,11 @@ else()
     message(
       WARNING "TOMOPY_CXX_GRIDREC with FFTW3 is not officially supported.")
   endif()
-  # FFTW doesn't officially support CMAKE, they prefer PkgConfig
+  # FFTW doesn't officially support CMAKE, they prefer PkgConfig.
   find_package(PkgConfig REQUIRED)
   pkg_search_module(FFTW REQUIRED fftw3f IMPORTED_TARGET)
-  target_link_libraries(tomo-gridrec PRIVATE fftw3f)
+  # Must link with thread aware fftw3f in order to make planner thread safe
+  target_link_libraries(tomo-gridrec PRIVATE fftw3f_threads fftw3f)
   target_compile_definitions(tomo-gridrec PRIVATE TOMOPY_USE_FFTW)
 endif()
 
