@@ -51,7 +51,6 @@ Module for external library wrappers.
 """
 import tomopy.util.dtype as dtype
 from . import c_shared_lib
-from . import _missing_library
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
@@ -59,13 +58,10 @@ __docformat__ = 'restructuredtext en'
 __all__ = ['c_gridrec']
 
 
-LIB_TOMOPY_GRIDREC = c_shared_lib("tomo-gridrec", error=False)
+LIB_TOMOPY_GRIDREC = c_shared_lib("tomo-gridrec")
 
 
 def c_gridrec(tomo, center, recon, theta, **kwargs):
-
-    if LIB_TOMOPY_GRIDREC is None:
-        _missing_library("gridrec")
 
     if len(tomo.shape) == 2:
         # no y-axis (only one slice)
