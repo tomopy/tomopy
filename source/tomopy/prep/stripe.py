@@ -944,7 +944,7 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
 
 def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     """
-    Detect stripes in a 3D array.
+    Detect stripes in a 3D array. Usually applied to normalized projection data.
 
     The method works with full and partial stripes of constant ot varying intensity. 
     
@@ -953,13 +953,15 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     Parameters
     ----------
     tomo : ndarray
-        3D tomographic data of float32 data type, normalized [0, 1] and given in
-        [angles, detY(depth), detX (horizontal)] axis orientation. With 
-        this orientation, the stripes are the vertical features.
+        3D tomographic data of float32 data type, preferably in the [0, 1] range, although 
+        reasonable deviations accepted (e.g. the result of the normalization and the negative log taken of the raw data).         
+        The projection data should be given with [angles, detY(depth), detX (horizontal)] axis orientation. With this orientation,
+        the stripes are the vertical features.
     size : int, optional
-        The pixel size of the vertical 1D median filter to minimise false detections. Increase it if you have longer or full stripes in the data. 
+        The pixel size of the vertical (angle dimension) 1D median filter to minimise false detections. Increase it if you have longer or full stripes in the data. 
     radius : int, optional
-        The pixel size of the stencil to calculate the mean ratio between vertical and horizontal orientations. The larger values will enlarge the mask width.
+        The pixel size of the 3D stencil to calculate the mean ratio between vertical (angular) and horizontal (detX) orientations of the detX gradient. The larger
+        values can affect the width of the detected stripe, use 1,2,3 values.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -967,15 +969,14 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     Returns
     -------
     ndarray
-        Weights for stripe's edges as a 3D array of float32 data type. 
-        The weights can be thresholded or passed to stripes_mask3d function to obtain a binary mask.
+        Weights in the range of [0, 1] of float32 data type where stripe's edges are highlighted with the smaller (e.g. < 0.5) values.
+        The weights can be manually thresholded or passed to stripes_mask3d function for further processing and a binary mask generation.
 
     Raises
     ------
     ValueError
         If the `tomo` is not three dimensional.
-        If the `size` is invlid.
-        If `tomo` is not scaled to [0, 1].
+        If the `size` is invalid.
     """ 
     if ncore is None:
         ncore = mproc.mp.cpu_count()
@@ -1015,7 +1016,7 @@ def stripes_mask3d(weights,
     """
     Takes the result of the stripes_detect3d module as an input and generates a 
     binary 3D mask with ones where stripes present. The method tries to eliminate
-    non-stripe features in data by checking the weight consistency in three directions.
+    non-stripe features in data by checking the consistency of weights in three directions.
 
     .. versionadded:: 1.14
 
@@ -1025,15 +1026,21 @@ def stripes_mask3d(weights,
         3D weights array, a result of stripes_detect3d module given in
         [angles, detY(depth), detX] axis orientation.
     threshold : float, optional
-        Threshold for the given weights, the smaller values correspond to the stripes
+        Threshold for the given weights. This parameter defines what weights will be considered 
+        as potential candidates for stripes. It is important to remove as many false outliers
+        as possible by taking the highest acceptable value. The lower value might lead to
+        ignoring the actual stripes and the higher can generate false alarms. The good range to try is (0.5-0.7).
     min_stripe_length : int, optional
-        Minimum accepted length of a stripe in pixels. Can be large if there are full stripes in the data.
+        Minimum length of a stripe in pixels with respect to the "angles" axis. If there are full stripes in the data,
+        then this could be >50% of the size of the the "angles" axis.
     min_stripe_depth : int, optional
-        Minimum accepted depth of a stripe in pixels. The stripes do not extend very deep, with this parameter more non-stripe features can be removed. 
+        Minimum depth of a stripe in pixels with respect to the "detY" axis. The stripes do not extend very deep normally
+        in the data. By setting this parameter to the approximate depth of the stripe more false alarms can be removed.
     min_stripe_width : int, optional
-        Minimum accepted width of a stripe in pixels. The stripes can be merged together with this parameter.
+        Minimum width of a stripe in pixels with respect to the "detX" axis. The stripes that close to each other 
+        can be merged together with this parameter.
     sensitivity_perc : float, optional
-        The value in percents to impose less strict conditions on length, depth and width of a stripe.
+        The value in percents to impose less strict conditions on length, depth and width parameters of a stripe.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.

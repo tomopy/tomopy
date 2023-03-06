@@ -506,13 +506,13 @@ int stripesdetect3d_main_float(float* Input, float* Output,
                            int window_halflength_vertical,
                            int ratio_radius,
                            int ncores,
-                           long dimX, long dimY, long dimZ)
+                           int dimX, int dimY, int dimZ)
 {
     long      i;
     long      j;
     long      k;
     long long totalvoxels;    
-    totalvoxels = (long long)(dimX*dimY*dimZ);
+    totalvoxels = (long long)((long)(dimX)*(long)(dimY)*(long)(dimZ));
 
     int window_fulllength = (int)(2*window_halflength_vertical + 1);
     int midval_window_index = (int)(0.5f*window_fulllength) - 1;
@@ -605,7 +605,8 @@ int stripesmask3d_main_float(float* Input,
                              int stripe_depth_min,
                              int stripe_width_min,
                              float sensitivity,
-                             int ncores, long dimX, long dimY, long dimZ)
+                             int ncores,
+                             int dimX, int dimY, int dimZ)
 {
     long      i;
     long      j;
@@ -613,7 +614,7 @@ int stripesmask3d_main_float(float* Input,
     int       iter_merge;
     int       switch_dim;
     size_t index;
-    size_t totalvoxels = dimX*dimY*dimZ;
+    size_t totalvoxels = (long)(dimX)*(long)(dimY)*(long)(dimZ);
 
     unsigned char* mask;    
     mask = malloc(totalvoxels * sizeof(unsigned char));

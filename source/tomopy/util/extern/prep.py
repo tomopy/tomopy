@@ -116,9 +116,9 @@ def c_stripes_detect3d(
         dtype.as_c_int(size),
         dtype.as_c_int(radius),
         dtype.as_c_int(ncore),
-        dtype.as_c_long(dx),
-        dtype.as_c_long(dy),
-        dtype.as_c_long(dz),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
     )
     return output
 
@@ -145,8 +145,8 @@ def c_stripesmask3d(
         dtype.as_c_int(min_stripe_width),
         dtype.as_c_float(sensitivity_perc),
         dtype.as_c_int(ncore),
-        dtype.as_c_long(dx),
-        dtype.as_c_long(dy),
-        dtype.as_c_long(dz),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
     )
     return output

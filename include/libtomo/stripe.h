@@ -59,7 +59,7 @@ stripesdetect3d_main_float(float* Input, float* Output,
                            int window_halflength_vertical,
                            int ratio_radius,
                            int ncores,
-                           long dimX, long dimY, long dimZ);
+                           int dimX, int dimY, int dimZ);
 
 DLL int
 stripesmask3d_main_float(float* Input,
@@ -69,5 +69,6 @@ stripesmask3d_main_float(float* Input,
                         int stripe_depth_min,
                         int stripe_width_min,
                         float sensitivity,
-                        int ncores, long dimX, long dimY, long dimZ);
+                        int ncores,
+                        int dimX, int dimY, int dimZ);
                         
