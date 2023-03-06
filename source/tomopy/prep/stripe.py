@@ -974,7 +974,9 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     Raises
     ------
     ValueError
-        If the input array is not three dimensional.        
+        If the `tomo` is not three dimensional.
+        If the `size` is invlid.
+        If `tomo` is not scaled to [0, 1].
     """ 
     if ncore is None:
         ncore = mproc.mp.cpu_count()
