@@ -1054,7 +1054,10 @@ def stripes_mask3d(weights,
     ------
     ValueError
         If the input array is not three dimensional.
-        If a min_stripe parameter is negative or longer than its corresponding dimension
+        If a min_stripe_length parameter is negative, zero or longer than its corresponding dimension ("angle")
+        If a min_stripe_depth parameter is negative or longer than its corresponding dimension ("detY")
+        If a min_stripe_width parameter is negative, zero or longer than its corresponding dimension ("detX")
+        If a sensitivity_perc parameter doesn't lie in the (0,100] range
 
     """
     if ncore is None:
