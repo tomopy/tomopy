@@ -952,9 +952,10 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
 
     Parameters
     ----------
-    inputData : ndarray
-        3D tomographic data of float32 data type, normalized [0,1] and given in
-        [angles, detY(depth), detX (horizontal)] axis orientation.
+    tomo : ndarray
+        3D tomographic data of float32 data type, normalized [0, 1] and given in
+        [angles, detY(depth), detX (horizontal)] axis orientation. With 
+        this orientation, the stripes are the vertical features.
     size : int, optional
         The pixel size of the vertical 1D median filter to minimise false detections. Increase it if you have longer or full stripes in the data. 
     radius : int, optional
