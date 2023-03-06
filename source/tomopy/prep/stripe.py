@@ -944,11 +944,9 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
 
 def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     """
-    Apply a stripes detection method to empasize their edges in a 3D array.
-    The input must be normalized projection data in range [0,1] and given in
-    the following axis orientation [angles, detY(depth), detX (horizontal)]. With 
-    this orientation, the stripes are the vertical features. The method works with
-    full and partial stripes of constant ot varying intensity. 
+    Detect stripes in a 3D array.
+
+    The method works with full and partial stripes of constant ot varying intensity. 
     
     .. versionadded:: 1.14
 
