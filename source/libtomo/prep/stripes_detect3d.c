@@ -44,12 +44,6 @@
 // C-module for detecting and emphasising stripes present in the data (3D case)
 // Original author: Daniil Kazantsev, Diamond Light Source Ltd.
 
-#include <math.h>
-#include <omp.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "libtomo/stripe.h"
 
 /********************************************************************/
@@ -247,8 +241,8 @@ vertical_median_stride3d(float* input, float* output,
 
 void
 mean_stride3d(float* input, float* output,
-                        long i, long j, long k,
-                        long dimX, long dimY, long dimZ)
+            long i, long j, long k,
+            long dimX, long dimY, long dimZ)
 {
     /* a 3d mean to enusre a more stable gradient */
     long      i1;
@@ -299,8 +293,8 @@ mean_stride3d(float* input, float* output,
 }
 
 void
-remove_inconsistent_stripes(unsigned char* mask,
-                            unsigned char* out, 
+remove_inconsistent_stripes(bool* mask,
+                            bool* out, 
                             int stripe_length_min, 
                             int stripe_depth_min, 
                             float sensitivity,
@@ -327,7 +321,7 @@ remove_inconsistent_stripes(unsigned char* mask,
     /* start by considering vertical features */
     if (switch_dim == 0)
     {
-        if (mask[index] == 1)
+        if (mask[index] == true)
         {
             counter_vert_voxels = 0;
             for(k_m = -halfstripe_length; k_m <= halfstripe_length; k_m++)
@@ -335,11 +329,11 @@ remove_inconsistent_stripes(unsigned char* mask,
                 k1 = k + k_m;
                 if((k1 < 0) || (k1 >= dimZ))
                     k1 = k - k_m;
-                if (mask[(size_t)(dimX * dimY * k1) + (size_t)(j * dimX + i)] == 1)            
+                if (mask[(size_t)(dimX * dimY * k1) + (size_t)(j * dimX + i)] == true)            
                     counter_vert_voxels++;
             }       
             if (counter_vert_voxels < threshold_vertical)
-                out[index] = 0;
+                out[index] = false;
         }
     }
     else 
@@ -350,7 +344,7 @@ remove_inconsistent_stripes(unsigned char* mask,
         in the depth dimension compared to the features that belong to a 
         sample. 
        */
-        if (mask[index] == 1)
+        if (mask[index] == true)
         {
             if (stripe_depth_min != 0)
             {
@@ -360,11 +354,11 @@ remove_inconsistent_stripes(unsigned char* mask,
                 y1 = j + y_m;
                 if((y1 < 0) || (y1 >= dimY))
                     y1 = j - y_m;
-                if (mask[(size_t)(dimX * dimY * k) + (size_t)(y1 * dimX + i)] == 1)
+                if (mask[(size_t)(dimX * dimY * k) + (size_t)(y1 * dimX + i)] == true)
                     counter_depth_voxels++;
             }
             if (counter_depth_voxels > threshold_depth)
-                out[index] = 0;         
+                out[index] = false;
             }
         }
     }
@@ -372,13 +366,13 @@ remove_inconsistent_stripes(unsigned char* mask,
 }
 
 void
-remove_short_stripes(unsigned char* mask,
-                        unsigned char* out, 
-                        int stripe_length_min, 
-                        long i,
-                        long j,
-                        long k,
-                        long dimX, long dimY, long dimZ)
+remove_short_stripes(bool* mask,
+                    bool* out, 
+                    int stripe_length_min, 
+                    long i,
+                    long j,
+                    long k,
+                    long dimX, long dimY, long dimZ)
 {
     int       counter_vert_voxels;
     int       halfstripe_length = (int)stripe_length_min/2;
@@ -387,7 +381,7 @@ remove_short_stripes(unsigned char* mask,
     size_t    index;
     index = (size_t)(dimX * dimY * k) + (size_t)(j * dimX + i);
 
-    if (mask[index] == 1)
+    if (mask[index] == true)
     {
         counter_vert_voxels = 0;
         for(k_m = -halfstripe_length; k_m <= halfstripe_length; k_m++)
@@ -395,18 +389,18 @@ remove_short_stripes(unsigned char* mask,
             k1 = k + k_m;
             if((k1 < 0) || (k1 >= dimZ))
                 k1 = k - k_m;
-            if (mask[(size_t)(dimX * dimY * k1) + (size_t)(j * dimX + i)] == 1)            
+            if (mask[(size_t)(dimX * dimY * k1) + (size_t)(j * dimX + i)] == true)            
                 counter_vert_voxels++;
         }       
         if (counter_vert_voxels < halfstripe_length) 
-            out[index] = 0;
+            out[index] = false;
     }
     return;
 }
 
 void
-merge_stripes(unsigned char* mask,
-              unsigned char* out,
+merge_stripes(bool* mask,
+              bool* out,
               int stripe_length_min,
               int stripe_width_min, 
               long i,
@@ -429,70 +423,70 @@ merge_stripes(unsigned char* mask,
     size_t      index;
     index = (size_t)(dimX * dimY * k) + (size_t)(j * dimX + i);    
 
-    if (mask[index] == 0)    
+    if (mask[index] == false)
     {        
-        /* checking if there is a mask to the left of zero */
+        /* checking if there is a mask to the left of False */
         mask_left = 0;
         for(x = -halfstripe_width; x <=0; x++) 
         {
             x_l = i + x;
             if (x_l < 0)
                 x_l = i - x;
-            if (mask[(size_t)(dimX * dimY * k) + (size_t)(j * dimX + x_l)] == 1)
+            if (mask[(size_t)(dimX * dimY * k) + (size_t)(j * dimX + x_l)] == true)
             {
                 mask_left = 1;
                 break;
             }
         }
-        /* checking if there is a mask to the right of zero */
+        /* checking if there is a mask to the right of False */
         mask_right = 0;
         for(x = 0; x <= halfstripe_width; x++) 
         {
             x_r = i + x;
             if (x_r >= dimX)
                 x_r = i - x;
-            if (mask[(size_t)(dimX * dimY * k) + (size_t)(j * dimX + x_r)] == 1)
+            if (mask[(size_t)(dimX * dimY * k) + (size_t)(j * dimX + x_r)] == true)
             {
                 mask_right = 1;
                 break;
             }
         }
-        /* now if there is a mask from the left and from the right side of the zero value make it one */ 
+        /* now if there is a mask from the left and from the right side of True value make it True */ 
         if ((mask_left == 1) && (mask_right == 1))
-            out[index] = 1;
+            out[index] = true;
 
         /* perform vertical merging */
-        if (out[index] != 1) 
+        if (out[index] == false)
         {
-            /* checking if there is a mask up of zero */
+            /* checking if there is a mask up of True */
             mask_up = 0;
             for(x = -vertical_length; x <=0; x++) 
             {
                 k_u = k + x;
                 if (k_u < 0)
                     k_u = k - x;
-                if (mask[(size_t)(dimX * dimY * k_u) + (size_t)(j * dimX + i)] == 1)
+                if (mask[(size_t)(dimX * dimY * k_u) + (size_t)(j * dimX + i)] == true)
                 {
                     mask_up = 1;
                     break;
                 }
             }
-            /* checking if there is a mask down of zero */
+            /* checking if there is a mask down of False */
             mask_down = 0;
             for(x = 0; x <= vertical_length; x++) 
             {
                 k_d = k + x;
                 if (k_d >= dimZ)
                     k_d = k - x;
-                if (mask[(size_t)(dimX * dimY * k_d) + (size_t)(j * dimX + i)] == 1)
+                if (mask[(size_t)(dimX * dimY * k_d) + (size_t)(j * dimX + i)] == true)
                 {
                     mask_down = 1;
                     break;
                 }
             }
-            /* now if there is a mask above and bellow of the zero value make it one */ 
+            /* now if there is a mask above and bellow of the False make it True */ 
             if ((mask_up == 1) && (mask_down == 1))
-                out[index] = 1;
+                out[index] = true;
         }
     }
     return;
@@ -503,10 +497,10 @@ merge_stripes(unsigned char* mask,
 /********************************************************************/
 DLL
 int stripesdetect3d_main_float(float* Input, float* Output, 
-                           int window_halflength_vertical,
-                           int ratio_radius,
-                           int ncores,
-                           int dimX, int dimY, int dimZ)
+                            int window_halflength_vertical,
+                            int ratio_radius,
+                            int ncores,
+                            int dimX, int dimY, int dimZ)
 {
     long      i;
     long      j;
@@ -519,7 +513,7 @@ int stripesdetect3d_main_float(float* Input, float* Output,
     
     float* temp3d_arr;
     temp3d_arr = malloc(totalvoxels * sizeof(float));
-    if (temp3d_arr == NULL) printf("Allocation of the 'temp3d_arr' array failed");
+    if (temp3d_arr == NULL) printf("Memory allocation of the 'temp3d_arr' array in 'stripesdetect3d_main_float' failed");
     
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -599,7 +593,7 @@ int stripesdetect3d_main_float(float* Input, float* Output,
 /********************************************************************/
 DLL
 int stripesmask3d_main_float(float* Input,
-                             unsigned char* Output,
+                             bool* Output,
                              float threshold_val,
                              int stripe_length_min,
                              int stripe_depth_min,
@@ -616,9 +610,9 @@ int stripesmask3d_main_float(float* Input,
     size_t index;
     size_t totalvoxels = (long)(dimX)*(long)(dimY)*(long)(dimZ);
 
-    unsigned char* mask;    
-    mask = malloc(totalvoxels * sizeof(unsigned char));
-    if (mask == NULL) printf("Allocation of the 'mask' array failed");
+    bool* mask;    
+    mask = malloc(totalvoxels * sizeof(bool));
+    if (mask == NULL) printf("Memory allocation of the 'mask' array in 'stripesmask3d_main_float' failed");
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -642,15 +636,15 @@ int stripesmask3d_main_float(float* Input,
                 {
                     index = (size_t)(dimX * dimY * k) + (size_t)(j * dimX + i);
                     if (Input[index] <= threshold_val)
-                        mask[index] = 1;
+                        mask[index] = true;
                     else
-                        mask[index] = 0; 
+                        mask[index] = false;
                 }
             }
         }
         
     /* Copy mask to output */
-    memcpy(Output, mask, totalvoxels * sizeof(unsigned char));
+    memcpy(Output, mask, totalvoxels * sizeof(bool));
     
     /* the depth consistency for features  */
     switch_dim = 1; 
@@ -673,7 +667,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }
     /* Copy output to mask */     
-    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
+    memcpy(mask, Output, totalvoxels * sizeof(bool));
 
     /* 
     Now we need to remove stripes that are shorter than "stripe_length_min" parameter
@@ -683,7 +677,7 @@ int stripesmask3d_main_float(float* Input,
     belong to true data.
     */
 
-/*continue by including long vertical features and discarding shorter ones */
+/*continue by including longer vertical features and discarding the shorter ones */
     switch_dim = 0; 
 #pragma omp parallel for shared(mask, Output) private(i, j, k)
         for(k = 0; k < dimZ; k++)
@@ -704,7 +698,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }
     /* Copy output to mask */
-    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
+    memcpy(mask, Output, totalvoxels * sizeof(bool));
 
     /* now we clean the obtained mask if the features do not hold our assumptions about the lengths */
 
@@ -725,7 +719,7 @@ int stripesmask3d_main_float(float* Input,
         }
 
     /* Copy output to mask */
-    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
+    memcpy(mask, Output, totalvoxels * sizeof(bool));
 
     /* 
     We can merge stripes together if they are relatively close to each other
@@ -749,7 +743,7 @@ int stripesmask3d_main_float(float* Input,
             }
         }    
     /* Copy output to mask */
-    memcpy(mask, Output, totalvoxels * sizeof(unsigned char));
+    memcpy(mask, Output, totalvoxels * sizeof(bool));
     }
 
     free(mask);

@@ -51,6 +51,13 @@
 #    define DLL
 #endif
 
+#include <math.h>
+#include <omp.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
 DLL void
 remove_stripe_sf(float* data, int dx, int dy, int dz, int size, int istart, int iend);
 
@@ -63,12 +70,12 @@ stripesdetect3d_main_float(float* Input, float* Output,
 
 DLL int
 stripesmask3d_main_float(float* Input,
-                        unsigned char* Output,
-                        float threshold_val,
-                        int stripe_length_min,
-                        int stripe_depth_min,
-                        int stripe_width_min,
-                        float sensitivity,
-                        int ncores,
-                        int dimX, int dimY, int dimZ);
+                         bool* Output,
+                         float threshold_val,
+                         int stripe_length_min,
+                         int stripe_depth_min,
+                         int stripe_width_min,
+                         float sensitivity,
+                         int ncores,
+                         int dimX, int dimY, int dimZ);
                         

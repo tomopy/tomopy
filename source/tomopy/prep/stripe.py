@@ -958,9 +958,9 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
         The projection data should be given with [angles, detY(depth), detX (horizontal)] axis orientation. With this orientation,
         the stripes are the vertical features.
     size : int, optional
-        The pixel size of the vertical (angle dimension) 1D median filter to minimise false detections. Increase it if you have longer or full stripes in the data. 
+        The pixel size of the 1D median filter orthogonal to stripes orientation to minimise false detections. Increase it if you have longer or full stripes in the data. 
     radius : int, optional
-        The pixel size of the 3D stencil to calculate the mean ratio between vertical (angular) and horizontal (detX) orientations of the detX gradient. The larger
+        The pixel size of the 3D stencil to calculate the mean ratio between the angular and detX orientations of the detX gradient. The larger
         values can affect the width of the detected stripe, use 1,2,3 values.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
@@ -1027,9 +1027,9 @@ def stripes_mask3d(weights,
         [angles, detY(depth), detX] axis orientation.
     threshold : float, optional
         Threshold for the given weights. This parameter defines what weights will be considered 
-        as potential candidates for stripes. It is important to remove as many false outliers
-        as possible by taking the highest acceptable value. The lower value might lead to
-        ignoring the actual stripes and the higher can generate false alarms. The good range to try is (0.5-0.7).
+        as potential candidates for stripes. The lower value (< 0.5) will result in the most prominent stripes in the data.
+        Increase the threshold cautiously to avoid taking too many false alarms into account. The good range to 
+        try is between 0.5 and 0.7.
     min_stripe_length : int, optional
         Minimum length of a stripe in pixels with respect to the "angles" axis. If there are full stripes in the data,
         then this could be >50% of the size of the the "angles" axis.
@@ -1048,7 +1048,7 @@ def stripes_mask3d(weights,
     Returns
     -------
     ndarray
-        A binary mask of uint8 data type with stripes highlighted.
+        A binary mask of bool data type with stripes highlighted as True values.
 
     Raises
     ------
@@ -1066,8 +1066,8 @@ def stripes_mask3d(weights,
     input_type = weights.dtype
     if (input_type != 'float32'):
         weights = dtype.as_float32(weights)  # silent convertion to float32 data type
-    out = np.uint8(np.empty_like(weights, order='C'))
-
+    out = np.zeros(np.shape(weights), dtype=bool, order='C')
+    
     if weights.ndim == 3:
         dz, dy, dx = weights.shape
         if (dz == 0) or (dy == 0) or (dx == 0):

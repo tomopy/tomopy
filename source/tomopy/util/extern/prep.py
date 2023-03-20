@@ -138,7 +138,7 @@ def c_stripesmask3d(
     LIB_TOMOPY_PREP.stripesmask3d_main_float.restype = dtype.as_c_void_p()
     LIB_TOMOPY_PREP.stripesmask3d_main_float(
         dtype.as_c_float_p(input),
-        dtype.as_c_uint8_p(output),
+        dtype.as_c_bool_p(output),
         dtype.as_c_float(threshold_val),
         dtype.as_c_int(min_stripe_length),
         dtype.as_c_int(min_stripe_depth),
