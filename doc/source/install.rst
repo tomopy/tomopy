@@ -24,9 +24,9 @@ Use this TomoPy installation by activating this environment::
 
     $ conda activate tomopy
 
-To install tomopy with CUDA features, include the cudatoolkit in the conda environment::
+To install tomopy with CUDA features, specify the CUDA build of libtomo in the conda environment::
 
-    $ conda create --name tomopy --channel conda-forge tomopy cudatoolkit
+    $ conda create --name tomopy --channel conda-forge tomopy "libtomo=*=cuda*"
 
 
 Updating the installation
