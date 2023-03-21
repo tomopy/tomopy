@@ -944,23 +944,30 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
 
 def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     """
-    Detect stripes in a 3D array. Usually applied to normalized projection data.
+    Detect stripes in a 3D array. Usually applied to normalized projection
+    data.
 
-    The method works with full and partial stripes of constant ot varying intensity. 
-    
+    The method works with full and partial stripes of constant ot varying
+    intensity.
+
     .. versionadded:: 1.14
 
     Parameters
     ----------
     tomo : ndarray
-        3D tomographic data of float32 data type, preferably in the [0, 1] range, although 
-        reasonable deviations accepted (e.g. the result of the normalization and the negative log taken of the raw data).         
-        The projection data should be given with [angles, detY(depth), detX (horizontal)] axis orientation. With this orientation,
-        the stripes are the vertical features.
+        3D tomographic data of float32 data type, preferably in the [0, 1]
+        range, although reasonable deviations accepted (e.g. the result of the
+        normalization and the negative log taken of the raw data). The
+        projection data should be given with [angles, detY(depth),
+        detX(horizontal)] axis orientation. With this orientation, the stripes
+        are the vertical features.
     size : int, optional
-        The pixel size of the 1D median filter orthogonal to stripes orientation to minimise false detections. Increase it if you have longer or full stripes in the data. 
+        The pixel size of the 1D median filter orthogonal to stripes
+        orientation to minimise false detections. Increase it if you have
+        longer or full stripes in the data.
     radius : int, optional
-        The pixel size of the 3D stencil to calculate the mean ratio between the angular and detX orientations of the detX gradient. The larger
+        The pixel size of the 3D stencil to calculate the mean ratio between
+        the angular and detX orientations of the detX gradient. The larger
         values can affect the width of the detected stripe, use 1,2,3 values.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
@@ -969,15 +976,18 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     Returns
     -------
     ndarray
-        Weights in the range of [0, 1] of float32 data type where stripe's edges are highlighted with the smaller (e.g. < 0.5) values.
-        The weights can be manually thresholded or passed to stripes_mask3d function for further processing and a binary mask generation.
+        Weights in the range of [0, 1] of float32 data type where stripe's
+        edges are highlighted with the smaller (e.g. < 0.5) values. The weights
+        can be manually thresholded or passed to stripes_mask3d function for
+        further processing and a binary mask generation.
 
     Raises
     ------
     ValueError
         If the `tomo` is not three dimensional.
+
         If the `size` is invalid.
-    """ 
+    """
     if ncore is None:
         ncore = mproc.mp.cpu_count()
 
@@ -985,20 +995,26 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     if (input_type != 'float32'):
         tomo = dtype.as_float32(tomo)  # silent convertion to float32 data type
     out = np.empty_like(tomo, order='C')
-    
+
     if tomo.ndim == 3:
         dz, dy, dx = tomo.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
-            raise ValueError("The length of one of dimensions is equal to zero")
+            msg = "The length of one of dimensions is equal to zero"
+            raise ValueError(msg)
     else:
-        raise ValueError("The input array must be a 3D array")
+        msg = "The input array must be a 3D array"
+        raise ValueError(msg)
 
     if size <= 0 or size > dz //  2:
-        raise ValueError("The size of the filter should be larger than zero and smaller than the half of the vertical dimension")
+        msg = (
+            "The size of the filter should be larger than zero "
+            "and smaller than the half of the vertical dimension"
+        )
+        raise ValueError(msg)
 
     # perform stripes detection
-    extern.c_stripes_detect3d(np.ascontiguousarray(tomo), 
-                              out, 
+    extern.c_stripes_detect3d(np.ascontiguousarray(tomo),
+                              out,
                               size,
                               radius,
                               ncore,
@@ -1006,7 +1022,7 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     return out
 
 
-def stripes_mask3d(weights, 
+def stripes_mask3d(weights,
                   threshold = 0.6,
                   min_stripe_length = 20,
                   min_stripe_depth  = 10,
@@ -1014,33 +1030,42 @@ def stripes_mask3d(weights,
                   sensitivity_perc = 85.0,
                   ncore=None):
     """
-    Takes the result of the stripes_detect3d module as an input and generates a 
-    binary 3D mask with ones where stripes present. The method tries to eliminate
-    non-stripe features in data by checking the consistency of weights in three directions.
+    Takes the result of the stripes_detect3d module as an input and generates a
+    binary 3D mask with ones where stripes present.
+
+    The method tries to eliminate non-stripe features in data by checking the
+    consistency of weights in three directions.
 
     .. versionadded:: 1.14
 
     Parameters
     ----------
     weights : ndarray
-        3D weights array, a result of stripes_detect3d module given in
-        [angles, detY(depth), detX] axis orientation.
+        3D weights array, a result of stripes_detect3d module given in [angles,
+        detY(depth), detX] axis orientation.
     threshold : float, optional
-        Threshold for the given weights. This parameter defines what weights will be considered 
-        as potential candidates for stripes. The lower value (< 0.5) will result in the most prominent stripes in the data.
-        Increase the threshold cautiously to avoid taking too many false alarms into account. The good range to 
-        try is between 0.5 and 0.7.
+        Threshold for the given weights. This parameter defines what weights
+        will be considered as potential candidates for stripes. The lower value
+        (< 0.5) will result in only the most prominent stripes in the data.
+        Increase the threshold cautiously because increasing the threshold
+        increases the probability of false detections. The good range to try is
+        between 0.5 and 0.7.
     min_stripe_length : int, optional
-        Minimum length of a stripe in pixels with respect to the "angles" axis. If there are full stripes in the data,
-        then this could be >50% of the size of the the "angles" axis.
+        Minimum length of a stripe in pixels with respect to the "angles" axis.
+        If there are full stripes in the data, then this could be >50% of the
+        size of the the "angles" axis.
     min_stripe_depth : int, optional
-        Minimum depth of a stripe in pixels with respect to the "detY" axis. The stripes do not extend very deep normally
-        in the data. By setting this parameter to the approximate depth of the stripe more false alarms can be removed.
+        Minimum depth of a stripe in pixels with respect to the "detY" axis.
+        The stripes do not extend very deep normally in the data. By setting
+        this parameter to the approximate depth of the stripe more false alarms
+        can be removed.
     min_stripe_width : int, optional
-        Minimum width of a stripe in pixels with respect to the "detX" axis. The stripes that close to each other 
-        can be merged together with this parameter.
+        Minimum width of a stripe in pixels with respect to the "detX" axis.
+        The stripes that close to each other can be merged together with this
+        parameter.
     sensitivity_perc : float, optional
-        The value in percents to impose less strict conditions on length, depth and width parameters of a stripe.
+        The value in percents to impose less strict conditions on length, depth
+        and width parameters of a stripe.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -1048,15 +1073,23 @@ def stripes_mask3d(weights,
     Returns
     -------
     ndarray
-        A binary mask of bool data type with stripes highlighted as True values.
+        A binary mask of bool data type with stripes highlighted as True
+        values.
 
     Raises
     ------
     ValueError
         If the input array is not three dimensional.
-        If a min_stripe_length parameter is negative, zero or longer than its corresponding dimension ("angle")
-        If a min_stripe_depth parameter is negative or longer than its corresponding dimension ("detY")
-        If a min_stripe_width parameter is negative, zero or longer than its corresponding dimension ("detX")
+
+        If a min_stripe_length parameter is negative, zero or longer than its
+        corresponding dimension ("angle")
+
+        If a min_stripe_depth parameter is negative or longer than its
+        corresponding dimension ("detY")
+
+        If a min_stripe_width parameter is negative, zero or longer than its
+        corresponding dimension ("detX")
+
         If a sensitivity_perc parameter doesn't lie in the (0,100] range
 
     """
@@ -1067,31 +1100,46 @@ def stripes_mask3d(weights,
     if (input_type != 'float32'):
         weights = dtype.as_float32(weights)  # silent convertion to float32 data type
     out = np.zeros(np.shape(weights), dtype=bool, order='C')
-    
+
     if weights.ndim == 3:
         dz, dy, dx = weights.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
-            raise ValueError("The length of one of dimensions is equal to zero")
+            msg = "The length of one of dimensions is equal to zero"
+            raise ValueError(msg)
     else:
-        raise ValueError("The input array must be a 3D array")
+        msg = "The input array must be a 3D array"
+        raise ValueError(msg)
 
     if min_stripe_length <= 0 or min_stripe_length >= dz:
-        raise ValueError("The minimum length of a stripe cannot be zero or exceed the size of the angular dimension")
+        msg = (
+            "The minimum length of a stripe cannot be zero "
+            "or exceed the size of the angular dimension"
+        )
+        raise ValueError(msg)
 
     if min_stripe_depth < 0 or min_stripe_depth >= dy:
-        raise ValueError("The minimum depth of a stripe cannot exceed the size of the depth dimension")
+        msg = (
+            "The minimum depth of a stripe cannot exceed "
+            "the size of the depth dimension"
+        )
+        raise ValueError(msg)
 
     if min_stripe_width <= 0 or min_stripe_width >= dx:
-        raise ValueError("The minimum width of a stripe cannot be zero or exceed the size of the horizontal dimension")
+        msg = (
+            "The minimum width of a stripe cannot be zero "
+            "or exceed the size of the horizontal dimension"
+        )
+        raise ValueError(msg)
 
     if 0.0 < sensitivity_perc <= 100.0:
         pass
     else:
-        raise ValueError("sensitivity_perc value must be in (0, 100] percentage range ")
-    
+        msg = "sensitivity_perc value must be in (0, 100] percentage range"
+        raise ValueError(msg)
+
     # perform mask creation based on the input provided by stripes_detect3d module
-    extern.c_stripesmask3d(np.ascontiguousarray(weights), 
-                           out, 
+    extern.c_stripesmask3d(np.ascontiguousarray(weights),
+                           out,
                            threshold,
                            min_stripe_length,
                            min_stripe_depth,
