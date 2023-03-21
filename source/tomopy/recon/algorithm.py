@@ -262,6 +262,10 @@ def recon(tomo,
     # Initialize tomography data.
     tomo = init_tomo(tomo, sinogram_order, sharedmem=False)
 
+    if tomo.shape[1] != len(theta):
+        msg = 'There must be one angle for every projection.'
+        raise ValueError(msg)
+
     generic_kwargs = ['num_gridx', 'num_gridy', 'options']
 
     # Generate kwargs for the algorithm.
@@ -310,6 +314,11 @@ def recon(tomo,
 
     # Generate args for the algorithm.
     center_arr = get_center(tomo.shape, center)
+
+    if tomo.shape[0] != len(center_arr):
+        msg = 'There must be one center for every slice.'
+        raise ValueError(msg)
+
     args = _get_algorithm_args(theta)
 
     # Initialize reconstruction.

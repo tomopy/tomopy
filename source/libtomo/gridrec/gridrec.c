@@ -46,11 +46,17 @@
 
 #include <math.h>
 
-#include "mkl.h"
-
 #include "libtomo/filters.h"
 #include "libtomo/gridrec.h"
 #include "pal.h"
+
+#ifdef TOMOPY_USE_MKL
+#    include "mkl.h"
+#endif
+#ifdef TOMOPY_USE_FFTW
+// Import pal.h first to import <complex.h> first so fftw uses native complex types
+#    include "fftw3.h"
+#endif
 
 float
 legendre(int n, const float* coefs, float x)
@@ -265,6 +271,7 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     // Set up PSWF lookup tables.
     set_pswf_tables(C, nt, lambda, coefs, ltbl, M02, wtbl, winv);
 
+#ifdef TOMOPY_USE_MKL
     DFTI_DESCRIPTOR_HANDLE reverse_1d;
     MKL_LONG               length_1d = (MKL_LONG) pdim;
     DftiCreateDescriptor(&reverse_1d, DFTI_SINGLE, DFTI_COMPLEX, 1, length_1d);
@@ -277,6 +284,14 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     DftiSetValue(forward_2d, DFTI_THREAD_LIMIT,
                  1);  // FFT should run sequentially to avoid oversubscription
     DftiCommitDescriptor(forward_2d);
+#endif
+#ifdef TOMOPY_USE_FFTW
+    fftwf_make_planner_thread_safe();
+    fftwf_plan reverse_1d;
+    reverse_1d = fftwf_plan_dft_1d(pdim, sino, sino, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftwf_plan forward_2d;
+    forward_2d = fftwf_plan_dft_2d(pdim, pdim, H[0], H[0], FFTW_FORWARD, FFTW_ESTIMATE);
+#endif
 
     for(p = 0; p < dt; p++)
     {
@@ -373,8 +388,12 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
                 sino[j] = 0.0;
             }
 
+#ifdef TOMOPY_USE_MKL
             DftiComputeBackward(reverse_1d, sino);
-
+#endif
+#ifdef TOMOPY_USE_FFTW
+            fftwf_execute(reverse_1d);
+#endif
             if(filter2d)
                 filphase_iter = filphase + pdim2 * p;
 
@@ -439,8 +458,12 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
         // of the array, the first (resp. second) half contains data for the
         // right [X>0] (resp. left [X<0]) half of the image.
 
+#ifdef TOMOPY_USE_MKL
         DftiComputeForward(forward_2d, H[0]);
-
+#endif
+#ifdef TOMOPY_USE_FFTW
+        fftwf_execute(forward_2d);
+#endif
         // Copy the real and imaginary parts of the complex data from H[][],
         // into the output buffers for the two reconstructed real images,
         // simultaneously carrying out a final multiplicative correction.
@@ -536,7 +559,13 @@ gridrec(const float* data, int dy, int dt, int dx, const float* center,
     free_vector_f(P_z);
     free_matrix_c(U_d);
     free_matrix_c(V_d);
+#ifdef TOMOPY_USE_MKL
     DftiFreeDescriptor(&reverse_1d);
     DftiFreeDescriptor(&forward_2d);
+#endif
+#ifdef TOMOPY_USE_FFTW
+    fftwf_destroy_plan(reverse_1d);
+    fftwf_destroy_plan(forward_2d);
+#endif
     return;
 }

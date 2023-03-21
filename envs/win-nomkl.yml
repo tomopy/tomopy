@@ -6,6 +6,7 @@ dependencies:
   - cmake
   - cxx-compiler
   - dxchange
+  - fftw
   - git
   - h5py
   - ninja

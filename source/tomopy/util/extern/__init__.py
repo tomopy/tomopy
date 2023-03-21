@@ -49,7 +49,6 @@
 import ctypes
 import ctypes.util
 import os
-import sys
 import warnings
 
 
