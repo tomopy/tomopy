@@ -27,6 +27,10 @@ target_compile_definitions(tomo-prep PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 target_compile_options(
   tomo-prep PRIVATE $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>)
 
+set_target_properties(tomo-prep PROPERTIES
+      C_STANDARD 99  # C99 or later requried for boolean type support
+      C_STANDARD_REQUIRED ON)
+
 install(TARGETS tomo-prep EXPORT libtomoTargets)
 
 install(

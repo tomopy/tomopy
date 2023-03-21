@@ -44,6 +44,13 @@
 // C-module for detecting and emphasising stripes present in the data (3D case)
 // Original author: Daniil Kazantsev, Diamond Light Source Ltd.
 
+#include <math.h>
+#include <omp.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "libtomo/stripe.h"
 
 /********************************************************************/
@@ -57,8 +64,8 @@ axis = 1: depth direction
 axis = 2: vertical direction
 */
 void
-gradient3D_local(float* input, float* output, long dimX, long dimY, long dimZ, int axis,
-                 int step_size)
+gradient3D_local(const float* input, float* output, long dimX, long dimY, long dimZ,
+                 int axis, int step_size)
 {
     long   i;
     long   j;
@@ -107,7 +114,6 @@ gradient3D_local(float* input, float* output, long dimX, long dimY, long dimZ, i
             }
         }
     }
-    return;
 }
 
 void
@@ -131,9 +137,9 @@ ratio_mean_stride3d(float* input, float* output, int radius, long i, long j, lon
 
     index = (size_t) (dimX * dimY * k) + (size_t) (j * dimX + i);
 
-    min_val = 0.0f;
+    min_val = 0.0F;
     /* calculate mean of gradientX in a 2D plate parallel to stripes direction */
-    mean_plate = 0.0f;
+    mean_plate = 0.0F;
     for(j_m = -radius; j_m <= radius; j_m++)
     {
         j1 = j + j_m;
@@ -151,7 +157,7 @@ ratio_mean_stride3d(float* input, float* output, int radius, long i, long j, lon
     mean_plate /= (float) (all_pixels_window);
 
     /* calculate mean of gradientX in a 2D plate orthogonal to stripes direction */
-    mean_horiz = 0.0f;
+    mean_horiz = 0.0F;
     for(j_m = -1; j_m <= 1; j_m++)
     {
         j1 = j + j_m;
@@ -169,7 +175,7 @@ ratio_mean_stride3d(float* input, float* output, int radius, long i, long j, lon
     mean_horiz /= (float) (radius * 3);
 
     /* Calculate another mean symmetrically */
-    mean_horiz2 = 0.0f;
+    mean_horiz2 = 0.0F;
     for(j_m = -1; j_m <= 1; j_m++)
     {
         j1 = j + j_m;
@@ -189,19 +195,18 @@ ratio_mean_stride3d(float* input, float* output, int radius, long i, long j, lon
     /* calculate the ratio between two means assuming that the mean
     orthogonal to stripes direction should be larger than the mean
     parallel to it */
-    if((mean_horiz >= mean_plate) && (mean_horiz != 0.0f))
+    if((mean_horiz >= mean_plate) && (mean_horiz != 0.0F))
         output[index] = mean_plate / mean_horiz;
-    if((mean_horiz < mean_plate) && (mean_plate != 0.0f))
+    if((mean_horiz < mean_plate) && (mean_plate != 0.0F))
         output[index] = mean_horiz / mean_plate;
-    if((mean_horiz2 >= mean_plate) && (mean_horiz2 != 0.0f))
+    if((mean_horiz2 >= mean_plate) && (mean_horiz2 != 0.0F))
         min_val = mean_plate / mean_horiz2;
-    if((mean_horiz2 < mean_plate) && (mean_plate != 0.0f))
+    if((mean_horiz2 < mean_plate) && (mean_plate != 0.0F))
         min_val = mean_horiz2 / mean_plate;
 
     /* accepting the smallest value */
     if(output[index] > min_val)
         output[index] = min_val;
-    return;
 }
 
 int
@@ -213,9 +218,10 @@ floatcomp(const void* elem1, const void* elem2)
 }
 
 void
-vertical_median_stride3d(float* input, float* output, int window_halflength_vertical,
-                         int window_fulllength, int midval_window_index, long i, long j,
-                         long k, long dimX, long dimY, long dimZ)
+vertical_median_stride3d(const float* input, float* output,
+                         int window_halflength_vertical, int window_fulllength,
+                         int midval_window_index, long i, long j, long k, long dimX,
+                         long dimY, long dimZ)
 {
     int    counter;
     long   k_m;
@@ -240,12 +246,11 @@ vertical_median_stride3d(float* input, float* output, int window_halflength_vert
     output[index] = _values[midval_window_index];
 
     free(_values);
-    return;
 }
 
 void
-mean_stride3d(float* input, float* output, long i, long j, long k, long dimX, long dimY,
-              long dimZ)
+mean_stride3d(const float* input, float* output, long i, long j, long k, long dimX,
+              long dimY, long dimZ)
 {
     /* a 3d mean to enusre a more stable gradient */
     long   i1;
@@ -291,19 +296,18 @@ mean_stride3d(float* input, float* output, long i, long j, long k, long dimX, lo
     val5 = input[(size_t) (dimX * dimY * k1) + (size_t) (j * dimX + i)];
     val6 = input[(size_t) (dimX * dimY * k2) + (size_t) (j * dimX + i)];
 
-    output[index] = 0.1428f * (input[index] + val1 + val2 + val3 + val4 + val5 + val6);
-    return;
+    output[index] = 0.1428F * (input[index] + val1 + val2 + val3 + val4 + val5 + val6);
 }
 
 void
-remove_inconsistent_stripes(bool* mask, bool* out, int stripe_length_min,
+remove_inconsistent_stripes(const bool* mask, bool* out, int stripe_length_min,
                             int stripe_depth_min, float sensitivity, int switch_dim,
                             long i, long j, long k, long dimX, long dimY, long dimZ)
 {
     int    counter_vert_voxels;
     int    counter_depth_voxels;
-    int    halfstripe_length = (int) stripe_length_min / 2;
-    int    halfstripe_depth  = (int) stripe_depth_min / 2;
+    int    halfstripe_length = stripe_length_min / 2;
+    int    halfstripe_depth  = stripe_depth_min / 2;
     long   k_m;
     long   k1;
     long   y_m;
@@ -311,8 +315,8 @@ remove_inconsistent_stripes(bool* mask, bool* out, int stripe_length_min,
     size_t index;
     index = (size_t) (dimX * dimY * k) + (size_t) (j * dimX + i);
 
-    int threshold_vertical = (int) ((0.01f * sensitivity) * stripe_length_min);
-    int threshold_depth    = (int) ((0.01f * sensitivity) * stripe_depth_min);
+    int threshold_vertical = (int) ((0.01F * sensitivity) * stripe_length_min);
+    int threshold_depth    = (int) ((0.01F * sensitivity) * stripe_depth_min);
 
     /* start by considering vertical features */
     if(switch_dim == 0)
@@ -359,15 +363,14 @@ remove_inconsistent_stripes(bool* mask, bool* out, int stripe_length_min,
             }
         }
     }
-    return;
 }
 
 void
-remove_short_stripes(bool* mask, bool* out, int stripe_length_min, long i, long j, long k,
-                     long dimX, long dimY, long dimZ)
+remove_short_stripes(const bool* mask, bool* out, int stripe_length_min, long i, long j,
+                     long k, long dimX, long dimY, long dimZ)
 {
     int    counter_vert_voxels;
-    int    halfstripe_length = (int) stripe_length_min / 2;
+    int    halfstripe_length = stripe_length_min / 2;
     long   k_m;
     long   k1;
     size_t index;
@@ -387,14 +390,13 @@ remove_short_stripes(bool* mask, bool* out, int stripe_length_min, long i, long 
         if(counter_vert_voxels < halfstripe_length)
             out[index] = false;
     }
-    return;
 }
 
 void
-merge_stripes(bool* mask, bool* out, int stripe_length_min, int stripe_width_min, long i,
-              long j, long k, long dimX, long dimY, long dimZ)
+merge_stripes(const bool* mask, bool* out, int stripe_length_min, int stripe_width_min,
+              long i, long j, long k, long dimX, long dimY, long dimZ)
 {
-    int halfstripe_width = (int) stripe_width_min / 2;
+    int halfstripe_width = stripe_width_min / 2;
     int vertical_length  = 2 * stripe_width_min;
 
     long   x;
@@ -476,7 +478,6 @@ merge_stripes(bool* mask, bool* out, int stripe_length_min, int stripe_width_min
                 out[index] = true;
         }
     }
-    return;
 }
 
 /********************************************************************/
@@ -492,14 +493,16 @@ stripesdetect3d_main_float(float* Input, float* Output, int window_halflength_ve
     long long totalvoxels;
     totalvoxels = (long long) ((long) (dimX) * (long) (dimY) * (long) (dimZ));
 
-    int window_fulllength   = (int) (2 * window_halflength_vertical + 1);
-    int midval_window_index = (int) (0.5f * window_fulllength) - 1;
+    int window_fulllength   = (2 * window_halflength_vertical + 1);
+    int midval_window_index = (int) (0.5F * window_fulllength) - 1;
 
     float* temp3d_arr;
     temp3d_arr = malloc(totalvoxels * sizeof(float));
     if(temp3d_arr == NULL)
+    {
         printf("Memory allocation of the 'temp3d_arr' array in "
                "'stripesdetect3d_main_float' failed");
+    }
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -589,8 +592,10 @@ stripesmask3d_main_float(float* Input, bool* Output, float threshold_val,
     bool* mask;
     mask = malloc(totalvoxels * sizeof(bool));
     if(mask == NULL)
+    {
         printf(
             "Memory allocation of the 'mask' array in 'stripesmask3d_main_float' failed");
+    }
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -614,9 +619,13 @@ stripesmask3d_main_float(float* Input, bool* Output, float threshold_val,
             {
                 index = (size_t) (dimX * dimY * k) + (size_t) (j * dimX + i);
                 if(Input[index] <= threshold_val)
+                {
                     mask[index] = true;
+                }
                 else
+                {
                     mask[index] = false;
+                }
             }
         }
     }
