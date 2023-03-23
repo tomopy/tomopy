@@ -9,8 +9,6 @@ tomopy_add_library(
   morph.c
   remove_ring.c
   median_filt3d.c
-  utils.c
-  utils.h
   ${HEADERS})
 
 find_package(OpenMP REQUIRED COMPONENTS C)

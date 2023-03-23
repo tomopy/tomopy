@@ -60,7 +60,9 @@ __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['c_normalize_bg',
-           'c_remove_stripe_sf']
+           'c_remove_stripe_sf',
+           'c_stripes_detect3d',
+           'c_stripesmask3d']
 
 LIB_TOMOPY_PREP = c_shared_lib("tomo-prep")
 
@@ -96,3 +98,55 @@ def c_remove_stripe_sf(tomo, size):
         dtype.as_c_int(istart),
         dtype.as_c_int(iend))
     tomo[:] = contiguous_tomo[:]
+
+def c_stripes_detect3d(
+    input,
+    output,
+    size,
+    radius,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_PREP.stripesdetect3d_main_float.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.stripesdetect3d_main_float(
+        dtype.as_c_float_p(input),
+        dtype.as_c_float_p(output),
+        dtype.as_c_int(size),
+        dtype.as_c_int(radius),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+    )
+    return output
+
+def c_stripesmask3d(
+    input,
+    output,
+    threshold_val,
+    min_stripe_length,
+    min_stripe_depth,
+    min_stripe_width,
+    sensitivity_perc,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_PREP.stripesmask3d_main_float.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_PREP.stripesmask3d_main_float(
+        dtype.as_c_float_p(input),
+        dtype.as_c_bool_p(output),
+        dtype.as_c_float(threshold_val),
+        dtype.as_c_int(min_stripe_length),
+        dtype.as_c_int(min_stripe_depth),
+        dtype.as_c_int(min_stripe_width),
+        dtype.as_c_float(sensitivity_perc),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+    )
+    return output

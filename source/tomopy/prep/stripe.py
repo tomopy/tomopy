@@ -45,7 +45,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
 """
 Module for pre-processing tasks.
 """
@@ -66,28 +65,36 @@ from scipy.ndimage import binary_dilation
 from scipy.ndimage import uniform_filter1d
 from scipy import interpolate
 import logging
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 __author__ = "Doga Gursoy, Eduardo X. Miqueles, Nghia Vo"
 __credits__ = "Juan V. Bermudez, Hugo H. Slepicka"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
-__all__ = ['remove_stripe_fw',
-           'remove_stripe_ti',
-           'remove_stripe_sf',
-           'remove_stripe_based_sorting',
-           'remove_stripe_based_filtering',
-           'remove_stripe_based_fitting',
-           'remove_large_stripe',
-           'remove_dead_stripe',
-           'remove_all_stripe',
-           'remove_stripe_based_interpolation']
+__all__ = [
+    'remove_stripe_fw',
+    'remove_stripe_ti',
+    'remove_stripe_sf',
+    'remove_stripe_based_sorting',
+    'remove_stripe_based_filtering',
+    'remove_stripe_based_fitting',
+    'remove_large_stripe',
+    'remove_dead_stripe',
+    'remove_all_stripe',
+    'remove_stripe_based_interpolation',
+    'stripes_detect3d',
+    'stripes_mask3d',
+]
 
 
-def remove_stripe_fw(
-        tomo, level=None, wname='db5', sigma=2,
-        pad=True, ncore=None, nchunk=None):
+def remove_stripe_fw(tomo,
+                     level=None,
+                     wname='db5',
+                     sigma=2,
+                     pad=True,
+                     ncore=None,
+                     nchunk=None):
     """
     Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW)
     based method :cite:`Munch:09`.
@@ -118,13 +125,12 @@ def remove_stripe_fw(
         size = np.max(tomo.shape)
         level = int(np.ceil(np.log2(size)))
 
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_fw,
-        args=(level, wname, sigma, pad),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_fw,
+                                args=(level, wname, sigma, pad),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -163,8 +169,8 @@ def _remove_stripe_fw(tomo, level, wname, sigma, pad):
             fcV *= np.transpose(np.tile(damp, (mx, 1)))
 
             # Inverse FFT.
-            cV[n] = np.real(ifft(np.fft.ifftshift(
-                fcV), axis=0, extra_info=num_jobs))
+            cV[n] = np.real(
+                ifft(np.fft.ifftshift(fcV), axis=0, extra_info=num_jobs))
 
         # Wavelet reconstruction.
         for n in range(level)[::-1]:
@@ -196,13 +202,12 @@ def remove_stripe_ti(tomo, nblock=0, alpha=1.5, ncore=None, nchunk=None):
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_ti,
-        args=(nblock, alpha),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_ti,
+                                args=(nblock, alpha),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -224,12 +229,20 @@ def _remove_stripe_ti(tomo, nblock, alpha):
 
 
 def _kernel(m, n):
-    v = [[np.array([1, -1]),
-          np.array([-3 / 2, 2, -1 / 2]),
-          np.array([-11 / 6, 3, -3 / 2, 1 / 3])],
-         [np.array([-1, 2, -1]),
-          np.array([2, -5, 4, -1])],
-         [np.array([-1, 3, -3, 1])]]
+    v = [
+        [
+            np.array([1, -1]),
+            np.array([-3 / 2, 2, -1 / 2]),
+            np.array([-11 / 6, 3, -3 / 2, 1 / 3]),
+        ],
+        [
+            np.array([-1, 2, -1]),
+            np.array([2, -5, 4, -1]),
+        ],
+        [
+            np.array([-1, 3, -3, 1]),
+        ],
+    ]
     return v[m - 1][n - 1]
 
 
@@ -342,17 +355,20 @@ def remove_stripe_sf(tomo, size=5, ncore=None, nchunk=None):
         Corrected 3D tomographic data.
     """
     tomo = dtype.as_float32(tomo)
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=extern.c_remove_stripe_sf,
-        args=(size,),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=extern.c_remove_stripe_sf,
+                                args=(size,),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
-def remove_stripe_based_sorting(tomo, size=None, dim=1, ncore=None, nchunk=None):
+def remove_stripe_based_sorting(tomo,
+                                size=None,
+                                dim=1,
+                                ncore=None,
+                                nchunk=None):
     """
     Remove full and partial stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 3).
@@ -376,13 +392,12 @@ def remove_stripe_based_sorting(tomo, size=None, dim=1, ncore=None, nchunk=None)
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_based_sorting,
-        args=(size, dim),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_based_sorting,
+                                args=(size, dim),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -401,14 +416,12 @@ def _rs_sort(sinogram, size, matindex, dim):
     """
     sinogram = np.transpose(sinogram)
     matcomb = np.asarray(np.dstack((matindex, sinogram)))
-    matsort = np.asarray(
-        [row[row[:, 1].argsort()] for row in matcomb])
+    matsort = np.asarray([row[row[:, 1].argsort()] for row in matcomb])
     if dim == 1:
         matsort[:, :, 1] = median_filter(matsort[:, :, 1], (size, 1))
     else:
         matsort[:, :, 1] = median_filter(matsort[:, :, 1], (size, size))
-    matsortback = np.asarray(
-        [row[row[:, 0].argsort()] for row in matsort])
+    matsortback = np.asarray([row[row[:, 0].argsort()] for row in matsort])
     sino_corrected = matsortback[:, :, 1]
     return np.transpose(sino_corrected)
 
@@ -425,8 +438,12 @@ def _remove_stripe_based_sorting(tomo, size, dim):
         tomo[:, m, :] = _rs_sort(sino, size, matindex, dim)
 
 
-def remove_stripe_based_filtering(
-        tomo, sigma=3, size=None, dim=1, ncore=None, nchunk=None):
+def remove_stripe_based_filtering(tomo,
+                                  sigma=3,
+                                  size=None,
+                                  dim=1,
+                                  ncore=None,
+                                  nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 2).
@@ -453,13 +470,12 @@ def remove_stripe_based_filtering(
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_based_filtering,
-        args=(sigma, size, dim),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_based_filtering,
+                                args=(sigma, size, dim),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -486,8 +502,8 @@ def _rs_filter(sinogram, window, listsign, size, dim, pad):
             ifft(fft(sinolist * listsign) * window) * listsign)[pad:ncol - pad]
     sinosharp = sinogram - sinosmooth
     matindex = _create_matindex(nrow, ncol - 2 * pad)
-    sinosmooth_cor = np.transpose(_rs_sort(
-        np.transpose(sinosmooth), size, matindex, dim))
+    sinosmooth_cor = np.transpose(
+        _rs_sort(np.transpose(sinosmooth), size, matindex, dim))
     return np.transpose(sinosmooth_cor + sinosharp)
 
 
@@ -502,12 +518,14 @@ def _remove_stripe_based_filtering(tomo, sigma, size, dim):
             size = max(5, int(0.01 * tomo.shape[2]))
     for m in range(tomo.shape[1]):
         sino = tomo[:, m, :]
-        tomo[:, m, :] = _rs_filter(
-            sino, window, listsign, size, dim, pad)
+        tomo[:, m, :] = _rs_filter(sino, window, listsign, size, dim, pad)
 
 
-def remove_stripe_based_fitting(
-        tomo, order=3, sigma=(5, 20), ncore=None, nchunk=None):
+def remove_stripe_based_fitting(tomo,
+                                order=3,
+                                sigma=(5, 20),
+                                ncore=None,
+                                nchunk=None):
     """
     Remove stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 1).
@@ -532,13 +550,12 @@ def remove_stripe_based_fitting(
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_based_fitting,
-        args=(order, sigma),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_based_fitting,
+                                args=(order, sigma),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -637,8 +654,13 @@ def _remove_stripe_based_fitting(tomo, order, sigma):
         tomo[:, m, :] = _rs_fit(sino, order, win2d, matsign, pad)
 
 
-def remove_large_stripe(tomo, snr=3, size=51, drop_ratio=0.1, norm=True,
-                        ncore=None, nchunk=None):
+def remove_large_stripe(tomo,
+                        snr=3,
+                        size=51,
+                        drop_ratio=0.1,
+                        norm=True,
+                        ncore=None,
+                        nchunk=None):
     """
     Remove large stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (algorithm 5).
@@ -667,13 +689,12 @@ def remove_large_stripe(tomo, snr=3, size=51, drop_ratio=0.1, norm=True,
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_large_stripe,
-        args=(snr, size, drop_ratio, norm),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_large_stripe,
+                                args=(snr, size, drop_ratio, norm),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -685,8 +706,8 @@ def _detect_stripe(listdata, snr):
     listsorted = np.sort(listdata)[::-1]
     xlist = np.arange(0, numdata, 1.0)
     ndrop = np.int16(0.25 * numdata)
-    (_slope, _intercept) = np.polyfit(
-        xlist[ndrop:-ndrop - 1], listsorted[ndrop:-ndrop - 1], 1)
+    (_slope, _intercept) = np.polyfit(xlist[ndrop:-ndrop - 1],
+                                      listsorted[ndrop:-ndrop - 1], 1)
     numt1 = _intercept + _slope * xlist[-1]
     noiselevel = np.abs(numt1 - _intercept)
     noiselevel = np.clip(noiselevel, 1e-6, None)
@@ -713,8 +734,10 @@ def _rs_large(sinogram, snr, size, matindex, drop_ratio=0.1, norm=True):
     sinosmooth = median_filter(sinosort, (1, size))
     list1 = np.mean(sinosort[ndrop:nrow - ndrop], axis=0)
     list2 = np.mean(sinosmooth[ndrop:nrow - ndrop], axis=0)
-    listfact = np.divide(list1, list2,
-                         out=np.ones_like(list1), where=list2 != 0)
+    listfact = np.divide(list1,
+                         list2,
+                         out=np.ones_like(list1),
+                         where=list2 != 0)
     # Locate stripes
     listmask = _detect_stripe(listfact, snr)
     listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
@@ -724,11 +747,9 @@ def _rs_large(sinogram, snr, size, matindex, drop_ratio=0.1, norm=True):
         sinogram = sinogram / matfact
     sinogram1 = np.transpose(sinogram)
     matcombine = np.asarray(np.dstack((matindex, sinogram1)))
-    matsort = np.asarray(
-        [row[row[:, 1].argsort()] for row in matcombine])
+    matsort = np.asarray([row[row[:, 1].argsort()] for row in matcombine])
     matsort[:, :, 1] = np.transpose(sinosmooth)
-    matsortback = np.asarray(
-        [row[row[:, 0].argsort()] for row in matsort])
+    matsortback = np.asarray([row[row[:, 0].argsort()] for row in matsort])
     sino_corrected = np.transpose(matsortback[:, :, 1])
     listxmiss = np.where(listmask > 0.0)[0]
     sinogram[:, listxmiss] = sino_corrected[:, listxmiss]
@@ -742,8 +763,12 @@ def _remove_large_stripe(tomo, snr, size, drop_ratio, norm):
         tomo[:, m, :] = _rs_large(sino, snr, size, matindex, drop_ratio, norm)
 
 
-def remove_dead_stripe(tomo, snr=3, size=51, norm=True,
-                       ncore=None, nchunk=None):
+def remove_dead_stripe(tomo,
+                       snr=3,
+                       size=51,
+                       norm=True,
+                       ncore=None,
+                       nchunk=None):
     """
     Remove unresponsive and fluctuating stripe artifacts from sinogram using
     Nghia Vo's approach :cite:`Vo:18` (algorithm 6).
@@ -769,13 +794,12 @@ def remove_dead_stripe(tomo, snr=3, size=51, norm=True,
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_dead_stripe,
-        args=(snr, size, norm),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_dead_stripe,
+                                args=(snr, size, norm),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -788,8 +812,10 @@ def _rs_dead(sinogram, snr, size, matindex, norm=True):
     sinosmooth = np.apply_along_axis(uniform_filter1d, 0, sinogram, 10)
     listdiff = np.sum(np.abs(sinogram - sinosmooth), axis=0)
     listdiffbck = median_filter(listdiff, size)
-    listfact = np.divide(listdiff, listdiffbck,
-                         out=np.ones_like(listdiff), where=listdiffbck != 0)
+    listfact = np.divide(listdiff,
+                         listdiffbck,
+                         out=np.ones_like(listdiff),
+                         where=listdiffbck != 0)
     listmask = _detect_stripe(listfact, snr)
     listmask = binary_dilation(listmask, iterations=1).astype(listmask.dtype)
     listmask[0:2] = 0.0
@@ -814,8 +840,13 @@ def _remove_dead_stripe(tomo, snr, size, norm):
         tomo[:, m, :] = _rs_dead(sino, snr, size, matindex, norm)
 
 
-def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, dim=1,
-                      ncore=None, nchunk=None):
+def remove_all_stripe(tomo,
+                      snr=3,
+                      la_size=61,
+                      sm_size=21,
+                      dim=1,
+                      ncore=None,
+                      nchunk=None):
     """
     Remove all types of stripe artifacts from sinogram using Nghia Vo's
     approach :cite:`Vo:18` (combination of algorithm 3,4,5, and 6).
@@ -843,13 +874,12 @@ def remove_all_stripe(tomo, snr=3, la_size=61, sm_size=21, dim=1,
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_all_stripe,
-        args=(snr, la_size, sm_size, dim),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_all_stripe,
+                                args=(snr, la_size, sm_size, dim),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -862,8 +892,13 @@ def _remove_all_stripe(tomo, snr, la_size, sm_size, dim):
         tomo[:, m, :] = sino
 
 
-def remove_stripe_based_interpolation(tomo, snr=3, size=31, drop_ratio=0.1,
-                                      norm=True, ncore=None, nchunk=None):
+def remove_stripe_based_interpolation(tomo,
+                                      snr=3,
+                                      size=31,
+                                      drop_ratio=0.1,
+                                      norm=True,
+                                      ncore=None,
+                                      nchunk=None):
     """
     Remove most types of stripe artifacts from sinograms based on
     interpolation. Derived from algorithm 4, 5, and 6 in :cite:`Vo:18`.
@@ -893,13 +928,12 @@ def remove_stripe_based_interpolation(tomo, snr=3, size=31, drop_ratio=0.1,
     ndarray
         Corrected 3D tomographic data.
     """
-    arr = mproc.distribute_jobs(
-        tomo,
-        func=_remove_stripe_based_interpolation,
-        args=(snr, size, drop_ratio, norm),
-        axis=1,
-        ncore=ncore,
-        nchunk=nchunk)
+    arr = mproc.distribute_jobs(tomo,
+                                func=_remove_stripe_based_interpolation,
+                                args=(snr, size, drop_ratio, norm),
+                                axis=1,
+                                ncore=ncore,
+                                nchunk=nchunk)
     return arr
 
 
@@ -915,8 +949,10 @@ def _rs_interpolation(sinogram, snr, size, drop_ratio=0.1, norm=True):
     sinosmooth = median_filter(sinosort, (1, size))
     list1 = np.mean(sinosort[ndrop:nrow - ndrop], axis=0)
     list2 = np.mean(sinosmooth[ndrop:nrow - ndrop], axis=0)
-    listfact = np.divide(list1, list2,
-                         out=np.ones_like(list1), where=list2 != 0)
+    listfact = np.divide(list1,
+                         list2,
+                         out=np.ones_like(list1),
+                         where=list2 != 0)
     listmask = _detect_stripe(listfact, snr)
     listmask = np.float32(binary_dilation(listmask, iterations=1))
     matfact = np.tile(listfact, (nrow, 1))
@@ -939,3 +975,205 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
         sino = tomo[:, m, :]
         sino = _rs_interpolation(sino, snr, size, drop_ratio, norm)
         tomo[:, m, :] = sino
+
+
+def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
+    """
+    Detect stripes in a 3D array. Usually applied to normalized projection
+    data.
+
+    The method works with full and partial stripes of constant ot varying
+    intensity.
+
+    .. versionadded:: 1.14
+
+    Parameters
+    ----------
+    tomo : ndarray
+        3D tomographic data of float32 data type, preferably in the [0, 1]
+        range, although reasonable deviations accepted (e.g. the result of the
+        normalization and the negative log taken of the raw data). The
+        projection data should be given with [angle, detY(depth),
+        detX(horizontal)] axis orientation. With this orientation, the stripes
+        are features along the angle axis.
+    size : int, optional
+        The pixel size of the 1D median filter orthogonal to stripes
+        orientation to minimise false detections. Increase it if you have
+        longer or full stripes in the data.
+    radius : int, optional
+        The pixel size of the 3D stencil to calculate the mean ratio between
+        the angular and detX orientations of the detX gradient. The larger
+        values can affect the width of the detected stripe, use 1,2,3 values.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs. All cores will be used
+        if unspecified.
+
+    Returns
+    -------
+    ndarray
+        Weights in the range of [0, 1] of float32 data type where stripe's
+        edges are highlighted with the smaller (e.g. < 0.5) values. The weights
+        can be manually thresholded or passed to stripes_mask3d function for
+        further processing and a binary mask generation.
+
+    Raises
+    ------
+    ValueError
+        If the `tomo` is not three dimensional.
+
+        If the `size` is invalid.
+    """
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    input_type = tomo.dtype
+    if (input_type != 'float32'):
+        tomo = dtype.as_float32(tomo)  # silent convertion to float32 data type
+    out = np.empty_like(tomo, order='C')
+
+    if tomo.ndim == 3:
+        dz, dy, dx = tomo.shape
+        if (dz == 0) or (dy == 0) or (dx == 0):
+            msg = "The length of one of dimensions is equal to zero"
+            raise ValueError(msg)
+    else:
+        msg = "The input array must be a 3D array"
+        raise ValueError(msg)
+
+    if size <= 0 or size > dz // 2:
+        msg = ("The size of the filter should be larger than zero "
+               "and smaller than the half of the vertical dimension")
+        raise ValueError(msg)
+
+    # perform stripes detection
+    extern.c_stripes_detect3d(np.ascontiguousarray(tomo), out, size, radius,
+                              ncore, dx, dy, dz)
+    return out
+
+
+def stripes_mask3d(weights,
+                   threshold=0.6,
+                   min_stripe_length=20,
+                   min_stripe_depth=10,
+                   min_stripe_width=5,
+                   sensitivity_perc=85.0,
+                   ncore=None):
+    """
+    Takes the result of the stripes_detect3d module as an input and generates a
+    binary 3D mask with ones where stripes present.
+
+    The method tries to eliminate non-stripe features in data by checking the
+    consistency of weights in three directions.
+
+    .. versionadded:: 1.14
+
+    Parameters
+    ----------
+    weights : ndarray
+        3D weights array, a result of stripes_detect3d module given in [angles,
+        detY(depth), detX] axis orientation.
+    threshold : float, optional
+        Threshold for the given weights. This parameter defines what weights
+        will be considered as potential candidates for stripes. The lower value
+        (< 0.5) will result in only the most prominent stripes in the data.
+        Increase the threshold cautiously because increasing the threshold
+        increases the probability of false detections. The good range to try is
+        between 0.5 and 0.7.
+    min_stripe_length : int, optional
+        Minimum length of a stripe in pixels with respect to the "angles" axis.
+        If there are full stripes in the data, then this could be >50% of the
+        size of the the "angles" axis.
+    min_stripe_depth : int, optional
+        Minimum depth of a stripe in pixels with respect to the "detY" axis.
+        The stripes do not extend very deep normally in the data. By setting
+        this parameter to the approximate depth of the stripe more false alarms
+        can be removed.
+    min_stripe_width : int, optional
+        Minimum width of a stripe in pixels with respect to the "detX" axis.
+        The stripes that close to each other can be merged together with this
+        parameter.
+    sensitivity_perc : float, optional
+        The value in the range [0, 100] that controls the strictness of the
+        minimum length, depth and width parameters of a stripe. 0 is
+        less-strict. 100 is more-strict.
+    ncore : int, optional
+        Number of cores that will be assigned to jobs. All cores will be used
+        if unspecified.
+
+    Returns
+    -------
+    ndarray
+        A binary mask of bool data type with stripes highlighted as True
+        values.
+
+    Raises
+    ------
+    ValueError
+        If the input array is not three dimensional.
+
+        If a min_stripe_length parameter is negative, zero or longer than its
+        corresponding dimension ("angle")
+
+        If a min_stripe_depth parameter is negative or longer than its
+        corresponding dimension ("detY")
+
+        If a min_stripe_width parameter is negative, zero or longer than its
+        corresponding dimension ("detX")
+
+        If a sensitivity_perc parameter doesn't lie in the (0,100] range
+
+    """
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    input_type = weights.dtype
+    if (input_type != 'float32'):
+        weights = dtype.as_float32(
+            weights)  # silent convertion to float32 data type
+    out = np.zeros(np.shape(weights), dtype=bool, order='C')
+
+    if weights.ndim == 3:
+        dz, dy, dx = weights.shape
+        if (dz == 0) or (dy == 0) or (dx == 0):
+            msg = "The length of one of dimensions is equal to zero"
+            raise ValueError(msg)
+    else:
+        msg = "The input array must be a 3D array"
+        raise ValueError(msg)
+
+    if min_stripe_length <= 0 or min_stripe_length >= dz:
+        msg = ("The minimum length of a stripe cannot be zero "
+               "or exceed the size of the angular dimension")
+        raise ValueError(msg)
+
+    if min_stripe_depth < 0 or min_stripe_depth >= dy:
+        msg = ("The minimum depth of a stripe cannot exceed "
+               "the size of the depth dimension")
+        raise ValueError(msg)
+
+    if min_stripe_width <= 0 or min_stripe_width >= dx:
+        msg = ("The minimum width of a stripe cannot be zero "
+               "or exceed the size of the horizontal dimension")
+        raise ValueError(msg)
+
+    if 0.0 < sensitivity_perc <= 100.0:
+        pass
+    else:
+        msg = "sensitivity_perc value must be in (0, 100] percentage range"
+        raise ValueError(msg)
+
+    # perform mask creation based on the input provided by stripes_detect3d module
+    extern.c_stripesmask3d(
+        np.ascontiguousarray(weights),
+        out,
+        threshold,
+        min_stripe_length,
+        min_stripe_depth,
+        min_stripe_width,
+        sensitivity_perc,
+        ncore,
+        dx,
+        dy,
+        dz,
+    )
+    return out

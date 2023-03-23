@@ -71,6 +71,8 @@ __all__ = [
     'as_uint8',
     'as_uint16',
     'as_c_float_p',
+    'as_c_bool_p',
+    'as_c_uint8_p',
     'as_c_uint16_p',
     'as_c_int',
     'as_c_int_p',
@@ -117,6 +119,15 @@ def as_c_float_p(arr):
     return arr.ctypes.data_as(c_float_p)
 
 
+def as_c_bool_p(arr):
+    c_bool_p = ctypes.POINTER(ctypes.c_bool)
+    return arr.ctypes.data_as(c_bool_p)
+
+def as_c_uint8_p(arr):
+    c_uint8_p = ctypes.POINTER(ctypes.c_uint8)
+    return arr.ctypes.data_as(c_uint8_p)
+
+
 def as_c_uint16_p(arr):
     c_uint16_p = ctypes.POINTER(ctypes.c_uint16)
     return arr.ctypes.data_as(c_uint16_p)
@@ -125,6 +136,8 @@ def as_c_uint16_p(arr):
 def as_c_int(arr):
     return ctypes.c_int(arr)
 
+def as_c_long(arr):
+    return ctypes.c_long(arr)
 
 def as_c_int_p(arr):
     arr = arr.astype(np.intc, copy=False)
