@@ -958,9 +958,9 @@ def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
         3D tomographic data of float32 data type, preferably in the [0, 1]
         range, although reasonable deviations accepted (e.g. the result of the
         normalization and the negative log taken of the raw data). The
-        projection data should be given with [angles, detY(depth),
+        projection data should be given with [angle, detY(depth),
         detX(horizontal)] axis orientation. With this orientation, the stripes
-        are the vertical features.
+        are features along the angle axis.
     size : int, optional
         The pixel size of the 1D median filter orthogonal to stripes
         orientation to minimise false detections. Increase it if you have
@@ -1064,8 +1064,9 @@ def stripes_mask3d(weights,
         The stripes that close to each other can be merged together with this
         parameter.
     sensitivity_perc : float, optional
-        The value in percents to impose less strict conditions on length, depth
-        and width parameters of a stripe.
+        The value in the range [0, 100] that controls the strictness of the
+        minimum length, depth and width parameters of a stripe. 0 is
+        less-strict. 100 is more-strict.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
