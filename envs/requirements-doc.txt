@@ -1,6 +1,6 @@
-sphinx >=2
-sphinx_rtd_theme
-sphinxcontrib-bibtex
+sphinx >=5, <6
+sphinx_rtd_theme >=1, <2
+sphinxcontrib-bibtex >=2, <3
 nbsphinx
 pandoc
 jupyter
