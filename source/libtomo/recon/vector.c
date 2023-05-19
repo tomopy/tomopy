@@ -174,7 +174,7 @@ vector(const float* data, int dy, int dt, int dx, const float* center, const flo
                     recon1[n + m * ngridy + s * ngridx * ngridy] +=
                         update1[n + m * ngridy] / sum_dist[n + m * ngridy];
                     recon2[n + m * ngridy + s * ngridx * ngridy] +=
-                        update1[n + m * ngridy] / sum_dist[n + m * ngridy];
+                        update2[n + m * ngridy] / sum_dist[n + m * ngridy];
                 }
             }
 
