@@ -48,7 +48,6 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <string.h>
-#include "stdio.h"
 
 #include "libtomo/median_filt3d.h"
 
