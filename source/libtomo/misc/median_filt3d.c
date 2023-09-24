@@ -48,6 +48,7 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <string.h>
+#include "stdio.h"
 
 #include "libtomo/median_filt3d.h"
 
@@ -63,6 +64,7 @@ int uint16comp(const void* elem1, const void* elem2)
         return -1;
     return *(const unsigned short*)elem1 > *(const unsigned short*)elem2;
 }
+
 
 void
 medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
@@ -292,10 +294,6 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
 
     totalvoxels = (size_t)(dimX * dimY * dimZ);
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
-    if(mu_threshold != 0.0)
-    {
-        memcpy(Output, Input, totalvoxels * sizeof(float));
-    } /* copy input into output */
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)
@@ -357,10 +355,6 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
 
     totalvoxels = (size_t)(dimX * dimY * dimZ);    
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
-    if(mu_threshold != 0.0)
-    {
-        memcpy(Output, Input, totalvoxels * sizeof(unsigned short));
-    } /* copy input into output */
 
     /* dealing here with a custom given number of cpu threads */
     if(ncores > 0)

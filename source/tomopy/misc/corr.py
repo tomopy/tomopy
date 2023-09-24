@@ -62,6 +62,7 @@ import warnings
 import numexpr as ne
 import concurrent.futures as cf
 from scipy.signal import medfilt2d
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -441,8 +442,8 @@ def remove_outlier3d(arr, dif, size=3, ncore=None):
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
         arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.empty_like(arr)
-
+    out = copy.deepcopy(arr)
+    
     # convert the full kernel size (odd int) to a half size as the C function requires it
     kernel_half_size = (max(int(size), 3) - 1) // 2
 
@@ -455,10 +456,10 @@ def remove_outlier3d(arr, dif, size=3, ncore=None):
 
     # perform full 3D filtering
     if (input_type == 'float32'):
-        extern.c_median_filt3d_float32(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_float32(np.ascontiguousarray(arr), np.ascontiguousarray(out), kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     else:
-        extern.c_median_filt3d_uint16(np.ascontiguousarray(arr), out, kernel_half_size, dif, ncore,
+        extern.c_median_filt3d_uint16(np.ascontiguousarray(arr), np.ascontiguousarray(out), kernel_half_size, dif, ncore,
                                     dx, dy, dz)
     return out
 
