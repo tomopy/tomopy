@@ -1,3 +1,2 @@
-[submodule "src/PTL"]
-	path = source/PTL
-	url = https://github.com/jrmadsen/PTL.git
+[submodule "source/PTL"]
+	url = https://github.com/tomopy/PTL.git
