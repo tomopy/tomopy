@@ -100,7 +100,7 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
                 k1 = k + k_m;
                 if((k1 < 0) || (k1 >= dimZ))
                     k1 = k;
-                index1 = (size_t)(dimX * dimY * k1 ) + (size_t)(j1 * dimX + i1);
+                index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
                 ValVec[counter] = Input[index1];
                 counter++;
             }
@@ -150,7 +150,7 @@ medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
             j1 = j + j_m;
             if((j1 < 0) || (j1 >= dimY))
                 j1 = j;
-            index1 = (size_t)(j1 * dimX + i1);
+            index1 = (size_t)(j1) * dimX + (size_t)(i1);
             ValVec[counter] = Input[index1];
             counter++;
         }
@@ -205,8 +205,8 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
             {
                 k1 = k + k_m;
                 if((k1 < 0) || (k1 >= dimZ))
-                    k1 = k;
-                index1 = (size_t)(dimX * dimY * k1 ) + (size_t)(j1 * dimX + i1);
+                    k1 = k;                
+                index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
                 ValVec[counter] = Input[index1];
                 counter++;
             }
@@ -257,7 +257,7 @@ medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
             j1 = j + j_m;
             if((j1 < 0) || (j1 >= dimY))
                 j1 = j;
-            index1 = (size_t)(j1 * dimX + i1);
+            index1 = (size_t)(j1) * dimX + (size_t)(i1);
             ValVec[counter] = Input[index1];
             counter++;
         }
@@ -291,7 +291,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
     size_t    index;
     size_t    totalvoxels;
 
-    totalvoxels = (size_t)(dimX * dimY * dimZ);
+    totalvoxels = (size_t)(dimX) * (size_t)(dimY) * (size_t)(dimZ);
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
 
     /* dealing here with a custom given number of cpu threads */
@@ -311,7 +311,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
         {
             for(i = 0; i < dimX; i++)
             {
-                index = (size_t)(j * dimX + i);
+                index = (size_t)(j) * dimX + (size_t)(i);
                 medfilt2D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
                                 j, index, (long) (dimX), (long) (dimY));
             }
@@ -328,7 +328,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
             {
                 for(i = 0; i < dimX; i++)
                 {
-                    index = (size_t)((dimX * dimY) * k) + (size_t)(j * dimX + i);
+                    index = dimX * dimY * (size_t)(k) + (size_t)(j) * dimX + (size_t)(i);
                     medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold,
                                     i, j, k, index, (long) (dimX), (long) (dimY),
                                     (long) (dimZ));
@@ -352,7 +352,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
     size_t    index;
     size_t    totalvoxels;
 
-    totalvoxels = (size_t)(dimX * dimY * dimZ);    
+    totalvoxels = (size_t)(dimX) * (size_t)(dimY) * (size_t)(dimZ);  
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
 
     /* dealing here with a custom given number of cpu threads */
@@ -372,7 +372,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
         {
             for(i = 0; i < dimX; i++)
             {
-                index = (size_t)(j * dimX + i);
+                index = (size_t)(j) * dimX + (size_t)(i);
                 medfilt2D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
                                  j, index, (long) (dimX), (long) (dimY));
             }
@@ -389,7 +389,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
             {
                 for(i = 0; i < dimX; i++)
                 {
-                    index = (size_t)(dimX * dimY * k) + (size_t)(j * dimX + i);
+                    index = dimX * dimY * (size_t)(k) + (size_t)(j) * dimX + (size_t)(i);
                     medfilt3D_uint16(Input, Output, radius, sizefilter_total,
                                      mu_threshold, i, j, k, index, (long) (dimX),
                                      (long) (dimY), (long) (dimZ));
