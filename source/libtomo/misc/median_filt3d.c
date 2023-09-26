@@ -67,8 +67,8 @@ int uint16comp(const void* elem1, const void* elem2)
 
 void
 medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, long k, size_t index, long dimX,
-                long dimY, long dimZ)
+                float mu_threshold, long i, long j, long k, size_t index, size_t dimX,
+                size_t dimY, size_t dimZ)
 {
     float*    ValVec;
     long      i_m;
@@ -125,7 +125,7 @@ medfilt3D_float(float* Input, float* Output, int radius, int sizefilter_total,
 
 void
 medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
-                float mu_threshold, long i, long j, size_t index, long dimX, long dimY)
+                float mu_threshold, long i, long j, size_t index, size_t dimX, size_t dimY)
 {
     float*    ValVec;
     long      i_m;
@@ -174,7 +174,7 @@ medfilt2D_float(float* Input, float* Output, int radius, int sizefilter_total,
 void
 medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
                  int sizefilter_total, float mu_threshold, long i, long j, long k,
-                 size_t index, long dimX, long dimY, long dimZ)
+                 size_t index, size_t dimX, size_t dimY, size_t dimZ)
 {
     unsigned short* ValVec;
     long            i_m;
@@ -205,14 +205,14 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
             {
                 k1 = k + k_m;
                 if((k1 < 0) || (k1 >= dimZ))
-                    k1 = k;                
+                    k1 = k;
                 index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
                 ValVec[counter] = Input[index1];
                 counter++;
             }
         }
     }
- 
+
     qsort(ValVec, sizefilter_total, sizeof(unsigned short), uint16comp);
 
     if(mu_threshold == 0.0F)
@@ -232,7 +232,7 @@ medfilt3D_uint16(unsigned short* Input, unsigned short* Output, int radius,
 void
 medfilt2D_uint16(unsigned short* Input, unsigned short* Output, int radius,
                  int sizefilter_total, float mu_threshold, long i, long j, size_t index,
-                 long dimX, long dimY)
+                 size_t dimX, size_t dimY)
 {
     unsigned short* ValVec;
     long            i_m;
@@ -313,7 +313,7 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
             {
                 index = (size_t)(j) * dimX + (size_t)(i);
                 medfilt2D_float(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                j, index, (long) (dimX), (long) (dimY));
+                                j, index, (size_t) dimX, (size_t) dimY);
             }
         }
     }
@@ -330,8 +330,8 @@ medianfilter_main_float(float* Input, float* Output, int radius, float mu_thresh
                 {
                     index = dimX * dimY * (size_t)(k) + (size_t)(j) * dimX + (size_t)(i);
                     medfilt3D_float(Input, Output, radius, sizefilter_total, mu_threshold,
-                                    i, j, k, index, (long) (dimX), (long) (dimY),
-                                    (long) (dimZ));
+                                    i, j, k, index, (size_t) dimX, (size_t) dimY,
+                                    (size_t) dimZ);
                 }
             }
         }
@@ -352,7 +352,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
     size_t    index;
     size_t    totalvoxels;
 
-    totalvoxels = (size_t)(dimX) * (size_t)(dimY) * (size_t)(dimZ);  
+    totalvoxels = (size_t)(dimX) * (size_t)(dimY) * (size_t)(dimZ);
     diameter = (2 * radius + 1); /* diameter of the filter's kernel */
 
     /* dealing here with a custom given number of cpu threads */
@@ -374,7 +374,7 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
             {
                 index = (size_t)(j) * dimX + (size_t)(i);
                 medfilt2D_uint16(Input, Output, radius, sizefilter_total, mu_threshold, i,
-                                 j, index, (long) (dimX), (long) (dimY));
+                                 j, index, (size_t) dimX,  (size_t) dimY);
             }
         }
     }
@@ -391,8 +391,8 @@ medianfilter_main_uint16(unsigned short* Input, unsigned short* Output, int radi
                 {
                     index = dimX * dimY * (size_t)(k) + (size_t)(j) * dimX + (size_t)(i);
                     medfilt3D_uint16(Input, Output, radius, sizefilter_total,
-                                     mu_threshold, i, j, k, index, (long) (dimX),
-                                     (long) (dimY), (long) (dimZ));
+                                     mu_threshold, i, j, k, index,(size_t) dimX,
+                                     (size_t)dimY, (size_t)dimZ);
                 }
             }
         }
