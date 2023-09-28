@@ -1,2 +1,3 @@
 [submodule "source/PTL"]
+	path = source/PTL
 	url = https://github.com/tomopy/PTL.git
