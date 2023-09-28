@@ -441,8 +441,8 @@ def remove_outlier3d(arr, dif, size=3, ncore=None):
     input_type = arr.dtype
     if (input_type != 'float32') and (input_type != 'uint16'):
         arr = dtype.as_float32(arr)  # silent convertion to float32 data type
-    out = np.empty_like(arr)
-
+    out = np.copy(arr, order='C')
+    
     # convert the full kernel size (odd int) to a half size as the C function requires it
     kernel_half_size = (max(int(size), 3) - 1) // 2
 

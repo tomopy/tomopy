@@ -79,6 +79,7 @@ __all__ = [
     'as_c_float',
     'as_c_char_p',
     'as_c_void_p',
+    'as_c_size_t',
 ]
 
 
@@ -155,6 +156,10 @@ def as_c_char_p(arr):
 
 def as_c_void_p():
     return ctypes.POINTER(ctypes.c_void_p)
+
+
+def as_c_size_t(arr):
+    return ctypes.c_size_t(arr)
 
 
 def as_sharedmem(arr, copy=False):

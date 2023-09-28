@@ -76,7 +76,7 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
   - script: |
-      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml
+      conda env create -n tomopy --quiet -f envs/linux-$(python.version).yml --solver=libmamba
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -106,7 +106,7 @@ jobs:
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
-      conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml
+      conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml --solver=libmamba
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
@@ -134,7 +134,7 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
-      conda env create -n tomopy --quiet -f envs/win-ci.yml
+      conda env create -n tomopy --quiet -f envs/win-ci.yml --solver=libmamba
     displayName: Create build environment
   - script: conda list -n tomopy
     displayName: List build environment
