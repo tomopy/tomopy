@@ -150,8 +150,8 @@ def normalize(
         flat = np.mean(flat, axis=0, dtype=np.float32)
         dark = np.mean(dark, axis=0, dtype=np.float32)
     elif averaging == 'median':
-        flat = np.median(flat, axis=0)
-        dark = np.median(dark, axis=0)
+        flat = np.median(flat, axis=0).astype(np.float32)
+        dark = np.median(dark, axis=0).astype(np.float32)
     else:
         raise ValueError(
             f"'averaging' must be 'mean' or 'median' not {averaging}")
