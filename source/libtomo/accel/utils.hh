@@ -42,7 +42,6 @@
 //--------------------------------------------------------------------------------------//
 
 #include "macros.hh"
-#include "typedefs.hh"
 
 BEGIN_EXTERN_C
 #include "libtomo/accel.h"
