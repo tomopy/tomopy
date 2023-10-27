@@ -97,7 +97,7 @@
 //
 #include "PTL/AutoLock.hh"
 #include "PTL/Types.hh"
-#include "PTL/Utility.hh"
+#include "PTL/GetEnv.hh"
 
 //--------------------------------------------------------------------------------------//
 // contain compiled implementations

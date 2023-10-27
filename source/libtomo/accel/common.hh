@@ -86,7 +86,9 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
 #endif
     // use unique pointer per-thread so manager gets deleted when thread gets deleted
     // create the thread-pool instance
-    tp = unique_thread_pool_t(new tomopy::ThreadPool(pool_size));
+    tomopy::ThreadPool::Config cfg;
+    cfg.pool_size = pool_size;
+    tp = unique_thread_pool_t(new tomopy::ThreadPool(cfg));
 
 #if defined(TOMOPY_USE_PTL)
     // ensure this thread is assigned id, assign variable so no unused result warning

@@ -42,6 +42,7 @@
 //--------------------------------------------------------------------------------------//
 
 #include "macros.hh"
+#include "typedefs.hh"
 
 BEGIN_EXTERN_C
 #include "libtomo/accel.h"
@@ -59,6 +60,62 @@ END_EXTERN_C
 #    define CPU_AREA CV_INTER_AREA
 #    define CPU_CUBIC CV_INTER_CUBIC
 #    define CPU_LANCZOS CV_INTER_LANCZOS4
+
+//--------------------------------------------------------------------------------------//
+
+// a non-string environment option with a string identifier
+template <typename Tp>
+using EnvChoice = std::tuple<Tp, std::string, std::string>;
+
+//--------------------------------------------------------------------------------------//
+// list of environment choices with non-string and string identifiers
+template <typename Tp>
+using EnvChoiceList = std::set<EnvChoice<Tp>>;
+
+//--------------------------------------------------------------------------------------//
+
+template <typename Tp>
+Tp
+GetChoice(const EnvChoiceList<Tp>& _choices, const std::string& str_var)
+{
+    auto asupper = [](std::string var) {
+        for(auto& itr : var)
+            itr = toupper(itr);
+        return var;
+    };
+
+    std::string upp_var = asupper(str_var);
+    Tp          var     = Tp();
+    // check to see if string matches a choice
+    for(const auto& itr : _choices)
+    {
+        if(asupper(std::get<1>(itr)) == upp_var)
+        {
+            // record value defined by environment
+            return std::get<0>(itr);
+        }
+    }
+    std::istringstream iss(str_var);
+    iss >> var;
+    // check to see if string matches a choice
+    for(const auto& itr : _choices)
+    {
+        if(var == std::get<0>(itr))
+        {
+            // record value defined by environment
+            return var;
+        }
+    }
+    // the value set in env did not match any choices
+    std::stringstream ss;
+    ss << "\n### Environment setting error @ " << __FUNCTION__ << " (line " << __LINE__
+       << ")! Invalid selection \"" << str_var << "\". Valid choices are:\n";
+    for(const auto& itr : _choices)
+        ss << "\t\"" << std::get<0>(itr) << "\" or \"" << std::get<1>(itr) << "\" ("
+           << std::get<2>(itr) << ")\n";
+    std::cerr << ss.str() << std::endl;
+    abort();
+}
 
 //--------------------------------------------------------------------------------------//
 
@@ -104,12 +161,12 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode(const std::string& preferred)
 {
-    PTL::EnvChoiceList<int> choices = {
-        PTL::EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-        PTL::EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        PTL::EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
+    EnvChoiceList<int> choices = {
+        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
-    return PTL::GetChoice<int>(choices, preferred);
+    return GetChoice<int>(choices, preferred);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -204,12 +261,12 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 inline int
 GetNppInterpolationMode(const std::string& preferred)
 {
-    PTL::EnvChoiceList<int> choices = {
-        PTL::EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        PTL::EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        PTL::EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
+    EnvChoiceList<int> choices = {
+        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
     };
-    return PTL::GetChoice<int>(choices, preferred);
+    return GetChoice<int>(choices, preferred);
 }
 
 //======================================================================================//
