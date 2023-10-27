@@ -58,7 +58,7 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     auto min_threads = num_threads_t(1);
     if(pool_size <= 0)
     {
-#if defined(TOMOPY_USE_PTL)
+
         // compute some properties (expected python threads, max threads)
         auto pythreads = PTL::GetEnv("TOMOPY_PYTHON_THREADS", HW_CONCURRENCY);
 #    if defined(TOMOPY_USE_CUDA)
@@ -72,9 +72,6 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
         auto nthreads =
             std::max(PTL::GetEnv("TOMOPY_NUM_THREADS", max_threads), min_threads);
         pool_size = nthreads;
-#else
-        pool_size = 1;
-#endif
     }
     // always specify at least one thread even if not creating threads
     pool_size = std::max(pool_size, min_threads);
@@ -90,7 +87,6 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     cfg.pool_size = pool_size;
     tp = unique_thread_pool_t(new tomopy::ThreadPool(cfg));
 
-#if defined(TOMOPY_USE_PTL)
     // ensure this thread is assigned id, assign variable so no unused result warning
     auto tid = GetThisThreadID();
 
@@ -111,7 +107,6 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     std::cout << "\n"
               << "[" << tid << "] Initialized tasking run manager with " << tp->size()
               << " threads..." << std::endl;
-#endif
 }
 
 //======================================================================================//
