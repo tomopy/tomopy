@@ -91,7 +91,7 @@ CreateThreadPool(unique_thread_pool_t& tp, num_threads_t& pool_size)
     auto tid = GetThisThreadID();
 
     // initialize the thread-local data information
-    auto& thread_data = PTL::ThreadData::GetInstance();
+    auto*& thread_data = PTL::ThreadData::GetInstance();
     if(!thread_data)
         thread_data = new PTL::ThreadData(tp.get());
 
