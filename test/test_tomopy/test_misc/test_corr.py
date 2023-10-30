@@ -60,6 +60,7 @@ from tomopy.misc.corr import (
     remove_nan,
     remove_outlier,
     circ_mask,
+    inpainter_morph,
 )
 
 from ..util import read_file, loop_dim
@@ -140,3 +141,18 @@ class ImageFilterTestCase(unittest.TestCase):
 
     def test_circ_mask(self):
         loop_dim(circ_mask, read_file('obj.npy'))
+        
+    def test_inpainter(self):
+        lena_image = read_file('lena.npy')
+        mask = np.zeros((512,512))
+        mask[270:285, :] = 1 # crop out the horizontal region
+        mask = np.array(mask, dtype='bool')
+        lena_image[mask == True] = 0
+        inpainted2d_mean = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='mean')
+        inpainted2d_median = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='median')
+        inpainted2d_random = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='random')
+        assert_allclose(np.mean(inpainted2d_mean, axis=(0, 1)).sum(), 0.486248, rtol=1e-6)
+        assert_allclose(np.mean(inpainted2d_median, axis=(0, 1)).sum(), 0.486408, rtol=1e-6)
+        # increase tolerance as the result of the method is probabalistic
+        assert_allclose(np.mean(inpainted2d_random, axis=(0, 1)).sum(), 0.486232, rtol=1e-3)
+        

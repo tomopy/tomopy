@@ -60,6 +60,7 @@ __all__ = [
     'c_remove_ring',
     'c_median_filt3d_float32',
     'c_median_filt3d_uint16',
+    'c_inpainter',
 ]
 
 LIB_TOMOPY_MISC = c_shared_lib("tomo-misc")
@@ -157,3 +158,32 @@ def c_median_filt3d_uint16(
         dtype.as_c_int(dz),
     )
     return output
+
+
+def c_inpainter(
+    input,
+    mask,
+    output,
+    iterations,
+    kernel_half_size,
+    method_type,
+    ncore,
+    dx,
+    dy,
+    dz,
+):
+    LIB_TOMOPY_MISC.Inpainter_morph_main.restype = dtype.as_c_void_p()
+    LIB_TOMOPY_MISC.Inpainter_morph_main(
+        dtype.as_c_float_p(input),
+        dtype.as_c_bool_p(mask),
+        dtype.as_c_float_p(output),
+        dtype.as_c_int(iterations),
+        dtype.as_c_int(kernel_half_size),
+        dtype.as_c_int(method_type),
+        dtype.as_c_int(ncore),
+        dtype.as_c_int(dx),
+        dtype.as_c_int(dy),
+        dtype.as_c_int(dz),
+    )
+    return output
+

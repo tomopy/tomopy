@@ -86,6 +86,7 @@ __all__ = [
     'remove_outlier_cuda',
     'remove_ring',
     'enhance_projs_aps_1id',
+    'inpainter_morph',
 ]
 
 
@@ -965,3 +966,124 @@ def _calc_histequal_wgt(img):
         image
     """
     return (np.sort(img.flatten()).searchsorted(img) + 1) / np.prod(img.shape)
+
+
+
+def inpainter_morph(arr, 
+                    mask,
+                    size=5,
+                    iterations=2,
+                    inpainting_type='random',
+                    method_type='2D',
+                    ncore=None):
+    """
+    Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean).
+
+    .. versionadded:: 1.14
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input 3D or 2D array of float32 data type.
+    mask : ndarray, bool
+        Boolean mask array of the same size as arr. 
+        True values in the mask indicate the region that needs to be inpainted.
+    size : int, optional
+        The size of the searching window.
+    iterations : int, optional
+        Iterations of the algorithm after the inpainted region was processed fully. 
+        The larger numbers usually lead to oversmoothing of the area.
+    inpainting_type : str, optional
+        The type of the inpainting technique. 
+        Choose between 'mean', 'median' or 'random' neighbour selection.
+        We suggest using 'random' to minimise the "spilling" of intensities of the inpainted areas.
+    method_type : str, optional
+            Choose between '2D' or '3D' algorithm. Usually '3D' provides a more consistent 
+            and better quality inpainting. 
+    ncore : int, optional
+        Number of cores that will be assigned to jobs. All cores will be used
+        if unspecified.
+
+    Returns
+    -------
+    ndarray
+       Inpainted array of float32 data type.
+
+    Raises
+    ------
+    ValueError
+        If the input array is not float32.
+        
+        If the input mask array is not bool.
+
+        If inpainting_type is not 'mean', 'median' or 'random'.
+
+        If method_type is not '2D' or '3D'
+
+    """
+    if ncore is None:
+        ncore = mproc.mp.cpu_count()
+
+    if (arr.dtype != 'float32'):
+        arr = dtype.as_float32(arr)  # silent convertion to float32 data type
+    if (mask.dtype != 'bool'):
+        raise ValueError("Please make sure that the mask provided is boolean where true values define the missing data regions!")
+    out = np.empty_like(arr, order='C')
+
+    if inpainting_type not in ['mean', 'median', 'random']:
+        raise ValueError("Inpainting type should be chosen as 'mean', 'median' or 'random'")
+    
+    if inpainting_type == 'mean':
+        inp_type_int = 0
+    if inpainting_type == 'median':
+        inp_type_int = 1
+    if inpainting_type == 'random':
+        inp_type_int = 2
+        
+    if method_type not in ['2D', '3D']:
+        raise ValueError("Choose method_type either '2D' or '3D'")
+    
+    if arr.ndim == 3:
+        dz, dy, dx = arr.shape
+        if (dz == 0) or (dy == 0) or (dx == 0):
+            raise ValueError("The length of one of dimensions is equal to zero")
+        if method_type == '2D':
+            # perform 2d inpainting for 3d data
+            for m in range(arr.shape[1]):
+                slice2d = arr[:, m, :]
+                mask2d = mask[:, m, :]
+                dy, dx = slice2d.shape
+                out2d = np.empty_like(slice2d, order='C')
+                extern.c_inpainter(np.ascontiguousarray(slice2d),
+                                   np.ascontiguousarray(mask2d),
+                                   out2d,
+                                   iterations,
+                                   size,
+                                   inp_type_int,
+                                   ncore,
+                                   dx, dy, 1)
+                out[:, m, :] = out2d
+        else:
+            # 3d inpaiting for 3d data
+            extern.c_inpainter(np.ascontiguousarray(arr),
+                               np.ascontiguousarray(mask),
+                               out,
+                               iterations,
+                               size,
+                               inp_type_int,
+                               ncore,
+                               dx, dy, dz)
+    else:
+        dy, dx = arr.shape
+        if (dy == 0) or (dx == 0):
+            raise ValueError("The length of one of dimensions is equal to zero")
+        extern.c_inpainter(np.ascontiguousarray(arr),
+                            np.ascontiguousarray(mask),
+                            out,
+                            iterations,
+                            size,
+                            inp_type_int,
+                            ncore,
+                            dx, dy, 1)
+
+    return out
