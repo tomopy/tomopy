@@ -23,12 +23,6 @@ target_include_directories(
          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-if(TRUE)
-  # FIXME: Need PTL headers regardless of whether we use PTL
-  target_include_directories(tomo-accel
-                             PRIVATE ${tomopy_SOURCE_DIR}/source/PTL/source)
-endif()
-
 if(TOMOPY_USE_CUDA)
 
   target_sources(tomo-accel PRIVATE gpu/common.cu gpu/mlem.cu gpu/sirt.cu
@@ -54,7 +48,7 @@ if(TOMOPY_USE_CUDA)
 endif(TOMOPY_USE_CUDA)
 
 target_link_libraries(tomo-accel PRIVATE ${TOMOPY_EXTERNAL_LIBRARIES}
-                                         ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES})
+                                         ${TOMOPY_EXTERNAL_PRIVATE_LIBRARIES} ptl-static)
 
 target_compile_definitions(tomo-accel PRIVATE ${${PROJECT_NAME}_DEFINITIONS})
 

@@ -20,25 +20,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE
 # PTL submodule
 #
 # ------------------------------------------------------------------------------#
-checkout_git_submodule(
-  RECURSIVE
-  TEST_FILE
-  CMakeLists.txt
-  RELATIVE_PATH
-  source/PTL
-  WORKING_DIRECTORY
-  ${PROJECT_SOURCE_DIR})
-
-if(TOMOPY_USE_PTL)
-  add_subdirectory(PTL)
-  if(BUILD_STATIC_LIBS)
-    list(APPEND TOMOPY_EXTERNAL_LIBRARIES ptl-static)
-  else()
-    list(APPEND TOMOPY_EXTERNAL_LIBRARIES ptl-shared)
-  endif()
-  list(APPEND ${PROJECT_NAME}_DEFINITIONS TOMOPY_USE_PTL)
+if(TOMOPY_USE_OPENCV OR TOMOPY_USE_CUDA)
+  checkout_git_submodule(
+    RECURSIVE
+    TEST_FILE
+    CMakeLists.txt
+    RELATIVE_PATH
+    source/PTL
+    WORKING_DIRECTORY
+    ${PROJECT_SOURCE_DIR})
+  add_subdirectory(PTL EXCLUDE_FROM_ALL)
 endif()
-
 # ------------------------------------------------------------------------------#
 #
 # TomoPy Python module

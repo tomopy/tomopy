@@ -97,21 +97,20 @@
 //
 #include "PTL/AutoLock.hh"
 #include "PTL/Types.hh"
-#include "PTL/Utility.hh"
+#include "PTL/GetEnv.hh"
 
 //--------------------------------------------------------------------------------------//
 // contain compiled implementations
 //
-#if defined(TOMOPY_USE_PTL)
-#    include "PTL/TBBTaskGroup.hh"
-#    include "PTL/Task.hh"
-#    include "PTL/TaskGroup.hh"
-#    include "PTL/TaskManager.hh"
-#    include "PTL/TaskRunManager.hh"
-#    include "PTL/ThreadData.hh"
-#    include "PTL/ThreadPool.hh"
-#    include "PTL/Threading.hh"
-#endif
+
+#include "PTL/Task.hh"
+#include "PTL/TaskGroup.hh"
+#include "PTL/TaskManager.hh"
+#include "PTL/TaskRunManager.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/Threading.hh"
+
 
 //--------------------------------------------------------------------------------------//
 // CUDA headers
@@ -150,13 +149,7 @@
 inline uintmax_t
 GetThisThreadID()
 {
-#if defined(TOMOPY_USE_PTL)
-    return ThreadPool::GetThisThreadID();
-#else
-    static std::atomic<uintmax_t> tcounter;
-    static thread_local auto      tid = tcounter++;
-    return tid;
-#endif
+    return PTL::ThreadPool::get_this_thread_id();
 }
 
 //======================================================================================//
@@ -394,67 +387,21 @@ struct cuda_algorithms
 //--------------------------------------------------------------------------------------//
 
 // Create a ThreadPool class in so we can refer to it safely when PTL is
-// not enabled. Do this within a namespace in case a header later includes
-// "PTL/ThreadPool.hh" and PTL is not enabled.
-// --> When PTL is enabled, tomopy::ThreadPool is an alias to PTL ThreadPool
-// --> When PTL is disabled, tomopy::ThreadPool is an alias to dummy class
-
-#if defined(TOMOPY_USE_PTL)
+// not enabled.
 
 //--------------------------------------------------------------------------------------//
 
-using ThreadPool = ::ThreadPool;
+using ThreadPool = PTL::ThreadPool;
 template <typename _Ret, typename _Arg = _Ret>
-using TaskGroup = ::TaskGroup<_Ret, _Arg>;
+using TaskGroup = PTL::TaskGroup<_Ret, _Arg>;
 
 //--------------------------------------------------------------------------------------//
 
 // when compiled with PTL, mark tomopy::ThreadPool as implemented
 template <>
-struct implementation_available<ThreadPool> : std::true_type
+struct implementation_available<PTL::ThreadPool> : std::true_type
 {
 };
-
-//--------------------------------------------------------------------------------------//
-
-#else
-
-//--------------------------------------------------------------------------------------//
-// dummy thread pool impl
-
-class ThreadPool
-{
-public:
-    ThreadPool(intmax_t = 1, bool = false) {}
-    intmax_t size() const { return 1; }
-    void destroy_threadpool() {}
-};
-
-template <typename _Ret, typename _Arg = _Ret>
-class TaskGroup
-{
-public:
-    template <typename _Func>
-    TaskGroup(_Func&& _join, ThreadPool* = nullptr)
-    : m_join(std::forward<_Func>(_join))
-    {
-    }
-
-    template <typename _Func, typename... _Args>
-    void run(_Func&& func, _Args&&... args)
-    {
-        std::forward<_Func>(func)(std::forward<_Args>(args)...);
-    }
-
-    void join() { m_join(); }
-
-private:
-    std::function<void()> m_join;
-};
-
-//--------------------------------------------------------------------------------------//
-
-#endif
 
 //--------------------------------------------------------------------------------------//
 
