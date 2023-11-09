@@ -1,0 +1,29 @@
+name: tomopy
+channels:
+  - conda-forge
+dependencies:
+  - gcc_linux-64
+  - cmake
+  - gxx_linux-64
+  - cuda-nvcc_linux-64
+  - libnpp-dev
+  - dxchange
+  - git
+  - h5py
+  - ninja
+  - numexpr
+  - numpy<1.22.4|>=1.23.0
+  - python
+  - pywavelets
+  - scikit-image>=0.17
+  - scipy
+  - setuptools_scm
+  - setuptools_scm_git_archive
+# Optional packages
+  # - pyctest>0.0.10
+  # - timemory=*=py37h* # the nompi build
+  - mkl
+  - mkl-devel
+  - mkl_fft
+  - pytest
+  - pytest-cov
