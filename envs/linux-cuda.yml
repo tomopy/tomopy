@@ -2,12 +2,12 @@ name: tomopy
 channels:
   - conda-forge
 dependencies:
+  - c-compiler
   - cmake
   - cuda-nvcc_linux-64
+  - cxx-compiler
   - dxchange
-  - gcc_linux-64
   - git
-  - gxx_linux-64
   - h5py
   - libgomp
   - libnpp-dev
