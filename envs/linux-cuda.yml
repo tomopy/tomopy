@@ -6,6 +6,7 @@ dependencies:
   - cmake
   - gxx_linux-64
   - cuda-nvcc_linux-64
+  - libgomp
   - libnpp-dev
   - dxchange
   - git
