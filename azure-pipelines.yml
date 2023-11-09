@@ -95,8 +95,8 @@ jobs:
       echo "C++ compiler is ${CXX}"
       pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DTOMOPY_USE_MKL:BOOL=$(use.mkl) -DTOMOPY_USE_CUDA:BOOL=$(use.cuda)
-      cmake --build build
-      cmake --install build
+      cmake --build build -v
+      cmake --install build -v
     displayName: Setup and install
   - script: |
       source activate tomopy
