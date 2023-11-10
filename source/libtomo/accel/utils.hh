@@ -52,14 +52,6 @@ END_EXTERN_C
 #    define _Complex
 #endif
 
-#if defined(TOMOPY_USE_OPENCV)
-
-#    define CPU_NN CV_INTER_NN
-#    define CPU_LINEAR CV_INTER_LINEAR
-#    define CPU_AREA CV_INTER_AREA
-#    define CPU_CUBIC CV_INTER_CUBIC
-#    define CPU_LANCZOS CV_INTER_LANCZOS4
-
 //--------------------------------------------------------------------------------------//
 
 // a non-string environment option with a string identifier
@@ -115,6 +107,14 @@ GetChoice(const EnvChoiceList<Tp>& _choices, const std::string& str_var)
     std::cerr << ss.str() << std::endl;
     abort();
 }
+
+#if defined(TOMOPY_USE_OPENCV)
+
+#    define CPU_NN CV_INTER_NN
+#    define CPU_LINEAR CV_INTER_LINEAR
+#    define CPU_AREA CV_INTER_AREA
+#    define CPU_CUBIC CV_INTER_CUBIC
+#    define CPU_LANCZOS CV_INTER_LANCZOS4
 
 //--------------------------------------------------------------------------------------//
 
