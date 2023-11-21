@@ -54,12 +54,7 @@
 
 #include <stdbool.h>
 
-DLL int 
-Inpainter_morph_main(float *Input, 
-                    bool *Mask,
-                    float *Output,
-                    int iterations,
-                    int W_halfsize,
-                    int method_type,
-                    int ncores,
-                    int dimX, int dimY, int dimZ);
+DLL int
+Inpainter_morph_main(float* Input, bool* Mask, float* Output, int iterations,
+                     int W_halfsize, int method_type, int ncores, int dimX, int dimY,
+                     int dimZ);

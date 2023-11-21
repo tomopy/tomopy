@@ -46,513 +46,517 @@
 
 #include <math.h>
 #include <omp.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 #include "libtomo/inpainter.h"
 
-int floatcomp1(const void* elem1, const void* elem2)
+int
+floatcomp1(const void* elem1, const void* elem2)
 {
-    if(*(const float*)elem1 < *(const float*)elem2)
+    if(*(const float*) elem1 < *(const float*) elem2)
         return -1;
-    return *(const float*)elem1 > *(const float*)elem2;
+    return *(const float*) elem1 > *(const float*) elem2;
 }
 
 /********************************************************************/
 /***************************2D Functions*****************************/
 /********************************************************************/
-void mean_smoothing_2D(bool *Mask, float *Output,
-                       float *Updated, long i, long j,
-                       long dimX, long dimY)
+void
+mean_smoothing_2D(const bool* Mask, const float* Output, float* Updated, long i, long j,
+                  long dimX, long dimY)
 {
-  long            i_m;
-  long            j_m;
-  long            i1;
-  long            j1;
-  float           sum_val;
-  int             counter_local;
-  size_t          index;
-  size_t          index1;
-  index = (size_t)j * dimX + (size_t)i;
+    long   i_m;
+    long   j_m;
+    long   i1;
+    long   j1;
+    float  sum_val;
+    int    counter_local;
+    size_t index;
+    size_t index1;
+    index = (size_t) j * dimX + (size_t) i;
 
-  if (Mask[index] == true)
-  {  
-    counter_local = 0; sum_val = 0.0f;
-    for(i_m=-1; i_m<=1; i_m++) 
+    if(Mask[index] == true)
     {
-      i1 = i+i_m;
-      for(j_m=-1; j_m<=1; j_m++) 
-      {
-        j1 = j+j_m;
-        if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY))) 
+        counter_local = 0;
+        sum_val       = 0.0F;
+        for(i_m = -1; i_m <= 1; i_m++)
         {
-          index1 = (size_t)j1 * dimX + (size_t)i1;
-          if (Output[index1] != 0.0) 
-          {
-          sum_val += Output[index1];
-          counter_local++;
-          }
-        }
-      }
-    }            
-    if (counter_local > 0) 
-    {
-    Updated[index] = sum_val/counter_local;
-    }
-  }
-return;
-}
-
-void 
-eucl_weighting_inpainting_2D(bool *M_upd, float *Output, 
-                             float *Updated, float *Gauss_weights,
-                             int W_halfsize, 
-                             long i, long j, long dimX, long dimY)
-{
-  long            i_m;
-  long            j_m;
-  long            i1;
-  long            j1;
-  float           sum_val;
-  float           sumweights;
-  int             counter_local;
-  int             counterglob;
-  int             counter_vicinity;
-  size_t          index;
-  size_t          index1;
-  index = (size_t)j * dimX + (size_t)i;
-
-  /* check that you're on the region defined by the updated mask */
-  if (M_upd[index] == true) 
-  {
-      /* first check if there is usable information in the close vicinity of the mask's edge */
-      counter_vicinity = 0;
-      for(i_m=-1; i_m<=1; i_m++) 
-      {
-          i1 = i+i_m;
-          for(j_m=-1; j_m<=1; j_m++) 
-          {
-              j1 = j+j_m;
-              if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY))) 
-              {
-                if (Output[(size_t)j1 * dimX + (size_t)i1] != 0.0)
-                {
-                counter_vicinity++;
-                break;
-                }           
-              }
-          }
-      }
-
-      if (counter_vicinity > 0) 
-      {
-          counter_local = 0;
-          sum_val = 0.0f;
-          sumweights = 0.0f;
-          counterglob = 0;
-          for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-          {
-            i1 = i+i_m;
-              for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
-              {
-                j1 = j+j_m;
-                  if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY))) 
-                  {
-                      index1 = (size_t)j1 * dimX + (size_t)i1;
-                      if (Output[index1] != 0.0) 
-                      {
-                      sum_val += Output[index1]*Gauss_weights[counterglob];
-                      sumweights += Gauss_weights[counterglob];
-                      counter_local++;
-                      }
-                  }
-                counterglob++;
-              }
-          }
-          /* if there were non zero mask values */
-          if (counter_local > 0) 
-          {
-          Updated[index] = sum_val/sumweights;
-          M_upd[index] = false;
-          }
-      }
-    }
-	return;
-}
-
-void 
-median_rand_inpainting_2D(bool *M_upd, 
-                          float *Output, float *Updated, 
-                          int W_halfsize, int window_fullength, 
-                          int method_type, 
-                          long i, long j, long dimX, long dimY)
-{
-  float           *_values;
-  long            i_m;
-  long            j_m;
-  long            i1;
-  long            j1;
-  long            median_val;
-  int             r0;
-  int             r1;
-  int             counter_local;
-  float           vicinity_mean;
-  size_t          index;
-  size_t          index1;
-  index = (size_t)j * dimX + (size_t)i;
-
-  _values = (float*) calloc(window_fullength, sizeof(float));
-
-  /* check that you're on the region defined by the updated mask */
-  if (M_upd[index] == true) 
-  {
-    /* a quick check if there is a usable information in the close vicinity of the mask's edge */
-    counter_local = 0;
-    vicinity_mean = 0.0f;
-    for(i_m=-1; i_m<=1; i_m++) 
-    {
-        i1 = i+i_m;
-        for(j_m=-1; j_m<=1; j_m++) 
-        {
-            j1 = j+j_m;
-            if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY))) 
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
             {
-              index1 = (size_t)j1 * dimX + (size_t)i1;
-              if (Output[index1] != 0.0)
-              {
-              vicinity_mean += Output[index1];
-              counter_local++;
-              }
+                j1 = j + j_m;
+                if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)))
+                {
+                    index1 = (size_t) j1 * dimX + (size_t) i1;
+                    if(Output[index1] != 0.0)
+                    {
+                        sum_val += Output[index1];
+                        counter_local++;
+                    }
+                }
+            }
+        }
+        if(counter_local > 0)
+        {
+            Updated[index] = sum_val / counter_local;
+        }
+    }
+}
+
+void
+eucl_weighting_inpainting_2D(bool* M_upd, const float* Output, float* Updated,
+                             const float* Gauss_weights, int W_halfsize, long i, long j,
+                             long dimX, long dimY)
+{
+    long   i_m;
+    long   j_m;
+    long   i1;
+    long   j1;
+    float  sum_val;
+    float  sumweights;
+    int    counter_local;
+    int    counterglob;
+    int    counter_vicinity;
+    size_t index;
+    size_t index1;
+    index = (size_t) j * dimX + (size_t) i;
+
+    /* check that you're on the region defined by the updated mask */
+    if(M_upd[index] == true)
+    {
+        /* first check if there is usable information in the close vicinity of the mask's
+         * edge */
+        counter_vicinity = 0;
+        for(i_m = -1; i_m <= 1; i_m++)
+        {
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
+            {
+                j1 = j + j_m;
+                if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)))
+                {
+                    if(Output[(size_t) j1 * dimX + (size_t) i1] != 0.0)
+                    {
+                        counter_vicinity++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(counter_vicinity > 0)
+        {
+            counter_local = 0;
+            sum_val       = 0.0F;
+            sumweights    = 0.0F;
+            counterglob   = 0;
+            for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
+            {
+                i1 = i + i_m;
+                for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+                {
+                    j1 = j + j_m;
+                    if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)))
+                    {
+                        index1 = (size_t) j1 * dimX + (size_t) i1;
+                        if(Output[index1] != 0.0)
+                        {
+                            sum_val += Output[index1] * Gauss_weights[counterglob];
+                            sumweights += Gauss_weights[counterglob];
+                            counter_local++;
+                        }
+                    }
+                    counterglob++;
+                }
+            }
+            /* if there were non zero mask values */
+            if(counter_local > 0)
+            {
+                Updated[index] = sum_val / sumweights;
+                M_upd[index]   = false;
             }
         }
     }
-    /*If we've got usable data in the vicinity then proceed with inpainting */
-    if (vicinity_mean != 0.0f) 
+}
+
+void
+median_rand_inpainting_2D(bool* M_upd, const float* Output, float* Updated,
+                          int W_halfsize, int window_fullength, int method_type, long i,
+                          long j, long dimX, long dimY)
+{
+    float* _values;
+    long   i_m;
+    long   j_m;
+    long   i1;
+    long   j1;
+    long   median_val;
+    int    r0;
+    int    r1;
+    int    counter_local;
+    float  vicinity_mean;
+    size_t index;
+    size_t index1;
+    index = (size_t) j * dimX + (size_t) i;
+
+    _values = (float*) calloc(window_fullength, sizeof(float));
+
+    /* check that you're on the region defined by the updated mask */
+    if(M_upd[index] == true)
     {
-          vicinity_mean = vicinity_mean/counter_local; /* get the mean of values in the vicinity */
-          /* fill the vectors */
-          counter_local = 0;
-          for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-          {
-              i1 = i+i_m;
-              for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
-              {
-                  j1 = j+j_m;
-                  if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY))) 
-                  {
-                      index1 = (size_t)j1 * dimX + (size_t)i1;
-                      if (Output[index1] != 0.0) 
-                      {
-                      _values[counter_local] = Output[index1];
-                      counter_local++;
-                      }
-                  }
-              }
-          }              
-      if (method_type == 1) 
-      {
-        /* inpainting based on the median neighbour (!can create sharp features!) */
-        qsort(_values, counter_local-1, sizeof(float), floatcomp1);
-        median_val = (int)(counter_local/2);
-        Updated[index] = _values[median_val];
-      } 
-      else 
-      {
-        /* inpainting based on a random neighbour (mean of two random values)*/
-        r0 = rand() % counter_local;
-        r1 = rand() % counter_local;
-        Updated[index] = 0.5f * (_values[r0] + _values[r1]);
-      }
-      M_upd[index] = false;
+        /* a quick check if there is a usable information in the close vicinity of the
+         * mask's edge */
+        counter_local = 0;
+        vicinity_mean = 0.0F;
+        for(i_m = -1; i_m <= 1; i_m++)
+        {
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
+            {
+                j1 = j + j_m;
+                if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)))
+                {
+                    index1 = (size_t) j1 * dimX + (size_t) i1;
+                    if(Output[index1] != 0.0)
+                    {
+                        vicinity_mean += Output[index1];
+                        counter_local++;
+                    }
+                }
+            }
+        }
+        /*If we've got usable data in the vicinity then proceed with inpainting */
+        if(vicinity_mean != 0.0F)
+        {
+            vicinity_mean = vicinity_mean /
+                            counter_local; /* get the mean of values in the vicinity */
+            /* fill the vectors */
+            counter_local = 0;
+            for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
+            {
+                i1 = i + i_m;
+                for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+                {
+                    j1 = j + j_m;
+                    if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)))
+                    {
+                        index1 = (size_t) j1 * dimX + (size_t) i1;
+                        if(Output[index1] != 0.0)
+                        {
+                            _values[counter_local] = Output[index1];
+                            counter_local++;
+                        }
+                    }
+                }
+            }
+            if(method_type == 1)
+            {
+                /* inpainting based on the median neighbour (!can create sharp features!)
+                 */
+                qsort(_values, counter_local - 1, sizeof(float), floatcomp1);
+                median_val     = counter_local / 2;
+                Updated[index] = _values[median_val];
+            }
+            else
+            {
+                /* inpainting based on a random neighbour (mean of two random values)*/
+                r0             = rand() % counter_local;
+                r1             = rand() % counter_local;
+                Updated[index] = 0.5F * (_values[r0] + _values[r1]);
+            }
+            M_upd[index] = false;
+        }
     }
-  }
-  free(_values);
-	return;
+    free(_values);
 }
 
 /********************************************************************/
 /***************************3D Functions*****************************/
 /********************************************************************/
-void 
-mean_smoothing_3D(bool *Mask, float *Output, float *Updated, long i, long j, long k, long dimX, long dimY, long dimZ)
+void
+mean_smoothing_3D(const bool* Mask, const float* Output, float* Updated, long i, long j,
+                  long k, long dimX, long dimY, long dimZ)
 {
-    long            i_m;
-    long            j_m;
-    long            k_m;
-    long            i1;
-    long            j1;
-    long            k1;
-    float           sum_val;
-    int             counter_local;
-    size_t          index;
-    size_t          index1;
-    index = dimX * dimY * (size_t)k + (size_t)j * dimX + (size_t)i;
+    long   i_m;
+    long   j_m;
+    long   k_m;
+    long   i1;
+    long   j1;
+    long   k1;
+    float  sum_val;
+    int    counter_local;
+    size_t index;
+    size_t index1;
+    index = dimX * dimY * (size_t) k + (size_t) j * dimX + (size_t) i;
 
-    if (Mask[index] == true) 
-    {  
-      counter_local = 0;
-      sum_val = 0.0f;
-      for(i_m=-1; i_m<=1; i_m++) 
-      {
-        i1 = i+i_m;
-        for(j_m=-1; j_m<=1; j_m++) 
-        {
-          j1 = j+j_m;
-          for(k_m=-1; k_m<=1; k_m++) 
-          {
-            k1 = k+k_m;
-            if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) && ((k1 >= 0) && (k1 < dimZ)))
-            {
-              index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
-              if (Output[index1] != 0.0)
-              {
-              sum_val += Output[index1];
-              counter_local++;
-              }
-            }
-          }
-        }
-      }            
-      if (counter_local > 0) 
-      {
-      Updated[index] = sum_val/counter_local;
-      }
-    }
-  return;
-}
-
-void 
-eucl_weighting_inpainting_3D(bool *M_upd, float *Output,
-                            float *Updated, float *Gauss_weights,
-                            int W_halfsize, long i, long j, long k, 
-                            long dimX, long dimY, long dimZ)
-{
-    long            i_m;
-    long            j_m;
-    long            k_m;
-    long            i1;
-    long            j1;
-    long            k1;
-    float           sum_val;
-    float           sumweights;
-    long            counter_local;
-    long            counterglob;
-    long            counter_vicinity;
-    size_t          index;
-    size_t          index1;
-    index = dimX * dimY * (size_t)k + (size_t)j * dimX + (size_t)i;
-
-    /* check that you're on the region defined by the updated mask */
-    if (M_upd[index] == true) 
+    if(Mask[index] == true)
     {
-      /* first check if there is usable information in the close vicinity of the mask's edge */
-      counter_vicinity = 0;
-      for(i_m=-1; i_m<=1; i_m++) 
-      {
-        i1 = i+i_m;
-        for(j_m=-1; j_m<=1; j_m++) 
+        counter_local = 0;
+        sum_val       = 0.0F;
+        for(i_m = -1; i_m <= 1; i_m++)
         {
-          j1 = j+j_m;
-          for(k_m=-1; k_m<=1; k_m++) 
-          {
-            k1 = k+k_m;
-            if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) && ((k1 >= 0) && (k1 < dimZ))) 
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
             {
-              if (Output[dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1] != 0.0)
-              {
-              counter_vicinity++;
-              break;
-              }
-            }
-          }
-        }
-      }
-
-      if (counter_vicinity > 0)
-      {
-        /* there is data for inpainting -> proceed */
-          counter_local = 0;
-          sum_val = 0.0f;
-          sumweights = 0.0f;
-          counterglob = 0;
-          for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-          {
-            i1 = i+i_m;
-              for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
-              {
-                j1 = j+j_m;
-                  for(k_m=-W_halfsize; k_m<=W_halfsize; k_m++) 
-                  {
-                    k1 = k+k_m;              
-                      if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) && ((k1 >= 0) && (k1 < dimZ))) 
-                      {
-                        index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
-                        if (Output[index1] != 0.0)
-                        {
-                          sum_val += Output[index1]*Gauss_weights[counterglob];
-                          sumweights += Gauss_weights[counterglob];
-                          counter_local++;
-                        }
-                      }
-                    counterglob++;
-                  }
-              }
-          }
-          /* if there were non zero mask values */
-          if (counter_local > 0) 
-          {
-          Updated[index] = sum_val/sumweights;
-          M_upd[index] = false;
-          }
-      }      
-    }
-	return;
-}
-
-void 
-median_rand_inpainting_3D(bool *M_upd, float *Output,
-                        float *Updated, int W_halfsize, int window_fullength,
-                        int method_type,
-                        long i, long j, long k, long dimX, long dimY, long dimZ)
-{
-  float           *_values;
-  long            i_m;
-  long            j_m;
-  long            k_m;
-  long            i1;
-  long            j1;
-  long            k1;    
-  float           vicinity_mean;
-  int             counter_local;
-  int             r0;
-  int             r1;
-  int             median_val;
-  size_t          index;
-  size_t          index1;
-
-  index = dimX * dimY * (size_t)k + (size_t)j * dimX + (size_t)i;
-
-  _values = (float*) calloc(window_fullength, sizeof(float));
-
-  /* check that you're on the region defined by the mask */
-  if (M_upd[index] == true) 
-  {
-    /* check if have a usable information in the vicinity of the mask's edge*/
-    counter_local = 0; 
-    vicinity_mean = 0.0f;
-    for(i_m=-1; i_m<=1; i_m++) 
-    {
-      i1 = i+i_m;
-      for(j_m=-1; j_m<=1; j_m++) 
-      {
-        j1 = j+j_m;
-        for(k_m=-1; k_m<=1; k_m++) 
-        {
-          k1 = k+k_m;
-          if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) && ((k1 >= 0) && (k1 < dimZ))) 
-          {
-            index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
-            if (Output[index1] != 0.0) 
-            {
-            vicinity_mean += Output[index1];
-            counter_local++;
-            }
-          }
-        }
-      }
-    }            
-          
-    /* We've got usable data in the vicinity os the neighbourhood then proceed with inpainting */
-    if (vicinity_mean != 0.0f) 
-    {
-      vicinity_mean = vicinity_mean/counter_local; /* get the mean of values in the vicinity */
-
-      /* fill the vector */
-      counter_local = 0;
-        for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-        {
-          i1 = i+i_m;
-            for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
-            {
-              j1 = j+j_m;
-                for(k_m=-W_halfsize; k_m<=W_halfsize; k_m++) 
+                j1 = j + j_m;
+                for(k_m = -1; k_m <= 1; k_m++)
                 {
-                  k1 = k+k_m;
-                  if (((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) && ((k1 >= 0) && (k1 < dimZ))) 
-                  {
-                      index1 = dimX * dimY * (size_t)k1 + (size_t)j1 * dimX + (size_t)i1;
-                      if (Output[index1] != 0.0) 
-                      {
-                        _values[counter_local] = Output[index1];
-                        counter_local++;
-                      }
-                  }
+                    k1 = k + k_m;
+                    if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) &&
+                       ((k1 >= 0) && (k1 < dimZ)))
+                    {
+                        index1 =
+                            dimX * dimY * (size_t) k1 + (size_t) j1 * dimX + (size_t) i1;
+                        if(Output[index1] != 0.0)
+                        {
+                            sum_val += Output[index1];
+                            counter_local++;
+                        }
+                    }
                 }
             }
         }
-        if (method_type == 1) 
+        if(counter_local > 0)
         {
-          /* inpainting based on the median neighbour */
-          qsort(_values, window_fullength, sizeof(float), floatcomp1);
-          median_val = (int)(counter_local/2);
-          Updated[index] = _values[median_val];
+            Updated[index] = sum_val / counter_local;
         }
-        else 
-        {
-          /* inpainting based on two random neighbours */
-          r0 = rand() % counter_local;
-          r1 = rand() % counter_local;
-          Updated[index] = 0.5f *(_values[r0] + _values[r1]);
-        }
-        M_upd[index] = false;
     }
-  }
-  free(_values);
-	return;
+}
+
+void
+eucl_weighting_inpainting_3D(bool* M_upd, const float* Output, float* Updated,
+                             const float* Gauss_weights, int W_halfsize, long i, long j,
+                             long k, long dimX, long dimY, long dimZ)
+{
+    long   i_m;
+    long   j_m;
+    long   k_m;
+    long   i1;
+    long   j1;
+    long   k1;
+    float  sum_val;
+    float  sumweights;
+    long   counter_local;
+    long   counterglob;
+    long   counter_vicinity;
+    size_t index;
+    size_t index1;
+    index = dimX * dimY * (size_t) k + (size_t) j * dimX + (size_t) i;
+
+    /* check that you're on the region defined by the updated mask */
+    if(M_upd[index] == true)
+    {
+        /* first check if there is usable information in the close vicinity of the mask's
+         * edge */
+        counter_vicinity = 0;
+        for(i_m = -1; i_m <= 1; i_m++)
+        {
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
+            {
+                j1 = j + j_m;
+                for(k_m = -1; k_m <= 1; k_m++)
+                {
+                    k1 = k + k_m;
+                    if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) &&
+                       ((k1 >= 0) && (k1 < dimZ)))
+                    {
+                        if(Output[dimX * dimY * (size_t) k1 + (size_t) j1 * dimX +
+                                  (size_t) i1] != 0.0)
+                        {
+                            counter_vicinity++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if(counter_vicinity > 0)
+        {
+            /* there is data for inpainting -> proceed */
+            counter_local = 0;
+            sum_val       = 0.0F;
+            sumweights    = 0.0F;
+            counterglob   = 0;
+            for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
+            {
+                i1 = i + i_m;
+                for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+                {
+                    j1 = j + j_m;
+                    for(k_m = -W_halfsize; k_m <= W_halfsize; k_m++)
+                    {
+                        k1 = k + k_m;
+                        if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) &&
+                           ((k1 >= 0) && (k1 < dimZ)))
+                        {
+                            index1 = dimX * dimY * (size_t) k1 + (size_t) j1 * dimX +
+                                     (size_t) i1;
+                            if(Output[index1] != 0.0)
+                            {
+                                sum_val += Output[index1] * Gauss_weights[counterglob];
+                                sumweights += Gauss_weights[counterglob];
+                                counter_local++;
+                            }
+                        }
+                        counterglob++;
+                    }
+                }
+            }
+            /* if there were non zero mask values */
+            if(counter_local > 0)
+            {
+                Updated[index] = sum_val / sumweights;
+                M_upd[index]   = false;
+            }
+        }
+    }
+}
+
+void
+median_rand_inpainting_3D(bool* M_upd, const float* Output, float* Updated,
+                          int W_halfsize, int window_fullength, int method_type, long i,
+                          long j, long k, long dimX, long dimY, long dimZ)
+{
+    float* _values;
+    long   i_m;
+    long   j_m;
+    long   k_m;
+    long   i1;
+    long   j1;
+    long   k1;
+    float  vicinity_mean;
+    int    counter_local;
+    int    r0;
+    int    r1;
+    int    median_val;
+    size_t index;
+    size_t index1;
+
+    index = dimX * dimY * (size_t) k + (size_t) j * dimX + (size_t) i;
+
+    _values = (float*) calloc(window_fullength, sizeof(float));
+
+    /* check that you're on the region defined by the mask */
+    if(M_upd[index] == true)
+    {
+        /* check if have a usable information in the vicinity of the mask's edge*/
+        counter_local = 0;
+        vicinity_mean = 0.0F;
+        for(i_m = -1; i_m <= 1; i_m++)
+        {
+            i1 = i + i_m;
+            for(j_m = -1; j_m <= 1; j_m++)
+            {
+                j1 = j + j_m;
+                for(k_m = -1; k_m <= 1; k_m++)
+                {
+                    k1 = k + k_m;
+                    if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) &&
+                       ((k1 >= 0) && (k1 < dimZ)))
+                    {
+                        index1 =
+                            dimX * dimY * (size_t) k1 + (size_t) j1 * dimX + (size_t) i1;
+                        if(Output[index1] != 0.0)
+                        {
+                            vicinity_mean += Output[index1];
+                            counter_local++;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* We've got usable data in the vicinity os the neighbourhood then proceed with
+         * inpainting */
+        if(vicinity_mean != 0.0F)
+        {
+            vicinity_mean = vicinity_mean /
+                            counter_local; /* get the mean of values in the vicinity */
+
+            /* fill the vector */
+            counter_local = 0;
+            for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
+            {
+                i1 = i + i_m;
+                for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+                {
+                    j1 = j + j_m;
+                    for(k_m = -W_halfsize; k_m <= W_halfsize; k_m++)
+                    {
+                        k1 = k + k_m;
+                        if(((i1 >= 0) && (i1 < dimX)) && ((j1 >= 0) && (j1 < dimY)) &&
+                           ((k1 >= 0) && (k1 < dimZ)))
+                        {
+                            index1 = dimX * dimY * (size_t) k1 + (size_t) j1 * dimX +
+                                     (size_t) i1;
+                            if(Output[index1] != 0.0)
+                            {
+                                _values[counter_local] = Output[index1];
+                                counter_local++;
+                            }
+                        }
+                    }
+                }
+            }
+            if(method_type == 1)
+            {
+                /* inpainting based on the median neighbour */
+                qsort(_values, window_fullength, sizeof(float), floatcomp1);
+                median_val     = (counter_local / 2);
+                Updated[index] = _values[median_val];
+            }
+            else
+            {
+                /* inpainting based on two random neighbours */
+                r0             = rand() % counter_local;
+                r1             = rand() % counter_local;
+                Updated[index] = 0.5F * (_values[r0] + _values[r1]);
+            }
+            M_upd[index] = false;
+        }
+    }
+    free(_values);
 }
 
 /* MAIN */
-DLL int Inpainter_morph_main(float *Input, 
-                            bool *Mask,
-                            float *Output,
-                            int iterations,
-                            int W_halfsize,
-                            int method_type,
-                            int ncores,
-                            int dimX, int dimY, int dimZ)
+DLL int
+Inpainter_morph_main(float* Input, bool* Mask, float* Output, int iterations,
+                     int W_halfsize, int method_type, int ncores, int dimX, int dimY,
+                     int dimZ)
 {
-    long            i;
-    long            j;
-    long            k;
-    long            l;
-    long            m;
-    long            i_m;
-    long            j_m;
-    long            k_m;
-    long            counter;
-    float           *Gauss_weights;
-    float           *Updated;
-    bool            *M_upd;
-    int             window_fullength;    
-    int             W_fullsize;
-    size_t          countmask;
-    size_t          iterations_mask_complete;
-    size_t          totalvoxels;        
+    long   i;
+    long   j;
+    long   k;
+    long   l;
+    long   m;
+    long   i_m;
+    long   j_m;
+    long   k_m;
+    long   counter;
+    float* Gauss_weights;
+    float* Updated;
+    bool*  M_upd;
+    int    window_fullength;
+    int    W_fullsize;
+    size_t countmask;
+    size_t iterations_mask_complete;
+    size_t totalvoxels;
 
-    if (ncores > 0) 
+    if(ncores > 0)
     {
         // Explicitly disable dynamic teams
         omp_set_dynamic(0);
-        // Use a number of threads for all consecutive parallel regions 
+        // Use a number of threads for all consecutive parallel regions
         omp_set_num_threads(ncores);
-    }    
+    }
 
-    totalvoxels = (size_t)(dimX) * (size_t)(dimY) * (size_t)(dimZ);
-    Updated = malloc(totalvoxels * sizeof(float));
-    M_upd = malloc(totalvoxels * sizeof(bool));
+    totalvoxels = (size_t) (dimX) * (size_t) (dimY) * (size_t) (dimZ);
+    Updated     = malloc(totalvoxels * sizeof(float));
+    M_upd       = malloc(totalvoxels * sizeof(bool));
 
     /********************PREPARATIONS**************************/
     /* copy input into output */
@@ -563,275 +567,312 @@ DLL int Inpainter_morph_main(float *Input,
 
     /*calculate all nonzero values in the given mask */
     countmask = 0;
-    for (m=0; m<totalvoxels; m++) 
+    for(m = 0; m < totalvoxels; m++)
     {
-      if (Mask[m] == true) 
-      {
-        /* prepeare output by zeroing values inside the mask */
-        Output[m] = 0.0f;
-        Updated[m] = 0.0f;
-        countmask++;
-      }
+        if(Mask[m] == true)
+        {
+            /* prepeare output by zeroing values inside the mask */
+            Output[m]  = 0.0F;
+            Updated[m] = 0.0F;
+            countmask++;
+        }
     }
 
     /*full 1D dim of the similarity (neighbour) window */
-    W_fullsize = (int)(2*W_halfsize + 1); 
-    if (dimZ == 1) 
+    W_fullsize = (2 * W_halfsize + 1);
+    if(dimZ == 1)
     {
-      window_fullength = (int) (powf(W_fullsize, 2));
+        window_fullength = (int) (powf(W_fullsize, 2));
     }
-    else 
+    else
     {
-      window_fullength = (int) (powf(W_fullsize, 3));
+        window_fullength = (int) (powf(W_fullsize, 3));
     }
     /* initialise vector of gaussian weights */
-    Gauss_weights = (float*)calloc(window_fullength, sizeof(float));
+    Gauss_weights = (float*) calloc(window_fullength, sizeof(float));
 
     /*  pre-calculation of Gaussian distance weights  */
-    if (dimZ == 1) 
-    {      
-      counter = 0;
-      for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-      {
-        for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
+    if(dimZ == 1)
+    {
+        counter = 0;
+        for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
         {
-            Gauss_weights[counter] = expf(-(powf((i_m), 2) + powf((j_m), 2))/(2*window_fullength));
-            counter++;
+            for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+            {
+                Gauss_weights[counter] =
+                    expf(-(powf((i_m), 2) + powf((j_m), 2)) / (2 * window_fullength));
+                counter++;
+            }
         }
-      }
     }
-    else 
-    {      
-      counter = 0;
-      for(i_m=-W_halfsize; i_m<=W_halfsize; i_m++) 
-      {
-        for(j_m=-W_halfsize; j_m<=W_halfsize; j_m++) 
+    else
+    {
+        counter = 0;
+        for(i_m = -W_halfsize; i_m <= W_halfsize; i_m++)
         {
-          for(k_m=-W_halfsize; k_m<=W_halfsize; k_m++) 
-          {
-            Gauss_weights[counter] = expf(-(powf((i_m), 2) + powf((j_m), 2) + powf((k_m), 2))/(2*window_fullength));
-            counter++;
-          }
+            for(j_m = -W_halfsize; j_m <= W_halfsize; j_m++)
+            {
+                for(k_m = -W_halfsize; k_m <= W_halfsize; k_m++)
+                {
+                    Gauss_weights[counter] =
+                        expf(-(powf((i_m), 2) + powf((j_m), 2) + powf((k_m), 2)) /
+                             (2 * window_fullength));
+                    counter++;
+                }
+            }
         }
-      }
     }
 
     /* exit if nothing to inpaint (i.e. zero mask provided) */
-    if (countmask == 0) 
+    if(countmask == 0)
     {
-      free(Updated);
-      free(M_upd);
-      free(Gauss_weights);
-      return 0;
+        free(Updated);
+        free(M_upd);
+        free(Gauss_weights);
+        return 0;
     }
-    /* The maximum number of required iterations to do the completion of the whole inpainted region */
+    /* The maximum number of required iterations to do the completion of the whole
+     * inpainted region */
     iterations_mask_complete = countmask;
 
     /********************************************************************/
     /****************2D version of the algorithm*************************/
     /********************************************************************/
-    if (dimZ == 1) 
+    if(dimZ == 1)
     {
-      /* 1. Start iterations to inpaint the masked region first */
-      for (l=0; l<iterations_mask_complete; l++) 
-      {
-        #pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i,j)
-        for(i=0; i<dimX; i++) 
+        /* 1. Start iterations to inpaint the masked region first */
+        for(l = 0; l < iterations_mask_complete; l++)
         {
-          for(j=0; j<dimY; j++) 
-          {
-            if ((method_type == 1) || (method_type == 2)) 
+#pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i, j)
+            for(i = 0; i < dimX; i++)
             {
-              median_rand_inpainting_2D(M_upd, Output, Updated, W_halfsize, window_fullength, method_type, i, j, (long)(dimX), (long)(dimY));
+                for(j = 0; j < dimY; j++)
+                {
+                    if((method_type == 1) || (method_type == 2))
+                    {
+                        median_rand_inpainting_2D(M_upd, Output, Updated, W_halfsize,
+                                                  window_fullength, method_type, i, j,
+                                                  (long) (dimX), (long) (dimY));
+                    }
+                    else
+                    {
+                        eucl_weighting_inpainting_2D(M_upd, Output, Updated,
+                                                     Gauss_weights, W_halfsize, i, j,
+                                                     (long) (dimX), (long) (dimY));
+                    }
+                }
             }
-            else 
+            memcpy(Output, Updated, totalvoxels * sizeof(float));
+
+            /* check here if the iterations to complete the masked region should be
+             * terminated */
+            countmask = 0;
+            for(m = 0; m < totalvoxels; m++)
             {
-              eucl_weighting_inpainting_2D(M_upd, Output, Updated, Gauss_weights, W_halfsize, i, j, (long)(dimX), (long)(dimY)); 
+                if(M_upd[m] == true)
+                {
+                    countmask++;
+                }
             }
-          }
+            if(countmask == 0)
+            {
+                /*exit iterations_mask_complete loop */
+                break;
+            }
+        }
+
+        /* if random pixel assignment is selected, perform one smoothing operation at the
+         * last iteration to remove outliers */
+        if(method_type == 2)
+        {
+            memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
+#pragma omp parallel for shared(M_upd, Output, Updated) private(i, j)
+            for(i = 0; i < dimX; i++)
+            {
+                for(j = 0; j < dimY; j++)
+                {
+                    mean_smoothing_2D(M_upd, Output, Updated, i, j, (long) (dimX),
+                                      (long) (dimY));
+                }
+            }
         }
         memcpy(Output, Updated, totalvoxels * sizeof(float));
 
-        /* check here if the iterations to complete the masked region should be terminated */
-        countmask = 0;
-        for (m=0; m<totalvoxels; m++) 
+        /* 2. The Masked region has already should be inpainted by now, initiate
+           user-defined iterations This might be useful if some additional smoothing of
+           the inpainted area is required */
+        if(iterations > 0)
         {
-          if (M_upd[m] == true) 
-          {
-            countmask++;
-          }
-        }
-        if (countmask == 0)
-        {
-          /*exit iterations_mask_complete loop */
-          break;
-        }
-      }
-
-      /* if random pixel assignment is selected, perform one smoothing operation at the last iteration to remove outliers */
-      if (method_type == 2) 
-      {
-        memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-        #pragma omp parallel for shared(M_upd, Output, Updated) private(i,j)
-        for(i=0; i<dimX; i++) 
-        {
-          for(j=0; j<dimY; j++) 
-          {
-            mean_smoothing_2D(M_upd, Output, Updated, i, j, (long)(dimX), (long)(dimY));
-          }
-        }
-      }
-      memcpy(Output, Updated, totalvoxels * sizeof(float));
-
-      /* 2. The Masked region has already should be inpainted by now, initiate user-defined iterations
-         This might be useful if some additional smoothing of the inpainted area is required */    
-      if (iterations > 0) 
-      {
-        /*we need to reset M_upd mask for every iteration!*/
-        memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-        for (l=0; l<iterations; l++) 
-        {
-          #pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i,j)
-          for(i=0; i<dimX; i++) 
-          {
-            for(j=0; j<dimY; j++) 
+            /*we need to reset M_upd mask for every iteration!*/
+            memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
+            for(l = 0; l < iterations; l++)
             {
-              if ((method_type == 1) || (method_type == 2)) 
-              {
-                median_rand_inpainting_2D(M_upd, Output, Updated, W_halfsize, window_fullength, method_type, i, j, (long)(dimX), (long)(dimY));
-              }
-              else {
-                eucl_weighting_inpainting_2D(M_upd, Output, Updated, Gauss_weights, W_halfsize, i, j, (long)(dimX), (long)(dimY)); 
-              }
+#pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i, j)
+                for(i = 0; i < dimX; i++)
+                {
+                    for(j = 0; j < dimY; j++)
+                    {
+                        if((method_type == 1) || (method_type == 2))
+                        {
+                            median_rand_inpainting_2D(M_upd, Output, Updated, W_halfsize,
+                                                      window_fullength, method_type, i, j,
+                                                      (long) (dimX), (long) (dimY));
+                        }
+                        else
+                        {
+                            eucl_weighting_inpainting_2D(M_upd, Output, Updated,
+                                                         Gauss_weights, W_halfsize, i, j,
+                                                         (long) (dimX), (long) (dimY));
+                        }
+                    }
+                }
+                memcpy(Output, Updated, totalvoxels * sizeof(float));
             }
-          } 
-          memcpy(Output, Updated, totalvoxels * sizeof(float));
-        }
 
-        /* again for random method we remove outliers with local mean filter */
-         if (method_type == 2) 
-         {
-           memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-           #pragma omp parallel for shared(Mask, Output, Updated) private(i,j)
-           for(i=0; i<dimX; i++) 
-           {
-             for(j=0; j<dimY; j++) 
-             {                
-                mean_smoothing_2D(M_upd, Output, Updated, i, j, (long)(dimX), (long)(dimY));
-             }
-           }
-           memcpy(Output, Updated, totalvoxels * sizeof(float));
-         }        
-      }
+            /* again for random method we remove outliers with local mean filter */
+            if(method_type == 2)
+            {
+                memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
+#pragma omp parallel for shared(Mask, Output, Updated) private(i, j)
+                for(i = 0; i < dimX; i++)
+                {
+                    for(j = 0; j < dimY; j++)
+                    {
+                        mean_smoothing_2D(M_upd, Output, Updated, i, j, (long) (dimX),
+                                          (long) (dimY));
+                    }
+                }
+                memcpy(Output, Updated, totalvoxels * sizeof(float));
+            }
+        }
     } /*end of 2D case*/
     /********************************************************************/
     /****************3D version of the algorithm*************************/
     /********************************************************************/
-    else 
+    else
     {
-      /* 1. Start iterations to inpaint the masked region first */
-      for (l=0; l<iterations_mask_complete; l++) 
-      {
-        #pragma omp parallel for shared(M_upd,Gauss_weights) private(i,j,k)
-        for(i=0; i<dimX; i++) 
+        /* 1. Start iterations to inpaint the masked region first */
+        for(l = 0; l < iterations_mask_complete; l++)
         {
-          for(j=0; j<dimY; j++) 
-          {
-            for(k=0; k<dimZ; k++) 
+#pragma omp parallel for shared(M_upd, Gauss_weights) private(i, j, k)
+            for(i = 0; i < dimX; i++)
             {
-              if ((method_type == 1) || (method_type == 2)) 
-              {
-                median_rand_inpainting_3D(M_upd, Output, Updated, W_halfsize, window_fullength, method_type, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
-              }
-              else 
-              {
-                eucl_weighting_inpainting_3D(M_upd, Output, Updated, Gauss_weights, W_halfsize, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
-              }
-            }
-          }
-        }
-        memcpy(Output, Updated, totalvoxels * sizeof(float));
-
-        /* check here if the iterations to complete the masked region should be terminated */
-        countmask = 0;
-        for (m=0; m<totalvoxels; m++) 
-        {
-          if (M_upd[m] == true) 
-          {
-            countmask++;
-          }
-        }
-        if (countmask == 0)
-        {
-          break; /*exit iterations_mask_complete loop */
-        }
-      }
-
-        /* if random pixel assignment is selected, perform one smoothing operation at the last iteration to remove outliers */
-        if (method_type == 2) 
-        {
-          memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-          #pragma omp parallel for shared(M_upd, Output, Updated) private(i,j,k)
-          for(i=0; i<dimX; i++) 
-          {
-            for(j=0; j<dimY; j++) 
-            {
-              for(k=0; k<dimZ; k++) 
-              {              
-                mean_smoothing_3D(M_upd, Output, Updated, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
-              }
-            }
-          }
-        }
-        memcpy(Output, Updated, totalvoxels * sizeof(float));
-
-
-        /* 2. The Masked region has already should be inpainted by now, initiate user-defined iterations
-          This might be useful if some additional smoothing of the inpainted area is required */    
-        if (iterations > 0) 
-        {
-          /*we need to reset M_upd mask for every iteration!*/
-          memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-          for (l=0; l<iterations; l++) 
-          {
-          #pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i, j, k)
-            for(i=0; i<dimX; i++) 
-            {
-              for(j=0; j<dimY; j++) 
-              {
-                for(k=0; k<dimZ; k++) 
+                for(j = 0; j < dimY; j++)
                 {
-                    if ((method_type == 1) || (method_type == 2)) 
+                    for(k = 0; k < dimZ; k++)
                     {
-                      median_rand_inpainting_3D(M_upd, Output, Updated, W_halfsize, window_fullength, method_type, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
-                    }
-                    else 
-                    {
-                      eucl_weighting_inpainting_3D(M_upd, Output, Updated, Gauss_weights, W_halfsize, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
+                        if((method_type == 1) || (method_type == 2))
+                        {
+                            median_rand_inpainting_3D(M_upd, Output, Updated, W_halfsize,
+                                                      window_fullength, method_type, i, j,
+                                                      k, (long) (dimX), (long) (dimY),
+                                                      (long) (dimZ));
+                        }
+                        else
+                        {
+                            eucl_weighting_inpainting_3D(M_upd, Output, Updated,
+                                                         Gauss_weights, W_halfsize, i, j,
+                                                         k, (long) (dimX), (long) (dimY),
+                                                         (long) (dimZ));
+                        }
                     }
                 }
-              }
             }
-          memcpy(Output, Updated, totalvoxels * sizeof(float));
-          }
-          
-          /* again for random method we remove outliers with local mean filter */
-          if (method_type == 2) 
-          {
+            memcpy(Output, Updated, totalvoxels * sizeof(float));
+
+            /* check here if the iterations to complete the masked region should be
+             * terminated */
+            countmask = 0;
+            for(m = 0; m < totalvoxels; m++)
+            {
+                if(M_upd[m] == true)
+                {
+                    countmask++;
+                }
+            }
+            if(countmask == 0)
+            {
+                break; /*exit iterations_mask_complete loop */
+            }
+        }
+
+        /* if random pixel assignment is selected, perform one smoothing operation at the
+         * last iteration to remove outliers */
+        if(method_type == 2)
+        {
             memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
-            #pragma omp parallel for shared(M_upd, Output, Updated) private(i,j,k)
-            for(i=0; i<dimX; i++) 
+#pragma omp parallel for shared(M_upd, Output, Updated) private(i, j, k)
+            for(i = 0; i < dimX; i++)
             {
-              for(j=0; j<dimY; j++) 
-              {
-                for(k=0; k<dimZ; k++) 
+                for(j = 0; j < dimY; j++)
                 {
-                  mean_smoothing_3D(M_upd, Output, Updated, i, j, k, (long)(dimX), (long)(dimY), (long)(dimZ));
+                    for(k = 0; k < dimZ; k++)
+                    {
+                        mean_smoothing_3D(M_upd, Output, Updated, i, j, k, (long) (dimX),
+                                          (long) (dimY), (long) (dimZ));
+                    }
                 }
-              }
             }
-          }
-          memcpy(Output, Updated, totalvoxels * sizeof(float));
+        }
+        memcpy(Output, Updated, totalvoxels * sizeof(float));
+
+        /* 2. The Masked region has already should be inpainted by now, initiate
+          user-defined iterations This might be useful if some additional smoothing of the
+          inpainted area is required */
+        if(iterations > 0)
+        {
+            /*we need to reset M_upd mask for every iteration!*/
+            memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
+            for(l = 0; l < iterations; l++)
+            {
+#pragma omp parallel for shared(M_upd, Output, Updated, Gauss_weights) private(i, j, k)
+                for(i = 0; i < dimX; i++)
+                {
+                    for(j = 0; j < dimY; j++)
+                    {
+                        for(k = 0; k < dimZ; k++)
+                        {
+                            if((method_type == 1) || (method_type == 2))
+                            {
+                                median_rand_inpainting_3D(M_upd, Output, Updated,
+                                                          W_halfsize, window_fullength,
+                                                          method_type, i, j, k,
+                                                          (long) (dimX), (long) (dimY),
+                                                          (long) (dimZ));
+                            }
+                            else
+                            {
+                                eucl_weighting_inpainting_3D(M_upd, Output, Updated,
+                                                             Gauss_weights, W_halfsize, i,
+                                                             j, k, (long) (dimX),
+                                                             (long) (dimY),
+                                                             (long) (dimZ));
+                            }
+                        }
+                    }
+                }
+                memcpy(Output, Updated, totalvoxels * sizeof(float));
+            }
+
+            /* again for random method we remove outliers with local mean filter */
+            if(method_type == 2)
+            {
+                memcpy(M_upd, Mask, totalvoxels * sizeof(bool));
+#pragma omp parallel for shared(M_upd, Output, Updated) private(i, j, k)
+                for(i = 0; i < dimX; i++)
+                {
+                    for(j = 0; j < dimY; j++)
+                    {
+                        for(k = 0; k < dimZ; k++)
+                        {
+                            mean_smoothing_3D(M_upd, Output, Updated, i, j, k,
+                                              (long) (dimX), (long) (dimY),
+                                              (long) (dimZ));
+                        }
+                    }
+                }
+            }
+            memcpy(Output, Updated, totalvoxels * sizeof(float));
         }
     }
 
