@@ -68,9 +68,15 @@ jobs:
       Python-nomkl:
         python.version: 'nomkl'
         use.mkl: 'OFF'
+        use.cuda: 'OFF'
       Python-38:
         python.version: '38'
         use.mkl: 'ON'
+        use.cuda: 'OFF'
+      Python-cuda:
+        python.version: 'cuda'
+        use.mkl: 'ON'
+        use.cuda: 'ON'
     maxParallel: 4
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -82,10 +88,15 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
+      export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}"
+      export CC=$(which gcc)
+      export CXX=$(which g++)
+      echo "C compiler is ${CC}"
+      echo "C++ compiler is ${CXX}"
       pip install . --no-deps
-      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DTOMOPY_USE_MKL:BOOL=$(use.mkl)
-      cmake --build build
-      cmake --install build
+      cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DTOMOPY_USE_MKL:BOOL=$(use.mkl) -DTOMOPY_USE_CUDA:BOOL=$(use.cuda)
+      cmake --build build -v
+      cmake --install build -v
     displayName: Setup and install
   - script: |
       source activate tomopy
@@ -112,6 +123,11 @@ jobs:
     displayName: List build environment
   - script: |
       source activate tomopy
+      export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}"
+      export CC=$(which clang)
+      export CXX=$(which clang++)
+      echo "C compiler is ${CC}"
+      echo "C++ compiler is ${CXX}"
       pip install . --no-deps
       cmake -S . -B build -GNinja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
       cmake --build build

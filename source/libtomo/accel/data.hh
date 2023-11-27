@@ -90,7 +90,7 @@ struct RuntimeOptions
     ~RuntimeOptions() {}
 
     // disable copying and copy assignment
-    RuntimeOptions(const RuntimeOptions&) = delete;
+    RuntimeOptions(const RuntimeOptions&)            = delete;
     RuntimeOptions& operator=(const RuntimeOptions&) = delete;
 
     // create the thread pool -- don't have this in the constructor
@@ -180,8 +180,6 @@ struct Registration
 
 //======================================================================================//
 
-#if defined(TOMOPY_USE_PTL)
-
 //--------------------------------------------------------------------------------------//
 // when PTL thread-pool is available
 //
@@ -210,48 +208,12 @@ execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... arg
         std::stringstream ss;
         ss << "\n\nError executing :: " << e.what() << "\n\n";
         {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
+            PTL::AutoLock l(PTL::TypeMutex<decltype(std::cout)>());
             std::cerr << e.what() << std::endl;
         }
         throw std::runtime_error(ss.str().c_str());
     }
 }
-
-#else
-
-//--------------------------------------------------------------------------------------//
-// when PTL thread-pool is not available
-//
-template <typename DataArray, typename Func, typename... Args>
-void
-execute(RuntimeOptions* ops, int dt, DataArray& data, Func&& func, Args&&... args)
-{
-    // sync streams
-    auto join = [&]() { stream_sync(0); };
-
-    try
-    {
-        for(int p = 0; p < dt; ++p)
-        {
-            auto _func = std::bind(std::forward<Func>(func), std::ref(data),
-                                   std::forward<int>(p), std::forward<Args>(args)...);
-            _func();
-        }
-        join();
-    }
-    catch(const std::exception& e)
-    {
-        std::stringstream ss;
-        ss << "\n\nError executing :: " << e.what() << "\n\n";
-        {
-            AutoLock l(TypeMutex<decltype(std::cout)>());
-            std::cerr << e.what() << std::endl;
-        }
-        throw std::runtime_error(ss.str().c_str());
-    }
-}
-
-#endif
 
 //======================================================================================//
 
@@ -295,9 +257,9 @@ public:
 
     int interpolation() const { return m_interp; }
 
-    Mutex* upd_mutex() const
+    PTL::Mutex* upd_mutex() const
     {
-        static Mutex mtx;
+        static PTL::Mutex mtx;
         return &mtx;
     }
 
@@ -401,7 +363,7 @@ public:
     GpuData(this_type&&)      = default;
 
     this_type& operator=(const this_type&) = delete;
-    this_type& operator=(this_type&&) = default;
+    this_type& operator=(this_type&&)      = default;
 
 public:
     // access functions
