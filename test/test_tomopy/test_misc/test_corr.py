@@ -67,18 +67,17 @@ from ..util import read_file, loop_dim
 
 __author__ = "Doga Gursoy, William Judge"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
+__docformat__ = "restructuredtext en"
 
 
 class ImageFilterTestCase(unittest.TestCase):
     def test_gaussian_filter(self):
-        loop_dim(gaussian_filter, read_file('cube.npy'))
+        loop_dim(gaussian_filter, read_file("cube.npy"))
 
     def test_median_filter(self):
-        loop_dim(median_filter, read_file('cube.npy'))
+        loop_dim(median_filter, read_file("cube.npy"))
 
     def test_median_filter_nonfinite(self):
-
         # Set a standard random value to make reproducible
         np.random.seed(1)
 
@@ -113,46 +112,57 @@ class ImageFilterTestCase(unittest.TestCase):
                     size=3,
                     callback=None,
                 )
-    
+
     def test_median_filter3d(self):
-        A = np.arange(4*5*6).reshape(4,5,6)
+        A = np.arange(4 * 5 * 6).reshape(4, 5, 6)
         assert_equal(
-            scipy.ndimage.median_filter(np.float32(A), size=3), 
-            median_filter3d(np.float32(A), size=3))
+            scipy.ndimage.median_filter(np.float32(A), size=3),
+            median_filter3d(np.float32(A), size=3),
+        )
 
     def test_remove_outlier3d(self):
-        A = np.arange(4*5*6).reshape(4,5,6)
-        A[2,2,2] = 1000.0 # introduce an outlier
-        A_dezinged = remove_outlier3d(np.float32(A), dif = 500, size=3)
-        A[2,2,2] = 75 # substituted value by dezinger
+        A = np.arange(4 * 5 * 6).reshape(4, 5, 6)
+        A[2, 2, 2] = 1000.0  # introduce an outlier
+        A_dezinged = remove_outlier3d(np.float32(A), dif=500, size=3)
+        A[2, 2, 2] = 75  # substituted value by dezinger
         assert_equal(np.float32(A), A_dezinged)
-        
+
     def test_remove_neg(self):
         assert_allclose(remove_neg([-2, -1, 0, 1, 2]), [0, 0, 0, 1, 2])
 
     def test_remove_nan(self):
-        assert_allclose(remove_nan([np.nan, 1.5, 2, np.nan, 1]),
-                        [0, 1.5, 2, 0, 1])
+        assert_allclose(remove_nan([np.nan, 1.5, 2, np.nan, 1]), [0, 1.5, 2, 0, 1])
 
     def test_remove_outlier(self):
-        proj = read_file('proj.npy')
+        proj = read_file("proj.npy")
         proj[8][4][6] = 20
-        assert_allclose(remove_outlier(proj, dif=10), read_file('proj.npy'))
+        assert_allclose(remove_outlier(proj, dif=10), read_file("proj.npy"))
 
     def test_circ_mask(self):
-        loop_dim(circ_mask, read_file('obj.npy'))
-        
+        loop_dim(circ_mask, read_file("obj.npy"))
+
     def test_inpainter(self):
-        lena_image = read_file('lena.npy')
-        mask = np.zeros((512,512))
-        mask[270:285, :] = 1 # crop out the horizontal region
-        mask = np.array(mask, dtype='bool')
-        lena_image[mask == True] = 0
-        inpainted2d_mean = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='mean')
-        inpainted2d_median = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='median')
-        inpainted2d_random = inpainter_morph(lena_image, mask, size=3, iterations=2, inpainting_type='random')
-        assert_allclose(np.mean(inpainted2d_mean, axis=(0, 1)).sum(), 0.486248, rtol=1e-6)
-        assert_allclose(np.mean(inpainted2d_median, axis=(0, 1)).sum(), 0.486408, rtol=1e-6)
+        lena_image = read_file("lena.npy")
+        mask = np.zeros((512, 512))
+        mask[270:285, :] = 1  # crop out the horizontal region
+        mask = np.array(mask, dtype="bool")
+        lena_image[mask] = 0
+        inpainted2d_mean = inpainter_morph(
+            lena_image, mask, size=3, iterations=2, inpainting_type="mean"
+        )
+        inpainted2d_median = inpainter_morph(
+            lena_image, mask, size=3, iterations=2, inpainting_type="median"
+        )
+        inpainted2d_random = inpainter_morph(
+            lena_image, mask, size=3, iterations=2, inpainting_type="random"
+        )
+        assert_allclose(
+            np.mean(inpainted2d_mean, axis=(0, 1)).sum(), 0.486248, rtol=1e-6
+        )
+        assert_allclose(
+            np.mean(inpainted2d_median, axis=(0, 1)).sum(), 0.486408, rtol=1e-6
+        )
         # increase tolerance as the result of the method is probabalistic
-        assert_allclose(np.mean(inpainted2d_random, axis=(0, 1)).sum(), 0.486232, rtol=1e-3)
-        
+        assert_allclose(
+            np.mean(inpainted2d_random, axis=(0, 1)).sum(), 0.486232, rtol=1e-3
+        )
