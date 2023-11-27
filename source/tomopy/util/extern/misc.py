@@ -54,13 +54,13 @@ from . import c_shared_lib
 
 __author__ = "Doga Gursoy"
 __copyright__ = "Copyright (c) 2015, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
+__docformat__ = "restructuredtext en"
 __all__ = [
-    'c_sample',
-    'c_remove_ring',
-    'c_median_filt3d_float32',
-    'c_median_filt3d_uint16',
-    'c_inpainter',
+    "c_sample",
+    "c_remove_ring",
+    "c_median_filt3d_float32",
+    "c_median_filt3d_uint16",
+    "c_inpainter",
 ]
 
 LIB_TOMOPY_MISC = c_shared_lib("tomo-misc")
@@ -186,4 +186,3 @@ def c_inpainter(
         dtype.as_c_int(dz),
     )
     return output
-
