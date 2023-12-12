@@ -1007,7 +1007,7 @@ def inpainter_morph(
     """
     Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean).
 
-    .. versionadded:: 1.14
+    .. versionadded:: 1.15
 
     Parameters
     ----------
