@@ -1005,7 +1005,8 @@ def inpainter_morph(
     ncore=None,
 ):
     """
-    Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean).
+    Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean). The algorithm is 
+    presented in the paper :cite:`Kazantsev:23`.
 
     If applied to 3D tomographic data, one can use the 2D module applied to a sinogram by specifing the axis in the list of parameters bellow.
     Alternatively, one can use the 3D module with symmetric 3D kernels (axis=None). The latter is more recommended for 3D data as it ensures 
