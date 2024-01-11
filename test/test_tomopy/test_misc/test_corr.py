@@ -62,6 +62,7 @@ from tomopy.misc.corr import (
     circ_mask,
     inpainter_morph,
 )
+from tomopy.misc.phantom import peppers
 
 from ..util import read_file, loop_dim
 
@@ -141,28 +142,81 @@ class ImageFilterTestCase(unittest.TestCase):
     def test_circ_mask(self):
         loop_dim(circ_mask, read_file("obj.npy"))
 
-    def test_inpainter(self):
-        lena_image = read_file("lena.npy")
+    def test_inpainter2d(self):
+        
+        input_image = peppers(size=512)[0, :, :]
         mask = np.zeros((512, 512))
         mask[270:285, :] = 1  # crop out the horizontal region
         mask = np.array(mask, dtype="bool")
-        lena_image[mask] = 0
+
         inpainted2d_mean = inpainter_morph(
-            lena_image, mask, size=3, iterations=2, inpainting_type="mean"
+            input_image, mask, size=3, iterations=2, inpainting_type="mean", axis=None
         )
         inpainted2d_median = inpainter_morph(
-            lena_image, mask, size=3, iterations=2, inpainting_type="median"
+            input_image, mask, size=3, iterations=2, inpainting_type="median", axis=None
         )
         inpainted2d_random = inpainter_morph(
-            lena_image, mask, size=3, iterations=2, inpainting_type="random"
+            input_image, mask, size=3, iterations=2, inpainting_type="random", axis=None
         )
         assert_allclose(
-            np.mean(inpainted2d_mean, axis=(0, 1)).sum(), 0.486248, rtol=1e-6
+            np.mean(inpainted2d_mean, axis=(0, 1)).sum(), 104.20617, rtol=1e-6
         )
         assert_allclose(
-            np.mean(inpainted2d_median, axis=(0, 1)).sum(), 0.486408, rtol=1e-6
+            np.mean(inpainted2d_median, axis=(0, 1)).sum(), 104.26762, rtol=1e-6
         )
-        # increase tolerance as the result of the method is probabalistic
+        # providing a range as the method is probabilistic 
+        assert 103.0 <= np.mean(inpainted2d_random, axis=(0, 1)).sum() <= 106.0
+
+    def test_inpainter3d_as_2d(self):
+        
+        input_vol3d = np.float32(np.zeros((512,3,512)))
+        mask3d = np.zeros((512,3,512))
+        mask2d = np.zeros((512,512))
+        mask2d[270:285, :] = 1  # crop out the horizontal region
+        for j in range(3):
+            input_vol3d[:,j,:] = peppers(size=512)[0, :, :]
+            mask3d[:,j,:] = mask2d       
+        
+        mask3d = np.array(mask3d, dtype="bool")
+        
+        inpainted3d_mean = inpainter_morph(
+            input_vol3d, mask3d, size=3, iterations=2, inpainting_type="mean", axis=1
+        )
+        inpainted3d_median = inpainter_morph(
+            input_vol3d, mask3d, size=3, iterations=2, inpainting_type="median", axis=1
+        )
+        inpainted3d_random = inpainter_morph(
+            input_vol3d, mask3d, size=3, iterations=2, inpainting_type="random", axis=1
+        )
         assert_allclose(
-            np.mean(inpainted2d_random, axis=(0, 1)).sum(), 0.486232, rtol=1e-3
+            np.mean(inpainted3d_mean), 104.20617, rtol=1e-6
         )
+        assert_allclose(
+            np.mean(inpainted3d_median), 104.26761, rtol=1e-6
+        )
+        # providing a range as the method is probabilistic 
+        assert 103.0 <= np.mean(inpainted3d_random) <= 106.0
+
+    def test_inpainter3d(self):
+        
+        input_vol3d = np.float32(np.zeros((512,3,512)))
+        mask3d = np.zeros((512,3,512))
+        mask2d = np.zeros((512,512))
+        mask2d[270:285, :] = 1  # crop out the horizontal region
+        for j in range(3):
+            input_vol3d[:,j,:] = peppers(size=512)[0, :, :]
+            mask3d[:,j,:] = mask2d       
+        
+        mask3d = np.array(mask3d, dtype="bool")
+
+        inpainted3d_mean = inpainter_morph(
+            input_vol3d, mask3d, size=3, iterations=0, inpainting_type="mean"
+        )
+        inpainted3d_random = inpainter_morph(
+            input_vol3d, mask3d, size=1, iterations=0, inpainting_type="random"
+        )
+        assert_allclose(
+            np.mean(inpainted3d_mean), 104.20623, rtol=1e-6
+        )
+        # pproviding a range as the method is probabilistic 
+        assert 103.0 <= np.mean(inpainted3d_random) <= 106.0 

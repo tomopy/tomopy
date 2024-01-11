@@ -1001,33 +1001,38 @@ def inpainter_morph(
     size=5,
     iterations=2,
     inpainting_type="random",
-    method_type="2D",
+    axis=None,
     ncore=None,
 ):
     """
     Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean).
+
+    If applied to 3D tomographic data, one can use the 2D module applied to a sinogram by specifing the axis in the list of parameters bellow.
+    Alternatively, one can use the 3D module with symmetric 3D kernels (axis=None). The latter is more recommended for 3D data as it ensures 
+    the smoother intensity transition in every direction.
+
 
     .. versionadded:: 1.15
 
     Parameters
     ----------
     arr : ndarray
-        Input 3D or 2D array of float32 data type.
+        Input 3D or 2D array of float32 data type with the missing data. 
     mask : ndarray, bool
         Boolean mask array of the same size as arr.
         True values in the mask indicate the region that needs to be inpainted.
     size : int, optional
-        The size of the searching window.
+        The size of the searching window (a kernel).
     iterations : int, optional
         Iterations of the algorithm after the inpainted region was processed fully.
-        The larger numbers usually lead to oversmoothing of the area.
+        The larger numbers usually lead to oversmoothing of the area, we recommend 2.
     inpainting_type : str, optional
         The type of the inpainting technique.
         Choose between 'mean', 'median' or 'random' neighbour selection.
-        We suggest using 'random' to minimise the "spilling" of intensities of the inpainted areas.
-    method_type : str, optional
-            Choose between '2D' or '3D' algorithm. Usually '3D' provides a more consistent
-            and better quality inpainting.
+        We suggest using 'random' to minimise the "spilling" of intensities inside the inpainted areas.
+    axis : int, optional
+        Choose a specific axis to apply 2D inpainting to 3D data. If set to None then the 3D inpainting is enabled,
+        which is recommended to use for 3D data. If the 2D inpainting used for 3D data, it is best to apply it in sinogram space.        
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -1046,7 +1051,9 @@ def inpainter_morph(
 
         If inpainting_type is not 'mean', 'median' or 'random'.
 
-        If method_type is not '2D' or '3D'
+        If axis is an integer for 2D input data.
+
+        If axis is outside of the accepted range.
 
     """
     if ncore is None:
@@ -1072,18 +1079,24 @@ def inpainter_morph(
     if inpainting_type == "random":
         inp_type_int = 2
 
-    if method_type not in ["2D", "3D"]:
-        raise ValueError("Choose method_type either '2D' or '3D'")
+    if axis is not None:
+        if arr.ndim == 2:
+            raise ValueError("The axis number is valid only for 3D data, please set axis to None for 2D data")
+        else:
+            if axis < 0 or axis > 2:
+                raise ValueError("The accepted axes range for 3D data is [0:2]")
 
     if arr.ndim == 3:
         dz, dy, dx = arr.shape
         if (dz == 0) or (dy == 0) or (dx == 0):
             raise ValueError("The length of one of dimensions is equal to zero")
-        if method_type == "2D":
-            # perform 2d inpainting for 3d data
-            for m in range(arr.shape[1]):
-                slice2d = arr[:, m, :]
-                mask2d = mask[:, m, :]
+        if axis is not None:
+            # perform 2d inpainting for 3d data using the provided axis
+            slices_list = [slice(None), slice(None), slice(None)]      
+            for m in range(arr.shape[axis]):
+                slices_list[axis] = slice(m,m+1)
+                slice2d = arr[tuple(slices_list)].squeeze()
+                mask2d = mask[tuple(slices_list)].squeeze()
                 dy, dx = slice2d.shape
                 out2d = np.empty_like(slice2d, order="C")
                 extern.c_inpainter(
@@ -1098,7 +1111,12 @@ def inpainter_morph(
                     dy,
                     1,
                 )
-                out[:, m, :] = out2d
+                if axis == 0:
+                    out[m, :, :] = out2d
+                elif axis == 1:
+                    out[:, m, :] = out2d
+                else:
+                    out[:, :, m] = out2d
         else:
             # 3d inpaiting for 3d data
             extern.c_inpainter(
