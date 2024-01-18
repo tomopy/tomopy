@@ -546,13 +546,10 @@ Inpainter_morph_main(float* Input, bool* Mask, float* Output, int iterations,
     size_t iterations_mask_complete;
     size_t totalvoxels;
 
-    if(ncores > 0)
-    {
-        // Explicitly disable dynamic teams
-        omp_set_dynamic(0);
-        // Use a number of threads for all consecutive parallel regions
-        omp_set_num_threads(ncores);
-    }
+    // Explicitly disable dynamic teams
+    omp_set_dynamic(0);
+    // Use a number of threads for all consecutive parallel regions
+    omp_set_num_threads(ncores);
 
     totalvoxels = (size_t) (dimX) * (size_t) (dimY) * (size_t) (dimZ);
     Updated     = malloc(totalvoxels * sizeof(float));

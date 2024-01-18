@@ -143,7 +143,6 @@ class ImageFilterTestCase(unittest.TestCase):
         loop_dim(circ_mask, read_file("obj.npy"))
 
     def test_inpainter2d(self):
-        
         input_image = peppers(size=512)[0, :, :]
         mask = np.zeros((512, 512))
         mask[270:285, :] = 1  # crop out the horizontal region
@@ -164,21 +163,20 @@ class ImageFilterTestCase(unittest.TestCase):
         assert_allclose(
             np.mean(inpainted2d_median, axis=(0, 1)).sum(), 104.26762, rtol=1e-6
         )
-        # providing a range as the method is probabilistic 
+        # providing a range as the method is probabilistic
         assert 103.0 <= np.mean(inpainted2d_random, axis=(0, 1)).sum() <= 106.0
 
     def test_inpainter3d_as_2d(self):
-        
-        input_vol3d = np.float32(np.zeros((512,3,512)))
-        mask3d = np.zeros((512,3,512))
-        mask2d = np.zeros((512,512))
+        input_vol3d = np.float32(np.zeros((512, 3, 512)))
+        mask3d = np.zeros((512, 3, 512))
+        mask2d = np.zeros((512, 512))
         mask2d[270:285, :] = 1  # crop out the horizontal region
         for j in range(3):
-            input_vol3d[:,j,:] = peppers(size=512)[0, :, :]
-            mask3d[:,j,:] = mask2d       
-        
+            input_vol3d[:, j, :] = peppers(size=512)[0, :, :]
+            mask3d[:, j, :] = mask2d
+
         mask3d = np.array(mask3d, dtype="bool")
-        
+
         inpainted3d_mean = inpainter_morph(
             input_vol3d, mask3d, size=3, iterations=2, inpainting_type="mean", axis=1
         )
@@ -188,25 +186,20 @@ class ImageFilterTestCase(unittest.TestCase):
         inpainted3d_random = inpainter_morph(
             input_vol3d, mask3d, size=3, iterations=2, inpainting_type="random", axis=1
         )
-        assert_allclose(
-            np.mean(inpainted3d_mean), 104.20617, rtol=1e-6
-        )
-        assert_allclose(
-            np.mean(inpainted3d_median), 104.26761, rtol=1e-6
-        )
-        # providing a range as the method is probabilistic 
+        assert_allclose(np.mean(inpainted3d_mean), 104.20617, rtol=1e-6)
+        assert_allclose(np.mean(inpainted3d_median), 104.26761, rtol=1e-6)
+        # providing a range as the method is probabilistic
         assert 103.0 <= np.mean(inpainted3d_random) <= 106.0
 
     def test_inpainter3d(self):
-        
-        input_vol3d = np.float32(np.zeros((512,3,512)))
-        mask3d = np.zeros((512,3,512))
-        mask2d = np.zeros((512,512))
+        input_vol3d = np.float32(np.zeros((512, 3, 512)))
+        mask3d = np.zeros((512, 3, 512))
+        mask2d = np.zeros((512, 512))
         mask2d[270:285, :] = 1  # crop out the horizontal region
         for j in range(3):
-            input_vol3d[:,j,:] = peppers(size=512)[0, :, :]
-            mask3d[:,j,:] = mask2d       
-        
+            input_vol3d[:, j, :] = peppers(size=512)[0, :, :]
+            mask3d[:, j, :] = mask2d
+
         mask3d = np.array(mask3d, dtype="bool")
 
         inpainted3d_mean = inpainter_morph(
@@ -215,8 +208,6 @@ class ImageFilterTestCase(unittest.TestCase):
         inpainted3d_random = inpainter_morph(
             input_vol3d, mask3d, size=1, iterations=0, inpainting_type="random"
         )
-        assert_allclose(
-            np.mean(inpainted3d_mean), 104.20623, rtol=1e-6
-        )
-        # pproviding a range as the method is probabilistic 
-        assert 103.0 <= np.mean(inpainted3d_random) <= 106.0 
+        assert_allclose(np.mean(inpainted3d_mean), 104.20623, rtol=1e-6)
+        # pproviding a range as the method is probabilistic
+        assert 103.0 <= np.mean(inpainted3d_random) <= 106.0
