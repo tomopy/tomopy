@@ -1005,12 +1005,15 @@ def inpainter_morph(
     ncore=None,
 ):
     """
-    Apply 3D or 2D morphological inpainter (extrapolator) to a given missing data array using provided mask (boolean). The algorithm is 
-    presented in the paper :cite:`Kazantsev:23`.
+    Apply 3D or 2D morphological inpainter (extrapolator) to a given missing
+    data array using provided mask (boolean). The algorithm is presented in the
+    paper :cite:`Kazantsev:23`.
 
-    If applied to 3D tomographic data, one can use the 2D module applied to a sinogram by specifing the axis in the list of parameters bellow.
-    Alternatively, one can use the 3D module with symmetric 3D kernels (axis=None). The latter is more recommended for 3D data as it ensures 
-    the smoother intensity transition in every direction.
+    If applied to 3D tomographic data, one can use the 2D module applied to a
+    sinogram by specifing the axis in the list of parameters bellow.
+    Alternatively, one can use the 3D module with symmetric 3D kernels
+    (axis=None). The latter is more recommended for 3D data as it ensures the
+    smoother intensity transition in every direction.
 
 
     .. versionadded:: 1.15
@@ -1018,22 +1021,25 @@ def inpainter_morph(
     Parameters
     ----------
     arr : ndarray
-        Input 3D or 2D array of float32 data type with the missing data. 
+        Input 3D or 2D array of float32 data type with the missing data.
     mask : ndarray, bool
-        Boolean mask array of the same size as arr.
-        True values in the mask indicate the region that needs to be inpainted.
+        Boolean mask array of the same size as arr. True values in the mask
+        indicate the region that needs to be inpainted.
     size : int, optional
         The size of the searching window (a kernel).
     iterations : int, optional
-        Iterations of the algorithm after the inpainted region was processed fully.
-        The larger numbers usually lead to oversmoothing of the area, we recommend 2.
+        Iterations of the algorithm after the inpainted region was processed
+        fully. The larger numbers usually lead to oversmoothing of the area, we
+        recommend 2.
     inpainting_type : str, optional
-        The type of the inpainting technique.
-        Choose between 'mean', 'median' or 'random' neighbour selection.
-        We suggest using 'random' to minimise the "spilling" of intensities inside the inpainted areas.
+        The type of the inpainting technique. Choose between 'mean', 'median'
+        or 'random' neighbour selection. We suggest using 'random' to minimise
+        the "spilling" of intensities inside the inpainted areas.
     axis : int, optional
-        Choose a specific axis to apply 2D inpainting to 3D data. If set to None then the 3D inpainting is enabled,
-        which is recommended to use for 3D data. If the 2D inpainting used for 3D data, it is best to apply it in sinogram space.        
+        Split the data along this axis, and perform inpainting in the remaining
+        dimensions. If set to `None` then the 3D inpainting is enabled, which
+        is recommended to use for 3D data. If the 2D inpainting used for 3D
+        data, it is best to apply it in sinogram space.
     ncore : int, optional
         Number of cores that will be assigned to jobs. All cores will be used
         if unspecified.
@@ -1093,7 +1099,7 @@ def inpainter_morph(
             raise ValueError("The length of one of dimensions is equal to zero")
         if axis is not None:
             # perform 2d inpainting for 3d data using the provided axis
-            slices_list = [slice(None), slice(None), slice(None)]      
+            slices_list = [slice(None), slice(None), slice(None)]
             for m in range(arr.shape[axis]):
                 slices_list[axis] = slice(m,m+1)
                 slice2d = arr[tuple(slices_list)].squeeze()
