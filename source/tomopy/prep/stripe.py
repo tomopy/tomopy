@@ -980,7 +980,7 @@ def _remove_stripe_based_interpolation(tomo, snr, size, drop_ratio, norm):
 def stripes_detect3d(tomo, size=10, radius=3, ncore=None):
     """
     Detect stripes in a 3D array. Usually applied to normalized projection
-    data.
+    data. The algorithm is presented in the paper :cite:`Kazantsev:23`.
 
     The method works with full and partial stripes of constant ot varying
     intensity.
@@ -1063,7 +1063,8 @@ def stripes_mask3d(weights,
     binary 3D mask with ones where stripes present.
 
     The method tries to eliminate non-stripe features in data by checking the
-    consistency of weights in three directions.
+    consistency of weights in three directions. The algorithm is 
+    presented in the paper :cite:`Kazantsev:23`.
 
     .. versionadded:: 1.14
 

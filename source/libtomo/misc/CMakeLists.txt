@@ -1,6 +1,7 @@
 set(HEADERS
     "${tomopy_SOURCE_DIR}/include/libtomo/morph.h"
     "${tomopy_SOURCE_DIR}/include/libtomo/remove_ring.h"
+    "${tomopy_SOURCE_DIR}/include/libtomo/inpainter.h"
     "${tomopy_SOURCE_DIR}/include/libtomo/median_filt3d.h")
 
 tomopy_add_library(
@@ -8,6 +9,7 @@ tomopy_add_library(
   SHARED
   morph.c
   remove_ring.c
+  inpainter.c
   median_filt3d.c
   ${HEADERS})
 
