@@ -823,10 +823,14 @@ def _rs_dead(sinogram, snr, size, matindex, norm=True):
     listx = np.where(listmask < 1.0)[0]
     listy = np.arange(nrow)
     matz = sinogram[:, listx]
-    finter = interpolate.interp2d(listx, listy, matz, kind='linear')
+    finter = interpolate.RectBivariateSpline(listy, listx, matz,
+                                             kx=1, ky=1)
     listxmiss = np.where(listmask > 0.0)[0]
     if len(listxmiss) > 0:
-        sinogram[:, listxmiss] = finter(listxmiss, listy)
+        matxmiss, maty = np.meshgrid(listxmiss, listy)
+        output = finter.ev(np.ndarray.flatten(maty),
+                           np.ndarray.flatten(matxmiss))
+        sinogram[:, listxmiss] = output.reshape(matxmiss.shape)
     # Remove residual stripes
     if norm is True:
         sinogram = _rs_large(sinogram, snr, size, matindex)
@@ -963,10 +967,14 @@ def _rs_interpolation(sinogram, snr, size, drop_ratio=0.1, norm=True):
     listx = np.where(listmask < 1.0)[0]
     listy = np.arange(nrow)
     matz = sinogram[:, listx]
-    finter = interpolate.interp2d(listx, listy, matz, kind='linear')
+    finter = interpolate.RectBivariateSpline(listy, listx, matz,
+                                             kx=1, ky=1)
     listxmiss = np.where(listmask > 0.0)[0]
     if len(listxmiss) > 0:
-        sinogram[:, listxmiss] = finter(listxmiss, listy)
+        matxmiss, maty = np.meshgrid(listxmiss, listy)
+        output = finter.ev(np.ndarray.flatten(maty),
+                           np.ndarray.flatten(matxmiss))
+        sinogram[:, listxmiss] = output.reshape(matxmiss.shape)
     return sinogram
 
 
