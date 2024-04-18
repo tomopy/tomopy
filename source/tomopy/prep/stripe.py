@@ -480,7 +480,7 @@ def remove_stripe_based_filtering(tomo,
 
 
 def _create_1d_window(ncol, sigma, pad):
-    window = signal.gaussian(ncol + 2 * pad, std=sigma)
+    window = signal.windows.gaussian(ncol + 2 * pad, std=sigma)
     return window
 
 
@@ -1071,7 +1071,7 @@ def stripes_mask3d(weights,
     binary 3D mask with ones where stripes present.
 
     The method tries to eliminate non-stripe features in data by checking the
-    consistency of weights in three directions. The algorithm is 
+    consistency of weights in three directions. The algorithm is
     presented in the paper :cite:`Kazantsev:23`.
 
     .. versionadded:: 1.14
