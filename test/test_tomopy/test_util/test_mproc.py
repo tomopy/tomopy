@@ -46,9 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import tomopy.util.mproc as mproc
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal

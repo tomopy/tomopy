@@ -46,9 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import unittest
 from tomopy.prep.normalize import normalize, normalize_bg, normalize_nf
 from ..util import read_file
