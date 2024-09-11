@@ -50,9 +50,6 @@
 Module for functions related to finding axis of rotation.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import os.path
 

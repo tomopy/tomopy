@@ -46,9 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import unittest
 from ..util import read_file, loop_dim
 from tomopy.misc.morph import downsample, upsample, sino_360_to_180

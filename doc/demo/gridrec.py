@@ -50,7 +50,6 @@
 TomoPy example script to reconstruct the tomography data as
 with gridrec.
 """
-from __future__ import print_function
 import tomopy
 import dxchange
 

@@ -49,9 +49,6 @@
 Module for pre-processing tasks.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import numpy as np
 import pywt
 import tomopy.util.extern as extern

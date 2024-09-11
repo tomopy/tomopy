@@ -46,9 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import unittest
 from tomopy.misc.phantom import baboon, barbara, cameraman, checkerboard, \
     lena, peppers, shepp2d, shepp3d
