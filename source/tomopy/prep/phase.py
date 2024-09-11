@@ -50,9 +50,6 @@
 Module for phase retrieval.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import numpy as np
 from tomopy.util.misc import (fft2, ifft2)
 
