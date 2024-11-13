@@ -118,7 +118,7 @@ jobs:
     displayName: print debug
   - bash: a=$(which python); export CONDA="${a%/*}/"; echo $CONDA
     displayName: defining CONDA
-  - bash: sudo chown -R $USER $CONDA
+  - bash: echo $USER; echo $CONDA; sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
       conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml --solver=libmamba
