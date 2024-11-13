@@ -94,7 +94,7 @@ def as_ndarray(arr, dtype=None, copy=False):
 
 def as_dtype(arr, dtype, copy=False):
     if not arr.dtype == dtype:
-        if copy: 
+        if copy:
             arr = np.array(arr, dtype=dtype)
         else:
             arr = np.asarray(arr, dtype=dtype)
