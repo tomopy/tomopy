@@ -114,11 +114,7 @@ jobs:
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
-  - bash: which python
-    displayName: print debug
-  - bash: a=$(which python); export CONDA="${a%/*}/"; echo $CONDA
-    displayName: defining CONDA
-  - bash: echo $USER; echo $CONDA; sudo chown -R $USER $CONDA
+  - bash: a=$(which python); export CONDA="${a%/*}/"; echo $USER; echo $CONDA; sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
   - script: |
       conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml --solver=libmamba
