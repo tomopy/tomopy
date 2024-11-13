@@ -283,6 +283,7 @@ def _ring(sino, m, n):
     N = np.size(mysino, 1)
 
     # Remove NaN.
+    print(mysino)
     pos = np.where(np.isnan(mysino) is True)
     mysino[pos] = 0
 
