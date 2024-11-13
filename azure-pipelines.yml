@@ -116,7 +116,7 @@ jobs:
     displayName: Add conda to PATH
   - bash: which python
     displayName: print debug
-  - bash: a = $(which python); export CONDA="${a%/*}/"; echo $CONDA
+  - bash: a=$(which python); export CONDA="${a%/*}/"; echo $CONDA
     displayName: defining CONDA
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
