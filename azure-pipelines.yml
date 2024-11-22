@@ -112,10 +112,15 @@ jobs:
         python.version: '38'
     maxParallel: 4
   steps:
-  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+  - script: |
+      mkdir -p ~/miniconda
+      curl https://repo.anaconda.com/miniconda/Miniconda3-py39_24.5.0-0-MacOSX-x86_64.sh -o ~/miniconda/miniconda.sh
+      bash ~/miniconda/miniconda.sh -b -u -p ~/miniconda
+      rm ~/miniconda/miniconda.sh
+      ~/miniconda/bin/conda init bash
+    displayName: Install miniconda in runner
+  - bash: echo "##vso[task.prependpath]~/miniconda/bin"
     displayName: Add conda to PATH
-  - bash: sudo chown -R $USER $CONDA
-    displayName: Take ownership of conda installation
   - script: |
       conda env create -n tomopy --quiet -f envs/osx-$(python.version).yml --solver=libmamba
     displayName: Create build environment

@@ -85,13 +85,19 @@ __all__ = [
 
 def as_ndarray(arr, dtype=None, copy=False):
     if not isinstance(arr, np.ndarray):
-        arr = np.array(arr, dtype=dtype, copy=copy)
+        if copy:
+            arr = np.array(arr, dtype=dtype)
+        else:
+            arr = np.asarray(arr, dtype=dtype)
     return arr
 
 
 def as_dtype(arr, dtype, copy=False):
     if not arr.dtype == dtype:
-        arr = np.array(arr, dtype=dtype, copy=copy)
+        if copy:
+            arr = np.array(arr, dtype=dtype)
+        else:
+            arr = np.asarray(arr, dtype=dtype)
     return arr
 
 
