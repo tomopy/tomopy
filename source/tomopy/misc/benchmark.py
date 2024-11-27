@@ -46,8 +46,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from __future__ import absolute_import
-
 __version__ = '1.2.1'
 
 __all__ = ['algorithms', 'image_quality', 'exit_action',

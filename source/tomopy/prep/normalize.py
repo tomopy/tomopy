@@ -47,9 +47,6 @@
 # #########################################################################
 """Module for data normalization."""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import numpy as np
 import tomopy.util.mproc as mproc
 import tomopy.util.extern as extern
