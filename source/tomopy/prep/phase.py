@@ -52,7 +52,7 @@ Module for phase retrieval.
 
 import numpy as np
 from tomopy.util.misc import (fft2, ifft2)
-
+from tomopy.prep.normalize import minus_log
 
 import tomopy.util.mproc as mproc
 import logging
@@ -123,28 +123,34 @@ def retrieve_phase(
     arr = mproc.distribute_jobs(
         tomo,
         func=_retrieve_phase,
-        args=(phase_filter, py, pz, prj, pad),
+        args=(phase_filter, py, pz, prj, pad, energy),
         axis=0,
         ncore=ncore,
         nchunk=nchunk)
     return arr
 
 
-def _retrieve_phase(tomo, phase_filter, px, py, prj, pad):
+def _retrieve_phase(tomo, phase_filter, px, py, prj, pad, energy):
     dx, dy, dz = tomo.shape
     num_jobs = tomo.shape[0]
     normalized_phase_filter = phase_filter / phase_filter.max()
     for m in range(num_jobs):
         prj[px:dy + px, py:dz + py] = tomo[m]
-        prj[:px] = prj[px]
-        prj[-px:] = prj[-px-1]
-        prj[:, :py] = prj[:, py][:, np.newaxis]
-        prj[:, -py:] = prj[:, -py-1][:, np.newaxis]
+        #  Correction for no padding
+        if pad:
+            prj[:px] = prj[px]
+            prj[-px:] = prj[-px-1]
+            prj[:, :py] = prj[:, py][:, np.newaxis]
+            prj[:, -py:] = prj[:, -py-1][:, np.newaxis]
         fproj = fft2(prj, extra_info=num_jobs)
         fproj *= normalized_phase_filter
         proj = np.real(ifft2(fproj, extra_info=num_jobs, overwrite_input=True))
         if pad:
             proj = proj[px:dy + px, py:dz + py]
+        # The equation of Paganin filter has logarithm operation
+        proj = minus_log(proj)
+        # The final result will be the value of beta
+        proj = proj/(4*PI/_wavelength(energy))
         tomo[m] = proj
 
 
@@ -186,7 +192,9 @@ def _calc_pad(tomo, pixel_size, dist, energy, pad):
 
 
 def _paganin_filter_factor(energy, dist, alpha, w2):
-    return 1 / (_wavelength(energy) * dist * w2 / (4 * PI) + alpha)
+    # The equation is changed according to Paganin equation. 
+    # Alpha represents the ratio of delta/beta.
+    return 1 / (1 + (dist * alpha * _wavelength(energy) * w2/(4*PI)))
 
 
 def _calc_pad_width(dim, pixel_size, wavelength, dist):
@@ -241,5 +249,7 @@ def _reciprocal_coord(pixel_size, num_grid):
     """
     n = num_grid - 1
     rc = np.arange(-n, num_grid, 2, dtype = np.float32)
-    rc *= 0.5 / (n * pixel_size)
+    # The reciprocal coordinate needs to be normalized with 2 PI
+    # in the spatial frequency domain
+    rc *= 2*PI / (n * pixel_size)
     return  rc
