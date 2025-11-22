@@ -292,7 +292,8 @@ def distribute_jobs(arr,
                 shared_out_type, shared_out_shape, queue=queue, on_host=True)
 
     if ncore > 1 and DEBUG is False:
-        with closing(mp.Pool(processes=ncore,
+        mp_context = mp.get_context("fork")
+        with closing(mp_context.Pool(processes=ncore,
                              initializer=init_shared,
                              initargs=(shared_arrays, shared_out, arr.dtype,
                                        shared_shape, shared_out_type,
