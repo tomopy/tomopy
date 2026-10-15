@@ -175,7 +175,15 @@ def normalize_roi(arr, roi=[0, 0, 10, 10], ncore=None):
     arr : ndarray
         3D tomographic data.
     roi: list of int, optional
-        [top-left, top-right, bottom-left, bottom-right] pixel coordinates.
+        [row_start, col_start, row_end, col_end] of the window, i.e. the
+        window is ``proj[row_start:row_end, col_start:col_end]`` for each
+        projection (end indices excluded)::
+
+            (row_start, col_start)
+                    +-----------+
+                    |  window   |
+                    +-----------+
+                         (row_end, col_end)
     ncore : int, optional
         Number of cores that will be assigned to jobs.
 
